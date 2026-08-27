@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
+  MIN_TOPIC_COUNT,
   gradeCards,
   topicCards,
   incorrectItems,
@@ -16,8 +17,8 @@ import {
 
 /**
  * Covers plan.md AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8: grade to topic to a
- * full 6-question practice session mixing both question kinds, to a full
- * score result, to a Practice Again reset.
+ * full practice session (length varies per topic, AC15) mixing image-choice
+ * and listening-fill-blank, to a full score result, to a Practice Again reset.
  *
  * The correct answer for each question is never hardcoded. A discovery pass
  * plays through the session once: for image-choice it clicks option 0 and
@@ -42,15 +43,19 @@ test.describe('Student self-practice: happy path across both question kinds', ()
 
     await selectGrade(page, 0);
 
-    await test.step('topic selection shows 2 topic cards (AC2)', async () => {
-      await expect(topicCards(page)).toHaveCount(2);
+    await test.step('topic selection shows at least 10 distinct topic cards (AC11, expanded from AC2\'s original 2)', async () => {
+      const count = await topicCards(page).count();
+      expect(count).toBeGreaterThanOrEqual(MIN_TOPIC_COUNT);
     });
 
     await selectTopic(page, 0);
 
     const firstProgress = await readQuestionProgress(page);
     expect(firstProgress.current).toBe(1);
-    expect(firstProgress.total).toBe(6);
+    // Session length varies per topic since v3 (buildTopicSession includes every
+    // kind a topic is eligible for, AC15) - assert it is a real positive count,
+    // not a fixed number.
+    expect(firstProgress.total).toBeGreaterThan(0);
     const totalQuestions = firstProgress.total;
 
     const answerKeys: QuestionAnswerKey[] = [];

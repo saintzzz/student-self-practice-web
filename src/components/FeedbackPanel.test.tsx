@@ -41,4 +41,27 @@ describe('FeedbackPanel', () => {
     expect(screen.queryByTestId('answer-feedback')).not.toBeInTheDocument();
     expect(screen.getByText('cat')).toBeVisible();
   });
+
+  it('does not set the answer-feedback testid for counting-image questions (AC12/AC13 reuse the image-choice pattern)', () => {
+    render(
+      <FeedbackPanel kind="counting-image" isCorrect={true} correctWord="3 cats" explanation="Explanation." />,
+    );
+
+    expect(screen.queryByTestId('answer-feedback')).not.toBeInTheDocument();
+  });
+
+  it('sets the answer-feedback testid and reveals the correct word for extra-letter questions (AC14)', () => {
+    render(
+      <FeedbackPanel
+        kind="extra-letter"
+        isCorrect={false}
+        correctWord="bird"
+        explanation='Con chim tiếng Anh là "bird". Chữ cái thừa là "s".'
+      />,
+    );
+
+    const feedback = screen.getByTestId('answer-feedback');
+    expect(feedback).toHaveTextContent('bird');
+    expect(feedback).toHaveTextContent('Chữ cái thừa là "s"');
+  });
 });

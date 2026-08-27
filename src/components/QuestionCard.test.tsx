@@ -2,27 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QuestionCard from './QuestionCard';
-import type { ImageChoiceQuestion, ListeningFillBlankQuestion } from '../types';
+import { IMAGE_QUESTION, LISTENING_QUESTION, noopHandlers } from './questionCardFixtures';
 
-const IMAGE_QUESTION: ImageChoiceQuestion = {
-  id: 'q1',
-  topicId: 't1',
-  kind: 'image-choice',
-  emoji: '🐱',
-  options: ['cat', 'dog', 'fish', 'bird'],
-  correctIndex: 0,
-  explanation: 'Con mèo tiếng Anh là "cat".',
-};
-
-const LISTENING_QUESTION: ListeningFillBlankQuestion = {
-  id: 'q2',
-  topicId: 't1',
-  kind: 'listening-fill-blank',
-  word: 'rabbit',
-  explanation: 'Con thỏ tiếng Anh là "rabbit".',
-};
-
-describe('QuestionCard', () => {
+describe('QuestionCard (image-choice, listening-fill-blank, next button)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -32,38 +14,35 @@ describe('QuestionCard', () => {
       <QuestionCard
         question={IMAGE_QUESTION}
         questionNumber={1}
-        totalQuestions={6}
+        totalQuestions={8}
         currentAnswer={null}
-        onSubmitImageChoice={vi.fn()}
-        onSubmitListening={vi.fn()}
-        onNext={vi.fn()}
+        {...noopHandlers}
       />,
     );
 
     expect(screen.getByTestId('question-progress')).toHaveTextContent('1');
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('6');
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('8');
     expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'image-choice');
     expect(screen.getByTestId('next-button')).toBeDisabled();
   });
 
-  it('routes an image-choice selection to onSubmitImageChoice', async () => {
+  it('routes an image-choice selection to onSubmitOption', async () => {
     const user = userEvent.setup();
-    const onSubmitImageChoice = vi.fn();
+    const onSubmitOption = vi.fn();
     render(
       <QuestionCard
         question={IMAGE_QUESTION}
         questionNumber={1}
-        totalQuestions={6}
+        totalQuestions={8}
         currentAnswer={null}
-        onSubmitImageChoice={onSubmitImageChoice}
-        onSubmitListening={vi.fn()}
-        onNext={vi.fn()}
+        {...noopHandlers}
+        onSubmitOption={onSubmitOption}
       />,
     );
 
     await user.click(screen.getByTestId('option-0'));
 
-    expect(onSubmitImageChoice).toHaveBeenCalledWith(0);
+    expect(onSubmitOption).toHaveBeenCalledWith(0);
   });
 
   it('shows the listening-fill-blank kind attribute and its controls', () => {
@@ -71,11 +50,9 @@ describe('QuestionCard', () => {
       <QuestionCard
         question={LISTENING_QUESTION}
         questionNumber={4}
-        totalQuestions={6}
+        totalQuestions={8}
         currentAnswer={null}
-        onSubmitImageChoice={vi.fn()}
-        onSubmitListening={vi.fn()}
-        onNext={vi.fn()}
+        {...noopHandlers}
       />,
     );
 
@@ -95,11 +72,10 @@ describe('QuestionCard', () => {
       <QuestionCard
         question={LISTENING_QUESTION}
         questionNumber={4}
-        totalQuestions={6}
+        totalQuestions={8}
         currentAnswer={null}
-        onSubmitImageChoice={vi.fn()}
+        {...noopHandlers}
         onSubmitListening={onSubmitListening}
-        onNext={vi.fn()}
       />,
     );
 
@@ -114,11 +90,9 @@ describe('QuestionCard', () => {
       <QuestionCard
         question={LISTENING_QUESTION}
         questionNumber={4}
-        totalQuestions={6}
+        totalQuestions={8}
         currentAnswer={{ isCorrect: false, typedAnswer: 'dog' }}
-        onSubmitImageChoice={vi.fn()}
-        onSubmitListening={vi.fn()}
-        onNext={vi.fn()}
+        {...noopHandlers}
       />,
     );
 
@@ -133,10 +107,9 @@ describe('QuestionCard', () => {
       <QuestionCard
         question={IMAGE_QUESTION}
         questionNumber={1}
-        totalQuestions={6}
+        totalQuestions={8}
         currentAnswer={{ isCorrect: true, selectedIndex: 0 }}
-        onSubmitImageChoice={vi.fn()}
-        onSubmitListening={vi.fn()}
+        {...noopHandlers}
         onNext={onNext}
       />,
     );

@@ -1,9 +1,11 @@
 import type { AnswerRecord, Question, SessionResult } from '../types';
+import { formatCountLabel } from './generators/countingImage';
 
 export interface CurrentAnswer {
   isCorrect: boolean;
   selectedIndex?: number;
   typedAnswer?: string;
+  selectedLetterIndex?: number;
 }
 
 export interface PracticeSessionState {
@@ -35,9 +37,18 @@ export function normalizeAnswer(text: string): string {
   return text.trim().toLowerCase();
 }
 
-/** The single English word a question is testing, regardless of kind. */
+/** The correct answer text for a question, regardless of kind. */
 export function getCorrectWord(question: Question): string {
-  return question.kind === 'image-choice' ? question.options[question.correctIndex] : question.word;
+  switch (question.kind) {
+    case 'image-choice':
+      return question.options[question.correctIndex];
+    case 'listening-fill-blank':
+      return question.word;
+    case 'counting-image':
+      return formatCountLabel(question.prompt);
+    case 'extra-letter':
+      return question.correctWord;
+  }
 }
 
 function recordAnswer(
@@ -54,7 +65,8 @@ function recordAnswer(
   };
 }
 
-export function submitImageChoiceAnswer(
+/** Handles both image-choice and counting-image - both are "pick 1 of 4 options" shaped. */
+export function submitOptionAnswer(
   state: PracticeSessionState,
   selectedIndex: number,
 ): PracticeSessionState {
@@ -63,7 +75,7 @@ export function submitImageChoiceAnswer(
   }
 
   const currentQuestion = getCurrentQuestion(state);
-  if (!currentQuestion || currentQuestion.kind !== 'image-choice') {
+  if (!currentQuestion || (currentQuestion.kind !== 'image-choice' && currentQuestion.kind !== 'counting-image')) {
     return state;
   }
 
@@ -86,6 +98,23 @@ export function submitListeningAnswer(
 
   const isCorrect = normalizeAnswer(typedAnswer) === normalizeAnswer(currentQuestion.word);
   return recordAnswer(state, { isCorrect, typedAnswer }, currentQuestion);
+}
+
+export function submitExtraLetterAnswer(
+  state: PracticeSessionState,
+  selectedLetterIndex: number,
+): PracticeSessionState {
+  if (hasAnsweredCurrent(state)) {
+    return state;
+  }
+
+  const currentQuestion = getCurrentQuestion(state);
+  if (!currentQuestion || currentQuestion.kind !== 'extra-letter') {
+    return state;
+  }
+
+  const isCorrect = selectedLetterIndex === currentQuestion.extraIndex;
+  return recordAnswer(state, { isCorrect, selectedLetterIndex }, currentQuestion);
 }
 
 export function advanceToNextQuestion(state: PracticeSessionState): PracticeSessionState {

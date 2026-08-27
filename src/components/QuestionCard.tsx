@@ -3,6 +3,8 @@ import type { CurrentAnswer } from '../lib/practiceSession';
 import { getCorrectWord } from '../lib/practiceSession';
 import ImageChoiceQuestion from './ImageChoiceQuestion';
 import ListeningFillBlankQuestion from './ListeningFillBlankQuestion';
+import CountingImageQuestion from './CountingImageQuestion';
+import ExtraLetterQuestion from './ExtraLetterQuestion';
 import FeedbackPanel from './FeedbackPanel';
 
 interface QuestionCardProps {
@@ -10,9 +12,57 @@ interface QuestionCardProps {
   questionNumber: number;
   totalQuestions: number;
   currentAnswer: CurrentAnswer | null;
-  onSubmitImageChoice: (index: number) => void;
+  onSubmitOption: (index: number) => void;
   onSubmitListening: (typedAnswer: string) => void;
+  onSubmitExtraLetter: (letterIndex: number) => void;
   onNext: () => void;
+}
+
+function renderQuestionBody(
+  question: Question,
+  currentAnswer: CurrentAnswer | null,
+  onSubmitOption: (index: number) => void,
+  onSubmitListening: (typedAnswer: string) => void,
+  onSubmitExtraLetter: (letterIndex: number) => void,
+) {
+  switch (question.kind) {
+    case 'image-choice':
+      return (
+        <ImageChoiceQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
+    case 'counting-image':
+      return (
+        <CountingImageQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
+    case 'listening-fill-blank':
+      return (
+        <ListeningFillBlankQuestion
+          key={question.id}
+          question={question}
+          hasAnswered={currentAnswer !== null}
+          onSubmit={onSubmitListening}
+        />
+      );
+    case 'extra-letter':
+      return (
+        <ExtraLetterQuestion
+          key={question.id}
+          question={question}
+          selectedLetterIndex={currentAnswer?.selectedLetterIndex ?? null}
+          onSelectLetter={onSubmitExtraLetter}
+        />
+      );
+  }
 }
 
 export default function QuestionCard({
@@ -20,8 +70,9 @@ export default function QuestionCard({
   questionNumber,
   totalQuestions,
   currentAnswer,
-  onSubmitImageChoice,
+  onSubmitOption,
   onSubmitListening,
+  onSubmitExtraLetter,
   onNext,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
@@ -30,27 +81,14 @@ export default function QuestionCard({
     <div
       data-testid="question-card"
       data-question-kind={question.kind}
+      data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       className="mx-auto max-w-2xl px-4 py-10 text-center"
     >
       <p data-testid="question-progress" className="mb-6 text-lg font-bold text-sky-600">
         Câu {questionNumber}/{totalQuestions}
       </p>
 
-      {question.kind === 'image-choice' ? (
-        <ImageChoiceQuestion
-          key={question.id}
-          question={question}
-          selectedIndex={currentAnswer?.selectedIndex ?? null}
-          onSelectOption={onSubmitImageChoice}
-        />
-      ) : (
-        <ListeningFillBlankQuestion
-          key={question.id}
-          question={question}
-          hasAnswered={hasAnswered}
-          onSubmit={onSubmitListening}
-        />
-      )}
+      {renderQuestionBody(question, currentAnswer, onSubmitOption, onSubmitListening, onSubmitExtraLetter)}
 
       {currentAnswer && (
         <FeedbackPanel

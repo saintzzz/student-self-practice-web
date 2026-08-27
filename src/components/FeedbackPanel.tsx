@@ -7,10 +7,12 @@ interface FeedbackPanelProps {
   explanation: string;
 }
 
+const KINDS_WITH_ANSWER_FEEDBACK_TESTID: readonly QuestionKind[] = ['listening-fill-blank', 'extra-letter'];
+
 export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation }: FeedbackPanelProps) {
   return (
     <div
-      data-testid={kind === 'listening-fill-blank' ? 'answer-feedback' : undefined}
+      data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
       className={`mt-6 rounded-2xl border-4 p-5 text-left ${
         isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-rose-400 bg-rose-50'
       }`}

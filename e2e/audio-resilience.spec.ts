@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 import {
-  optionButtons,
   selectGrade,
   selectTopic,
   readQuestionProgress,
   currentQuestionKind,
+  discoverCurrentQuestionAnswer,
   playAudio,
   goToNextQuestion,
 } from './utils/practice-flow';
@@ -55,7 +55,11 @@ test.describe('Student self-practice: audio playback resilience', () => {
       } else {
         // Answer minimally to reach a listening-fill-blank question later
         // in the session; the outcome does not matter for this scenario.
-        await optionButtons(page).first().click();
+        // discoverCurrentQuestionAnswer branches correctly on whichever of
+        // the 4 v3 kinds is showing (image-choice/counting-image use
+        // option-{index}, extra-letter uses letter-tile-{index}), unlike a
+        // blind option click which would hang on a non-option kind.
+        await discoverCurrentQuestionAnswer(page);
         await goToNextQuestion(page);
         q++;
       }

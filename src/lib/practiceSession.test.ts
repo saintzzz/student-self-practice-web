@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { ImageChoiceQuestion, ListeningFillBlankQuestion, Question } from '../types';
+import type {
+  CountingImageQuestion,
+  ExtraLetterQuestion,
+  ImageChoiceQuestion,
+  ListeningFillBlankQuestion,
+  Question,
+} from '../types';
 import {
   advanceToNextQuestion,
   computeSessionResult,
@@ -9,8 +15,9 @@ import {
   getIncorrectAnswers,
   isSessionComplete,
   normalizeAnswer,
-  submitImageChoiceAnswer,
+  submitExtraLetterAnswer,
   submitListeningAnswer,
+  submitOptionAnswer,
 } from './practiceSession';
 
 const IMAGE_QUESTION: ImageChoiceQuestion = {
@@ -31,7 +38,33 @@ const LISTENING_QUESTION: ListeningFillBlankQuestion = {
   explanation: 'Con thỏ tiếng Anh là "rabbit".',
 };
 
-const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION];
+const COUNTING_QUESTION: CountingImageQuestion = {
+  id: 'q-count-1',
+  topicId: 't1',
+  kind: 'counting-image',
+  direction: 'image-to-count',
+  prompt: { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+  options: [
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 },
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 4 },
+  ],
+  correctIndex: 0,
+  explanation: 'Đếm số lượng trong hình rồi chọn "3 cats".',
+};
+
+const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
+  id: 'q-extra-1',
+  topicId: 't1',
+  kind: 'extra-letter',
+  correctWord: 'bird',
+  displayLetters: ['b', 'i', 'r', 's', 'd'],
+  extraIndex: 3,
+  explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',
+};
+
+const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION, COUNTING_QUESTION, EXTRA_LETTER_QUESTION];
 
 describe('createSession', () => {
   it('starts at question 0 with no answers', () => {
@@ -51,7 +84,7 @@ describe('getCurrentQuestion', () => {
   });
 
   it('returns null when past the last question', () => {
-    const session = { ...createSession(QUESTIONS), currentIndex: 5 };
+    const session = { ...createSession(QUESTIONS), currentIndex: 99 };
 
     expect(getCurrentQuestion(session)).toBeNull();
   });
@@ -72,12 +105,20 @@ describe('getCorrectWord', () => {
   it('returns the target word for listening-fill-blank questions', () => {
     expect(getCorrectWord(LISTENING_QUESTION)).toBe('rabbit');
   });
+
+  it('returns the formatted count label for counting-image questions', () => {
+    expect(getCorrectWord(COUNTING_QUESTION)).toBe('3 cats');
+  });
+
+  it('returns the correct word for extra-letter questions', () => {
+    expect(getCorrectWord(EXTRA_LETTER_QUESTION)).toBe('bird');
+  });
 });
 
 describe('advanceToNextQuestion', () => {
   it('moves to the next question and clears the current answer', () => {
     const session = createSession(QUESTIONS);
-    const answered = submitImageChoiceAnswer(session, 0);
+    const answered = submitOptionAnswer(session, 0);
     const advanced = advanceToNextQuestion(answered);
 
     expect(advanced.currentIndex).toBe(1);
@@ -101,30 +142,34 @@ describe('isSessionComplete', () => {
 
   it('is true once currentIndex passes the last question', () => {
     let session = createSession(QUESTIONS);
-    session = advanceToNextQuestion(submitImageChoiceAnswer(session, 0));
+    session = advanceToNextQuestion(submitOptionAnswer(session, 0));
     session = advanceToNextQuestion(submitListeningAnswer(session, 'rabbit'));
+    session = advanceToNextQuestion(submitOptionAnswer(session, 0));
+    session = advanceToNextQuestion(submitExtraLetterAnswer(session, 3));
 
     expect(isSessionComplete(session)).toBe(true);
   });
 });
 
 describe('computeSessionResult', () => {
-  it('counts correct answers out of total questions across both kinds', () => {
+  it('counts correct answers out of total questions across all 4 kinds', () => {
     let session = createSession(QUESTIONS);
-    session = advanceToNextQuestion(submitImageChoiceAnswer(session, 0)); // correct
-    session = submitListeningAnswer(session, 'dog'); // incorrect
+    session = advanceToNextQuestion(submitOptionAnswer(session, 0)); // image-choice correct
+    session = advanceToNextQuestion(submitListeningAnswer(session, 'dog')); // incorrect
+    session = advanceToNextQuestion(submitOptionAnswer(session, 0)); // counting-image correct
+    session = submitExtraLetterAnswer(session, 0); // extra-letter incorrect
 
     const result = computeSessionResult(session);
 
-    expect(result.correctCount).toBe(1);
-    expect(result.totalCount).toBe(2);
+    expect(result.correctCount).toBe(2);
+    expect(result.totalCount).toBe(4);
   });
 });
 
 describe('getIncorrectAnswers', () => {
   it('returns only the incorrectly answered questions', () => {
     let session = createSession(QUESTIONS);
-    session = advanceToNextQuestion(submitImageChoiceAnswer(session, 1)); // incorrect
+    session = advanceToNextQuestion(submitOptionAnswer(session, 1)); // incorrect
     session = submitListeningAnswer(session, 'rabbit'); // correct
 
     const result = computeSessionResult(session);
