@@ -2,34 +2,34 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ResultSummary from './ResultSummary';
-import type { Question, SessionResult } from '../types';
+import type { ImageChoiceQuestion, ListeningFillBlankQuestion, SessionResult } from '../types';
 
-const QUESTION_1: Question = {
+const IMAGE_QUESTION: ImageChoiceQuestion = {
   id: 'q1',
   topicId: 't1',
-  text: 'She ___ to school every day.',
-  options: ['walk', 'walks', 'walking', 'walked'],
-  correctIndex: 1,
-  explanation: 'Third-person singular subjects take an -s ending.',
+  kind: 'image-choice',
+  emoji: '🐱',
+  options: ['cat', 'dog', 'fish', 'bird'],
+  correctIndex: 0,
+  explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
-const QUESTION_2: Question = {
+const LISTENING_QUESTION: ListeningFillBlankQuestion = {
   id: 'q2',
   topicId: 't1',
-  text: 'They ___ football on weekends.',
-  options: ['plays', 'play', 'playing', 'played'],
-  correctIndex: 1,
-  explanation: 'Plural subjects use the base verb form.',
+  kind: 'listening-fill-blank',
+  word: 'rabbit',
+  explanation: 'Con thỏ tiếng Anh là "rabbit".',
 };
 
 describe('ResultSummary', () => {
-  it('renders a perfect score with no incorrect items (happy path)', () => {
+  it('renders a perfect score with no incorrect items (happy path, AC6)', () => {
     const result: SessionResult = {
       correctCount: 2,
       totalCount: 2,
       answers: [
-        { question: QUESTION_1, selectedIndex: 1, isCorrect: true },
-        { question: QUESTION_2, selectedIndex: 1, isCorrect: true },
+        { question: IMAGE_QUESTION, isCorrect: true },
+        { question: LISTENING_QUESTION, isCorrect: true },
       ],
     };
 
@@ -39,33 +39,35 @@ describe('ResultSummary', () => {
     expect(screen.queryByTestId('incorrect-item-0')).not.toBeInTheDocument();
   });
 
-  it('lists incorrectly answered questions with the correct answer and explanation (wrong answer path)', () => {
+  it('lists incorrectly answered questions with the correct word and explanation for both kinds (AC7)', () => {
     const result: SessionResult = {
-      correctCount: 1,
+      correctCount: 0,
       totalCount: 2,
       answers: [
-        { question: QUESTION_1, selectedIndex: 0, isCorrect: false },
-        { question: QUESTION_2, selectedIndex: 1, isCorrect: true },
+        { question: IMAGE_QUESTION, isCorrect: false },
+        { question: LISTENING_QUESTION, isCorrect: false },
       ],
     };
 
     render(<ResultSummary result={result} onPracticeAgain={vi.fn()} onChooseTopic={vi.fn()} />);
 
-    expect(screen.getByTestId('score-summary')).toHaveTextContent('1/2');
-    const incorrectItem = screen.getByTestId('incorrect-item-0');
-    expect(incorrectItem).toHaveTextContent(QUESTION_1.text);
-    expect(incorrectItem).toHaveTextContent('walks');
-    expect(incorrectItem).toHaveTextContent(QUESTION_1.explanation);
+    expect(screen.getByTestId('score-summary')).toHaveTextContent('0/2');
+    const imageItem = screen.getByTestId('incorrect-item-0');
+    expect(imageItem).toHaveTextContent('cat');
+    expect(imageItem).toHaveTextContent(IMAGE_QUESTION.explanation);
+    const listeningItem = screen.getByTestId('incorrect-item-1');
+    expect(listeningItem).toHaveTextContent('rabbit');
+    expect(listeningItem).toHaveTextContent(LISTENING_QUESTION.explanation);
   });
 
-  it('calls onPracticeAgain and onChooseTopic when their buttons are clicked', async () => {
+  it('calls onPracticeAgain and onChooseTopic when their buttons are clicked (AC8, AC9)', async () => {
     const user = userEvent.setup();
     const onPracticeAgain = vi.fn();
     const onChooseTopic = vi.fn();
     const result: SessionResult = {
       correctCount: 1,
       totalCount: 1,
-      answers: [{ question: QUESTION_1, selectedIndex: 1, isCorrect: true }],
+      answers: [{ question: IMAGE_QUESTION, isCorrect: true }],
     };
 
     render(

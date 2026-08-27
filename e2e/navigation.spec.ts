@@ -7,47 +7,58 @@ import {
   goBackToGrades,
   readTopicTestIds,
   readQuestionProgress,
+  currentQuestionKind,
+  discoverCurrentQuestionAnswer,
   goToNextQuestion,
-  answerAndDiscoverCorrectIndex,
   clickChooseAnotherTopic,
 } from './utils/practice-flow';
 
 /**
- * Covers plan.md AC2 (Back to grade selection) and AC8 (Choose another
- * topic returns to the topic list for the current grade).
+ * Covers plan.md AC1, AC2: grade to topic navigation and back.
  */
-test.describe('Student self-practice: navigation', () => {
-  test('Back on topic selection returns to grade selection', async ({ page }) => {
+test.describe('Student self-practice: grade to topic navigation', () => {
+  test('shows exactly 1 grade card, selecting it shows 2 topic cards, Back returns to grade selection', async ({
+    page,
+  }) => {
     await page.goto('/');
+
+    await expect(gradeCards(page), 'exactly 1 grade card ("Lop 2") per plan.md AC1').toHaveCount(1);
+
     await selectGrade(page, 0);
 
-    const topicCountBefore = await topicCards(page).count();
-    expect(topicCountBefore).toBeGreaterThanOrEqual(2);
+    await expect(topicCards(page), '2 topic cards ("Con vat", "Mau sac") per plan.md AC2').toHaveCount(2);
     await expect(gradeCards(page)).toHaveCount(0);
 
     await goBackToGrades(page);
 
-    const gradeCountAfter = await gradeCards(page).count();
-    expect(gradeCountAfter).toBeGreaterThanOrEqual(2);
+    await expect(gradeCards(page)).toHaveCount(1);
     await expect(topicCards(page)).toHaveCount(0);
   });
+});
 
-  test('Choose another topic from the result summary returns to the same grade topic list', async ({
-    page,
-  }) => {
+/**
+ * Covers plan.md AC9: "Choose another topic" from the result summary returns
+ * to the topic list, not the grade selection screen.
+ */
+test.describe('Student self-practice: choose another topic', () => {
+  test('returns to the same topic list after finishing a session', async ({ page }) => {
     await page.goto('/');
     await selectGrade(page, 0);
 
     const topicIdsBeforeSession = await readTopicTestIds(page);
-    expect(topicIdsBeforeSession.length).toBeGreaterThanOrEqual(2);
+    expect(topicIdsBeforeSession.length).toBe(2);
 
     await selectTopic(page, 0);
 
     const { total: totalQuestions } = await readQuestionProgress(page);
+
     for (let q = 1; q <= totalQuestions; q++) {
-      // Answer arbitrarily; the outcome does not matter for this navigation
-      // scenario, only that a session can be completed.
-      await answerAndDiscoverCorrectIndex(page, 0);
+      // Discover-and-answer with a guaranteed-safe first attempt; the actual
+      // outcome does not matter for this navigation scenario, only that the
+      // session can be completed by branching correctly on question kind.
+      const kind = await currentQuestionKind(page);
+      expect(['image-choice', 'listening-fill-blank']).toContain(kind);
+      await discoverCurrentQuestionAnswer(page);
       await goToNextQuestion(page);
     }
 
@@ -55,8 +66,6 @@ test.describe('Student self-practice: navigation', () => {
 
     await clickChooseAnotherTopic(page);
 
-    // Same topic list as before (AC8), not a different grade or the grade
-    // selection screen.
     await expect(gradeCards(page)).toHaveCount(0);
     const topicIdsAfterChoose = await readTopicTestIds(page);
     expect(topicIdsAfterChoose).toEqual(topicIdsBeforeSession);

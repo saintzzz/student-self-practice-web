@@ -3,19 +3,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import GradeSelect from './GradeSelect';
 
-const GRADES = [
-  { id: 'grade-6', name: 'Grade 6' },
-  { id: 'grade-7', name: 'Grade 7' },
-];
+const GRADES = [{ id: 'grade-2', name: 'Lớp 2' }];
 
 describe('GradeSelect', () => {
-  it('renders a card for every grade', () => {
+  it('renders exactly one grade card (AC1)', () => {
     render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} />);
 
-    expect(screen.getByTestId('grade-card-grade-6')).toBeVisible();
-    expect(screen.getByTestId('grade-card-grade-7')).toBeVisible();
-    expect(screen.getByText('Grade 6')).toBeVisible();
-    expect(screen.getByText('Grade 7')).toBeVisible();
+    expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
+    expect(screen.getAllByTestId(/^grade-card-/)).toHaveLength(1);
+    expect(screen.getByText('Lớp 2')).toBeVisible();
   });
 
   it('calls onSelectGrade with the clicked grade id', async () => {
@@ -23,8 +19,8 @@ describe('GradeSelect', () => {
     const onSelectGrade = vi.fn();
     render(<GradeSelect grades={GRADES} onSelectGrade={onSelectGrade} />);
 
-    await user.click(screen.getByTestId('grade-card-grade-7'));
+    await user.click(screen.getByTestId('grade-card-grade-2'));
 
-    expect(onSelectGrade).toHaveBeenCalledWith('grade-7');
+    expect(onSelectGrade).toHaveBeenCalledWith('grade-2');
   });
 });

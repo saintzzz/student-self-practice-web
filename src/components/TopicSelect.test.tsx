@@ -3,21 +3,20 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import TopicSelect from './TopicSelect';
 
-const GRADE = { id: 'grade-6', name: 'Grade 6' };
+const GRADE = { id: 'grade-2', name: 'Lớp 2' };
 const TOPICS = [
-  { id: 'g6-present-simple', gradeId: 'grade-6', name: 'Present Simple Tense' },
-  { id: 'g6-family-vocab', gradeId: 'grade-6', name: 'Vocabulary: Family and Friends' },
+  { id: 'g2-animals', gradeId: 'grade-2', name: 'Con vật' },
+  { id: 'g2-colors', gradeId: 'grade-2', name: 'Màu sắc' },
 ];
 
 describe('TopicSelect', () => {
-  it('renders a card for every topic in the selected grade', () => {
-    render(
-      <TopicSelect grade={GRADE} topics={TOPICS} onSelectTopic={vi.fn()} onBack={vi.fn()} />,
-    );
+  it('renders a card for every topic in the selected grade (AC2)', () => {
+    render(<TopicSelect grade={GRADE} topics={TOPICS} onSelectTopic={vi.fn()} onBack={vi.fn()} />);
 
-    expect(screen.getByTestId('topic-card-g6-present-simple')).toBeVisible();
-    expect(screen.getByTestId('topic-card-g6-family-vocab')).toBeVisible();
-    expect(screen.getByText('Grade 6 topics')).toBeVisible();
+    expect(screen.getByTestId('topic-card-g2-animals')).toBeVisible();
+    expect(screen.getByTestId('topic-card-g2-colors')).toBeVisible();
+    expect(screen.getByText('Con vật')).toBeVisible();
+    expect(screen.getByText('Màu sắc')).toBeVisible();
   });
 
   it('calls onSelectTopic with the clicked topic id', async () => {
@@ -27,12 +26,12 @@ describe('TopicSelect', () => {
       <TopicSelect grade={GRADE} topics={TOPICS} onSelectTopic={onSelectTopic} onBack={vi.fn()} />,
     );
 
-    await user.click(screen.getByTestId('topic-card-g6-family-vocab'));
+    await user.click(screen.getByTestId('topic-card-g2-colors'));
 
-    expect(onSelectTopic).toHaveBeenCalledWith('g6-family-vocab');
+    expect(onSelectTopic).toHaveBeenCalledWith('g2-colors');
   });
 
-  it('calls onBack when the back button is clicked', async () => {
+  it('calls onBack when the back button is clicked (AC2)', async () => {
     const user = userEvent.setup();
     const onBack = vi.fn();
     render(<TopicSelect grade={GRADE} topics={TOPICS} onSelectTopic={vi.fn()} onBack={onBack} />);

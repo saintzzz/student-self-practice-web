@@ -10,7 +10,8 @@ import {
   createSession,
   getCurrentQuestion,
   isSessionComplete,
-  submitAnswer,
+  submitImageChoiceAnswer,
+  submitListeningAnswer,
   type PracticeSessionState,
 } from './lib/practiceSession';
 
@@ -38,9 +39,14 @@ export default function App() {
     setScreen('practice');
   }
 
-  function handleSelectOption(index: number): void {
+  function handleSubmitImageChoice(index: number): void {
     if (!session) return;
-    setSession(submitAnswer(session, index));
+    setSession(submitImageChoiceAnswer(session, index));
+  }
+
+  function handleSubmitListening(typedAnswer: string): void {
+    if (!session) return;
+    setSession(submitListeningAnswer(session, typedAnswer));
   }
 
   function handleNext(): void {
@@ -88,8 +94,9 @@ export default function App() {
           question={currentQuestion}
           questionNumber={session.currentIndex + 1}
           totalQuestions={session.questions.length}
-          selectedIndex={session.selectedIndex}
-          onSelectOption={handleSelectOption}
+          currentAnswer={session.currentAnswer}
+          onSubmitImageChoice={handleSubmitImageChoice}
+          onSubmitListening={handleSubmitListening}
           onNext={handleNext}
         />
       );

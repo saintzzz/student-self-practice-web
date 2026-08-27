@@ -1,88 +1,128 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QuestionCard from './QuestionCard';
-import type { Question } from '../types';
+import type { ImageChoiceQuestion, ListeningFillBlankQuestion } from '../types';
 
-const QUESTION: Question = {
+const IMAGE_QUESTION: ImageChoiceQuestion = {
   id: 'q1',
   topicId: 't1',
-  text: 'She ___ to school every day.',
-  options: ['walk', 'walks', 'walking', 'walked'],
-  correctIndex: 1,
-  explanation: 'Third-person singular subjects take an -s ending.',
+  kind: 'image-choice',
+  emoji: '🐱',
+  options: ['cat', 'dog', 'fish', 'bird'],
+  correctIndex: 0,
+  explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
+const LISTENING_QUESTION: ListeningFillBlankQuestion = {
+  id: 'q2',
+  topicId: 't1',
+  kind: 'listening-fill-blank',
+  word: 'rabbit',
+  explanation: 'Con thỏ tiếng Anh là "rabbit".',
 };
 
 describe('QuestionCard', () => {
-  it('shows the progress indicator and question text', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('shows the progress indicator and the image-choice kind attribute', () => {
     render(
       <QuestionCard
-        question={QUESTION}
+        question={IMAGE_QUESTION}
         questionNumber={1}
-        totalQuestions={4}
-        selectedIndex={null}
-        onSelectOption={vi.fn()}
+        totalQuestions={6}
+        currentAnswer={null}
+        onSubmitImageChoice={vi.fn()}
+        onSubmitListening={vi.fn()}
         onNext={vi.fn()}
       />,
     );
 
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('Question 1 of 4');
-    expect(screen.getByText(QUESTION.text)).toBeVisible();
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('1');
+    expect(screen.getByTestId('question-progress')).toHaveTextContent('6');
+    expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'image-choice');
     expect(screen.getByTestId('next-button')).toBeDisabled();
   });
 
-  it('calls onSelectOption when an option is clicked (happy path, correct answer)', async () => {
+  it('routes an image-choice selection to onSubmitImageChoice', async () => {
     const user = userEvent.setup();
-    const onSelectOption = vi.fn();
+    const onSubmitImageChoice = vi.fn();
     render(
       <QuestionCard
-        question={QUESTION}
+        question={IMAGE_QUESTION}
         questionNumber={1}
-        totalQuestions={4}
-        selectedIndex={null}
-        onSelectOption={onSelectOption}
+        totalQuestions={6}
+        currentAnswer={null}
+        onSubmitImageChoice={onSubmitImageChoice}
+        onSubmitListening={vi.fn()}
         onNext={vi.fn()}
       />,
     );
 
-    await user.click(screen.getByTestId('option-1'));
+    await user.click(screen.getByTestId('option-0'));
 
-    expect(onSelectOption).toHaveBeenCalledWith(1);
+    expect(onSubmitImageChoice).toHaveBeenCalledWith(0);
   });
 
-  it('shows correct feedback and enables Next when the correct option is selected', () => {
+  it('shows the listening-fill-blank kind attribute and its controls', () => {
     render(
       <QuestionCard
-        question={QUESTION}
-        questionNumber={1}
-        totalQuestions={4}
-        selectedIndex={1}
-        onSelectOption={vi.fn()}
+        question={LISTENING_QUESTION}
+        questionNumber={4}
+        totalQuestions={6}
+        currentAnswer={null}
+        onSubmitImageChoice={vi.fn()}
+        onSubmitListening={vi.fn()}
         onNext={vi.fn()}
       />,
     );
 
-    expect(screen.getByText('Correct.')).toBeVisible();
-    expect(screen.getByTestId('option-1')).toBeDisabled();
-    expect(screen.getByTestId('next-button')).toBeEnabled();
+    expect(screen.getByTestId('question-card')).toHaveAttribute(
+      'data-question-kind',
+      'listening-fill-blank',
+    );
+    expect(screen.getByTestId('play-audio-button')).toBeVisible();
+    expect(screen.getByTestId('answer-input')).toBeVisible();
+    expect(screen.getByTestId('submit-answer-button')).toBeVisible();
   });
 
-  it('shows incorrect feedback and reveals the correct answer when a wrong option is selected', () => {
+  it('routes a listening submission to onSubmitListening', async () => {
+    const onSubmitListening = vi.fn();
+    const user = userEvent.setup();
     render(
       <QuestionCard
-        question={QUESTION}
-        questionNumber={1}
-        totalQuestions={4}
-        selectedIndex={0}
-        onSelectOption={vi.fn()}
+        question={LISTENING_QUESTION}
+        questionNumber={4}
+        totalQuestions={6}
+        currentAnswer={null}
+        onSubmitImageChoice={vi.fn()}
+        onSubmitListening={onSubmitListening}
         onNext={vi.fn()}
       />,
     );
 
-    expect(screen.getByText('Incorrect.')).toBeVisible();
-    expect(screen.getByText(QUESTION.explanation)).toBeVisible();
-    expect(screen.getByTestId('option-0')).toBeDisabled();
-    expect(screen.getByTestId('option-1')).toBeDisabled();
+    await user.type(screen.getByTestId('answer-input'), 'rabbit');
+    await user.click(screen.getByTestId('submit-answer-button'));
+
+    expect(onSubmitListening).toHaveBeenCalledWith('rabbit');
+  });
+
+  it('shows feedback with the answer-feedback testid and enables Next once a listening answer is submitted', () => {
+    render(
+      <QuestionCard
+        question={LISTENING_QUESTION}
+        questionNumber={4}
+        totalQuestions={6}
+        currentAnswer={{ isCorrect: false, typedAnswer: 'dog' }}
+        onSubmitImageChoice={vi.fn()}
+        onSubmitListening={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('answer-feedback')).toHaveTextContent('rabbit');
     expect(screen.getByTestId('next-button')).toBeEnabled();
   });
 
@@ -91,11 +131,12 @@ describe('QuestionCard', () => {
     const onNext = vi.fn();
     render(
       <QuestionCard
-        question={QUESTION}
+        question={IMAGE_QUESTION}
         questionNumber={1}
-        totalQuestions={4}
-        selectedIndex={1}
-        onSelectOption={vi.fn()}
+        totalQuestions={6}
+        currentAnswer={{ isCorrect: true, selectedIndex: 0 }}
+        onSubmitImageChoice={vi.fn()}
+        onSubmitListening={vi.fn()}
         onNext={onNext}
       />,
     );
