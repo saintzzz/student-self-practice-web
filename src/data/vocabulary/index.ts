@@ -13,15 +13,27 @@ import { TRANSPORTATION_TOPIC, TRANSPORTATION_WORDS } from './transportation';
 import { SHAPES_TOPIC, SHAPES_WORDS } from './shapes';
 import { FOOD_TOPIC, FOOD_WORDS } from './food';
 import { FEELINGS_TOPIC, FEELINGS_WORDS } from './feelings';
+import { ACTIONS_TOPIC, ACTIONS_WORDS } from './actions';
+import { NATURE_TOPIC, NATURE_WORDS } from './nature';
+import { OCCUPATIONS_TOPIC, OCCUPATIONS_WORDS } from './occupations';
+import { SPORTS_TOPIC, SPORTS_WORDS } from './sports';
+import { INSTRUMENTS_TOPIC, INSTRUMENTS_WORDS } from './instruments';
+import { INSECTS_TOPIC, INSECTS_WORDS } from './insects';
+import { SEA_CREATURES_TOPIC, SEA_CREATURES_WORDS } from './seaCreatures';
+import { VEGETABLES_TOPIC, VEGETABLES_WORDS } from './vegetables';
+import { FURNITURE_TOPIC, FURNITURE_WORDS } from './furniture';
 
 /** Single grade for this MVP, per mvp-decisions.md (Grade 2 only). */
 export const GRADES: readonly Grade[] = [{ id: 'grade-2', name: 'Lớp 2' }];
 
 /**
- * 14 curated topics (AC11 requires >= 10). Each topic's words all have a
- * clear single-emoji representation; some plan.md candidate words were
- * dropped where no unambiguous single emoji exists (e.g. "rooms in a
- * house" has no clean per-room emoji).
+ * 23 curated topics (AC11 requires >= 10; expanded from 14 per the
+ * vocabulary-bank-expansion follow-up request - see
+ * plans/reports/engineer-260828-student-self-practice-vocab-expansion.md).
+ * Each topic's words all have a clear single-emoji representation; candidate
+ * words without one (e.g. "jump", a per-room emoji, two-digit numbers,
+ * additional family relations, additional shapes) were deliberately dropped
+ * rather than padded in - see the per-topic file comments for specifics.
  */
 export const TOPICS: readonly Topic[] = [
   ANIMALS_TOPIC,
@@ -38,6 +50,15 @@ export const TOPICS: readonly Topic[] = [
   SHAPES_TOPIC,
   FOOD_TOPIC,
   FEELINGS_TOPIC,
+  ACTIONS_TOPIC,
+  NATURE_TOPIC,
+  OCCUPATIONS_TOPIC,
+  SPORTS_TOPIC,
+  INSTRUMENTS_TOPIC,
+  INSECTS_TOPIC,
+  SEA_CREATURES_TOPIC,
+  VEGETABLES_TOPIC,
+  FURNITURE_TOPIC,
 ];
 
 const WORDS_BY_TOPIC: Record<string, VocabWord[]> = {
@@ -55,6 +76,15 @@ const WORDS_BY_TOPIC: Record<string, VocabWord[]> = {
   [SHAPES_TOPIC.id]: SHAPES_WORDS,
   [FOOD_TOPIC.id]: FOOD_WORDS,
   [FEELINGS_TOPIC.id]: FEELINGS_WORDS,
+  [ACTIONS_TOPIC.id]: ACTIONS_WORDS,
+  [NATURE_TOPIC.id]: NATURE_WORDS,
+  [OCCUPATIONS_TOPIC.id]: OCCUPATIONS_WORDS,
+  [SPORTS_TOPIC.id]: SPORTS_WORDS,
+  [INSTRUMENTS_TOPIC.id]: INSTRUMENTS_WORDS,
+  [INSECTS_TOPIC.id]: INSECTS_WORDS,
+  [SEA_CREATURES_TOPIC.id]: SEA_CREATURES_WORDS,
+  [VEGETABLES_TOPIC.id]: VEGETABLES_WORDS,
+  [FURNITURE_TOPIC.id]: FURNITURE_WORDS,
 };
 
 export const ALL_WORDS: readonly VocabWord[] = Object.values(WORDS_BY_TOPIC).flat();

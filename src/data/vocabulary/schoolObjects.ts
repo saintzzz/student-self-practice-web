@@ -19,4 +19,11 @@ export const SCHOOL_OBJECTS_WORDS: VocabWord[] = [
   { id: 'crayon', topicId: t, word: 'crayon', plural: 'crayons', emoji: '🖍️', countable: true, explanation: 'Bút sáp màu tiếng Anh là "crayon".' },
   { id: 'notebook', topicId: t, word: 'notebook', plural: 'notebooks', emoji: '📓', countable: true, explanation: 'Quyển vở tiếng Anh là "notebook".' },
   { id: 'pen', topicId: t, word: 'pen', plural: 'pens', emoji: '🖊️', countable: true, explanation: 'Cái bút mực tiếng Anh là "pen".' },
+  { id: 'globe', topicId: t, word: 'globe', plural: 'globes', emoji: '🌍', countable: true, explanation: 'Quả địa cầu tiếng Anh là "globe".' },
+  { id: 'paintbrush', topicId: t, word: 'paintbrush', plural: 'paintbrushes', emoji: '🖌️', countable: true, explanation: 'Cọ vẽ tiếng Anh là "paintbrush".' },
+  { id: 'calendar', topicId: t, word: 'calendar', plural: 'calendars', emoji: '📅', countable: true, explanation: 'Lịch tiếng Anh là "calendar".' },
+  { id: 'pushpin', topicId: t, word: 'pushpin', plural: 'pushpins', emoji: '📌', countable: true, explanation: 'Đinh ghim tiếng Anh là "pushpin".' },
+  { id: 'paperclip', topicId: t, word: 'paperclip', plural: 'paperclips', emoji: '📎', countable: true, explanation: 'Kẹp giấy tiếng Anh là "paperclip".' },
+  { id: 'folder', topicId: t, word: 'folder', plural: 'folders', emoji: '📁', countable: true, explanation: 'Cặp đựng tài liệu tiếng Anh là "folder".' },
+  { id: 'abacus', topicId: t, word: 'abacus', plural: 'abacuses', emoji: '🧮', countable: true, explanation: 'Bàn tính tiếng Anh là "abacus".' },
 ];

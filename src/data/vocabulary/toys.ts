@@ -11,4 +11,7 @@ export const TOYS_WORDS: VocabWord[] = [
   { id: 'balloon', topicId: t, word: 'balloon', plural: 'balloons', emoji: '🎈', countable: true, explanation: 'Bóng bay tiếng Anh là "balloon".' },
   { id: 'robot', topicId: t, word: 'robot', plural: 'robots', emoji: '🤖', countable: true, explanation: 'Người máy tiếng Anh là "robot".' },
   { id: 'drum', topicId: t, word: 'drum', plural: 'drums', emoji: '🥁', countable: true, explanation: 'Cái trống tiếng Anh là "drum".' },
+  { id: 'puzzle', topicId: t, word: 'puzzle', plural: 'puzzles', emoji: '🧩', countable: true, explanation: 'Trò chơi xếp hình tiếng Anh là "puzzle".' },
+  { id: 'dice', topicId: t, word: 'dice', plural: 'dice', emoji: '🎲', countable: true, explanation: 'Xúc xắc tiếng Anh là "dice".' },
+  { id: 'block', topicId: t, word: 'block', plural: 'blocks', emoji: '🧱', countable: true, explanation: 'Khối xếp hình tiếng Anh là "block".' },
 ];

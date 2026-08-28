@@ -13,4 +13,13 @@ export const CLOTHES_WORDS: VocabWord[] = [
   { id: 'hat', topicId: t, word: 'hat', plural: 'hats', emoji: '🎩', countable: true, explanation: 'Mũ tiếng Anh là "hat".' },
   { id: 'sock', topicId: t, word: 'sock', plural: 'socks', emoji: '🧦', countable: true, explanation: 'Tất tiếng Anh là "sock".' },
   { id: 'dress', topicId: t, word: 'dress', plural: 'dresses', emoji: '👗', countable: true, explanation: 'Váy tiếng Anh là "dress".' },
+  { id: 'jacket', topicId: t, word: 'jacket', plural: 'jackets', emoji: '🧥', countable: true, explanation: 'Áo khoác tiếng Anh là "jacket".' },
+  { id: 'scarf', topicId: t, word: 'scarf', plural: 'scarves', emoji: '🧣', countable: true, explanation: 'Khăn quàng cổ tiếng Anh là "scarf".' },
+  { id: 'glove', topicId: t, word: 'glove', plural: 'gloves', emoji: '🧤', countable: true, explanation: 'Găng tay tiếng Anh là "glove".' },
+  { id: 'tie', topicId: t, word: 'tie', plural: 'ties', emoji: '👔', countable: true, explanation: 'Cà vạt tiếng Anh là "tie".' },
+  // "glasses" and "sunglasses" are grammatically always-plural, same reasoning as "scissors"/"pants".
+  { id: 'glasses', topicId: t, word: 'glasses', emoji: '👓', countable: false, explanation: 'Kính mắt tiếng Anh là "glasses".' },
+  { id: 'sunglasses', topicId: t, word: 'sunglasses', emoji: '🕶️', countable: false, explanation: 'Kính râm tiếng Anh là "sunglasses".' },
+  { id: 'crown', topicId: t, word: 'crown', plural: 'crowns', emoji: '👑', countable: true, explanation: 'Vương miện tiếng Anh là "crown".' },
+  { id: 'ring', topicId: t, word: 'ring', plural: 'rings', emoji: '💍', countable: true, explanation: 'Chiếc nhẫn tiếng Anh là "ring".' },
 ];
