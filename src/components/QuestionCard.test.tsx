@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import QuestionCard from './QuestionCard';
-import { IMAGE_QUESTION, LISTENING_QUESTION, noopHandlers } from './questionCardFixtures';
+import { IMAGE_QUESTION, LISTENING_QUESTION, LISTENING_SENTENCE_QUESTION, noopHandlers } from './questionCardFixtures';
 
 describe('QuestionCard (image-choice, listening-fill-blank, next button)', () => {
   afterEach(() => {
@@ -97,6 +97,62 @@ describe('QuestionCard (image-choice, listening-fill-blank, next button)', () =>
     );
 
     expect(screen.getByTestId('answer-feedback')).toHaveTextContent('rabbit');
+    expect(screen.getByTestId('next-button')).toBeEnabled();
+  });
+
+  it('shows the listening-sentence-fill-blank kind attribute, the blanked sentence and its controls', () => {
+    render(
+      <QuestionCard
+        question={LISTENING_SENTENCE_QUESTION}
+        questionNumber={2}
+        totalQuestions={10}
+        currentAnswer={null}
+        {...noopHandlers}
+      />,
+    );
+
+    expect(screen.getByTestId('question-card')).toHaveAttribute(
+      'data-question-kind',
+      'listening-sentence-fill-blank',
+    );
+    expect(screen.getByText('I have a ___.')).toBeVisible();
+    expect(screen.getByTestId('play-audio-button')).toBeVisible();
+    expect(screen.getByTestId('answer-input')).toBeVisible();
+    expect(screen.getByTestId('submit-answer-button')).toBeVisible();
+  });
+
+  it('routes a listening-sentence-fill-blank submission to onSubmitListening', async () => {
+    const onSubmitListening = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <QuestionCard
+        question={LISTENING_SENTENCE_QUESTION}
+        questionNumber={2}
+        totalQuestions={10}
+        currentAnswer={null}
+        {...noopHandlers}
+        onSubmitListening={onSubmitListening}
+      />,
+    );
+
+    await user.type(screen.getByTestId('answer-input'), 'cat');
+    await user.click(screen.getByTestId('submit-answer-button'));
+
+    expect(onSubmitListening).toHaveBeenCalledWith('cat');
+  });
+
+  it('shows answer-feedback for listening-sentence-fill-blank once answered', () => {
+    render(
+      <QuestionCard
+        question={LISTENING_SENTENCE_QUESTION}
+        questionNumber={2}
+        totalQuestions={10}
+        currentAnswer={{ isCorrect: true, typedAnswer: 'cat' }}
+        {...noopHandlers}
+      />,
+    );
+
+    expect(screen.getByTestId('answer-feedback')).toHaveTextContent('cat');
     expect(screen.getByTestId('next-button')).toBeEnabled();
   });
 

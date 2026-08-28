@@ -25,6 +25,20 @@ export function seededShuffleIndices(n: number, seed: string): number[] {
 }
 
 /**
+ * Picks `n` items out of `items` via a seeded shuffle - deterministic per
+ * seed, no repeats unless `n` exceeds `items.length` (in which case every
+ * item is returned once). Used to sample a Round's ~10 questions out of a
+ * much larger generated pool (see src/lib/rounds/*).
+ */
+export function seededPickN<T>(items: readonly T[], n: number, seed: string): T[] {
+  if (items.length <= n) {
+    return [...items];
+  }
+  const order = seededShuffleIndices(items.length, seed);
+  return order.slice(0, n).map((i) => items[i]!);
+}
+
+/**
  * Picks `count` distinct items from `items` (excluding any whose key is in
  * `excludeKeys`), deterministically based on `seed`. Falls back to filling
  * from any remaining unused candidates if hash collisions under-fill.

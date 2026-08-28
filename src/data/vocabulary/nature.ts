@@ -13,4 +13,7 @@ export const NATURE_WORDS: VocabWord[] = [
   // "ocean" and "fire" are not countable in everyday usage for a 7-year-old learner.
   { id: 'ocean', topicId: t, word: 'ocean', emoji: '🌊', countable: false, explanation: 'Đại dương tiếng Anh là "ocean".' },
   { id: 'fire', topicId: t, word: 'fire', emoji: '🔥', countable: false, explanation: 'Lửa tiếng Anh là "fire".' },
+  // v5 vocabulary additions (plan.md "v5 Research-Grounded Content").
+  { id: 'shell', topicId: t, word: 'shell', plural: 'shells', emoji: '🐚', countable: true, explanation: 'Vỏ sò tiếng Anh là "shell".' },
+  { id: 'water', topicId: t, word: 'water', emoji: '💧', countable: false, explanation: 'Nước tiếng Anh là "water".' },
 ];

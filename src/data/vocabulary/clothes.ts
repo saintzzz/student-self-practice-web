@@ -22,4 +22,8 @@ export const CLOTHES_WORDS: VocabWord[] = [
   { id: 'sunglasses', topicId: t, word: 'sunglasses', emoji: '🕶️', countable: false, explanation: 'Kính râm tiếng Anh là "sunglasses".' },
   { id: 'crown', topicId: t, word: 'crown', plural: 'crowns', emoji: '👑', countable: true, explanation: 'Vương miện tiếng Anh là "crown".' },
   { id: 'ring', topicId: t, word: 'ring', plural: 'rings', emoji: '💍', countable: true, explanation: 'Chiếc nhẫn tiếng Anh là "ring".' },
+  // v5 vocabulary addition (plan.md "v5 Research-Grounded Content"). "dress",
+  // "socks" (same word/emoji as existing "sock"), "glasses" and "jacket" were
+  // also on the approved list but already exist above and were skipped.
+  { id: 'handbag', topicId: t, word: 'handbag', plural: 'handbags', emoji: '👜', countable: true, explanation: 'Túi xách tiếng Anh là "handbag".' },
 ];

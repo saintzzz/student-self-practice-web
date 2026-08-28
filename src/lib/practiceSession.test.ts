@@ -4,6 +4,7 @@ import type {
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
+  ListeningSentenceFillBlankQuestion,
   Question,
 } from '../types';
 import {
@@ -64,6 +65,16 @@ const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',
 };
 
+const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
+  id: 'q-lsfb-1',
+  topicId: 't1',
+  kind: 'listening-sentence-fill-blank',
+  word: 'cat',
+  sentence: 'I have a cat.',
+  displaySentence: 'I have a ___.',
+  explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
 const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION, COUNTING_QUESTION, EXTRA_LETTER_QUESTION];
 
 describe('createSession', () => {
@@ -112,6 +123,10 @@ describe('getCorrectWord', () => {
 
   it('returns the correct word for extra-letter questions', () => {
     expect(getCorrectWord(EXTRA_LETTER_QUESTION)).toBe('bird');
+  });
+
+  it('returns the target word for listening-sentence-fill-blank questions (Round 2)', () => {
+    expect(getCorrectWord(LISTENING_SENTENCE_QUESTION)).toBe('cat');
   });
 });
 

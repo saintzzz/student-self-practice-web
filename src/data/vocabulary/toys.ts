@@ -14,4 +14,8 @@ export const TOYS_WORDS: VocabWord[] = [
   { id: 'puzzle', topicId: t, word: 'puzzle', plural: 'puzzles', emoji: '🧩', countable: true, explanation: 'Trò chơi xếp hình tiếng Anh là "puzzle".' },
   { id: 'dice', topicId: t, word: 'dice', plural: 'dice', emoji: '🎲', countable: true, explanation: 'Xúc xắc tiếng Anh là "dice".' },
   { id: 'block', topicId: t, word: 'block', plural: 'blocks', emoji: '🧱', countable: true, explanation: 'Khối xếp hình tiếng Anh là "block".' },
+  // v5 vocabulary addition (plan.md "v5 Research-Grounded Content"). "kite",
+  // "balloon" and "robot" were also on the approved list but already exist
+  // above and were skipped.
+  { id: 'teddy-bear', topicId: t, word: 'teddy bear', plural: 'teddy bears', emoji: '🧸', countable: true, explanation: 'Gấu bông tiếng Anh là "teddy bear".' },
 ];

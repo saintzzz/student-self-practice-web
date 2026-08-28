@@ -50,6 +50,21 @@ describe('FeedbackPanel', () => {
     expect(screen.queryByTestId('answer-feedback')).not.toBeInTheDocument();
   });
 
+  it('sets the answer-feedback testid for listening-sentence-fill-blank questions (Round 2, AC18)', () => {
+    render(
+      <FeedbackPanel
+        kind="listening-sentence-fill-blank"
+        isCorrect={false}
+        correctWord="cat"
+        explanation='Con mèo tiếng Anh là "cat".'
+      />,
+    );
+
+    const feedback = screen.getByTestId('answer-feedback');
+    expect(feedback).toHaveTextContent('cat');
+    expect(feedback).toHaveTextContent('Chưa đúng rồi');
+  });
+
   it('sets the answer-feedback testid and reveals the correct word for extra-letter questions (AC14)', () => {
     render(
       <FeedbackPanel

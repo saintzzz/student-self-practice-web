@@ -26,4 +26,8 @@ export const SCHOOL_OBJECTS_WORDS: VocabWord[] = [
   { id: 'paperclip', topicId: t, word: 'paperclip', plural: 'paperclips', emoji: '📎', countable: true, explanation: 'Kẹp giấy tiếng Anh là "paperclip".' },
   { id: 'folder', topicId: t, word: 'folder', plural: 'folders', emoji: '📁', countable: true, explanation: 'Cặp đựng tài liệu tiếng Anh là "folder".' },
   { id: 'abacus', topicId: t, word: 'abacus', plural: 'abacuses', emoji: '🧮', countable: true, explanation: 'Bàn tính tiếng Anh là "abacus".' },
+  // v5 vocabulary addition (plan.md "v5 Research-Grounded Content"). "bag" and
+  // "ruler" were also on the approved list but already exist above and were
+  // skipped.
+  { id: 'computer', topicId: t, word: 'computer', plural: 'computers', emoji: '💻', countable: true, explanation: 'Máy tính tiếng Anh là "computer".' },
 ];

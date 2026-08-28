@@ -4,6 +4,7 @@ import type {
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
+  ListeningSentenceFillBlankQuestion,
   Question,
 } from '../types';
 import {
@@ -58,7 +59,23 @@ const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',
 };
 
-const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION, COUNTING_QUESTION, EXTRA_LETTER_QUESTION];
+const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
+  id: 'q-lsfb-1',
+  topicId: 't1',
+  kind: 'listening-sentence-fill-blank',
+  word: 'cat',
+  sentence: 'I have a cat.',
+  displaySentence: 'I have a ___.',
+  explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
+const QUESTIONS: Question[] = [
+  IMAGE_QUESTION,
+  LISTENING_QUESTION,
+  COUNTING_QUESTION,
+  EXTRA_LETTER_QUESTION,
+  LISTENING_SENTENCE_QUESTION,
+];
 
 describe('submitOptionAnswer (image-choice)', () => {
   it('records a correct answer', () => {
@@ -141,6 +158,30 @@ describe('submitListeningAnswer', () => {
     const updated = submitListeningAnswer(session, 'cat');
 
     expect(hasAnsweredCurrent(updated)).toBe(false);
+  });
+});
+
+describe('submitListeningAnswer (listening-sentence-fill-blank, Round 2)', () => {
+  it('records a correct answer when the typed word matches the blanked-out target', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 4 };
+    const updated = submitListeningAnswer(session, 'cat');
+
+    expect(updated.currentAnswer?.isCorrect).toBe(true);
+    expect(updated.currentAnswer?.typedAnswer).toBe('cat');
+  });
+
+  it('matches case-insensitively and trims whitespace, same as the bare-word kind', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 4 };
+    const updated = submitListeningAnswer(session, '  CAT  ');
+
+    expect(updated.currentAnswer?.isCorrect).toBe(true);
+  });
+
+  it('records an incorrect answer for a wrong word', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 4 };
+    const updated = submitListeningAnswer(session, 'dog');
+
+    expect(updated.currentAnswer?.isCorrect).toBe(false);
   });
 });
 

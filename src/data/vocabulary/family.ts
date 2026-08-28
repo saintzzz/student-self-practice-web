@@ -12,4 +12,8 @@ export const FAMILY_WORDS: VocabWord[] = [
   { id: 'sister', topicId: t, word: 'sister', emoji: '👧', countable: false, explanation: 'Chị/em gái tiếng Anh là "sister".' },
   { id: 'brother', topicId: t, word: 'brother', emoji: '👦', countable: false, explanation: 'Anh/em trai tiếng Anh là "brother".' },
   { id: 'baby', topicId: t, word: 'baby', emoji: '👶', countable: false, explanation: 'Em bé tiếng Anh là "baby".' },
+  // v5 vocabulary additions (plan.md "v5 Research-Grounded Content"): "baby"
+  // was on the approved list but already exists above (added pre-v5) and was
+  // skipped as an exact duplicate - see
+  // plans/reports/engineer-260828-student-self-practice-v5-vocab.md.
 ];

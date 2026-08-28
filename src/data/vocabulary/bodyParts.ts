@@ -11,4 +11,8 @@ export const BODY_PARTS_WORDS: VocabWord[] = [
   { id: 'foot', topicId: t, word: 'foot', emoji: '🦶', countable: false, explanation: 'Bàn chân tiếng Anh là "foot".' },
   { id: 'nose', topicId: t, word: 'nose', emoji: '👃', countable: false, explanation: 'Cái mũi tiếng Anh là "nose".' },
   { id: 'mouth', topicId: t, word: 'mouth', emoji: '👄', countable: false, explanation: 'Cái miệng tiếng Anh là "mouth".' },
+  // v5 vocabulary addition (plan.md "v5 Research-Grounded Content"). "ear" and
+  // "mouth" were also on the approved list but already exist above and were
+  // skipped.
+  { id: 'leg', topicId: t, word: 'leg', emoji: '🦵', countable: false, explanation: 'Chân tiếng Anh là "leg".' },
 ];

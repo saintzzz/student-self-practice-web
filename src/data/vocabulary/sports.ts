@@ -18,4 +18,11 @@ export const SPORTS_WORDS: VocabWord[] = [
   { id: 'boxing', topicId: t, word: 'boxing', emoji: '🥊', countable: false, explanation: 'Quyền anh tiếng Anh là "boxing".' },
   { id: 'skateboard', topicId: t, word: 'skateboard', emoji: '🛹', countable: false, explanation: 'Ván trượt tiếng Anh là "skateboard".' },
   { id: 'surfing', topicId: t, word: 'surfing', emoji: '🏄', countable: false, explanation: 'Lướt sóng tiếng Anh là "surfing".' },
+  // v5 vocabulary additions (plan.md "v5 Research-Grounded Content"). "badminton",
+  // "tennis" and "basketball" were also on the approved list but already exist
+  // above and were skipped.
+  { id: 'table-tennis', topicId: t, word: 'table tennis', emoji: '🏓', countable: false, explanation: 'Bóng bàn tiếng Anh là "table tennis".' },
+  { id: 'baseball', topicId: t, word: 'baseball', emoji: '⚾', countable: false, explanation: 'Bóng chày tiếng Anh là "baseball".' },
+  { id: 'hockey', topicId: t, word: 'hockey', emoji: '🏒', countable: false, explanation: 'Khúc côn cầu tiếng Anh là "hockey".' },
+  { id: 'swimming', topicId: t, word: 'swimming', emoji: '🏊', countable: false, explanation: 'Bơi lội tiếng Anh là "swimming".' },
 ];

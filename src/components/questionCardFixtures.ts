@@ -4,6 +4,7 @@ import type {
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
+  ListeningSentenceFillBlankQuestion,
 } from '../types';
 
 /** Shared fixtures for QuestionCard.test.tsx and QuestionCard.counting-extra.test.tsx. */
@@ -39,6 +40,16 @@ export const COUNTING_QUESTION: CountingImageQuestion = {
   ],
   correctIndex: 0,
   explanation: 'Đếm số lượng trong hình rồi chọn "3 cats".',
+};
+
+export const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
+  id: 'q5',
+  topicId: 't1',
+  kind: 'listening-sentence-fill-blank',
+  word: 'cat',
+  sentence: 'I have a cat.',
+  displaySentence: 'I have a ___.',
+  explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
 export const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {

@@ -7,7 +7,11 @@ interface FeedbackPanelProps {
   explanation: string;
 }
 
-const KINDS_WITH_ANSWER_FEEDBACK_TESTID: readonly QuestionKind[] = ['listening-fill-blank', 'extra-letter'];
+const KINDS_WITH_ANSWER_FEEDBACK_TESTID: readonly QuestionKind[] = [
+  'listening-fill-blank',
+  'extra-letter',
+  'listening-sentence-fill-blank',
+];
 
 export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation }: FeedbackPanelProps) {
   return (

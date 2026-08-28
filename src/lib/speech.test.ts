@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { speakWord } from './speech';
+import { speakSentence, speakWord } from './speech';
 
 describe('speakWord', () => {
   afterEach(() => {
@@ -23,5 +23,30 @@ describe('speakWord', () => {
     });
 
     expect(() => speakWord('cat')).not.toThrow();
+  });
+});
+
+describe('speakSentence', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls window.speechSynthesis.speak with an utterance for the full sentence in en-US', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+
+    speakSentence('I have a cat.');
+
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance.text).toBe('I have a cat.');
+    expect(utterance.lang).toBe('en-US');
+  });
+
+  it('does not throw when speechSynthesis.speak itself throws', () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {
+      throw new Error('no voices installed');
+    });
+
+    expect(() => speakSentence('I can see a dog.')).not.toThrow();
   });
 });

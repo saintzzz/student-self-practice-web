@@ -1,78 +1,63 @@
 import { useState } from 'react';
 import GradeSelect from './components/GradeSelect';
-import TopicSelect from './components/TopicSelect';
-import QuestionCard from './components/QuestionCard';
-import ResultSummary from './components/ResultSummary';
-import { GRADES, getQuestionsByTopic, getTopicsByGrade } from './data/questions';
+import StartBatchScreen from './components/StartBatchScreen';
+import BatchScreen from './components/BatchScreen';
+import { GRADES } from './data/vocabulary';
 import {
-  advanceToNextQuestion,
-  computeSessionResult,
-  createSession,
-  getCurrentQuestion,
-  isSessionComplete,
-  submitExtraLetterAnswer,
-  submitListeningAnswer,
-  submitOptionAnswer,
-  type PracticeSessionState,
-} from './lib/practiceSession';
+  advanceRoundQuestion,
+  createBatch,
+  goToNextRound,
+  updateRoundSession,
+  type BatchState,
+} from './lib/batch/batchSession';
+import { submitExtraLetterAnswer, submitListeningAnswer, submitOptionAnswer } from './lib/practiceSession';
 
-type Screen = 'grade-select' | 'topic-select' | 'practice' | 'result';
+type Screen = 'grade-select' | 'start-batch' | 'batch';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  const [session, setSession] = useState<PracticeSessionState | null>(null);
+  const [batch, setBatch] = useState<BatchState | null>(null);
 
   function handleSelectGrade(gradeId: string): void {
     setSelectedGradeId(gradeId);
-    setScreen('topic-select');
+    setScreen('start-batch');
   }
 
   function handleBackToGrades(): void {
     setSelectedGradeId(null);
+    setBatch(null);
     setScreen('grade-select');
   }
 
-  function handleSelectTopic(topicId: string): void {
-    setSelectedTopicId(topicId);
-    setSession(createSession(getQuestionsByTopic(topicId)));
-    setScreen('practice');
+  function handleStartBatch(): void {
+    setBatch(createBatch());
+    setScreen('batch');
   }
 
   function handleSubmitOption(index: number): void {
-    if (!session) return;
-    setSession(submitOptionAnswer(session, index));
+    if (!batch) return;
+    setBatch(updateRoundSession(batch, (session) => submitOptionAnswer(session, index)));
   }
 
   function handleSubmitListening(typedAnswer: string): void {
-    if (!session) return;
-    setSession(submitListeningAnswer(session, typedAnswer));
+    if (!batch) return;
+    setBatch(updateRoundSession(batch, (session) => submitListeningAnswer(session, typedAnswer)));
   }
 
   function handleSubmitExtraLetter(letterIndex: number): void {
-    if (!session) return;
-    setSession(submitExtraLetterAnswer(session, letterIndex));
+    if (!batch) return;
+    setBatch(updateRoundSession(batch, (session) => submitExtraLetterAnswer(session, letterIndex)));
   }
 
-  function handleNext(): void {
-    if (!session) return;
-    const advanced = advanceToNextQuestion(session);
-    setSession(advanced);
-    if (isSessionComplete(advanced)) {
-      setScreen('result');
-    }
+  function handleNextQuestion(): void {
+    if (!batch) return;
+    setBatch(advanceRoundQuestion(batch));
   }
 
-  function handlePracticeAgain(): void {
-    if (!selectedTopicId) return;
-    setSession(createSession(getQuestionsByTopic(selectedTopicId)));
-    setScreen('practice');
-  }
-
-  function handleChooseTopic(): void {
-    setSession(null);
-    setScreen('topic-select');
+  function handleNextRound(): void {
+    if (!batch) return;
+    setBatch(goToNextRound(batch));
   }
 
   if (screen === 'grade-select') {
@@ -81,41 +66,21 @@ export default function App() {
 
   const selectedGrade = GRADES.find((grade) => grade.id === selectedGradeId);
 
-  if (screen === 'topic-select' && selectedGrade) {
-    return (
-      <TopicSelect
-        grade={selectedGrade}
-        topics={getTopicsByGrade(selectedGrade.id)}
-        onSelectTopic={handleSelectTopic}
-        onBack={handleBackToGrades}
-      />
-    );
+  if (screen === 'start-batch' && selectedGrade) {
+    return <StartBatchScreen grade={selectedGrade} onStartBatch={handleStartBatch} onBack={handleBackToGrades} />;
   }
 
-  if (screen === 'practice' && session) {
-    const currentQuestion = getCurrentQuestion(session);
-    if (currentQuestion) {
-      return (
-        <QuestionCard
-          question={currentQuestion}
-          questionNumber={session.currentIndex + 1}
-          totalQuestions={session.questions.length}
-          currentAnswer={session.currentAnswer}
-          onSubmitOption={handleSubmitOption}
-          onSubmitListening={handleSubmitListening}
-          onSubmitExtraLetter={handleSubmitExtraLetter}
-          onNext={handleNext}
-        />
-      );
-    }
-  }
-
-  if (screen === 'result' && session) {
+  if (screen === 'batch' && batch) {
     return (
-      <ResultSummary
-        result={computeSessionResult(session)}
-        onPracticeAgain={handlePracticeAgain}
-        onChooseTopic={handleChooseTopic}
+      <BatchScreen
+        batch={batch}
+        onSubmitOption={handleSubmitOption}
+        onSubmitListening={handleSubmitListening}
+        onSubmitExtraLetter={handleSubmitExtraLetter}
+        onNextQuestion={handleNextQuestion}
+        onNextRound={handleNextRound}
+        onStartNewBatch={handleStartBatch}
+        onChooseGrade={handleBackToGrades}
       />
     );
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hashString, pickDistinct, seededShuffleIndices } from './prng';
+import { hashString, pickDistinct, seededPickN, seededShuffleIndices } from './prng';
 
 describe('hashString', () => {
   it('is deterministic for the same input', () => {
@@ -25,6 +25,36 @@ describe('seededShuffleIndices', () => {
   it('varies output for different seeds', () => {
     const a = seededShuffleIndices(8, 'seed-a');
     const b = seededShuffleIndices(8, 'seed-b');
+
+    expect(a).not.toEqual(b);
+  });
+});
+
+describe('seededPickN', () => {
+  const items = Array.from({ length: 20 }, (_, i) => i);
+
+  it('returns exactly n items when n < items.length', () => {
+    const result = seededPickN(items, 5, 'seed-1');
+
+    expect(result).toHaveLength(5);
+    expect(new Set(result).size).toBe(5);
+    for (const value of result) {
+      expect(items).toContain(value);
+    }
+  });
+
+  it('returns every item (in original order) when n >= items.length', () => {
+    expect(seededPickN(items, 25, 'seed-1')).toEqual(items);
+    expect(seededPickN(items, 20, 'seed-1')).toEqual(items);
+  });
+
+  it('is deterministic for the same seed', () => {
+    expect(seededPickN(items, 6, 'same-seed')).toEqual(seededPickN(items, 6, 'same-seed'));
+  });
+
+  it('varies its selection across different seeds', () => {
+    const a = seededPickN(items, 6, 'seed-a');
+    const b = seededPickN(items, 6, 'seed-b');
 
     expect(a).not.toEqual(b);
   });

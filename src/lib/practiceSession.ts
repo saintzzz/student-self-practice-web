@@ -1,4 +1,4 @@
-import type { AnswerRecord, Question, SessionResult } from '../types';
+import type { AnswerRecord, ListeningFillBlankQuestion, ListeningSentenceFillBlankQuestion, Question, SessionResult } from '../types';
 import { formatCountLabel } from './generators/countingImage';
 
 export interface CurrentAnswer {
@@ -43,12 +43,19 @@ export function getCorrectWord(question: Question): string {
     case 'image-choice':
       return question.options[question.correctIndex];
     case 'listening-fill-blank':
+    case 'listening-sentence-fill-blank':
       return question.word;
     case 'counting-image':
       return formatCountLabel(question.prompt);
     case 'extra-letter':
       return question.correctWord;
   }
+}
+
+function isListeningQuestion(
+  question: Question,
+): question is ListeningFillBlankQuestion | ListeningSentenceFillBlankQuestion {
+  return question.kind === 'listening-fill-blank' || question.kind === 'listening-sentence-fill-blank';
 }
 
 function recordAnswer(
@@ -83,6 +90,12 @@ export function submitOptionAnswer(
   return recordAnswer(state, { isCorrect, selectedIndex }, currentQuestion);
 }
 
+/**
+ * Handles both listening-fill-blank (bare word) and
+ * listening-sentence-fill-blank (Round 2 - full sentence with the word
+ * blanked out) - both are "hear it, type the target word" shaped and match
+ * case-insensitively/trimmed the same way.
+ */
 export function submitListeningAnswer(
   state: PracticeSessionState,
   typedAnswer: string,
@@ -92,7 +105,7 @@ export function submitListeningAnswer(
   }
 
   const currentQuestion = getCurrentQuestion(state);
-  if (!currentQuestion || currentQuestion.kind !== 'listening-fill-blank') {
+  if (!currentQuestion || !isListeningQuestion(currentQuestion)) {
     return state;
   }
 

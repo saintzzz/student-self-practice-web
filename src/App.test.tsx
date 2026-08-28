@@ -4,39 +4,43 @@ import userEvent from '@testing-library/user-event';
 import App from './App';
 
 /**
- * Answers whichever question kind is currently on screen so tests can drive
- * a full session without hardcoding which kinds land in which slot (the
- * pool selection is seeded but topics differ in eligible kinds - see
- * plan.md v3 AC15).
+ * Drives the app through the v5 Batch/Round flow: Grade -> Start a Batch ->
+ * Round 1 (extra-letter) -> Round 2 (listening-sentence-fill-blank) ->
+ * Round 3/4 stubs -> Batch summary. See plan.md v5 "New Interaction Model:
+ * Batch / Round" and its Data-Testid Contract Additions.
  */
+async function startBatch(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.click(screen.getByTestId('grade-card-grade-2'));
+  await user.click(screen.getByTestId('start-batch-button'));
+}
+
+/** Answers whichever question kind is on screen without hardcoding any vocabulary. */
 async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): Promise<string> {
   const card = screen.getByTestId('question-card');
   const kind = card.getAttribute('data-question-kind') ?? '';
 
-  if (kind === 'image-choice' || kind === 'counting-image') {
-    await user.click(screen.getByTestId('option-0'));
-  } else if (kind === 'listening-fill-blank') {
-    await user.click(screen.getByTestId('submit-answer-button'));
-  } else if (kind === 'extra-letter') {
+  if (kind === 'extra-letter') {
     await user.click(screen.getByTestId('letter-tile-0'));
+  } else if (kind === 'listening-sentence-fill-blank') {
+    await user.click(screen.getByTestId('submit-answer-button'));
   }
 
   return kind;
 }
 
-async function completeSession(user: ReturnType<typeof userEvent.setup>): Promise<Set<string>> {
+/** Answers every question in the active Round until round-score-summary appears. */
+async function completeActiveRound(user: ReturnType<typeof userEvent.setup>): Promise<Set<string>> {
   const seenKinds = new Set<string>();
 
   while (screen.queryByTestId('question-card')) {
-    const kind = await answerCurrentQuestion(user);
-    seenKinds.add(kind);
+    seenKinds.add(await answerCurrentQuestion(user));
     await user.click(screen.getByTestId('next-button'));
   }
 
   return seenKinds;
 }
 
-describe('App', () => {
+describe('App (v5 Batch/Round flow)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -48,97 +52,107 @@ describe('App', () => {
     expect(screen.getAllByTestId(/^grade-card-/)).toHaveLength(1);
   });
 
-  it('navigates grade -> topic -> practice session and back to grades (AC1, AC2, AC3)', async () => {
+  it('navigates grade -> start-batch screen -> Round 1, and back-to-grades returns to grade selection', async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByTestId('grade-card-grade-2'));
-    expect(screen.getByTestId('topic-card-g2-animals')).toBeVisible();
-    expect(screen.getByTestId('topic-card-g2-colors')).toBeVisible();
-    expect(screen.getAllByTestId(/^topic-card-/).length).toBeGreaterThanOrEqual(10);
+    expect(screen.getByTestId('start-batch-button')).toBeVisible();
 
     await user.click(screen.getByTestId('back-to-grades'));
     expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
 
     await user.click(screen.getByTestId('grade-card-grade-2'));
-    await user.click(screen.getByTestId('topic-card-g2-animals'));
+    await user.click(screen.getByTestId('start-batch-button'));
 
-    const questionCard = screen.getByTestId('question-card');
-    expect(questionCard).toHaveAttribute('data-question-kind');
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('1');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
+    expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
   });
 
-  it('a non-countable topic session mixes image-choice, listening-fill-blank and extra-letter (AC3, AC15)', async () => {
+  it('completes Round 1, shows a round score summary, and Round 2 begins on listening-sentence-fill-blank (AC17, AC18)', async () => {
     vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByTestId('grade-card-grade-2'));
-    await user.click(screen.getByTestId('topic-card-g2-colors'));
+    await startBatch(user);
+    const round1Kinds = await completeActiveRound(user);
+    expect(round1Kinds).toEqual(new Set(['extra-letter']));
+    expect(screen.getByTestId('round-score-summary')).toBeVisible();
 
-    const seenKinds = await completeSession(user);
+    await user.click(screen.getByTestId('next-round-button'));
 
-    expect(seenKinds.has('image-choice')).toBe(true);
-    expect(seenKinds.has('listening-fill-blank')).toBe(true);
-    expect(seenKinds.has('extra-letter')).toBe(true);
-    expect(seenKinds.has('counting-image')).toBe(false);
-    expect(screen.getByTestId('score-summary')).toBeVisible();
-  });
-
-  it('a countable topic session includes all 4 kinds including both counting-image directions (AC3, AC15)', async () => {
-    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByTestId('grade-card-grade-2'));
-    await user.click(screen.getByTestId('topic-card-g2-animals'));
-
-    const seenDirections = new Set<string>();
-    const seenKinds = new Set<string>();
-
-    while (screen.queryByTestId('question-card')) {
-      const card = screen.getByTestId('question-card');
-      const kind = card.getAttribute('data-question-kind') ?? '';
-      const direction = card.getAttribute('data-count-direction');
-      seenKinds.add(kind);
-      if (direction) seenDirections.add(direction);
-
-      await answerCurrentQuestion(user);
-      await user.click(screen.getByTestId('next-button'));
-    }
-
-    expect(seenKinds).toEqual(
-      new Set(['image-choice', 'listening-fill-blank', 'counting-image', 'extra-letter']),
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('2/4');
+    expect(screen.getByTestId('question-card')).toHaveAttribute(
+      'data-question-kind',
+      'listening-sentence-fill-blank',
     );
-    expect(seenDirections).toEqual(new Set(['count-to-image', 'image-to-count']));
   });
 
-  it('Practice Again resets the session to question 1 (AC8)', async () => {
+  it('completing Round 1 and Round 2, then passing through Round 3/4 stubs, reaches the Batch summary (AC17, AC21)', async () => {
     vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByTestId('grade-card-grade-2'));
-    await user.click(screen.getByTestId('topic-card-g2-colors'));
+    await startBatch(user);
+    await completeActiveRound(user);
+    await user.click(screen.getByTestId('next-round-button'));
 
-    await completeSession(user);
+    const round2Kinds = await completeActiveRound(user);
+    expect(round2Kinds).toEqual(new Set(['listening-sentence-fill-blank']));
+    expect(screen.getByTestId('round-score-summary')).toBeVisible();
+    await user.click(screen.getByTestId('next-round-button'));
+
+    // Round 3 stub
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('3/4');
+    expect(screen.queryByTestId('question-card')).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('next-round-button'));
+
+    // Round 4 stub
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
+    expect(screen.queryByTestId('question-card')).not.toBeInTheDocument();
+    await user.click(screen.getByTestId('next-round-button'));
+
+    expect(screen.getByTestId('batch-score-summary')).toBeVisible();
+    expect(screen.getByTestId('round-breakdown-1')).toBeVisible();
+    expect(screen.getByTestId('round-breakdown-2')).toBeVisible();
+    expect(screen.getByTestId('round-breakdown-3')).toHaveTextContent('Chưa có nội dung');
+    expect(screen.getByTestId('round-breakdown-4')).toHaveTextContent('Chưa có nội dung');
+  });
+
+  it('"Luyện tập bài mới" starts a fresh Batch back at Round 1', async () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<App />);
+
+    await startBatch(user);
+    await completeActiveRound(user);
+    await user.click(screen.getByTestId('next-round-button'));
+    await completeActiveRound(user);
+    await user.click(screen.getByTestId('next-round-button'));
+    await user.click(screen.getByTestId('next-round-button'));
+    await user.click(screen.getByTestId('next-round-button'));
+
     await user.click(screen.getByTestId('practice-again-button'));
 
-    expect(screen.getByTestId('question-progress')).toHaveTextContent('1');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
+    expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
   });
 
-  it('Choose another topic returns to the topic list (AC9)', async () => {
+  it('"Chọn lớp khác" from the Batch summary returns all the way to grade selection', async () => {
     vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByTestId('grade-card-grade-2'));
-    await user.click(screen.getByTestId('topic-card-g2-colors'));
+    await startBatch(user);
+    await completeActiveRound(user);
+    await user.click(screen.getByTestId('next-round-button'));
+    await completeActiveRound(user);
+    await user.click(screen.getByTestId('next-round-button'));
+    await user.click(screen.getByTestId('next-round-button'));
+    await user.click(screen.getByTestId('next-round-button'));
 
-    await completeSession(user);
-    await user.click(screen.getByTestId('choose-topic-button'));
+    await user.click(screen.getByTestId('back-to-grades'));
 
-    expect(screen.getByTestId('topic-card-g2-animals')).toBeVisible();
-    expect(screen.getByTestId('topic-card-g2-colors')).toBeVisible();
+    expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
   });
 });

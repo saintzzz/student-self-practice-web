@@ -27,4 +27,15 @@ export const FOOD_WORDS: VocabWord[] = [
   { id: 'cheese', topicId: t, word: 'cheese', emoji: '🧀', countable: false, explanation: 'Phô mai tiếng Anh là "cheese".' },
   { id: 'pancake', topicId: t, word: 'pancake', plural: 'pancakes', emoji: '🥞', countable: true, explanation: 'Bánh pancake tiếng Anh là "pancake".' },
   { id: 'soup', topicId: t, word: 'soup', emoji: '🍲', countable: false, explanation: 'Súp tiếng Anh là "soup".' },
+  // v5 vocabulary additions (plan.md "v5 Research-Grounded Content"). "bread",
+  // "egg", "milk", "cake", "chocolate", "candy" and "rice" were also on the
+  // approved list but already exist above and were skipped. "burger" was
+  // skipped too - same emoji/meaning as the existing "hamburger" entry.
+  // "ice cream" and "juice" are mass nouns in everyday English, same reasoning
+  // as milk/rice above. "chips" is grammatically plural-only in this sense
+  // (like "popcorn"/"noodles"), so it is not marked countable either.
+  { id: 'ice-cream', topicId: t, word: 'ice cream', emoji: '🍦', countable: false, explanation: 'Kem tiếng Anh là "ice cream".' },
+  { id: 'juice', topicId: t, word: 'juice', emoji: '🧃', countable: false, explanation: 'Nước ép tiếng Anh là "juice".' },
+  { id: 'chips', topicId: t, word: 'chips', emoji: '🍟', countable: false, explanation: 'Khoai tây chiên tiếng Anh là "chips".' },
+  { id: 'meat', topicId: t, word: 'meat', emoji: '🥩', countable: false, explanation: 'Thịt tiếng Anh là "meat".' },
 ];

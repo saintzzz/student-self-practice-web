@@ -40,4 +40,12 @@ export const ANIMALS_WORDS: VocabWord[] = [
   { id: 'peacock', topicId: t, word: 'peacock', plural: 'peacocks', emoji: '🦚', countable: true, explanation: 'Con công tiếng Anh là "peacock".' },
   { id: 'parrot', topicId: t, word: 'parrot', plural: 'parrots', emoji: '🦜', countable: true, explanation: 'Con vẹt tiếng Anh là "parrot".' },
   { id: 'swan', topicId: t, word: 'swan', plural: 'swans', emoji: '🦢', countable: true, explanation: 'Con thiên nga tiếng Anh là "swan".' },
+  // v5 vocabulary additions (plan.md "v5 Research-Grounded Content" - Cambridge
+  // Starters/textbook sourced). "frog", "goat", "monkey", "tiger", "snake",
+  // "parrot", "duck", "pig", "cow" and "mouse" were also on the approved list
+  // but already exist above and were skipped to avoid duplicates.
+  { id: 'crocodile', topicId: t, word: 'crocodile', plural: 'crocodiles', emoji: '🐊', countable: true, explanation: 'Con cá sấu tiếng Anh là "crocodile".' },
+  { id: 'giraffe', topicId: t, word: 'giraffe', plural: 'giraffes', emoji: '🦒', countable: true, explanation: 'Con hươu cao cổ tiếng Anh là "giraffe".' },
+  { id: 'hippo', topicId: t, word: 'hippo', plural: 'hippos', emoji: '🦛', countable: true, explanation: 'Con hà mã tiếng Anh là "hippo".' },
+  { id: 'lizard', topicId: t, word: 'lizard', plural: 'lizards', emoji: '🦎', countable: true, explanation: 'Con thằn lằn tiếng Anh là "lizard".' },
 ];

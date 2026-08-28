@@ -3,6 +3,7 @@ import type { CurrentAnswer } from '../lib/practiceSession';
 import { getCorrectWord } from '../lib/practiceSession';
 import ImageChoiceQuestion from './ImageChoiceQuestion';
 import ListeningFillBlankQuestion from './ListeningFillBlankQuestion';
+import ListeningSentenceFillBlankQuestion from './ListeningSentenceFillBlankQuestion';
 import CountingImageQuestion from './CountingImageQuestion';
 import ExtraLetterQuestion from './ExtraLetterQuestion';
 import FeedbackPanel from './FeedbackPanel';
@@ -47,6 +48,15 @@ function renderQuestionBody(
     case 'listening-fill-blank':
       return (
         <ListeningFillBlankQuestion
+          key={question.id}
+          question={question}
+          hasAnswered={currentAnswer !== null}
+          onSubmit={onSubmitListening}
+        />
+      );
+    case 'listening-sentence-fill-blank':
+      return (
+        <ListeningSentenceFillBlankQuestion
           key={question.id}
           question={question}
           hasAnswered={currentAnswer !== null}

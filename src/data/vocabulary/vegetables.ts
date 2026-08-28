@@ -21,4 +21,8 @@ export const VEGETABLES_WORDS: VocabWord[] = [
   { id: 'pepper', topicId: t, word: 'pepper', plural: 'peppers', emoji: '🌶️', countable: true, explanation: 'Quả ớt tiếng Anh là "pepper".' },
   { id: 'eggplant', topicId: t, word: 'eggplant', plural: 'eggplants', emoji: '🍆', countable: true, explanation: 'Quả cà tím tiếng Anh là "eggplant".' },
   { id: 'lettuce', topicId: t, word: 'lettuce', emoji: '🥬', countable: false, explanation: 'Rau xà lách tiếng Anh là "lettuce".' },
+  // v5 vocabulary additions (plan.md "v5 Research-Grounded Content"): "carrot",
+  // "onion", "potato" and "tomato" were all on the approved list but already
+  // exist above (added pre-v5) and were skipped as exact duplicates - see
+  // plans/reports/engineer-260828-student-self-practice-v5-vocab.md.
 ];
