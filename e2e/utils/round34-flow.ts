@@ -1,6 +1,7 @@
 import { type Page, expect } from '@playwright/test';
-import { currentQuestionKind, goToNextQuestion, readQuestionProgress } from './practice-flow';
+import { currentQuestionKind, currentQuestionKindOneOf, goToNextQuestion, readQuestionProgress } from './practice-flow';
 import { type DescriptionType, answerOptionQuestion, currentDescriptionType, optionButtons } from './option-flow';
+import { forceMistakeLimitExceeded } from './pair-matching-flow';
 
 /**
  * Round 3 (pronunciation-recording) and Round 4 (describe-and-choose-image)
@@ -154,7 +155,29 @@ export async function runDescribeAndChooseImageRound(
   for (let q = 1; q <= total; q++) {
     const progress = await readQuestionProgress(page);
     expect(progress.current, `expected question ${q} of Round 4`).toBe(q);
-    await currentQuestionKind(page, 'describe-and-choose-image');
+    // v8 mixes picture-pair-matching into Round 4's pool alongside
+    // describe-and-choose-image (plan.md v8 AC31) - branch per kind, same
+    // pattern already applied to Round 2's runListeningSentenceRound for its
+    // v8 listening-image-choice addition.
+    const kind = await currentQuestionKindOneOf(page, ['describe-and-choose-image', 'picture-pair-matching']);
+
+    if (kind === 'picture-pair-matching') {
+      // This runner's job is to survive/traverse Round 4, not to exercise
+      // the pair-matching mechanic itself (round4-picture-pair-matching.spec.ts
+      // already covers that in depth). Deliberately failing the board via
+      // forceMistakeLimitExceeded is deterministic and safe - blindly
+      // "solving" an unknown 4-pair board via elimination cannot guarantee
+      // staying within the 3-mistake budget in the worst-case tile
+      // arrangement (the first pair alone can need up to 3 wrong guesses),
+      // so forcing a controlled loss is the only reliably deterministic
+      // choice here, and this runner's callers only care about a real
+      // (self-consistent) score tally, not a specific outcome per board.
+      await forceMistakeLimitExceeded(page);
+      incorrectCount++;
+      await goToNextQuestion(page);
+      continue;
+    }
+
     const descriptionType = await currentDescriptionType(page);
     descriptionTypeCounts[descriptionType]++;
 

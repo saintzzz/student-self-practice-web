@@ -1,3 +1,5 @@
+import type { PicturePairMatchingQuestion } from './pairMatching';
+
 export interface Grade {
   id: string;
   name: string;
@@ -33,7 +35,8 @@ export type QuestionKind =
   | 'listening-sentence-fill-blank'
   | 'pronunciation-recording'
   | 'describe-and-choose-image'
-  | 'listening-image-choice';
+  | 'listening-image-choice'
+  | 'picture-pair-matching';
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -161,6 +164,9 @@ export interface DescribeAndChooseImageQuestion {
   explanation: string;
 }
 
+/** Picture-pair-matching types (plan.md v8) live in ./pairMatching.ts, split out for file-size hygiene. */
+export * from './pairMatching';
+
 export type Question =
   | ImageChoiceQuestion
   | ListeningFillBlankQuestion
@@ -169,7 +175,8 @@ export type Question =
   | ListeningSentenceFillBlankQuestion
   | PronunciationRecordingQuestion
   | DescribeAndChooseImageQuestion
-  | ListeningImageChoiceQuestion;
+  | ListeningImageChoiceQuestion
+  | PicturePairMatchingQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:

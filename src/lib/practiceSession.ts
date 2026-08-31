@@ -58,6 +58,8 @@ export function getCorrectWord(question: Question): string {
       return formatCountLabel(question.options[question.correctIndex]);
     case 'listening-image-choice':
       return question.word;
+    case 'picture-pair-matching':
+      return question.pairs.map((pair) => `${pair.word} - ${pair.emoji}`).join(', ');
   }
 }
 
@@ -177,6 +179,30 @@ export function submitPronunciationAnswer(
     { isCorrect, pronunciationTranscript: transcript, pronunciationScore: score },
     currentQuestion,
   );
+}
+
+/**
+ * Round 4 addition - Picture-Pair-Matching Board (plan.md v8, AC32). The
+ * board itself (PicturePairMatchingQuestion + rounds/pairMatchingBoard.ts)
+ * is the single source of truth for whether it was solved within the
+ * mistake budget; this reducer just records that outcome exactly once, same
+ * "does nothing once already answered / on the wrong kind" guard shape as
+ * every other submit function here.
+ */
+export function submitPairMatchingAnswer(
+  state: PracticeSessionState,
+  isCorrect: boolean,
+): PracticeSessionState {
+  if (hasAnsweredCurrent(state)) {
+    return state;
+  }
+
+  const currentQuestion = getCurrentQuestion(state);
+  if (!currentQuestion || currentQuestion.kind !== 'picture-pair-matching') {
+    return state;
+  }
+
+  return recordAnswer(state, { isCorrect }, currentQuestion);
 }
 
 export function advanceToNextQuestion(state: PracticeSessionState): PracticeSessionState {

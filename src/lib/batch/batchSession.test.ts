@@ -14,6 +14,7 @@ import {
   submitExtraLetterAnswer,
   submitListeningAnswer,
   submitOptionAnswer,
+  submitPairMatchingAnswer,
   submitPronunciationAnswer,
 } from '../practiceSession';
 import { ROUND_1_QUESTION_COUNT } from '../rounds/round1ExtraLetter';
@@ -42,6 +43,9 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   }
   if (question.kind === 'describe-and-choose-image' || question.kind === 'listening-image-choice') {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
+  }
+  if (question.kind === 'picture-pair-matching') {
+    return updateRoundSession(state, (session) => submitPairMatchingAnswer(session, true));
   }
   throw new Error(`Unexpected question kind for Round 1-4 in this build: ${question.kind}`);
 }

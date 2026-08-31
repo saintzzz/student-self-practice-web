@@ -16,6 +16,7 @@ describe('ActiveRoundQuestion', () => {
         onSubmitListening={vi.fn()}
         onSubmitExtraLetter={vi.fn()}
         onSubmitPronunciation={vi.fn()}
+        onSubmitPairMatching={vi.fn()}
         onNextQuestion={vi.fn()}
       />,
     );
@@ -36,6 +37,7 @@ describe('ActiveRoundQuestion', () => {
         onSubmitListening={vi.fn()}
         onSubmitExtraLetter={onSubmitExtraLetter}
         onSubmitPronunciation={vi.fn()}
+        onSubmitPairMatching={vi.fn()}
         onNextQuestion={vi.fn()}
       />,
     );
@@ -55,6 +57,7 @@ describe('ActiveRoundQuestion', () => {
         onSubmitListening={vi.fn()}
         onSubmitExtraLetter={vi.fn()}
         onSubmitPronunciation={vi.fn()}
+        onSubmitPairMatching={vi.fn()}
         onNextQuestion={vi.fn()}
       />,
     );

@@ -35,6 +35,13 @@ import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback 
  * does (forced speech-recognition-unsupported fallback through Round 3,
  * since Round 3 has no real content to test here and headless Chromium has
  * no real mic anyway) -- see that spec's doc comment for the rationale.
+ *
+ * v8 note: Round 4 now also mixes in picture-pair-matching questions
+ * (plan.md v8 AC31), which reveal no emoji signal via runDescribeAndChooseImageRound
+ * (that runner correctly skips them for this purpose -- see round34-flow.ts).
+ * This test's diversity checks are therefore measured against the count of
+ * describe-and-choose-image questions actually seen (round4.correctOptionEmojis.length),
+ * not round4.totalQuestions, which now includes the non-emoji pair-matching boards too.
  */
 test.describe('Batch/Round: content variety across a Round (AC23 indirect proxy)', () => {
   test('Round 4 correct-answer objects are not dominated by one or two repeated emoji across the round', async ({ page }) => {
@@ -51,11 +58,18 @@ test.describe('Batch/Round: content variety across a Round (AC23 indirect proxy)
 
     const round4 = await runDescribeAndChooseImageRound(page);
 
+    // v8: round4.correctOptionEmojis only has one entry per
+    // describe-and-choose-image question seen -- picture-pair-matching
+    // questions (also in Round 4's pool since v8) contribute nothing here,
+    // so the population size for this check is nonEmptyEmojis.length, not
+    // round4.totalQuestions (see this file's doc comment).
     const nonEmptyEmojis = round4.correctOptionEmojis.filter((emoji) => emoji.length > 0);
     expect(
       nonEmptyEmojis,
-      'expected every Round 4 question to reveal a non-empty correct-option emoji/character to measure diversity from',
-    ).toHaveLength(round4.totalQuestions);
+      'expected every describe-and-choose-image question in Round 4 to reveal a non-empty correct-option ' +
+        'emoji/character to measure diversity from',
+    ).toHaveLength(round4.correctOptionEmojis.length);
+    expect(nonEmptyEmojis.length, 'expected at least one describe-and-choose-image question in this Round').toBeGreaterThan(0);
 
     const frequency = new Map<string, number>();
     for (const emoji of nonEmptyEmojis) {
@@ -63,18 +77,19 @@ test.describe('Batch/Round: content variety across a Round (AC23 indirect proxy)
     }
     const distinctCount = frequency.size;
     const maxFrequency = Math.max(...frequency.values());
+    const sampleSize = nonEmptyEmojis.length;
 
     expect(
       distinctCount,
-      `expected a meaningful variety of distinct correct-answer objects across Round 4's ${round4.totalQuestions} ` +
-        `questions (indirect AC23 proxy -- see this file's doc comment), got only ${distinctCount} distinct value(s): ` +
-        `${[...frequency.keys()].join(', ')}`,
-    ).toBeGreaterThanOrEqual(Math.min(4, round4.totalQuestions));
+      `expected a meaningful variety of distinct correct-answer objects across Round 4's ${sampleSize} ` +
+        `describe-and-choose-image questions (indirect AC23 proxy -- see this file's doc comment), got only ` +
+        `${distinctCount} distinct value(s): ${[...frequency.keys()].join(', ')}`,
+    ).toBeGreaterThanOrEqual(Math.min(4, sampleSize));
 
     expect(
-      maxFrequency / round4.totalQuestions,
-      `expected no single object to dominate more than half of Round 4's questions (indirect AC23 proxy), but one ` +
-        `value appeared ${maxFrequency} of ${round4.totalQuestions} times`,
+      maxFrequency / sampleSize,
+      `expected no single object to dominate more than half of Round 4's describe-and-choose-image questions ` +
+        `(indirect AC23 proxy), but one value appeared ${maxFrequency} of ${sampleSize} times`,
     ).toBeLessThanOrEqual(0.5);
   });
 });

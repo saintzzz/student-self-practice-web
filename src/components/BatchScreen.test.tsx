@@ -13,6 +13,7 @@ import {
   submitExtraLetterAnswer,
   submitListeningAnswer,
   submitOptionAnswer,
+  submitPairMatchingAnswer,
   submitPronunciationAnswer,
 } from '../lib/practiceSession';
 import { ROUND_DURATION_SECONDS } from '../hooks/useRoundTimer';
@@ -23,6 +24,7 @@ function buildNoopHandlers() {
     onSubmitListening: vi.fn(),
     onSubmitExtraLetter: vi.fn(),
     onSubmitPronunciation: vi.fn(),
+    onSubmitPairMatching: vi.fn(),
     onNextQuestion: vi.fn(),
     onNextRound: vi.fn(),
     onStartNewBatch: vi.fn(),
@@ -44,6 +46,9 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   }
   if (question.kind === 'describe-and-choose-image') {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
+  }
+  if (question.kind === 'picture-pair-matching') {
+    return updateRoundSession(state, (session) => submitPairMatchingAnswer(session, true));
   }
   return updateRoundSession(state, (session) => submitListeningAnswer(session, '0000'));
 }

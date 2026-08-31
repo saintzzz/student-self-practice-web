@@ -9,6 +9,7 @@ import CountingImageQuestion from './CountingImageQuestion';
 import ExtraLetterQuestion from './ExtraLetterQuestion';
 import PronunciationRecordingQuestion from './PronunciationRecordingQuestion';
 import DescribeAndChooseImageQuestion from './DescribeAndChooseImageQuestion';
+import PicturePairMatchingQuestion from './PicturePairMatchingQuestion';
 import FeedbackPanel from './FeedbackPanel';
 
 interface QuestionCardProps {
@@ -20,6 +21,7 @@ interface QuestionCardProps {
   onSubmitListening: (typedAnswer: string) => void;
   onSubmitExtraLetter: (letterIndex: number) => void;
   onSubmitPronunciation: (transcript: string) => void;
+  onSubmitPairMatching: (isCorrect: boolean) => void;
   onNext: () => void;
 }
 
@@ -30,6 +32,7 @@ function renderQuestionBody(
   onSubmitListening: (typedAnswer: string) => void,
   onSubmitExtraLetter: (letterIndex: number) => void,
   onSubmitPronunciation: (transcript: string) => void,
+  onSubmitPairMatching: (isCorrect: boolean) => void,
 ) {
   switch (question.kind) {
     case 'image-choice':
@@ -107,6 +110,15 @@ function renderQuestionBody(
           onSelectOption={onSubmitOption}
         />
       );
+    case 'picture-pair-matching':
+      return (
+        <PicturePairMatchingQuestion
+          key={question.id}
+          question={question}
+          hasAnswered={currentAnswer !== null}
+          onSubmit={onSubmitPairMatching}
+        />
+      );
   }
 }
 
@@ -119,6 +131,7 @@ export default function QuestionCard({
   onSubmitListening,
   onSubmitExtraLetter,
   onSubmitPronunciation,
+  onSubmitPairMatching,
   onNext,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
@@ -142,6 +155,7 @@ export default function QuestionCard({
         onSubmitListening,
         onSubmitExtraLetter,
         onSubmitPronunciation,
+        onSubmitPairMatching,
       )}
 
       {/* pronunciation-recording renders its own complete feedback panel

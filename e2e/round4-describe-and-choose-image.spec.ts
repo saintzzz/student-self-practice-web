@@ -1,8 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fastForwardThroughRounds1And2, goToNextRound, readRoundProgress, readRoundScoreSummary } from './utils/batch-flow';
-import { currentQuestionKind, goToNextQuestion, readElementOutcome, readQuestionProgress } from './utils/practice-flow';
+import { currentQuestionKindOneOf, goToNextQuestion, readElementOutcome, readQuestionProgress } from './utils/practice-flow';
 import { answerOptionQuestion, currentDescriptionType, optionButtons } from './utils/option-flow';
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
+import { forceMistakeLimitExceeded } from './utils/pair-matching-flow';
+
+const ROUND4_KINDS = ['describe-and-choose-image', 'picture-pair-matching'] as const;
 
 /**
  * Covers plan.md v5/v6 Round 4 (describe-and-choose-image -- AC20, AC25,
@@ -48,16 +51,16 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
   }) => {
     await reachRound4(page);
 
-    await test.step('Round 4 begins at round 4 of 4 with describe-and-choose-image questions', async () => {
+    await test.step('Round 4 begins at round 4 of 4 (v8: either describe-and-choose-image or picture-pair-matching, both are real content, never RoundStub)', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(4);
       expect(roundProgress.total).toBe(4);
-      await currentQuestionKind(page, 'describe-and-choose-image');
+      await currentQuestionKindOneOf(page, ROUND4_KINDS);
     });
 
     const round4 = await runDescribeAndChooseImageRound(page);
 
-    await test.step('every question had exactly 4 options and produced a definite correct/incorrect outcome (enforced by answerOptionQuestion)', async () => {
+    await test.step('every question produced a definite correct/incorrect outcome (describe-and-choose-image via answerOptionQuestion, picture-pair-matching via forceMistakeLimitExceeded in runDescribeAndChooseImageRound)', async () => {
       expect(round4.correctCount + round4.incorrectCount).toBe(round4.totalQuestions);
       // plan.md AC17 says "~10 questions each" -- tolerant range, same
       // reasoning as round1/round2 specs.
@@ -65,8 +68,9 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
       expect(round4.totalQuestions).toBeLessThanOrEqual(12);
     });
 
-    await test.step('every question was tagged a valid description type (count or negation) via data-description-type', async () => {
-      expect(round4.descriptionTypeCounts.count + round4.descriptionTypeCounts.negation).toBe(round4.totalQuestions);
+    await test.step('every describe-and-choose-image question was tagged a valid description type (count or negation) via data-description-type -- v8: picture-pair-matching questions carry no description type and are excluded from this tally by runDescribeAndChooseImageRound itself', async () => {
+      const describeImageQuestionCount = round4.descriptionTypeCounts.count + round4.descriptionTypeCounts.negation;
+      expect(describeImageQuestionCount).toBe(round4.correctOptionEmojis.length);
       expect(round4.descriptionTypeCounts.count).toBeGreaterThanOrEqual(0);
       expect(round4.descriptionTypeCounts.negation).toBeGreaterThanOrEqual(0);
     });
@@ -82,7 +86,7 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
     page,
   }) => {
     await reachRound4(page);
-    await currentQuestionKind(page, 'describe-and-choose-image');
+    await currentQuestionKindOneOf(page, ROUND4_KINDS);
 
     const { total } = await readQuestionProgress(page);
     let foundWrongCase = false;
@@ -90,7 +94,19 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
     for (let q = 1; q <= total; q++) {
       const progress = await readQuestionProgress(page);
       expect(progress.current, `expected question ${q} of Round 4`).toBe(q);
-      await currentQuestionKind(page, 'describe-and-choose-image');
+      const kind = await currentQuestionKindOneOf(page, ROUND4_KINDS);
+
+      if (kind === 'picture-pair-matching') {
+        // v8: this test is specifically about describe-and-choose-image's
+        // wrong-answer feedback -- picture-pair-matching's own feedback is
+        // covered by round4-picture-pair-matching.spec.ts. Skip past it
+        // deterministically (same technique as round34-flow.ts's
+        // runDescribeAndChooseImageRound) without asserting anything about it.
+        await forceMistakeLimitExceeded(page);
+        await goToNextQuestion(page);
+        continue;
+      }
+
       const descriptionType = await currentDescriptionType(page);
 
       // Structural choice (always click the first rendered option), never a

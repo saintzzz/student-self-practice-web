@@ -17,6 +17,27 @@ async function startBatch(user: ReturnType<typeof userEvent.setup>): Promise<voi
 }
 
 /**
+ * Resolves a picture-pair-matching board (plan.md v8 AC31/AC32) using ONLY
+ * word-tile-vs-word-tile clicks, which can never form a real pair (a pair is
+ * always one word tile + one picture tile) - 4 such guaranteed-wrong
+ * attempts deterministically exceed the 3-mistake budget and mark the board
+ * "failed", regardless of the actual (random, unseeded) word-picture
+ * pairing. Same structural, never-hardcode-vocabulary technique as
+ * e2e/utils/pair-matching-flow.ts's forceMistakeLimitExceeded.
+ */
+async function resolvePicturePairMatchingBoard(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  const tiles = screen.getAllByTestId(/^pair-tile-/);
+  const wordTiles = tiles.filter((tile) => /^[A-Za-z][A-Za-z\s]*$/.test(tile.textContent ?? ''));
+
+  for (let i = 0; i < 4; i++) {
+    await user.click(wordTiles[i % wordTiles.length]!);
+    await user.click(wordTiles[(i + 1) % wordTiles.length]!);
+  }
+
+  await waitFor(() => expect(screen.getByTestId('next-button')).toBeEnabled());
+}
+
+/**
  * Answers whichever question kind is on screen without hardcoding any
  * vocabulary. pronunciation-recording relies on the default fake
  * SpeechRecognition installed by src/test/setup.ts, which auto-completes
@@ -37,6 +58,8 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
     await waitFor(() => expect(screen.getByTestId('pronunciation-feedback')).toBeVisible());
   } else if (kind === 'describe-and-choose-image') {
     await user.click(screen.getByTestId('option-0'));
+  } else if (kind === 'picture-pair-matching') {
+    await resolvePicturePairMatchingBoard(user);
   }
 
   return kind;
@@ -124,14 +147,14 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 
-    // Round 4 - real content now (AC25), not a stub.
+    // Round 4 - real content now (AC25), not a stub. Mixes describe-and-choose-image
+    // with picture-pair-matching (plan.md v8 AC31), so the first question may be
+    // either kind.
     expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
-    expect(screen.getByTestId('question-card')).toHaveAttribute(
-      'data-question-kind',
-      'describe-and-choose-image',
-    );
+    const round4FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
+    expect(['describe-and-choose-image', 'picture-pair-matching']).toContain(round4FirstKind);
     const round4Kinds = await completeActiveRound(user);
-    expect(round4Kinds).toEqual(new Set(['describe-and-choose-image']));
+    expect(round4Kinds).toEqual(new Set(['describe-and-choose-image', 'picture-pair-matching']));
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 

@@ -7,6 +7,7 @@ import type {
   ListeningFillBlankQuestion,
   ListeningImageChoiceQuestion,
   ListeningSentenceFillBlankQuestion,
+  PicturePairMatchingQuestion,
   PronunciationRecordingQuestion,
 } from '../types';
 
@@ -99,10 +100,34 @@ export const LISTENING_IMAGE_CHOICE_QUESTION: ListeningImageChoiceQuestion = {
   explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
+export const PICTURE_PAIR_MATCHING_QUESTION: PicturePairMatchingQuestion = {
+  id: 'q9',
+  topicId: 't1',
+  kind: 'picture-pair-matching',
+  pairs: [
+    { word: 'cat', emoji: '🐱' },
+    { word: 'dog', emoji: '🐶' },
+    { word: 'fish', emoji: '🐟' },
+    { word: 'bird', emoji: '🐦' },
+  ],
+  tiles: [
+    { pairIndex: 0, tileType: 'word', label: 'cat' },
+    { pairIndex: 2, tileType: 'picture', label: '🐟' },
+    { pairIndex: 1, tileType: 'word', label: 'dog' },
+    { pairIndex: 0, tileType: 'picture', label: '🐱' },
+    { pairIndex: 3, tileType: 'word', label: 'bird' },
+    { pairIndex: 1, tileType: 'picture', label: '🐶' },
+    { pairIndex: 2, tileType: 'word', label: 'fish' },
+    { pairIndex: 3, tileType: 'picture', label: '🐦' },
+  ],
+  explanation: 'Các cặp đúng trong bảng này là: cat - 🐱, dog - 🐶, fish - 🐟, bird - 🐦.',
+};
+
 export const noopHandlers = {
   onSubmitOption: vi.fn(),
   onSubmitListening: vi.fn(),
   onSubmitExtraLetter: vi.fn(),
   onSubmitPronunciation: vi.fn(),
+  onSubmitPairMatching: vi.fn(),
   onNext: vi.fn(),
 };

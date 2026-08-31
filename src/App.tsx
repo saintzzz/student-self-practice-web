@@ -15,6 +15,7 @@ import {
   submitExtraLetterAnswer,
   submitListeningAnswer,
   submitOptionAnswer,
+  submitPairMatchingAnswer,
   submitPronunciationAnswer,
 } from './lib/practiceSession';
 
@@ -61,6 +62,11 @@ export default function App() {
     setBatch(updateRoundSession(batch, (session) => submitPronunciationAnswer(session, transcript)));
   }
 
+  function handleSubmitPairMatching(isCorrect: boolean): void {
+    if (!batch) return;
+    setBatch(updateRoundSession(batch, (session) => submitPairMatchingAnswer(session, isCorrect)));
+  }
+
   function handleNextQuestion(): void {
     if (!batch) return;
     setBatch(advanceRoundQuestion(batch));
@@ -95,6 +101,7 @@ export default function App() {
         onSubmitListening={handleSubmitListening}
         onSubmitExtraLetter={handleSubmitExtraLetter}
         onSubmitPronunciation={handleSubmitPronunciation}
+        onSubmitPairMatching={handleSubmitPairMatching}
         onNextQuestion={handleNextQuestion}
         onNextRound={handleNextRound}
         onStartNewBatch={handleStartBatch}

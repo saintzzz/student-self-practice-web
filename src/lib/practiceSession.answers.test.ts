@@ -6,14 +6,17 @@ import type {
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
   ListeningSentenceFillBlankQuestion,
+  PicturePairMatchingQuestion,
   Question,
 } from '../types';
 import {
   createSession,
+  getCorrectWord,
   hasAnsweredCurrent,
   submitExtraLetterAnswer,
   submitListeningAnswer,
   submitOptionAnswer,
+  submitPairMatchingAnswer,
 } from './practiceSession';
 
 const IMAGE_QUESTION: ImageChoiceQuestion = {
@@ -86,6 +89,29 @@ const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
   explanation: 'Câu này phủ định "cat" nên hình đúng là hình không có cat.',
 };
 
+const PAIR_MATCHING_QUESTION: PicturePairMatchingQuestion = {
+  id: 'q-ppm-1',
+  topicId: 't1',
+  kind: 'picture-pair-matching',
+  pairs: [
+    { word: 'cat', emoji: '🐱' },
+    { word: 'dog', emoji: '🐶' },
+    { word: 'fish', emoji: '🐟' },
+    { word: 'bird', emoji: '🐦' },
+  ],
+  tiles: [
+    { pairIndex: 0, tileType: 'word', label: 'cat' },
+    { pairIndex: 0, tileType: 'picture', label: '🐱' },
+    { pairIndex: 1, tileType: 'word', label: 'dog' },
+    { pairIndex: 1, tileType: 'picture', label: '🐶' },
+    { pairIndex: 2, tileType: 'word', label: 'fish' },
+    { pairIndex: 2, tileType: 'picture', label: '🐟' },
+    { pairIndex: 3, tileType: 'word', label: 'bird' },
+    { pairIndex: 3, tileType: 'picture', label: '🐦' },
+  ],
+  explanation: 'Các cặp đúng trong bảng này là: cat - 🐱, dog - 🐶, fish - 🐟, bird - 🐦.',
+};
+
 const QUESTIONS: Question[] = [
   IMAGE_QUESTION,
   LISTENING_QUESTION,
@@ -93,6 +119,7 @@ const QUESTIONS: Question[] = [
   EXTRA_LETTER_QUESTION,
   LISTENING_SENTENCE_QUESTION,
   DESCRIBE_IMAGE_QUESTION,
+  PAIR_MATCHING_QUESTION,
 ];
 
 describe('submitOptionAnswer (image-choice)', () => {
@@ -240,5 +267,46 @@ describe('submitExtraLetterAnswer', () => {
     const updated = submitExtraLetterAnswer(session, 0);
 
     expect(hasAnsweredCurrent(updated)).toBe(false);
+  });
+});
+
+describe('submitPairMatchingAnswer (picture-pair-matching, Round 4)', () => {
+  it('records a correct outcome as reported by the board', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 6 };
+    const updated = submitPairMatchingAnswer(session, true);
+
+    expect(hasAnsweredCurrent(updated)).toBe(true);
+    expect(updated.currentAnswer?.isCorrect).toBe(true);
+    expect(updated.answers).toHaveLength(1);
+    expect(updated.answers[0]?.isCorrect).toBe(true);
+  });
+
+  it('records an incorrect outcome as reported by the board (mistake budget exceeded, AC32)', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 6 };
+    const updated = submitPairMatchingAnswer(session, false);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(false);
+  });
+
+  it('does not overwrite an existing answer for the same question', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 6 };
+    const firstAnswer = submitPairMatchingAnswer(session, true);
+    const secondAttempt = submitPairMatchingAnswer(firstAnswer, false);
+
+    expect(secondAttempt.answers).toHaveLength(1);
+    expect(secondAttempt.currentAnswer?.isCorrect).toBe(true);
+  });
+
+  it('does nothing when the current question is not picture-pair-matching', () => {
+    const session = createSession(QUESTIONS);
+    const updated = submitPairMatchingAnswer(session, true);
+
+    expect(hasAnsweredCurrent(updated)).toBe(false);
+  });
+});
+
+describe('getCorrectWord (picture-pair-matching)', () => {
+  it('returns a word-emoji list of all 4 pairs', () => {
+    expect(getCorrectWord(PAIR_MATCHING_QUESTION)).toBe('cat - 🐱, dog - 🐶, fish - 🐟, bird - 🐦');
   });
 });
