@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type {
   CountingImageQuestion,
+  DescribeAndChooseImageQuestion,
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
@@ -69,6 +70,22 @@ export const PRONUNCIATION_QUESTION: PronunciationRecordingQuestion = {
   kind: 'pronunciation-recording',
   word: 'cat',
   explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
+export const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
+  id: 'q7',
+  topicId: 't1',
+  kind: 'describe-and-choose-image',
+  descriptionType: 'count',
+  sentence: 'There are 3 cats.',
+  options: [
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 },
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 4 },
+  ],
+  correctIndex: 0,
+  explanation: 'Chọn hình có 3 cats. Con mèo tiếng Anh là "cat".',
 };
 
 export const noopHandlers = {

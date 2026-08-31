@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type {
   CountingImageQuestion,
+  DescribeAndChooseImageQuestion,
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
@@ -69,12 +70,29 @@ const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
   explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
+const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
+  id: 'q6',
+  topicId: 't1',
+  kind: 'describe-and-choose-image',
+  descriptionType: 'negation',
+  sentence: "There isn't a cat here.",
+  options: [
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 2 },
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 1 },
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 4 },
+  ],
+  correctIndex: 0,
+  explanation: 'Câu này phủ định "cat" nên hình đúng là hình không có cat.',
+};
+
 const QUESTIONS: Question[] = [
   IMAGE_QUESTION,
   LISTENING_QUESTION,
   COUNTING_QUESTION,
   EXTRA_LETTER_QUESTION,
   LISTENING_SENTENCE_QUESTION,
+  DESCRIBE_IMAGE_QUESTION,
 ];
 
 describe('submitOptionAnswer (image-choice)', () => {
@@ -124,6 +142,22 @@ describe('submitOptionAnswer (counting-image)', () => {
 
   it('records an incorrect answer for a wrong option', () => {
     const session = { ...createSession(QUESTIONS), currentIndex: 2 };
+    const updated = submitOptionAnswer(session, 1);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(false);
+  });
+});
+
+describe('submitOptionAnswer (describe-and-choose-image, Round 4)', () => {
+  it('records a correct answer against correctIndex', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 5 };
+    const updated = submitOptionAnswer(session, 0);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(true);
+  });
+
+  it('records an incorrect answer for a wrong option', () => {
+    const session = { ...createSession(QUESTIONS), currentIndex: 5 };
     const updated = submitOptionAnswer(session, 1);
 
     expect(updated.currentAnswer?.isCorrect).toBe(false);

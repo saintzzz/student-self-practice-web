@@ -31,7 +31,8 @@ export type QuestionKind =
   | 'counting-image'
   | 'extra-letter'
   | 'listening-sentence-fill-blank'
-  | 'pronunciation-recording';
+  | 'pronunciation-recording'
+  | 'describe-and-choose-image';
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -116,22 +117,45 @@ export interface PronunciationRecordingQuestion {
   explanation: string;
 }
 
+/** The two sentence shapes Round 4 generates (plan.md v5 "Round 4 - Describe and Choose Image"). */
+export type DescriptionType = 'count' | 'negation';
+
+/**
+ * Round 4 of the v5/v6 Batch/Round model (see plan.md "Round 4 - Describe
+ * and Choose Image" and "Round 4 Negation Design"). `sentence` is spoken via
+ * TTS and shown on screen; the student picks the matching repeated-emoji
+ * image from `options`. For `descriptionType: 'count'`, the correct option
+ * depicts the described object at the described count. For
+ * `descriptionType: 'negation'`, the correct option depicts a completely
+ * different object (zero of the negated word) while the other 3 options all
+ * depict the negated word at varying counts - this keeps the "exactly one
+ * correct option out of 4" invariant intact instead of a "3 correct + 1
+ * wrong" shape.
+ */
+export interface DescribeAndChooseImageQuestion {
+  id: string;
+  topicId: string;
+  kind: 'describe-and-choose-image';
+  descriptionType: DescriptionType;
+  sentence: string;
+  options: readonly [CountingImageOption, CountingImageOption, CountingImageOption, CountingImageOption];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
 export type Question =
   | ImageChoiceQuestion
   | ListeningFillBlankQuestion
   | CountingImageQuestion
   | ExtraLetterQuestion
   | ListeningSentenceFillBlankQuestion
-  | PronunciationRecordingQuestion;
+  | PronunciationRecordingQuestion
+  | DescribeAndChooseImageQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:
- * Batch / Round"). `extra-letter` (Round 1), `listening-sentence-fill-blank`
- * (Round 2), and `pronunciation-recording` (Round 3) have real content
- * generators wired up in this build; `describe-and-choose-image` (Round 4)
- * still exists as a type-level placeholder only - a follow-up task adds its
- * real generator/component without needing to touch this union or the
- * round-index plumbing.
+ * Batch / Round"). All 4 kinds have real content generators wired up
+ * (plan.md v6 AC24/AC25).
  */
 export type RoundType =
   | 'extra-letter'

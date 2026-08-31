@@ -71,6 +71,15 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
         return runDescribeAndChooseImageRound(page);
       });
 
+      // Round runners stop at that round's round-score-summary without
+      // auto-advancing (the established pattern for every Round in this
+      // suite) - this explicit click is required to actually leave Round 4
+      // and reach the Batch summary. Missing it here made this test check
+      // batch-score-summary while the app was still correctly sitting on
+      // Round 4's round-summary screen (same class of bug fixed earlier in
+      // the v5 round3-round4-stubs.spec.ts off-by-one).
+      await goToNextRound(page);
+
       await test.step('the Batch summary shows a per-round breakdown with real, parseable scores for all 4 rounds -- no "Chưa có nội dung ở bản này" placeholder left for any round (AC21/AC24/AC25)', async () => {
         await expect(page.getByTestId('batch-score-summary')).toBeVisible();
         const batchScore = await readBatchScoreSummary(page);

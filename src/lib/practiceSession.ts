@@ -54,6 +54,8 @@ export function getCorrectWord(question: Question): string {
       return question.correctWord;
     case 'pronunciation-recording':
       return question.word;
+    case 'describe-and-choose-image':
+      return formatCountLabel(question.options[question.correctIndex]);
   }
 }
 
@@ -77,7 +79,7 @@ function recordAnswer(
   };
 }
 
-/** Handles both image-choice and counting-image - both are "pick 1 of 4 options" shaped. */
+/** Handles image-choice, counting-image and describe-and-choose-image - all "pick 1 of 4 options" shaped. */
 export function submitOptionAnswer(
   state: PracticeSessionState,
   selectedIndex: number,
@@ -87,7 +89,12 @@ export function submitOptionAnswer(
   }
 
   const currentQuestion = getCurrentQuestion(state);
-  if (!currentQuestion || (currentQuestion.kind !== 'image-choice' && currentQuestion.kind !== 'counting-image')) {
+  if (
+    !currentQuestion ||
+    (currentQuestion.kind !== 'image-choice' &&
+      currentQuestion.kind !== 'counting-image' &&
+      currentQuestion.kind !== 'describe-and-choose-image')
+  ) {
     return state;
   }
 

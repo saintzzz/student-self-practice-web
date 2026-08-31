@@ -12,6 +12,7 @@ import {
   getCurrentQuestion,
   submitExtraLetterAnswer,
   submitListeningAnswer,
+  submitOptionAnswer,
   submitPronunciationAnswer,
 } from '../lib/practiceSession';
 
@@ -34,6 +35,9 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   }
   if (question.kind === 'pronunciation-recording') {
     return updateRoundSession(state, (session) => submitPronunciationAnswer(session, '0000'));
+  }
+  if (question.kind === 'describe-and-choose-image') {
+    return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
   }
   return updateRoundSession(state, (session) => submitListeningAnswer(session, '0000'));
 }
@@ -81,21 +85,23 @@ describe('BatchScreen', () => {
     expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
   });
 
-  it('renders the stub placeholder (with next-round-button) for Round 4, not a question card', () => {
+  it('renders a real question card (not a stub) for Round 4, per AC25', () => {
     let batch = createBatch('fixed-seed');
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // -> Round 2 active
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // -> Round 3 active
     batch = completeActiveRound(batch);
-    batch = goToNextRound(batch); // -> Round 4 stub
+    batch = goToNextRound(batch); // -> Round 4 active
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);
 
     expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
-    expect(screen.getByTestId('next-round-button')).toBeVisible();
-    expect(screen.queryByTestId('question-card')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('round-score-summary')).not.toBeInTheDocument();
+    expect(screen.getByTestId('question-card')).toHaveAttribute(
+      'data-question-kind',
+      'describe-and-choose-image',
+    );
+    expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
   });
 
   it('renders batch-score-summary after Round 4, with no round-progress', () => {
@@ -105,7 +111,8 @@ describe('BatchScreen', () => {
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // Round 3 active
     batch = completeActiveRound(batch);
-    batch = goToNextRound(batch); // Round 4 stub
+    batch = goToNextRound(batch); // Round 4 active
+    batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // batch summary
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);

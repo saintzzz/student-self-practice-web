@@ -1,7 +1,8 @@
 /**
- * Shared styling for the 4-option "pick one" button shell used by both
- * ImageChoiceQuestion and CountingImageQuestion (both are structurally
- * "pick 1 of 4 options", see plan.md v3).
+ * Shared styling for the 4-option "pick one" button shell used by
+ * ImageChoiceQuestion, CountingImageQuestion, and
+ * DescribeAndChooseImageQuestion (all structurally "pick 1 of 4 options",
+ * see plan.md v3/v5).
  */
 export function getOptionButtonClassName(
   index: number,

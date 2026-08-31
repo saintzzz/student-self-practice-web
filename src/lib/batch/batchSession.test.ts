@@ -12,17 +12,19 @@ import {
   getCurrentQuestion,
   submitExtraLetterAnswer,
   submitListeningAnswer,
+  submitOptionAnswer,
   submitPronunciationAnswer,
 } from '../practiceSession';
 import { ROUND_1_QUESTION_COUNT } from '../rounds/round1ExtraLetter';
 import { ROUND_2_QUESTION_COUNT } from '../rounds/round2ListeningSentence';
 import { ROUND_3_QUESTION_COUNT } from '../rounds/round3Pronunciation';
+import { ROUND_4_QUESTION_COUNT } from '../rounds/round4DescribeAndChooseImage';
 
 /**
  * Answers whichever question is current using the same "guaranteed
  * discoverable, never hardcoded vocabulary" technique the E2E suite uses:
- * tile 0 for extra-letter, a guess that can never accidentally match any
- * real word for listening/pronunciation kinds.
+ * tile/option 0 for tile/option-shaped kinds, a guess that can never
+ * accidentally match any real word for listening/pronunciation kinds.
  */
 function answerCurrentQuestion(state: BatchState): BatchState {
   const question = state.roundSession ? getCurrentQuestion(state.roundSession) : null;
@@ -37,7 +39,10 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   if (question.kind === 'pronunciation-recording') {
     return updateRoundSession(state, (session) => submitPronunciationAnswer(session, '0000'));
   }
-  throw new Error(`Unexpected question kind for Round 1/2/3 in this build: ${question.kind}`);
+  if (question.kind === 'describe-and-choose-image') {
+    return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
+  }
+  throw new Error(`Unexpected question kind for Round 1-4 in this build: ${question.kind}`);
 }
 
 function completeActiveRound(state: BatchState): BatchState {
@@ -67,8 +72,8 @@ describe('createBatch', () => {
   });
 });
 
-describe('full Batch flow (AC17, AC21, AC24)', () => {
-  it('moves through Round 1 -> Round 2 -> Round 3 -> Round 4 stub -> Batch summary', () => {
+describe('full Batch flow (AC17, AC21, AC24, AC25)', () => {
+  it('moves through Round 1 -> Round 2 -> Round 3 -> Round 4 -> Batch summary, all real (no stub)', () => {
     let batch = createBatch('fixed-seed');
 
     expect(currentRoundDefinition(batch)?.roundType).toBe('extra-letter');
@@ -100,10 +105,15 @@ describe('full Batch flow (AC17, AC21, AC24)', () => {
     expect(batch.completedRounds[2]?.implemented).toBe(true);
 
     batch = goToNextRound(batch);
-    expect(batch.phase).toBe('stub');
+    expect(batch.phase).toBe('active');
     expect(currentRoundDefinition(batch)?.roundType).toBe('describe-and-choose-image');
+    expect(batch.roundSession?.questions).toHaveLength(ROUND_4_QUESTION_COUNT);
+
+    batch = completeActiveRound(batch);
+    expect(batch.phase).toBe('round-summary');
     expect(batch.completedRounds).toHaveLength(4);
-    expect(batch.completedRounds[3]?.implemented).toBe(false);
+    expect(batch.completedRounds[3]?.totalCount).toBe(ROUND_4_QUESTION_COUNT);
+    expect(batch.completedRounds[3]?.implemented).toBe(true);
 
     batch = goToNextRound(batch);
     expect(batch.phase).toBe('batch-summary');
@@ -111,7 +121,9 @@ describe('full Batch flow (AC17, AC21, AC24)', () => {
 
     const result = computeBatchResult(batch);
     expect(result.rounds).toHaveLength(4);
-    expect(result.totalQuestions).toBe(ROUND_1_QUESTION_COUNT + ROUND_2_QUESTION_COUNT + ROUND_3_QUESTION_COUNT);
+    expect(result.totalQuestions).toBe(
+      ROUND_1_QUESTION_COUNT + ROUND_2_QUESTION_COUNT + ROUND_3_QUESTION_COUNT + ROUND_4_QUESTION_COUNT,
+    );
     expect(result.totalCorrect).toBeGreaterThanOrEqual(0);
     expect(result.totalCorrect).toBeLessThanOrEqual(result.totalQuestions);
   });

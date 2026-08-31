@@ -7,6 +7,7 @@ import ListeningSentenceFillBlankQuestion from './ListeningSentenceFillBlankQues
 import CountingImageQuestion from './CountingImageQuestion';
 import ExtraLetterQuestion from './ExtraLetterQuestion';
 import PronunciationRecordingQuestion from './PronunciationRecordingQuestion';
+import DescribeAndChooseImageQuestion from './DescribeAndChooseImageQuestion';
 import FeedbackPanel from './FeedbackPanel';
 
 interface QuestionCardProps {
@@ -87,6 +88,15 @@ function renderQuestionBody(
           onSubmit={onSubmitPronunciation}
         />
       );
+    case 'describe-and-choose-image':
+      return (
+        <DescribeAndChooseImageQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
   }
 }
 
@@ -108,6 +118,7 @@ export default function QuestionCard({
       data-testid="question-card"
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
+      data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
       className="mx-auto max-w-2xl px-4 py-10 text-center"
     >
       <p data-testid="question-progress" className="mb-6 text-lg font-bold text-sky-600">

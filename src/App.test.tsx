@@ -6,9 +6,9 @@ import App from './App';
 /**
  * Drives the app through the v5/v6 Batch/Round flow: Grade -> Start a Batch
  * -> Round 1 (extra-letter) -> Round 2 (listening-sentence-fill-blank) ->
- * Round 3 (pronunciation-recording) -> Round 4 stub -> Batch summary. See
- * plan.md v5 "New Interaction Model: Batch / Round" and v6 AC24 (Round 3 is
- * no longer a stub).
+ * Round 3 (pronunciation-recording) -> Round 4 (describe-and-choose-image)
+ * -> Batch summary. See plan.md v5 "New Interaction Model: Batch / Round"
+ * and v6 AC24/AC25 (Round 3 and Round 4 are no longer stubs).
  */
 async function startBatch(user: ReturnType<typeof userEvent.setup>): Promise<void> {
   await user.click(screen.getByTestId('grade-card-grade-2'));
@@ -32,6 +32,8 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
   } else if (kind === 'pronunciation-recording') {
     await user.click(screen.getByTestId('record-button'));
     await waitFor(() => expect(screen.getByTestId('pronunciation-feedback')).toBeVisible());
+  } else if (kind === 'describe-and-choose-image') {
+    await user.click(screen.getByTestId('option-0'));
   }
 
   return kind;
@@ -97,7 +99,9 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     );
   });
 
-  it('completes Round 2, then Round 3 renders and completes for real, then Round 4 stub, reaching the Batch summary (AC17, AC21, AC24)', async () => {
+  it(
+    'completes Round 2, then Round 3 and Round 4 render and complete for real, reaching the Batch summary (AC17, AC21, AC24, AC25)',
+    async () => {
     vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
@@ -119,23 +123,28 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 
-    // Round 4 - still a stub in this build.
+    // Round 4 - real content now (AC25), not a stub.
     expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
-    expect(screen.queryByTestId('question-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('question-card')).toHaveAttribute(
+      'data-question-kind',
+      'describe-and-choose-image',
+    );
+    const round4Kinds = await completeActiveRound(user);
+    expect(round4Kinds).toEqual(new Set(['describe-and-choose-image']));
+    expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 
     expect(screen.getByTestId('batch-score-summary')).toBeVisible();
     expect(screen.getByTestId('round-breakdown-1')).toBeVisible();
     expect(screen.getByTestId('round-breakdown-2')).toBeVisible();
     expect(screen.getByTestId('round-breakdown-3')).not.toHaveTextContent('Chưa có nội dung');
-    expect(screen.getByTestId('round-breakdown-4')).toHaveTextContent('Chưa có nội dung');
-  });
+    expect(screen.getByTestId('round-breakdown-4')).not.toHaveTextContent('Chưa có nội dung');
+    },
+    15000,
+  );
 
-  it('"Luyện tập bài mới" starts a fresh Batch back at Round 1', async () => {
-    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
-    const user = userEvent.setup();
-    render(<App />);
-
+  /** Drives a full Batch (all 4 real Rounds) from a freshly rendered App to the Batch summary. */
+  async function driveFullBatchToSummary(user: ReturnType<typeof userEvent.setup>): Promise<void> {
     await startBatch(user);
     await completeActiveRound(user);
     await user.click(screen.getByTestId('next-round-button'));
@@ -143,30 +152,40 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('next-round-button'));
     await completeActiveRound(user);
     await user.click(screen.getByTestId('next-round-button'));
-    await user.click(screen.getByTestId('next-round-button'));
-
-    await user.click(screen.getByTestId('practice-again-button'));
-
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
-    expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
-  });
-
-  it('"Chọn lớp khác" from the Batch summary returns all the way to grade selection', async () => {
-    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
-    const user = userEvent.setup();
-    render(<App />);
-
-    await startBatch(user);
     await completeActiveRound(user);
     await user.click(screen.getByTestId('next-round-button'));
-    await completeActiveRound(user);
-    await user.click(screen.getByTestId('next-round-button'));
-    await completeActiveRound(user);
-    await user.click(screen.getByTestId('next-round-button'));
-    await user.click(screen.getByTestId('next-round-button'));
+  }
 
-    await user.click(screen.getByTestId('back-to-grades'));
+  it(
+    '"Luyện tập bài mới" starts a fresh Batch back at Round 1',
+    async () => {
+      vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+      const user = userEvent.setup();
+      render(<App />);
 
-    expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
-  });
+      await driveFullBatchToSummary(user);
+
+      await user.click(screen.getByTestId('practice-again-button'));
+
+      expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
+      expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
+    },
+    15000,
+  );
+
+  it(
+    '"Chọn lớp khác" from the Batch summary returns all the way to grade selection',
+    async () => {
+      vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+      const user = userEvent.setup();
+      render(<App />);
+
+      await driveFullBatchToSummary(user);
+
+      await user.click(screen.getByTestId('back-to-grades'));
+
+      expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
+    },
+    15000,
+  );
 });

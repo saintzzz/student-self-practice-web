@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type {
   CountingImageQuestion,
+  DescribeAndChooseImageQuestion,
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
@@ -85,6 +86,22 @@ const PRONUNCIATION_QUESTION: PronunciationRecordingQuestion = {
   explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
+const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
+  id: 'q-dcci-1',
+  topicId: 't1',
+  kind: 'describe-and-choose-image',
+  descriptionType: 'count',
+  sentence: 'There are 3 cats.',
+  options: [
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+    { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 },
+    { word: 'dog', plural: 'dogs', emoji: '🐶', count: 4 },
+  ],
+  correctIndex: 0,
+  explanation: 'Chọn hình có 3 cats.',
+};
+
 const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION, COUNTING_QUESTION, EXTRA_LETTER_QUESTION];
 
 describe('createSession', () => {
@@ -141,6 +158,27 @@ describe('getCorrectWord', () => {
 
   it('returns the target word for pronunciation-recording questions (Round 3)', () => {
     expect(getCorrectWord(PRONUNCIATION_QUESTION)).toBe('cat');
+  });
+
+  it('returns the formatted count label of the correct option for describe-and-choose-image questions (Round 4)', () => {
+    expect(getCorrectWord(DESCRIBE_IMAGE_QUESTION)).toBe('3 cats');
+  });
+});
+
+describe('submitOptionAnswer (describe-and-choose-image, Round 4)', () => {
+  it('records a correct answer against correctIndex', () => {
+    const session = createSession([DESCRIBE_IMAGE_QUESTION]);
+    const updated = submitOptionAnswer(session, 0);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(true);
+    expect(updated.currentAnswer?.selectedIndex).toBe(0);
+  });
+
+  it('records an incorrect answer for a wrong option', () => {
+    const session = createSession([DESCRIBE_IMAGE_QUESTION]);
+    const updated = submitOptionAnswer(session, 1);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(false);
   });
 });
 

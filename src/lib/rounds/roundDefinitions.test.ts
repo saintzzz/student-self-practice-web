@@ -19,14 +19,11 @@ describe('ROUND_DEFINITIONS (AC17 - a Batch is exactly 4 fixed-order Rounds)', (
     expect(ROUND_DEFINITIONS.map((r) => r.roundNumber)).toEqual([1, 2, 3, 4]);
   });
 
-  it('Round 1, Round 2 and Round 3 have real content generators wired in (AC24)', () => {
+  it('all 4 Rounds have real content generators wired in (AC24, AC25)', () => {
     expect(ROUND_DEFINITIONS[0]?.buildQuestions).toBeTypeOf('function');
     expect(ROUND_DEFINITIONS[1]?.buildQuestions).toBeTypeOf('function');
     expect(ROUND_DEFINITIONS[2]?.buildQuestions).toBeTypeOf('function');
-  });
-
-  it('Round 4 is still an explicit placeholder with no generator yet', () => {
-    expect(ROUND_DEFINITIONS[3]?.buildQuestions).toBeUndefined();
+    expect(ROUND_DEFINITIONS[3]?.buildQuestions).toBeTypeOf('function');
   });
 
   it('every round has a non-empty Vietnamese title with no em-dash', () => {

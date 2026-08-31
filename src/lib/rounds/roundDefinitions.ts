@@ -2,12 +2,11 @@ import type { RoundContentDefinition } from './types';
 import { buildRound1Questions } from './round1ExtraLetter';
 import { buildRound2Questions } from './round2ListeningSentence';
 import { buildRound3Questions } from './round3Pronunciation';
+import { buildRound4Questions } from './round4DescribeAndChooseImage';
 
 /**
  * The fixed 4-Round Batch registry, in fixed order (plan.md v5 AC17, v6
- * AC24). Round 4 (describe-and-choose-image) is still an explicit
- * placeholder in this build - see RoundContentDefinition's doc comment for
- * how a follow-up task lights it up.
+ * AC24/AC25). All 4 Rounds have real content generators wired up.
  */
 export const ROUND_DEFINITIONS: readonly RoundContentDefinition[] = [
   {
@@ -32,5 +31,6 @@ export const ROUND_DEFINITIONS: readonly RoundContentDefinition[] = [
     roundNumber: 4,
     roundType: 'describe-and-choose-image',
     titleVi: 'Vòng 4: Chọn hình đúng',
+    buildQuestions: buildRound4Questions,
   },
 ];
