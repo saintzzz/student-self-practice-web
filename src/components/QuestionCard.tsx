@@ -6,6 +6,7 @@ import ListeningFillBlankQuestion from './ListeningFillBlankQuestion';
 import ListeningSentenceFillBlankQuestion from './ListeningSentenceFillBlankQuestion';
 import CountingImageQuestion from './CountingImageQuestion';
 import ExtraLetterQuestion from './ExtraLetterQuestion';
+import PronunciationRecordingQuestion from './PronunciationRecordingQuestion';
 import FeedbackPanel from './FeedbackPanel';
 
 interface QuestionCardProps {
@@ -16,6 +17,7 @@ interface QuestionCardProps {
   onSubmitOption: (index: number) => void;
   onSubmitListening: (typedAnswer: string) => void;
   onSubmitExtraLetter: (letterIndex: number) => void;
+  onSubmitPronunciation: (transcript: string) => void;
   onNext: () => void;
 }
 
@@ -25,6 +27,7 @@ function renderQuestionBody(
   onSubmitOption: (index: number) => void,
   onSubmitListening: (typedAnswer: string) => void,
   onSubmitExtraLetter: (letterIndex: number) => void,
+  onSubmitPronunciation: (transcript: string) => void,
 ) {
   switch (question.kind) {
     case 'image-choice':
@@ -72,6 +75,18 @@ function renderQuestionBody(
           onSelectLetter={onSubmitExtraLetter}
         />
       );
+    case 'pronunciation-recording':
+      return (
+        <PronunciationRecordingQuestion
+          key={question.id}
+          question={question}
+          hasAnswered={currentAnswer !== null}
+          transcript={currentAnswer?.pronunciationTranscript ?? null}
+          score={currentAnswer?.pronunciationScore ?? null}
+          isCorrect={currentAnswer?.isCorrect ?? null}
+          onSubmit={onSubmitPronunciation}
+        />
+      );
   }
 }
 
@@ -83,6 +98,7 @@ export default function QuestionCard({
   onSubmitOption,
   onSubmitListening,
   onSubmitExtraLetter,
+  onSubmitPronunciation,
   onNext,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
@@ -98,9 +114,18 @@ export default function QuestionCard({
         Câu {questionNumber}/{totalQuestions}
       </p>
 
-      {renderQuestionBody(question, currentAnswer, onSubmitOption, onSubmitListening, onSubmitExtraLetter)}
+      {renderQuestionBody(
+        question,
+        currentAnswer,
+        onSubmitOption,
+        onSubmitListening,
+        onSubmitExtraLetter,
+        onSubmitPronunciation,
+      )}
 
-      {currentAnswer && (
+      {/* pronunciation-recording renders its own complete feedback panel
+          (transcript + score + explanation) - see PronunciationRecordingQuestion. */}
+      {currentAnswer && question.kind !== 'pronunciation-recording' && (
         <FeedbackPanel
           kind={question.kind}
           isCorrect={currentAnswer.isCorrect}

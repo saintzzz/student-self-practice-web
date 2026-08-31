@@ -10,7 +10,12 @@ import {
   updateRoundSession,
   type BatchState,
 } from './lib/batch/batchSession';
-import { submitExtraLetterAnswer, submitListeningAnswer, submitOptionAnswer } from './lib/practiceSession';
+import {
+  submitExtraLetterAnswer,
+  submitListeningAnswer,
+  submitOptionAnswer,
+  submitPronunciationAnswer,
+} from './lib/practiceSession';
 
 type Screen = 'grade-select' | 'start-batch' | 'batch';
 
@@ -50,6 +55,11 @@ export default function App() {
     setBatch(updateRoundSession(batch, (session) => submitExtraLetterAnswer(session, letterIndex)));
   }
 
+  function handleSubmitPronunciation(transcript: string): void {
+    if (!batch) return;
+    setBatch(updateRoundSession(batch, (session) => submitPronunciationAnswer(session, transcript)));
+  }
+
   function handleNextQuestion(): void {
     if (!batch) return;
     setBatch(advanceRoundQuestion(batch));
@@ -77,6 +87,7 @@ export default function App() {
         onSubmitOption={handleSubmitOption}
         onSubmitListening={handleSubmitListening}
         onSubmitExtraLetter={handleSubmitExtraLetter}
+        onSubmitPronunciation={handleSubmitPronunciation}
         onNextQuestion={handleNextQuestion}
         onNextRound={handleNextRound}
         onStartNewBatch={handleStartBatch}

@@ -6,6 +6,7 @@ interface ActiveRoundQuestionProps {
   onSubmitOption: (index: number) => void;
   onSubmitListening: (typedAnswer: string) => void;
   onSubmitExtraLetter: (letterIndex: number) => void;
+  onSubmitPronunciation: (transcript: string) => void;
   onNextQuestion: () => void;
 }
 
@@ -15,6 +16,7 @@ export default function ActiveRoundQuestion({
   onSubmitOption,
   onSubmitListening,
   onSubmitExtraLetter,
+  onSubmitPronunciation,
   onNextQuestion,
 }: ActiveRoundQuestionProps) {
   const question = getCurrentQuestion(session);
@@ -31,6 +33,7 @@ export default function ActiveRoundQuestion({
       onSubmitOption={onSubmitOption}
       onSubmitListening={onSubmitListening}
       onSubmitExtraLetter={onSubmitExtraLetter}
+      onSubmitPronunciation={onSubmitPronunciation}
       onNext={onNextQuestion}
     />
   );

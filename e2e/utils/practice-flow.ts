@@ -14,20 +14,26 @@ import { type Locator, type Page, expect } from '@playwright/test';
  * discipline as the v2-v4 tester work this replaces.
  *
  * Superseded by this rewrite (removed, not just extended, per the v5 task
- * instructions): topic selection helpers, image-choice/counting-image
- * option helpers, and the old topic-session-scoped score/summary readers.
- * The v5 interaction model has no topic-selection step (Grade -> Start a
- * Batch directly) and Round 1/2 use only the extra-letter and
- * listening-sentence-fill-blank kinds, so those helpers are unused dead
- * code under the new model. Round 4 ("describe-and-choose-image") will need
- * an option-based helper again once it has real content -- add it back
- * then, not preemptively (YAGNI).
+ * instructions): topic selection helpers, and the old topic-session-scoped
+ * score/summary readers. The v5 interaction model has no topic-selection
+ * step (Grade -> Start a Batch directly), so those are unused dead code
+ * under the new model.
+ *
+ * Round 4 ("describe-and-choose-image", plan.md v6) reintroduces an
+ * option-based ("pick 1 of 4") mechanic -- its primitives (optionButtons,
+ * answerOptionQuestion, currentDescriptionType) live in ./option-flow.ts,
+ * split out to keep both files under the project's ~200-line file-size
+ * guideline; that file imports questionCard/readElementOutcome from here.
  */
 
 export type AnswerOutcome = 'correct' | 'incorrect' | 'neutral' | 'unknown';
 
-/** The two round kinds that have real content in this build phase. */
-export type RoundQuestionKind = 'extra-letter' | 'listening-sentence-fill-blank';
+/** The four Round kinds, in Batch order (plan.md v5 AC17, v6 AC24/AC25). */
+export type RoundQuestionKind =
+  | 'extra-letter'
+  | 'listening-sentence-fill-blank'
+  | 'pronunciation-recording'
+  | 'describe-and-choose-image';
 
 export interface Fraction {
   current: number;

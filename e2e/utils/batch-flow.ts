@@ -13,21 +13,21 @@ import {
 } from './practice-flow';
 
 /**
- * Batch/Round navigation helpers for the v5 interaction model
- * (plans/260827-student-self-practice-site/plan.md, "v5 - Batch/Round
- * Restructure" section, "Data-Testid Contract Additions"). Replaces the old
- * topic-select -> mixed-kind-session -> score-summary flow entirely: this
- * build has no topic selection step, the flow is
+ * Batch/Round navigation and Round 1/Round 2 runners for the v5/v6
+ * interaction model (plans/260827-student-self-practice-site/plan.md, "v5 -
+ * Batch/Round Restructure" and "v6 - Round 3 + Round 4 Real Implementation"
+ * sections, "Data-Testid Contract Additions"). Replaces the old topic-select
+ * -> mixed-kind-session -> score-summary flow entirely: this build has no
+ * topic selection step, the flow is
  * Grade -> Start a Batch -> Round 1..4 -> Batch summary.
  *
- * A Batch is exactly 4 fixed-order Rounds (AC17). Only Round 1
- * (extra-letter) and Round 2 (listening-sentence-fill-blank) have real
- * question content in this build phase; Round 3 and Round 4 are explicit
- * stubs. This file's stub-round helper deliberately does not assume any
- * particular stub UI shape -- see advancePastRound() below.
+ * A Batch is exactly 4 fixed-order Rounds (AC17): extra-letter,
+ * listening-sentence-fill-blank, pronunciation-recording,
+ * describe-and-choose-image. Round 3/Round 4's own runners
+ * (runPronunciationRecordingRoundFallback, runDescribeAndChooseImageRound)
+ * live in ./round34-flow.ts, split out to keep this file under the
+ * project's ~200-line file-size guideline.
  */
-
-const STUB_ROUND_TIMEOUT_MS = 10_000;
 
 /** Starts a batch from a fresh page load: grade selection -> Start a Batch. */
 export async function startBatch(page: Page, gradeIndex = 0): Promise<void> {
@@ -35,6 +35,24 @@ export async function startBatch(page: Page, gradeIndex = 0): Promise<void> {
   await selectGrade(page, gradeIndex);
   await page.getByTestId('start-batch-button').click();
   await expect(page.getByTestId('round-progress')).toBeVisible();
+}
+
+/**
+ * Starts a fresh Batch and drives all the way through Round 1
+ * (extra-letter) and Round 2 (listening-sentence-fill-blank) to land on
+ * Round 3's first question, without re-asserting Round 1/2's own behavior
+ * in depth (that is round1-extra-letter.spec.ts / round2-listening-sentence
+ * .spec.ts's job). Used by Round 3/Round 4 specs that only need to reach
+ * their round quickly. The explicit goToNextRound() call after each round
+ * runner is required -- the round runners stop at that round's
+ * round-score-summary without auto-advancing.
+ */
+export async function fastForwardThroughRounds1And2(page: Page): Promise<void> {
+  await startBatch(page);
+  await runExtraLetterRound(page);
+  await goToNextRound(page);
+  await runListeningSentenceRound(page, { verifyAudioResilience: false });
+  await goToNextRound(page);
 }
 
 export async function readRoundProgress(page: Page): Promise<Fraction> {
@@ -154,86 +172,6 @@ export async function runListeningSentenceRound(
   }
 
   return { totalQuestions: total, correctCount: 0, incorrectCount: total, revealedWords, pageErrors };
-}
-
-export type RoundStubAdvanceOutcome = 'advanced-to-next-round' | 'reached-batch-summary';
-
-/**
- * Advances past a Round that is a content-less stub in this build phase
- * (Round 3 pronunciation-recording, Round 4 describe-and-choose-image --
- * see plan.md v5, not yet implemented). The exact stub UI shape is
- * deliberately NOT assumed (it may show round-score-summary immediately, or
- * expose next-round-button directly with no summary, or skip straight to
- * batch-score-summary if this is the last round) -- this function races for
- * whichever of those becomes visible first and reacts accordingly, and
- * throws a clear, non-silent error if none of them appear within a generous
- * timeout, per the instruction to surface a genuinely blocked flow rather
- * than working around it.
- */
-export async function advancePastRoundStub(page: Page, roundLabel: string): Promise<RoundStubAdvanceOutcome> {
-  const batchSummary = page.getByTestId('batch-score-summary');
-  const roundSummary = page.getByTestId('round-score-summary');
-  const nextRoundButton = page.getByTestId('next-round-button');
-
-  const raceResult = await Promise.race([
-    batchSummary
-      .waitFor({ state: 'visible', timeout: STUB_ROUND_TIMEOUT_MS })
-      .then(() => 'batch-summary' as const)
-      .catch(() => null),
-    roundSummary
-      .waitFor({ state: 'visible', timeout: STUB_ROUND_TIMEOUT_MS })
-      .then(() => 'round-summary' as const)
-      .catch(() => null),
-    nextRoundButton
-      .waitFor({ state: 'visible', timeout: STUB_ROUND_TIMEOUT_MS })
-      .then(() => 'next-round-button' as const)
-      .catch(() => null),
-  ]);
-
-  if (raceResult === null) {
-    throw new Error(
-      `${roundLabel}: none of batch-score-summary, round-score-summary, or next-round-button became visible ` +
-        `within ${STUB_ROUND_TIMEOUT_MS}ms. This stub round appears to block the Batch from ever reaching a ` +
-        'summary screen -- this is a real app-behavior finding to fix, not a test-technique problem to route around.',
-    );
-  }
-
-  if (raceResult === 'batch-summary') {
-    return 'reached-batch-summary';
-  }
-
-  // round-summary and/or next-round-button is visible; either way,
-  // next-round-button is the documented affordance to proceed.
-  await expect(nextRoundButton).toBeVisible({ timeout: STUB_ROUND_TIMEOUT_MS });
-  await nextRoundButton.click();
-
-  // Do NOT race against `round-progress` becoming visible here: BatchScreen
-  // renders RoundProgress on every phase except 'batch-summary' (including
-  // the stub phase we just clicked past), so it is already visible before
-  // this click too and Playwright's waitFor resolves near-instantly against
-  // that stale element, before the real post-click render ever happens -
-  // that previously made this helper misreport 'advanced-to-next-round' even
-  // when the app had genuinely reached the Batch summary. Waiting solely for
-  // batch-summary (with a real timeout, not an instant race) and treating a
-  // timeout as "did not reach it yet" is the reliable signal.
-  const reachedSummary = await batchSummary
-    .waitFor({ state: 'visible', timeout: STUB_ROUND_TIMEOUT_MS })
-    .then(() => true)
-    .catch(() => false);
-
-  if (reachedSummary) {
-    return 'reached-batch-summary';
-  }
-
-  // Confirm the app actually moved on to something (a new round or another
-  // stub) rather than silently doing nothing - fail loudly if not.
-  // RoundProgress renders on every non-batch-summary phase, so its continued
-  // presence is sufficient evidence the app is still rendering a round (as
-  // opposed to a blank/crashed screen), without the earlier race's flaw of
-  // treating "still visible from before" as "just became visible".
-  await expect(page.getByTestId('round-progress')).toBeVisible({ timeout: STUB_ROUND_TIMEOUT_MS });
-
-  return 'advanced-to-next-round';
 }
 
 export type { AnswerOutcome };

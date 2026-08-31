@@ -10,6 +10,7 @@ interface BatchScreenProps {
   onSubmitOption: (index: number) => void;
   onSubmitListening: (typedAnswer: string) => void;
   onSubmitExtraLetter: (letterIndex: number) => void;
+  onSubmitPronunciation: (transcript: string) => void;
   onNextQuestion: () => void;
   onNextRound: () => void;
   onStartNewBatch: () => void;
@@ -31,6 +32,7 @@ export default function BatchScreen({
   onSubmitOption,
   onSubmitListening,
   onSubmitExtraLetter,
+  onSubmitPronunciation,
   onNextQuestion,
   onNextRound,
   onStartNewBatch,
@@ -71,6 +73,7 @@ export default function BatchScreen({
           onSubmitOption={onSubmitOption}
           onSubmitListening={onSubmitListening}
           onSubmitExtraLetter={onSubmitExtraLetter}
+          onSubmitPronunciation={onSubmitPronunciation}
           onNextQuestion={onNextQuestion}
         />
       )}

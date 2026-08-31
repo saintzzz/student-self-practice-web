@@ -8,12 +8,18 @@ import {
   updateRoundSession,
   type BatchState,
 } from '../lib/batch/batchSession';
-import { getCurrentQuestion, submitExtraLetterAnswer, submitListeningAnswer } from '../lib/practiceSession';
+import {
+  getCurrentQuestion,
+  submitExtraLetterAnswer,
+  submitListeningAnswer,
+  submitPronunciationAnswer,
+} from '../lib/practiceSession';
 
 const noopHandlers = {
   onSubmitOption: vi.fn(),
   onSubmitListening: vi.fn(),
   onSubmitExtraLetter: vi.fn(),
+  onSubmitPronunciation: vi.fn(),
   onNextQuestion: vi.fn(),
   onNextRound: vi.fn(),
   onStartNewBatch: vi.fn(),
@@ -25,6 +31,9 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   if (!question) return state;
   if (question.kind === 'extra-letter') {
     return updateRoundSession(state, (session) => submitExtraLetterAnswer(session, 0));
+  }
+  if (question.kind === 'pronunciation-recording') {
+    return updateRoundSession(state, (session) => submitPronunciationAnswer(session, '0000'));
   }
   return updateRoundSession(state, (session) => submitListeningAnswer(session, '0000'));
 }
@@ -58,16 +67,32 @@ describe('BatchScreen', () => {
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
   });
 
-  it('renders the stub placeholder (with next-round-button) for Round 3, not a question card', () => {
+  it('renders a real question card (not a stub) for Round 3, per AC24', () => {
     let batch = createBatch('fixed-seed');
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // -> Round 2 active
     batch = completeActiveRound(batch);
-    batch = goToNextRound(batch); // -> Round 3 stub
+    batch = goToNextRound(batch); // -> Round 3 active
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);
 
     expect(screen.getByTestId('round-progress')).toHaveTextContent('3/4');
+    expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'pronunciation-recording');
+    expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
+  });
+
+  it('renders the stub placeholder (with next-round-button) for Round 4, not a question card', () => {
+    let batch = createBatch('fixed-seed');
+    batch = completeActiveRound(batch);
+    batch = goToNextRound(batch); // -> Round 2 active
+    batch = completeActiveRound(batch);
+    batch = goToNextRound(batch); // -> Round 3 active
+    batch = completeActiveRound(batch);
+    batch = goToNextRound(batch); // -> Round 4 stub
+
+    render(<BatchScreen batch={batch} {...noopHandlers} />);
+
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
     expect(screen.getByTestId('next-round-button')).toBeVisible();
     expect(screen.queryByTestId('question-card')).not.toBeInTheDocument();
     expect(screen.queryByTestId('round-score-summary')).not.toBeInTheDocument();
@@ -78,7 +103,8 @@ describe('BatchScreen', () => {
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch);
     batch = completeActiveRound(batch);
-    batch = goToNextRound(batch); // Round 3 stub
+    batch = goToNextRound(batch); // Round 3 active
+    batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // Round 4 stub
     batch = goToNextRound(batch); // batch summary
 

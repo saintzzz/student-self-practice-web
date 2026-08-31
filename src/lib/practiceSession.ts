@@ -1,11 +1,14 @@
 import type { AnswerRecord, ListeningFillBlankQuestion, ListeningSentenceFillBlankQuestion, Question, SessionResult } from '../types';
 import { formatCountLabel } from './generators/countingImage';
+import { scorePronunciationAttempt } from './rounds/pronunciationScoring';
 
 export interface CurrentAnswer {
   isCorrect: boolean;
   selectedIndex?: number;
   typedAnswer?: string;
   selectedLetterIndex?: number;
+  pronunciationTranscript?: string;
+  pronunciationScore?: number;
 }
 
 export interface PracticeSessionState {
@@ -49,6 +52,8 @@ export function getCorrectWord(question: Question): string {
       return formatCountLabel(question.prompt);
     case 'extra-letter':
       return question.correctWord;
+    case 'pronunciation-recording':
+      return question.word;
   }
 }
 
@@ -128,6 +133,35 @@ export function submitExtraLetterAnswer(
 
   const isCorrect = selectedLetterIndex === currentQuestion.extraIndex;
   return recordAnswer(state, { isCorrect, selectedLetterIndex }, currentQuestion);
+}
+
+/**
+ * Round 3 - Pronunciation Recording (plan.md v5/v6). `transcript` is either
+ * a real SpeechRecognition result or an explicit empty string (no speech
+ * detected, or the student used the skip affordance on the
+ * permission-denied / unsupported-browser fallback messages). Scoring is
+ * computed here - the single source of truth for correctness, same as
+ * every other kind's submit function.
+ */
+export function submitPronunciationAnswer(
+  state: PracticeSessionState,
+  transcript: string,
+): PracticeSessionState {
+  if (hasAnsweredCurrent(state)) {
+    return state;
+  }
+
+  const currentQuestion = getCurrentQuestion(state);
+  if (!currentQuestion || currentQuestion.kind !== 'pronunciation-recording') {
+    return state;
+  }
+
+  const { score, isCorrect } = scorePronunciationAttempt(currentQuestion.word, transcript);
+  return recordAnswer(
+    state,
+    { isCorrect, pronunciationTranscript: transcript, pronunciationScore: score },
+    currentQuestion,
+  );
 }
 
 export function advanceToNextQuestion(state: PracticeSessionState): PracticeSessionState {

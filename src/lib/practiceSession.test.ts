@@ -5,6 +5,7 @@ import type {
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
   ListeningSentenceFillBlankQuestion,
+  PronunciationRecordingQuestion,
   Question,
 } from '../types';
 import {
@@ -19,6 +20,7 @@ import {
   submitExtraLetterAnswer,
   submitListeningAnswer,
   submitOptionAnswer,
+  submitPronunciationAnswer,
 } from './practiceSession';
 
 const IMAGE_QUESTION: ImageChoiceQuestion = {
@@ -75,6 +77,14 @@ const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
   explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
+const PRONUNCIATION_QUESTION: PronunciationRecordingQuestion = {
+  id: 'q-pron-1',
+  topicId: 't1',
+  kind: 'pronunciation-recording',
+  word: 'cat',
+  explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
 const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION, COUNTING_QUESTION, EXTRA_LETTER_QUESTION];
 
 describe('createSession', () => {
@@ -127,6 +137,44 @@ describe('getCorrectWord', () => {
 
   it('returns the target word for listening-sentence-fill-blank questions (Round 2)', () => {
     expect(getCorrectWord(LISTENING_SENTENCE_QUESTION)).toBe('cat');
+  });
+
+  it('returns the target word for pronunciation-recording questions (Round 3)', () => {
+    expect(getCorrectWord(PRONUNCIATION_QUESTION)).toBe('cat');
+  });
+});
+
+describe('submitPronunciationAnswer', () => {
+  it('marks the answer correct and records score 100 for an exact transcript match', () => {
+    const session = createSession([PRONUNCIATION_QUESTION]);
+    const answered = submitPronunciationAnswer(session, 'cat');
+
+    expect(answered.currentAnswer?.isCorrect).toBe(true);
+    expect(answered.currentAnswer?.pronunciationScore).toBe(100);
+    expect(answered.currentAnswer?.pronunciationTranscript).toBe('cat');
+  });
+
+  it('marks the answer incorrect with score 0 for an empty transcript (no speech / skipped)', () => {
+    const session = createSession([PRONUNCIATION_QUESTION]);
+    const answered = submitPronunciationAnswer(session, '');
+
+    expect(answered.currentAnswer?.isCorrect).toBe(false);
+    expect(answered.currentAnswer?.pronunciationScore).toBe(0);
+  });
+
+  it('does nothing if the current question is not a pronunciation-recording question', () => {
+    const session = createSession([IMAGE_QUESTION]);
+    const answered = submitPronunciationAnswer(session, 'cat');
+
+    expect(answered.currentAnswer).toBeNull();
+  });
+
+  it('does nothing if the current question has already been answered', () => {
+    const session = createSession([PRONUNCIATION_QUESTION]);
+    const answered = submitPronunciationAnswer(session, 'cat');
+    const reAnswered = submitPronunciationAnswer(answered, 'dog');
+
+    expect(reAnswered.currentAnswer?.pronunciationTranscript).toBe('cat');
   });
 });
 

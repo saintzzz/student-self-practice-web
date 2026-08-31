@@ -5,6 +5,7 @@ import type {
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
   ListeningSentenceFillBlankQuestion,
+  PronunciationRecordingQuestion,
 } from '../types';
 
 /** Shared fixtures for QuestionCard.test.tsx and QuestionCard.counting-extra.test.tsx. */
@@ -62,9 +63,18 @@ export const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',
 };
 
+export const PRONUNCIATION_QUESTION: PronunciationRecordingQuestion = {
+  id: 'q6',
+  topicId: 't1',
+  kind: 'pronunciation-recording',
+  word: 'cat',
+  explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
 export const noopHandlers = {
   onSubmitOption: vi.fn(),
   onSubmitListening: vi.fn(),
   onSubmitExtraLetter: vi.fn(),
+  onSubmitPronunciation: vi.fn(),
   onNext: vi.fn(),
 };

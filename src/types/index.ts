@@ -30,7 +30,8 @@ export type QuestionKind =
   | 'listening-fill-blank'
   | 'counting-image'
   | 'extra-letter'
-  | 'listening-sentence-fill-blank';
+  | 'listening-sentence-fill-blank'
+  | 'pronunciation-recording';
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -99,21 +100,38 @@ export interface ListeningSentenceFillBlankQuestion {
   explanation: string;
 }
 
+/**
+ * Round 3 of the v5 Batch/Round model (see plan.md "Round 3 - Pronunciation
+ * Recording"). The student reads `word` aloud; the browser's
+ * SpeechRecognition API transcribes the attempt and
+ * `submitPronunciationAnswer` (practiceSession.ts) scores it via
+ * `scorePronunciationAttempt` (rounds/pronunciationScoring.ts) - an
+ * approximate string-similarity check, not phoneme-level analysis.
+ */
+export interface PronunciationRecordingQuestion {
+  id: string;
+  topicId: string;
+  kind: 'pronunciation-recording';
+  word: string;
+  explanation: string;
+}
+
 export type Question =
   | ImageChoiceQuestion
   | ListeningFillBlankQuestion
   | CountingImageQuestion
   | ExtraLetterQuestion
-  | ListeningSentenceFillBlankQuestion;
+  | ListeningSentenceFillBlankQuestion
+  | PronunciationRecordingQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:
- * Batch / Round"). Only `extra-letter` (Round 1) and
- * `listening-sentence-fill-blank` (Round 2) have real content generators
- * wired up in this build; `pronunciation-recording` (Round 3) and
- * `describe-and-choose-image` (Round 4) exist as a type-level placeholder
- * only - a follow-up task adds their real generators/components without
- * needing to touch this union or the round-index plumbing.
+ * Batch / Round"). `extra-letter` (Round 1), `listening-sentence-fill-blank`
+ * (Round 2), and `pronunciation-recording` (Round 3) have real content
+ * generators wired up in this build; `describe-and-choose-image` (Round 4)
+ * still exists as a type-level placeholder only - a follow-up task adds its
+ * real generator/component without needing to touch this union or the
+ * round-index plumbing.
  */
 export type RoundType =
   | 'extra-letter'
