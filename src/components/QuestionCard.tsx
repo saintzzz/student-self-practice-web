@@ -4,6 +4,7 @@ import { getCorrectWord } from '../lib/practiceSession';
 import ImageChoiceQuestion from './ImageChoiceQuestion';
 import ListeningFillBlankQuestion from './ListeningFillBlankQuestion';
 import ListeningSentenceFillBlankQuestion from './ListeningSentenceFillBlankQuestion';
+import ListeningImageChoiceQuestion from './ListeningImageChoiceQuestion';
 import CountingImageQuestion from './CountingImageQuestion';
 import ExtraLetterQuestion from './ExtraLetterQuestion';
 import PronunciationRecordingQuestion from './PronunciationRecordingQuestion';
@@ -91,6 +92,15 @@ function renderQuestionBody(
     case 'describe-and-choose-image':
       return (
         <DescribeAndChooseImageQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
+    case 'listening-image-choice':
+      return (
+        <ListeningImageChoiceQuestion
           key={question.id}
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}

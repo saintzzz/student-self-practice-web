@@ -40,7 +40,7 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   if (question.kind === 'pronunciation-recording') {
     return updateRoundSession(state, (session) => submitPronunciationAnswer(session, '0000'));
   }
-  if (question.kind === 'describe-and-choose-image') {
+  if (question.kind === 'describe-and-choose-image' || question.kind === 'listening-image-choice') {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
   }
   throw new Error(`Unexpected question kind for Round 1-4 in this build: ${question.kind}`);

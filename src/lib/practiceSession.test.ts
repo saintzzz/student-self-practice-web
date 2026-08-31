@@ -5,6 +5,7 @@ import type {
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
+  ListeningImageChoiceQuestion,
   ListeningSentenceFillBlankQuestion,
   PronunciationRecordingQuestion,
   Question,
@@ -102,6 +103,16 @@ const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
   explanation: 'Chọn hình có 3 cats.',
 };
 
+const LISTENING_IMAGE_CHOICE_QUESTION: ListeningImageChoiceQuestion = {
+  id: 'q-lic-1',
+  topicId: 't1',
+  kind: 'listening-image-choice',
+  word: 'cat',
+  options: ['🐱', '🐶', '🐟', '🐦'],
+  correctIndex: 0,
+  explanation: 'Con mèo tiếng Anh là "cat".',
+};
+
 const QUESTIONS: Question[] = [IMAGE_QUESTION, LISTENING_QUESTION, COUNTING_QUESTION, EXTRA_LETTER_QUESTION];
 
 describe('createSession', () => {
@@ -162,6 +173,27 @@ describe('getCorrectWord', () => {
 
   it('returns the formatted count label of the correct option for describe-and-choose-image questions (Round 4)', () => {
     expect(getCorrectWord(DESCRIBE_IMAGE_QUESTION)).toBe('3 cats');
+  });
+
+  it('returns the target word for listening-image-choice questions (Round 2 addition)', () => {
+    expect(getCorrectWord(LISTENING_IMAGE_CHOICE_QUESTION)).toBe('cat');
+  });
+});
+
+describe('submitOptionAnswer (listening-image-choice, Round 2 addition)', () => {
+  it('records a correct answer against correctIndex', () => {
+    const session = createSession([LISTENING_IMAGE_CHOICE_QUESTION]);
+    const updated = submitOptionAnswer(session, 0);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(true);
+    expect(updated.currentAnswer?.selectedIndex).toBe(0);
+  });
+
+  it('records an incorrect answer for a wrong option', () => {
+    const session = createSession([LISTENING_IMAGE_CHOICE_QUESTION]);
+    const updated = submitOptionAnswer(session, 1);
+
+    expect(updated.currentAnswer?.isCorrect).toBe(false);
   });
 });
 

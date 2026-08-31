@@ -7,7 +7,7 @@ import {
   runExtraLetterRound,
   type RoundRunResult,
 } from './utils/batch-flow';
-import { currentQuestionKind } from './utils/practice-flow';
+import { currentQuestionKind, currentQuestionKindOneOf } from './utils/practice-flow';
 
 /**
  * Covers plan.md v5 AC17 (Round 1 of the new Batch/Round interaction model)
@@ -68,12 +68,15 @@ test.describe('Batch/Round: Round 1 (extra-letter)', () => {
       expect(roundScore.current).toBe(round1.correctCount);
     });
 
-    await test.step('advancing past the round score summary begins Round 2 (listening-sentence-fill-blank)', async () => {
+    await test.step('advancing past the round score summary begins Round 2 (listening, either v8 kind)', async () => {
       await goToNextRound(page);
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(2);
       expect(roundProgress.total).toBe(4);
-      await currentQuestionKind(page, 'listening-sentence-fill-blank');
+      // v8 mixes listening-image-choice into Round 2's pool alongside
+      // listening-sentence-fill-blank (plan.md v8 AC30), so the first
+      // question can legitimately be either kind.
+      await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
     });
   });
 });

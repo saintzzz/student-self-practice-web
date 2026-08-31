@@ -56,6 +56,8 @@ export function getCorrectWord(question: Question): string {
       return question.word;
     case 'describe-and-choose-image':
       return formatCountLabel(question.options[question.correctIndex]);
+    case 'listening-image-choice':
+      return question.word;
   }
 }
 
@@ -79,7 +81,12 @@ function recordAnswer(
   };
 }
 
-/** Handles image-choice, counting-image and describe-and-choose-image - all "pick 1 of 4 options" shaped. */
+/**
+ * Handles every "pick 1 of 4 options" shaped kind: image-choice,
+ * counting-image, describe-and-choose-image and listening-image-choice
+ * (plan.md v8 "Round 2 Addition: Listening Image-Choice" - no typing, same
+ * correctIndex-based scoring as the other option-shaped kinds).
+ */
 export function submitOptionAnswer(
   state: PracticeSessionState,
   selectedIndex: number,
@@ -93,7 +100,8 @@ export function submitOptionAnswer(
     !currentQuestion ||
     (currentQuestion.kind !== 'image-choice' &&
       currentQuestion.kind !== 'counting-image' &&
-      currentQuestion.kind !== 'describe-and-choose-image')
+      currentQuestion.kind !== 'describe-and-choose-image' &&
+      currentQuestion.kind !== 'listening-image-choice')
   ) {
     return state;
   }

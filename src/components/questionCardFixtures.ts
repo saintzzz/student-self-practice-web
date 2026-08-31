@@ -5,6 +5,7 @@ import type {
   ExtraLetterQuestion,
   ImageChoiceQuestion,
   ListeningFillBlankQuestion,
+  ListeningImageChoiceQuestion,
   ListeningSentenceFillBlankQuestion,
   PronunciationRecordingQuestion,
 } from '../types';
@@ -86,6 +87,16 @@ export const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
   ],
   correctIndex: 0,
   explanation: 'Chọn hình có 3 cats. Con mèo tiếng Anh là "cat".',
+};
+
+export const LISTENING_IMAGE_CHOICE_QUESTION: ListeningImageChoiceQuestion = {
+  id: 'q8',
+  topicId: 't1',
+  kind: 'listening-image-choice',
+  word: 'cat',
+  options: ['🐱', '🐶', '🐟', '🐦'],
+  correctIndex: 0,
+  explanation: 'Con mèo tiếng Anh là "cat".',
 };
 
 export const noopHandlers = {

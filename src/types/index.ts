@@ -32,7 +32,8 @@ export type QuestionKind =
   | 'extra-letter'
   | 'listening-sentence-fill-blank'
   | 'pronunciation-recording'
-  | 'describe-and-choose-image';
+  | 'describe-and-choose-image'
+  | 'listening-image-choice';
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -102,6 +103,23 @@ export interface ListeningSentenceFillBlankQuestion {
 }
 
 /**
+ * Round 2 addition (plan.md v8 "Round 2 Addition: Listening Image-Choice").
+ * TTS speaks `word` in full; the student picks the matching image from
+ * `options` (4 emojis, no typing) - reuses the same "pick 1 of 4 options"
+ * shell and `option-{index}` testid as `ImageChoiceQuestion`. Mixed into
+ * Round 2's pool alongside `ListeningSentenceFillBlankQuestion`.
+ */
+export interface ListeningImageChoiceQuestion {
+  id: string;
+  topicId: string;
+  kind: 'listening-image-choice';
+  word: string;
+  options: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+/**
  * Round 3 of the v5 Batch/Round model (see plan.md "Round 3 - Pronunciation
  * Recording"). The student reads `word` aloud; the browser's
  * SpeechRecognition API transcribes the attempt and
@@ -150,7 +168,8 @@ export type Question =
   | ExtraLetterQuestion
   | ListeningSentenceFillBlankQuestion
   | PronunciationRecordingQuestion
-  | DescribeAndChooseImageQuestion;
+  | DescribeAndChooseImageQuestion
+  | ListeningImageChoiceQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:

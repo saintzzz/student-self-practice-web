@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { goToNextRound, readBatchScoreSummary, readRoundProgress, runExtraLetterRound, runListeningSentenceRound, startBatch } from './utils/batch-flow';
-import { type Fraction, currentQuestionKind, parseFraction, questionCard } from './utils/practice-flow';
+import { type Fraction, currentQuestionKind, currentQuestionKindOneOf, parseFraction, questionCard } from './utils/practice-flow';
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 
 /**
@@ -48,8 +48,12 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
       });
       await goToNextRound(page);
 
-      const round2 = await test.step('Round 2 (listening-sentence-fill-blank) is real, not a stub', async () => {
-        await currentQuestionKind(page, 'listening-sentence-fill-blank');
+      const round2 = await test.step('Round 2 (listening-sentence-fill-blank + v8 listening-image-choice) is real, not a stub', async () => {
+        // v8 mixes listening-image-choice into Round 2's pool alongside
+        // listening-sentence-fill-blank (plan.md v8 AC30) -- the first
+        // question of a given Batch attempt can legitimately be either kind,
+        // so this no longer asserts one exact kind here.
+        await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
         return runListeningSentenceRound(page, { verifyAudioResilience: false });
       });
       await goToNextRound(page);

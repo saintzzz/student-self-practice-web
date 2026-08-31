@@ -28,12 +28,21 @@ import { type Locator, type Page, expect } from '@playwright/test';
 
 export type AnswerOutcome = 'correct' | 'incorrect' | 'neutral' | 'unknown';
 
-/** The four Round kinds, in Batch order (plan.md v5 AC17, v6 AC24/AC25). */
+/**
+ * The Round kinds, in Batch order (plan.md v5 AC17, v6 AC24/AC25). v8 adds
+ * two more kinds that mix into Round 2 and Round 4's pools respectively
+ * (plan.md v8 "Architecture note": a single Round's question pool can mix
+ * two different `kind` values, one fixed theme/skill per Round, not
+ * literally one exact `kind` string) -- `listening-image-choice` (Round 2,
+ * AC30) and `picture-pair-matching` (Round 4, AC31).
+ */
 export type RoundQuestionKind =
   | 'extra-letter'
   | 'listening-sentence-fill-blank'
+  | 'listening-image-choice'
   | 'pronunciation-recording'
-  | 'describe-and-choose-image';
+  | 'describe-and-choose-image'
+  | 'picture-pair-matching';
 
 export interface Fraction {
   current: number;
@@ -90,6 +99,26 @@ export async function currentQuestionKind(page: Page, expectedKind: RoundQuestio
     );
   }
   return kind;
+}
+
+/**
+ * Same discipline as currentQuestionKind but for the v8 mixed-pool Rounds
+ * (plan.md v8 "Architecture note"): Round 2 mixes listening-sentence-fill
+ * -blank + listening-image-choice, Round 4 mixes describe-and-choose-image +
+ * picture-pair-matching. Callers pass the allow-list of kinds valid for that
+ * Round instead of a single exact kind.
+ */
+export async function currentQuestionKindOneOf(
+  page: Page,
+  expectedKinds: RoundQuestionKind[],
+): Promise<RoundQuestionKind> {
+  const kind = await questionCard(page).getAttribute('data-question-kind');
+  if (!expectedKinds.includes(kind as RoundQuestionKind)) {
+    throw new Error(
+      `Expected question-card data-question-kind to be one of [${expectedKinds.join(', ')}] for this round, got: "${kind}".`,
+    );
+  }
+  return kind as RoundQuestionKind;
 }
 
 /**

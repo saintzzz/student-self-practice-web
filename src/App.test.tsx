@@ -4,11 +4,12 @@ import userEvent from '@testing-library/user-event';
 import App from './App';
 
 /**
- * Drives the app through the v5/v6 Batch/Round flow: Grade -> Start a Batch
- * -> Round 1 (extra-letter) -> Round 2 (listening-sentence-fill-blank) ->
- * Round 3 (pronunciation-recording) -> Round 4 (describe-and-choose-image)
- * -> Batch summary. See plan.md v5 "New Interaction Model: Batch / Round"
- * and v6 AC24/AC25 (Round 3 and Round 4 are no longer stubs).
+ * Drives the app through the v5/v6/v8 Batch/Round flow: Grade -> Start a
+ * Batch -> Round 1 (extra-letter) -> Round 2 (listening-sentence-fill-blank
+ * mixed with listening-image-choice, plan.md v8 AC30) -> Round 3
+ * (pronunciation-recording) -> Round 4 (describe-and-choose-image) -> Batch
+ * summary. See plan.md v5 "New Interaction Model: Batch / Round" and v6
+ * AC24/AC25 (Round 3 and Round 4 are no longer stubs).
  */
 async function startBatch(user: ReturnType<typeof userEvent.setup>): Promise<void> {
   await user.click(screen.getByTestId('grade-card-grade-2'));
@@ -29,6 +30,8 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
     await user.click(screen.getByTestId('letter-tile-0'));
   } else if (kind === 'listening-sentence-fill-blank') {
     await user.click(screen.getByTestId('submit-answer-button'));
+  } else if (kind === 'listening-image-choice') {
+    await user.click(screen.getByTestId('option-0'));
   } else if (kind === 'pronunciation-recording') {
     await user.click(screen.getByTestId('record-button'));
     await waitFor(() => expect(screen.getByTestId('pronunciation-feedback')).toBeVisible());
@@ -80,7 +83,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
   });
 
-  it('completes Round 1, shows a round score summary, and Round 2 begins on listening-sentence-fill-blank (AC17, AC18)', async () => {
+  it('completes Round 1, shows a round score summary, and Round 2 begins with a listening kind (AC17, AC18, AC30)', async () => {
     vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();
     render(<App />);
@@ -93,10 +96,8 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('next-round-button'));
 
     expect(screen.getByTestId('round-progress')).toHaveTextContent('2/4');
-    expect(screen.getByTestId('question-card')).toHaveAttribute(
-      'data-question-kind',
-      'listening-sentence-fill-blank',
-    );
+    const round2FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
+    expect(['listening-sentence-fill-blank', 'listening-image-choice']).toContain(round2FirstKind);
   });
 
   it(
@@ -111,7 +112,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('next-round-button'));
 
     const round2Kinds = await completeActiveRound(user);
-    expect(round2Kinds).toEqual(new Set(['listening-sentence-fill-blank']));
+    expect(round2Kinds).toEqual(new Set(['listening-sentence-fill-blank', 'listening-image-choice']));
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 

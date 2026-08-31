@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { goToNextRound, runExtraLetterRound, startBatch } from './utils/batch-flow';
-import { currentQuestionKind } from './utils/practice-flow';
+import { currentQuestionKind, currentQuestionKindOneOf } from './utils/practice-flow';
 import {
   fastForwardRoundTimerForTesting,
   hasRoundTimerTestHook,
@@ -85,7 +85,9 @@ test.describe('Batch/Round: round timer (AC27, AC28, AC29)', () => {
     await runExtraLetterRound(page);
     await goToNextRound(page);
 
-    await currentQuestionKind(page, 'listening-sentence-fill-blank');
+    // v8 mixes listening-image-choice into Round 2's pool (plan.md v8
+    // AC30), so the first question here can legitimately be either kind.
+    await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
     const round2Seconds = await readRoundTimerSeconds(page);
     expect(
       round2Seconds,
