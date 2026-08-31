@@ -6,6 +6,7 @@ import { GRADES } from './data/vocabulary';
 import {
   advanceRoundQuestion,
   createBatch,
+  endRoundEarly,
   goToNextRound,
   updateRoundSession,
   type BatchState,
@@ -70,6 +71,12 @@ export default function App() {
     setBatch(goToNextRound(batch));
   }
 
+  /** Round's 5:00 countdown reached 0 (plan.md v7 AC28) - end the Round now, scored on whatever was answered so far. */
+  function handleRoundTimeExpired(): void {
+    if (!batch) return;
+    setBatch(endRoundEarly(batch));
+  }
+
   if (screen === 'grade-select') {
     return <GradeSelect grades={GRADES} onSelectGrade={handleSelectGrade} />;
   }
@@ -92,6 +99,7 @@ export default function App() {
         onNextRound={handleNextRound}
         onStartNewBatch={handleStartBatch}
         onChooseGrade={handleBackToGrades}
+        onRoundTimeExpired={handleRoundTimeExpired}
       />
     );
   }

@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 import BatchScreen from './BatchScreen';
 import {
   advanceRoundQuestion,
@@ -15,17 +15,23 @@ import {
   submitOptionAnswer,
   submitPronunciationAnswer,
 } from '../lib/practiceSession';
+import { ROUND_DURATION_SECONDS } from '../hooks/useRoundTimer';
 
-const noopHandlers = {
-  onSubmitOption: vi.fn(),
-  onSubmitListening: vi.fn(),
-  onSubmitExtraLetter: vi.fn(),
-  onSubmitPronunciation: vi.fn(),
-  onNextQuestion: vi.fn(),
-  onNextRound: vi.fn(),
-  onStartNewBatch: vi.fn(),
-  onChooseGrade: vi.fn(),
-};
+function buildNoopHandlers() {
+  return {
+    onSubmitOption: vi.fn(),
+    onSubmitListening: vi.fn(),
+    onSubmitExtraLetter: vi.fn(),
+    onSubmitPronunciation: vi.fn(),
+    onNextQuestion: vi.fn(),
+    onNextRound: vi.fn(),
+    onStartNewBatch: vi.fn(),
+    onChooseGrade: vi.fn(),
+    onRoundTimeExpired: vi.fn(),
+  };
+}
+
+const noopHandlers = buildNoopHandlers();
 
 function answerCurrentQuestion(state: BatchState): BatchState {
   const question = state.roundSession ? getCurrentQuestion(state.roundSession) : null;
@@ -119,5 +125,126 @@ describe('BatchScreen', () => {
 
     expect(screen.getByTestId('batch-score-summary')).toBeVisible();
     expect(screen.queryByTestId('round-progress')).not.toBeInTheDocument();
+  });
+});
+
+describe('BatchScreen live score + round timer (plan.md v7, AC26-AC29)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows live-score and round-timer from the start of an active Round', () => {
+    const batch = createBatch('fixed-seed');
+
+    render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+
+    expect(screen.getByTestId('live-score')).toHaveTextContent('0/0');
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('5:00');
+  });
+
+  it('updates live-score the instant an answer is recorded, before Next is clicked', () => {
+    const batch = createBatch('fixed-seed');
+    const answered = answerCurrentQuestion(batch);
+
+    const { rerender } = render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+    expect(screen.getByTestId('live-score')).toHaveTextContent('0/0');
+
+    rerender(<BatchScreen batch={answered} {...buildNoopHandlers()} />);
+
+    expect(screen.getByTestId('live-score')).toHaveTextContent('/1');
+  });
+
+  it('counts the round-timer down once per second while the Round is active', () => {
+    const batch = createBatch('fixed-seed');
+    render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('4:57');
+  });
+
+  it('does not end the Round before the full 5:00 has elapsed', () => {
+    const handlers = buildNoopHandlers();
+    const batch = createBatch('fixed-seed');
+    render(<BatchScreen batch={batch} {...handlers} />);
+
+    act(() => {
+      vi.advanceTimersByTime(ROUND_DURATION_SECONDS * 1000 - 1000);
+    });
+
+    expect(handlers.onRoundTimeExpired).not.toHaveBeenCalled();
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('0:01');
+  });
+
+  it('calls onRoundTimeExpired exactly once when the countdown reaches 0:00 (AC28)', () => {
+    const handlers = buildNoopHandlers();
+    const batch = createBatch('fixed-seed');
+    render(<BatchScreen batch={batch} {...handlers} />);
+
+    act(() => {
+      vi.advanceTimersByTime(ROUND_DURATION_SECONDS * 1000);
+    });
+
+    expect(handlers.onRoundTimeExpired).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('0:00');
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(handlers.onRoundTimeExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets to a fresh 5:00 when the next Round starts (AC29)', () => {
+    let batch = createBatch('fixed-seed');
+    const { rerender } = render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('4:00');
+
+    batch = completeActiveRound(batch);
+    rerender(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+    batch = goToNextRound(batch);
+    rerender(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('5:00');
+  });
+
+  it('resets to a fresh 5:00 for Round 1 of a brand-new Batch ("Luyện tập bài mới")', () => {
+    let batch = createBatch('fixed-seed');
+    const { rerender } = render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
+
+    act(() => {
+      vi.advanceTimersByTime(120_000);
+    });
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('3:00');
+
+    const freshBatch = createBatch('a-different-seed');
+    rerender(<BatchScreen batch={freshBatch} {...buildNoopHandlers()} />);
+
+    expect(screen.getByTestId('round-timer')).toHaveTextContent('5:00');
+  });
+
+  it('stops ticking once the Round is no longer active (no leaked interval)', () => {
+    const handlers = buildNoopHandlers();
+    let batch = createBatch('fixed-seed');
+    const { rerender } = render(<BatchScreen batch={batch} {...handlers} />);
+
+    batch = completeActiveRound(batch);
+    rerender(<BatchScreen batch={batch} {...handlers} />);
+    expect(screen.getByTestId('round-score-summary')).toBeVisible();
+
+    act(() => {
+      vi.advanceTimersByTime(ROUND_DURATION_SECONDS * 1000);
+    });
+
+    expect(handlers.onRoundTimeExpired).not.toHaveBeenCalled();
   });
 });

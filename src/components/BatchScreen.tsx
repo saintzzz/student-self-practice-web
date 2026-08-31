@@ -1,5 +1,8 @@
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
+import { useRoundTimer } from '../hooks/useRoundTimer';
 import RoundProgress from './RoundProgress';
+import LiveScore from './LiveScore';
+import RoundTimer from './RoundTimer';
 import ActiveRoundQuestion from './ActiveRoundQuestion';
 import RoundSummary from './RoundSummary';
 import RoundStub from './RoundStub';
@@ -15,6 +18,8 @@ interface BatchScreenProps {
   onNextRound: () => void;
   onStartNewBatch: () => void;
   onChooseGrade: () => void;
+  /** Called exactly once when the active Round's 5:00 timer expires (plan.md v7 AC28). */
+  onRoundTimeExpired: () => void;
 }
 
 const TOTAL_ROUNDS = 4;
@@ -26,6 +31,12 @@ const TOTAL_ROUNDS = 4;
  * gets a `buildQuestions`, `phase` naturally becomes 'active' for them too
  * and they render through the exact same ActiveRoundQuestion/RoundSummary
  * path Round 1/2 already use - no new phase or component is required here.
+ *
+ * Also owns the per-Round timer (plan.md v7 "Round Timer"): `useRoundTimer`
+ * is called unconditionally (Rules of Hooks) before any phase branch, keyed
+ * on `${batch.seed}:${batch.roundIndex}` so it resets to a fresh 5:00 on
+ * every new Round, including Round 1 of a brand-new Batch (AC29), and only
+ * ticks while `phase === 'active'`.
  */
 export default function BatchScreen({
   batch,
@@ -37,7 +48,11 @@ export default function BatchScreen({
   onNextRound,
   onStartNewBatch,
   onChooseGrade,
+  onRoundTimeExpired,
 }: BatchScreenProps) {
+  const roundKey = `${batch.seed}:${batch.roundIndex}`;
+  const { secondsRemaining } = useRoundTimer(roundKey, batch.phase === 'active', onRoundTimeExpired);
+
   if (batch.phase === 'batch-summary') {
     return (
       <BatchSummary
@@ -68,14 +83,20 @@ export default function BatchScreen({
       {batch.phase === 'stub' && <RoundStub titleVi={definition.titleVi} onNextRound={onNextRound} />}
 
       {batch.phase === 'active' && batch.roundSession && (
-        <ActiveRoundQuestion
-          session={batch.roundSession}
-          onSubmitOption={onSubmitOption}
-          onSubmitListening={onSubmitListening}
-          onSubmitExtraLetter={onSubmitExtraLetter}
-          onSubmitPronunciation={onSubmitPronunciation}
-          onNextQuestion={onNextQuestion}
-        />
+        <>
+          <div className="mb-4 flex items-center justify-center gap-6">
+            <LiveScore session={batch.roundSession} />
+            <RoundTimer secondsRemaining={secondsRemaining} />
+          </div>
+          <ActiveRoundQuestion
+            session={batch.roundSession}
+            onSubmitOption={onSubmitOption}
+            onSubmitListening={onSubmitListening}
+            onSubmitExtraLetter={onSubmitExtraLetter}
+            onSubmitPronunciation={onSubmitPronunciation}
+            onNextQuestion={onNextQuestion}
+          />
+        </>
       )}
 
       {batch.phase === 'round-summary' && lastCompletedOutcome && (

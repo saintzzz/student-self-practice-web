@@ -187,12 +187,20 @@ export function isSessionComplete(state: PracticeSessionState): boolean {
   return state.currentIndex >= state.questions.length;
 }
 
+/**
+ * `totalCount` is derived from `state.answers.length` (questions actually
+ * answered so far), not `state.questions.length` (the Round's full size).
+ * These are identical once a Round completes normally (every question is
+ * answered before the loop advances past it), but they diverge when a Round
+ * ends early - e.g. the plan.md v7 Round Timer expiring mid-Round (AC28) -
+ * where only the answered questions should count toward the total.
+ */
 export function computeSessionResult(state: PracticeSessionState): SessionResult {
   const correctCount = state.answers.filter((answer) => answer.isCorrect).length;
 
   return {
     correctCount,
-    totalCount: state.questions.length,
+    totalCount: state.answers.length,
     answers: state.answers,
   };
 }

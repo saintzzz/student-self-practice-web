@@ -140,6 +140,34 @@ export function advanceRoundQuestion(state: BatchState): BatchState {
   };
 }
 
+/**
+ * Ends the active Round immediately, scoring whatever was answered so far
+ * (plan.md v7 "Round Timer" AC28) - invoked when a Round's 5:00 countdown
+ * reaches 0. Goes straight to that Round's round-summary, exactly like a
+ * normal completion via `advanceRoundQuestion`, except `buildRoundOutcome`'s
+ * `totalCount` now reflects only answered questions (see
+ * `computeSessionResult` in practiceSession.ts) instead of the Round's full
+ * question count - unanswered questions are excluded, never counted wrong.
+ * A no-op outside the active phase, so a stray/late timer callback can never
+ * corrupt an already-finished Round or Batch.
+ */
+export function endRoundEarly(state: BatchState): BatchState {
+  if (state.phase !== 'active' || !state.roundSession) {
+    return state;
+  }
+
+  const definition = ROUND_DEFINITIONS[state.roundIndex];
+  if (!definition) {
+    return { ...state, phase: 'batch-summary', roundSession: null };
+  }
+
+  return {
+    ...state,
+    phase: 'round-summary',
+    completedRounds: [...state.completedRounds, buildRoundOutcome(definition, state.roundSession)],
+  };
+}
+
 /** Moves from the current Round's summary/stub to the next Round, or to the Batch summary after Round 4. */
 export function goToNextRound(state: BatchState): BatchState {
   const nextIndex = state.roundIndex + 1;

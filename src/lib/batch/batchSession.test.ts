@@ -4,6 +4,7 @@ import {
   computeBatchResult,
   createBatch,
   currentRoundDefinition,
+  endRoundEarly,
   goToNextRound,
   updateRoundSession,
   type BatchState,
@@ -146,5 +147,75 @@ describe('updateRoundSession / advanceRoundQuestion guards', () => {
     const after = advanceRoundQuestion(batch);
 
     expect(after).toBe(batch);
+  });
+});
+
+describe('endRoundEarly (plan.md v7 "Round Timer", AC28)', () => {
+  it('is a no-op outside the active phase', () => {
+    let batch = createBatch('fixed-seed');
+    batch = completeActiveRound(batch);
+
+    const after = endRoundEarly(batch);
+
+    expect(after).toBe(batch);
+  });
+
+  it('ends the Round immediately when nothing has been answered yet, scoring 0/0', () => {
+    const batch = createBatch('fixed-seed');
+
+    const ended = endRoundEarly(batch);
+
+    expect(ended.phase).toBe('round-summary');
+    expect(ended.completedRounds).toHaveLength(1);
+    expect(ended.completedRounds[0]?.totalCount).toBe(0);
+    expect(ended.completedRounds[0]?.correctCount).toBe(0);
+    expect(ended.completedRounds[0]?.implemented).toBe(true);
+  });
+
+  it('scores only the questions answered so far, excluding unanswered ones from the total (AC28)', () => {
+    let batch = createBatch('fixed-seed');
+    // Answer exactly 3 questions (out of ROUND_1_QUESTION_COUNT), then time out.
+    for (let i = 0; i < 3; i += 1) {
+      batch = answerCurrentQuestion(batch);
+      batch = advanceRoundQuestion(batch);
+    }
+    expect(batch.phase).toBe('active'); // still mid-round - fewer than the full round count answered
+
+    const ended = endRoundEarly(batch);
+
+    expect(ended.phase).toBe('round-summary');
+    expect(ended.completedRounds).toHaveLength(1);
+    expect(ended.completedRounds[0]?.totalCount).toBe(3);
+    expect(ended.completedRounds[0]?.totalCount).toBeLessThan(ROUND_1_QUESTION_COUNT);
+  });
+
+  it('never crashes or blocks the Batch - goToNextRound proceeds normally after an early-ended Round', () => {
+    let batch = createBatch('fixed-seed');
+    batch = answerCurrentQuestion(batch);
+    batch = advanceRoundQuestion(batch);
+    batch = endRoundEarly(batch);
+
+    batch = goToNextRound(batch);
+
+    expect(batch.phase).toBe('active');
+    expect(currentRoundDefinition(batch)?.roundType).toBe('listening-sentence-fill-blank');
+  });
+
+  it('a Batch can reach batch-summary even if every Round times out with zero answers', () => {
+    let batch = createBatch('fixed-seed');
+    batch = endRoundEarly(batch); // Round 1
+    batch = goToNextRound(batch);
+    batch = endRoundEarly(batch); // Round 2
+    batch = goToNextRound(batch);
+    batch = endRoundEarly(batch); // Round 3
+    batch = goToNextRound(batch);
+    batch = endRoundEarly(batch); // Round 4
+    batch = goToNextRound(batch);
+
+    expect(batch.phase).toBe('batch-summary');
+    const result = computeBatchResult(batch);
+    expect(result.rounds).toHaveLength(4);
+    expect(result.totalQuestions).toBe(0);
+    expect(result.totalCorrect).toBe(0);
   });
 });
