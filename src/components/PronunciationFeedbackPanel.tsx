@@ -25,7 +25,7 @@ export default function PronunciationFeedbackPanel({
   return (
     <div
       data-testid="pronunciation-feedback"
-      className={`mt-2 rounded-2xl border-4 p-5 text-left ${
+      className={`mt-2 rounded-2xl border-4 p-4 text-left ${
         isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-rose-400 bg-rose-50'
       }`}
     >

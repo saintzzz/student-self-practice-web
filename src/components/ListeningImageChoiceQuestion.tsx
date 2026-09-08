@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ListeningImageChoiceQuestion as ListeningImageChoiceQuestionType } from '../types';
 import { speakWord } from '../lib/speech';
 import { getOptionButtonClassName } from './optionButtonStyle';
+import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface ListeningImageChoiceQuestionProps {
   question: ListeningImageChoiceQuestionType;
@@ -32,12 +33,12 @@ export default function ListeningImageChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">Nghe từ rồi chọn đúng hình nhé!</p>
+      <p className="mb-2 text-xl font-semibold text-sky-700">Nghe từ rồi chọn đúng hình nhé!</p>
       <button
         type="button"
         data-testid="play-audio-button"
         onClick={handlePlay}
-        className="mb-6 rounded-full bg-indigo-500 px-8 py-5 text-2xl font-bold text-white shadow-md transition hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-400"
+        className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
       >
         {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
       </button>

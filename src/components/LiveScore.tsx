@@ -17,7 +17,7 @@ export default function LiveScore({ session }: LiveScoreProps) {
   const { correct, answered } = computeLiveScore(session);
 
   return (
-    <p data-testid="live-score" className="text-lg font-bold text-emerald-700">
+    <p data-testid="live-score" className="text-base font-bold text-emerald-700">
       Điểm: {correct}/{answered} đúng
     </p>
   );

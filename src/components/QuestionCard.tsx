@@ -11,6 +11,7 @@ import PronunciationRecordingQuestion from './PronunciationRecordingQuestion';
 import DescribeAndChooseImageQuestion from './DescribeAndChooseImageQuestion';
 import PicturePairMatchingQuestion from './PicturePairMatchingQuestion';
 import FeedbackPanel from './FeedbackPanel';
+import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface QuestionCardProps {
   question: Question;
@@ -142,9 +143,17 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="mx-auto max-w-2xl px-4 py-10 text-center"
+      className="py-2 text-center [@media(max-height:420px)]:py-1"
     >
-      <p data-testid="question-progress" className="mb-6 text-lg font-bold text-sky-600">
+      {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
+          wrapper already provides that exact centering/padding, and this
+          component is always rendered nested inside it; re-applying the
+          same px-4 here was doubling the horizontal padding and shrinking
+          the width available for wrapped tile rows on narrow phones. */}
+      <p
+        data-testid="question-progress"
+        className="mb-1 text-base font-bold text-sky-600 [@media(max-height:420px)]:mb-0"
+      >
         Câu {questionNumber}/{totalQuestions}
       </p>
 
@@ -174,7 +183,7 @@ export default function QuestionCard({
         data-testid="next-button"
         disabled={!hasAnswered}
         onClick={onNext}
-        className="mt-8 rounded-2xl bg-amber-500 px-10 py-4 text-2xl font-bold text-white shadow-md transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className={`mt-2 [@media(max-height:420px)]:mt-1 ${CONTINUE_BUTTON_CLASSNAME}`}
       >
         Câu tiếp theo →
       </button>

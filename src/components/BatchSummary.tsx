@@ -1,4 +1,5 @@
 import type { BatchResult } from '../lib/batch/batchSession';
+import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface BatchSummaryProps {
   result: BatchResult;
@@ -36,19 +37,14 @@ export default function BatchSummary({ result, onStartNewBatch, onChooseGrade }:
       </div>
 
       <div className="flex flex-col justify-center gap-4 sm:flex-row">
-        <button
-          type="button"
-          data-testid="practice-again-button"
-          onClick={onStartNewBatch}
-          className="rounded-2xl bg-amber-500 px-8 py-4 text-2xl font-bold text-white shadow-md transition hover:bg-amber-600"
-        >
+        <button type="button" data-testid="practice-again-button" onClick={onStartNewBatch} className={CONTINUE_BUTTON_CLASSNAME}>
           Luyện tập bài mới
         </button>
         <button
           type="button"
           data-testid="back-to-grades"
           onClick={onChooseGrade}
-          className="rounded-2xl border-4 border-sky-300 bg-white px-8 py-4 text-2xl font-bold text-sky-700 transition hover:bg-sky-50"
+          className="flex min-h-[76px] items-center justify-center rounded-2xl border-4 border-sky-300 bg-white px-8 py-4 text-2xl font-bold text-sky-700 transition hover:bg-sky-50"
         >
           Chọn lớp khác
         </button>

@@ -16,8 +16,8 @@ export default function ImageChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">Từ nào đúng với hình này?</p>
-      <div className="mb-6 text-8xl" aria-hidden="true">
+      <p className="mb-2 text-xl font-semibold text-sky-700">Từ nào đúng với hình này?</p>
+      <div className="mb-3 text-8xl" aria-hidden="true">
         {question.emoji}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

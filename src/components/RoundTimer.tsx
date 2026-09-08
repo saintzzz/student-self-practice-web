@@ -20,7 +20,7 @@ export default function RoundTimer({ secondsRemaining }: RoundTimerProps) {
   return (
     <p
       data-testid="round-timer"
-      className={`text-lg font-bold ${isUrgent ? 'text-red-600' : 'text-sky-700'}`}
+      className={`text-base font-bold ${isUrgent ? 'text-red-600' : 'text-sky-700'}`}
     >
       ⏱ {formatTimer(secondsRemaining)}
     </p>

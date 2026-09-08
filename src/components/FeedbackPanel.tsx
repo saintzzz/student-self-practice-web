@@ -17,7 +17,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
   return (
     <div
       data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
-      className={`mt-6 rounded-2xl border-4 p-5 text-left ${
+      className={`mt-3 rounded-2xl border-4 p-4 text-left ${
         isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-rose-400 bg-rose-50'
       }`}
     >

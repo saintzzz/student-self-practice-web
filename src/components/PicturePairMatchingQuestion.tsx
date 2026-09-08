@@ -59,12 +59,12 @@ export default function PicturePairMatchingQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">Ghép mỗi từ tiếng Anh với đúng hình của nó nhé!</p>
-      <p data-testid="pair-matching-mistake-count" className="mb-4 text-lg font-bold text-rose-600">
+      <p className="mb-2 text-xl font-semibold text-sky-700">Ghép mỗi từ tiếng Anh với đúng hình của nó nhé!</p>
+      <p data-testid="pair-matching-mistake-count" className="mb-2 text-lg font-bold text-rose-600">
         Sai: {state.mistakeCount}/{MAX_PAIR_MATCHING_MISTAKES}
       </p>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4">
         {question.tiles.map((tile, index) => {
           const isMatched = outcome === 'failed' || isPairMatchingTileMatched(state, question.tiles, index);
           const isPending = state.pendingTileIndex === index;

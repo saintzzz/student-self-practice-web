@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CountingImageOption, DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
 import { speakSentence } from '../lib/speech';
 import { getOptionButtonClassName } from './optionButtonStyle';
+import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface DescribeAndChooseImageQuestionProps {
   question: DescribeAndChooseImageQuestionType;
@@ -35,13 +36,13 @@ export default function DescribeAndChooseImageQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">Nghe hoặc đọc câu rồi chọn hình đúng nhé!</p>
-      <p className="mb-6 text-3xl font-extrabold text-sky-900">{question.sentence}</p>
+      <p className="mb-2 text-xl font-semibold text-sky-700">Nghe hoặc đọc câu rồi chọn hình đúng nhé!</p>
+      <p className="mb-3 text-3xl font-extrabold text-sky-900">{question.sentence}</p>
       <button
         type="button"
         data-testid="play-audio-button"
         onClick={handlePlay}
-        className="mb-6 rounded-full bg-indigo-500 px-8 py-5 text-2xl font-bold text-white shadow-md transition hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-400"
+        className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
       >
         {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
       </button>

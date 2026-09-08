@@ -35,8 +35,8 @@ export default function PronunciationRecordingQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">Đọc to từ này lên nhé:</p>
-      <p className="mb-6 text-4xl font-extrabold text-sky-900">{question.word}</p>
+      <p className="mb-2 text-xl font-semibold text-sky-700">Đọc to từ này lên nhé:</p>
+      <p className="mb-3 text-4xl font-extrabold text-sky-900">{question.word}</p>
 
       {hasAnswered ? (
         <PronunciationFeedbackPanel
@@ -48,7 +48,7 @@ export default function PronunciationRecordingQuestion({
         />
       ) : (
         <>
-          <p className="mb-6 text-base italic text-slate-500">{DISCLOSURE_TEXT}</p>
+          <p className="mb-3 text-base italic text-slate-500">{DISCLOSURE_TEXT}</p>
 
           {phase === 'unsupported' && (
             <PronunciationStatusMessage
@@ -74,7 +74,7 @@ export default function PronunciationRecordingQuestion({
                 type="button"
                 data-testid="record-button"
                 onClick={phase === 'recording' ? stopRecording : startRecording}
-                className="rounded-full bg-rose-500 px-8 py-5 text-2xl font-bold text-white shadow-md transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-400"
+                className="flex min-h-[76px] items-center justify-center rounded-full bg-rose-500 px-8 py-3 text-2xl font-bold text-white shadow-md transition hover:bg-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-400"
               >
                 {phase === 'recording' ? '⏹️ Đang ghi âm, nhấn để dừng' : '🎙️ Nhấn để ghi âm'}
               </button>

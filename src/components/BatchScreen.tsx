@@ -79,14 +79,14 @@ export default function BatchScreen({
   const lastCompletedOutcome = batch.completedRounds[batch.completedRounds.length - 1];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-8">
+    <div className="mx-auto max-w-2xl px-4 pt-2">
       <RoundProgress roundNumber={definition.roundNumber} totalRounds={TOTAL_ROUNDS} titleVi={definition.titleVi} />
 
       {batch.phase === 'stub' && <RoundStub titleVi={definition.titleVi} onNextRound={onNextRound} />}
 
       {batch.phase === 'active' && batch.roundSession && (
         <>
-          <div className="mb-4 flex items-center justify-center gap-6">
+          <div className="mb-1 flex items-center justify-center gap-3 [@media(max-height:420px)]:mb-0">
             <LiveScore session={batch.roundSession} />
             <RoundTimer secondsRemaining={secondsRemaining} />
           </div>

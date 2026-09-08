@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { ListeningSentenceFillBlankQuestion as ListeningSentenceFillBlankQuestionType } from '../types';
 import { speakSentence } from '../lib/speech';
+import { AUDIO_BUTTON_CLASSNAME, SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface ListeningSentenceFillBlankQuestionProps {
   question: ListeningSentenceFillBlankQuestionType;
@@ -36,13 +37,13 @@ export default function ListeningSentenceFillBlankQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">Nghe câu và điền từ còn thiếu nhé!</p>
-      <p className="mb-6 text-3xl font-extrabold text-sky-900">{question.displaySentence}</p>
+      <p className="mb-2 text-xl font-semibold text-sky-700">Nghe câu và điền từ còn thiếu nhé!</p>
+      <p className="mb-3 text-3xl font-extrabold text-sky-900">{question.displaySentence}</p>
       <button
         type="button"
         data-testid="play-audio-button"
         onClick={handlePlay}
-        className="mb-6 rounded-full bg-indigo-500 px-8 py-5 text-2xl font-bold text-white shadow-md transition hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-400"
+        className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
       >
         {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
       </button>
@@ -54,14 +55,9 @@ export default function ListeningSentenceFillBlankQuestion({
           disabled={hasAnswered}
           onChange={(event) => setInputValue(event.target.value)}
           placeholder="Gõ từ còn thiếu..."
-          className="w-full rounded-2xl border-4 border-sky-200 px-5 py-4 text-2xl font-semibold text-sky-900 focus:outline-none focus:ring-4 focus:ring-sky-500 disabled:bg-slate-100 sm:w-64"
+          className="min-h-[76px] w-full rounded-2xl border-4 border-sky-200 px-5 py-4 text-2xl font-semibold text-sky-900 focus:outline-none focus:ring-4 focus:ring-sky-500 disabled:bg-slate-100 sm:w-64"
         />
-        <button
-          type="submit"
-          data-testid="submit-answer-button"
-          disabled={hasAnswered}
-          className="rounded-2xl bg-emerald-500 px-8 py-4 text-2xl font-bold text-white shadow-md transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
+        <button type="submit" data-testid="submit-answer-button" disabled={hasAnswered} className={SUBMIT_ANSWER_BUTTON_CLASSNAME}>
           Kiểm tra
         </button>
       </form>

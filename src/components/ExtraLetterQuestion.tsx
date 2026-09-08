@@ -8,7 +8,8 @@ interface ExtraLetterQuestionProps {
 
 function getTileClassName(index: number, selectedLetterIndex: number | null, extraIndex: number): string {
   const base =
-    'relative flex h-16 w-16 items-center justify-center rounded-2xl border-4 text-3xl font-extrabold uppercase transition focus:outline-none focus:ring-4 focus:ring-sky-500';
+    'relative flex min-h-[76px] min-w-[76px] items-center justify-center rounded-2xl border-4 text-3xl ' +
+    'font-extrabold uppercase transition focus:outline-none focus:ring-4 focus:ring-sky-500';
 
   if (selectedLetterIndex === null) {
     return `${base} border-sky-200 bg-white text-sky-900 hover:border-sky-400`;
@@ -35,10 +36,10 @@ export default function ExtraLetterQuestion({
 
   return (
     <div>
-      <p className="mb-4 text-xl font-semibold text-sky-700">
+      <p className="mb-2 text-xl font-semibold text-sky-700">
         Từ này có 1 chữ cái thừa! Bấm vào chữ cái em nghĩ là thừa nhé.
       </p>
-      <div className="mb-6 flex flex-wrap justify-center gap-3">
+      <div className="mb-2 flex flex-wrap justify-center gap-x-3 gap-y-2">
         {question.displayLetters.map((letter, index) => (
           <button
             key={`${letter}-${index}`}
