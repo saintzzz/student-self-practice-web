@@ -1,7 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { fastForwardThroughRounds1And2, goToNextRound, readRoundProgress } from './utils/batch-flow';
-import { currentQuestionKind, questionCard } from './utils/practice-flow';
+import { currentQuestionKind, currentQuestionKindOneOf, questionCard } from './utils/practice-flow';
 import { runPronunciationRecordingRoundFallback } from './utils/round34-flow';
+
+// Round 4 mixes describe-and-choose-image with picture-pair-matching (plan.md
+// v8) - which kind shuffles first is not deterministic, so tests here only
+// assert "a real Round 4 kind", never one specific kind, matching the
+// pattern already used by round34-flow.ts and round-topic-spread.spec.ts.
+const ROUND4_KINDS = ['describe-and-choose-image', 'picture-pair-matching'] as const;
 
 /**
  * Covers plan.md v5/v6 Round 3 (pronunciation-recording -- AC19, AC24, Data-
@@ -26,10 +32,12 @@ import { runPronunciationRecordingRoundFallback } from './utils/round34-flow';
  *      deleting window.SpeechRecognition/webkitSpeechRecognition before the
  *      page loads) renders and does not block the Batch from reaching
  *      Round 4 (AC19).
- *   4. the mic-permission-denied-message fallback path (forced by a
- *      rejecting navigator.mediaDevices.getUserMedia mock, since headless
- *      Chromium has no microphone to grant permission for anyway) renders
- *      and does not block the Batch from reaching Round 4 (AC19).
+ *   4. the mic-permission-denied-message fallback path (forced by a stub
+ *      SpeechRecognition that reports a 'not-allowed' error, since headless
+ *      Chromium has no microphone to grant permission for anyway, and the
+ *      app itself no longer pre-flights a separate getUserMedia() call --
+ *      see usePronunciationRecording.ts) renders and does not block the
+ *      Batch from reaching Round 4 (AC19).
  *
  * These tests were written before Round 3 had a real implementation --
  * Round 3 was being built by another agent in parallel with this suite
@@ -156,11 +164,11 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
     await runPronunciationRecordingRoundFallback(page, 'speech-recognition-unsupported');
     await goToNextRound(page);
 
-    await test.step('the Batch reaches Round 4 (describe-and-choose-image) after the unsupported-browser fallback, never getting stuck', async () => {
+    await test.step('the Batch reaches Round 4 after the unsupported-browser fallback, never getting stuck', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(4);
       expect(roundProgress.total).toBe(4);
-      await currentQuestionKind(page, 'describe-and-choose-image');
+      await currentQuestionKindOneOf(page, [...ROUND4_KINDS]);
     });
   });
 
@@ -170,14 +178,33 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
     await page.addInitScript(() => {
       // Simulate the user denying the microphone permission prompt --
       // plan.md v5 Round 3 "Microphone permission flow (request, handle
-      // denial gracefully...)". Headless Chromium has no real microphone
-      // and no way to show/accept a permission prompt, so a rejecting
-      // getUserMedia mock is the deterministic way to exercise this path.
-      const denyGetUserMedia = () => Promise.reject(new DOMException('Permission denied by test harness', 'NotAllowedError'));
-      if (!navigator.mediaDevices) {
-        Object.defineProperty(navigator, 'mediaDevices', { value: {}, configurable: true });
+      // denial gracefully...)". The app no longer pre-flights a separate
+      // getUserMedia() call before starting recognition (removed to avoid a
+      // double mic-acquisition race on Android Chrome -- see
+      // usePronunciationRecording.ts), so permission denial is simulated by
+      // making SpeechRecognition itself report a 'not-allowed' error, the
+      // same signal the app's onerror handler already reacts to.
+      class DenyingRecognition {
+        lang = '';
+        continuous = false;
+        interimResults = false;
+        maxAlternatives = 1;
+        onresult: ((event: unknown) => void) | null = null;
+        onerror: ((event: { error: string }) => void) | null = null;
+        onend: (() => void) | null = null;
+
+        start() {
+          setTimeout(() => this.onerror?.({ error: 'not-allowed' }), 0);
+        }
+
+        stop() {}
+        abort() {}
       }
-      navigator.mediaDevices.getUserMedia = denyGetUserMedia;
+
+      // @ts-expect-error test-only global stub, not a full SpeechRecognition type
+      window.SpeechRecognition = DenyingRecognition;
+      // @ts-expect-error test-only global stub, not a full SpeechRecognition type
+      window.webkitSpeechRecognition = DenyingRecognition;
     });
 
     await fastForwardThroughRounds1And2(page);
@@ -186,11 +213,11 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
     await runPronunciationRecordingRoundFallback(page, 'mic-permission-denied');
     await goToNextRound(page);
 
-    await test.step('the Batch reaches Round 4 (describe-and-choose-image) after the permission-denied fallback, never getting stuck', async () => {
+    await test.step('the Batch reaches Round 4 after the permission-denied fallback, never getting stuck', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(4);
       expect(roundProgress.total).toBe(4);
-      await currentQuestionKind(page, 'describe-and-choose-image');
+      await currentQuestionKindOneOf(page, [...ROUND4_KINDS]);
     });
   });
 });

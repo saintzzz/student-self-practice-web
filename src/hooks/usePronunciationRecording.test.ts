@@ -47,8 +47,31 @@ describe('usePronunciationRecording', () => {
     await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
   });
 
-  it('moves to permission-denied when getUserMedia rejects', async () => {
-    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockRejectedValue(new Error('Permission denied'));
+  it('moves to permission-denied when the recognizer reports a not-allowed error', async () => {
+    // startRecording no longer pre-flights a separate getUserMedia() call
+    // (removed to avoid a double mic-acquisition race on Android Chrome) -
+    // permission denial now surfaces solely through SpeechRecognition's own
+    // onerror, exercised here the same way speechRecognition.test.ts does.
+    class DenyingRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+
+      start(): void {
+        setTimeout(() => this.onerror?.({ error: 'not-allowed' }), 0);
+      }
+
+      stop(): void {}
+      abort(): void {}
+    }
+
+    const original = { ...testWindow() };
+    testWindow().SpeechRecognition = DenyingRecognition;
+    testWindow().webkitSpeechRecognition = undefined;
 
     const { result } = renderHook(() => usePronunciationRecording(vi.fn()));
 
@@ -57,6 +80,9 @@ describe('usePronunciationRecording', () => {
     });
 
     await waitFor(() => expect(result.current.phase).toBe('permission-denied'));
+
+    testWindow().SpeechRecognition = original.SpeechRecognition;
+    testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
   });
 
   it('skip calls onAttempt with an empty string exactly once', async () => {

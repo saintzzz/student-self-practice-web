@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   isSpeechRecognitionSupported,
-  requestMicrophonePermission,
   startSpeechRecognition,
   type SpeechRecognitionController,
 } from '../lib/speechRecognition';
@@ -51,28 +50,26 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
   const startRecording = useCallback(() => {
     if (settledRef.current || phase === 'recording') return;
 
-    void (async () => {
-      const granted = await requestMicrophonePermission();
-      if (settledRef.current) return;
-      if (!granted) {
-        setPhase('permission-denied');
-        return;
-      }
+    // Goes straight to SpeechRecognition.start() instead of pre-flighting a
+    // separate getUserMedia() call - requesting the microphone twice in a
+    // row (once here, once again internally when recognition starts) is a
+    // known source of flaky mic-acquisition failures on Android Chrome.
+    // SpeechRecognition's own onerror already reports permission denial via
+    // the 'not-allowed' family of codes (see PERMISSION_ERROR_CODES), so
+    // nothing is lost by not asking twice.
+    const controller = startSpeechRecognition({
+      onResult: (transcript) => finish(transcript),
+      onPermissionError: () => setPhase('permission-denied'),
+      onOtherError: () => finish(''),
+    });
 
-      const controller = startSpeechRecognition({
-        onResult: (transcript) => finish(transcript),
-        onPermissionError: () => setPhase('permission-denied'),
-        onOtherError: () => finish(''),
-      });
+    if (!controller) {
+      setPhase('unsupported');
+      return;
+    }
 
-      if (!controller) {
-        setPhase('unsupported');
-        return;
-      }
-
-      controllerRef.current = controller;
-      setPhase('recording');
-    })();
+    controllerRef.current = controller;
+    setPhase('recording');
   }, [phase, finish]);
 
   const stopRecording = useCallback(() => {
