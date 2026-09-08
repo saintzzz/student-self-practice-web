@@ -1,5 +1,7 @@
 import type { BatchResult } from '../lib/batch/batchSession';
+import { getScoreStatus } from '../lib/batch/scoreStatus';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
+import Mascot from './Mascot';
 
 interface BatchSummaryProps {
   result: BatchResult;
@@ -7,13 +9,30 @@ interface BatchSummaryProps {
   onChooseGrade: () => void;
 }
 
-/** Shown after Round 4 (plan.md v5 AC21: total score + per-round breakdown). */
+/**
+ * Shown after Round 4 (plan.md v5 AC21: total score + per-round breakdown;
+ * plan.md v10: points is now the headline metric, matching IOE's own
+ * raw-point-total convention, with the existing correct-count line kept as
+ * a secondary detail).
+ */
 export default function BatchSummary({ result, onStartNewBatch, onChooseGrade }: BatchSummaryProps) {
+  const status = getScoreStatus(result.points, result.maxPoints);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 text-center">
+      <Mascot mood="celebrating" />
       <h1 className="mb-3 text-4xl font-extrabold text-sky-900">Hoàn thành bài luyện tập!</h1>
-      <p data-testid="batch-score-summary" className="mb-10 text-2xl font-semibold text-sky-700">
+      <p data-testid="batch-points-summary" className="mb-1 text-4xl font-extrabold text-amber-600">
+        {result.points}/{result.maxPoints} điểm
+      </p>
+      <p data-testid="batch-score-summary" className="mb-2 text-xl font-semibold text-sky-700">
         Tổng điểm: {result.totalCorrect}/{result.totalQuestions} câu đúng.
+      </p>
+      <p
+        data-testid="batch-completion-badge"
+        className={`mb-10 text-lg font-semibold ${status.isComplete ? 'text-emerald-700' : 'text-sky-700'}`}
+      >
+        {status.label}
       </p>
 
       <div className="mb-10 text-left">
@@ -28,7 +47,7 @@ export default function BatchSummary({ result, onStartNewBatch, onChooseGrade }:
               <p className="text-lg font-bold text-sky-900">{round.titleVi}</p>
               <p className="text-base text-slate-700">
                 {round.implemented
-                  ? `${round.correctCount}/${round.totalCount} câu đúng`
+                  ? `${round.correctCount}/${round.totalCount} câu đúng (${round.points}/${round.maxPoints} điểm)`
                   : 'Chưa có nội dung ở bản này'}
               </p>
             </li>

@@ -1,4 +1,5 @@
 import type { Grade } from '../types';
+import Mascot from './Mascot';
 
 interface StartBatchScreenProps {
   grade: Grade;
@@ -9,7 +10,8 @@ interface StartBatchScreenProps {
 /**
  * Replaces the old topic-selection screen (plan.md v5: "Grade -> Start a
  * Batch, a single button, no topic selection needed since a Batch pulls
- * from the whole vocabulary pool, not one topic").
+ * from the whole vocabulary pool, not one topic"). Greets with the app-wide
+ * pig mascot (plan.md v10, AC38).
  */
 export default function StartBatchScreen({ grade, onStartBatch, onBack }: StartBatchScreenProps) {
   return (
@@ -22,6 +24,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onBack }: StartB
       >
         ← Quay lại chọn lớp
       </button>
+      <Mascot mood="greeting" />
       <h1 className="mb-3 text-4xl font-extrabold text-sky-900">{grade.name}: Sẵn sàng luyện tập chưa?</h1>
       <p className="mb-10 text-xl text-sky-700">
         Một bài luyện tập gồm 4 vòng nhỏ, mỗi vòng khoảng 10 câu hỏi. Bấm nút bên dưới để bắt đầu nhé!

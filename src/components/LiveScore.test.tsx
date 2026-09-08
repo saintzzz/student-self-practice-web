@@ -26,29 +26,32 @@ const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
 
 const QUESTIONS: Question[] = [IMAGE_QUESTION, EXTRA_LETTER_QUESTION];
 
-describe('LiveScore (plan.md v7 "Live Score Display", AC26)', () => {
-  it('shows 0/0 before any question is answered', () => {
+describe('LiveScore (plan.md v7 "Live Score Display", AC26; plan.md v10 "Points Scoring", AC35)', () => {
+  it('shows 0/0 and 0 points before any question is answered', () => {
     const session = createSession(QUESTIONS);
 
     render(<LiveScore session={session} />);
 
     expect(screen.getByTestId('live-score')).toHaveTextContent('0/0');
+    expect(screen.getByTestId('live-score')).toHaveTextContent('0 điểm');
   });
 
-  it('shows the running total against answered-so-far, not the Round total', () => {
+  it('shows the running total against answered-so-far, not the Round total, plus 10 points for the one correct answer', () => {
     const session = submitOptionAnswer(createSession(QUESTIONS), 0); // correct, but 1 of 2 questions total
 
     render(<LiveScore session={session} />);
 
     expect(screen.getByTestId('live-score')).toHaveTextContent('1/1');
+    expect(screen.getByTestId('live-score')).toHaveTextContent('10 điểm');
   });
 
-  it('counts incorrect answers toward "answered" but not "correct"', () => {
+  it('counts incorrect answers toward "answered" but not "correct", contributing 0 points', () => {
     const session = submitOptionAnswer(createSession(QUESTIONS), 1); // wrong option
 
     render(<LiveScore session={session} />);
 
     expect(screen.getByTestId('live-score')).toHaveTextContent('0/1');
+    expect(screen.getByTestId('live-score')).toHaveTextContent('0 điểm');
   });
 
   it('accumulates across multiple answered questions within the same Round', () => {
@@ -60,5 +63,6 @@ describe('LiveScore (plan.md v7 "Live Score Display", AC26)', () => {
     render(<LiveScore session={session} />);
 
     expect(screen.getByTestId('live-score')).toHaveTextContent('1/2');
+    expect(screen.getByTestId('live-score')).toHaveTextContent('10 điểm');
   });
 });

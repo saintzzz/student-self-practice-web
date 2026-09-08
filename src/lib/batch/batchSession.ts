@@ -1,6 +1,7 @@
 import type { RoundType } from '../../types';
 import { ROUND_DEFINITIONS } from '../rounds/roundDefinitions';
 import type { RoundContentDefinition } from '../rounds/types';
+import { POINTS_PER_CORRECT_ANSWER } from './points';
 import {
   advanceToNextQuestion,
   computeSessionResult,
@@ -15,6 +16,10 @@ export interface RoundOutcome {
   titleVi: string;
   correctCount: number;
   totalCount: number;
+  /** correctCount * POINTS_PER_CORRECT_ANSWER (plan.md v10, AC34). */
+  points: number;
+  /** totalCount * POINTS_PER_CORRECT_ANSWER - this Round's max given what was actually answered. */
+  maxPoints: number;
   /** False for a Round rendered as a stub placeholder (no real content yet). */
   implemented: boolean;
 }
@@ -22,6 +27,10 @@ export interface RoundOutcome {
 export interface BatchResult {
   totalCorrect: number;
   totalQuestions: number;
+  /** Sum of every Round's points (plan.md v10, AC36). */
+  points: number;
+  /** Sum of every Round's maxPoints. */
+  maxPoints: number;
   rounds: RoundOutcome[];
 }
 
@@ -51,6 +60,8 @@ function buildRoundOutcome(
       titleVi: definition.titleVi,
       correctCount: 0,
       totalCount: 0,
+      points: 0,
+      maxPoints: 0,
       implemented: false,
     };
   }
@@ -62,6 +73,8 @@ function buildRoundOutcome(
     titleVi: definition.titleVi,
     correctCount: result.correctCount,
     totalCount: result.totalCount,
+    points: result.correctCount * POINTS_PER_CORRECT_ANSWER,
+    maxPoints: result.totalCount * POINTS_PER_CORRECT_ANSWER,
     implemented: true,
   };
 }
@@ -181,5 +194,7 @@ export function goToNextRound(state: BatchState): BatchState {
 export function computeBatchResult(state: BatchState): BatchResult {
   const totalCorrect = state.completedRounds.reduce((sum, round) => sum + round.correctCount, 0);
   const totalQuestions = state.completedRounds.reduce((sum, round) => sum + round.totalCount, 0);
-  return { totalCorrect, totalQuestions, rounds: state.completedRounds };
+  const points = state.completedRounds.reduce((sum, round) => sum + round.points, 0);
+  const maxPoints = state.completedRounds.reduce((sum, round) => sum + round.maxPoints, 0);
+  return { totalCorrect, totalQuestions, points, maxPoints, rounds: state.completedRounds };
 }

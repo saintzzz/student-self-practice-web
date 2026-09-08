@@ -21,6 +21,7 @@ import { ROUND_1_QUESTION_COUNT } from '../rounds/round1ExtraLetter';
 import { ROUND_2_QUESTION_COUNT } from '../rounds/round2ListeningSentence';
 import { ROUND_3_QUESTION_COUNT } from '../rounds/round3Pronunciation';
 import { ROUND_4_QUESTION_COUNT } from '../rounds/round4DescribeAndChooseImage';
+import { POINTS_PER_CORRECT_ANSWER } from './points';
 
 /**
  * Answers whichever question is current using the same "guaranteed
@@ -221,5 +222,96 @@ describe('endRoundEarly (plan.md v7 "Round Timer", AC28)', () => {
     expect(result.rounds).toHaveLength(4);
     expect(result.totalQuestions).toBe(0);
     expect(result.totalCorrect).toBe(0);
+  });
+});
+
+/**
+ * Points scoring (plan.md v10 "Points Scoring", AC34, AC36): flat
+ * POINTS_PER_CORRECT_ANSWER (10) per correct answer, 0 for wrong/unanswered,
+ * derived purely from correctCount/totalCount - no speed bonus anywhere.
+ * Round 1 (extra-letter) is used throughout since it is a single fixed
+ * question kind, which makes deliberately answering "correctly" or
+ * "incorrectly" straightforward and deterministic regardless of seed.
+ */
+describe('points scoring (plan.md v10, AC34, AC36)', () => {
+  function answerRound1Question(state: BatchState, correct: boolean): BatchState {
+    const question = state.roundSession ? getCurrentQuestion(state.roundSession) : null;
+    if (!question || question.kind !== 'extra-letter') {
+      throw new Error(`expected an extra-letter question, got ${question?.kind}`);
+    }
+    const wrongIndex = (question.extraIndex + 1) % question.displayLetters.length;
+    const selectedIndex = correct ? question.extraIndex : wrongIndex;
+    return updateRoundSession(state, (session) => submitExtraLetterAnswer(session, selectedIndex));
+  }
+
+  function completeRound1WithPattern(state: BatchState, correctPattern: boolean[]): BatchState {
+    let current = state;
+    let i = 0;
+    while (current.phase === 'active') {
+      current = answerRound1Question(current, correctPattern[i % correctPattern.length]);
+      current = advanceRoundQuestion(current);
+      i += 1;
+    }
+    return current;
+  }
+
+  it('all correct: points equals the full maxPoints', () => {
+    const batch = completeRound1WithPattern(createBatch('fixed-seed'), [true]);
+    const outcome = batch.completedRounds[0];
+
+    expect(outcome?.correctCount).toBe(ROUND_1_QUESTION_COUNT);
+    expect(outcome?.points).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER);
+    expect(outcome?.maxPoints).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER);
+  });
+
+  it('all wrong: points is 0 while maxPoints still reflects the full Round', () => {
+    const batch = completeRound1WithPattern(createBatch('fixed-seed'), [false]);
+    const outcome = batch.completedRounds[0];
+
+    expect(outcome?.correctCount).toBe(0);
+    expect(outcome?.points).toBe(0);
+    expect(outcome?.maxPoints).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER);
+  });
+
+  it('mixed correct/wrong: points reflects only the correct answers', () => {
+    const batch = completeRound1WithPattern(createBatch('fixed-seed'), [true, false]);
+    const outcome = batch.completedRounds[0];
+
+    expect(outcome?.points).toBe((outcome?.correctCount ?? 0) * POINTS_PER_CORRECT_ANSWER);
+    expect(outcome?.points).toBeGreaterThan(0);
+    expect(outcome?.points).toBeLessThan(outcome?.maxPoints ?? 0);
+    expect(outcome?.maxPoints).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER);
+  });
+
+  it('a Round ended early via the timer scores points only on the fewer questions actually answered', () => {
+    let batch = createBatch('fixed-seed');
+    // Answer exactly 3 questions (2 correct, 1 wrong), then the timer fires.
+    batch = answerRound1Question(batch, true);
+    batch = advanceRoundQuestion(batch);
+    batch = answerRound1Question(batch, false);
+    batch = advanceRoundQuestion(batch);
+    batch = answerRound1Question(batch, true);
+    batch = advanceRoundQuestion(batch);
+    expect(batch.phase).toBe('active'); // still mid-round
+
+    const ended = endRoundEarly(batch);
+    const outcome = ended.completedRounds[0];
+
+    expect(outcome?.totalCount).toBe(3);
+    expect(outcome?.totalCount).toBeLessThan(ROUND_1_QUESTION_COUNT);
+    expect(outcome?.correctCount).toBe(2);
+    expect(outcome?.points).toBe(2 * POINTS_PER_CORRECT_ANSWER);
+    expect(outcome?.maxPoints).toBe(3 * POINTS_PER_CORRECT_ANSWER);
+  });
+
+  it('computeBatchResult sums points/maxPoints across every completed Round', () => {
+    let batch = completeRound1WithPattern(createBatch('fixed-seed'), [true]); // full Round 1, all correct
+    batch = goToNextRound(batch);
+    batch = endRoundEarly(batch); // Round 2 times out with 0 answered
+
+    const result = computeBatchResult(batch);
+
+    expect(result.points).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER + 0);
+    expect(result.maxPoints).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER + 0);
   });
 });

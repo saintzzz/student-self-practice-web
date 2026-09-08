@@ -79,4 +79,27 @@ describe('FeedbackPanel', () => {
     expect(feedback).toHaveTextContent('bird');
     expect(feedback).toHaveTextContent('Chữ cái thừa là "s"');
   });
+
+  it('shows the pig mascot in happy mood, inline size, for a correct answer (plan.md v10, AC38)', () => {
+    render(
+      <FeedbackPanel kind="image-choice" isCorrect={true} correctWord="cat" explanation="Explanation." />,
+    );
+
+    const mascot = screen.getByTestId('mascot');
+    expect(mascot).toHaveAttribute('data-mascot-mood', 'happy');
+  });
+
+  it('shows the pig mascot in encouraging mood for an incorrect answer, keeping the gentle "cố lên nhé" copy as-is', () => {
+    render(
+      <FeedbackPanel
+        kind="listening-fill-blank"
+        isCorrect={false}
+        correctWord="rabbit"
+        explanation='Con thỏ tiếng Anh là "rabbit".'
+      />,
+    );
+
+    expect(screen.getByTestId('mascot')).toHaveAttribute('data-mascot-mood', 'encouraging');
+    expect(screen.getByTestId('answer-feedback')).toHaveTextContent('Chưa đúng rồi, cố lên nhé!');
+  });
 });
