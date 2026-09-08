@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { VocabWord } from '../../types';
+import { ALL_WORDS } from '../../data/vocabulary';
+import { COMMON_ENGLISH_WORDS } from '../../data/commonEnglishWords';
 import { generateExtraLetterQuestions, generateExtraLetterVariants } from './extraLetter';
 
 /** Removes the letter at extraIndex and rejoins - must recover the original word. */
@@ -55,6 +57,55 @@ describe('generateExtraLetterVariants', () => {
     const second = generateExtraLetterVariants('rabbit');
 
     expect(first).toEqual(second);
+  });
+
+  /**
+   * Regression test for a real bug reported by a student (2026-09-08):
+   * "pear" (+ inserted "t" before it) produced "tpear", where removing the
+   * "t" gives "pear" (intended) but removing the "p" instead gives "tear" -
+   * also a real word, so there was no way to tell from the letters alone
+   * which removal was "correct". No variant of "pear" may ever have another
+   * removable position that also spells a different common English word.
+   */
+  it('never produces an ambiguous "pear"/"tear"-style puzzle (regression, reported 2026-09-08)', () => {
+    const variants = generateExtraLetterVariants('pear');
+    expect(variants.length).toBeGreaterThan(0);
+
+    for (const variant of variants) {
+      for (let i = 0; i < variant.displayLetters.length; i++) {
+        if (i === variant.extraIndex) continue;
+        const alternateRemoval = variant.displayLetters.filter((_, j) => j !== i).join('');
+        expect(COMMON_ENGLISH_WORDS.has(alternateRemoval) && alternateRemoval !== 'pear').toBe(false);
+      }
+    }
+  });
+
+  /**
+   * Broad regression sweep over every real word this app can generate an
+   * extra-letter question from (not just a hand-picked example) - the
+   * "pear"/"tear" bug was only found by a student playing the live app,
+   * meaning no existing test covered this class of bug at all. Every
+   * variant of every eligible vocab word must be unambiguous.
+   */
+  it('produces zero ambiguous variants across the entire real vocabulary bank', () => {
+    const ambiguousExamples: string[] = [];
+
+    for (const word of ALL_WORDS) {
+      const variants = generateExtraLetterVariants(word.word);
+      for (const variant of variants) {
+        for (let i = 0; i < variant.displayLetters.length; i++) {
+          if (i === variant.extraIndex) continue;
+          const alternateRemoval = variant.displayLetters.filter((_, j) => j !== i).join('');
+          if (COMMON_ENGLISH_WORDS.has(alternateRemoval) && alternateRemoval !== word.word) {
+            ambiguousExamples.push(
+              `"${variant.displayLetters.join('')}" (intended "${word.word}") also removes to real word "${alternateRemoval}"`,
+            );
+          }
+        }
+      }
+    }
+
+    expect(ambiguousExamples, ambiguousExamples.join('; ')).toEqual([]);
   });
 });
 

@@ -24,6 +24,51 @@ describe('speakWord', () => {
 
     expect(() => speakWord('cat')).not.toThrow();
   });
+
+  it('reports "error" via onStatus when speechSynthesis.speak throws (plan.md hotfix, 2026-09-08)', () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {
+      throw new Error('no voices installed');
+    });
+    const onStatus = vi.fn();
+
+    speakWord('cat', onStatus);
+
+    expect(onStatus).toHaveBeenCalledWith('error');
+  });
+
+  it('reports "error" via onStatus when the utterance itself later fires onerror', () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utterance: SpeechSynthesisUtterance) => {
+      utterance.onerror?.({} as SpeechSynthesisErrorEvent);
+    });
+    const onStatus = vi.fn();
+
+    speakWord('cat', onStatus);
+
+    expect(onStatus).toHaveBeenCalledWith('error');
+  });
+
+  it('reports "started" via onStatus when the utterance fires onstart', () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utterance: SpeechSynthesisUtterance) => {
+      utterance.onstart?.({} as unknown as SpeechSynthesisEvent);
+    });
+    const onStatus = vi.fn();
+
+    speakWord('cat', onStatus);
+
+    expect(onStatus).toHaveBeenCalledWith('started');
+  });
+
+  it('reports "unsupported" via onStatus when window.speechSynthesis does not exist', () => {
+    const original = window.speechSynthesis;
+    // @ts-expect-error deliberately removing a browser API for this test
+    delete window.speechSynthesis;
+    const onStatus = vi.fn();
+
+    speakWord('cat', onStatus);
+
+    expect(onStatus).toHaveBeenCalledWith('unsupported');
+    window.speechSynthesis = original;
+  });
 });
 
 describe('speakSentence', () => {

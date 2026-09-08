@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import type { ListeningFillBlankQuestion as ListeningFillBlankQuestionType } from '../types';
 import { speakWord } from '../lib/speech';
+import { useAudioPlayback } from '../hooks/useAudioPlayback';
+import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { AUDIO_BUTTON_CLASSNAME, SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface ListeningFillBlankQuestionProps {
@@ -15,12 +17,7 @@ export default function ListeningFillBlankQuestion({
   onSubmit,
 }: ListeningFillBlankQuestionProps) {
   const [inputValue, setInputValue] = useState('');
-  const [hasPlayed, setHasPlayed] = useState(false);
-
-  function handlePlay(): void {
-    speakWord(question.word);
-    setHasPlayed(true);
-  }
+  const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) => speakWord(question.word, onStatus));
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -34,11 +31,12 @@ export default function ListeningFillBlankQuestion({
       <button
         type="button"
         data-testid="play-audio-button"
-        onClick={handlePlay}
+        onClick={play}
         className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
       >
         {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
       </button>
+      {playbackFailed && <AudioPlaybackWarning />}
       <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <input
           type="text"

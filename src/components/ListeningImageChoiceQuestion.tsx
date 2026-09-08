@@ -1,6 +1,7 @@
-import { useState } from 'react';
 import type { ListeningImageChoiceQuestion as ListeningImageChoiceQuestionType } from '../types';
 import { speakWord } from '../lib/speech';
+import { useAudioPlayback } from '../hooks/useAudioPlayback';
+import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 
@@ -23,13 +24,8 @@ export default function ListeningImageChoiceQuestion({
   selectedIndex,
   onSelectOption,
 }: ListeningImageChoiceQuestionProps) {
-  const [hasPlayed, setHasPlayed] = useState(false);
+  const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) => speakWord(question.word, onStatus));
   const hasAnswered = selectedIndex !== null;
-
-  function handlePlay(): void {
-    speakWord(question.word);
-    setHasPlayed(true);
-  }
 
   return (
     <div>
@@ -37,11 +33,12 @@ export default function ListeningImageChoiceQuestion({
       <button
         type="button"
         data-testid="play-audio-button"
-        onClick={handlePlay}
+        onClick={play}
         className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
       >
         {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
       </button>
+      {playbackFailed && <AudioPlaybackWarning />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((emoji, index) => (

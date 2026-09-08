@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import type { ListeningSentenceFillBlankQuestion as ListeningSentenceFillBlankQuestionType } from '../types';
 import { speakSentence } from '../lib/speech';
+import { useAudioPlayback } from '../hooks/useAudioPlayback';
+import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { AUDIO_BUTTON_CLASSNAME, SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
 
 interface ListeningSentenceFillBlankQuestionProps {
@@ -22,12 +24,9 @@ export default function ListeningSentenceFillBlankQuestion({
   onSubmit,
 }: ListeningSentenceFillBlankQuestionProps) {
   const [inputValue, setInputValue] = useState('');
-  const [hasPlayed, setHasPlayed] = useState(false);
-
-  function handlePlay(): void {
-    speakSentence(question.sentence);
-    setHasPlayed(true);
-  }
+  const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) =>
+    speakSentence(question.sentence, onStatus),
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -42,11 +41,12 @@ export default function ListeningSentenceFillBlankQuestion({
       <button
         type="button"
         data-testid="play-audio-button"
-        onClick={handlePlay}
+        onClick={play}
         className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
       >
         {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
       </button>
+      {playbackFailed && <AudioPlaybackWarning />}
       <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <input
           type="text"

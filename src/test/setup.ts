@@ -25,7 +25,10 @@ if (typeof window.speechSynthesis === 'undefined') {
   window.speechSynthesis = {
     speak: () => {},
     cancel: () => {},
+    resume: () => {},
     getVoices: () => [],
+    addEventListener: () => {},
+    removeEventListener: () => {},
   };
 }
 

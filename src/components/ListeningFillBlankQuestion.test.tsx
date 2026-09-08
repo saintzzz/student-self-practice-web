@@ -79,4 +79,31 @@ describe('ListeningFillBlankQuestion', () => {
     expect(screen.getByTestId('answer-input')).toBeDisabled();
     expect(screen.getByTestId('submit-answer-button')).toBeDisabled();
   });
+
+  /**
+   * Regression test for a real bug reported by a student on Android Chrome
+   * (2026-09-08): tapping "Nghe" produced no sound with zero feedback, so
+   * neither the student nor anyone debugging their report could tell a
+   * failed playback attempt from "everything is fine, just tap play".
+   */
+  it('shows audio-playback-warning when the utterance reports an error, and clears it on a successful replay', async () => {
+    const speakSpy = vi
+      .spyOn(window.speechSynthesis, 'speak')
+      .mockImplementationOnce((utterance: SpeechSynthesisUtterance) => {
+        utterance.onerror?.({} as SpeechSynthesisErrorEvent);
+      })
+      .mockImplementationOnce((utterance: SpeechSynthesisUtterance) => {
+        utterance.onstart?.({} as unknown as SpeechSynthesisEvent);
+      });
+    const user = userEvent.setup();
+    render(<ListeningFillBlankQuestion question={QUESTION} hasAnswered={false} onSubmit={vi.fn()} />);
+
+    const playButton = screen.getByTestId('play-audio-button');
+    await user.click(playButton);
+    expect(screen.getByTestId('audio-playback-warning')).toBeVisible();
+
+    await user.click(playButton);
+    expect(screen.queryByTestId('audio-playback-warning')).not.toBeInTheDocument();
+    expect(speakSpy).toHaveBeenCalledTimes(2);
+  });
 });
