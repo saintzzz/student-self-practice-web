@@ -4,7 +4,7 @@ import { BODY, CARD, CARD_TINT, H1, NAV_PILL, PROMPT, SCREEN_ENTER } from '../li
 import { login, USERNAME_RE } from '../lib/auth/practiceAuth';
 
 const INPUT =
-  'w-full rounded-2xl border-2 border-sky-200 bg-sky-50 px-5 py-4 text-lg font-bold text-sky-900 placeholder:font-normal placeholder:text-sky-400 focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-200';
+  'w-full rounded-2xl border-2 border-sky-200 bg-sky-50 px-5 py-4 text-lg font-bold text-sky-900 shadow-inner transition placeholder:font-normal placeholder:text-sky-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-300/70 focus:shadow-[0_8px_20px_-8px_rgba(56,189,248,0.5)]';
 
 interface AuthScreenProps {
   onLoggedIn: () => void;
@@ -76,7 +76,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
             data-testid="login-submit"
             type="submit"
             disabled={busy}
-            className="min-h-[76px] rounded-3xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-8 font-display text-2xl font-extrabold text-white shadow-[inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(16,185,129,0.5)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 active:shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)] disabled:translate-y-0 disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-400"
+            className="min-h-[76px] rounded-3xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-8 font-display text-2xl font-extrabold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(16,185,129,0.5)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_10px_22px_-6px_rgba(16,185,129,0.55)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_2px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.18)] disabled:translate-y-0 disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-400"
           >
             {busy ? 'Đang vào...' : 'Đăng nhập'}
           </button>

@@ -14,14 +14,14 @@ interface PronunciationStatusMessageProps {
  */
 export default function PronunciationStatusMessage({ testId, heading, body, onSkip }: PronunciationStatusMessageProps) {
   return (
-    <div data-testid={testId} className="rounded-2xl border-4 border-amber-300 bg-amber-50 p-5 text-left">
+    <div data-testid={testId} className="rounded-2xl border-4 border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100/60 p-5 text-left shadow-md">
       <p className="text-xl font-extrabold text-amber-800">{heading}</p>
       <p className="mt-2 text-lg text-amber-900">{body}</p>
       <button
         type="button"
         data-testid="pronunciation-skip-button"
         onClick={onSkip}
-        className="mt-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-amber-400 to-amber-600 px-6 py-3 text-lg font-bold text-white shadow-[inset_0_-3px_0_rgba(0,0,0,0.15),0_4px_10px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-amber-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+        className="mt-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-amber-400 to-amber-600 px-6 py-3 text-lg font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-3px_0_rgba(0,0,0,0.15),0_4px_10px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-amber-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
       >
         Bỏ qua câu này →
       </button>

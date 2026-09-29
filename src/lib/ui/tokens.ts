@@ -17,9 +17,10 @@
  *    motion-reduce:animate-none.
  */
 
-/** Big white content card - the "scene" each screen lives in. */
+/** Big white content card - the "scene" each screen lives in. CR-12:
+    color-tinted deep shadow + inner top highlight for layered depth. */
 export const CARD =
-  'rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-6 shadow-xl ring-1 ring-slate-200/70 sm:p-8';
+  'rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_20px_40px_-16px_rgba(56,189,248,0.35),0_8px_16px_-8px_rgba(15,23,42,0.15)] ring-1 ring-slate-200/70 sm:p-8';
 
 /** Tinted card variant for feedback/summary accents. */
 export const CARD_TINT = {
@@ -57,7 +58,7 @@ export const SCORE_PILL_LG =
 export const PROGRESS_TRACK =
   'h-3 min-w-[4rem] flex-1 overflow-hidden rounded-full bg-sky-100/80 ring-1 ring-sky-200 backdrop-blur-sm';
 export const PROGRESS_FILL =
-  'h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-[width] duration-300 motion-reduce:transition-none';
+  'relative h-full overflow-hidden rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-[width] duration-300 motion-reduce:transition-none';
 
 /** Screen enter animation - fade + 8px rise, transform/opacity only. */
 export const SCREEN_ENTER = 'animate-screen-enter motion-reduce:animate-none';

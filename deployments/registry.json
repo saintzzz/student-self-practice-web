@@ -4,7 +4,6 @@
       "name": "ioe-leduyminh",
       "platform": "vercel",
       "team": "linhld7s-projects",
-      "teamId": "team_Aa3XmBpCS6gqVNxTNLxwx43e",
       "repo": "saintzzz/student-self-practice-web",
       "branch": "main",
       "autoDeployOnPush": true,
@@ -14,17 +13,16 @@
       "commit": "ab094f4",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-01T10:35:00+07:00",
+      "lastHealthCheck": "2026-10-01T10:55:00+07:00",
       "healthDetails": {
         "GET /": 200,
-        "GET /assets/index-BAHiOYrV.js": 200,
-        "GET /assets/index-Bu6WBCT0.css": 200,
-        "bundle contains": "premium gradient/pressed-edge CTAs, glass chips",
-        "grade cards rendered": 5,
-        "login surface (env absent -> guest mode)": "hidden",
-        "console errors": 0
+        "GET /assets/index-Bd-8x8JH.js": 200,
+        "auth": "LIVE - VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY set on prod/preview/dev via REST API; redeploy dpl_HAnRUoxrDo9gn1Vz4e4pFqe4Zjtg READY",
+        "admin login verified": "sign-in -> admin console rendered, console errors 0",
+        "guest button": "present (Choi khong can tai khoan)"
       },
-      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: ab094f4 (CR-11 polish: inline-flex CTA alignment fix, de-zigzag map, gradient pressed-edge buttons, glass chips, gold score pills) serving bundle index-BAHiOYrV.js; earlier: e316e8c (CR-10 themed world + engagement) - production remains in guest mode until VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY are added to project env (dashboard) and a rebuild runs. Backend live: schema practice, RLS verified, edge function v1, admin account provisioned. Earlier verified commits: 23814e9 (CR-08 accounts+RBAC), ec94500 (CR-07 grades 1-5), 5ae3bc2 (CR-09 UI refresh), 996b801 (CR-06), 810b743 (CR-03), 2a92991 (CR-01/02/04)."
+      "note": "Git-linked project under the personal account duylinhcn3-8443 (the earlier teamId field was wrong - list_projects on linhld7s-projects returns empty; project found via personal-scope listing). Supabase env vars added 2026-10-01 via REST API upsert; redeploy dpl_HAnRUoxrDo9gn1Vz4e4pFqe4Zjtg (commit ab094f4) is READY and serving auth bundle index-Bd-8x8JH.js - login surface verified live with real admin sign-in. Backend live: schema practice, RLS verified, edge function v1.",
+      "scope": "personal account duylinhcn3-8443 (NOT linhld7s-projects team - corrected 2026-10-01)"
     }
   ]
 }

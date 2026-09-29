@@ -951,3 +951,34 @@ Implements design-spec section 17.
 - testids/DOM roles unchanged; class-only refactor.
 - 76px min targets kept; reduced-motion variants kept/added.
 - Budget: +~0.5-1 kB CSS (new utilities) - no JS change.
+
+
+## 15. CR-12 addendum - premium-max implementation (2026-10-01)
+
+Implements design-spec section 18. Class/refactor-only; no new deps.
+
+### 15.1 Changes
+
+- theme.ts: deepen pageGradient ramps per land.
+- index.css: +keyframes twinkle, float-y, progress-shimmer
+  (transform/opacity only, reduced-motion off).
+- LandScene.tsx: ambient sparkle layer + top glow + vignette.
+- tokens.ts: CARD layered shadow; NAV_PILL/CHIP gloss; PROGRESS_FILL
+  shimmer; SCORE_PILL glow kept.
+- actionButtonStyle.ts: top-gloss inset on PREMIUM_BASE.
+- optionButtonStyle.ts: gradient-white + hover ring glow.
+- ExtraLetterQuestion + PicturePairMatchingQuestion: key-cap tiles.
+- QuestionCard/ListeningFillBlank/ListeningSentenceFillBlank: inputs
+  focus-glow (already ringed - verify only).
+- FeedbackPanel: left accent bar + gradient tint.
+- EngagementBar: emoji mini-discs + gold star chip.
+- GradeSelect: medal disc (gradient + ring-4 white) .
+- Mascot block: halo + float.
+- BatchScreen header: floating glass pill on sm+.
+- AuthScreen: hero spacing + halo mascot.
+- AdminScreen: gold role badge + row hover.
+
+### 15.2 Invariants
+
+- testids/DOM structure unchanged; CSS budget may need +0.5-1 kB
+  re-base (shadow/gradient arbitrary values) - justify if hit.

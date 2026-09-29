@@ -18,7 +18,7 @@
  * progress/continue, indigo = audio.
  */
 const PREMIUM_BASE =
-  'inline-flex min-h-[76px] items-center justify-center font-display font-bold text-white shadow-[inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_-4px_0_rgba(0,0,0,0.18),0_10px_20px_-6px_rgba(0,0,0,0.3)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_-2px_0_rgba(0,0,0,0.18),0_3px_8px_-4px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-sm';
+  'inline-flex min-h-[76px] items-center justify-center font-display font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_10px_20px_-6px_rgba(0,0,0,0.3)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_2px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.18),0_3px_8px_-4px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-sm';
 
 /** "Nghe" / "Nghe lại" audio-play buttons (listening + describe-image questions). */
 export const AUDIO_BUTTON_CLASSNAME =

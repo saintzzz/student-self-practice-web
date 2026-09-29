@@ -14,7 +14,7 @@ import {
 } from '../lib/ui/tokens';
 
 const INPUT =
-  'w-full rounded-2xl border-2 border-sky-200 bg-sky-50 px-4 py-3 text-base font-bold text-sky-900 placeholder:font-normal placeholder:text-sky-400 focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-200';
+  'w-full rounded-2xl border-2 border-sky-200 bg-sky-50 px-4 py-3 text-base font-bold text-sky-900 shadow-inner transition placeholder:font-normal placeholder:text-sky-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-300/70';
 const BTN =
   'rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-5 py-3 text-base font-extrabold text-white shadow-[inset_0_-3px_0_rgba(0,0,0,0.15),0_3px_8px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:translate-y-0 disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-emerald-400';
 const BTN_SECONDARY =
@@ -191,7 +191,13 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
           </button>
         )}
         <h1 className={H1}>Quản trị</h1>
-        <span className={`ml-auto ${CHIP_SKY}`}>{account.display_name}</span>
+        {/* CR-12 DS-X5: gold role badge for the admin identity chip. */}
+        <span
+          className="ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-full bg-gradient-to-b from-amber-100 to-amber-200 px-3 py-1 text-sm font-bold text-amber-900 shadow-md ring-1 ring-amber-300/80"
+        >
+          <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-xs">👑</span>
+          {account.display_name}
+        </span>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -203,8 +209,8 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
             onClick={() => { setTab(t.id); setError(null); }}
             className={
               tab === t.id
-                ? 'rounded-full bg-indigo-600 px-5 py-2 text-base font-bold text-white shadow-sm focus:outline-none focus:ring-4 focus:ring-indigo-300'
-                : `${CHIP_SKY} cursor-pointer`
+                ? 'rounded-full bg-gradient-to-b from-indigo-400 to-indigo-600 px-5 py-2 text-base font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_4px_10px_-3px_rgba(79,70,229,0.5)] transition focus:outline-none focus:ring-4 focus:ring-indigo-300'
+                : `${CHIP_SKY} cursor-pointer transition hover:bg-sky-100`
             }
           >
             {t.label}
@@ -258,7 +264,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
               <li
                 key={a.id}
                 data-testid={`account-row-${a.username}`}
-                className="flex flex-wrap items-center gap-2 rounded-2xl bg-sky-50 px-4 py-3 ring-1 ring-sky-100"
+                className="flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-50 to-white px-4 py-3 shadow-sm ring-1 ring-sky-100 transition hover:bg-sky-100/60 hover:shadow-md hover:ring-sky-200"
               >
                 <span className={`${BODY} font-bold`}>{a.display_name}</span>
                 <span className="text-sm text-sky-600">@{a.username}</span>
@@ -316,7 +322,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
               <li
                 key={c.id}
                 data-testid={`class-row-${c.name}`}
-                className="flex flex-wrap items-center gap-2 rounded-2xl bg-sky-50 px-4 py-3 ring-1 ring-sky-100"
+                className="flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-50 to-white px-4 py-3 shadow-sm ring-1 ring-sky-100 transition hover:bg-sky-100/60 hover:shadow-md hover:ring-sky-200"
               >
                 <span className={`${BODY} font-bold`}>{c.name}</span>
                 <span className="text-sm text-sky-600">
@@ -397,10 +403,10 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
                     type="button"
                     data-testid={`scope-grade-${g.id}`}
                     onClick={() => toggleScope(scopeClassId, g.id, isOn)}
-                    className={`min-h-[76px] rounded-3xl border-4 p-4 text-left font-display text-xl font-bold shadow-sm transition active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 ${
+                    className={`min-h-[76px] rounded-3xl border-4 p-4 text-left font-display text-xl font-bold transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 ${
                       isOn
-                        ? 'border-emerald-400 bg-emerald-50 text-emerald-800 focus:ring-emerald-300'
-                        : 'border-slate-200 bg-white text-slate-500 focus:ring-sky-300'
+                        ? 'border-emerald-400 bg-gradient-to-b from-emerald-50 to-emerald-100/60 text-emerald-800 shadow-[inset_0_2px_0_rgba(255,255,255,0.9),0_6px_14px_-6px_rgba(5,150,105,0.4)] focus:ring-emerald-300'
+                        : 'border-slate-200 bg-gradient-to-b from-white to-sky-50/70 text-slate-500 shadow-[inset_0_2px_0_rgba(255,255,255,0.9),0_4px_10px_-4px_rgba(15,23,42,0.12)] focus:ring-sky-300'
                     }`}
                   >
                     {g.name}

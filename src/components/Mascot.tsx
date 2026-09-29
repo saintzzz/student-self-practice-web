@@ -59,19 +59,32 @@ const SIZE_CLASSNAME: Record<NonNullable<MascotProps['size']>, string> = {
 export default function Mascot({ mood, size = 'block' }: MascotProps) {
   const { accentEmoji, animationClassName, ariaLabel } = MOOD_CONFIG[mood];
 
+  /* CR-12 DS-X4: block mascots get a soft radial halo + gentle float so
+     the character reads like a hero element, not a floating emoji. */
+  const block = size === 'block';
+
   return (
     <span
       data-testid="mascot"
       data-mascot-mood={mood}
       role="img"
       aria-label={ariaLabel}
-      className={`inline-flex items-center gap-1 leading-none ${SIZE_CLASSNAME[size]} ${animationClassName}`}
+      className={`relative inline-flex items-center gap-1 leading-none ${SIZE_CLASSNAME[size]} ${animationClassName}`}
     >
-      <span aria-hidden="true">
+      {block && (
+        <span
+          aria-hidden="true"
+          className="absolute -inset-4 rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0))]"
+        />
+      )}
+      <span
+        aria-hidden="true"
+        className={`relative ${block ? 'mascot-float motion-reduce:animate-none' : ''}`}
+      >
         <EmojiVisual emoji="🐷" />
       </span>
       {accentEmoji && (
-        <span aria-hidden="true">
+        <span aria-hidden="true" className="relative">
           <EmojiVisual emoji={accentEmoji} animated />
         </span>
       )}

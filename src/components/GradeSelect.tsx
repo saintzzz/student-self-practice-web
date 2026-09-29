@@ -82,7 +82,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         <EngagementBar />
       </div>
       {visibleGrades.length === 0 ? (
-        <div data-testid="no-scope-message" className="rounded-3xl bg-white p-8 text-lg font-bold text-slate-600 shadow-md ring-1 ring-slate-200">
+        <div data-testid="no-scope-message" className="rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-8 text-lg font-bold text-slate-600 shadow-lg ring-1 ring-slate-200">
           Cô/Thầy chưa mở nội dung cho bé - hãy hỏi cô nhé!
         </div>
       ) : (
@@ -109,7 +109,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               </span>
               <span
                 aria-hidden="true"
-                className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full ${land.discBg} font-display text-3xl font-extrabold text-white shadow-inner`}
+                className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full ${land.discBg} font-display text-3xl font-extrabold text-white ring-4 ring-white/80 shadow-[inset_0_2px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_14px_-4px_rgba(15,23,42,0.3)]`}
               >
                 {(grade.name.match(/\d+/) ?? ['📖'])[0]}
               </span>

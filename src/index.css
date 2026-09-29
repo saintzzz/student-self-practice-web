@@ -154,9 +154,36 @@ body {
 }
 .sticker-chip { animation: sticker-chip-in 360ms ease-out both; }
 
+/* ------------------------------------------------------------------
+   CR-12 premium-max ambience (design-spec s18): ambient sky sparkle
+   (reuses land-twinkle with staggered delays), mascot float, progress
+   shimmer - all transform/opacity, all gated by reduced-motion.
+------------------------------------------------------------------- */
+.ambient-sparkle {
+  transform-box: fill-box;
+  animation: land-twinkle 3.4s ease-in-out infinite;
+}
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+.mascot-float { animation: mascot-float 3.6s ease-in-out infinite; }
+
+/* Progress shimmer: a light band sliding across the gradient fill -
+   transform only. */
+@keyframes progress-shimmer {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(320%); }
+}
+.progress-shimmer {
+  animation: progress-shimmer 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .land-drift, .land-drift-slow, .land-sway, .land-twinkle, .land-float,
-  .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip {
+  .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip,
+  .ambient-sparkle, .mascot-float, .progress-shimmer {
     animation: none;
   }
   .confetti-particle { display: none; }

@@ -51,10 +51,17 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
   return (
     <div
       data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
-      className={`relative mt-3 rounded-2xl p-4 text-left ring-2 shadow-sm [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 ${
-        isCorrect ? 'bg-emerald-50 ring-emerald-300' : 'bg-rose-50 ring-rose-300'
+      className={`relative mt-3 overflow-hidden rounded-2xl p-4 pl-5 text-left ring-2 shadow-md [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
+        isCorrect
+          ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/60 ring-emerald-300'
+          : 'bg-gradient-to-r from-rose-50 to-rose-100/60 ring-rose-300'
       }`}
     >
+      {/* CR-12 DS-X2: accent edge bar. */}
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-0 left-0 w-1.5 ${isCorrect ? 'bg-emerald-400' : 'bg-rose-400'}`}
+      />
       {isCorrect && <Confetti />}
       <HeadlineTag
         className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}

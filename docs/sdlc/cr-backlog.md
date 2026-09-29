@@ -17,6 +17,7 @@
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
 | CR-10 | Real visual identity: theme, kid appeal, engagement layer | human request 2026-10-01 | resolved (deployed e316e8c) |
 | CR-11 | Visual polish: alignment bugs, balance, full responsive, premium finish | human request 2026-10-01 | resolved (deployed ab094f4) |
+| CR-12 | Premium-max pass: every screen, element, icon, test view | human request 2026-10-01 | implemented, gates green |
 
 ---
 
@@ -353,3 +354,31 @@
   (login/admin/skip/record) upgraded, glass header strip + album.
 - Tester: 712/712 unit, 60/60 e2e (grades.spec flake fixed), visual
   QA desktop/390/667-landscape, budget re-based (A-29).
+
+## CR-12: Premium-max - INTAKE (2026-10-01)
+
+- **Human request (verbatim):** "co toi muon premium toi da, ca man
+  hinh, ca element, ca icon, ca bai thi... tat ca moi thu thuoc web
+  nay deu premium max."
+- **Also resolved in this intake:** production auth now live
+  (A-30) - Vercel env vars set via REST API, admin login verified.
+- **Scope - elevate every surface beyond CR-11's class-language:**
+  - Ambience: deeper multi-stop land gradients, ambient twinkle
+    sparkles + soft top glow in LandScene, cinematic vignette.
+  - Surfaces: layered card shadow (color-tinted drop + inner top
+    highlight), floating glass header pill, richer tinted panels.
+  - Buttons: add top-gloss highlight on every pressed-edge CTA;
+    option tiles get gradient-white + hover ring glow; letter/pair
+    tiles get "key" bottom-edge treatment.
+  - Icons: chip emojis sit in tinted mini-discs; grade disc becomes
+    a medal (gradient + white ring); star bank chip goes gold.
+  - Feedback: accent left border + soft gradient tint.
+  - Login: hero treatment (mascot halo + float, tighter hero copy).
+  - Score/progress: shimmer sweep on the round progress fill,
+    stronger gold glow on score pills.
+  - Admin: premium header band (title + gold role badge).
+- **Guardrails unchanged:** testids, 76px targets, status-color
+  semantics, reduced-motion for every new animation, same-origin
+  assets only (no new art - all CSS/SVG), dash rule, budgets with
+  justification, auth/guest flows identical.
+- **Rulings:** none open - "premium toi da" is the direction.

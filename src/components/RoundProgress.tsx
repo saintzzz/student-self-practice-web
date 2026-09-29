@@ -35,10 +35,15 @@ export default function RoundProgress({
           Vòng {roundNumber}/{totalRounds}
         </p>
         <div className={PROGRESS_TRACK} aria-hidden="true">
-          <div className={PROGRESS_FILL} style={{ width: `${Math.round(fraction * 100)}%` }} />
+          <div className={PROGRESS_FILL} style={{ width: `${Math.round(fraction * 100)}%` }}>
+            <span className="progress-shimmer absolute inset-y-0 w-1/3 rounded-full bg-white/50 blur-[2px]" />
+          </div>
         </div>
       </div>
-      <p className="mt-0.5 text-sm font-semibold text-slate-600 [@media(max-height:420px)]:hidden">
+      {/* CR-12: title now drops at <=600px heights (was <=420) - on short
+          phones the round chip alone still conveys progress, and the freed
+          ~22px keeps content-heavy questions closer to zero-scroll. */}
+      <p className="mt-0.5 text-sm font-semibold text-slate-600 [@media(max-height:600px)]:hidden">
         {titleVi}
       </p>
     </div>

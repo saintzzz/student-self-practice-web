@@ -22,6 +22,11 @@
  * surface layer - arbitrary-value pressed-edge/gradient shadows on
  * CTAs, glass backdrop-blur chips, card gradient sheen. Headroom
  * kept ~0.85 kB.
+ * CSS re-based for CR-12 (advisory A-31): +0.45 kB over the CR-11
+ * max is the premium-max layer - top-gloss insets on CTAs, key-cap
+ * tile shadows (options, letters, pair tiles), layered card shadow,
+ * ambient/mascot/progress keyframes, medal discs, gold badges.
+ * Headroom kept ~0.8 kB.
  * Run after `npm run build`.
  */
 import { readFile } from 'node:fs/promises';
@@ -33,7 +38,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
 const JS_MAX_KB = 121;
-const CSS_MAX_KB = 8.5;
+const CSS_MAX_KB = 10;
 const BASELINE = { js: 101.07, css: 5.2 };
 
 const kb = (buf) => gzipSync(buf, { level: 9 }).length / 1024;

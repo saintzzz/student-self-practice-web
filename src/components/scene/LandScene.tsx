@@ -8,23 +8,65 @@ import type { LandKey } from '../../lib/ui/theme';
  */
 export default function LandScene({ land }: { land: LandKey }) {
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 select-none overflow-hidden"
-    >
-      <svg
-        viewBox="0 0 1200 320"
-        preserveAspectRatio="xMidYMax slice"
-        className="block h-44 w-full sm:h-60"
+    <>
+      {/* CR-12 DS-X1 ambience: soft top glow + gentle bottom vignette,
+          painted before the scene so content always stays above. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-white/40 to-transparent"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/10 to-transparent"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 select-none overflow-hidden"
       >
-        {land === 'sky' && <SkyScene />}
-        {land === 'playground' && <PlaygroundScene />}
-        {land === 'town' && <TownScene />}
-        {land === 'jungle' && <JungleScene />}
-        {land === 'city' && <CityScene />}
-        {land === 'space' && <SpaceScene />}
-      </svg>
-    </div>
+        <svg
+          viewBox="0 0 1200 320"
+          preserveAspectRatio="xMidYMax slice"
+          className="block h-44 w-full sm:h-60"
+        >
+          <AmbientSparkles dark={land === 'space'} />
+          {land === 'sky' && <SkyScene />}
+          {land === 'playground' && <PlaygroundScene />}
+          {land === 'town' && <TownScene />}
+          {land === 'jungle' && <JungleScene />}
+          {land === 'city' && <CityScene />}
+          {land === 'space' && <SpaceScene />}
+        </svg>
+      </div>
+    </>
+  );
+}
+
+/** CR-12: floating sparkle dots above the scene - dreamy ambience. */
+function AmbientSparkles({ dark }: { dark: boolean }) {
+  const dots: Array<[number, number, number, number]> = [
+    [90, 30, 3.2, 0],
+    [260, 90, 2.2, 0.9],
+    [430, 50, 3.0, 1.7],
+    [620, 110, 2.4, 0.4],
+    [780, 40, 3.4, 2.2],
+    [950, 95, 2.2, 1.1],
+    [1120, 60, 3.0, 2.8],
+  ];
+  return (
+    <g>
+      {dots.map(([cx, cy, r, delay], i) => (
+        <circle
+          key={i}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill={dark ? '#fef9c3' : '#ffffff'}
+          opacity={dark ? 0.9 : 0.85}
+          className="ambient-sparkle"
+          style={{ animationDelay: `${delay}s` }}
+        />
+      ))}
+    </g>
   );
 }
 

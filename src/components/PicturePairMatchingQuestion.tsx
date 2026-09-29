@@ -16,14 +16,28 @@ interface PicturePairMatchingQuestionProps {
 }
 
 function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boolean): string {
+  /* CR-12 DS-X3: memory tiles become flip-card keys - gradient face,
+     sheen + bottom edge; states keep their semantic colors. */
   const base =
     'flex min-h-[76px] w-full items-center justify-center rounded-2xl border-4 p-4 text-2xl font-bold ' +
-    'transition focus:outline-none focus:ring-4 focus:ring-sky-500 disabled:cursor-not-allowed';
+    'shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-4px_0_rgba(0,0,0,0.08),0_4px_10px_-4px_rgba(15,23,42,0.15)] ' +
+    'transition hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none ' +
+    'motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-sky-500 disabled:cursor-not-allowed';
 
-  if (isMatched) return `${base} border-emerald-500 bg-emerald-50 text-emerald-900`;
-  if (isWrongFlash) return `${base} border-rose-500 bg-rose-50 text-rose-900`;
-  if (isPending) return `${base} border-amber-400 bg-amber-50 text-sky-900`;
-  return `${base} border-sky-200 bg-white text-sky-900 hover:border-sky-400`;
+  if (isMatched) {
+    return `${base} border-emerald-500 bg-gradient-to-b from-emerald-50 to-emerald-100/70 text-emerald-900 ` +
+      'shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-4px_0_rgba(5,150,105,0.25),0_6px_14px_-6px_rgba(5,150,105,0.45)]';
+  }
+  if (isWrongFlash) {
+    return `${base} border-rose-500 bg-gradient-to-b from-rose-50 to-rose-100/70 text-rose-900 ` +
+      'shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-4px_0_rgba(225,29,72,0.25),0_6px_14px_-6px_rgba(225,29,72,0.45)]';
+  }
+  if (isPending) {
+    return `${base} border-amber-400 bg-gradient-to-b from-amber-50 to-amber-100/70 text-sky-900 ` +
+      'shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-4px_0_rgba(217,119,6,0.25),0_6px_14px_-6px_rgba(217,119,6,0.45)]';
+  }
+  return `${base} border-sky-200 bg-gradient-to-b from-white to-sky-50/80 text-sky-900 ` +
+    'hover:border-sky-400 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-4px_0_rgba(0,0,0,0.08),0_8px_18px_-6px_rgba(56,189,248,0.5)]';
 }
 
 /**

@@ -372,3 +372,29 @@ runs the identical guest-only experience (no login surface).
 - Visual QA: journey map desktop (no zigzag, lone L5 card centered),
   390x844 portrait (CTAs full-width), 667x375 landscape (header single
   row, compact variants).
+
+
+## Production auth verification (2026-10-01)
+
+- Env vars set via Vercel REST API (personal scope - registry
+  corrected, A-30); redeploy READY.
+- Live check: `https://ioe-leduyminh.vercel.app` shows "Chao be!"
+  login + guest button; real admin credentials sign in -> admin
+  console (admin-signout visible); 0 console errors.
+
+
+## CR-12 verification (2026-10-01)
+
+- npx tsc --noEmit: clean
+- npx vitest run: 712/712 (84 files)
+- npm run build: clean; entry JS 113.37 kB / CSS 8.95 kB
+- scripts/check-bundle-budget.mjs: OK (CSS max re-based to 10 kB, A-31)
+- scripts/check-attribution.mjs: OK (520 svg / 166 lottie / 0 images)
+- em-dash sweep src/: clean
+- npx playwright test: 60/60 chromium
+- Playwright MCP visual QA: journey map desktop (medal discs, gold star
+  chip, ambient glow), question screen (key-cap tiles, glass pill
+  header, feedback accent bar, centered gloss CTA), 390x844 mobile
+  (wrapped chips, full-width CTA, no overflow), 320x568 compaction,
+  login screen (halo mascot, emerald gloss CTA, glassy guest pill)
+- Console errors: none

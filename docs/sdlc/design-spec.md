@@ -952,3 +952,47 @@ Kid-premium (Duolingo Max / Lingokids level) - warm, tactile, glossy:
   flat py-12).
 - Keep every existing `[@media(max-height:420px)]` compaction.
 - Grid: `grid-cols-1 sm:grid-cols-2`; odd trailing card centered.
+
+
+## 18. CR-12 addendum - premium-max finish (2026-10-01)
+
+Kid-premium ceiling: cinematic warmth + tactile depth on EVERYTHING.
+Applied through tokens/constants so every screen inherits it.
+
+### 18.1 Ambience (DS-X1)
+
+- Land page gradients deepen to 3-stop cinematic ramps (saturated
+  top -> soft mid -> warm ground).
+- LandScene gains an ambient layer: 6-8 twinkling star/sparkle dots
+  (opacity pulse, staggered delays, transform/opacity only, off under
+  reduced-motion) + a soft white top-glow + slight bottom vignette.
+
+### 18.2 Surfaces (DS-X2)
+
+- CARD: color-tinted deep shadow (`sky/25` drop) + inner white top
+  highlight; ring stays hairline.
+- Header play strip -> floating glass pill (rounded-full on sm+,
+  backdrop-blur, deeper shadow).
+- FeedbackPanel: 4px left accent bar + gradient tint, keeps ring.
+
+### 18.3 Interactive elements (DS-X3)
+
+- PREMIUM_BASE buttons add `inset 0 1px` top gloss.
+- Option buttons (4-choice): gradient white surface, hover lifts +
+  sky ring glow.
+- Letter tiles + pair tiles: "key cap" - gradient face, inset bottom
+  edge, pressed state flattens.
+- Inputs: keep sky-50 fill, focus glow ring.
+
+### 18.4 Icons & badges (DS-X4)
+
+- Chip emojis sit inside a tinted mini-disc (h-6 w-6 rounded-full
+  bg-white/60 ring) - applies to star bank, streak, timer, score.
+- Grade disc -> medal: gradient disc + white ring-4 + inner shadow.
+- Star bank chip -> gold gradient tint (amber-100->amber-200).
+- Mascot block: radial halo backdrop + gentle float keyframe.
+
+### 18.5 Admin (DS-X5)
+
+- Header band: title + gold "Quan tri vien" badge; forms keep their
+  gradient submit; list rows get hover tint.
