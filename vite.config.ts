@@ -10,5 +10,9 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     exclude: ['node_modules/**', 'e2e/**'],
+    // EmojiVisual pulls a 171 kB lazy player chunk on first mount in every
+    // component test; unbounded parallelism starves long tests past their
+    // timeouts on mid-range machines. Cap workers for stability.
+    poolOptions: { forks: { maxForks: 4, minForks: 1 } },
   },
 });

@@ -42,7 +42,11 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   if (question.kind === 'pronunciation-recording') {
     return updateRoundSession(state, (session) => submitPronunciationAnswer(session, '0000'));
   }
-  if (question.kind === 'describe-and-choose-image' || question.kind === 'listening-image-choice') {
+  if (
+    question.kind === 'describe-and-choose-image' ||
+    question.kind === 'listening-image-choice' ||
+    question.kind === 'image-choice'
+  ) {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
   }
   if (question.kind === 'picture-pair-matching') {
@@ -53,11 +57,14 @@ function answerCurrentQuestion(state: BatchState): BatchState {
 
 function completeActiveRound(state: BatchState): BatchState {
   let current = state;
-  while (current.phase === 'active') {
+  // Guard bound: a round is <= 10 questions; exceeding it means a new kind
+  // slipped past answerCurrentQuestion - fail loudly instead of hanging.
+  for (let guard = 0; guard < 20; guard++) {
+    if (current.phase !== 'active') return current;
     current = answerCurrentQuestion(current);
     current = advanceRoundQuestion(current);
   }
-  return current;
+  throw new Error('completeActiveRound did not finish within 20 questions');
 }
 
 describe('createBatch', () => {
@@ -229,28 +236,40 @@ describe('endRoundEarly (plan.md v7 "Round Timer", AC28)', () => {
  * Points scoring (plan.md v10 "Points Scoring", AC34, AC36): flat
  * POINTS_PER_CORRECT_ANSWER (10) per correct answer, 0 for wrong/unanswered,
  * derived purely from correctCount/totalCount - no speed bonus anywhere.
- * Round 1 (extra-letter) is used throughout since it is a single fixed
- * question kind, which makes deliberately answering "correctly" or
- * "incorrectly" straightforward and deterministic regardless of seed.
+ * Round 1 is used throughout; since PRD r3 (D-10) it mixes extra-letter
+ * with image-choice, so the helper answers each kind deterministically
+ * correct/wrong regardless of seed.
  */
 describe('points scoring (plan.md v10, AC34, AC36)', () => {
   function answerRound1Question(state: BatchState, correct: boolean): BatchState {
     const question = state.roundSession ? getCurrentQuestion(state.roundSession) : null;
-    if (!question || question.kind !== 'extra-letter') {
-      throw new Error(`expected an extra-letter question, got ${question?.kind}`);
+    if (!question) {
+      throw new Error('expected a Round 1 question, got none');
     }
-    const wrongIndex = (question.extraIndex + 1) % question.displayLetters.length;
-    const selectedIndex = correct ? question.extraIndex : wrongIndex;
-    return updateRoundSession(state, (session) => submitExtraLetterAnswer(session, selectedIndex));
+    if (question.kind === 'extra-letter') {
+      const wrongIndex = (question.extraIndex + 1) % question.displayLetters.length;
+      const selectedIndex = correct ? question.extraIndex : wrongIndex;
+      return updateRoundSession(state, (session) => submitExtraLetterAnswer(session, selectedIndex));
+    }
+    if (question.kind === 'image-choice') {
+      const wrongIndex = (question.correctIndex + 1) % question.options.length;
+      return updateRoundSession(state, (session) =>
+        submitOptionAnswer(session, correct ? question.correctIndex : wrongIndex),
+      );
+    }
+    throw new Error(`expected a Round 1 kind, got ${question.kind}`);
   }
 
   function completeRound1WithPattern(state: BatchState, correctPattern: boolean[]): BatchState {
     let current = state;
     let i = 0;
-    while (current.phase === 'active') {
+    while (current.phase === 'active' && i < 20) {
       current = answerRound1Question(current, correctPattern[i % correctPattern.length]);
       current = advanceRoundQuestion(current);
       i += 1;
+    }
+    if (current.phase === 'active') {
+      throw new Error('completeRound1WithPattern did not finish within 20 questions');
     }
     return current;
   }

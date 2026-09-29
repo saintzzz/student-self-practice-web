@@ -14,6 +14,7 @@ const IMAGE_QUESTION: ImageChoiceQuestion = {
   topicId: 't1',
   kind: 'image-choice',
   emoji: '🐱',
+  wordId: 'fixture-cat',
   options: ['cat', 'dog', 'fish', 'bird'],
   correctIndex: 0,
   explanation: 'Con mèo tiếng Anh là "cat".',
@@ -33,6 +34,7 @@ const COUNTING_QUESTION: CountingImageQuestion = {
   kind: 'counting-image',
   direction: 'image-to-count',
   prompt: { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+  promptWordId: 'fixture-cat',
   options: [
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },
@@ -48,6 +50,7 @@ const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
   topicId: 't1',
   kind: 'extra-letter',
   correctWord: 'bird',
+  wordId: 'fixture-bird',
   displayLetters: ['b', 'i', 'r', 's', 'd'],
   extraIndex: 3,
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',

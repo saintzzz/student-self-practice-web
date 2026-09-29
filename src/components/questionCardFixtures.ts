@@ -17,6 +17,7 @@ export const IMAGE_QUESTION: ImageChoiceQuestion = {
   topicId: 't1',
   kind: 'image-choice',
   emoji: '🐱',
+  wordId: 'fixture-cat',
   options: ['cat', 'dog', 'fish', 'bird'],
   correctIndex: 0,
   explanation: 'Con mèo tiếng Anh là "cat".',
@@ -36,6 +37,7 @@ export const COUNTING_QUESTION: CountingImageQuestion = {
   kind: 'counting-image',
   direction: 'image-to-count',
   prompt: { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+  promptWordId: 'fixture-cat',
   options: [
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },
@@ -51,6 +53,7 @@ export const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
   topicId: 't1',
   kind: 'listening-sentence-fill-blank',
   word: 'cat',
+  wordId: 'fixture-cat',
   sentence: 'I have a cat.',
   displaySentence: 'I have a ___.',
   explanation: 'Con mèo tiếng Anh là "cat".',
@@ -61,6 +64,7 @@ export const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
   topicId: 't1',
   kind: 'extra-letter',
   correctWord: 'bird',
+  wordId: 'fixture-bird',
   displayLetters: ['b', 'i', 'r', 's', 'd'],
   extraIndex: 3,
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',
@@ -86,6 +90,7 @@ export const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
     { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 },
     { word: 'dog', plural: 'dogs', emoji: '🐶', count: 4 },
   ],
+  optionWordIds: ['fixture-cat', 'fixture-cat', 'fixture-dog', 'fixture-dog'],
   correctIndex: 0,
   explanation: 'Chọn hình có 3 cats. Con mèo tiếng Anh là "cat".',
 };
@@ -96,6 +101,7 @@ export const LISTENING_IMAGE_CHOICE_QUESTION: ListeningImageChoiceQuestion = {
   kind: 'listening-image-choice',
   word: 'cat',
   options: ['🐱', '🐶', '🐟', '🐦'],
+  optionWordIds: ['fixture-cat', 'fixture-dog', 'fixture-fish', 'fixture-bird'],
   correctIndex: 0,
   explanation: 'Con mèo tiếng Anh là "cat".',
 };
@@ -105,10 +111,10 @@ export const PICTURE_PAIR_MATCHING_QUESTION: PicturePairMatchingQuestion = {
   topicId: 't1',
   kind: 'picture-pair-matching',
   pairs: [
-    { word: 'cat', emoji: '🐱' },
-    { word: 'dog', emoji: '🐶' },
-    { word: 'fish', emoji: '🐟' },
-    { word: 'bird', emoji: '🐦' },
+    { word: 'cat', emoji: '🐱', wordId: 'fixture-cat' },
+    { word: 'dog', emoji: '🐶', wordId: 'fixture-dog' },
+    { word: 'fish', emoji: '🐟', wordId: 'fixture-fish' },
+    { word: 'bird', emoji: '🐦', wordId: 'fixture-bird' },
   ],
   tiles: [
     { pairIndex: 0, tileType: 'word', label: 'cat' },

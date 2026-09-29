@@ -2,6 +2,7 @@ import { useState } from 'react';
 import GradeSelect from './components/GradeSelect';
 import StartBatchScreen from './components/StartBatchScreen';
 import BatchScreen from './components/BatchScreen';
+import CreditsScreen from './components/CreditsScreen';
 import { GRADES } from './data/vocabulary';
 import {
   advanceRoundQuestion,
@@ -19,12 +20,13 @@ import {
   submitPronunciationAnswer,
 } from './lib/practiceSession';
 
-type Screen = 'grade-select' | 'start-batch' | 'batch';
+type Screen = 'grade-select' | 'start-batch' | 'batch' | 'credits';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
+  const [focusCreditsLink, setFocusCreditsLink] = useState(false);
 
   function handleSelectGrade(gradeId: string): void {
     setSelectedGradeId(gradeId);
@@ -34,6 +36,17 @@ export default function App() {
   function handleBackToGrades(): void {
     setSelectedGradeId(null);
     setBatch(null);
+    setScreen('grade-select');
+  }
+
+  function handleOpenCredits(): void {
+    setFocusCreditsLink(false);
+    setScreen('credits');
+  }
+
+  function handleCreditsBack(): void {
+    // AC-7.10: focus returns to the "Nguồn hình ảnh" pill on grade-select.
+    setFocusCreditsLink(true);
     setScreen('grade-select');
   }
 
@@ -83,8 +96,19 @@ export default function App() {
     setBatch(endRoundEarly(batch));
   }
 
+  if (screen === 'credits') {
+    return <CreditsScreen onBack={handleCreditsBack} />;
+  }
+
   if (screen === 'grade-select') {
-    return <GradeSelect grades={GRADES} onSelectGrade={handleSelectGrade} />;
+    return (
+      <GradeSelect
+        grades={GRADES}
+        onSelectGrade={handleSelectGrade}
+        onOpenCredits={handleOpenCredits}
+        focusCreditsLink={focusCreditsLink}
+      />
+    );
   }
 
   const selectedGrade = GRADES.find((grade) => grade.id === selectedGradeId);
@@ -111,5 +135,12 @@ export default function App() {
     );
   }
 
-  return <GradeSelect grades={GRADES} onSelectGrade={handleSelectGrade} />;
+  return (
+    <GradeSelect
+      grades={GRADES}
+      onSelectGrade={handleSelectGrade}
+      onOpenCredits={handleOpenCredits}
+      focusCreditsLink={focusCreditsLink}
+    />
+  );
 }

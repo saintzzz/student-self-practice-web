@@ -9,9 +9,14 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "assets:emoji": "node scripts/fetch-emoji-assets.mjs",
+    "assets:images": "node scripts/fetch-vocab-images.mjs",
+    "assets:images:publish": "node scripts/publish-vocab-images.mjs"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "0.19.16",
+    "@lottiefiles/dotlottie-web": "0.80.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -20,12 +25,14 @@
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^24.19.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "jsdom": "^25.0.0",
     "postcss": "^8.4.45",
+    "sharp": "0.35.5",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",

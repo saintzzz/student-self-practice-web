@@ -1,8 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ListeningImageChoiceQuestion from './ListeningImageChoiceQuestion';
 import type { ListeningImageChoiceQuestion as ListeningImageChoiceQuestionType } from '../types';
+import { getWordVisual } from '../lib/emoji/wordVisual';
+
+vi.mock('../lib/emoji/wordVisual', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../lib/emoji/wordVisual')>();
+  return { ...mod, getWordVisual: vi.fn(mod.getWordVisual) };
+});
 
 const QUESTION: ListeningImageChoiceQuestionType = {
   id: 'q1',
@@ -10,6 +16,7 @@ const QUESTION: ListeningImageChoiceQuestionType = {
   kind: 'listening-image-choice',
   word: 'cat',
   options: ['🐱', '🐶', '🐟', '🐦'],
+  optionWordIds: ['fixture-cat', 'fixture-dog', 'fixture-fish', 'fixture-bird'],
   correctIndex: 0,
   explanation: 'Con mèo tiếng Anh là "cat".',
 };
@@ -58,5 +65,35 @@ describe('ListeningImageChoiceQuestion', () => {
     expect(screen.getByTestId('option-1')).toBeDisabled();
     expect(screen.getByTestId('option-2')).toBeDisabled();
     expect(screen.getByTestId('option-3')).toBeDisabled();
+  });
+
+  it('drops ALL four options to the svg fallback when any one photo fails (AC-5.3 all-or-nothing)', () => {
+    const mockedGetWordVisual = vi.mocked(getWordVisual);
+    const urls = new Map(
+      QUESTION.optionWordIds.map((id, i) => [
+        id,
+        { emoji: QUESTION.options[i]!, imageUrl: `/images/vocab/${id}.webp` },
+      ]),
+    );
+    mockedGetWordVisual.mockImplementation((wordId) => urls.get(wordId));
+
+    render(<ListeningImageChoiceQuestion question={QUESTION} selectedIndex={null} onSelectOption={vi.fn()} />);
+
+    // All four options start in photo mode.
+    for (let i = 0; i < 4; i++) {
+      const visual = screen.getByTestId(`option-${i}`).querySelector('[data-emoji-visual]')!;
+      expect(visual).toHaveAttribute('data-emoji-mode', 'image');
+    }
+
+    // One photo fails -> the whole group remounts into svg mode; no option
+    // is ever left showing an empty box.
+    const failingImg = screen.getByTestId('option-1').querySelector('[data-emoji-visual] img')!;
+    fireEvent.error(failingImg);
+
+    for (let i = 0; i < 4; i++) {
+      const visual = screen.getByTestId(`option-${i}`).querySelector('[data-emoji-visual]')!;
+      expect(visual, `option-${i} must fall back to svg, not blank`).toHaveAttribute('data-emoji-mode', 'svg');
+      expect(visual.querySelector('img')!.getAttribute('src')).toMatch(/^\/emoji\/svg\//);
+    }
   });
 });

@@ -1,0 +1,2442 @@
+{
+  "words": {
+    "abacus": {
+      "id": "abacus",
+      "topicId": "g2-school-objects",
+      "word": "abacus",
+      "plural": "abacuses",
+      "emoji": "🧮",
+      "countable": true,
+      "explanation": "Bàn tính tiếng Anh là \"abacus\"."
+    },
+    "accordion": {
+      "id": "accordion",
+      "topicId": "g2-instruments",
+      "word": "accordion",
+      "plural": "accordions",
+      "emoji": "🪗",
+      "countable": true,
+      "explanation": "Đàn accordion tiếng Anh là \"accordion\"."
+    },
+    "ambulance": {
+      "id": "ambulance",
+      "topicId": "g2-transportation",
+      "word": "ambulance",
+      "plural": "ambulances",
+      "emoji": "🚑",
+      "countable": true,
+      "explanation": "Xe cứu thương tiếng Anh là \"ambulance\"."
+    },
+    "angry": {
+      "id": "angry",
+      "topicId": "g2-feelings",
+      "word": "angry",
+      "emoji": "😠",
+      "countable": false,
+      "explanation": "Tức giận tiếng Anh là \"angry\"."
+    },
+    "ant": {
+      "id": "ant",
+      "topicId": "g2-insects",
+      "word": "ant",
+      "plural": "ants",
+      "emoji": "🐜",
+      "countable": true,
+      "explanation": "Con kiến tiếng Anh là \"ant\"."
+    },
+    "apple": {
+      "id": "apple",
+      "topicId": "g2-fruits",
+      "word": "apple",
+      "plural": "apples",
+      "emoji": "🍎",
+      "countable": true,
+      "explanation": "Quả táo tiếng Anh là \"apple\"."
+    },
+    "artist": {
+      "id": "artist",
+      "topicId": "g2-occupations",
+      "word": "artist",
+      "emoji": "🧑‍🎨",
+      "countable": false,
+      "explanation": "Họa sĩ tiếng Anh là \"artist\"."
+    },
+    "astronaut": {
+      "id": "astronaut",
+      "topicId": "g2-occupations",
+      "word": "astronaut",
+      "emoji": "🧑‍🚀",
+      "countable": false,
+      "explanation": "Phi hành gia tiếng Anh là \"astronaut\"."
+    },
+    "avocado": {
+      "id": "avocado",
+      "topicId": "g2-vegetables",
+      "word": "avocado",
+      "plural": "avocados",
+      "emoji": "🥑",
+      "countable": true,
+      "explanation": "Quả bơ tiếng Anh là \"avocado\"."
+    },
+    "baby": {
+      "id": "baby",
+      "topicId": "g2-family",
+      "word": "baby",
+      "emoji": "👶",
+      "countable": false,
+      "explanation": "Em bé tiếng Anh là \"baby\"."
+    },
+    "badminton": {
+      "id": "badminton",
+      "topicId": "g2-sports",
+      "word": "badminton",
+      "emoji": "🏸",
+      "countable": false,
+      "explanation": "Cầu lông tiếng Anh là \"badminton\"."
+    },
+    "bag": {
+      "id": "bag",
+      "topicId": "g2-school-objects",
+      "word": "bag",
+      "plural": "bags",
+      "emoji": "🎒",
+      "countable": true,
+      "explanation": "Cái cặp sách tiếng Anh là \"bag\"."
+    },
+    "ball": {
+      "id": "ball",
+      "topicId": "g2-toys",
+      "word": "ball",
+      "plural": "balls",
+      "emoji": "⚽",
+      "countable": true,
+      "explanation": "Quả bóng tiếng Anh là \"ball\"."
+    },
+    "balloon": {
+      "id": "balloon",
+      "topicId": "g2-toys",
+      "word": "balloon",
+      "plural": "balloons",
+      "emoji": "🎈",
+      "countable": true,
+      "explanation": "Bóng bay tiếng Anh là \"balloon\"."
+    },
+    "banana": {
+      "id": "banana",
+      "topicId": "g2-fruits",
+      "word": "banana",
+      "plural": "bananas",
+      "emoji": "🍌",
+      "countable": true,
+      "explanation": "Quả chuối tiếng Anh là \"banana\"."
+    },
+    "banjo": {
+      "id": "banjo",
+      "topicId": "g2-instruments",
+      "word": "banjo",
+      "plural": "banjos",
+      "emoji": "🪕",
+      "countable": true,
+      "explanation": "Đàn banjo tiếng Anh là \"banjo\"."
+    },
+    "baseball": {
+      "id": "baseball",
+      "topicId": "g2-sports",
+      "word": "baseball",
+      "emoji": "⚾",
+      "countable": false,
+      "explanation": "Bóng chày tiếng Anh là \"baseball\"."
+    },
+    "basketball": {
+      "id": "basketball",
+      "topicId": "g2-sports",
+      "word": "basketball",
+      "emoji": "🏀",
+      "countable": false,
+      "explanation": "Bóng rổ tiếng Anh là \"basketball\"."
+    },
+    "bathtub": {
+      "id": "bathtub",
+      "topicId": "g2-furniture",
+      "word": "bathtub",
+      "plural": "bathtubs",
+      "emoji": "🛁",
+      "countable": true,
+      "explanation": "Bồn tắm tiếng Anh là \"bathtub\"."
+    },
+    "beach": {
+      "id": "beach",
+      "topicId": "g2-places",
+      "word": "beach",
+      "plural": "beaches",
+      "emoji": "🏖️",
+      "countable": true,
+      "explanation": "Bãi biển tiếng Anh là \"beach\"."
+    },
+    "bear": {
+      "id": "bear",
+      "topicId": "g2-animals",
+      "word": "bear",
+      "plural": "bears",
+      "emoji": "🐻",
+      "countable": true,
+      "explanation": "Con gấu tiếng Anh là \"bear\"."
+    },
+    "bed": {
+      "id": "bed",
+      "topicId": "g2-furniture",
+      "word": "bed",
+      "plural": "beds",
+      "emoji": "🛏️",
+      "countable": true,
+      "explanation": "Cái giường tiếng Anh là \"bed\"."
+    },
+    "bee": {
+      "id": "bee",
+      "topicId": "g2-insects",
+      "word": "bee",
+      "plural": "bees",
+      "emoji": "🐝",
+      "countable": true,
+      "explanation": "Con ong tiếng Anh là \"bee\"."
+    },
+    "bike": {
+      "id": "bike",
+      "topicId": "g2-transportation",
+      "word": "bike",
+      "plural": "bikes",
+      "emoji": "🚲",
+      "countable": true,
+      "explanation": "Xe đạp tiếng Anh là \"bike\"."
+    },
+    "bird": {
+      "id": "bird",
+      "topicId": "g2-animals",
+      "word": "bird",
+      "plural": "birds",
+      "emoji": "🐦",
+      "countable": true,
+      "explanation": "Con chim tiếng Anh là \"bird\"."
+    },
+    "black": {
+      "id": "black",
+      "topicId": "g2-colors",
+      "word": "black",
+      "emoji": "⚫",
+      "countable": false,
+      "explanation": "Màu đen tiếng Anh là \"black\"."
+    },
+    "block": {
+      "id": "block",
+      "topicId": "g2-toys",
+      "word": "block",
+      "plural": "blocks",
+      "emoji": "🧱",
+      "countable": true,
+      "explanation": "Khối xếp hình tiếng Anh là \"block\"."
+    },
+    "blue": {
+      "id": "blue",
+      "topicId": "g2-colors",
+      "word": "blue",
+      "emoji": "🔵",
+      "countable": false,
+      "explanation": "Màu xanh dương tiếng Anh là \"blue\"."
+    },
+    "boat": {
+      "id": "boat",
+      "topicId": "g2-transportation",
+      "word": "boat",
+      "plural": "boats",
+      "emoji": "⛵",
+      "countable": true,
+      "explanation": "Thuyền tiếng Anh là \"boat\"."
+    },
+    "book": {
+      "id": "book",
+      "topicId": "g2-school-objects",
+      "word": "book",
+      "plural": "books",
+      "emoji": "📖",
+      "countable": true,
+      "explanation": "Quyển sách tiếng Anh là \"book\"."
+    },
+    "bowling": {
+      "id": "bowling",
+      "topicId": "g2-sports",
+      "word": "bowling",
+      "emoji": "🎳",
+      "countable": false,
+      "explanation": "Bowling tiếng Anh là \"bowling\"."
+    },
+    "boxing": {
+      "id": "boxing",
+      "topicId": "g2-sports",
+      "word": "boxing",
+      "emoji": "🥊",
+      "countable": false,
+      "explanation": "Quyền anh tiếng Anh là \"boxing\"."
+    },
+    "bread": {
+      "id": "bread",
+      "topicId": "g2-food",
+      "word": "bread",
+      "emoji": "🍞",
+      "countable": false,
+      "explanation": "Bánh mì tiếng Anh là \"bread\"."
+    },
+    "broccoli": {
+      "id": "broccoli",
+      "topicId": "g2-vegetables",
+      "word": "broccoli",
+      "emoji": "🥦",
+      "countable": false,
+      "explanation": "Bông cải xanh tiếng Anh là \"broccoli\"."
+    },
+    "brother": {
+      "id": "brother",
+      "topicId": "g2-family",
+      "word": "brother",
+      "emoji": "👦",
+      "countable": false,
+      "explanation": "Anh/em trai tiếng Anh là \"brother\"."
+    },
+    "brown": {
+      "id": "brown",
+      "topicId": "g2-colors",
+      "word": "brown",
+      "emoji": "🟤",
+      "countable": false,
+      "explanation": "Màu nâu tiếng Anh là \"brown\"."
+    },
+    "builder": {
+      "id": "builder",
+      "topicId": "g2-occupations",
+      "word": "builder",
+      "emoji": "👷",
+      "countable": false,
+      "explanation": "Thợ xây tiếng Anh là \"builder\"."
+    },
+    "bus": {
+      "id": "bus",
+      "topicId": "g2-transportation",
+      "word": "bus",
+      "plural": "buses",
+      "emoji": "🚌",
+      "countable": true,
+      "explanation": "Xe buýt tiếng Anh là \"bus\"."
+    },
+    "butterfly": {
+      "id": "butterfly",
+      "topicId": "g2-insects",
+      "word": "butterfly",
+      "plural": "butterflies",
+      "emoji": "🦋",
+      "countable": true,
+      "explanation": "Con bướm tiếng Anh là \"butterfly\"."
+    },
+    "cake": {
+      "id": "cake",
+      "topicId": "g2-food",
+      "word": "cake",
+      "plural": "cakes",
+      "emoji": "🎂",
+      "countable": true,
+      "explanation": "Bánh ngọt tiếng Anh là \"cake\"."
+    },
+    "calendar": {
+      "id": "calendar",
+      "topicId": "g2-school-objects",
+      "word": "calendar",
+      "plural": "calendars",
+      "emoji": "📅",
+      "countable": true,
+      "explanation": "Lịch tiếng Anh là \"calendar\"."
+    },
+    "camel": {
+      "id": "camel",
+      "topicId": "g2-animals",
+      "word": "camel",
+      "plural": "camels",
+      "emoji": "🐫",
+      "countable": true,
+      "explanation": "Con lạc đà tiếng Anh là \"camel\"."
+    },
+    "candle": {
+      "id": "candle",
+      "topicId": "g2-furniture",
+      "word": "candle",
+      "plural": "candles",
+      "emoji": "🕯️",
+      "countable": true,
+      "explanation": "Cây nến tiếng Anh là \"candle\"."
+    },
+    "candy": {
+      "id": "candy",
+      "topicId": "g2-food",
+      "word": "candy",
+      "plural": "candies",
+      "emoji": "🍬",
+      "countable": true,
+      "explanation": "Kẹo tiếng Anh là \"candy\"."
+    },
+    "car": {
+      "id": "car",
+      "topicId": "g2-transportation",
+      "word": "car",
+      "plural": "cars",
+      "emoji": "🚗",
+      "countable": true,
+      "explanation": "Ô tô tiếng Anh là \"car\"."
+    },
+    "carrot": {
+      "id": "carrot",
+      "topicId": "g2-vegetables",
+      "word": "carrot",
+      "plural": "carrots",
+      "emoji": "🥕",
+      "countable": true,
+      "explanation": "Củ cà rốt tiếng Anh là \"carrot\"."
+    },
+    "cat": {
+      "id": "cat",
+      "topicId": "g2-animals",
+      "word": "cat",
+      "plural": "cats",
+      "emoji": "🐱",
+      "countable": true,
+      "explanation": "Con mèo tiếng Anh là \"cat\"."
+    },
+    "caterpillar": {
+      "id": "caterpillar",
+      "topicId": "g2-insects",
+      "word": "caterpillar",
+      "plural": "caterpillars",
+      "emoji": "🐛",
+      "countable": true,
+      "explanation": "Con sâu bướm tiếng Anh là \"caterpillar\"."
+    },
+    "chair": {
+      "id": "chair",
+      "topicId": "g2-furniture",
+      "word": "chair",
+      "plural": "chairs",
+      "emoji": "🪑",
+      "countable": true,
+      "explanation": "Cái ghế tiếng Anh là \"chair\"."
+    },
+    "cheese": {
+      "id": "cheese",
+      "topicId": "g2-food",
+      "word": "cheese",
+      "emoji": "🧀",
+      "countable": false,
+      "explanation": "Phô mai tiếng Anh là \"cheese\"."
+    },
+    "cherry": {
+      "id": "cherry",
+      "topicId": "g2-fruits",
+      "word": "cherry",
+      "plural": "cherries",
+      "emoji": "🍒",
+      "countable": true,
+      "explanation": "Quả anh đào tiếng Anh là \"cherry\"."
+    },
+    "chicken": {
+      "id": "chicken",
+      "topicId": "g2-animals",
+      "word": "chicken",
+      "plural": "chickens",
+      "emoji": "🐔",
+      "countable": true,
+      "explanation": "Con gà tiếng Anh là \"chicken\"."
+    },
+    "chips": {
+      "id": "chips",
+      "topicId": "g2-food",
+      "word": "chips",
+      "emoji": "🍟",
+      "countable": false,
+      "explanation": "Khoai tây chiên tiếng Anh là \"chips\"."
+    },
+    "chocolate": {
+      "id": "chocolate",
+      "topicId": "g2-food",
+      "word": "chocolate",
+      "emoji": "🍫",
+      "countable": false,
+      "explanation": "Sô cô la tiếng Anh là \"chocolate\"."
+    },
+    "circle": {
+      "id": "circle",
+      "topicId": "g2-shapes",
+      "word": "circle",
+      "plural": "circles",
+      "emoji": "⭕",
+      "countable": true,
+      "explanation": "Hình tròn tiếng Anh là \"circle\"."
+    },
+    "clap": {
+      "id": "clap",
+      "topicId": "g2-actions",
+      "word": "clap",
+      "emoji": "👏",
+      "countable": false,
+      "explanation": "Vỗ tay tiếng Anh là \"clap\"."
+    },
+    "climb": {
+      "id": "climb",
+      "topicId": "g2-actions",
+      "word": "climb",
+      "emoji": "🧗",
+      "countable": false,
+      "explanation": "Leo trèo tiếng Anh là \"climb\"."
+    },
+    "clock": {
+      "id": "clock",
+      "topicId": "g2-furniture",
+      "word": "clock",
+      "plural": "clocks",
+      "emoji": "🕰️",
+      "countable": true,
+      "explanation": "Đồng hồ tiếng Anh là \"clock\"."
+    },
+    "cloud": {
+      "id": "cloud",
+      "topicId": "g2-weather",
+      "word": "cloud",
+      "emoji": "☁️",
+      "countable": false,
+      "explanation": "Mây tiếng Anh là \"cloud\"."
+    },
+    "computer": {
+      "id": "computer",
+      "topicId": "g2-school-objects",
+      "word": "computer",
+      "plural": "computers",
+      "emoji": "💻",
+      "countable": true,
+      "explanation": "Máy tính tiếng Anh là \"computer\"."
+    },
+    "cook": {
+      "id": "cook",
+      "topicId": "g2-actions",
+      "word": "cook",
+      "emoji": "🍳",
+      "countable": false,
+      "explanation": "Nấu ăn tiếng Anh là \"cook\"."
+    },
+    "cookie": {
+      "id": "cookie",
+      "topicId": "g2-food",
+      "word": "cookie",
+      "plural": "cookies",
+      "emoji": "🍪",
+      "countable": true,
+      "explanation": "Bánh quy tiếng Anh là \"cookie\"."
+    },
+    "corn": {
+      "id": "corn",
+      "topicId": "g2-vegetables",
+      "word": "corn",
+      "emoji": "🌽",
+      "countable": false,
+      "explanation": "Ngô tiếng Anh là \"corn\"."
+    },
+    "cow": {
+      "id": "cow",
+      "topicId": "g2-animals",
+      "word": "cow",
+      "plural": "cows",
+      "emoji": "🐄",
+      "countable": true,
+      "explanation": "Con bò tiếng Anh là \"cow\"."
+    },
+    "crab": {
+      "id": "crab",
+      "topicId": "g2-sea-creatures",
+      "word": "crab",
+      "plural": "crabs",
+      "emoji": "🦀",
+      "countable": true,
+      "explanation": "Con cua tiếng Anh là \"crab\"."
+    },
+    "crayon": {
+      "id": "crayon",
+      "topicId": "g2-school-objects",
+      "word": "crayon",
+      "plural": "crayons",
+      "emoji": "🖍️",
+      "countable": true,
+      "explanation": "Bút sáp màu tiếng Anh là \"crayon\"."
+    },
+    "crocodile": {
+      "id": "crocodile",
+      "topicId": "g2-animals",
+      "word": "crocodile",
+      "plural": "crocodiles",
+      "emoji": "🐊",
+      "countable": true,
+      "explanation": "Con cá sấu tiếng Anh là \"crocodile\"."
+    },
+    "crown": {
+      "id": "crown",
+      "topicId": "g2-clothes",
+      "word": "crown",
+      "plural": "crowns",
+      "emoji": "👑",
+      "countable": true,
+      "explanation": "Vương miện tiếng Anh là \"crown\"."
+    },
+    "cry": {
+      "id": "cry",
+      "topicId": "g2-actions",
+      "word": "cry",
+      "emoji": "😢",
+      "countable": false,
+      "explanation": "Khóc tiếng Anh là \"cry\"."
+    },
+    "cucumber": {
+      "id": "cucumber",
+      "topicId": "g2-vegetables",
+      "word": "cucumber",
+      "plural": "cucumbers",
+      "emoji": "🥒",
+      "countable": true,
+      "explanation": "Quả dưa chuột tiếng Anh là \"cucumber\"."
+    },
+    "dad": {
+      "id": "dad",
+      "topicId": "g2-family",
+      "word": "dad",
+      "emoji": "👨",
+      "countable": false,
+      "explanation": "Bố tiếng Anh là \"dad\"."
+    },
+    "dance": {
+      "id": "dance",
+      "topicId": "g2-actions",
+      "word": "dance",
+      "emoji": "💃",
+      "countable": false,
+      "explanation": "Nhảy múa tiếng Anh là \"dance\"."
+    },
+    "deer": {
+      "id": "deer",
+      "topicId": "g2-animals",
+      "word": "deer",
+      "plural": "deer",
+      "emoji": "🦌",
+      "countable": true,
+      "explanation": "Con hươu tiếng Anh là \"deer\"."
+    },
+    "diamond": {
+      "id": "diamond",
+      "topicId": "g2-shapes",
+      "word": "diamond",
+      "plural": "diamonds",
+      "emoji": "🔶",
+      "countable": true,
+      "explanation": "Hình thoi tiếng Anh là \"diamond\"."
+    },
+    "dice": {
+      "id": "dice",
+      "topicId": "g2-toys",
+      "word": "dice",
+      "plural": "dice",
+      "emoji": "🎲",
+      "countable": true,
+      "explanation": "Xúc xắc tiếng Anh là \"dice\"."
+    },
+    "doctor": {
+      "id": "doctor",
+      "topicId": "g2-occupations",
+      "word": "doctor",
+      "emoji": "🧑‍⚕️",
+      "countable": false,
+      "explanation": "Bác sĩ tiếng Anh là \"doctor\"."
+    },
+    "dog": {
+      "id": "dog",
+      "topicId": "g2-animals",
+      "word": "dog",
+      "plural": "dogs",
+      "emoji": "🐶",
+      "countable": true,
+      "explanation": "Con chó tiếng Anh là \"dog\"."
+    },
+    "doll": {
+      "id": "doll",
+      "topicId": "g2-toys",
+      "word": "doll",
+      "plural": "dolls",
+      "emoji": "🪆",
+      "countable": true,
+      "explanation": "Búp bê tiếng Anh là \"doll\"."
+    },
+    "dolphin": {
+      "id": "dolphin",
+      "topicId": "g2-sea-creatures",
+      "word": "dolphin",
+      "plural": "dolphins",
+      "emoji": "🐬",
+      "countable": true,
+      "explanation": "Con cá heo tiếng Anh là \"dolphin\"."
+    },
+    "donut": {
+      "id": "donut",
+      "topicId": "g2-food",
+      "word": "donut",
+      "plural": "donuts",
+      "emoji": "🍩",
+      "countable": true,
+      "explanation": "Bánh donut tiếng Anh là \"donut\"."
+    },
+    "door": {
+      "id": "door",
+      "topicId": "g2-furniture",
+      "word": "door",
+      "plural": "doors",
+      "emoji": "🚪",
+      "countable": true,
+      "explanation": "Cái cửa tiếng Anh là \"door\"."
+    },
+    "draw": {
+      "id": "draw",
+      "topicId": "g2-actions",
+      "word": "draw",
+      "emoji": "🎨",
+      "countable": false,
+      "explanation": "Vẽ tiếng Anh là \"draw\"."
+    },
+    "dress": {
+      "id": "dress",
+      "topicId": "g2-clothes",
+      "word": "dress",
+      "plural": "dresses",
+      "emoji": "👗",
+      "countable": true,
+      "explanation": "Váy tiếng Anh là \"dress\"."
+    },
+    "drink": {
+      "id": "drink",
+      "topicId": "g2-actions",
+      "word": "drink",
+      "emoji": "🥤",
+      "countable": false,
+      "explanation": "Uống tiếng Anh là \"drink\"."
+    },
+    "drum": {
+      "id": "drum",
+      "topicId": "g2-toys",
+      "word": "drum",
+      "plural": "drums",
+      "emoji": "🥁",
+      "countable": true,
+      "explanation": "Cái trống tiếng Anh là \"drum\"."
+    },
+    "duck": {
+      "id": "duck",
+      "topicId": "g2-animals",
+      "word": "duck",
+      "plural": "ducks",
+      "emoji": "🦆",
+      "countable": true,
+      "explanation": "Con vịt tiếng Anh là \"duck\"."
+    },
+    "ear": {
+      "id": "ear",
+      "topicId": "g2-body-parts",
+      "word": "ear",
+      "emoji": "👂",
+      "countable": false,
+      "explanation": "Cái tai tiếng Anh là \"ear\"."
+    },
+    "egg": {
+      "id": "egg",
+      "topicId": "g2-food",
+      "word": "egg",
+      "plural": "eggs",
+      "emoji": "🥚",
+      "countable": true,
+      "explanation": "Quả trứng tiếng Anh là \"egg\"."
+    },
+    "eggplant": {
+      "id": "eggplant",
+      "topicId": "g2-vegetables",
+      "word": "eggplant",
+      "plural": "eggplants",
+      "emoji": "🍆",
+      "countable": true,
+      "explanation": "Quả cà tím tiếng Anh là \"eggplant\"."
+    },
+    "eight": {
+      "id": "eight",
+      "topicId": "g2-numbers",
+      "word": "eight",
+      "emoji": "8️⃣",
+      "countable": false,
+      "explanation": "Số 8 tiếng Anh là \"eight\"."
+    },
+    "elephant": {
+      "id": "elephant",
+      "topicId": "g2-animals",
+      "word": "elephant",
+      "plural": "elephants",
+      "emoji": "🐘",
+      "countable": true,
+      "explanation": "Con voi tiếng Anh là \"elephant\"."
+    },
+    "eye": {
+      "id": "eye",
+      "topicId": "g2-body-parts",
+      "word": "eye",
+      "emoji": "👁️",
+      "countable": false,
+      "explanation": "Con mắt tiếng Anh là \"eye\"."
+    },
+    "farmer": {
+      "id": "farmer",
+      "topicId": "g2-occupations",
+      "word": "farmer",
+      "emoji": "🧑‍🌾",
+      "countable": false,
+      "explanation": "Nông dân tiếng Anh là \"farmer\"."
+    },
+    "fire": {
+      "id": "fire",
+      "topicId": "g2-nature",
+      "word": "fire",
+      "emoji": "🔥",
+      "countable": false,
+      "explanation": "Lửa tiếng Anh là \"fire\"."
+    },
+    "firefighter": {
+      "id": "firefighter",
+      "topicId": "g2-occupations",
+      "word": "firefighter",
+      "emoji": "🧑‍🚒",
+      "countable": false,
+      "explanation": "Lính cứu hỏa tiếng Anh là \"firefighter\"."
+    },
+    "fish": {
+      "id": "fish",
+      "topicId": "g2-animals",
+      "word": "fish",
+      "plural": "fish",
+      "emoji": "🐟",
+      "countable": true,
+      "explanation": "Con cá tiếng Anh là \"fish\"."
+    },
+    "five": {
+      "id": "five",
+      "topicId": "g2-numbers",
+      "word": "five",
+      "emoji": "5️⃣",
+      "countable": false,
+      "explanation": "Số 5 tiếng Anh là \"five\"."
+    },
+    "flower": {
+      "id": "flower",
+      "topicId": "g2-nature",
+      "word": "flower",
+      "plural": "flowers",
+      "emoji": "🌸",
+      "countable": true,
+      "explanation": "Bông hoa tiếng Anh là \"flower\"."
+    },
+    "fly": {
+      "id": "fly",
+      "topicId": "g2-insects",
+      "word": "fly",
+      "plural": "flies",
+      "emoji": "🪰",
+      "countable": true,
+      "explanation": "Con ruồi tiếng Anh là \"fly\"."
+    },
+    "folder": {
+      "id": "folder",
+      "topicId": "g2-school-objects",
+      "word": "folder",
+      "plural": "folders",
+      "emoji": "📁",
+      "countable": true,
+      "explanation": "Cặp đựng tài liệu tiếng Anh là \"folder\"."
+    },
+    "foot": {
+      "id": "foot",
+      "topicId": "g2-body-parts",
+      "word": "foot",
+      "emoji": "🦶",
+      "countable": false,
+      "explanation": "Bàn chân tiếng Anh là \"foot\"."
+    },
+    "four": {
+      "id": "four",
+      "topicId": "g2-numbers",
+      "word": "four",
+      "emoji": "4️⃣",
+      "countable": false,
+      "explanation": "Số 4 tiếng Anh là \"four\"."
+    },
+    "fox": {
+      "id": "fox",
+      "topicId": "g2-animals",
+      "word": "fox",
+      "plural": "foxes",
+      "emoji": "🦊",
+      "countable": true,
+      "explanation": "Con cáo tiếng Anh là \"fox\"."
+    },
+    "frog": {
+      "id": "frog",
+      "topicId": "g2-animals",
+      "word": "frog",
+      "plural": "frogs",
+      "emoji": "🐸",
+      "countable": true,
+      "explanation": "Con ếch tiếng Anh là \"frog\"."
+    },
+    "garlic": {
+      "id": "garlic",
+      "topicId": "g2-vegetables",
+      "word": "garlic",
+      "emoji": "🧄",
+      "countable": false,
+      "explanation": "Tỏi tiếng Anh là \"garlic\"."
+    },
+    "giraffe": {
+      "id": "giraffe",
+      "topicId": "g2-animals",
+      "word": "giraffe",
+      "plural": "giraffes",
+      "emoji": "🦒",
+      "countable": true,
+      "explanation": "Con hươu cao cổ tiếng Anh là \"giraffe\"."
+    },
+    "glasses": {
+      "id": "glasses",
+      "topicId": "g2-clothes",
+      "word": "glasses",
+      "emoji": "👓",
+      "countable": false,
+      "explanation": "Kính mắt tiếng Anh là \"glasses\"."
+    },
+    "globe": {
+      "id": "globe",
+      "topicId": "g2-school-objects",
+      "word": "globe",
+      "plural": "globes",
+      "emoji": "🌍",
+      "countable": true,
+      "explanation": "Quả địa cầu tiếng Anh là \"globe\"."
+    },
+    "glove": {
+      "id": "glove",
+      "topicId": "g2-clothes",
+      "word": "glove",
+      "plural": "gloves",
+      "emoji": "🧤",
+      "countable": true,
+      "explanation": "Găng tay tiếng Anh là \"glove\"."
+    },
+    "goat": {
+      "id": "goat",
+      "topicId": "g2-animals",
+      "word": "goat",
+      "plural": "goats",
+      "emoji": "🐐",
+      "countable": true,
+      "explanation": "Con dê tiếng Anh là \"goat\"."
+    },
+    "golf": {
+      "id": "golf",
+      "topicId": "g2-sports",
+      "word": "golf",
+      "emoji": "⛳",
+      "countable": false,
+      "explanation": "Golf tiếng Anh là \"golf\"."
+    },
+    "grandma": {
+      "id": "grandma",
+      "topicId": "g2-family",
+      "word": "grandma",
+      "emoji": "👵",
+      "countable": false,
+      "explanation": "Bà tiếng Anh là \"grandma\"."
+    },
+    "grandpa": {
+      "id": "grandpa",
+      "topicId": "g2-family",
+      "word": "grandpa",
+      "emoji": "👴",
+      "countable": false,
+      "explanation": "Ông tiếng Anh là \"grandpa\"."
+    },
+    "grape": {
+      "id": "grape",
+      "topicId": "g2-fruits",
+      "word": "grape",
+      "plural": "grapes",
+      "emoji": "🍇",
+      "countable": true,
+      "explanation": "Quả nho tiếng Anh là \"grape\"."
+    },
+    "grasshopper": {
+      "id": "grasshopper",
+      "topicId": "g2-insects",
+      "word": "grasshopper",
+      "plural": "grasshoppers",
+      "emoji": "🦗",
+      "countable": true,
+      "explanation": "Con châu chấu tiếng Anh là \"grasshopper\"."
+    },
+    "green": {
+      "id": "green",
+      "topicId": "g2-colors",
+      "word": "green",
+      "emoji": "🟢",
+      "countable": false,
+      "explanation": "Màu xanh lá tiếng Anh là \"green\"."
+    },
+    "guitar": {
+      "id": "guitar",
+      "topicId": "g2-instruments",
+      "word": "guitar",
+      "plural": "guitars",
+      "emoji": "🎸",
+      "countable": true,
+      "explanation": "Đàn ghi ta tiếng Anh là \"guitar\"."
+    },
+    "hamburger": {
+      "id": "hamburger",
+      "topicId": "g2-food",
+      "word": "hamburger",
+      "plural": "hamburgers",
+      "emoji": "🍔",
+      "countable": true,
+      "explanation": "Bánh hamburger tiếng Anh là \"hamburger\"."
+    },
+    "hand": {
+      "id": "hand",
+      "topicId": "g2-body-parts",
+      "word": "hand",
+      "emoji": "✋",
+      "countable": false,
+      "explanation": "Bàn tay tiếng Anh là \"hand\"."
+    },
+    "handbag": {
+      "id": "handbag",
+      "topicId": "g2-clothes",
+      "word": "handbag",
+      "plural": "handbags",
+      "emoji": "👜",
+      "countable": true,
+      "explanation": "Túi xách tiếng Anh là \"handbag\"."
+    },
+    "happy": {
+      "id": "happy",
+      "topicId": "g2-feelings",
+      "word": "happy",
+      "emoji": "😀",
+      "countable": false,
+      "explanation": "Vui vẻ tiếng Anh là \"happy\"."
+    },
+    "hat": {
+      "id": "hat",
+      "topicId": "g2-clothes",
+      "word": "hat",
+      "plural": "hats",
+      "emoji": "🎩",
+      "countable": true,
+      "explanation": "Mũ tiếng Anh là \"hat\"."
+    },
+    "heart": {
+      "id": "heart",
+      "topicId": "g2-shapes",
+      "word": "heart",
+      "plural": "hearts",
+      "emoji": "❤️",
+      "countable": true,
+      "explanation": "Hình trái tim tiếng Anh là \"heart\"."
+    },
+    "hedgehog": {
+      "id": "hedgehog",
+      "topicId": "g2-animals",
+      "word": "hedgehog",
+      "plural": "hedgehogs",
+      "emoji": "🦔",
+      "countable": true,
+      "explanation": "Con nhím tiếng Anh là \"hedgehog\"."
+    },
+    "helicopter": {
+      "id": "helicopter",
+      "topicId": "g2-transportation",
+      "word": "helicopter",
+      "plural": "helicopters",
+      "emoji": "🚁",
+      "countable": true,
+      "explanation": "Máy bay trực thăng tiếng Anh là \"helicopter\"."
+    },
+    "hippo": {
+      "id": "hippo",
+      "topicId": "g2-animals",
+      "word": "hippo",
+      "plural": "hippos",
+      "emoji": "🦛",
+      "countable": true,
+      "explanation": "Con hà mã tiếng Anh là \"hippo\"."
+    },
+    "hockey": {
+      "id": "hockey",
+      "topicId": "g2-sports",
+      "word": "hockey",
+      "emoji": "🏒",
+      "countable": false,
+      "explanation": "Khúc côn cầu tiếng Anh là \"hockey\"."
+    },
+    "honey": {
+      "id": "honey",
+      "topicId": "g2-food",
+      "word": "honey",
+      "emoji": "🍯",
+      "countable": false,
+      "explanation": "Mật ong tiếng Anh là \"honey\"."
+    },
+    "horse": {
+      "id": "horse",
+      "topicId": "g2-animals",
+      "word": "horse",
+      "plural": "horses",
+      "emoji": "🐴",
+      "countable": true,
+      "explanation": "Con ngựa tiếng Anh là \"horse\"."
+    },
+    "house": {
+      "id": "house",
+      "topicId": "g2-places",
+      "word": "house",
+      "plural": "houses",
+      "emoji": "🏠",
+      "countable": true,
+      "explanation": "Ngôi nhà tiếng Anh là \"house\"."
+    },
+    "ice-cream": {
+      "id": "ice-cream",
+      "topicId": "g2-food",
+      "word": "ice cream",
+      "emoji": "🍦",
+      "countable": false,
+      "explanation": "Kem tiếng Anh là \"ice cream\"."
+    },
+    "jacket": {
+      "id": "jacket",
+      "topicId": "g2-clothes",
+      "word": "jacket",
+      "plural": "jackets",
+      "emoji": "🧥",
+      "countable": true,
+      "explanation": "Áo khoác tiếng Anh là \"jacket\"."
+    },
+    "juice": {
+      "id": "juice",
+      "topicId": "g2-food",
+      "word": "juice",
+      "emoji": "🧃",
+      "countable": false,
+      "explanation": "Nước ép tiếng Anh là \"juice\"."
+    },
+    "kangaroo": {
+      "id": "kangaroo",
+      "topicId": "g2-animals",
+      "word": "kangaroo",
+      "plural": "kangaroos",
+      "emoji": "🦘",
+      "countable": true,
+      "explanation": "Con chuột túi tiếng Anh là \"kangaroo\"."
+    },
+    "key": {
+      "id": "key",
+      "topicId": "g2-furniture",
+      "word": "key",
+      "plural": "keys",
+      "emoji": "🔑",
+      "countable": true,
+      "explanation": "Chìa khóa tiếng Anh là \"key\"."
+    },
+    "kite": {
+      "id": "kite",
+      "topicId": "g2-toys",
+      "word": "kite",
+      "plural": "kites",
+      "emoji": "🪁",
+      "countable": true,
+      "explanation": "Con diều tiếng Anh là \"kite\"."
+    },
+    "koala": {
+      "id": "koala",
+      "topicId": "g2-animals",
+      "word": "koala",
+      "plural": "koalas",
+      "emoji": "🐨",
+      "countable": true,
+      "explanation": "Gấu túi koala tiếng Anh là \"koala\"."
+    },
+    "ladybug": {
+      "id": "ladybug",
+      "topicId": "g2-insects",
+      "word": "ladybug",
+      "plural": "ladybugs",
+      "emoji": "🐞",
+      "countable": true,
+      "explanation": "Bọ rùa tiếng Anh là \"ladybug\"."
+    },
+    "lamp": {
+      "id": "lamp",
+      "topicId": "g2-furniture",
+      "word": "lamp",
+      "plural": "lamps",
+      "emoji": "🪔",
+      "countable": true,
+      "explanation": "Cái đèn tiếng Anh là \"lamp\"."
+    },
+    "laugh": {
+      "id": "laugh",
+      "topicId": "g2-actions",
+      "word": "laugh",
+      "emoji": "😂",
+      "countable": false,
+      "explanation": "Cười tiếng Anh là \"laugh\"."
+    },
+    "leaf": {
+      "id": "leaf",
+      "topicId": "g2-nature",
+      "word": "leaf",
+      "plural": "leaves",
+      "emoji": "🍃",
+      "countable": true,
+      "explanation": "Chiếc lá tiếng Anh là \"leaf\"."
+    },
+    "leg": {
+      "id": "leg",
+      "topicId": "g2-body-parts",
+      "word": "leg",
+      "emoji": "🦵",
+      "countable": false,
+      "explanation": "Chân tiếng Anh là \"leg\"."
+    },
+    "lemon": {
+      "id": "lemon",
+      "topicId": "g2-fruits",
+      "word": "lemon",
+      "plural": "lemons",
+      "emoji": "🍋",
+      "countable": true,
+      "explanation": "Quả chanh tiếng Anh là \"lemon\"."
+    },
+    "lettuce": {
+      "id": "lettuce",
+      "topicId": "g2-vegetables",
+      "word": "lettuce",
+      "emoji": "🥬",
+      "countable": false,
+      "explanation": "Rau xà lách tiếng Anh là \"lettuce\"."
+    },
+    "lion": {
+      "id": "lion",
+      "topicId": "g2-animals",
+      "word": "lion",
+      "plural": "lions",
+      "emoji": "🦁",
+      "countable": true,
+      "explanation": "Con sư tử tiếng Anh là \"lion\"."
+    },
+    "lizard": {
+      "id": "lizard",
+      "topicId": "g2-animals",
+      "word": "lizard",
+      "plural": "lizards",
+      "emoji": "🦎",
+      "countable": true,
+      "explanation": "Con thằn lằn tiếng Anh là \"lizard\"."
+    },
+    "mango": {
+      "id": "mango",
+      "topicId": "g2-fruits",
+      "word": "mango",
+      "plural": "mangoes",
+      "emoji": "🥭",
+      "countable": true,
+      "explanation": "Quả xoài tiếng Anh là \"mango\"."
+    },
+    "meat": {
+      "id": "meat",
+      "topicId": "g2-food",
+      "word": "meat",
+      "emoji": "🥩",
+      "countable": false,
+      "explanation": "Thịt tiếng Anh là \"meat\"."
+    },
+    "mechanic": {
+      "id": "mechanic",
+      "topicId": "g2-occupations",
+      "word": "mechanic",
+      "emoji": "🧑‍🔧",
+      "countable": false,
+      "explanation": "Thợ máy tiếng Anh là \"mechanic\"."
+    },
+    "milk": {
+      "id": "milk",
+      "topicId": "g2-food",
+      "word": "milk",
+      "emoji": "🥛",
+      "countable": false,
+      "explanation": "Sữa tiếng Anh là \"milk\"."
+    },
+    "mirror": {
+      "id": "mirror",
+      "topicId": "g2-furniture",
+      "word": "mirror",
+      "plural": "mirrors",
+      "emoji": "🪞",
+      "countable": true,
+      "explanation": "Cái gương tiếng Anh là \"mirror\"."
+    },
+    "mom": {
+      "id": "mom",
+      "topicId": "g2-family",
+      "word": "mom",
+      "emoji": "👩",
+      "countable": false,
+      "explanation": "Mẹ tiếng Anh là \"mom\"."
+    },
+    "monkey": {
+      "id": "monkey",
+      "topicId": "g2-animals",
+      "word": "monkey",
+      "plural": "monkeys",
+      "emoji": "🐵",
+      "countable": true,
+      "explanation": "Con khỉ tiếng Anh là \"monkey\"."
+    },
+    "mosquito": {
+      "id": "mosquito",
+      "topicId": "g2-insects",
+      "word": "mosquito",
+      "plural": "mosquitoes",
+      "emoji": "🦟",
+      "countable": true,
+      "explanation": "Con muỗi tiếng Anh là \"mosquito\"."
+    },
+    "motorbike": {
+      "id": "motorbike",
+      "topicId": "g2-transportation",
+      "word": "motorbike",
+      "plural": "motorbikes",
+      "emoji": "🏍️",
+      "countable": true,
+      "explanation": "Xe máy tiếng Anh là \"motorbike\"."
+    },
+    "mountain": {
+      "id": "mountain",
+      "topicId": "g2-nature",
+      "word": "mountain",
+      "plural": "mountains",
+      "emoji": "⛰️",
+      "countable": true,
+      "explanation": "Ngọn núi tiếng Anh là \"mountain\"."
+    },
+    "mouse": {
+      "id": "mouse",
+      "topicId": "g2-animals",
+      "word": "mouse",
+      "plural": "mice",
+      "emoji": "🐭",
+      "countable": true,
+      "explanation": "Con chuột tiếng Anh là \"mouse\"."
+    },
+    "mouth": {
+      "id": "mouth",
+      "topicId": "g2-body-parts",
+      "word": "mouth",
+      "emoji": "👄",
+      "countable": false,
+      "explanation": "Cái miệng tiếng Anh là \"mouth\"."
+    },
+    "mushroom": {
+      "id": "mushroom",
+      "topicId": "g2-vegetables",
+      "word": "mushroom",
+      "plural": "mushrooms",
+      "emoji": "🍄",
+      "countable": true,
+      "explanation": "Cây nấm tiếng Anh là \"mushroom\"."
+    },
+    "nine": {
+      "id": "nine",
+      "topicId": "g2-numbers",
+      "word": "nine",
+      "emoji": "9️⃣",
+      "countable": false,
+      "explanation": "Số 9 tiếng Anh là \"nine\"."
+    },
+    "noodles": {
+      "id": "noodles",
+      "topicId": "g2-food",
+      "word": "noodles",
+      "emoji": "🍜",
+      "countable": false,
+      "explanation": "Mì tiếng Anh là \"noodles\"."
+    },
+    "nose": {
+      "id": "nose",
+      "topicId": "g2-body-parts",
+      "word": "nose",
+      "emoji": "👃",
+      "countable": false,
+      "explanation": "Cái mũi tiếng Anh là \"nose\"."
+    },
+    "notebook": {
+      "id": "notebook",
+      "topicId": "g2-school-objects",
+      "word": "notebook",
+      "plural": "notebooks",
+      "emoji": "📓",
+      "countable": true,
+      "explanation": "Quyển vở tiếng Anh là \"notebook\"."
+    },
+    "ocean": {
+      "id": "ocean",
+      "topicId": "g2-nature",
+      "word": "ocean",
+      "emoji": "🌊",
+      "countable": false,
+      "explanation": "Đại dương tiếng Anh là \"ocean\"."
+    },
+    "octopus": {
+      "id": "octopus",
+      "topicId": "g2-sea-creatures",
+      "word": "octopus",
+      "plural": "octopuses",
+      "emoji": "🐙",
+      "countable": true,
+      "explanation": "Con bạch tuộc tiếng Anh là \"octopus\"."
+    },
+    "one": {
+      "id": "one",
+      "topicId": "g2-numbers",
+      "word": "one",
+      "emoji": "1️⃣",
+      "countable": false,
+      "explanation": "Số 1 tiếng Anh là \"one\"."
+    },
+    "onion": {
+      "id": "onion",
+      "topicId": "g2-vegetables",
+      "word": "onion",
+      "plural": "onions",
+      "emoji": "🧅",
+      "countable": true,
+      "explanation": "Củ hành tây tiếng Anh là \"onion\"."
+    },
+    "orange": {
+      "id": "orange",
+      "topicId": "g2-colors",
+      "word": "orange",
+      "emoji": "🟠",
+      "countable": false,
+      "explanation": "Màu cam tiếng Anh là \"orange\"."
+    },
+    "owl": {
+      "id": "owl",
+      "topicId": "g2-animals",
+      "word": "owl",
+      "plural": "owls",
+      "emoji": "🦉",
+      "countable": true,
+      "explanation": "Con cú tiếng Anh là \"owl\"."
+    },
+    "paintbrush": {
+      "id": "paintbrush",
+      "topicId": "g2-school-objects",
+      "word": "paintbrush",
+      "plural": "paintbrushes",
+      "emoji": "🖌️",
+      "countable": true,
+      "explanation": "Cọ vẽ tiếng Anh là \"paintbrush\"."
+    },
+    "pancake": {
+      "id": "pancake",
+      "topicId": "g2-food",
+      "word": "pancake",
+      "plural": "pancakes",
+      "emoji": "🥞",
+      "countable": true,
+      "explanation": "Bánh pancake tiếng Anh là \"pancake\"."
+    },
+    "panda": {
+      "id": "panda",
+      "topicId": "g2-animals",
+      "word": "panda",
+      "plural": "pandas",
+      "emoji": "🐼",
+      "countable": true,
+      "explanation": "Gấu trúc tiếng Anh là \"panda\"."
+    },
+    "pants": {
+      "id": "pants",
+      "topicId": "g2-clothes",
+      "word": "pants",
+      "emoji": "👖",
+      "countable": false,
+      "explanation": "Quần dài tiếng Anh là \"pants\"."
+    },
+    "paperclip": {
+      "id": "paperclip",
+      "topicId": "g2-school-objects",
+      "word": "paperclip",
+      "plural": "paperclips",
+      "emoji": "📎",
+      "countable": true,
+      "explanation": "Kẹp giấy tiếng Anh là \"paperclip\"."
+    },
+    "parrot": {
+      "id": "parrot",
+      "topicId": "g2-animals",
+      "word": "parrot",
+      "plural": "parrots",
+      "emoji": "🦜",
+      "countable": true,
+      "explanation": "Con vẹt tiếng Anh là \"parrot\"."
+    },
+    "peach": {
+      "id": "peach",
+      "topicId": "g2-fruits",
+      "word": "peach",
+      "plural": "peaches",
+      "emoji": "🍑",
+      "countable": true,
+      "explanation": "Quả đào tiếng Anh là \"peach\"."
+    },
+    "peacock": {
+      "id": "peacock",
+      "topicId": "g2-animals",
+      "word": "peacock",
+      "plural": "peacocks",
+      "emoji": "🦚",
+      "countable": true,
+      "explanation": "Con công tiếng Anh là \"peacock\"."
+    },
+    "pear": {
+      "id": "pear",
+      "topicId": "g2-fruits",
+      "word": "pear",
+      "plural": "pears",
+      "emoji": "🍐",
+      "countable": true,
+      "explanation": "Quả lê tiếng Anh là \"pear\"."
+    },
+    "pen": {
+      "id": "pen",
+      "topicId": "g2-school-objects",
+      "word": "pen",
+      "plural": "pens",
+      "emoji": "🖊️",
+      "countable": true,
+      "explanation": "Cái bút mực tiếng Anh là \"pen\"."
+    },
+    "pencil": {
+      "id": "pencil",
+      "topicId": "g2-school-objects",
+      "word": "pencil",
+      "plural": "pencils",
+      "emoji": "✏️",
+      "countable": true,
+      "explanation": "Cái bút chì tiếng Anh là \"pencil\"."
+    },
+    "penguin": {
+      "id": "penguin",
+      "topicId": "g2-animals",
+      "word": "penguin",
+      "plural": "penguins",
+      "emoji": "🐧",
+      "countable": true,
+      "explanation": "Chim cánh cụt tiếng Anh là \"penguin\"."
+    },
+    "pepper": {
+      "id": "pepper",
+      "topicId": "g2-vegetables",
+      "word": "pepper",
+      "plural": "peppers",
+      "emoji": "🌶️",
+      "countable": true,
+      "explanation": "Quả ớt tiếng Anh là \"pepper\"."
+    },
+    "piano": {
+      "id": "piano",
+      "topicId": "g2-instruments",
+      "word": "piano",
+      "plural": "pianos",
+      "emoji": "🎹",
+      "countable": true,
+      "explanation": "Đàn piano tiếng Anh là \"piano\"."
+    },
+    "pig": {
+      "id": "pig",
+      "topicId": "g2-animals",
+      "word": "pig",
+      "plural": "pigs",
+      "emoji": "🐷",
+      "countable": true,
+      "explanation": "Con lợn tiếng Anh là \"pig\"."
+    },
+    "pilot": {
+      "id": "pilot",
+      "topicId": "g2-occupations",
+      "word": "pilot",
+      "emoji": "🧑‍✈️",
+      "countable": false,
+      "explanation": "Phi công tiếng Anh là \"pilot\"."
+    },
+    "pineapple": {
+      "id": "pineapple",
+      "topicId": "g2-fruits",
+      "word": "pineapple",
+      "plural": "pineapples",
+      "emoji": "🍍",
+      "countable": true,
+      "explanation": "Quả dứa tiếng Anh là \"pineapple\"."
+    },
+    "pizza": {
+      "id": "pizza",
+      "topicId": "g2-food",
+      "word": "pizza",
+      "plural": "pizzas",
+      "emoji": "🍕",
+      "countable": true,
+      "explanation": "Bánh pizza tiếng Anh là \"pizza\"."
+    },
+    "plane": {
+      "id": "plane",
+      "topicId": "g2-transportation",
+      "word": "plane",
+      "plural": "planes",
+      "emoji": "✈️",
+      "countable": true,
+      "explanation": "Máy bay tiếng Anh là \"plane\"."
+    },
+    "policeman": {
+      "id": "policeman",
+      "topicId": "g2-occupations",
+      "word": "policeman",
+      "emoji": "👮",
+      "countable": false,
+      "explanation": "Cảnh sát tiếng Anh là \"policeman\"."
+    },
+    "popcorn": {
+      "id": "popcorn",
+      "topicId": "g2-food",
+      "word": "popcorn",
+      "emoji": "🍿",
+      "countable": false,
+      "explanation": "Bỏng ngô tiếng Anh là \"popcorn\"."
+    },
+    "potato": {
+      "id": "potato",
+      "topicId": "g2-vegetables",
+      "word": "potato",
+      "plural": "potatoes",
+      "emoji": "🥔",
+      "countable": true,
+      "explanation": "Củ khoai tây tiếng Anh là \"potato\"."
+    },
+    "pumpkin": {
+      "id": "pumpkin",
+      "topicId": "g2-vegetables",
+      "word": "pumpkin",
+      "plural": "pumpkins",
+      "emoji": "🎃",
+      "countable": true,
+      "explanation": "Quả bí ngô tiếng Anh là \"pumpkin\"."
+    },
+    "purple": {
+      "id": "purple",
+      "topicId": "g2-colors",
+      "word": "purple",
+      "emoji": "🟣",
+      "countable": false,
+      "explanation": "Màu tím tiếng Anh là \"purple\"."
+    },
+    "pushpin": {
+      "id": "pushpin",
+      "topicId": "g2-school-objects",
+      "word": "pushpin",
+      "plural": "pushpins",
+      "emoji": "📌",
+      "countable": true,
+      "explanation": "Đinh ghim tiếng Anh là \"pushpin\"."
+    },
+    "puzzle": {
+      "id": "puzzle",
+      "topicId": "g2-toys",
+      "word": "puzzle",
+      "plural": "puzzles",
+      "emoji": "🧩",
+      "countable": true,
+      "explanation": "Trò chơi xếp hình tiếng Anh là \"puzzle\"."
+    },
+    "rabbit": {
+      "id": "rabbit",
+      "topicId": "g2-animals",
+      "word": "rabbit",
+      "plural": "rabbits",
+      "emoji": "🐰",
+      "countable": true,
+      "explanation": "Con thỏ tiếng Anh là \"rabbit\"."
+    },
+    "rain": {
+      "id": "rain",
+      "topicId": "g2-weather",
+      "word": "rain",
+      "emoji": "🌧️",
+      "countable": false,
+      "explanation": "Mưa tiếng Anh là \"rain\"."
+    },
+    "rainbow": {
+      "id": "rainbow",
+      "topicId": "g2-weather",
+      "word": "rainbow",
+      "emoji": "🌈",
+      "countable": false,
+      "explanation": "Cầu vồng tiếng Anh là \"rainbow\"."
+    },
+    "read": {
+      "id": "read",
+      "topicId": "g2-actions",
+      "word": "read",
+      "emoji": "📖",
+      "countable": false,
+      "explanation": "Đọc tiếng Anh là \"read\"."
+    },
+    "red": {
+      "id": "red",
+      "topicId": "g2-colors",
+      "word": "red",
+      "emoji": "🔴",
+      "countable": false,
+      "explanation": "Màu đỏ tiếng Anh là \"red\"."
+    },
+    "rice": {
+      "id": "rice",
+      "topicId": "g2-food",
+      "word": "rice",
+      "emoji": "🍚",
+      "countable": false,
+      "explanation": "Cơm tiếng Anh là \"rice\"."
+    },
+    "ring": {
+      "id": "ring",
+      "topicId": "g2-clothes",
+      "word": "ring",
+      "plural": "rings",
+      "emoji": "💍",
+      "countable": true,
+      "explanation": "Chiếc nhẫn tiếng Anh là \"ring\"."
+    },
+    "robot": {
+      "id": "robot",
+      "topicId": "g2-toys",
+      "word": "robot",
+      "plural": "robots",
+      "emoji": "🤖",
+      "countable": true,
+      "explanation": "Người máy tiếng Anh là \"robot\"."
+    },
+    "rock": {
+      "id": "rock",
+      "topicId": "g2-nature",
+      "word": "rock",
+      "plural": "rocks",
+      "emoji": "🪨",
+      "countable": true,
+      "explanation": "Hòn đá tiếng Anh là \"rock\"."
+    },
+    "rocket": {
+      "id": "rocket",
+      "topicId": "g2-transportation",
+      "word": "rocket",
+      "plural": "rockets",
+      "emoji": "🚀",
+      "countable": true,
+      "explanation": "Tên lửa tiếng Anh là \"rocket\"."
+    },
+    "ruler": {
+      "id": "ruler",
+      "topicId": "g2-school-objects",
+      "word": "ruler",
+      "plural": "rulers",
+      "emoji": "📏",
+      "countable": true,
+      "explanation": "Cái thước kẻ tiếng Anh là \"ruler\"."
+    },
+    "run": {
+      "id": "run",
+      "topicId": "g2-actions",
+      "word": "run",
+      "emoji": "🏃",
+      "countable": false,
+      "explanation": "Chạy tiếng Anh là \"run\"."
+    },
+    "sad": {
+      "id": "sad",
+      "topicId": "g2-feelings",
+      "word": "sad",
+      "emoji": "😢",
+      "countable": false,
+      "explanation": "Buồn tiếng Anh là \"sad\"."
+    },
+    "sandwich": {
+      "id": "sandwich",
+      "topicId": "g2-food",
+      "word": "sandwich",
+      "plural": "sandwiches",
+      "emoji": "🥪",
+      "countable": true,
+      "explanation": "Bánh sandwich tiếng Anh là \"sandwich\"."
+    },
+    "saxophone": {
+      "id": "saxophone",
+      "topicId": "g2-instruments",
+      "word": "saxophone",
+      "plural": "saxophones",
+      "emoji": "🎷",
+      "countable": true,
+      "explanation": "Kèn saxophone tiếng Anh là \"saxophone\"."
+    },
+    "scared": {
+      "id": "scared",
+      "topicId": "g2-feelings",
+      "word": "scared",
+      "emoji": "😨",
+      "countable": false,
+      "explanation": "Sợ hãi tiếng Anh là \"scared\"."
+    },
+    "scarf": {
+      "id": "scarf",
+      "topicId": "g2-clothes",
+      "word": "scarf",
+      "plural": "scarves",
+      "emoji": "🧣",
+      "countable": true,
+      "explanation": "Khăn quàng cổ tiếng Anh là \"scarf\"."
+    },
+    "scientist": {
+      "id": "scientist",
+      "topicId": "g2-occupations",
+      "word": "scientist",
+      "emoji": "🧑‍🔬",
+      "countable": false,
+      "explanation": "Nhà khoa học tiếng Anh là \"scientist\"."
+    },
+    "scissors": {
+      "id": "scissors",
+      "topicId": "g2-school-objects",
+      "word": "scissors",
+      "emoji": "✂️",
+      "countable": false,
+      "explanation": "Cái kéo tiếng Anh là \"scissors\"."
+    },
+    "seven": {
+      "id": "seven",
+      "topicId": "g2-numbers",
+      "word": "seven",
+      "emoji": "7️⃣",
+      "countable": false,
+      "explanation": "Số 7 tiếng Anh là \"seven\"."
+    },
+    "shark": {
+      "id": "shark",
+      "topicId": "g2-sea-creatures",
+      "word": "shark",
+      "plural": "sharks",
+      "emoji": "🦈",
+      "countable": true,
+      "explanation": "Con cá mập tiếng Anh là \"shark\"."
+    },
+    "sheep": {
+      "id": "sheep",
+      "topicId": "g2-animals",
+      "word": "sheep",
+      "plural": "sheep",
+      "emoji": "🐑",
+      "countable": true,
+      "explanation": "Con cừu tiếng Anh là \"sheep\"."
+    },
+    "shell": {
+      "id": "shell",
+      "topicId": "g2-nature",
+      "word": "shell",
+      "plural": "shells",
+      "emoji": "🐚",
+      "countable": true,
+      "explanation": "Vỏ sò tiếng Anh là \"shell\"."
+    },
+    "ship": {
+      "id": "ship",
+      "topicId": "g2-transportation",
+      "word": "ship",
+      "plural": "ships",
+      "emoji": "🚢",
+      "countable": true,
+      "explanation": "Tàu thủy tiếng Anh là \"ship\"."
+    },
+    "shirt": {
+      "id": "shirt",
+      "topicId": "g2-clothes",
+      "word": "shirt",
+      "plural": "shirts",
+      "emoji": "👕",
+      "countable": true,
+      "explanation": "Áo sơ mi tiếng Anh là \"shirt\"."
+    },
+    "shoe": {
+      "id": "shoe",
+      "topicId": "g2-clothes",
+      "word": "shoe",
+      "plural": "shoes",
+      "emoji": "👟",
+      "countable": true,
+      "explanation": "Giày tiếng Anh là \"shoe\"."
+    },
+    "shrimp": {
+      "id": "shrimp",
+      "topicId": "g2-sea-creatures",
+      "word": "shrimp",
+      "plural": "shrimp",
+      "emoji": "🦐",
+      "countable": true,
+      "explanation": "Con tôm tiếng Anh là \"shrimp\"."
+    },
+    "sing": {
+      "id": "sing",
+      "topicId": "g2-actions",
+      "word": "sing",
+      "emoji": "🎤",
+      "countable": false,
+      "explanation": "Hát tiếng Anh là \"sing\"."
+    },
+    "sister": {
+      "id": "sister",
+      "topicId": "g2-family",
+      "word": "sister",
+      "emoji": "👧",
+      "countable": false,
+      "explanation": "Chị/em gái tiếng Anh là \"sister\"."
+    },
+    "six": {
+      "id": "six",
+      "topicId": "g2-numbers",
+      "word": "six",
+      "emoji": "6️⃣",
+      "countable": false,
+      "explanation": "Số 6 tiếng Anh là \"six\"."
+    },
+    "skateboard": {
+      "id": "skateboard",
+      "topicId": "g2-sports",
+      "word": "skateboard",
+      "emoji": "🛹",
+      "countable": false,
+      "explanation": "Ván trượt tiếng Anh là \"skateboard\"."
+    },
+    "sleep": {
+      "id": "sleep",
+      "topicId": "g2-actions",
+      "word": "sleep",
+      "emoji": "😴",
+      "countable": false,
+      "explanation": "Ngủ tiếng Anh là \"sleep\"."
+    },
+    "snail": {
+      "id": "snail",
+      "topicId": "g2-insects",
+      "word": "snail",
+      "plural": "snails",
+      "emoji": "🐌",
+      "countable": true,
+      "explanation": "Con ốc sên tiếng Anh là \"snail\"."
+    },
+    "snake": {
+      "id": "snake",
+      "topicId": "g2-animals",
+      "word": "snake",
+      "plural": "snakes",
+      "emoji": "🐍",
+      "countable": true,
+      "explanation": "Con rắn tiếng Anh là \"snake\"."
+    },
+    "snow": {
+      "id": "snow",
+      "topicId": "g2-weather",
+      "word": "snow",
+      "emoji": "❄️",
+      "countable": false,
+      "explanation": "Tuyết tiếng Anh là \"snow\"."
+    },
+    "sock": {
+      "id": "sock",
+      "topicId": "g2-clothes",
+      "word": "sock",
+      "plural": "socks",
+      "emoji": "🧦",
+      "countable": true,
+      "explanation": "Tất tiếng Anh là \"sock\"."
+    },
+    "sofa": {
+      "id": "sofa",
+      "topicId": "g2-furniture",
+      "word": "sofa",
+      "plural": "sofas",
+      "emoji": "🛋️",
+      "countable": true,
+      "explanation": "Ghế sofa tiếng Anh là \"sofa\"."
+    },
+    "soup": {
+      "id": "soup",
+      "topicId": "g2-food",
+      "word": "soup",
+      "emoji": "🍲",
+      "countable": false,
+      "explanation": "Súp tiếng Anh là \"soup\"."
+    },
+    "spider": {
+      "id": "spider",
+      "topicId": "g2-insects",
+      "word": "spider",
+      "plural": "spiders",
+      "emoji": "🕷️",
+      "countable": true,
+      "explanation": "Con nhện tiếng Anh là \"spider\"."
+    },
+    "square": {
+      "id": "square",
+      "topicId": "g2-shapes",
+      "word": "square",
+      "plural": "squares",
+      "emoji": "⬛",
+      "countable": true,
+      "explanation": "Hình vuông tiếng Anh là \"square\"."
+    },
+    "squid": {
+      "id": "squid",
+      "topicId": "g2-sea-creatures",
+      "word": "squid",
+      "plural": "squid",
+      "emoji": "🦑",
+      "countable": true,
+      "explanation": "Con mực tiếng Anh là \"squid\"."
+    },
+    "squirrel": {
+      "id": "squirrel",
+      "topicId": "g2-animals",
+      "word": "squirrel",
+      "plural": "squirrels",
+      "emoji": "🐿️",
+      "countable": true,
+      "explanation": "Con sóc tiếng Anh là \"squirrel\"."
+    },
+    "star": {
+      "id": "star",
+      "topicId": "g2-shapes",
+      "word": "star",
+      "plural": "stars",
+      "emoji": "⭐",
+      "countable": true,
+      "explanation": "Hình ngôi sao tiếng Anh là \"star\"."
+    },
+    "strawberry": {
+      "id": "strawberry",
+      "topicId": "g2-fruits",
+      "word": "strawberry",
+      "plural": "strawberries",
+      "emoji": "🍓",
+      "countable": true,
+      "explanation": "Quả dâu tây tiếng Anh là \"strawberry\"."
+    },
+    "street": {
+      "id": "street",
+      "topicId": "g2-places",
+      "word": "street",
+      "plural": "streets",
+      "emoji": "🛣️",
+      "countable": true,
+      "explanation": "Con đường tiếng Anh là \"street\"."
+    },
+    "sun": {
+      "id": "sun",
+      "topicId": "g2-weather",
+      "word": "sun",
+      "emoji": "☀️",
+      "countable": false,
+      "explanation": "Mặt trời tiếng Anh là \"sun\"."
+    },
+    "sunglasses": {
+      "id": "sunglasses",
+      "topicId": "g2-clothes",
+      "word": "sunglasses",
+      "emoji": "🕶️",
+      "countable": false,
+      "explanation": "Kính râm tiếng Anh là \"sunglasses\"."
+    },
+    "surfing": {
+      "id": "surfing",
+      "topicId": "g2-sports",
+      "word": "surfing",
+      "emoji": "🏄",
+      "countable": false,
+      "explanation": "Lướt sóng tiếng Anh là \"surfing\"."
+    },
+    "surprised": {
+      "id": "surprised",
+      "topicId": "g2-feelings",
+      "word": "surprised",
+      "emoji": "😲",
+      "countable": false,
+      "explanation": "Ngạc nhiên tiếng Anh là \"surprised\"."
+    },
+    "swan": {
+      "id": "swan",
+      "topicId": "g2-animals",
+      "word": "swan",
+      "plural": "swans",
+      "emoji": "🦢",
+      "countable": true,
+      "explanation": "Con thiên nga tiếng Anh là \"swan\"."
+    },
+    "swim": {
+      "id": "swim",
+      "topicId": "g2-actions",
+      "word": "swim",
+      "emoji": "🏊",
+      "countable": false,
+      "explanation": "Bơi tiếng Anh là \"swim\"."
+    },
+    "swimming": {
+      "id": "swimming",
+      "topicId": "g2-sports",
+      "word": "swimming",
+      "emoji": "🏊",
+      "countable": false,
+      "explanation": "Bơi lội tiếng Anh là \"swimming\"."
+    },
+    "table-tennis": {
+      "id": "table-tennis",
+      "topicId": "g2-sports",
+      "word": "table tennis",
+      "emoji": "🏓",
+      "countable": false,
+      "explanation": "Bóng bàn tiếng Anh là \"table tennis\"."
+    },
+    "taxi": {
+      "id": "taxi",
+      "topicId": "g2-transportation",
+      "word": "taxi",
+      "plural": "taxis",
+      "emoji": "🚕",
+      "countable": true,
+      "explanation": "Xe taxi tiếng Anh là \"taxi\"."
+    },
+    "teacher": {
+      "id": "teacher",
+      "topicId": "g2-occupations",
+      "word": "teacher",
+      "emoji": "🧑‍🏫",
+      "countable": false,
+      "explanation": "Giáo viên tiếng Anh là \"teacher\"."
+    },
+    "teddy-bear": {
+      "id": "teddy-bear",
+      "topicId": "g2-toys",
+      "word": "teddy bear",
+      "plural": "teddy bears",
+      "emoji": "🧸",
+      "countable": true,
+      "explanation": "Gấu bông tiếng Anh là \"teddy bear\"."
+    },
+    "television": {
+      "id": "television",
+      "topicId": "g2-furniture",
+      "word": "television",
+      "plural": "televisions",
+      "emoji": "📺",
+      "countable": true,
+      "explanation": "Ti vi tiếng Anh là \"television\"."
+    },
+    "ten": {
+      "id": "ten",
+      "topicId": "g2-numbers",
+      "word": "ten",
+      "emoji": "🔟",
+      "countable": false,
+      "explanation": "Số 10 tiếng Anh là \"ten\"."
+    },
+    "tennis": {
+      "id": "tennis",
+      "topicId": "g2-sports",
+      "word": "tennis",
+      "emoji": "🎾",
+      "countable": false,
+      "explanation": "Quần vợt tiếng Anh là \"tennis\"."
+    },
+    "three": {
+      "id": "three",
+      "topicId": "g2-numbers",
+      "word": "three",
+      "emoji": "3️⃣",
+      "countable": false,
+      "explanation": "Số 3 tiếng Anh là \"three\"."
+    },
+    "tie": {
+      "id": "tie",
+      "topicId": "g2-clothes",
+      "word": "tie",
+      "plural": "ties",
+      "emoji": "👔",
+      "countable": true,
+      "explanation": "Cà vạt tiếng Anh là \"tie\"."
+    },
+    "tiger": {
+      "id": "tiger",
+      "topicId": "g2-animals",
+      "word": "tiger",
+      "plural": "tigers",
+      "emoji": "🐯",
+      "countable": true,
+      "explanation": "Con hổ tiếng Anh là \"tiger\"."
+    },
+    "tired": {
+      "id": "tired",
+      "topicId": "g2-feelings",
+      "word": "tired",
+      "emoji": "😴",
+      "countable": false,
+      "explanation": "Mệt mỏi tiếng Anh là \"tired\"."
+    },
+    "toilet": {
+      "id": "toilet",
+      "topicId": "g2-furniture",
+      "word": "toilet",
+      "plural": "toilets",
+      "emoji": "🚽",
+      "countable": true,
+      "explanation": "Nhà vệ sinh tiếng Anh là \"toilet\"."
+    },
+    "tomato": {
+      "id": "tomato",
+      "topicId": "g2-vegetables",
+      "word": "tomato",
+      "plural": "tomatoes",
+      "emoji": "🍅",
+      "countable": true,
+      "explanation": "Quả cà chua tiếng Anh là \"tomato\"."
+    },
+    "tractor": {
+      "id": "tractor",
+      "topicId": "g2-transportation",
+      "word": "tractor",
+      "plural": "tractors",
+      "emoji": "🚜",
+      "countable": true,
+      "explanation": "Máy kéo tiếng Anh là \"tractor\"."
+    },
+    "train": {
+      "id": "train",
+      "topicId": "g2-transportation",
+      "word": "train",
+      "plural": "trains",
+      "emoji": "🚆",
+      "countable": true,
+      "explanation": "Tàu hỏa tiếng Anh là \"train\"."
+    },
+    "tree": {
+      "id": "tree",
+      "topicId": "g2-nature",
+      "word": "tree",
+      "plural": "trees",
+      "emoji": "🌳",
+      "countable": true,
+      "explanation": "Cây tiếng Anh là \"tree\"."
+    },
+    "triangle": {
+      "id": "triangle",
+      "topicId": "g2-shapes",
+      "word": "triangle",
+      "plural": "triangles",
+      "emoji": "🔺",
+      "countable": true,
+      "explanation": "Hình tam giác tiếng Anh là \"triangle\"."
+    },
+    "truck": {
+      "id": "truck",
+      "topicId": "g2-transportation",
+      "word": "truck",
+      "plural": "trucks",
+      "emoji": "🚚",
+      "countable": true,
+      "explanation": "Xe tải tiếng Anh là \"truck\"."
+    },
+    "trumpet": {
+      "id": "trumpet",
+      "topicId": "g2-instruments",
+      "word": "trumpet",
+      "plural": "trumpets",
+      "emoji": "🎺",
+      "countable": true,
+      "explanation": "Kèn trumpet tiếng Anh là \"trumpet\"."
+    },
+    "turtle": {
+      "id": "turtle",
+      "topicId": "g2-sea-creatures",
+      "word": "turtle",
+      "plural": "turtles",
+      "emoji": "🐢",
+      "countable": true,
+      "explanation": "Con rùa tiếng Anh là \"turtle\"."
+    },
+    "two": {
+      "id": "two",
+      "topicId": "g2-numbers",
+      "word": "two",
+      "emoji": "2️⃣",
+      "countable": false,
+      "explanation": "Số 2 tiếng Anh là \"two\"."
+    },
+    "violin": {
+      "id": "violin",
+      "topicId": "g2-instruments",
+      "word": "violin",
+      "plural": "violins",
+      "emoji": "🎻",
+      "countable": true,
+      "explanation": "Đàn vi-ô-lông tiếng Anh là \"violin\"."
+    },
+    "volleyball": {
+      "id": "volleyball",
+      "topicId": "g2-sports",
+      "word": "volleyball",
+      "emoji": "🏐",
+      "countable": false,
+      "explanation": "Bóng chuyền tiếng Anh là \"volleyball\"."
+    },
+    "walk": {
+      "id": "walk",
+      "topicId": "g2-actions",
+      "word": "walk",
+      "emoji": "🚶",
+      "countable": false,
+      "explanation": "Đi bộ tiếng Anh là \"walk\"."
+    },
+    "water": {
+      "id": "water",
+      "topicId": "g2-nature",
+      "word": "water",
+      "emoji": "💧",
+      "countable": false,
+      "explanation": "Nước tiếng Anh là \"water\"."
+    },
+    "watermelon": {
+      "id": "watermelon",
+      "topicId": "g2-fruits",
+      "word": "watermelon",
+      "plural": "watermelons",
+      "emoji": "🍉",
+      "countable": true,
+      "explanation": "Quả dưa hấu tiếng Anh là \"watermelon\"."
+    },
+    "wave": {
+      "id": "wave",
+      "topicId": "g2-actions",
+      "word": "wave",
+      "emoji": "👋",
+      "countable": false,
+      "explanation": "Vẫy tay tiếng Anh là \"wave\"."
+    },
+    "whale": {
+      "id": "whale",
+      "topicId": "g2-sea-creatures",
+      "word": "whale",
+      "plural": "whales",
+      "emoji": "🐳",
+      "countable": true,
+      "explanation": "Con cá voi tiếng Anh là \"whale\"."
+    },
+    "white": {
+      "id": "white",
+      "topicId": "g2-colors",
+      "word": "white",
+      "emoji": "⚪",
+      "countable": false,
+      "explanation": "Màu trắng tiếng Anh là \"white\"."
+    },
+    "wind": {
+      "id": "wind",
+      "topicId": "g2-weather",
+      "word": "wind",
+      "emoji": "💨",
+      "countable": false,
+      "explanation": "Gió tiếng Anh là \"wind\"."
+    },
+    "window": {
+      "id": "window",
+      "topicId": "g2-furniture",
+      "word": "window",
+      "plural": "windows",
+      "emoji": "🪟",
+      "countable": true,
+      "explanation": "Cửa sổ tiếng Anh là \"window\"."
+    },
+    "wolf": {
+      "id": "wolf",
+      "topicId": "g2-animals",
+      "word": "wolf",
+      "plural": "wolves",
+      "emoji": "🐺",
+      "countable": true,
+      "explanation": "Con sói tiếng Anh là \"wolf\"."
+    },
+    "worm": {
+      "id": "worm",
+      "topicId": "g2-insects",
+      "word": "worm",
+      "plural": "worms",
+      "emoji": "🪱",
+      "countable": true,
+      "explanation": "Con giun tiếng Anh là \"worm\"."
+    },
+    "write": {
+      "id": "write",
+      "topicId": "g2-actions",
+      "word": "write",
+      "emoji": "✍️",
+      "countable": false,
+      "explanation": "Viết tiếng Anh là \"write\"."
+    },
+    "yellow": {
+      "id": "yellow",
+      "topicId": "g2-colors",
+      "word": "yellow",
+      "emoji": "🟡",
+      "countable": false,
+      "explanation": "Màu vàng tiếng Anh là \"yellow\"."
+    },
+    "zebra": {
+      "id": "zebra",
+      "topicId": "g2-animals",
+      "word": "zebra",
+      "plural": "zebras",
+      "emoji": "🦓",
+      "countable": true,
+      "explanation": "Con ngựa vằn tiếng Anh là \"zebra\"."
+    }
+  }
+}

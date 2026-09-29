@@ -12,7 +12,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // The dev server serves ~1.2 MB of unminified dotLottie WASM plus 400+
+  // per-emoji SVG/JSON requests on first load of each page; with the default
+  // core-count parallelism the suite's click/assertion steps can starve past
+  // 30 s on this machine, so cap workers and raise the per-test timeout.
+  workers: process.env.CI ? 2 : 3,
+  timeout: 90_000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',

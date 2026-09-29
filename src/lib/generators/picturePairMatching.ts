@@ -6,7 +6,7 @@ const PAIRS_PER_BOARD = 4;
 const TILES_PER_BOARD = PAIRS_PER_BOARD * 2;
 
 function toPair(word: VocabWord): PairMatchingPair {
-  return { word: word.word, emoji: word.emoji };
+  return { word: word.word, emoji: word.emoji, wordId: word.id };
 }
 
 function buildTiles(pairs: readonly PairMatchingPair[], seed: string): PicturePairMatchingQuestion['tiles'] {

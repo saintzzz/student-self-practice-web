@@ -1,0 +1,5020 @@
+{
+  "wordIds": [
+    "abacus",
+    "accordion",
+    "ambulance",
+    "angry",
+    "ant",
+    "apple",
+    "artist",
+    "astronaut",
+    "avocado",
+    "baby",
+    "badminton",
+    "bag",
+    "ball",
+    "balloon",
+    "banana",
+    "banjo",
+    "baseball",
+    "basketball",
+    "bathtub",
+    "beach",
+    "bear",
+    "bed",
+    "bee",
+    "bike",
+    "bird",
+    "black",
+    "block",
+    "blue",
+    "boat",
+    "book",
+    "bowling",
+    "boxing",
+    "bread",
+    "broccoli",
+    "brother",
+    "brown",
+    "builder",
+    "bus",
+    "butterfly",
+    "cake",
+    "calendar",
+    "camel",
+    "candle",
+    "candy",
+    "car",
+    "carrot",
+    "cat",
+    "caterpillar",
+    "chair",
+    "cheese",
+    "cherry",
+    "chicken",
+    "chips",
+    "chocolate",
+    "circle",
+    "clap",
+    "climb",
+    "clock",
+    "cloud",
+    "computer",
+    "cook",
+    "cookie",
+    "corn",
+    "cow",
+    "crab",
+    "crayon",
+    "crocodile",
+    "crown",
+    "cry",
+    "cucumber",
+    "dad",
+    "dance",
+    "deer",
+    "diamond",
+    "dice",
+    "doctor",
+    "dog",
+    "doll",
+    "dolphin",
+    "donut",
+    "door",
+    "draw",
+    "dress",
+    "drink",
+    "drum",
+    "duck",
+    "ear",
+    "egg",
+    "eggplant",
+    "eight",
+    "elephant",
+    "eye",
+    "farmer",
+    "fire",
+    "firefighter",
+    "fish",
+    "five",
+    "flower",
+    "fly",
+    "folder",
+    "foot",
+    "four",
+    "fox",
+    "frog",
+    "garlic",
+    "giraffe",
+    "glasses",
+    "globe",
+    "glove",
+    "goat",
+    "golf",
+    "grandma",
+    "grandpa",
+    "grape",
+    "grasshopper",
+    "green",
+    "guitar",
+    "hamburger",
+    "hand",
+    "handbag",
+    "happy",
+    "hat",
+    "heart",
+    "hedgehog",
+    "helicopter",
+    "hippo",
+    "hockey",
+    "honey",
+    "horse",
+    "house",
+    "ice-cream",
+    "jacket",
+    "juice",
+    "kangaroo",
+    "key",
+    "kite",
+    "koala",
+    "ladybug",
+    "lamp",
+    "laugh",
+    "leaf",
+    "leg",
+    "lemon",
+    "lettuce",
+    "lion",
+    "lizard",
+    "mango",
+    "meat",
+    "mechanic",
+    "milk",
+    "mirror",
+    "mom",
+    "monkey",
+    "mosquito",
+    "motorbike",
+    "mountain",
+    "mouse",
+    "mouth",
+    "mushroom",
+    "nine",
+    "noodles",
+    "nose",
+    "notebook",
+    "ocean",
+    "octopus",
+    "one",
+    "onion",
+    "orange",
+    "owl",
+    "paintbrush",
+    "pancake",
+    "panda",
+    "pants",
+    "paperclip",
+    "parrot",
+    "peach",
+    "peacock",
+    "pear",
+    "pen",
+    "pencil",
+    "penguin",
+    "pepper",
+    "piano",
+    "pig",
+    "pilot",
+    "pineapple",
+    "pizza",
+    "plane",
+    "policeman",
+    "popcorn",
+    "potato",
+    "pumpkin",
+    "purple",
+    "pushpin",
+    "puzzle",
+    "rabbit",
+    "rain",
+    "rainbow",
+    "read",
+    "red",
+    "rice",
+    "ring",
+    "robot",
+    "rock",
+    "rocket",
+    "ruler",
+    "run",
+    "sad",
+    "sandwich",
+    "saxophone",
+    "scared",
+    "scarf",
+    "scientist",
+    "scissors",
+    "seven",
+    "shark",
+    "sheep",
+    "shell",
+    "ship",
+    "shirt",
+    "shoe",
+    "shrimp",
+    "sing",
+    "sister",
+    "six",
+    "skateboard",
+    "sleep",
+    "snail",
+    "snake",
+    "snow",
+    "sock",
+    "sofa",
+    "soup",
+    "spider",
+    "square",
+    "squid",
+    "squirrel",
+    "star",
+    "strawberry",
+    "street",
+    "sun",
+    "sunglasses",
+    "surfing",
+    "surprised",
+    "swan",
+    "swim",
+    "swimming",
+    "table-tennis",
+    "taxi",
+    "teacher",
+    "teddy-bear",
+    "television",
+    "ten",
+    "tennis",
+    "three",
+    "tie",
+    "tiger",
+    "tired",
+    "toilet",
+    "tomato",
+    "tractor",
+    "train",
+    "tree",
+    "triangle",
+    "truck",
+    "trumpet",
+    "turtle",
+    "two",
+    "violin",
+    "volleyball",
+    "walk",
+    "water",
+    "watermelon",
+    "wave",
+    "whale",
+    "white",
+    "wind",
+    "window",
+    "wolf",
+    "worm",
+    "write",
+    "yellow",
+    "zebra"
+  ],
+  "questions": {
+    "abacus": [
+      {
+        "id": "q-lsfb-abacus-0",
+        "sentence": "I have an abacus.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-abacus-1",
+        "sentence": "I can see an abacus.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-abacus-2",
+        "sentence": "This is an abacus.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "accordion": [
+      {
+        "id": "q-lsfb-accordion-0",
+        "sentence": "I have an accordion.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-accordion-1",
+        "sentence": "I can see an accordion.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-accordion-2",
+        "sentence": "This is an accordion.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "ambulance": [
+      {
+        "id": "q-lsfb-ambulance-0",
+        "sentence": "I have an ambulance.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-ambulance-1",
+        "sentence": "I can see an ambulance.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-ambulance-2",
+        "sentence": "This is an ambulance.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "angry": [
+      {
+        "id": "q-lsfb-angry-0",
+        "sentence": "I like angry.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-angry-1",
+        "sentence": "I want some angry.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-angry-2",
+        "sentence": "I can see angry.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "ant": [
+      {
+        "id": "q-lsfb-ant-0",
+        "sentence": "I have an ant.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-ant-1",
+        "sentence": "I can see an ant.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-ant-2",
+        "sentence": "This is an ant.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "apple": [
+      {
+        "id": "q-lsfb-apple-0",
+        "sentence": "I have an apple.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-apple-1",
+        "sentence": "I can see an apple.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-apple-2",
+        "sentence": "This is an apple.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "artist": [
+      {
+        "id": "q-lsfb-artist-0",
+        "sentence": "I like artist.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-artist-1",
+        "sentence": "I want some artist.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-artist-2",
+        "sentence": "I can see artist.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "astronaut": [
+      {
+        "id": "q-lsfb-astronaut-0",
+        "sentence": "I like astronaut.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-astronaut-1",
+        "sentence": "I want some astronaut.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-astronaut-2",
+        "sentence": "I can see astronaut.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "avocado": [
+      {
+        "id": "q-lsfb-avocado-0",
+        "sentence": "I have an avocado.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-avocado-1",
+        "sentence": "I can see an avocado.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-avocado-2",
+        "sentence": "This is an avocado.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "baby": [
+      {
+        "id": "q-lsfb-baby-0",
+        "sentence": "I like baby.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-baby-1",
+        "sentence": "I want some baby.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-baby-2",
+        "sentence": "I can see baby.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "badminton": [
+      {
+        "id": "q-lsfb-badminton-0",
+        "sentence": "I like badminton.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-badminton-1",
+        "sentence": "I want some badminton.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-badminton-2",
+        "sentence": "I can see badminton.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "bag": [
+      {
+        "id": "q-lsfb-bag-0",
+        "sentence": "I have a bag.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bag-1",
+        "sentence": "I can see a bag.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bag-2",
+        "sentence": "This is a bag.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ball": [
+      {
+        "id": "q-lsfb-ball-0",
+        "sentence": "I have a ball.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-ball-1",
+        "sentence": "I can see a ball.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-ball-2",
+        "sentence": "This is a ball.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "balloon": [
+      {
+        "id": "q-lsfb-balloon-0",
+        "sentence": "I have a balloon.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-balloon-1",
+        "sentence": "I can see a balloon.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-balloon-2",
+        "sentence": "This is a balloon.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "banana": [
+      {
+        "id": "q-lsfb-banana-0",
+        "sentence": "I have a banana.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-banana-1",
+        "sentence": "I can see a banana.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-banana-2",
+        "sentence": "This is a banana.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "banjo": [
+      {
+        "id": "q-lsfb-banjo-0",
+        "sentence": "I have a banjo.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-banjo-1",
+        "sentence": "I can see a banjo.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-banjo-2",
+        "sentence": "This is a banjo.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "baseball": [
+      {
+        "id": "q-lsfb-baseball-0",
+        "sentence": "I like baseball.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-baseball-1",
+        "sentence": "I want some baseball.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-baseball-2",
+        "sentence": "I can see baseball.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "basketball": [
+      {
+        "id": "q-lsfb-basketball-0",
+        "sentence": "I like basketball.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-basketball-1",
+        "sentence": "I want some basketball.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-basketball-2",
+        "sentence": "I can see basketball.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "bathtub": [
+      {
+        "id": "q-lsfb-bathtub-0",
+        "sentence": "I have a bathtub.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bathtub-1",
+        "sentence": "I can see a bathtub.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bathtub-2",
+        "sentence": "This is a bathtub.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "beach": [
+      {
+        "id": "q-lsfb-beach-0",
+        "sentence": "I have a beach.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-beach-1",
+        "sentence": "I can see a beach.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-beach-2",
+        "sentence": "This is a beach.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "bear": [
+      {
+        "id": "q-lsfb-bear-0",
+        "sentence": "I have a bear.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bear-1",
+        "sentence": "I can see a bear.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bear-2",
+        "sentence": "This is a bear.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "bed": [
+      {
+        "id": "q-lsfb-bed-0",
+        "sentence": "I have a bed.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bed-1",
+        "sentence": "I can see a bed.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bed-2",
+        "sentence": "This is a bed.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "bee": [
+      {
+        "id": "q-lsfb-bee-0",
+        "sentence": "I have a bee.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bee-1",
+        "sentence": "I can see a bee.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bee-2",
+        "sentence": "This is a bee.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "bike": [
+      {
+        "id": "q-lsfb-bike-0",
+        "sentence": "I have a bike.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bike-1",
+        "sentence": "I can see a bike.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bike-2",
+        "sentence": "This is a bike.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "bird": [
+      {
+        "id": "q-lsfb-bird-0",
+        "sentence": "I have a bird.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bird-1",
+        "sentence": "I can see a bird.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bird-2",
+        "sentence": "This is a bird.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "black": [
+      {
+        "id": "q-lsfb-black-0",
+        "sentence": "I like black.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-black-1",
+        "sentence": "I want some black.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-black-2",
+        "sentence": "I can see black.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "block": [
+      {
+        "id": "q-lsfb-block-0",
+        "sentence": "I have a block.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-block-1",
+        "sentence": "I can see a block.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-block-2",
+        "sentence": "This is a block.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "blue": [
+      {
+        "id": "q-lsfb-blue-0",
+        "sentence": "I like blue.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-blue-1",
+        "sentence": "I want some blue.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-blue-2",
+        "sentence": "I can see blue.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "boat": [
+      {
+        "id": "q-lsfb-boat-0",
+        "sentence": "I have a boat.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-boat-1",
+        "sentence": "I can see a boat.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-boat-2",
+        "sentence": "This is a boat.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "book": [
+      {
+        "id": "q-lsfb-book-0",
+        "sentence": "I have a book.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-book-1",
+        "sentence": "I can see a book.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-book-2",
+        "sentence": "This is a book.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "bowling": [
+      {
+        "id": "q-lsfb-bowling-0",
+        "sentence": "I like bowling.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-bowling-1",
+        "sentence": "I want some bowling.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-bowling-2",
+        "sentence": "I can see bowling.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "boxing": [
+      {
+        "id": "q-lsfb-boxing-0",
+        "sentence": "I like boxing.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-boxing-1",
+        "sentence": "I want some boxing.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-boxing-2",
+        "sentence": "I can see boxing.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "bread": [
+      {
+        "id": "q-lsfb-bread-0",
+        "sentence": "I like bread.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-bread-1",
+        "sentence": "I want some bread.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-bread-2",
+        "sentence": "I can see bread.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "broccoli": [
+      {
+        "id": "q-lsfb-broccoli-0",
+        "sentence": "I like broccoli.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-broccoli-1",
+        "sentence": "I want some broccoli.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-broccoli-2",
+        "sentence": "I can see broccoli.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "brother": [
+      {
+        "id": "q-lsfb-brother-0",
+        "sentence": "I like brother.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-brother-1",
+        "sentence": "I want some brother.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-brother-2",
+        "sentence": "I can see brother.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "brown": [
+      {
+        "id": "q-lsfb-brown-0",
+        "sentence": "I like brown.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-brown-1",
+        "sentence": "I want some brown.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-brown-2",
+        "sentence": "I can see brown.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "builder": [
+      {
+        "id": "q-lsfb-builder-0",
+        "sentence": "I like builder.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-builder-1",
+        "sentence": "I want some builder.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-builder-2",
+        "sentence": "I can see builder.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "bus": [
+      {
+        "id": "q-lsfb-bus-0",
+        "sentence": "I have a bus.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-bus-1",
+        "sentence": "I can see a bus.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-bus-2",
+        "sentence": "This is a bus.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "butterfly": [
+      {
+        "id": "q-lsfb-butterfly-0",
+        "sentence": "I have a butterfly.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-butterfly-1",
+        "sentence": "I can see a butterfly.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-butterfly-2",
+        "sentence": "This is a butterfly.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "cake": [
+      {
+        "id": "q-lsfb-cake-0",
+        "sentence": "I have a cake.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-cake-1",
+        "sentence": "I can see a cake.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-cake-2",
+        "sentence": "This is a cake.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "calendar": [
+      {
+        "id": "q-lsfb-calendar-0",
+        "sentence": "I have a calendar.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-calendar-1",
+        "sentence": "I can see a calendar.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-calendar-2",
+        "sentence": "This is a calendar.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "camel": [
+      {
+        "id": "q-lsfb-camel-0",
+        "sentence": "I have a camel.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-camel-1",
+        "sentence": "I can see a camel.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-camel-2",
+        "sentence": "This is a camel.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "candle": [
+      {
+        "id": "q-lsfb-candle-0",
+        "sentence": "I have a candle.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-candle-1",
+        "sentence": "I can see a candle.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-candle-2",
+        "sentence": "This is a candle.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "candy": [
+      {
+        "id": "q-lsfb-candy-0",
+        "sentence": "I have a candy.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-candy-1",
+        "sentence": "I can see a candy.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-candy-2",
+        "sentence": "This is a candy.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "car": [
+      {
+        "id": "q-lsfb-car-0",
+        "sentence": "I have a car.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-car-1",
+        "sentence": "I can see a car.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-car-2",
+        "sentence": "This is a car.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "carrot": [
+      {
+        "id": "q-lsfb-carrot-0",
+        "sentence": "I have a carrot.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-carrot-1",
+        "sentence": "I can see a carrot.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-carrot-2",
+        "sentence": "This is a carrot.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "cat": [
+      {
+        "id": "q-lsfb-cat-0",
+        "sentence": "I have a cat.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-cat-1",
+        "sentence": "I can see a cat.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-cat-2",
+        "sentence": "This is a cat.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "caterpillar": [
+      {
+        "id": "q-lsfb-caterpillar-0",
+        "sentence": "I have a caterpillar.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-caterpillar-1",
+        "sentence": "I can see a caterpillar.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-caterpillar-2",
+        "sentence": "This is a caterpillar.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "chair": [
+      {
+        "id": "q-lsfb-chair-0",
+        "sentence": "I have a chair.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-chair-1",
+        "sentence": "I can see a chair.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-chair-2",
+        "sentence": "This is a chair.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "cheese": [
+      {
+        "id": "q-lsfb-cheese-0",
+        "sentence": "I like cheese.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-cheese-1",
+        "sentence": "I want some cheese.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-cheese-2",
+        "sentence": "I can see cheese.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "cherry": [
+      {
+        "id": "q-lsfb-cherry-0",
+        "sentence": "I have a cherry.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-cherry-1",
+        "sentence": "I can see a cherry.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-cherry-2",
+        "sentence": "This is a cherry.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "chicken": [
+      {
+        "id": "q-lsfb-chicken-0",
+        "sentence": "I have a chicken.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-chicken-1",
+        "sentence": "I can see a chicken.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-chicken-2",
+        "sentence": "This is a chicken.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "chips": [
+      {
+        "id": "q-lsfb-chips-0",
+        "sentence": "I like chips.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-chips-1",
+        "sentence": "I want some chips.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-chips-2",
+        "sentence": "I can see chips.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "chocolate": [
+      {
+        "id": "q-lsfb-chocolate-0",
+        "sentence": "I like chocolate.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-chocolate-1",
+        "sentence": "I want some chocolate.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-chocolate-2",
+        "sentence": "I can see chocolate.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "circle": [
+      {
+        "id": "q-lsfb-circle-0",
+        "sentence": "I have a circle.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-circle-1",
+        "sentence": "I can see a circle.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-circle-2",
+        "sentence": "This is a circle.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "clap": [
+      {
+        "id": "q-lsfb-clap-0",
+        "sentence": "I can clap.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-clap-1",
+        "sentence": "I like to clap.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "climb": [
+      {
+        "id": "q-lsfb-climb-0",
+        "sentence": "I can climb.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-climb-1",
+        "sentence": "I like to climb.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "clock": [
+      {
+        "id": "q-lsfb-clock-0",
+        "sentence": "I have a clock.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-clock-1",
+        "sentence": "I can see a clock.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-clock-2",
+        "sentence": "This is a clock.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "cloud": [
+      {
+        "id": "q-lsfb-cloud-0",
+        "sentence": "I like cloud.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-cloud-1",
+        "sentence": "I want some cloud.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-cloud-2",
+        "sentence": "I can see cloud.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "computer": [
+      {
+        "id": "q-lsfb-computer-0",
+        "sentence": "I have a computer.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-computer-1",
+        "sentence": "I can see a computer.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-computer-2",
+        "sentence": "This is a computer.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "cook": [
+      {
+        "id": "q-lsfb-cook-0",
+        "sentence": "I can cook.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-cook-1",
+        "sentence": "I like to cook.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "cookie": [
+      {
+        "id": "q-lsfb-cookie-0",
+        "sentence": "I have a cookie.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-cookie-1",
+        "sentence": "I can see a cookie.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-cookie-2",
+        "sentence": "This is a cookie.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "corn": [
+      {
+        "id": "q-lsfb-corn-0",
+        "sentence": "I like corn.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-corn-1",
+        "sentence": "I want some corn.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-corn-2",
+        "sentence": "I can see corn.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "cow": [
+      {
+        "id": "q-lsfb-cow-0",
+        "sentence": "I have a cow.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-cow-1",
+        "sentence": "I can see a cow.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-cow-2",
+        "sentence": "This is a cow.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "crab": [
+      {
+        "id": "q-lsfb-crab-0",
+        "sentence": "I have a crab.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-crab-1",
+        "sentence": "I can see a crab.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-crab-2",
+        "sentence": "This is a crab.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "crayon": [
+      {
+        "id": "q-lsfb-crayon-0",
+        "sentence": "I have a crayon.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-crayon-1",
+        "sentence": "I can see a crayon.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-crayon-2",
+        "sentence": "This is a crayon.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "crocodile": [
+      {
+        "id": "q-lsfb-crocodile-0",
+        "sentence": "I have a crocodile.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-crocodile-1",
+        "sentence": "I can see a crocodile.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-crocodile-2",
+        "sentence": "This is a crocodile.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "crown": [
+      {
+        "id": "q-lsfb-crown-0",
+        "sentence": "I have a crown.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-crown-1",
+        "sentence": "I can see a crown.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-crown-2",
+        "sentence": "This is a crown.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "cry": [
+      {
+        "id": "q-lsfb-cry-0",
+        "sentence": "I can cry.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-cry-1",
+        "sentence": "I like to cry.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "cucumber": [
+      {
+        "id": "q-lsfb-cucumber-0",
+        "sentence": "I have a cucumber.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-cucumber-1",
+        "sentence": "I can see a cucumber.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-cucumber-2",
+        "sentence": "This is a cucumber.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "dad": [
+      {
+        "id": "q-lsfb-dad-0",
+        "sentence": "I like dad.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-dad-1",
+        "sentence": "I want some dad.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-dad-2",
+        "sentence": "I can see dad.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "dance": [
+      {
+        "id": "q-lsfb-dance-0",
+        "sentence": "I can dance.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-dance-1",
+        "sentence": "I like to dance.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "deer": [
+      {
+        "id": "q-lsfb-deer-0",
+        "sentence": "I have a deer.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-deer-1",
+        "sentence": "I can see a deer.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-deer-2",
+        "sentence": "This is a deer.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "diamond": [
+      {
+        "id": "q-lsfb-diamond-0",
+        "sentence": "I have a diamond.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-diamond-1",
+        "sentence": "I can see a diamond.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-diamond-2",
+        "sentence": "This is a diamond.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "dice": [
+      {
+        "id": "q-lsfb-dice-0",
+        "sentence": "I have a dice.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-dice-1",
+        "sentence": "I can see a dice.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-dice-2",
+        "sentence": "This is a dice.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "doctor": [
+      {
+        "id": "q-lsfb-doctor-0",
+        "sentence": "I like doctor.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-doctor-1",
+        "sentence": "I want some doctor.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-doctor-2",
+        "sentence": "I can see doctor.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "dog": [
+      {
+        "id": "q-lsfb-dog-0",
+        "sentence": "I have a dog.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-dog-1",
+        "sentence": "I can see a dog.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-dog-2",
+        "sentence": "This is a dog.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "doll": [
+      {
+        "id": "q-lsfb-doll-0",
+        "sentence": "I have a doll.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-doll-1",
+        "sentence": "I can see a doll.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-doll-2",
+        "sentence": "This is a doll.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "dolphin": [
+      {
+        "id": "q-lsfb-dolphin-0",
+        "sentence": "I have a dolphin.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-dolphin-1",
+        "sentence": "I can see a dolphin.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-dolphin-2",
+        "sentence": "This is a dolphin.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "donut": [
+      {
+        "id": "q-lsfb-donut-0",
+        "sentence": "I have a donut.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-donut-1",
+        "sentence": "I can see a donut.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-donut-2",
+        "sentence": "This is a donut.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "door": [
+      {
+        "id": "q-lsfb-door-0",
+        "sentence": "I have a door.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-door-1",
+        "sentence": "I can see a door.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-door-2",
+        "sentence": "This is a door.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "draw": [
+      {
+        "id": "q-lsfb-draw-0",
+        "sentence": "I can draw.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-draw-1",
+        "sentence": "I like to draw.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "dress": [
+      {
+        "id": "q-lsfb-dress-0",
+        "sentence": "I have a dress.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-dress-1",
+        "sentence": "I can see a dress.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-dress-2",
+        "sentence": "This is a dress.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "drink": [
+      {
+        "id": "q-lsfb-drink-0",
+        "sentence": "I can drink.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-drink-1",
+        "sentence": "I like to drink.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "drum": [
+      {
+        "id": "q-lsfb-drum-0",
+        "sentence": "I have a drum.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-drum-1",
+        "sentence": "I can see a drum.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-drum-2",
+        "sentence": "This is a drum.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "duck": [
+      {
+        "id": "q-lsfb-duck-0",
+        "sentence": "I have a duck.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-duck-1",
+        "sentence": "I can see a duck.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-duck-2",
+        "sentence": "This is a duck.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ear": [
+      {
+        "id": "q-lsfb-ear-0",
+        "sentence": "I like ear.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-ear-1",
+        "sentence": "I want some ear.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-ear-2",
+        "sentence": "I can see ear.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "egg": [
+      {
+        "id": "q-lsfb-egg-0",
+        "sentence": "I have an egg.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-egg-1",
+        "sentence": "I can see an egg.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-egg-2",
+        "sentence": "This is an egg.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "eggplant": [
+      {
+        "id": "q-lsfb-eggplant-0",
+        "sentence": "I have an eggplant.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-eggplant-1",
+        "sentence": "I can see an eggplant.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-eggplant-2",
+        "sentence": "This is an eggplant.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "eight": [
+      {
+        "id": "q-lsfb-eight-0",
+        "sentence": "I like eight.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-eight-1",
+        "sentence": "I want some eight.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-eight-2",
+        "sentence": "I can see eight.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "elephant": [
+      {
+        "id": "q-lsfb-elephant-0",
+        "sentence": "I have an elephant.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-elephant-1",
+        "sentence": "I can see an elephant.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-elephant-2",
+        "sentence": "This is an elephant.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "eye": [
+      {
+        "id": "q-lsfb-eye-0",
+        "sentence": "I like eye.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-eye-1",
+        "sentence": "I want some eye.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-eye-2",
+        "sentence": "I can see eye.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "farmer": [
+      {
+        "id": "q-lsfb-farmer-0",
+        "sentence": "I like farmer.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-farmer-1",
+        "sentence": "I want some farmer.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-farmer-2",
+        "sentence": "I can see farmer.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "fire": [
+      {
+        "id": "q-lsfb-fire-0",
+        "sentence": "I like fire.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-fire-1",
+        "sentence": "I want some fire.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-fire-2",
+        "sentence": "I can see fire.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "firefighter": [
+      {
+        "id": "q-lsfb-firefighter-0",
+        "sentence": "I like firefighter.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-firefighter-1",
+        "sentence": "I want some firefighter.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-firefighter-2",
+        "sentence": "I can see firefighter.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "fish": [
+      {
+        "id": "q-lsfb-fish-0",
+        "sentence": "I have a fish.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-fish-1",
+        "sentence": "I can see a fish.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-fish-2",
+        "sentence": "This is a fish.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "five": [
+      {
+        "id": "q-lsfb-five-0",
+        "sentence": "I like five.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-five-1",
+        "sentence": "I want some five.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-five-2",
+        "sentence": "I can see five.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "flower": [
+      {
+        "id": "q-lsfb-flower-0",
+        "sentence": "I have a flower.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-flower-1",
+        "sentence": "I can see a flower.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-flower-2",
+        "sentence": "This is a flower.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "fly": [
+      {
+        "id": "q-lsfb-fly-0",
+        "sentence": "I have a fly.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-fly-1",
+        "sentence": "I can see a fly.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-fly-2",
+        "sentence": "This is a fly.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "folder": [
+      {
+        "id": "q-lsfb-folder-0",
+        "sentence": "I have a folder.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-folder-1",
+        "sentence": "I can see a folder.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-folder-2",
+        "sentence": "This is a folder.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "foot": [
+      {
+        "id": "q-lsfb-foot-0",
+        "sentence": "I like foot.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-foot-1",
+        "sentence": "I want some foot.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-foot-2",
+        "sentence": "I can see foot.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "four": [
+      {
+        "id": "q-lsfb-four-0",
+        "sentence": "I like four.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-four-1",
+        "sentence": "I want some four.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-four-2",
+        "sentence": "I can see four.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "fox": [
+      {
+        "id": "q-lsfb-fox-0",
+        "sentence": "I have a fox.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-fox-1",
+        "sentence": "I can see a fox.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-fox-2",
+        "sentence": "This is a fox.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "frog": [
+      {
+        "id": "q-lsfb-frog-0",
+        "sentence": "I have a frog.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-frog-1",
+        "sentence": "I can see a frog.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-frog-2",
+        "sentence": "This is a frog.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "garlic": [
+      {
+        "id": "q-lsfb-garlic-0",
+        "sentence": "I like garlic.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-garlic-1",
+        "sentence": "I want some garlic.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-garlic-2",
+        "sentence": "I can see garlic.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "giraffe": [
+      {
+        "id": "q-lsfb-giraffe-0",
+        "sentence": "I have a giraffe.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-giraffe-1",
+        "sentence": "I can see a giraffe.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-giraffe-2",
+        "sentence": "This is a giraffe.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "glasses": [
+      {
+        "id": "q-lsfb-glasses-0",
+        "sentence": "I like glasses.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-glasses-1",
+        "sentence": "I want some glasses.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-glasses-2",
+        "sentence": "I can see glasses.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "globe": [
+      {
+        "id": "q-lsfb-globe-0",
+        "sentence": "I have a globe.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-globe-1",
+        "sentence": "I can see a globe.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-globe-2",
+        "sentence": "This is a globe.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "glove": [
+      {
+        "id": "q-lsfb-glove-0",
+        "sentence": "I have a glove.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-glove-1",
+        "sentence": "I can see a glove.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-glove-2",
+        "sentence": "This is a glove.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "goat": [
+      {
+        "id": "q-lsfb-goat-0",
+        "sentence": "I have a goat.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-goat-1",
+        "sentence": "I can see a goat.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-goat-2",
+        "sentence": "This is a goat.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "golf": [
+      {
+        "id": "q-lsfb-golf-0",
+        "sentence": "I like golf.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-golf-1",
+        "sentence": "I want some golf.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-golf-2",
+        "sentence": "I can see golf.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "grandma": [
+      {
+        "id": "q-lsfb-grandma-0",
+        "sentence": "I like grandma.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-grandma-1",
+        "sentence": "I want some grandma.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-grandma-2",
+        "sentence": "I can see grandma.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "grandpa": [
+      {
+        "id": "q-lsfb-grandpa-0",
+        "sentence": "I like grandpa.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-grandpa-1",
+        "sentence": "I want some grandpa.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-grandpa-2",
+        "sentence": "I can see grandpa.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "grape": [
+      {
+        "id": "q-lsfb-grape-0",
+        "sentence": "I have a grape.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-grape-1",
+        "sentence": "I can see a grape.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-grape-2",
+        "sentence": "This is a grape.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "grasshopper": [
+      {
+        "id": "q-lsfb-grasshopper-0",
+        "sentence": "I have a grasshopper.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-grasshopper-1",
+        "sentence": "I can see a grasshopper.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-grasshopper-2",
+        "sentence": "This is a grasshopper.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "green": [
+      {
+        "id": "q-lsfb-green-0",
+        "sentence": "I like green.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-green-1",
+        "sentence": "I want some green.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-green-2",
+        "sentence": "I can see green.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "guitar": [
+      {
+        "id": "q-lsfb-guitar-0",
+        "sentence": "I have a guitar.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-guitar-1",
+        "sentence": "I can see a guitar.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-guitar-2",
+        "sentence": "This is a guitar.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "hamburger": [
+      {
+        "id": "q-lsfb-hamburger-0",
+        "sentence": "I have a hamburger.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-hamburger-1",
+        "sentence": "I can see a hamburger.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-hamburger-2",
+        "sentence": "This is a hamburger.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "hand": [
+      {
+        "id": "q-lsfb-hand-0",
+        "sentence": "I like hand.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-hand-1",
+        "sentence": "I want some hand.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-hand-2",
+        "sentence": "I can see hand.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "handbag": [
+      {
+        "id": "q-lsfb-handbag-0",
+        "sentence": "I have a handbag.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-handbag-1",
+        "sentence": "I can see a handbag.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-handbag-2",
+        "sentence": "This is a handbag.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "happy": [
+      {
+        "id": "q-lsfb-happy-0",
+        "sentence": "I like happy.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-happy-1",
+        "sentence": "I want some happy.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-happy-2",
+        "sentence": "I can see happy.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "hat": [
+      {
+        "id": "q-lsfb-hat-0",
+        "sentence": "I have a hat.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-hat-1",
+        "sentence": "I can see a hat.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-hat-2",
+        "sentence": "This is a hat.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "heart": [
+      {
+        "id": "q-lsfb-heart-0",
+        "sentence": "I have a heart.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-heart-1",
+        "sentence": "I can see a heart.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-heart-2",
+        "sentence": "This is a heart.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "hedgehog": [
+      {
+        "id": "q-lsfb-hedgehog-0",
+        "sentence": "I have a hedgehog.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-hedgehog-1",
+        "sentence": "I can see a hedgehog.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-hedgehog-2",
+        "sentence": "This is a hedgehog.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "helicopter": [
+      {
+        "id": "q-lsfb-helicopter-0",
+        "sentence": "I have a helicopter.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-helicopter-1",
+        "sentence": "I can see a helicopter.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-helicopter-2",
+        "sentence": "This is a helicopter.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "hippo": [
+      {
+        "id": "q-lsfb-hippo-0",
+        "sentence": "I have a hippo.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-hippo-1",
+        "sentence": "I can see a hippo.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-hippo-2",
+        "sentence": "This is a hippo.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "hockey": [
+      {
+        "id": "q-lsfb-hockey-0",
+        "sentence": "I like hockey.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-hockey-1",
+        "sentence": "I want some hockey.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-hockey-2",
+        "sentence": "I can see hockey.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "honey": [
+      {
+        "id": "q-lsfb-honey-0",
+        "sentence": "I like honey.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-honey-1",
+        "sentence": "I want some honey.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-honey-2",
+        "sentence": "I can see honey.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "horse": [
+      {
+        "id": "q-lsfb-horse-0",
+        "sentence": "I have a horse.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-horse-1",
+        "sentence": "I can see a horse.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-horse-2",
+        "sentence": "This is a horse.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "house": [
+      {
+        "id": "q-lsfb-house-0",
+        "sentence": "I have a house.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-house-1",
+        "sentence": "I can see a house.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-house-2",
+        "sentence": "This is a house.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ice-cream": [
+      {
+        "id": "q-lsfb-ice-cream-0",
+        "sentence": "I like ice cream.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-ice-cream-1",
+        "sentence": "I want some ice cream.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-ice-cream-2",
+        "sentence": "I can see ice cream.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "jacket": [
+      {
+        "id": "q-lsfb-jacket-0",
+        "sentence": "I have a jacket.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-jacket-1",
+        "sentence": "I can see a jacket.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-jacket-2",
+        "sentence": "This is a jacket.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "juice": [
+      {
+        "id": "q-lsfb-juice-0",
+        "sentence": "I like juice.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-juice-1",
+        "sentence": "I want some juice.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-juice-2",
+        "sentence": "I can see juice.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "kangaroo": [
+      {
+        "id": "q-lsfb-kangaroo-0",
+        "sentence": "I have a kangaroo.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-kangaroo-1",
+        "sentence": "I can see a kangaroo.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-kangaroo-2",
+        "sentence": "This is a kangaroo.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "key": [
+      {
+        "id": "q-lsfb-key-0",
+        "sentence": "I have a key.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-key-1",
+        "sentence": "I can see a key.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-key-2",
+        "sentence": "This is a key.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "kite": [
+      {
+        "id": "q-lsfb-kite-0",
+        "sentence": "I have a kite.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-kite-1",
+        "sentence": "I can see a kite.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-kite-2",
+        "sentence": "This is a kite.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "koala": [
+      {
+        "id": "q-lsfb-koala-0",
+        "sentence": "I have a koala.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-koala-1",
+        "sentence": "I can see a koala.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-koala-2",
+        "sentence": "This is a koala.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ladybug": [
+      {
+        "id": "q-lsfb-ladybug-0",
+        "sentence": "I have a ladybug.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-ladybug-1",
+        "sentence": "I can see a ladybug.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-ladybug-2",
+        "sentence": "This is a ladybug.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "lamp": [
+      {
+        "id": "q-lsfb-lamp-0",
+        "sentence": "I have a lamp.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-lamp-1",
+        "sentence": "I can see a lamp.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-lamp-2",
+        "sentence": "This is a lamp.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "laugh": [
+      {
+        "id": "q-lsfb-laugh-0",
+        "sentence": "I can laugh.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-laugh-1",
+        "sentence": "I like to laugh.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "leaf": [
+      {
+        "id": "q-lsfb-leaf-0",
+        "sentence": "I have a leaf.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-leaf-1",
+        "sentence": "I can see a leaf.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-leaf-2",
+        "sentence": "This is a leaf.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "leg": [
+      {
+        "id": "q-lsfb-leg-0",
+        "sentence": "I like leg.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-leg-1",
+        "sentence": "I want some leg.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-leg-2",
+        "sentence": "I can see leg.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "lemon": [
+      {
+        "id": "q-lsfb-lemon-0",
+        "sentence": "I have a lemon.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-lemon-1",
+        "sentence": "I can see a lemon.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-lemon-2",
+        "sentence": "This is a lemon.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "lettuce": [
+      {
+        "id": "q-lsfb-lettuce-0",
+        "sentence": "I like lettuce.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-lettuce-1",
+        "sentence": "I want some lettuce.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-lettuce-2",
+        "sentence": "I can see lettuce.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "lion": [
+      {
+        "id": "q-lsfb-lion-0",
+        "sentence": "I have a lion.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-lion-1",
+        "sentence": "I can see a lion.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-lion-2",
+        "sentence": "This is a lion.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "lizard": [
+      {
+        "id": "q-lsfb-lizard-0",
+        "sentence": "I have a lizard.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-lizard-1",
+        "sentence": "I can see a lizard.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-lizard-2",
+        "sentence": "This is a lizard.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "mango": [
+      {
+        "id": "q-lsfb-mango-0",
+        "sentence": "I have a mango.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-mango-1",
+        "sentence": "I can see a mango.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-mango-2",
+        "sentence": "This is a mango.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "meat": [
+      {
+        "id": "q-lsfb-meat-0",
+        "sentence": "I like meat.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-meat-1",
+        "sentence": "I want some meat.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-meat-2",
+        "sentence": "I can see meat.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "mechanic": [
+      {
+        "id": "q-lsfb-mechanic-0",
+        "sentence": "I like mechanic.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-mechanic-1",
+        "sentence": "I want some mechanic.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-mechanic-2",
+        "sentence": "I can see mechanic.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "milk": [
+      {
+        "id": "q-lsfb-milk-0",
+        "sentence": "I like milk.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-milk-1",
+        "sentence": "I want some milk.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-milk-2",
+        "sentence": "I can see milk.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "mirror": [
+      {
+        "id": "q-lsfb-mirror-0",
+        "sentence": "I have a mirror.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-mirror-1",
+        "sentence": "I can see a mirror.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-mirror-2",
+        "sentence": "This is a mirror.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "mom": [
+      {
+        "id": "q-lsfb-mom-0",
+        "sentence": "I like mom.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-mom-1",
+        "sentence": "I want some mom.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-mom-2",
+        "sentence": "I can see mom.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "monkey": [
+      {
+        "id": "q-lsfb-monkey-0",
+        "sentence": "I have a monkey.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-monkey-1",
+        "sentence": "I can see a monkey.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-monkey-2",
+        "sentence": "This is a monkey.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "mosquito": [
+      {
+        "id": "q-lsfb-mosquito-0",
+        "sentence": "I have a mosquito.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-mosquito-1",
+        "sentence": "I can see a mosquito.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-mosquito-2",
+        "sentence": "This is a mosquito.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "motorbike": [
+      {
+        "id": "q-lsfb-motorbike-0",
+        "sentence": "I have a motorbike.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-motorbike-1",
+        "sentence": "I can see a motorbike.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-motorbike-2",
+        "sentence": "This is a motorbike.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "mountain": [
+      {
+        "id": "q-lsfb-mountain-0",
+        "sentence": "I have a mountain.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-mountain-1",
+        "sentence": "I can see a mountain.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-mountain-2",
+        "sentence": "This is a mountain.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "mouse": [
+      {
+        "id": "q-lsfb-mouse-0",
+        "sentence": "I have a mouse.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-mouse-1",
+        "sentence": "I can see a mouse.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-mouse-2",
+        "sentence": "This is a mouse.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "mouth": [
+      {
+        "id": "q-lsfb-mouth-0",
+        "sentence": "I like mouth.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-mouth-1",
+        "sentence": "I want some mouth.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-mouth-2",
+        "sentence": "I can see mouth.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "mushroom": [
+      {
+        "id": "q-lsfb-mushroom-0",
+        "sentence": "I have a mushroom.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-mushroom-1",
+        "sentence": "I can see a mushroom.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-mushroom-2",
+        "sentence": "This is a mushroom.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "nine": [
+      {
+        "id": "q-lsfb-nine-0",
+        "sentence": "I like nine.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-nine-1",
+        "sentence": "I want some nine.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-nine-2",
+        "sentence": "I can see nine.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "noodles": [
+      {
+        "id": "q-lsfb-noodles-0",
+        "sentence": "I like noodles.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-noodles-1",
+        "sentence": "I want some noodles.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-noodles-2",
+        "sentence": "I can see noodles.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "nose": [
+      {
+        "id": "q-lsfb-nose-0",
+        "sentence": "I like nose.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-nose-1",
+        "sentence": "I want some nose.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-nose-2",
+        "sentence": "I can see nose.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "notebook": [
+      {
+        "id": "q-lsfb-notebook-0",
+        "sentence": "I have a notebook.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-notebook-1",
+        "sentence": "I can see a notebook.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-notebook-2",
+        "sentence": "This is a notebook.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ocean": [
+      {
+        "id": "q-lsfb-ocean-0",
+        "sentence": "I like ocean.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-ocean-1",
+        "sentence": "I want some ocean.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-ocean-2",
+        "sentence": "I can see ocean.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "octopus": [
+      {
+        "id": "q-lsfb-octopus-0",
+        "sentence": "I have an octopus.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-octopus-1",
+        "sentence": "I can see an octopus.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-octopus-2",
+        "sentence": "This is an octopus.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "one": [
+      {
+        "id": "q-lsfb-one-0",
+        "sentence": "I like one.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-one-1",
+        "sentence": "I want some one.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-one-2",
+        "sentence": "I can see one.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "onion": [
+      {
+        "id": "q-lsfb-onion-0",
+        "sentence": "I have an onion.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-onion-1",
+        "sentence": "I can see an onion.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-onion-2",
+        "sentence": "This is an onion.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "orange": [
+      {
+        "id": "q-lsfb-orange-0",
+        "sentence": "I like orange.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-orange-1",
+        "sentence": "I want some orange.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-orange-2",
+        "sentence": "I can see orange.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "owl": [
+      {
+        "id": "q-lsfb-owl-0",
+        "sentence": "I have an owl.",
+        "displaySentence": "I have an ___."
+      },
+      {
+        "id": "q-lsfb-owl-1",
+        "sentence": "I can see an owl.",
+        "displaySentence": "I can see an ___."
+      },
+      {
+        "id": "q-lsfb-owl-2",
+        "sentence": "This is an owl.",
+        "displaySentence": "This is an ___."
+      }
+    ],
+    "paintbrush": [
+      {
+        "id": "q-lsfb-paintbrush-0",
+        "sentence": "I have a paintbrush.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-paintbrush-1",
+        "sentence": "I can see a paintbrush.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-paintbrush-2",
+        "sentence": "This is a paintbrush.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pancake": [
+      {
+        "id": "q-lsfb-pancake-0",
+        "sentence": "I have a pancake.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pancake-1",
+        "sentence": "I can see a pancake.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pancake-2",
+        "sentence": "This is a pancake.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "panda": [
+      {
+        "id": "q-lsfb-panda-0",
+        "sentence": "I have a panda.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-panda-1",
+        "sentence": "I can see a panda.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-panda-2",
+        "sentence": "This is a panda.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pants": [
+      {
+        "id": "q-lsfb-pants-0",
+        "sentence": "I like pants.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-pants-1",
+        "sentence": "I want some pants.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-pants-2",
+        "sentence": "I can see pants.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "paperclip": [
+      {
+        "id": "q-lsfb-paperclip-0",
+        "sentence": "I have a paperclip.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-paperclip-1",
+        "sentence": "I can see a paperclip.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-paperclip-2",
+        "sentence": "This is a paperclip.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "parrot": [
+      {
+        "id": "q-lsfb-parrot-0",
+        "sentence": "I have a parrot.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-parrot-1",
+        "sentence": "I can see a parrot.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-parrot-2",
+        "sentence": "This is a parrot.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "peach": [
+      {
+        "id": "q-lsfb-peach-0",
+        "sentence": "I have a peach.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-peach-1",
+        "sentence": "I can see a peach.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-peach-2",
+        "sentence": "This is a peach.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "peacock": [
+      {
+        "id": "q-lsfb-peacock-0",
+        "sentence": "I have a peacock.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-peacock-1",
+        "sentence": "I can see a peacock.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-peacock-2",
+        "sentence": "This is a peacock.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pear": [
+      {
+        "id": "q-lsfb-pear-0",
+        "sentence": "I have a pear.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pear-1",
+        "sentence": "I can see a pear.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pear-2",
+        "sentence": "This is a pear.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pen": [
+      {
+        "id": "q-lsfb-pen-0",
+        "sentence": "I have a pen.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pen-1",
+        "sentence": "I can see a pen.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pen-2",
+        "sentence": "This is a pen.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pencil": [
+      {
+        "id": "q-lsfb-pencil-0",
+        "sentence": "I have a pencil.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pencil-1",
+        "sentence": "I can see a pencil.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pencil-2",
+        "sentence": "This is a pencil.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "penguin": [
+      {
+        "id": "q-lsfb-penguin-0",
+        "sentence": "I have a penguin.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-penguin-1",
+        "sentence": "I can see a penguin.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-penguin-2",
+        "sentence": "This is a penguin.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pepper": [
+      {
+        "id": "q-lsfb-pepper-0",
+        "sentence": "I have a pepper.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pepper-1",
+        "sentence": "I can see a pepper.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pepper-2",
+        "sentence": "This is a pepper.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "piano": [
+      {
+        "id": "q-lsfb-piano-0",
+        "sentence": "I have a piano.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-piano-1",
+        "sentence": "I can see a piano.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-piano-2",
+        "sentence": "This is a piano.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pig": [
+      {
+        "id": "q-lsfb-pig-0",
+        "sentence": "I have a pig.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pig-1",
+        "sentence": "I can see a pig.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pig-2",
+        "sentence": "This is a pig.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pilot": [
+      {
+        "id": "q-lsfb-pilot-0",
+        "sentence": "I like pilot.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-pilot-1",
+        "sentence": "I want some pilot.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-pilot-2",
+        "sentence": "I can see pilot.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "pineapple": [
+      {
+        "id": "q-lsfb-pineapple-0",
+        "sentence": "I have a pineapple.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pineapple-1",
+        "sentence": "I can see a pineapple.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pineapple-2",
+        "sentence": "This is a pineapple.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pizza": [
+      {
+        "id": "q-lsfb-pizza-0",
+        "sentence": "I have a pizza.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pizza-1",
+        "sentence": "I can see a pizza.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pizza-2",
+        "sentence": "This is a pizza.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "plane": [
+      {
+        "id": "q-lsfb-plane-0",
+        "sentence": "I have a plane.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-plane-1",
+        "sentence": "I can see a plane.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-plane-2",
+        "sentence": "This is a plane.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "policeman": [
+      {
+        "id": "q-lsfb-policeman-0",
+        "sentence": "I like policeman.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-policeman-1",
+        "sentence": "I want some policeman.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-policeman-2",
+        "sentence": "I can see policeman.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "popcorn": [
+      {
+        "id": "q-lsfb-popcorn-0",
+        "sentence": "I like popcorn.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-popcorn-1",
+        "sentence": "I want some popcorn.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-popcorn-2",
+        "sentence": "I can see popcorn.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "potato": [
+      {
+        "id": "q-lsfb-potato-0",
+        "sentence": "I have a potato.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-potato-1",
+        "sentence": "I can see a potato.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-potato-2",
+        "sentence": "This is a potato.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "pumpkin": [
+      {
+        "id": "q-lsfb-pumpkin-0",
+        "sentence": "I have a pumpkin.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pumpkin-1",
+        "sentence": "I can see a pumpkin.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pumpkin-2",
+        "sentence": "This is a pumpkin.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "purple": [
+      {
+        "id": "q-lsfb-purple-0",
+        "sentence": "I like purple.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-purple-1",
+        "sentence": "I want some purple.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-purple-2",
+        "sentence": "I can see purple.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "pushpin": [
+      {
+        "id": "q-lsfb-pushpin-0",
+        "sentence": "I have a pushpin.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-pushpin-1",
+        "sentence": "I can see a pushpin.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-pushpin-2",
+        "sentence": "This is a pushpin.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "puzzle": [
+      {
+        "id": "q-lsfb-puzzle-0",
+        "sentence": "I have a puzzle.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-puzzle-1",
+        "sentence": "I can see a puzzle.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-puzzle-2",
+        "sentence": "This is a puzzle.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "rabbit": [
+      {
+        "id": "q-lsfb-rabbit-0",
+        "sentence": "I have a rabbit.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-rabbit-1",
+        "sentence": "I can see a rabbit.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-rabbit-2",
+        "sentence": "This is a rabbit.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "rain": [
+      {
+        "id": "q-lsfb-rain-0",
+        "sentence": "I like rain.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-rain-1",
+        "sentence": "I want some rain.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-rain-2",
+        "sentence": "I can see rain.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "rainbow": [
+      {
+        "id": "q-lsfb-rainbow-0",
+        "sentence": "I like rainbow.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-rainbow-1",
+        "sentence": "I want some rainbow.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-rainbow-2",
+        "sentence": "I can see rainbow.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "read": [
+      {
+        "id": "q-lsfb-read-0",
+        "sentence": "I can read.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-read-1",
+        "sentence": "I like to read.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "red": [
+      {
+        "id": "q-lsfb-red-0",
+        "sentence": "I like red.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-red-1",
+        "sentence": "I want some red.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-red-2",
+        "sentence": "I can see red.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "rice": [
+      {
+        "id": "q-lsfb-rice-0",
+        "sentence": "I like rice.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-rice-1",
+        "sentence": "I want some rice.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-rice-2",
+        "sentence": "I can see rice.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "ring": [
+      {
+        "id": "q-lsfb-ring-0",
+        "sentence": "I have a ring.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-ring-1",
+        "sentence": "I can see a ring.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-ring-2",
+        "sentence": "This is a ring.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "robot": [
+      {
+        "id": "q-lsfb-robot-0",
+        "sentence": "I have a robot.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-robot-1",
+        "sentence": "I can see a robot.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-robot-2",
+        "sentence": "This is a robot.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "rock": [
+      {
+        "id": "q-lsfb-rock-0",
+        "sentence": "I have a rock.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-rock-1",
+        "sentence": "I can see a rock.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-rock-2",
+        "sentence": "This is a rock.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "rocket": [
+      {
+        "id": "q-lsfb-rocket-0",
+        "sentence": "I have a rocket.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-rocket-1",
+        "sentence": "I can see a rocket.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-rocket-2",
+        "sentence": "This is a rocket.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ruler": [
+      {
+        "id": "q-lsfb-ruler-0",
+        "sentence": "I have a ruler.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-ruler-1",
+        "sentence": "I can see a ruler.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-ruler-2",
+        "sentence": "This is a ruler.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "run": [
+      {
+        "id": "q-lsfb-run-0",
+        "sentence": "I can run.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-run-1",
+        "sentence": "I like to run.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "sad": [
+      {
+        "id": "q-lsfb-sad-0",
+        "sentence": "I like sad.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-sad-1",
+        "sentence": "I want some sad.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-sad-2",
+        "sentence": "I can see sad.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "sandwich": [
+      {
+        "id": "q-lsfb-sandwich-0",
+        "sentence": "I have a sandwich.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-sandwich-1",
+        "sentence": "I can see a sandwich.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-sandwich-2",
+        "sentence": "This is a sandwich.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "saxophone": [
+      {
+        "id": "q-lsfb-saxophone-0",
+        "sentence": "I have a saxophone.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-saxophone-1",
+        "sentence": "I can see a saxophone.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-saxophone-2",
+        "sentence": "This is a saxophone.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "scared": [
+      {
+        "id": "q-lsfb-scared-0",
+        "sentence": "I like scared.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-scared-1",
+        "sentence": "I want some scared.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-scared-2",
+        "sentence": "I can see scared.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "scarf": [
+      {
+        "id": "q-lsfb-scarf-0",
+        "sentence": "I have a scarf.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-scarf-1",
+        "sentence": "I can see a scarf.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-scarf-2",
+        "sentence": "This is a scarf.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "scientist": [
+      {
+        "id": "q-lsfb-scientist-0",
+        "sentence": "I like scientist.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-scientist-1",
+        "sentence": "I want some scientist.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-scientist-2",
+        "sentence": "I can see scientist.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "scissors": [
+      {
+        "id": "q-lsfb-scissors-0",
+        "sentence": "I like scissors.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-scissors-1",
+        "sentence": "I want some scissors.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-scissors-2",
+        "sentence": "I can see scissors.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "seven": [
+      {
+        "id": "q-lsfb-seven-0",
+        "sentence": "I like seven.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-seven-1",
+        "sentence": "I want some seven.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-seven-2",
+        "sentence": "I can see seven.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "shark": [
+      {
+        "id": "q-lsfb-shark-0",
+        "sentence": "I have a shark.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-shark-1",
+        "sentence": "I can see a shark.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-shark-2",
+        "sentence": "This is a shark.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "sheep": [
+      {
+        "id": "q-lsfb-sheep-0",
+        "sentence": "I have a sheep.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-sheep-1",
+        "sentence": "I can see a sheep.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-sheep-2",
+        "sentence": "This is a sheep.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "shell": [
+      {
+        "id": "q-lsfb-shell-0",
+        "sentence": "I have a shell.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-shell-1",
+        "sentence": "I can see a shell.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-shell-2",
+        "sentence": "This is a shell.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ship": [
+      {
+        "id": "q-lsfb-ship-0",
+        "sentence": "I have a ship.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-ship-1",
+        "sentence": "I can see a ship.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-ship-2",
+        "sentence": "This is a ship.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "shirt": [
+      {
+        "id": "q-lsfb-shirt-0",
+        "sentence": "I have a shirt.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-shirt-1",
+        "sentence": "I can see a shirt.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-shirt-2",
+        "sentence": "This is a shirt.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "shoe": [
+      {
+        "id": "q-lsfb-shoe-0",
+        "sentence": "I have a shoe.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-shoe-1",
+        "sentence": "I can see a shoe.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-shoe-2",
+        "sentence": "This is a shoe.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "shrimp": [
+      {
+        "id": "q-lsfb-shrimp-0",
+        "sentence": "I have a shrimp.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-shrimp-1",
+        "sentence": "I can see a shrimp.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-shrimp-2",
+        "sentence": "This is a shrimp.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "sing": [
+      {
+        "id": "q-lsfb-sing-0",
+        "sentence": "I can sing.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-sing-1",
+        "sentence": "I like to sing.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "sister": [
+      {
+        "id": "q-lsfb-sister-0",
+        "sentence": "I like sister.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-sister-1",
+        "sentence": "I want some sister.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-sister-2",
+        "sentence": "I can see sister.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "six": [
+      {
+        "id": "q-lsfb-six-0",
+        "sentence": "I like six.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-six-1",
+        "sentence": "I want some six.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-six-2",
+        "sentence": "I can see six.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "skateboard": [
+      {
+        "id": "q-lsfb-skateboard-0",
+        "sentence": "I like skateboard.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-skateboard-1",
+        "sentence": "I want some skateboard.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-skateboard-2",
+        "sentence": "I can see skateboard.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "sleep": [
+      {
+        "id": "q-lsfb-sleep-0",
+        "sentence": "I can sleep.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-sleep-1",
+        "sentence": "I like to sleep.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "snail": [
+      {
+        "id": "q-lsfb-snail-0",
+        "sentence": "I have a snail.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-snail-1",
+        "sentence": "I can see a snail.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-snail-2",
+        "sentence": "This is a snail.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "snake": [
+      {
+        "id": "q-lsfb-snake-0",
+        "sentence": "I have a snake.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-snake-1",
+        "sentence": "I can see a snake.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-snake-2",
+        "sentence": "This is a snake.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "snow": [
+      {
+        "id": "q-lsfb-snow-0",
+        "sentence": "I like snow.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-snow-1",
+        "sentence": "I want some snow.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-snow-2",
+        "sentence": "I can see snow.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "sock": [
+      {
+        "id": "q-lsfb-sock-0",
+        "sentence": "I have a sock.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-sock-1",
+        "sentence": "I can see a sock.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-sock-2",
+        "sentence": "This is a sock.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "sofa": [
+      {
+        "id": "q-lsfb-sofa-0",
+        "sentence": "I have a sofa.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-sofa-1",
+        "sentence": "I can see a sofa.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-sofa-2",
+        "sentence": "This is a sofa.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "soup": [
+      {
+        "id": "q-lsfb-soup-0",
+        "sentence": "I like soup.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-soup-1",
+        "sentence": "I want some soup.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-soup-2",
+        "sentence": "I can see soup.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "spider": [
+      {
+        "id": "q-lsfb-spider-0",
+        "sentence": "I have a spider.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-spider-1",
+        "sentence": "I can see a spider.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-spider-2",
+        "sentence": "This is a spider.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "square": [
+      {
+        "id": "q-lsfb-square-0",
+        "sentence": "I have a square.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-square-1",
+        "sentence": "I can see a square.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-square-2",
+        "sentence": "This is a square.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "squid": [
+      {
+        "id": "q-lsfb-squid-0",
+        "sentence": "I have a squid.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-squid-1",
+        "sentence": "I can see a squid.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-squid-2",
+        "sentence": "This is a squid.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "squirrel": [
+      {
+        "id": "q-lsfb-squirrel-0",
+        "sentence": "I have a squirrel.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-squirrel-1",
+        "sentence": "I can see a squirrel.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-squirrel-2",
+        "sentence": "This is a squirrel.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "star": [
+      {
+        "id": "q-lsfb-star-0",
+        "sentence": "I have a star.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-star-1",
+        "sentence": "I can see a star.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-star-2",
+        "sentence": "This is a star.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "strawberry": [
+      {
+        "id": "q-lsfb-strawberry-0",
+        "sentence": "I have a strawberry.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-strawberry-1",
+        "sentence": "I can see a strawberry.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-strawberry-2",
+        "sentence": "This is a strawberry.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "street": [
+      {
+        "id": "q-lsfb-street-0",
+        "sentence": "I have a street.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-street-1",
+        "sentence": "I can see a street.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-street-2",
+        "sentence": "This is a street.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "sun": [
+      {
+        "id": "q-lsfb-sun-0",
+        "sentence": "I like sun.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-sun-1",
+        "sentence": "I want some sun.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-sun-2",
+        "sentence": "I can see sun.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "sunglasses": [
+      {
+        "id": "q-lsfb-sunglasses-0",
+        "sentence": "I like sunglasses.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-sunglasses-1",
+        "sentence": "I want some sunglasses.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-sunglasses-2",
+        "sentence": "I can see sunglasses.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "surfing": [
+      {
+        "id": "q-lsfb-surfing-0",
+        "sentence": "I like surfing.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-surfing-1",
+        "sentence": "I want some surfing.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-surfing-2",
+        "sentence": "I can see surfing.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "surprised": [
+      {
+        "id": "q-lsfb-surprised-0",
+        "sentence": "I like surprised.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-surprised-1",
+        "sentence": "I want some surprised.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-surprised-2",
+        "sentence": "I can see surprised.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "swan": [
+      {
+        "id": "q-lsfb-swan-0",
+        "sentence": "I have a swan.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-swan-1",
+        "sentence": "I can see a swan.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-swan-2",
+        "sentence": "This is a swan.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "swim": [
+      {
+        "id": "q-lsfb-swim-0",
+        "sentence": "I can swim.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-swim-1",
+        "sentence": "I like to swim.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "swimming": [
+      {
+        "id": "q-lsfb-swimming-0",
+        "sentence": "I like swimming.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-swimming-1",
+        "sentence": "I want some swimming.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-swimming-2",
+        "sentence": "I can see swimming.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "table-tennis": [
+      {
+        "id": "q-lsfb-table-tennis-0",
+        "sentence": "I like table tennis.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-table-tennis-1",
+        "sentence": "I want some table tennis.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-table-tennis-2",
+        "sentence": "I can see table tennis.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "taxi": [
+      {
+        "id": "q-lsfb-taxi-0",
+        "sentence": "I have a taxi.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-taxi-1",
+        "sentence": "I can see a taxi.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-taxi-2",
+        "sentence": "This is a taxi.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "teacher": [
+      {
+        "id": "q-lsfb-teacher-0",
+        "sentence": "I like teacher.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-teacher-1",
+        "sentence": "I want some teacher.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-teacher-2",
+        "sentence": "I can see teacher.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "teddy-bear": [
+      {
+        "id": "q-lsfb-teddy-bear-0",
+        "sentence": "I have a teddy bear.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-teddy-bear-1",
+        "sentence": "I can see a teddy bear.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-teddy-bear-2",
+        "sentence": "This is a teddy bear.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "television": [
+      {
+        "id": "q-lsfb-television-0",
+        "sentence": "I have a television.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-television-1",
+        "sentence": "I can see a television.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-television-2",
+        "sentence": "This is a television.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "ten": [
+      {
+        "id": "q-lsfb-ten-0",
+        "sentence": "I like ten.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-ten-1",
+        "sentence": "I want some ten.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-ten-2",
+        "sentence": "I can see ten.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "tennis": [
+      {
+        "id": "q-lsfb-tennis-0",
+        "sentence": "I like tennis.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-tennis-1",
+        "sentence": "I want some tennis.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-tennis-2",
+        "sentence": "I can see tennis.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "three": [
+      {
+        "id": "q-lsfb-three-0",
+        "sentence": "I like three.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-three-1",
+        "sentence": "I want some three.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-three-2",
+        "sentence": "I can see three.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "tie": [
+      {
+        "id": "q-lsfb-tie-0",
+        "sentence": "I have a tie.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-tie-1",
+        "sentence": "I can see a tie.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-tie-2",
+        "sentence": "This is a tie.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "tiger": [
+      {
+        "id": "q-lsfb-tiger-0",
+        "sentence": "I have a tiger.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-tiger-1",
+        "sentence": "I can see a tiger.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-tiger-2",
+        "sentence": "This is a tiger.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "tired": [
+      {
+        "id": "q-lsfb-tired-0",
+        "sentence": "I like tired.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-tired-1",
+        "sentence": "I want some tired.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-tired-2",
+        "sentence": "I can see tired.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "toilet": [
+      {
+        "id": "q-lsfb-toilet-0",
+        "sentence": "I have a toilet.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-toilet-1",
+        "sentence": "I can see a toilet.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-toilet-2",
+        "sentence": "This is a toilet.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "tomato": [
+      {
+        "id": "q-lsfb-tomato-0",
+        "sentence": "I have a tomato.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-tomato-1",
+        "sentence": "I can see a tomato.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-tomato-2",
+        "sentence": "This is a tomato.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "tractor": [
+      {
+        "id": "q-lsfb-tractor-0",
+        "sentence": "I have a tractor.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-tractor-1",
+        "sentence": "I can see a tractor.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-tractor-2",
+        "sentence": "This is a tractor.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "train": [
+      {
+        "id": "q-lsfb-train-0",
+        "sentence": "I have a train.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-train-1",
+        "sentence": "I can see a train.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-train-2",
+        "sentence": "This is a train.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "tree": [
+      {
+        "id": "q-lsfb-tree-0",
+        "sentence": "I have a tree.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-tree-1",
+        "sentence": "I can see a tree.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-tree-2",
+        "sentence": "This is a tree.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "triangle": [
+      {
+        "id": "q-lsfb-triangle-0",
+        "sentence": "I have a triangle.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-triangle-1",
+        "sentence": "I can see a triangle.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-triangle-2",
+        "sentence": "This is a triangle.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "truck": [
+      {
+        "id": "q-lsfb-truck-0",
+        "sentence": "I have a truck.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-truck-1",
+        "sentence": "I can see a truck.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-truck-2",
+        "sentence": "This is a truck.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "trumpet": [
+      {
+        "id": "q-lsfb-trumpet-0",
+        "sentence": "I have a trumpet.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-trumpet-1",
+        "sentence": "I can see a trumpet.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-trumpet-2",
+        "sentence": "This is a trumpet.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "turtle": [
+      {
+        "id": "q-lsfb-turtle-0",
+        "sentence": "I have a turtle.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-turtle-1",
+        "sentence": "I can see a turtle.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-turtle-2",
+        "sentence": "This is a turtle.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "two": [
+      {
+        "id": "q-lsfb-two-0",
+        "sentence": "I like two.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-two-1",
+        "sentence": "I want some two.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-two-2",
+        "sentence": "I can see two.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "violin": [
+      {
+        "id": "q-lsfb-violin-0",
+        "sentence": "I have a violin.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-violin-1",
+        "sentence": "I can see a violin.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-violin-2",
+        "sentence": "This is a violin.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "volleyball": [
+      {
+        "id": "q-lsfb-volleyball-0",
+        "sentence": "I like volleyball.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-volleyball-1",
+        "sentence": "I want some volleyball.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-volleyball-2",
+        "sentence": "I can see volleyball.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "walk": [
+      {
+        "id": "q-lsfb-walk-0",
+        "sentence": "I can walk.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-walk-1",
+        "sentence": "I like to walk.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "water": [
+      {
+        "id": "q-lsfb-water-0",
+        "sentence": "I like water.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-water-1",
+        "sentence": "I want some water.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-water-2",
+        "sentence": "I can see water.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "watermelon": [
+      {
+        "id": "q-lsfb-watermelon-0",
+        "sentence": "I have a watermelon.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-watermelon-1",
+        "sentence": "I can see a watermelon.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-watermelon-2",
+        "sentence": "This is a watermelon.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "wave": [
+      {
+        "id": "q-lsfb-wave-0",
+        "sentence": "I can wave.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-wave-1",
+        "sentence": "I like to wave.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "whale": [
+      {
+        "id": "q-lsfb-whale-0",
+        "sentence": "I have a whale.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-whale-1",
+        "sentence": "I can see a whale.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-whale-2",
+        "sentence": "This is a whale.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "white": [
+      {
+        "id": "q-lsfb-white-0",
+        "sentence": "I like white.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-white-1",
+        "sentence": "I want some white.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-white-2",
+        "sentence": "I can see white.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "wind": [
+      {
+        "id": "q-lsfb-wind-0",
+        "sentence": "I like wind.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-wind-1",
+        "sentence": "I want some wind.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-wind-2",
+        "sentence": "I can see wind.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "window": [
+      {
+        "id": "q-lsfb-window-0",
+        "sentence": "I have a window.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-window-1",
+        "sentence": "I can see a window.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-window-2",
+        "sentence": "This is a window.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "wolf": [
+      {
+        "id": "q-lsfb-wolf-0",
+        "sentence": "I have a wolf.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-wolf-1",
+        "sentence": "I can see a wolf.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-wolf-2",
+        "sentence": "This is a wolf.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "worm": [
+      {
+        "id": "q-lsfb-worm-0",
+        "sentence": "I have a worm.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-worm-1",
+        "sentence": "I can see a worm.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-worm-2",
+        "sentence": "This is a worm.",
+        "displaySentence": "This is a ___."
+      }
+    ],
+    "write": [
+      {
+        "id": "q-lsfb-write-0",
+        "sentence": "I can write.",
+        "displaySentence": "I can ___."
+      },
+      {
+        "id": "q-lsfb-write-1",
+        "sentence": "I like to write.",
+        "displaySentence": "I like to ___."
+      }
+    ],
+    "yellow": [
+      {
+        "id": "q-lsfb-yellow-0",
+        "sentence": "I like yellow.",
+        "displaySentence": "I like ___."
+      },
+      {
+        "id": "q-lsfb-yellow-1",
+        "sentence": "I want some yellow.",
+        "displaySentence": "I want some ___."
+      },
+      {
+        "id": "q-lsfb-yellow-2",
+        "sentence": "I can see yellow.",
+        "displaySentence": "I can see ___."
+      }
+    ],
+    "zebra": [
+      {
+        "id": "q-lsfb-zebra-0",
+        "sentence": "I have a zebra.",
+        "displaySentence": "I have a ___."
+      },
+      {
+        "id": "q-lsfb-zebra-1",
+        "sentence": "I can see a zebra.",
+        "displaySentence": "I can see a ___."
+      },
+      {
+        "id": "q-lsfb-zebra-2",
+        "sentence": "This is a zebra.",
+        "displaySentence": "This is a ___."
+      }
+    ]
+  }
+}

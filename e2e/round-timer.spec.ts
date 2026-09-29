@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { goToNextRound, runExtraLetterRound, startBatch } from './utils/batch-flow';
-import { currentQuestionKind, currentQuestionKindOneOf } from './utils/practice-flow';
+import { currentQuestionKindOneOf } from './utils/practice-flow';
 import {
   fastForwardRoundTimerForTesting,
   hasRoundTimerTestHook,
@@ -40,7 +40,7 @@ test.describe('Batch/Round: round timer (AC27, AC28, AC29)', () => {
     page,
   }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
     const timer = roundTimerLocator(page);
     await expect(timer, 'expected round-timer to be visible throughout an active Round (plan.md v7 AC27)').toBeVisible();
@@ -69,7 +69,7 @@ test.describe('Batch/Round: round timer (AC27, AC28, AC29)', () => {
     page,
   }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
     // Let Round 1's timer visibly run down for a few seconds before finishing
     // the round, so that a later "Round 2 starts near 5:00" reading is a
@@ -100,7 +100,7 @@ test.describe('Batch/Round: round timer (AC27, AC28, AC29)', () => {
     page,
   }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
     const hookAvailable = await hasRoundTimerTestHook(page);
     test.skip(

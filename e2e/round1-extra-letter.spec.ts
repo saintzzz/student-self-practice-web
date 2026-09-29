@@ -7,7 +7,7 @@ import {
   runExtraLetterRound,
   type RoundRunResult,
 } from './utils/batch-flow';
-import { currentQuestionKind, currentQuestionKindOneOf } from './utils/practice-flow';
+import { currentQuestionKindOneOf } from './utils/practice-flow';
 
 /**
  * Covers plan.md v5 AC17 (Round 1 of the new Batch/Round interaction model)
@@ -34,7 +34,7 @@ test.describe('Batch/Round: Round 1 (extra-letter)', () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(1);
       expect(roundProgress.total).toBe(4);
-      await currentQuestionKind(page, 'extra-letter');
+      await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
     });
 
     let round1: RoundRunResult;

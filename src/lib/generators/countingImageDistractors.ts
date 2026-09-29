@@ -31,7 +31,10 @@ export function buildDistractorOptions(
   correctCount: number,
   topicWords: VocabWord[],
   seedBase: string,
-): [CountingImageOption, CountingImageOption, CountingImageOption] {
+): {
+  options: [CountingImageOption, CountingImageOption, CountingImageOption];
+  wordIds: [string, string, string];
+} {
   const sameObjectWrongCount = toOption(correctWord, pickWrongCount(correctCount, `${seedBase}-wc`));
 
   const otherWords = pickDistinct(
@@ -50,5 +53,8 @@ export function buildDistractorOptions(
     pickWrongCount(correctCount, `${seedBase}-wo-wc`),
   );
 
-  return [sameObjectWrongCount, differentObjectRightCount, differentObjectWrongCount];
+  return {
+    options: [sameObjectWrongCount, differentObjectRightCount, differentObjectWrongCount],
+    wordIds: [correctWord.id, wordForRightCount.id, wordForWrongCount.id],
+  };
 }

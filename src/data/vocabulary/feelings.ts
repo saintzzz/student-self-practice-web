@@ -11,4 +11,9 @@ export const FEELINGS_WORDS: VocabWord[] = [
   { id: 'scared', topicId: t, word: 'scared', emoji: '😨', countable: false, explanation: 'Sợ hãi tiếng Anh là "scared".' },
   { id: 'tired', topicId: t, word: 'tired', emoji: '😴', countable: false, explanation: 'Mệt mỏi tiếng Anh là "tired".' },
   { id: 'surprised', topicId: t, word: 'surprised', emoji: '😲', countable: false, explanation: 'Ngạc nhiên tiếng Anh là "surprised".' },
+  // SGK Tiếng Anh 2 gap additions (docs/sdlc/prd.md section 7).
+  { id: 'excited', topicId: t, word: 'excited', emoji: '🤩', countable: false, explanation: 'Háo hức tiếng Anh là "excited".' },
+  { id: 'sick', topicId: t, word: 'sick', emoji: '🤒', countable: false, explanation: 'Bị ốm tiếng Anh là "sick".' },
+  { id: 'cold', topicId: t, word: 'cold', emoji: '🥶', countable: false, explanation: 'Cảm thấy lạnh tiếng Anh là "cold".' },
+  { id: 'hot', topicId: t, word: 'hot', emoji: '🥵', countable: false, explanation: 'Cảm thấy nóng tiếng Anh là "hot".' },
 ];

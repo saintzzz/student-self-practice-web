@@ -23,7 +23,7 @@ describe('QuestionCard (picture-pair-matching)', () => {
     expect(screen.getByTestId('next-button')).toBeDisabled();
   });
 
-  it('routes a resolved board (all 4 pairs found) to onSubmitPairMatching(true)', async () => {
+  it('routes a resolved board (all 4 pairs found) to onSubmitPairMatching(true)', { timeout: 15_000 }, async () => {
     const onSubmitPairMatching = vi.fn();
     const user = userEvent.setup();
     render(

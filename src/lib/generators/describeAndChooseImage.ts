@@ -43,13 +43,15 @@ function buildCountInstance(
   const distractors = buildDistractorOptions(word, count, [...countableWords], seedBase);
 
   const order = seededShuffleIndices(4, `${seedBase}-order`);
-  const pool = [correctOption, ...distractors];
+  const pool = [correctOption, ...distractors.options];
+  const poolWordIds = [word.id, ...distractors.wordIds];
   const options = order.map((i) => pool[i]!) as [
     CountingImageOption,
     CountingImageOption,
     CountingImageOption,
     CountingImageOption,
   ];
+  const optionWordIds = order.map((i) => poolWordIds[i]!) as [string, string, string, string];
   const correctIndex = order.indexOf(0) as 0 | 1 | 2 | 3;
 
   return {
@@ -59,6 +61,7 @@ function buildCountInstance(
     descriptionType: 'count',
     sentence: countSentence(correctOption),
     options,
+    optionWordIds,
     correctIndex,
     explanation: `Chọn hình có ${formatCountLabel(correctOption)}. ${word.explanation}`,
   };
@@ -92,12 +95,14 @@ function buildNegationInstance(
 
   const order = seededShuffleIndices(4, `${seedBase}-order`);
   const pool = [correctOption, ...distractorOptions];
+  const poolWordIds = [differentWord.id, word.id, word.id, word.id];
   const options = order.map((i) => pool[i]!) as [
     CountingImageOption,
     CountingImageOption,
     CountingImageOption,
     CountingImageOption,
   ];
+  const optionWordIds = order.map((i) => poolWordIds[i]!) as [string, string, string, string];
   const correctIndex = order.indexOf(0) as 0 | 1 | 2 | 3;
 
   return {
@@ -107,6 +112,7 @@ function buildNegationInstance(
     descriptionType: 'negation',
     sentence: negationSentence(word),
     options,
+    optionWordIds,
     correctIndex,
     explanation: `Câu này phủ định "${word.word}" nên hình đúng là hình không có ${word.word}. ${word.explanation}`,
   };

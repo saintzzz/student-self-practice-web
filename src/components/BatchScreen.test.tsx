@@ -44,7 +44,12 @@ function answerCurrentQuestion(state: BatchState): BatchState {
   if (question.kind === 'pronunciation-recording') {
     return updateRoundSession(state, (session) => submitPronunciationAnswer(session, '0000'));
   }
-  if (question.kind === 'describe-and-choose-image') {
+  if (
+    question.kind === 'describe-and-choose-image' ||
+    question.kind === 'image-choice' ||
+    question.kind === 'listening-image-choice' ||
+    question.kind === 'counting-image'
+  ) {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
   }
   if (question.kind === 'picture-pair-matching') {
@@ -55,11 +60,15 @@ function answerCurrentQuestion(state: BatchState): BatchState {
 
 function completeActiveRound(state: BatchState): BatchState {
   let current = state;
-  while (current.phase === 'active') {
+  // A round is <= 10 questions; a larger bound means a new question kind
+  // slipped past answerCurrentQuestion and the loop would hang the suite
+  // instead of failing - make it fail loudly instead.
+  for (let guard = 0; guard < 20; guard++) {
+    if (current.phase !== 'active') return current;
     current = answerCurrentQuestion(current);
     current = advanceRoundQuestion(current);
   }
-  return current;
+  throw new Error('completeActiveRound did not finish within 20 questions');
 }
 
 describe('BatchScreen', () => {

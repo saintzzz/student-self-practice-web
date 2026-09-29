@@ -52,6 +52,15 @@ describe('generateExtraLetterVariants', () => {
     expect(generateExtraLetterVariants('watermelon')).toHaveLength(0);
   });
 
+  it('returns no variants for multi-word entries (space would render as a blank tile)', () => {
+    // Regression: "hot dog" (7 chars incl. space) previously slipped through
+    // the length filter, producing an invisible space tile whose removal
+    // could never reassemble the revealed word.
+    expect(generateExtraLetterVariants('hot dog')).toHaveLength(0);
+    expect(generateExtraLetterVariants('ice cream')).toHaveLength(0);
+    expect(generateExtraLetterVariants('teddy bear')).toHaveLength(0);
+  });
+
   it('is deterministic across repeated calls (same seed inputs -> same output)', () => {
     const first = generateExtraLetterVariants('rabbit');
     const second = generateExtraLetterVariants('rabbit');

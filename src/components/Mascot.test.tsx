@@ -40,6 +40,17 @@ describe('Mascot (plan.md v10, AC38-AC39)', () => {
     expect(screen.getByTestId('mascot')).not.toHaveTextContent('🎉');
   });
 
+  it.each([
+    ['greeting', 'Heo con vẫy chào'],
+    ['happy', 'Heo con vui mừng'],
+    ['encouraging', 'Heo con động viên'],
+    ['celebrating', 'Heo con ăn mừng'],
+  ] as const)('exposes the %s mood as accessible name "%s" (AC-1.9)', (mood, label) => {
+    render(<Mascot mood={mood} />);
+
+    expect(screen.getByTestId('mascot')).toHaveAttribute('aria-label', label);
+  });
+
   it.each(MOODS)('gates the %s mood animation behind motion-reduce:animate-none', (mood) => {
     render(<Mascot mood={mood} />);
 

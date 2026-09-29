@@ -9,10 +9,10 @@ const QUESTION: PicturePairMatchingQuestionType = {
   topicId: 't1',
   kind: 'picture-pair-matching',
   pairs: [
-    { word: 'cat', emoji: '🐱' },
-    { word: 'dog', emoji: '🐶' },
-    { word: 'fish', emoji: '🐟' },
-    { word: 'bird', emoji: '🐦' },
+    { word: 'cat', emoji: '🐱', wordId: 'fixture-cat' },
+    { word: 'dog', emoji: '🐶', wordId: 'fixture-dog' },
+    { word: 'fish', emoji: '🐟', wordId: 'fixture-fish' },
+    { word: 'bird', emoji: '🐦', wordId: 'fixture-bird' },
   ],
   tiles: [
     { pairIndex: 0, tileType: 'word', label: 'cat' },
@@ -37,7 +37,7 @@ describe('PicturePairMatchingQuestion', () => {
     expect(screen.getByTestId('pair-matching-mistake-count')).toHaveTextContent('Sai: 0/3');
   });
 
-  it('a full correct playthrough matches all 4 pairs and calls onSubmit(true) exactly once', async () => {
+  it('a full correct playthrough matches all 4 pairs and calls onSubmit(true) exactly once', { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<PicturePairMatchingQuestion question={QUESTION} hasAnswered={false} onSubmit={onSubmit} />);
@@ -60,7 +60,7 @@ describe('PicturePairMatchingQuestion', () => {
     }
   });
 
-  it('exceeding the 3-mistake budget calls onSubmit(false) exactly once and reveals every tile as correct', async () => {
+  it('exceeding the 3-mistake budget calls onSubmit(false) exactly once and reveals every tile as correct', { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<PicturePairMatchingQuestion question={QUESTION} hasAnswered={false} onSubmit={onSubmit} />);

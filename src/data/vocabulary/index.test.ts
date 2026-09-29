@@ -35,7 +35,7 @@ describe('vocabulary bank (regression guard)', () => {
 
   it('has no em-dash in any explanation (project-wide constraint)', () => {
     for (const word of ALL_WORDS) {
-      expect(word.explanation, `word "${word.id}" explanation contains an em-dash`).not.toContain('—');
+      expect(word.explanation, `word "${word.id}" explanation contains an em-dash`).not.toContain(String.fromCodePoint(0x2014));
     }
   });
 

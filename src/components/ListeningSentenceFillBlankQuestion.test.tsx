@@ -9,6 +9,7 @@ const QUESTION: ListeningSentenceFillBlankQuestionType = {
   topicId: 't1',
   kind: 'listening-sentence-fill-blank',
   word: 'cat',
+  wordId: 'fixture-cat',
   sentence: 'I have a cat.',
   displaySentence: 'I have a ___.',
   explanation: 'Con mèo tiếng Anh là "cat".',

@@ -9,6 +9,7 @@ const QUESTION: ExtraLetterQuestionType = {
   topicId: 't1',
   kind: 'extra-letter',
   correctWord: 'bird',
+  wordId: 'fixture-bird',
   displayLetters: ['b', 'i', 'r', 's', 'd'],
   extraIndex: 3,
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',

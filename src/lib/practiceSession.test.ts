@@ -30,6 +30,7 @@ const IMAGE_QUESTION: ImageChoiceQuestion = {
   topicId: 't1',
   kind: 'image-choice',
   emoji: '🐱',
+  wordId: 'fixture-cat',
   options: ['cat', 'dog', 'fish', 'bird'],
   correctIndex: 0,
   explanation: 'Con mèo tiếng Anh là "cat".',
@@ -49,6 +50,7 @@ const COUNTING_QUESTION: CountingImageQuestion = {
   kind: 'counting-image',
   direction: 'image-to-count',
   prompt: { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+  promptWordId: 'fixture-cat',
   options: [
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },
@@ -64,6 +66,7 @@ const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
   topicId: 't1',
   kind: 'extra-letter',
   correctWord: 'bird',
+  wordId: 'fixture-bird',
   displayLetters: ['b', 'i', 'r', 's', 'd'],
   extraIndex: 3,
   explanation: 'Con chim tiếng Anh là "bird". Chữ cái thừa là "s".',
@@ -74,6 +77,7 @@ const LISTENING_SENTENCE_QUESTION: ListeningSentenceFillBlankQuestion = {
   topicId: 't1',
   kind: 'listening-sentence-fill-blank',
   word: 'cat',
+  wordId: 'fixture-cat',
   sentence: 'I have a cat.',
   displaySentence: 'I have a ___.',
   explanation: 'Con mèo tiếng Anh là "cat".',
@@ -99,6 +103,7 @@ const DESCRIBE_IMAGE_QUESTION: DescribeAndChooseImageQuestion = {
     { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 },
     { word: 'dog', plural: 'dogs', emoji: '🐶', count: 4 },
   ],
+  optionWordIds: ['fixture-cat', 'fixture-cat', 'fixture-dog', 'fixture-dog'],
   correctIndex: 0,
   explanation: 'Chọn hình có 3 cats.',
 };
@@ -109,6 +114,7 @@ const LISTENING_IMAGE_CHOICE_QUESTION: ListeningImageChoiceQuestion = {
   kind: 'listening-image-choice',
   word: 'cat',
   options: ['🐱', '🐶', '🐟', '🐦'],
+  optionWordIds: ['fixture-cat', 'fixture-dog', 'fixture-fish', 'fixture-bird'],
   correctIndex: 0,
   explanation: 'Con mèo tiếng Anh là "cat".',
 };

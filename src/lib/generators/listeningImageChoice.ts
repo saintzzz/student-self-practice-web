@@ -28,9 +28,15 @@ function buildVariant(
     `${word.id}-lic-${variantSeed}`,
   );
 
-  const candidateEmojis = [word.emoji, ...distractors.map((d) => d.emoji)];
+  const candidateWords = [word, ...distractors];
   const order = seededShuffleIndices(4, `${word.id}-lic-${variantSeed}-order`);
-  const options = order.map((originalIndex) => candidateEmojis[originalIndex]!) as [
+  const options = order.map((originalIndex) => candidateWords[originalIndex]!.emoji) as [
+    string,
+    string,
+    string,
+    string,
+  ];
+  const optionWordIds = order.map((originalIndex) => candidateWords[originalIndex]!.id) as [
     string,
     string,
     string,
@@ -44,6 +50,7 @@ function buildVariant(
     kind: 'listening-image-choice',
     word: word.word,
     options,
+    optionWordIds,
     correctIndex,
     explanation: word.explanation,
   };

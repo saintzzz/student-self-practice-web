@@ -1,14 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { ROUND_1_QUESTION_COUNT, buildRound1Questions } from './round1ExtraLetter';
+import {
+  ROUND_1_EXTRA_LETTER_COUNT,
+  ROUND_1_IMAGE_CHOICE_COUNT,
+  ROUND_1_QUESTION_COUNT,
+  buildRound1Questions,
+} from './round1ExtraLetter';
 import { ALL_WORDS } from '../../data/vocabulary';
 import { generateExtraLetterQuestions } from '../generators/extraLetter';
+import { generateImageChoiceQuestions } from '../generators/imageChoice';
 
 describe('buildRound1Questions', () => {
-  it('returns about 10 questions, all of kind extra-letter', () => {
+  it('AC-9.1: returns 10 questions - 7 extra-letter + 3 image-choice, seeded-shuffled', () => {
     const questions = buildRound1Questions('seed-a');
 
     expect(questions).toHaveLength(ROUND_1_QUESTION_COUNT);
-    expect(questions.every((q) => q.kind === 'extra-letter')).toBe(true);
+    expect(questions.filter((q) => q.kind === 'extra-letter')).toHaveLength(ROUND_1_EXTRA_LETTER_COUNT);
+    expect(questions.filter((q) => q.kind === 'image-choice')).toHaveLength(ROUND_1_IMAGE_CHOICE_COUNT);
+  });
+
+  it('AC-9.1: image-choice lands at varying positions across seeds, including position 1', () => {
+    // PRD amendment A-12: AC-9.1 scans s1..s40 (widened from s1..s20 - the
+    // seeded shuffle never places an image-choice at index 0 within the
+    // original range; s24 and s33 do).
+    const positions = new Set<number>();
+    for (let i = 1; i <= 40; i++) {
+      const questions = buildRound1Questions(`s${i}`);
+      questions.forEach((q, index) => {
+        if (q.kind === 'image-choice') {
+          positions.add(index);
+        }
+      });
+    }
+
+    expect(positions.size).toBeGreaterThan(1);
+    expect(positions.has(0)).toBe(true);
   });
 
   it('is deterministic for the same seed', () => {
@@ -36,17 +61,35 @@ describe('buildRound1Questions', () => {
     expect(topicIds.size).toBeGreaterThan(1);
   });
 
-  it('AC23: a single Round draw is spread across at least min(eligible topics, 8) distinct topics', () => {
+  it('AC-9.2/AC23: each kind slice is stratified - extra-letter draw spreads across topics', () => {
     const eligibleTopics = new Set(generateExtraLetterQuestions([...ALL_WORDS]).map((q) => q.topicId));
-    const minExpected = Math.min(eligibleTopics.size, 8);
+    const minExpected = Math.min(eligibleTopics.size, ROUND_1_EXTRA_LETTER_COUNT);
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
-      const topicIds = new Set(buildRound1Questions(seed).map((q) => q.topicId));
+      const topicIds = new Set(
+        buildRound1Questions(seed)
+          .filter((q) => q.kind === 'extra-letter')
+          .map((q) => q.topicId),
+      );
       expect(topicIds.size).toBeGreaterThanOrEqual(minExpected);
     }
   });
 
-  it('AC23: no single topic dominates a Round draw when many topics are eligible', () => {
+  it('AC-9.2/AC23: image-choice slice is stratified across topics too', () => {
+    const eligibleTopics = new Set(generateImageChoiceQuestions([...ALL_WORDS]).map((q) => q.topicId));
+    const minExpected = Math.min(eligibleTopics.size, ROUND_1_IMAGE_CHOICE_COUNT);
+
+    for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
+      const topicIds = new Set(
+        buildRound1Questions(seed)
+          .filter((q) => q.kind === 'image-choice')
+          .map((q) => q.topicId),
+      );
+      expect(topicIds.size).toBeGreaterThanOrEqual(minExpected);
+    }
+  });
+
+  it('AC-9.2: no single topic dominates a Round draw when many topics are eligible', () => {
     const eligibleTopics = new Set(generateExtraLetterQuestions([...ALL_WORDS]).map((q) => q.topicId));
     // With >= 10 eligible topics and 10 questions, the fair share per topic is 1.
     expect(eligibleTopics.size).toBeGreaterThanOrEqual(ROUND_1_QUESTION_COUNT);
@@ -57,7 +100,9 @@ describe('buildRound1Questions', () => {
     }
 
     for (const count of counts.values()) {
-      expect(count).toBeLessThanOrEqual(1);
+      // Both slices contribute at most 1 each, so a topic may appear up to 2
+      // times total (once per slice) - still far from domination.
+      expect(count).toBeLessThanOrEqual(2);
     }
   });
 });

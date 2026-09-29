@@ -1,3 +1,5 @@
+import { EmojiVisual } from './EmojiVisual';
+
 export type MascotMood = 'greeting' | 'happy' | 'encouraging' | 'celebrating';
 
 interface MascotProps {
@@ -65,8 +67,14 @@ export default function Mascot({ mood, size = 'block' }: MascotProps) {
       aria-label={ariaLabel}
       className={`inline-flex items-center gap-1 leading-none ${SIZE_CLASSNAME[size]} ${animationClassName}`}
     >
-      <span aria-hidden="true">🐷</span>
-      {accentEmoji && <span aria-hidden="true">{accentEmoji}</span>}
+      <span aria-hidden="true">
+        <EmojiVisual emoji="🐷" />
+      </span>
+      {accentEmoji && (
+        <span aria-hidden="true">
+          <EmojiVisual emoji={accentEmoji} animated />
+        </span>
+      )}
     </span>
   );
 }

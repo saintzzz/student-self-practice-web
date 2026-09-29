@@ -18,6 +18,26 @@ function article(word: string): 'a' | 'an' {
 
 type SentenceTemplate = (word: string) => string;
 
+/**
+ * Sentence classes (PRD section 5.1, ruling D-6: fix in-run). Every class
+ * maps to a template family; `countable`, `mass` and `action` are the
+ * pre-existing sets kept byte-identical, the rest are new topic-aware
+ * families so feelings/occupations/... no longer produce sentences like
+ * "I want some sick.".
+ */
+type SentenceClass =
+  | 'countable'
+  | 'mass'
+  | 'action'
+  | 'feeling'
+  | 'occupation'
+  | 'family'
+  | 'body-part'
+  | 'color'
+  | 'number'
+  | 'the-noun'
+  | 'sport';
+
 /** "I have a cat.", "I can see an elephant.", "This is a red." (see templatesForWord for gating). */
 const COUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `I have ${article(word)} ${word}.`,
@@ -25,7 +45,7 @@ const COUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `This is ${article(word)} ${word}.`,
 ];
 
-/** For countable: false words (colors, feelings, weather, etc.). */
+/** For countable: false words with no topic class (food, drink, clothes plurals, etc.). */
 const UNCOUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `I like ${word}.`,
   (word) => `I want some ${word}.`,
@@ -38,11 +58,107 @@ const ACTION_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `I like to ${word}.`,
 ];
 
-function templatesForWord(word: VocabWord): readonly SentenceTemplate[] {
-  if (word.topicId === ACTIONS_TOPIC_ID) {
-    return ACTION_TEMPLATES;
+/** Feelings are adjectives, not mass nouns: "I am happy." / "I feel happy.". */
+const FEELING_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I am ${word}.`,
+  (word) => `I feel ${word}.`,
+];
+
+/** One third-person form plus a neutral aspiration form (PRD 5.1 ruling). */
+const OCCUPATION_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `He is ${article(word)} ${word}.`,
+  (word) => `I want to be ${article(word)} ${word}.`,
+];
+
+const FAMILY_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `This is my ${word}.`,
+  (word) => `I love my ${word}.`,
+];
+
+const BODY_PART_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `This is my ${word}.`,
+  (word) => `Touch your ${word}.`,
+];
+
+const COLOR_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I like ${word}.`,
+  (word) => `I can see ${word}.`,
+  (word) => `It is ${word}.`,
+];
+
+const NUMBER_TEMPLATES: readonly SentenceTemplate[] = [(word) => `I can count to ${word}.`];
+
+/** Words that read naturally with "the": sun, moon, rain, wind, ... */
+const THE_NOUN_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I like the ${word}.`,
+  (word) => `I can see the ${word}.`,
+];
+
+const SPORT_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I like ${word}.`,
+  (word) => `Do you like ${word}?`,
+];
+
+const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[]>> = {
+  countable: COUNTABLE_TEMPLATES,
+  mass: UNCOUNTABLE_TEMPLATES,
+  action: ACTION_TEMPLATES,
+  feeling: FEELING_TEMPLATES,
+  occupation: OCCUPATION_TEMPLATES,
+  family: FAMILY_TEMPLATES,
+  'body-part': BODY_PART_TEMPLATES,
+  color: COLOR_TEMPLATES,
+  number: NUMBER_TEMPLATES,
+  'the-noun': THE_NOUN_TEMPLATES,
+  sport: SPORT_TEMPLATES,
+};
+
+/**
+ * PRD 5.1 Table A - topic-level sentence classes. Topics not listed fall
+ * through to the countable/mass default (step 4 of BR-16).
+ */
+const TOPIC_CLASSES: Readonly<Record<string, SentenceClass>> = {
+  'g2-feelings': 'feeling',
+  'g2-occupations': 'occupation',
+  'g2-family': 'family',
+  'g2-body-parts': 'body-part',
+  'g2-colors': 'color',
+  'g2-numbers': 'number',
+  'g2-weather': 'the-noun',
+  'g2-sports': 'sport',
+};
+
+/**
+ * PRD 5.1 Table B - per-word overrides that beat the topic class
+ * (e.g. `chef` is an occupation living in `g2-kitchen`; `skateboard` is an
+ * object noun in `g2-sports`).
+ */
+const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
+  chef: 'occupation',
+  moon: 'the-noun',
+  ocean: 'the-noun',
+  fire: 'the-noun',
+  skateboard: 'countable',
+};
+
+/** BR-16 precedence: word-id override -> actions topic -> topic class -> countable/mass. */
+export function sentenceClassFor(word: VocabWord): SentenceClass {
+  const override = WORD_ID_OVERRIDES[word.id];
+  if (override) {
+    return override;
   }
-  return word.countable ? COUNTABLE_TEMPLATES : UNCOUNTABLE_TEMPLATES;
+  if (word.topicId === ACTIONS_TOPIC_ID) {
+    return 'action';
+  }
+  const topicClass = TOPIC_CLASSES[word.topicId];
+  if (topicClass) {
+    return topicClass;
+  }
+  return word.countable ? 'countable' : 'mass';
+}
+
+function templatesForWord(word: VocabWord): readonly SentenceTemplate[] {
+  return CLASS_TEMPLATES[sentenceClassFor(word)];
 }
 
 function escapeRegExp(text: string): string {
@@ -82,6 +198,7 @@ export function generateListeningSentenceFillBlankQuestions(
         topicId: word.topicId,
         kind: 'listening-sentence-fill-blank',
         word: word.word,
+        wordId: word.id,
         sentence,
         displaySentence: blankOutWord(sentence, word.word),
         explanation: word.explanation,

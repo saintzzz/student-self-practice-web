@@ -5,7 +5,8 @@ import {
   runExtraLetterRound,
   startBatch,
 } from './utils/batch-flow';
-import { answerExtraLetterTile, currentQuestionKind, goToNextQuestion, readQuestionProgress } from './utils/practice-flow';
+import { answerExtraLetterTile, currentQuestionKindOneOf, goToNextQuestion, readQuestionProgress } from './utils/practice-flow';
+import { answerOptionQuestion } from './utils/option-flow';
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 import { findPointsFraction, readLiveScorePoints } from './utils/points-flow';
 
@@ -33,7 +34,8 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
     page,
   }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    // Round 1 mixes extra-letter + image-choice (PRD r3 / D-10).
+    await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
     const { total } = await readQuestionProgress(page);
     // Sampling a handful of questions (not the full ~10) is enough to prove
@@ -43,7 +45,11 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
     let correctSoFar = 0;
 
     for (let q = 1; q <= questionsToSample; q++) {
-      const result = await answerExtraLetterTile(page, 0);
+      const kind = await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
+      const result =
+        kind === 'extra-letter'
+          ? await answerExtraLetterTile(page, 0)
+          : await answerOptionQuestion(page, 0);
       if (result.outcome === 'correct') correctSoFar++;
       else if (result.outcome !== 'incorrect') {
         throw new Error(`Round 1 question ${q}: unrecognized answer outcome "${result.outcome}"`);

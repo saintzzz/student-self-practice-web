@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { startBatch } from './utils/batch-flow';
-import { answerExtraLetterTile, currentQuestionKind, goToNextQuestion, readQuestionProgress } from './utils/practice-flow';
+import { answerExtraLetterTile, currentQuestionKindOneOf, goToNextQuestion, readQuestionProgress } from './utils/practice-flow';
+import { answerOptionQuestion } from './utils/option-flow';
 import { liveScoreLocator, readLiveScore } from './utils/timer-flow';
 
 /**
@@ -29,7 +30,9 @@ test.describe('Batch/Round: live score indicator (AC26)', () => {
     page,
   }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    // Round 1 mixes extra-letter + image-choice (PRD r3 / D-10): either kind
+    // is a valid first question for this live-score check.
+    await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
     await expect(
       liveScoreLocator(page),
@@ -47,7 +50,7 @@ test.describe('Batch/Round: live score indicator (AC26)', () => {
     page,
   }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
     const { total } = await readQuestionProgress(page);
     // "answer a couple of questions" -- sampling a few is sufficient to prove
@@ -58,7 +61,13 @@ test.describe('Batch/Round: live score indicator (AC26)', () => {
     let correctSoFar = 0;
 
     for (let q = 1; q <= questionsToSample; q++) {
-      const result = await answerExtraLetterTile(page, 0);
+      // PRD r3 / D-10: Round 1 shuffles extra-letter + image-choice; answer
+      // each kind structurally and take the REAL observed outcome.
+      const kind = await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
+      const result =
+        kind === 'extra-letter'
+          ? await answerExtraLetterTile(page, 0)
+          : await answerOptionQuestion(page, 0);
       if (result.outcome === 'correct') correctSoFar++;
       else if (result.outcome !== 'incorrect') {
         throw new Error(`Round 1 question ${q}: unrecognized answer outcome "${result.outcome}"`);

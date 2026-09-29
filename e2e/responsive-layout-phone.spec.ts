@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { startBatch, fastForwardThroughRounds1And2, goToNextRound } from './utils/batch-flow';
+import { advanceToQuestionKind, startBatch, fastForwardThroughRounds1And2, goToNextRound } from './utils/batch-flow';
 import { runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 import { advanceToPicturePairMatching, pairTiles, readMistakeCount } from './utils/pair-matching-flow';
-import { currentQuestionKind, letterTiles } from './utils/practice-flow';
+import { letterTiles } from './utils/practice-flow';
 import {
   PHONE_LANDSCAPE,
   PHONE_PORTRAIT,
@@ -41,7 +41,7 @@ test.describe('Responsive layout: phone portrait 375x667 (Round 1, extra-letter)
 
   test('letter tiles and next-button are reachable without scrolling', async ({ page }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await advanceToQuestionKind(page, 'extra-letter');
 
     await expectFullyInViewport(page, letterTiles(page).first(), 'letter-tile-0');
     // next-button is disabled until an answer is given (plan.md v2 contract),
@@ -57,7 +57,7 @@ test.describe('Responsive layout: phone landscape 667x375 (Round 1, confirmed wo
 
   test('letter tiles and next-button are reachable without scrolling', async ({ page }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await advanceToQuestionKind(page, 'extra-letter');
 
     await expectFullyInViewport(page, letterTiles(page).first(), 'letter-tile-0');
     await expectFullyInViewport(page, page.getByTestId('next-button'), 'next-button');

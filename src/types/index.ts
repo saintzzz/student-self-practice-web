@@ -25,6 +25,13 @@ export interface VocabWord {
   emoji: string;
   explanation: string;
   countable: boolean;
+  /**
+   * Optional curated photo for this word, e.g. '/images/vocab/{id}.webp'.
+   * Only populated after the image has been human-approved in the image
+   * pipeline (reviewStatus 'approved'); enforced bidirectionally against
+   * public/attribution.json by scripts/check-attribution.mjs.
+   */
+  imageUrl?: string;
 }
 
 export type QuestionKind =
@@ -43,6 +50,8 @@ export interface ImageChoiceQuestion {
   topicId: string;
   kind: 'image-choice';
   emoji: string;
+  /** Id of the VocabWord the prompt depicts; lets renderers resolve a curated photo without an emoji->word lookup. */
+  wordId: string;
   options: readonly [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
   explanation: string;
@@ -73,6 +82,8 @@ export interface CountingImageQuestion {
   direction: CountDirection;
   /** The correct object+count combination the student must find among options. */
   prompt: CountingImageOption;
+  /** Id of the VocabWord behind `prompt`; used to resolve the FeedbackPanel picture. */
+  promptWordId: string;
   options: readonly [CountingImageOption, CountingImageOption, CountingImageOption, CountingImageOption];
   correctIndex: 0 | 1 | 2 | 3;
   explanation: string;
@@ -83,6 +94,8 @@ export interface ExtraLetterQuestion {
   topicId: string;
   kind: 'extra-letter';
   correctWord: string;
+  /** Id of the VocabWord for `correctWord`; used to resolve the FeedbackPanel picture. */
+  wordId: string;
   displayLetters: readonly string[];
   extraIndex: number;
   explanation: string;
@@ -100,6 +113,8 @@ export interface ListeningSentenceFillBlankQuestion {
   topicId: string;
   kind: 'listening-sentence-fill-blank';
   word: string;
+  /** Id of the VocabWord for `word`; used to resolve the FeedbackPanel picture. */
+  wordId: string;
   sentence: string;
   displaySentence: string;
   explanation: string;
@@ -118,6 +133,8 @@ export interface ListeningImageChoiceQuestion {
   kind: 'listening-image-choice';
   word: string;
   options: readonly [string, string, string, string];
+  /** VocabWord ids parallel to `options` (distractors may come from any topic, so word identity must be carried, not derived). */
+  optionWordIds: readonly [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
   explanation: string;
 }
@@ -160,6 +177,8 @@ export interface DescribeAndChooseImageQuestion {
   descriptionType: DescriptionType;
   sentence: string;
   options: readonly [CountingImageOption, CountingImageOption, CountingImageOption, CountingImageOption];
+  /** VocabWord ids parallel to `options` (same additive pattern as ListeningImageChoiceQuestion). */
+  optionWordIds: readonly [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
   explanation: string;
 }

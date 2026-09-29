@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PicturePairMatchingQuestion as PicturePairMatchingQuestionType } from '../types';
+import { EmojiVisual } from './EmojiVisual';
 import {
   MAX_PAIR_MATCHING_MISTAKES,
   clickPairMatchingTile,
@@ -84,7 +85,13 @@ export default function PicturePairMatchingQuestion({
               onClick={() => handleTileClick(index)}
               className={tileClassName(isMatched, isPending, isWrongFlash)}
             >
-              {tile.label}
+              {tile.tileType === 'picture' ? (
+                <span aria-hidden="true">
+                  <EmojiVisual emoji={tile.label} />
+                </span>
+              ) : (
+                tile.label
+              )}
             </button>
           );
         })}

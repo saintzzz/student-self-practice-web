@@ -91,7 +91,10 @@ function pickExtraLetter(chars: string[], pos: number, correctWord: string, seed
  * recovers the original word - this is the invariant unit tests assert.
  */
 export function generateExtraLetterVariants(word: string): ExtraLetterVariant[] {
-  if (word.length < MIN_LENGTH || word.length > MAX_LENGTH) {
+  // Single alphabetic words only: a multi-word entry like "hot dog" would
+  // render its space as a blank tile and break the remove-one-tile invariant
+  // (the revealed word can never be reassembled from the tiles).
+  if (word.length < MIN_LENGTH || word.length > MAX_LENGTH || !/^[a-z]+$/i.test(word)) {
     return [];
   }
 
@@ -126,6 +129,7 @@ export function generateExtraLetterQuestions(topicWords: VocabWord[]): ExtraLett
         topicId: word.topicId,
         kind: 'extra-letter',
         correctWord: word.word,
+        wordId: word.id,
         displayLetters: variant.displayLetters,
         extraIndex: variant.extraIndex,
         explanation: `${word.explanation} Chữ cái thừa là "${variant.extraLetter}".`,

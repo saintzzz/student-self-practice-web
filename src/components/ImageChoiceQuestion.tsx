@@ -1,4 +1,6 @@
 import type { ImageChoiceQuestion as ImageChoiceQuestionType } from '../types';
+import { getWordVisual } from '../lib/emoji/wordVisual';
+import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName } from './optionButtonStyle';
 
 interface ImageChoiceQuestionProps {
@@ -17,8 +19,16 @@ export default function ImageChoiceQuestion({
   return (
     <div>
       <p className="mb-2 text-xl font-semibold text-sky-700">Từ nào đúng với hình này?</p>
-      <div className="mb-3 text-8xl" aria-hidden="true">
-        {question.emoji}
+      <div
+        className="mb-3 text-8xl [@media(max-height:420px)]:text-6xl"
+        aria-hidden="true"
+      >
+        <EmojiVisual
+          emoji={question.emoji}
+          animated
+          imageUrl={getWordVisual(question.wordId)?.imageUrl}
+          variant="block"
+        />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (

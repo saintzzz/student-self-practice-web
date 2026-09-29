@@ -38,8 +38,10 @@ export type AnswerOutcome = 'correct' | 'incorrect' | 'neutral' | 'unknown';
  */
 export type RoundQuestionKind =
   | 'extra-letter'
+  | 'image-choice'
   | 'listening-sentence-fill-blank'
   | 'listening-image-choice'
+  | 'counting-image'
   | 'pronunciation-recording'
   | 'describe-and-choose-image'
   | 'picture-pair-matching';
@@ -110,7 +112,7 @@ export async function currentQuestionKind(page: Page, expectedKind: RoundQuestio
  */
 export async function currentQuestionKindOneOf(
   page: Page,
-  expectedKinds: RoundQuestionKind[],
+  expectedKinds: readonly RoundQuestionKind[],
 ): Promise<RoundQuestionKind> {
   const kind = await questionCard(page).getAttribute('data-question-kind');
   if (!expectedKinds.includes(kind as RoundQuestionKind)) {

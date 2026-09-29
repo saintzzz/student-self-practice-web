@@ -112,3 +112,43 @@ if (
   speechApiWindow.SpeechRecognition = MockSpeechRecognitionStub;
   speechApiWindow.webkitSpeechRecognition = MockSpeechRecognitionStub;
 }
+
+/**
+ * T-4 test infrastructure: the dotLottie player (canvas + WASM) cannot run
+ * in jsdom. Mock the project wrapper `EmojiLottiePlayer` - never the npm
+ * package directly - so EmojiVisual exercises its real lazy/Suspense/
+ * timeout/fallback code path while the player itself is a stub.
+ *
+ * Control seam: `window.__lottieMockBehavior`
+ *   'ready'          (default) fires onReady on mount
+ *   'error-data'     fires onError('data') - per-mount fallback, no breaker
+ *   'error-runtime'  fires onError('runtime') - trips the session breaker
+ *   'hang'           never resolves - exercises the 2500 ms timeout
+ * Reset it in beforeEach; EmojiVisual tests use fake timers.
+ */
+import { vi } from 'vitest';
+import React from 'react';
+
+declare global {
+  interface Window {
+    __lottieMockBehavior?: 'ready' | 'error-data' | 'error-runtime' | 'hang';
+  }
+}
+
+vi.mock('../components/EmojiLottiePlayer', () => ({
+  default: function MockEmojiLottiePlayer(props: {
+    lottieKey: string;
+    onReady: () => void;
+    onError: (kind: 'data' | 'runtime') => void;
+  }) {
+    React.useEffect(() => {
+      const behavior = window.__lottieMockBehavior ?? 'ready';
+      if (behavior === 'ready') props.onReady();
+      else if (behavior === 'error-data') props.onError('data');
+      else if (behavior === 'error-runtime') props.onError('runtime');
+      // 'hang': intentionally does nothing
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return React.createElement('span', { 'data-testid': `lottie-${props.lottieKey}` });
+  },
+}));

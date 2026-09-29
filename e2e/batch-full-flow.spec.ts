@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { goToNextRound, readBatchScoreSummary, readRoundProgress, runExtraLetterRound, runListeningSentenceRound, startBatch } from './utils/batch-flow';
-import { type Fraction, currentQuestionKind, currentQuestionKindOneOf, parseFraction, questionCard } from './utils/practice-flow';
+import { type Fraction, currentQuestionKindOneOf, parseFraction, questionCard } from './utils/practice-flow';
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 
 /**
@@ -43,7 +43,7 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
       await startBatch(page);
 
       const round1 = await test.step('Round 1 (extra-letter) is real, not a stub', async () => {
-        await currentQuestionKind(page, 'extra-letter');
+        await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
         return runExtraLetterRound(page);
       });
       await goToNextRound(page);

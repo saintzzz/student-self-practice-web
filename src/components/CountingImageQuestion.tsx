@@ -1,4 +1,5 @@
 import type { CountingImageOption, CountingImageQuestion as CountingImageQuestionType } from '../types';
+import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName } from './optionButtonStyle';
 
 interface CountingImageQuestionProps {
@@ -9,10 +10,6 @@ interface CountingImageQuestionProps {
 
 function countLabel(option: CountingImageOption): string {
   return `${option.count} ${option.count === 1 ? option.word : option.plural}`;
-}
-
-function repeatedEmoji(option: CountingImageOption): string {
-  return option.emoji.repeat(option.count);
 }
 
 export default function CountingImageQuestion({
@@ -33,7 +30,7 @@ export default function CountingImageQuestion({
         <p className="mb-3 text-4xl font-extrabold text-sky-900">{countLabel(question.prompt)}</p>
       ) : (
         <div className="mb-3 text-6xl leading-relaxed" aria-hidden="true">
-          {repeatedEmoji(question.prompt)}
+          <EmojiVisual emoji={question.prompt.emoji} count={question.prompt.count} />
         </div>
       )}
 
@@ -48,7 +45,9 @@ export default function CountingImageQuestion({
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
           >
             {isCountToImage ? (
-              <span aria-hidden="true">{repeatedEmoji(option)}</span>
+              <span aria-hidden="true">
+                <EmojiVisual emoji={option.emoji} count={option.count} />
+              </span>
             ) : (
               countLabel(option)
             )}

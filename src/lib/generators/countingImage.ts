@@ -22,7 +22,7 @@ function buildInstance(
     emoji: word.emoji,
     count,
   };
-  const distractors = buildDistractorOptions(word, count, topicWords, seedBase);
+  const distractors = buildDistractorOptions(word, count, topicWords, seedBase).options;
 
   const order = seededShuffleIndices(4, `${seedBase}-order`);
   const pool = [correctOption, ...distractors];
@@ -45,6 +45,7 @@ function buildInstance(
     kind: 'counting-image',
     direction,
     prompt: correctOption,
+    promptWordId: word.id,
     options,
     correctIndex,
     explanation,

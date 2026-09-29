@@ -1,11 +1,24 @@
+import { useEffect, useRef } from 'react';
 import type { Grade } from '../types';
 
 interface GradeSelectProps {
   grades: readonly Grade[];
   onSelectGrade: (gradeId: string) => void;
+  /** When provided, shows the "Nguồn hình ảnh" pill below the grid (DS-6). */
+  onOpenCredits?: () => void;
+  /** Refocus the credits pill when returning from the Credits screen (AC-7.10). */
+  focusCreditsLink?: boolean;
 }
 
-export default function GradeSelect({ grades, onSelectGrade }: GradeSelectProps) {
+export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink }: GradeSelectProps) {
+  const creditsRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (focusCreditsLink) {
+      creditsRef.current?.focus();
+    }
+  }, [focusCreditsLink]);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 text-center">
       <h1 className="mb-3 text-4xl font-extrabold text-sky-900">Chọn lớp của em</h1>
@@ -23,6 +36,17 @@ export default function GradeSelect({ grades, onSelectGrade }: GradeSelectProps)
           </button>
         ))}
       </div>
+      {onOpenCredits && (
+        <button
+          ref={creditsRef}
+          type="button"
+          data-testid="credits-link"
+          onClick={onOpenCredits}
+          className="mt-10 rounded-full bg-sky-100 px-6 py-3 text-lg font-bold text-sky-700 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-500"
+        >
+          Nguồn hình ảnh
+        </button>
+      )}
     </div>
   );
 }

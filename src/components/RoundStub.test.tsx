@@ -14,7 +14,7 @@ describe('RoundStub', () => {
   it('has no em-dash in its copy', () => {
     render(<RoundStub titleVi="Vòng 4: Chọn hình đúng" onNextRound={vi.fn()} />);
 
-    expect(document.body.textContent).not.toContain('—');
+    expect(document.body.textContent).not.toContain(String.fromCodePoint(0x2014));
   });
 
   it('calls onNextRound when next-round-button is clicked', async () => {

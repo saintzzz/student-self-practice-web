@@ -16,6 +16,7 @@ const COUNT_QUESTION: DescribeAndChooseImageQuestionType = {
     { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 },
     { word: 'dog', plural: 'dogs', emoji: '🐶', count: 4 },
   ],
+  optionWordIds: ['fixture-cat', 'fixture-cat', 'fixture-dog', 'fixture-dog'],
   correctIndex: 0,
   explanation: 'Chọn hình có 3 cats.',
 };

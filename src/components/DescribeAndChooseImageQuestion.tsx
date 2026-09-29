@@ -1,4 +1,5 @@
-import type { CountingImageOption, DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
+import type { DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
+import { EmojiVisual } from './EmojiVisual';
 import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
@@ -9,10 +10,6 @@ interface DescribeAndChooseImageQuestionProps {
   question: DescribeAndChooseImageQuestionType;
   selectedIndex: number | null;
   onSelectOption: (index: number) => void;
-}
-
-function repeatedEmoji(option: CountingImageOption): string {
-  return option.emoji.repeat(option.count);
 }
 
 /**
@@ -57,7 +54,7 @@ export default function DescribeAndChooseImageQuestion({
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
           >
             <span aria-hidden="true" className="text-4xl leading-relaxed">
-              {repeatedEmoji(option)}
+              <EmojiVisual emoji={option.emoji} count={option.count} />
             </span>
           </button>
         ))}

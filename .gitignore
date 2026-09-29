@@ -11,3 +11,6 @@ vite.config.d.ts
 
 .vercel
 .env*
+
+# image bank staging (approved files are published to public/images/vocab/)
+image-staging/

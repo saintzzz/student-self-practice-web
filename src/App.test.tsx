@@ -5,7 +5,8 @@ import App from './App';
 
 /**
  * Drives the app through the v5/v6/v8 Batch/Round flow: Grade -> Start a
- * Batch -> Round 1 (extra-letter) -> Round 2 (listening-sentence-fill-blank
+ * Batch -> Round 1 (extra-letter mixed with image-choice, PRD r3 D-10) ->
+ * Round 2 (listening-sentence-fill-blank
  * mixed with listening-image-choice, plan.md v8 AC30) -> Round 3
  * (pronunciation-recording) -> Round 4 (describe-and-choose-image) -> Batch
  * summary. See plan.md v5 "New Interaction Model: Batch / Round" and v6
@@ -51,7 +52,7 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
     await user.click(screen.getByTestId('letter-tile-0'));
   } else if (kind === 'listening-sentence-fill-blank') {
     await user.click(screen.getByTestId('submit-answer-button'));
-  } else if (kind === 'listening-image-choice') {
+  } else if (kind === 'listening-image-choice' || kind === 'image-choice') {
     await user.click(screen.getByTestId('option-0'));
   } else if (kind === 'pronunciation-recording') {
     await user.click(screen.getByTestId('record-button'));
@@ -103,7 +104,11 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('start-batch-button'));
 
     expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
-    expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
+    // Round 1 is a seeded shuffle of extra-letter + image-choice (D-10): the
+    // batch seed is random here, so the first question may be either kind.
+    expect(['extra-letter', 'image-choice']).toContain(
+      screen.getByTestId('question-card').getAttribute('data-question-kind'),
+    );
   });
 
   it('completes Round 1, shows a round score summary, and Round 2 begins with a listening kind (AC17, AC18, AC30)', async () => {
@@ -113,7 +118,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
 
     await startBatch(user);
     const round1Kinds = await completeActiveRound(user);
-    expect(round1Kinds).toEqual(new Set(['extra-letter']));
+    expect(round1Kinds).toEqual(new Set(['extra-letter', 'image-choice']));
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
 
     await user.click(screen.getByTestId('next-round-button'));
@@ -121,7 +126,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     expect(screen.getByTestId('round-progress')).toHaveTextContent('2/4');
     const round2FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
     expect(['listening-sentence-fill-blank', 'listening-image-choice']).toContain(round2FirstKind);
-  });
+  }, 60000);
 
   it(
     'completes Round 2, then Round 3 and Round 4 render and complete for real, reaching the Batch summary (AC17, AC21, AC24, AC25)',
@@ -164,7 +169,9 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     expect(screen.getByTestId('round-breakdown-3')).not.toHaveTextContent('Chưa có nội dung');
     expect(screen.getByTestId('round-breakdown-4')).not.toHaveTextContent('Chưa có nội dung');
     },
-    15000,
+    // EmojiVisual lazy-loads the Lottie player per animated question, so a
+    // full batch drive is slower than the v5-era default allowed.
+    90000,
   );
 
   /** Drives a full Batch (all 4 real Rounds) from a freshly rendered App to the Batch summary. */
@@ -192,9 +199,11 @@ describe('App (v5/v6 Batch/Round flow)', () => {
       await user.click(screen.getByTestId('practice-again-button'));
 
       expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
-      expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
+      expect(['extra-letter', 'image-choice']).toContain(
+        screen.getByTestId('question-card').getAttribute('data-question-kind'),
+      );
     },
-    15000,
+    90000,
   );
 
   it(
@@ -210,6 +219,6 @@ describe('App (v5/v6 Batch/Round flow)', () => {
 
       expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
     },
-    15000,
+    90000,
   );
 });

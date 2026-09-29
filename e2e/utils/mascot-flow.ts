@@ -1,5 +1,11 @@
 import { type Locator, type Page, expect } from '@playwright/test';
-import { answerExtraLetterTile, goToNextQuestion, readQuestionProgress } from './practice-flow';
+import {
+  answerExtraLetterTile,
+  goToNextQuestion,
+  questionCard,
+  readQuestionProgress,
+} from './practice-flow';
+import { answerOptionQuestion } from './option-flow';
 import { startBatch } from './batch-flow';
 
 /**
@@ -70,6 +76,17 @@ export async function findExtraLetterOutcome(
     await startBatch(page);
     const { total } = await readQuestionProgress(page);
     for (let q = 1; q <= total; q++) {
+      // PRD r3 / D-10: Round 1 shuffles in image-choice questions, which
+      // lack answer-feedback and letter tiles - skip them structurally.
+      const kind = await questionCard(page).getAttribute('data-question-kind');
+      if (kind !== 'extra-letter') {
+        if (kind === 'image-choice') {
+          await answerOptionQuestion(page, 0);
+          await goToNextQuestion(page);
+          continue;
+        }
+        throw new Error(`findExtraLetterOutcome: unexpected Round 1 kind "${kind}"`);
+      }
       const result = await answerExtraLetterTile(page, 0);
       if (result.outcome === desiredOutcome) {
         return { feedback: page.getByTestId('answer-feedback'), correctWord: result.correctWord };

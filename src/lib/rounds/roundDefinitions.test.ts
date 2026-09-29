@@ -29,7 +29,7 @@ describe('ROUND_DEFINITIONS (AC17 - a Batch is exactly 4 fixed-order Rounds)', (
   it('every round has a non-empty Vietnamese title with no em-dash', () => {
     for (const round of ROUND_DEFINITIONS) {
       expect(round.titleVi.length).toBeGreaterThan(0);
-      expect(round.titleVi).not.toContain('—');
+      expect(round.titleVi).not.toContain(String.fromCodePoint(0x2014));
     }
   });
 });

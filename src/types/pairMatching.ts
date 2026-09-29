@@ -10,6 +10,8 @@
 export interface PairMatchingPair {
   word: string;
   emoji: string;
+  /** Id of the VocabWord behind this pair (additive, for word-identity resolution). */
+  wordId: string;
 }
 
 export type PairTileType = 'word' | 'picture';

@@ -23,16 +23,22 @@ import { SEA_CREATURES_TOPIC, SEA_CREATURES_WORDS } from './seaCreatures';
 import { VEGETABLES_TOPIC, VEGETABLES_WORDS } from './vegetables';
 import { FURNITURE_TOPIC, FURNITURE_WORDS } from './furniture';
 import { PLACES_TOPIC, PLACES_WORDS } from './places';
+import { PARTY_TOPIC, PARTY_WORDS } from './party';
+import { SEASIDE_TOPIC, SEASIDE_WORDS } from './seaside';
+import { KITCHEN_TOPIC, KITCHEN_WORDS } from './kitchen';
+import { CAMPING_TOPIC, CAMPING_WORDS } from './camping';
 
 /** Single grade for this MVP, per mvp-decisions.md (Grade 2 only). */
 export const GRADES: readonly Grade[] = [{ id: 'grade-2', name: 'Lớp 2' }];
 
 /**
- * 24 curated topics (AC11 requires >= 10; expanded from 14 per the
+ * 28 curated topics (AC11 requires >= 10; expanded from 14 per the
  * vocabulary-bank-expansion follow-up request - see
  * plans/reports/engineer-260828-student-self-practice-vocab-expansion.md;
  * "Places" added per the v5 curriculum research workflow - see
- * plans/reports/engineer-260828-student-self-practice-v5-vocab.md).
+ * plans/reports/engineer-260828-student-self-practice-v5-vocab.md; +4 SGK
+ * gap topics - party, seaside, kitchen, camping - per docs/sdlc/prd.md
+ * section 7).
  * Each topic's words all have a clear single-emoji representation; candidate
  * words without one (e.g. "jump", a per-room emoji, two-digit numbers,
  * additional family relations, additional shapes) were deliberately dropped
@@ -63,6 +69,10 @@ export const TOPICS: readonly Topic[] = [
   VEGETABLES_TOPIC,
   FURNITURE_TOPIC,
   PLACES_TOPIC,
+  PARTY_TOPIC,
+  SEASIDE_TOPIC,
+  KITCHEN_TOPIC,
+  CAMPING_TOPIC,
 ];
 
 const WORDS_BY_TOPIC: Record<string, VocabWord[]> = {
@@ -90,6 +100,10 @@ const WORDS_BY_TOPIC: Record<string, VocabWord[]> = {
   [VEGETABLES_TOPIC.id]: VEGETABLES_WORDS,
   [FURNITURE_TOPIC.id]: FURNITURE_WORDS,
   [PLACES_TOPIC.id]: PLACES_WORDS,
+  [PARTY_TOPIC.id]: PARTY_WORDS,
+  [SEASIDE_TOPIC.id]: SEASIDE_WORDS,
+  [KITCHEN_TOPIC.id]: KITCHEN_WORDS,
+  [CAMPING_TOPIC.id]: CAMPING_WORDS,
 };
 
 export const ALL_WORDS: readonly VocabWord[] = Object.values(WORDS_BY_TOPIC).flat();

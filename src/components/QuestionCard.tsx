@@ -1,6 +1,7 @@
 import type { Question } from '../types';
 import type { CurrentAnswer } from '../lib/practiceSession';
 import { getCorrectWord } from '../lib/practiceSession';
+import { getWordVisual } from '../lib/emoji/wordVisual';
 import ImageChoiceQuestion from './ImageChoiceQuestion';
 import ListeningFillBlankQuestion from './ListeningFillBlankQuestion';
 import ListeningSentenceFillBlankQuestion from './ListeningSentenceFillBlankQuestion';
@@ -123,6 +124,27 @@ function renderQuestionBody(
   }
 }
 
+/**
+ * US-10 table: the FeedbackPanel picture shows the correct word for the
+ * five picture-bearing kinds. image-choice is excluded (its prompt already
+ * IS the picture), picture-pair-matching has no single correct word, and
+ * listening-fill-blank/pronunciation keep their existing feedback.
+ */
+function feedbackPictureWordId(question: Question): string | undefined {
+  switch (question.kind) {
+    case 'extra-letter':
+    case 'listening-sentence-fill-blank':
+      return question.wordId;
+    case 'counting-image':
+      return question.promptWordId;
+    case 'listening-image-choice':
+    case 'describe-and-choose-image':
+      return question.optionWordIds[question.correctIndex];
+    default:
+      return undefined;
+  }
+}
+
 export default function QuestionCard({
   question,
   questionNumber,
@@ -136,6 +158,8 @@ export default function QuestionCard({
   onNext,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
+  const pictureWordId = feedbackPictureWordId(question);
+  const pictureVisual = pictureWordId ? getWordVisual(pictureWordId) : undefined;
 
   return (
     <div
@@ -175,6 +199,9 @@ export default function QuestionCard({
           isCorrect={currentAnswer.isCorrect}
           correctWord={getCorrectWord(question)}
           explanation={question.explanation}
+          picture={
+            pictureVisual ? { emoji: pictureVisual.emoji, imageUrl: pictureVisual.imageUrl } : undefined
+          }
         />
       )}
 

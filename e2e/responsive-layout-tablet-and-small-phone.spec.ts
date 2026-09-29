@@ -1,6 +1,6 @@
 import { test } from '@playwright/test';
-import { startBatch } from './utils/batch-flow';
-import { currentQuestionKind, letterTiles } from './utils/practice-flow';
+import { advanceToQuestionKind, startBatch } from './utils/batch-flow';
+import { letterTiles } from './utils/practice-flow';
 import {
   IPAD_PORTRAIT,
   SMALL_PHONE_PORTRAIT,
@@ -33,7 +33,7 @@ test.describe('Responsive layout: small phone portrait 320x568 (Round 1, extra-l
 
   test('letter tiles and next-button are reachable without scrolling', async ({ page }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await advanceToQuestionKind(page, 'extra-letter');
 
     await expectFullyInViewport(page, letterTiles(page).first(), 'letter-tile-0');
     await expectFullyInViewport(page, page.getByTestId('next-button'), 'next-button');
@@ -46,7 +46,7 @@ test.describe('Responsive layout: iPad portrait 768x1024 (regression check, alre
 
   test('letter tiles and next-button remain reachable without scrolling', async ({ page }) => {
     await startBatch(page);
-    await currentQuestionKind(page, 'extra-letter');
+    await advanceToQuestionKind(page, 'extra-letter');
 
     await expectFullyInViewport(page, letterTiles(page).first(), 'letter-tile-0');
     await expectFullyInViewport(page, page.getByTestId('next-button'), 'next-button');

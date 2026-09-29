@@ -1,4 +1,7 @@
+import { useMemo, useState } from 'react';
 import type { ListeningImageChoiceQuestion as ListeningImageChoiceQuestionType } from '../types';
+import { getWordVisual } from '../lib/emoji/wordVisual';
+import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
@@ -27,6 +30,16 @@ export default function ListeningImageChoiceQuestion({
   const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) => speakWord(question.word, onStatus));
   const hasAnswered = selectedIndex !== null;
 
+  // Photos are all-or-nothing across the 4 options (AC-5.2/5.4): only shown
+  // when every option has an approved image, and one photo error drops the
+  // whole group to the emoji fallback chain (AC-5.3).
+  const [photoGroupFailed, setPhotoGroupFailed] = useState(false);
+  const optionImageUrls = useMemo(() => {
+    if (photoGroupFailed) return null;
+    const urls = question.optionWordIds.map((id) => getWordVisual(id)?.imageUrl);
+    return urls.every((u): u is string => typeof u === 'string') ? urls : null;
+  }, [question.optionWordIds, photoGroupFailed]);
+
   return (
     <div>
       <p className="mb-2 text-xl font-semibold text-sky-700">Nghe từ rồi chọn đúng hình nhé!</p>
@@ -51,7 +64,19 @@ export default function ListeningImageChoiceQuestion({
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
           >
             <span aria-hidden="true" className="text-6xl">
-              {emoji}
+              <EmojiVisual
+                // Keyed on the group state so flipping to the fallback
+                // remounts every option into svg mode - EmojiVisual derives
+                // its mode at mount, so without the key the non-failed
+                // options would stay in 'image' mode with no imageUrl and
+                // render blank (AC-5.3: never an empty box).
+                key={photoGroupFailed ? 'static' : 'photo'}
+                emoji={emoji}
+                imageUrl={optionImageUrls?.[index]}
+                loading="lazy"
+                onImageError={() => setPhotoGroupFailed(true)}
+                variant="block"
+              />
             </span>
           </button>
         ))}

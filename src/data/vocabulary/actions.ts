@@ -27,4 +27,7 @@ export const ACTIONS_WORDS: VocabWord[] = [
   { id: 'draw', topicId: t, word: 'draw', emoji: '🎨', countable: false, explanation: 'Vẽ tiếng Anh là "draw".' },
   { id: 'clap', topicId: t, word: 'clap', emoji: '👏', countable: false, explanation: 'Vỗ tay tiếng Anh là "clap".' },
   { id: 'wave', topicId: t, word: 'wave', emoji: '👋', countable: false, explanation: 'Vẫy tay tiếng Anh là "wave".' },
+  // SGK Tiếng Anh 2 gap additions (docs/sdlc/prd.md section 7).
+  { id: 'slide', topicId: t, word: 'slide', emoji: '🛝', countable: false, explanation: 'Chơi cầu trượt tiếng Anh là "slide".' },
+  { id: 'skate', topicId: t, word: 'skate', emoji: '⛸️', countable: false, explanation: 'Trượt băng tiếng Anh là "skate".' },
 ];

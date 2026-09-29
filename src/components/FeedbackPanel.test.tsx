@@ -102,4 +102,66 @@ describe('FeedbackPanel', () => {
     expect(screen.getByTestId('mascot')).toHaveAttribute('data-mascot-mood', 'encouraging');
     expect(screen.getByTestId('answer-feedback')).toHaveTextContent('Chưa đúng rồi, cố lên nhé!');
   });
+
+  describe('DOM contract (AC-10.6 / amendment A-13)', () => {
+    it('keeps the baseline <p> markup byte-identical for an incorrect answer without a picture', () => {
+      render(
+        <FeedbackPanel
+          kind="extra-letter"
+          isCorrect={false}
+          correctWord="bird"
+          explanation='Con chim tiếng Anh là "bird".'
+        />,
+      );
+
+      const feedback = screen.getByTestId('answer-feedback');
+      // No accent (encouraging mood) and no picture means only phrasing
+      // content exists - all three lines stay <p>, matching ebd58a5.
+      const paragraphLines = feedback.querySelectorAll('p');
+      expect(paragraphLines.length).toBe(3);
+      // No <div> descendants at all: EmojiVisual's svg layer is span+img,
+      // and the encouraging mascot carries no accent/Lottie layer.
+      expect(feedback.querySelector('div')).toBeNull();
+      const wordLine = screen.getByText(/Từ đúng là:/);
+      expect(wordLine.tagName).toBe('P');
+      // Byte-identical to the ebd58a5 baseline markup for this line.
+      expect(wordLine).toHaveAttribute(
+        'class',
+        'mt-2 text-xl font-semibold text-sky-900 [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base',
+      );
+    });
+
+    it('uses <div> for the headline only when the happy accent may mount a Lottie layer', () => {
+      render(
+        <FeedbackPanel kind="extra-letter" isCorrect={true} correctWord="cat" explanation="Explanation." />,
+      );
+
+      const headline = screen.getByText('Chính xác! Giỏi quá!').parentElement!;
+      expect(headline.tagName).toBe('DIV');
+      // The correct-word line still has no non-phrasing content - it stays a <p>.
+      expect(screen.getByText(/Từ đúng là:/).tagName).toBe('P');
+    });
+
+    it('renders the picture inside the "Từ đúng là:" line (AC-10.2), which becomes a <div>', () => {
+      render(
+        <FeedbackPanel
+          kind="extra-letter"
+          isCorrect={true}
+          correctWord="cat"
+          explanation="Explanation."
+          picture={{ emoji: '🐱' }}
+        />,
+      );
+
+      const wordLine = screen.getByText(/Từ đúng là:/);
+      expect(wordLine.tagName).toBe('DIV');
+      const visual = wordLine.querySelector('[data-emoji-visual]');
+      expect(visual, 'expected the picture EmojiVisual inside the answer line').not.toBeNull();
+      expect(visual).toHaveAttribute('data-emoji-visual', '🐱');
+      // The word text remains inside the same line, not moved elsewhere.
+      expect(wordLine).toHaveTextContent('Từ đúng là: cat');
+      // AC-10.6: testid rule is unaffected by the picture.
+      expect(screen.getByTestId('answer-feedback')).toBeInTheDocument();
+    });
+  });
 });

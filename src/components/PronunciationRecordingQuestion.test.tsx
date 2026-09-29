@@ -48,7 +48,7 @@ describe('PronunciationRecordingQuestion', () => {
       />,
     );
 
-    expect(document.body.textContent).not.toContain('—');
+    expect(document.body.textContent).not.toContain(String.fromCodePoint(0x2014));
   });
 
   it('renders speech-recognition-unsupported-message and does not crash when the browser has no SpeechRecognition support', async () => {

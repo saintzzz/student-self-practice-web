@@ -10,6 +10,7 @@ const IMAGE_TO_COUNT_QUESTION: CountingImageQuestionType = {
   kind: 'counting-image',
   direction: 'image-to-count',
   prompt: { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
+  promptWordId: 'fixture-cat',
   options: [
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 },
     { word: 'cat', plural: 'cats', emoji: '🐱', count: 2 },

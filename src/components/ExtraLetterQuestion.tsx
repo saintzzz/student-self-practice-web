@@ -1,4 +1,5 @@
 import type { ExtraLetterQuestion as ExtraLetterQuestionType } from '../types';
+import { EmojiVisual } from './EmojiVisual';
 
 interface ExtraLetterQuestionProps {
   question: ExtraLetterQuestionType;
@@ -55,7 +56,7 @@ export default function ExtraLetterQuestion({
                 aria-hidden="true"
                 className="dart-arrow pointer-events-none absolute -top-7 text-2xl"
               >
-                🎯
+                <EmojiVisual emoji="🎯" />
               </span>
             )}
           </button>

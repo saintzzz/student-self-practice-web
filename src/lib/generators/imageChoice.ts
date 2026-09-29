@@ -16,8 +16,11 @@ function buildVariant(
   topicWords: VocabWord[],
   variantSeed: string,
 ): ImageChoiceQuestion {
+  // BR-15: a distractor sharing the prompt's emoji would be a second correct
+  // answer (e.g. prompt "sad" 😢, option "cry" - same emoji). Exclude them.
+  const distractorPool = topicWords.filter((w) => w.emoji !== word.emoji);
   const distractors = pickDistinct(
-    topicWords,
+    distractorPool,
     (w) => w.word,
     [word.word],
     3,
@@ -39,6 +42,7 @@ function buildVariant(
     topicId: word.topicId,
     kind: 'image-choice',
     emoji: word.emoji,
+    wordId: word.id,
     options,
     correctIndex,
     explanation: word.explanation,
