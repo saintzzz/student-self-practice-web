@@ -179,3 +179,23 @@ Format: Objection/Options/Ruling. Mọi quyết định vật liệu ghi ở đ�
   4. design-spec 5.4 stale -> updated to cite A-13 conditional-tag rule.
 - Human-gate notes pending for PM finalization: A-12 (AC-9.1 seed range),
   A-13 (AC-10.6 conditional tag).
+
+## A-15: Phase 7 Deployer - Vercel production live (2026-09-29)
+
+- **Blocker:** Vercel MCP token lacked project:create (403 on all
+  create paths incl. create_deployment). Human gate resolution: user
+  chose Vercel CLI path; device-flow login succeeded; user created
+  project `ioe-leduyminh` via dashboard import of the GitHub repo
+  (git-linked, auto-deploy on push).
+- **Deployments:** first deploy dpl_EW6dqdgPYn7aMmtBWyDWhQLuGvK9 (commit
+  acda200, 13s build) then auto-deploy dpl_HiNefPWBz2L662WZeqhiCT44QA6V
+  (commit 0829a52) after registry push. Both Ready, production.
+- **Health checks (all 200):** /, entry JS+CSS, /attribution.json,
+  /emoji/svg/1f431.svg, /emoji/svg/1f437.svg, /emoji/lottie/2728.json.
+  Deployment-specific URLs 302 to Vercel SSO by design - production
+  alias is the verified surface.
+- **Live URL:** https://ioe-leduyminh.vercel.app
+- **Registry:** deployments/registry.json records last health-checked
+  deployment + auto-deploy supersession note.
+- **Rollback:** no prior deployment exists; rollback = redeploy or git
+  revert on main (auto-deploy handles the rest).
