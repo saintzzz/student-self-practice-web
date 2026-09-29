@@ -12,7 +12,7 @@
 | CR-04 | Vercel ignored build step | DevOps review Phase 7 | resolved |
 | CR-05 | Branch protection + PR preview discipline | DevOps review Phase 7 | user-action-required |
 | CR-06 | Phonics nang sau: am cuoi / blends / rhyming | human request 2026-09-29 | resolved |
-| CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | resolved (implemented; awaiting deploy commit) |
+| CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | resolved (deployed ec94500) |
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | intake - pending rulings |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
 
