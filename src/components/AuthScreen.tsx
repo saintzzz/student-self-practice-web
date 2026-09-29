@@ -76,7 +76,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
             data-testid="login-submit"
             type="submit"
             disabled={busy}
-            className="min-h-[76px] rounded-3xl bg-emerald-500 px-8 text-2xl font-extrabold text-white shadow-md transition hover:bg-emerald-600 active:scale-95 disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-400"
+            className="min-h-[76px] rounded-3xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-8 font-display text-2xl font-extrabold text-white shadow-[inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(16,185,129,0.5)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 active:shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)] disabled:translate-y-0 disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-400"
           >
             {busy ? 'Đang vào...' : 'Đăng nhập'}
           </button>

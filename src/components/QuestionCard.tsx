@@ -213,7 +213,7 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="rounded-3xl bg-white p-4 text-center shadow-lg ring-1 ring-slate-200/60 [@media(max-height:420px)]:p-2 sm:p-6"
+      className="rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-4 text-center shadow-xl ring-1 ring-slate-200/70 [@media(max-height:420px)]:p-2 sm:p-6"
     >
       {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
           wrapper already provides that exact centering/padding, and this
@@ -256,7 +256,7 @@ export default function QuestionCard({
         data-testid="next-button"
         disabled={!hasAnswered}
         onClick={onNext}
-        className={`mt-2 [@media(max-height:420px)]:mt-1 ${CONTINUE_BUTTON_CLASSNAME}`}
+        className={`mt-2 w-full sm:w-auto [@media(max-height:420px)]:mt-1 ${CONTINUE_BUTTON_CLASSNAME}`}
       >
         Câu tiếp theo →
       </button>

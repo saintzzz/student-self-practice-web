@@ -17,7 +17,7 @@ export default function StickerAlbum({ earnedIds, onClose }: StickerAlbumProps) 
       data-testid="sticker-album"
       role="dialog"
       aria-label="Bộ sưu tập huy hiệu"
-      className="absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-2xl bg-white p-4 text-left shadow-xl ring-2 ring-amber-300"
+      className="absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-2xl bg-white/95 p-4 text-left shadow-2xl ring-2 ring-amber-300 backdrop-blur-sm"
     >
       <p className="mb-3 font-display text-lg font-extrabold text-amber-900">Huy hiệu của em</p>
       <ul className="space-y-2">

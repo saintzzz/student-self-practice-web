@@ -349,3 +349,26 @@ runs the identical guest-only experience (no login surface).
 | AC-T5 | engagement.spec t2 | auto |
 | AC-T6 | reduced-motion media block in index.css disables all new keyframes | manual |
 | AC-T7 | gates above | auto |
+
+
+## CR-11 gate results (balance + premium finish, 2026-10-01)
+
+| Gate | Command | Result |
+|---|---|---|
+| Unit (Vitest) | `npx vitest run` | **712/712 pass** (no new tests - class-only refactor) |
+| Typecheck | `npx tsc --noEmit` | **Pass** |
+| Build | `npm run build` | **Pass** - entry JS 112.26 kB, CSS 7.65 kB gzip |
+| Bundle budget | `node scripts/check-bundle-budget.mjs` | **Pass** - CSS max re-based to 8.5 (A-29) |
+| Attribution | `node scripts/check-attribution.mjs` | **Pass** |
+| Dash guard | manual sweep | **Pass** |
+| E2E (Playwright) | `npx playwright test` | **60/60 pass** (3.1m); grades.spec stale-assumption flake fixed (image-choice has no answer-feedback testid -> reads "Tu dung la:" line; re-ran 3x green) |
+
+### Diagnosis evidence (A-29)
+- DOM probe: `<button class="flex ...">` inside `text-center` measured
+  width 192px, left-aligned at padding edge - both shrink-wrap and
+  text-align ignorance confirmed on real Chrome. `inline-flex` renders
+  centered; verified visually on RoundSummary ("Vong tiep theo"
+  centered), question card ("Nghe" centered), landscape 667x375.
+- Visual QA: journey map desktop (no zigzag, lone L5 card centered),
+  390x844 portrait (CTAs full-width), 667x375 landscape (header single
+  row, compact variants).

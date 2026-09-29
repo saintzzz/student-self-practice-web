@@ -93,7 +93,7 @@ export default function BatchScreen({
     <div className={`mx-auto max-w-2xl px-4 pt-2 ${SCREEN_ENTER}`}>
       {/* DS-U2 single play chrome: round chip + track + score/timer chips
           in one card strip; title line drops on <=420px heights. */}
-      <div className="mb-2 flex flex-col gap-1.5 rounded-2xl bg-white/90 p-2 shadow-sm ring-1 ring-slate-200/60 sm:flex-row sm:items-start sm:gap-2 [@media(max-height:420px)]:mb-1">
+      <div className="mb-2 flex flex-col gap-1.5 rounded-2xl bg-white/75 p-2 shadow-md ring-1 ring-slate-200/60 backdrop-blur-sm sm:flex-row sm:items-start sm:gap-2 [@media(max-height:420px)]:mb-1">
         <RoundProgress
           roundNumber={definition.roundNumber}
           totalRounds={TOTAL_ROUNDS}

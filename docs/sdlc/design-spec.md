@@ -905,3 +905,50 @@ a starfield ring.
 
 All VN copy hyphen-only. Land names on cards: "Lop 1 - San choi" etc.
 Streak chip label: "x ngay lien tiep". Star chip: "x sao".
+
+
+## 17. CR-11 addendum - balance + premium finish (2026-10-01)
+
+Implements the human polish request after CR-10. One rule set, applied
+through tokens/constants only (no per-component ad-hoc styling).
+
+### 17.1 Alignment invariants (DS-P1)
+
+- Every standalone CTA renders centered in its card: button constants
+  use `inline-flex` (Chromium shrinks `display:flex` buttons to
+  fit-content AND drops text-align inheritance - verified quirk, A-29).
+- No zigzag offsets on the journey map; when the visible card count is
+  odd the trailing card centers itself (`sm:col-span-2 sm:mx-auto
+  sm:max-w-sm` behavior via a wrapper rule).
+- Spacing rhythm: sections inside a card use a single stack scale -
+  gap-2 (inline rows) / mt-3 (between text lines) / mt-6 (before the
+  CTA) / mt-8 (between major blocks). No mb-1/2/3/10 mixing.
+
+### 17.2 Premium surface language (DS-P2)
+
+Kid-premium (Duolingo Max / Lingokids level) - warm, tactile, glossy:
+
+- Primary CTA: vertical gradient (lighter top) + `inset 0 -3px` bottom
+  shade (pressed-toy edge) + hover -translate-y-0.5 + active scale.
+  CONTINUE = amber gradient, START = emerald, SUBMIT = emerald,
+  AUDIO = indigo.
+- Score/points pill: gold gradient `amber-300->amber-500`, amber glow
+  shadow, ring-amber-200/80.
+- Cards: white -> `bg-gradient-to-b from-white to-sky-50/50`,
+  shadow-xl, ring-slate-200/60. Summary cards get `max-w` rhythm
+  unchanged.
+- Chips (engagement bar, header strip): glassy - `bg-white/80
+  backdrop-blur-sm` + soft ring; status tints keep their hue.
+- Land map cards: `bg-gradient-to-br` per land tint, disc gets
+  gradient + inner ring; hover lift + ring glow instead of plain
+  shadow change.
+- Display headings: `tracking-tight`; H1 scales `text-3xl
+  sm:text-4xl`.
+
+### 17.3 Responsive rules (DS-P3)
+
+- Primary CTAs in summary/start contexts: `w-full sm:w-auto`.
+- Page paddings: `px-4 py-6 sm:py-10` on screen wrappers (replaces
+  flat py-12).
+- Keep every existing `[@media(max-height:420px)]` compaction.
+- Grid: `grid-cols-1 sm:grid-cols-2`; odd trailing card centered.

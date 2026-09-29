@@ -16,23 +16,23 @@ interface StartBatchScreenProps {
  */
 export default function StartBatchScreen({ grade, onStartBatch, onBack }: StartBatchScreenProps) {
   return (
-    <div className={`mx-auto max-w-2xl px-4 py-12 ${SCREEN_ENTER}`}>
+    <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
-        <div className="mb-4 text-left">
+        <div className="mb-6 text-left">
           <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL}>
             ← Quay lại chọn lớp
           </button>
         </div>
         <Mascot mood="greeting" />
-        <h1 className={`mb-3 ${H1}`}>{grade.name}: Sẵn sàng luyện tập chưa?</h1>
-        <p className={`mb-10 ${PROMPT}`}>
+        <h1 className={`mt-1 ${H1}`}>{grade.name}: Sẵn sàng luyện tập chưa?</h1>
+        <p className={`mt-3 ${PROMPT}`}>
           Một bài luyện tập gồm 4 vòng nhỏ, mỗi vòng khoảng 10 câu hỏi. Bấm nút bên dưới để bắt đầu nhé!
         </p>
         <button
           type="button"
           data-testid="start-batch-button"
           onClick={onStartBatch}
-          className="min-h-[76px] rounded-3xl bg-emerald-500 px-12 py-6 font-display text-3xl font-extrabold text-white shadow-lg transition hover:-translate-y-1 hover:bg-emerald-600 hover:shadow-xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-500"
+          className="mt-8 min-h-[76px] w-full rounded-3xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-12 py-6 font-display text-3xl font-extrabold text-white shadow-[inset_0_-5px_0_rgba(0,0,0,0.18),0_8px_20px_-6px_rgba(16,185,129,0.5)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_-5px_0_rgba(0,0,0,0.18),0_14px_28px_-8px_rgba(16,185,129,0.55)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_-2px_0_rgba(0,0,0,0.18),0_4px_10px_-4px_rgba(16,185,129,0.5)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-500 sm:w-auto"
         >
           Bắt đầu luyện tập →
         </button>

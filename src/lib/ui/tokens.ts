@@ -6,6 +6,9 @@
  * uses in actionButtonStyle.ts / optionButtonStyle.ts, widened to the
  * full surface.
  *
+ * CR-11 (design-spec s17): premium finish - subtle card gradients,
+ * glassy chips, gold score pills, tighter display type.
+ *
  * Invariants encoded here (do not relax):
  *  - 76px minimum interactive targets on anything touched alone.
  *  - status colors keep their semantics: emerald = correct/go,
@@ -16,7 +19,7 @@
 
 /** Big white content card - the "scene" each screen lives in. */
 export const CARD =
-  'rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200/60 sm:p-8';
+  'rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-6 shadow-xl ring-1 ring-slate-200/70 sm:p-8';
 
 /** Tinted card variant for feedback/summary accents. */
 export const CARD_TINT = {
@@ -27,26 +30,32 @@ export const CARD_TINT = {
 } as const;
 
 /** Type tokens - display font on headings/numbers, system for body. */
-export const H1 = 'font-display text-4xl font-extrabold text-sky-900';
-export const H2 = 'font-display text-xl font-bold text-sky-900';
+export const H1 = 'font-display text-3xl font-extrabold tracking-tight text-sky-900 sm:text-4xl';
+export const H2 = 'font-display text-xl font-bold tracking-tight text-sky-900';
 export const PROMPT = 'text-xl text-sky-700';
 export const BODY = 'text-lg text-slate-700';
 
-/** Ghost navigation pills ("Quay lai", "Nguon hinh anh"). */
+/** Ghost navigation pills ("Quay lai", "Nguon hinh anh") - glassy white. */
 export const NAV_PILL =
-  'inline-flex min-h-[76px] items-center justify-center rounded-full bg-white px-6 py-3 text-lg font-bold text-sky-700 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-50 hover:ring-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-400 [@media(max-height:420px)]:min-h-0';
+  'inline-flex min-h-[76px] items-center justify-center rounded-full bg-white/85 px-6 py-3 text-lg font-bold text-sky-700 shadow-md ring-1 ring-sky-200 backdrop-blur-sm transition hover:bg-white hover:ring-sky-300 focus:outline-none focus:ring-4 focus:ring-sky-400 [@media(max-height:420px)]:min-h-0';
 
-/** Header chips for the active-play bar (round / timer / score). */
+/** Header chips for the active-play bar (round / timer / score) - glassy. */
 const CHIP_BASE =
-  'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-base font-bold ring-1';
-export const CHIP_SKY = `${CHIP_BASE} bg-sky-50 text-sky-800 ring-sky-200`;
-export const CHIP_AMBER = `${CHIP_BASE} bg-amber-50 text-amber-800 ring-amber-200`;
-export const CHIP_AMBER_URGENT = `${CHIP_BASE} bg-rose-50 text-rose-700 ring-rose-300 animate-pulse motion-reduce:animate-none`;
-export const CHIP_EMERALD = `${CHIP_BASE} bg-emerald-50 text-emerald-800 ring-emerald-200`;
+  'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-base font-bold ring-1 backdrop-blur-sm';
+export const CHIP_SKY = `${CHIP_BASE} bg-sky-50/85 text-sky-800 ring-sky-200`;
+export const CHIP_AMBER = `${CHIP_BASE} bg-amber-50/85 text-amber-800 ring-amber-200`;
+export const CHIP_AMBER_URGENT = `${CHIP_BASE} bg-rose-50/90 text-rose-700 ring-rose-300 animate-pulse motion-reduce:animate-none`;
+export const CHIP_EMERALD = `${CHIP_BASE} bg-emerald-50/85 text-emerald-800 ring-emerald-200`;
+
+/** Gold gradient score pills - the "treasure" look on summary screens. */
+export const SCORE_PILL =
+  'inline-flex items-center justify-center rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-2 font-display text-xl font-extrabold text-amber-950 shadow-[0_6px_16px_-4px_rgba(245,158,11,0.55)] ring-4 ring-amber-200/80';
+export const SCORE_PILL_LG =
+  'inline-flex items-center justify-center rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-8 py-3 font-display text-4xl font-extrabold text-amber-950 shadow-[0_10px_24px_-6px_rgba(245,158,11,0.6)] ring-4 ring-amber-200/80';
 
 /** Round progress track: outer rounded track + sky gradient fill. */
 export const PROGRESS_TRACK =
-  'h-3 min-w-[4rem] flex-1 overflow-hidden rounded-full bg-sky-100 ring-1 ring-sky-200';
+  'h-3 min-w-[4rem] flex-1 overflow-hidden rounded-full bg-sky-100/80 ring-1 ring-sky-200 backdrop-blur-sm';
 export const PROGRESS_FILL =
   'h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-[width] duration-300 motion-reduce:transition-none';
 

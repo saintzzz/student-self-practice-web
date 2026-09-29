@@ -486,3 +486,26 @@ change.
 - **Round 3 tmp-QA lesson:** headless Chromium hangs on the real
   SpeechRecognition path ("listening" forever); specs must use the
   delete-SpeechRecognition init-script technique for fallback.
+
+
+## A-29: CR-11 polish notes (2026-10-01)
+
+- **Root cause of "elements lech":** verified Chromium quirk -
+  `<button>` with `display:flex` computes `display:flex` but keeps
+  fit-content sizing AND ignores ancestor `text-align:center`
+  (measured: 192px wide, left-aligned in a 1920px text-center box).
+  Every CTA constant used `flex` -> all progression/audio/submit
+  buttons rendered left-aligned. Fix: `inline-flex` (internal flex
+  layout + inline-level outer box that honors text-align). Option
+  buttons keep `flex w-full` (explicit width sidesteps the quirk).
+- **Journey-map zigzag removed:** `sm:translate-y-6` on odd cards read
+  as misalignment to the human; odd trailing card now centers
+  (`sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.75rem)]`), which also
+  fixes scoped subsets with odd counts.
+- **Premium language (design-spec s17.2):** light-top gradients +
+  inset bottom shade (pressed-toy edge) on all CTAs, gold gradient
+  SCORE_PILL/SCORE_PILL_LG tokens, glass backdrop-blur chips + header
+  strip + NAV_PILL, subtle card gradient (white->sky-50/60),
+  tracking-tight display type.
+- **CSS re-base:** max 7.5->8.5 kB; +0.95 kB is arbitrary-value
+  shadow/gradient utilities for the premium layer.

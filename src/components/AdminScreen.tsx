@@ -16,7 +16,7 @@ import {
 const INPUT =
   'w-full rounded-2xl border-2 border-sky-200 bg-sky-50 px-4 py-3 text-base font-bold text-sky-900 placeholder:font-normal placeholder:text-sky-400 focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-200';
 const BTN =
-  'rounded-2xl bg-emerald-500 px-5 py-3 text-base font-extrabold text-white shadow-sm transition hover:bg-emerald-600 active:scale-95 disabled:opacity-60 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-emerald-400';
+  'rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-5 py-3 text-base font-extrabold text-white shadow-[inset_0_-3px_0_rgba(0,0,0,0.15),0_3px_8px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:translate-y-0 disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-emerald-400';
 const BTN_SECONDARY =
   'rounded-2xl bg-white px-4 py-2 text-sm font-bold text-sky-700 ring-1 ring-sky-200 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-300';
 const BTN_DANGER =

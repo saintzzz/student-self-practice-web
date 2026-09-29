@@ -51,9 +51,12 @@ test.describe('Grade selection -> per-grade Batch (CR-07)', () => {
       } else {
         const options = page.locator('[data-testid^="image-option-"], [data-testid^="option-"]');
         await options.first().click();
-        const feedback = page.getByTestId('answer-feedback');
-        await expect(feedback).toBeVisible();
-        revealed = extractRevealedWord((await feedback.innerText()).trim());
+        // image-choice feedback carries no answer-feedback testid
+        // (FeedbackPanel only sets it for the three typed/tile kinds), so
+        // read the shared "Từ đúng là:" reveal line inside the card.
+        const revealLine = questionCard(page).getByText('Từ đúng là:');
+        await expect(revealLine).toBeVisible();
+        revealed = extractRevealedWord((await revealLine.innerText()).trim());
       }
       expect(revealed.length).toBeGreaterThanOrEqual(2);
 

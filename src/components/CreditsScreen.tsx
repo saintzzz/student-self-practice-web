@@ -9,7 +9,7 @@ import {
 import { NAV_PILL, H1, H2, SCREEN_ENTER } from '../lib/ui/tokens';
 
 const PILL = NAV_PILL;
-const CARD = 'mb-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-sky-200';
+const CARD = 'mb-3 rounded-2xl bg-gradient-to-b from-white to-sky-50/60 p-4 shadow-md ring-1 ring-sky-200';
 
 interface CreditsScreenProps {
   onBack: () => void;
@@ -41,7 +41,7 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
   }, []);
 
   return (
-    <div className={`mx-auto max-w-2xl px-4 py-12 text-left ${SCREEN_ENTER}`}>
+    <div className={`mx-auto max-w-2xl px-4 py-6 text-left sm:py-10 ${SCREEN_ENTER}`}>
       <button type="button" data-testid="credits-back" onClick={onBack} className={`mb-6 ${PILL}`}>
         ← Quay lại
       </button>

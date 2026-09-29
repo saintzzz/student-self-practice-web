@@ -21,7 +21,7 @@ export default function PronunciationStatusMessage({ testId, heading, body, onSk
         type="button"
         data-testid="pronunciation-skip-button"
         onClick={onSkip}
-        className="mt-4 rounded-2xl bg-amber-500 px-6 py-3 text-lg font-bold text-white shadow-md transition hover:bg-amber-600"
+        className="mt-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-amber-400 to-amber-600 px-6 py-3 text-lg font-bold text-white shadow-[inset_0_-3px_0_rgba(0,0,0,0.15),0_4px_10px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-amber-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
       >
         Bỏ qua câu này →
       </button>

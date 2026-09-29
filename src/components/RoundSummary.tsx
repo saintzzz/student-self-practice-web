@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RoundOutcome } from '../lib/batch/batchSession';
 import { getScoreStatus } from '../lib/batch/scoreStatus';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { CARD, SCREEN_ENTER } from '../lib/ui/tokens';
+import { CARD, SCORE_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import Mascot from './Mascot';
 import StarRain from './celebrations/StarRain';
 import { EmojiVisual } from './EmojiVisual';
@@ -31,6 +31,10 @@ interface RoundSummaryProps {
  * CR-10 DS-R3: awards 0-3 stars to the grade's land once per mount
  * (ref guard survives StrictMode's effect double-invoke) and rains
  * them over the points chip.
+ *
+ * CR-11 DS-P1: single vertical rhythm (mt-3 lines, mt-6 before CTA) -
+ * the centered inline-flex CTA finally honors text-center after the
+ * Chromium flex-button quirk fix in actionButtonStyle.
  */
 export default function RoundSummary({ outcome, gradeId, onNextRound }: RoundSummaryProps) {
   const status = getScoreStatus(outcome.points, outcome.maxPoints);
@@ -52,20 +56,17 @@ export default function RoundSummary({ outcome, gradeId, onNextRound }: RoundSum
     <div className={`${CARD} ${SCREEN_ENTER} py-6 text-center [@media(max-height:420px)]:py-3`}>
       <Mascot mood="celebrating" />
       <StarRain stars={award?.stars ?? 0} />
-      <h2 className="mb-2 font-display text-2xl font-extrabold text-sky-900">{outcome.titleVi}</h2>
-      <p data-testid="round-score-summary" className="mb-2 text-2xl font-semibold text-sky-700">
+      <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-sky-900">{outcome.titleVi}</h2>
+      <p data-testid="round-score-summary" className="mt-3 text-2xl font-semibold text-sky-700">
         Em trả lời đúng {outcome.correctCount}/{outcome.totalCount} câu ở vòng này.
       </p>
-      <p className="mb-3 flex justify-center">
-        <span
-          data-testid="round-points-summary"
-          className="inline-flex items-center justify-center rounded-full bg-amber-400 px-6 py-2 font-display text-xl font-extrabold text-amber-950 shadow-md ring-4 ring-amber-200"
-        >
+      <p className="mt-3 flex justify-center">
+        <span data-testid="round-points-summary" className={SCORE_PILL}>
           {outcome.points}/{outcome.maxPoints} điểm
         </span>
       </p>
       {award && award.newStickers.length > 0 && (
-        <p data-testid="round-new-stickers" className="mb-3 flex flex-wrap items-center justify-center gap-2">
+        <p data-testid="round-new-stickers" className="mt-3 flex flex-wrap items-center justify-center gap-2">
           {award.newStickers.map((s) => (
             <span
               key={s.id}
@@ -78,11 +79,16 @@ export default function RoundSummary({ outcome, gradeId, onNextRound }: RoundSum
       )}
       <p
         data-testid="round-completion-badge"
-        className={`mb-4 text-lg font-semibold ${status.isComplete ? 'text-emerald-700' : 'text-sky-700'}`}
+        className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-700' : 'text-sky-700'}`}
       >
         {status.label}
       </p>
-      <button type="button" data-testid="next-round-button" onClick={onNextRound} className={CONTINUE_BUTTON_CLASSNAME}>
+      <button
+        type="button"
+        data-testid="next-round-button"
+        onClick={onNextRound}
+        className={`mt-6 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}
+      >
         Vòng tiếp theo →
       </button>
     </div>

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * check-bundle-budget - AC-2.10 entry budget gate.
- * Entry JS gzip <= 121 kB, entry CSS gzip <= 7.5 kB
+ * Entry JS gzip <= 121 kB, entry CSS gzip <= 8.5 kB
  * (baseline 101.07 / 5.20 kB + headroom, measured with gzip level 9).
  * CSS baseline re-based for CR-09 (AC-UI6): +1.24 kB is the Baloo 2
  * @font-face rules + design-token utilities; headroom kept at ~1 kB.
@@ -18,6 +18,10 @@
  * celebrations, journey-map GradeSelect); +1.50 kB CSS is the land +
  * reward keyframes with reduced-motion fallbacks. Headroom kept:
  * ~9.4 kB JS / ~0.8 kB CSS.
+ * CSS re-based for CR-11 (advisory A-29): +0.95 kB is the premium
+ * surface layer - arbitrary-value pressed-edge/gradient shadows on
+ * CTAs, glass backdrop-blur chips, card gradient sheen. Headroom
+ * kept ~0.85 kB.
  * Run after `npm run build`.
  */
 import { readFile } from 'node:fs/promises';
@@ -29,7 +33,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
 const JS_MAX_KB = 121;
-const CSS_MAX_KB = 7.5;
+const CSS_MAX_KB = 8.5;
 const BASELINE = { js: 101.07, css: 5.2 };
 
 const kb = (buf) => gzipSync(buf, { level: 9 }).length / 1024;

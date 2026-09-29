@@ -925,3 +925,29 @@ Implements PRD section 19 / design-spec section 16.
 - e2e: add `engagement.spec.ts` - answer questions, finish a round,
   assert star chip > 0 and streak chip >= 1; all 58 prior specs keep
   passing (gotoApp unchanged).
+
+
+## 14. CR-11 addendum - alignment fix + premium tokens (2026-10-01)
+
+Implements design-spec section 17.
+
+### 14.1 Changes
+
+- `actionButtonStyle.ts`: `flex`->`inline-flex` on AUDIO/SUBMIT/
+  CONTINUE + gradient + pressed-edge classes. Option buttons keep
+  `flex w-full` (explicit width sidesteps the quirk).
+- `tokens.ts`: CARD gains subtle gradient + shadow-xl; CHIP_* gain
+  glass (`bg-*-50/80 backdrop-blur-sm`); new `SCORE_PILL`/`SCORE_PILL_LG`
+  gold-gradient pills replace inline classes in summaries.
+- `GradeSelect.tsx`: drop `sm:translate-y-6` zigzag; when
+  `visibleGrades.length` is odd, last card gets `sm:col-span-2
+  sm:mx-auto sm:w-[calc(50%-12px)]`; card body gains gradient tint.
+- `RoundSummary`/`BatchSummary`/`StartBatchScreen`/`RoundStub`:
+  rhythm refactor to mt-3/mt-6 stacks + `w-full sm:w-auto` CTAs.
+- `EngagementBar`/header chips: glass chips.
+
+### 14.2 Invariants
+
+- testids/DOM roles unchanged; class-only refactor.
+- 76px min targets kept; reduced-motion variants kept/added.
+- Budget: +~0.5-1 kB CSS (new utilities) - no JS change.

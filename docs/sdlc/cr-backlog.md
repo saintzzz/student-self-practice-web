@@ -15,7 +15,8 @@
 | CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | resolved (deployed ec94500) |
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | resolved (backend + app implemented; prod auth pending Vercel env vars) |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
-| CR-10 | Real visual identity: theme, kid appeal, engagement layer | human request 2026-10-01 | resolved (pending deploy) |
+| CR-10 | Real visual identity: theme, kid appeal, engagement layer | human request 2026-10-01 | resolved (deployed e316e8c) |
+| CR-11 | Visual polish: alignment bugs, balance, full responsive, premium finish | human request 2026-10-01 | resolved (pending deploy) |
 
 ---
 
@@ -299,3 +300,56 @@
   wiring; FeedbackPanel confetti; beheo-force-guest e2e hatch.
 - Tester: 712/712 unit, 60/60 e2e (+2 engagement), visual QA desktop
   + 390px portrait, budget/attribution/dash green.
+
+## CR-11: Visual polish - INTAKE (2026-10-01)
+
+- **Human feedback (verbatim):** "design kieu gi ma cac elements sap xep
+  lech het? button Vong tiep theo sao khong can giua de can doi? tat ca
+  cai khac nua, lam the nao de trong ung dung dep nhat, can doi nhat...
+  lam full responsive di nhe. neu duoc giao dien co the trong luxury hon
+  de de bo tien ra mua hon khong?"
+- **Diagnosis (verified in-browser):**
+  1. Chromium button quirk: `<button>` with `display:flex` shrinks to
+     fit-content AND ignores parent `text-align:center` - every CTA
+     (Vong tiep theo, Cau tiep theo, Nghe, Kiem tra, Tiep tuc) renders
+     LEFT-aligned inside text-center cards. Root cause of "lech het".
+  2. Journey-map zigzag (`sm:translate-y-6` on odd cards) reads as
+     misalignment; 5th card sits alone in a 2-col grid row.
+  3. Summary screens use ad-hoc margins (mb-1/2/3/10 mixed) - no
+     spacing rhythm.
+  4. Surfaces/buttons are flat solids - reads "prototype", not a paid
+     product. Asks for premium feel to support monetization.
+- **Scope:**
+  - Fix: actionButtonStyle `flex`->`inline-flex` (centers under
+    text-center, identical inside flex parents).
+  - Balance: remove zigzag; center the odd trailing card; unify
+    spacing rhythm on summary/start/map screens; w-full CTAs on
+    phones -> auto on sm+.
+  - Premium pass (kid-premium direction: Duolingo Max / Lingokids
+    polish level): gradient CTAs with pressed-edge (inset bottom
+    shade) + hover lift, gold gradient score pill + glow, glassy
+    chips (backdrop-blur), refined card (shadow-xl + subtle
+    gradient), gradient land discs/cards, tracking-tight display
+    headings.
+  - Responsive: consistent page paddings, H1 scale-down, odd-card
+    centering, keep 76px targets + reduced-motion + small-height
+    variants.
+- **Guardrails unchanged:** testids, 76px targets, status colors,
+  reduced-motion, same-origin assets, dash rule, budgets (justify
+  any re-base), guest/auth flows identical.
+- **Human rulings:** none open - direction stated in request.
+
+### CR-11 pipeline record (2026-10-01)
+
+- Intake + diagnosis: cr-backlog entry above; Chromium flex-button
+  quirk verified in-browser (A-29).
+- Designer: design-spec section 17 (DS-P1 alignment invariants, DS-P2
+  premium surface language, DS-P3 responsive rules).
+- Tech Lead: architecture section 14.
+- Dev: actionButtonStyle inline-flex + gradient/pressed-edge, tokens
+  (CARD gradient, glass chips, SCORE_PILL tokens, glassy NAV_PILL),
+  GradeSelect de-zigzag + lone-card centering + sheen, summary/start/
+  stub/question screens rhythm + w-full CTAs, 4 flat buttons
+  (login/admin/skip/record) upgraded, glass header strip + album.
+- Tester: 712/712 unit, 60/60 e2e (grades.spec flake fixed), visual
+  QA desktop/390/667-landscape, budget re-based (A-29).

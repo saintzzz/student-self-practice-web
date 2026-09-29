@@ -20,11 +20,11 @@ export default function RoundStub({ titleVi, onNextRound }: RoundStubProps) {
       <div className="mb-3 text-6xl" aria-hidden="true">
         🚧
       </div>
-      <h2 className="mb-2 font-display text-2xl font-extrabold text-sky-900">{titleVi}</h2>
-      <p className="mb-4 text-xl font-semibold text-sky-700">
+      <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-sky-900">{titleVi}</h2>
+      <p className="mt-3 text-xl font-semibold text-sky-700">
         Vòng này đang được phát triển. Hẹn gặp lại em trong bản cập nhật tiếp theo nhé!
       </p>
-      <button type="button" data-testid="next-round-button" onClick={onNextRound} className={CONTINUE_BUTTON_CLASSNAME}>
+      <button type="button" data-testid="next-round-button" onClick={onNextRound} className={`mt-6 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}>
         Tiếp tục →
       </button>
     </div>

@@ -43,9 +43,12 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
     : grades;
 
   const engagement = getState();
+  // CR-11 DS-P1: a lone trailing card in the 2-col grid centers itself
+  // (odd counts happen with 5 grades and with scoped class subsets).
+  const lastIsLone = visibleGrades.length % 2 === 1;
 
   return (
-    <div className={`mx-auto max-w-3xl px-4 py-8 text-center ${SCREEN_ENTER}`}>
+    <div className={`mx-auto max-w-3xl px-4 py-6 text-center sm:py-8 ${SCREEN_ENTER}`}>
       {(onSignOut || onLogin) && (
         <div className="mb-2 flex justify-end">
           {onLogin && (
@@ -87,14 +90,15 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         {visibleGrades.map((grade, i) => {
           const land = getLand(grade.id);
           const gp = engagement.grades[grade.id];
+          const isLoneLast = lastIsLone && i === visibleGrades.length - 1;
           return (
             <button
               key={grade.id}
               type="button"
               data-testid={`grade-card-${grade.id}`}
               onClick={() => onSelectGrade(grade.id)}
-              className={`relative flex min-h-[76px] items-center gap-4 overflow-hidden rounded-3xl border-4 ${land.cardRing.replace('ring-', 'border-')} ${land.cardTint} p-5 pb-16 text-left shadow-lg transition hover:-translate-y-1 hover:shadow-xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-500 sm:px-6 sm:pt-6 ${
-                i % 2 === 1 ? 'sm:translate-y-6' : ''
+              className={`relative flex min-h-[76px] items-center gap-4 overflow-hidden rounded-3xl border-4 ${land.cardRing.replace('ring-', 'border-')} ${land.cardTint} bg-gradient-to-br from-white/70 via-white/10 to-transparent p-5 pb-16 text-left shadow-lg transition hover:-translate-y-1 hover:shadow-2xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-500 sm:px-6 sm:pt-6 ${
+                isLoneLast ? 'sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.75rem)]' : ''
               }`}
             >
               {/* mini scene strip at the card bottom */}
