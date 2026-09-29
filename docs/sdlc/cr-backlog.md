@@ -11,7 +11,7 @@
 | CR-03 | Phonics round (P3) | constitution intake ruling, research doc 2.2 / 6 | resolved |
 | CR-04 | Vercel ignored build step | DevOps review Phase 7 | resolved |
 | CR-05 | Branch protection + PR preview discipline | DevOps review Phase 7 | user-action-required |
-| CR-06 | Phonics nang sau: am cuoi / blends / rhyming | human request 2026-09-29 | implemented - pending deploy gate |
+| CR-06 | Phonics nang sau: am cuoi / blends / rhyming | human request 2026-09-29 | resolved |
 | CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | intake - pending rulings |
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | intake - pending rulings |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | intake - pending rulings |
@@ -111,9 +111,10 @@
   4 phonics (sound/word/final + alternating blend-or-rhyme). Rhyme
   model is spelled-rime + audit-driven overrides (splits like
   mountain/rain, merges like two/shoe/blue->u-long) with containment
-  exclusion. Unit suite 660/660, typecheck/build/attribution/bundle
-  green; e2e re-run pending on this mac12 box (Playwright pinned
-  1.55.0 for headless-shell-1187, A-22). Deploy gate: pending.
+  exclusion. Unit suite 660/660, e2e 49/49, typecheck/build/
+  attribution/bundle green; deployed via commit 996b801 (registry
+  updated, production GET / -> 200 serving index-BhcXqFf2.js).
+  Playwright pinned 1.55.0 for headless-shell-1187 on mac12 (A-22).
 
 ## CR-07: Full elementary coverage - grades 1-5 - INTAKE
 
