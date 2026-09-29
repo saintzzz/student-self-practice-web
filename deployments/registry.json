@@ -10,18 +10,19 @@
       "productionUrl": "https://ioe-leduyminh.vercel.app",
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh.vercel.app",
-      "commit": "ab094f4",
+      "commit": "3d1261d",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-01T10:55:00+07:00",
+      "lastHealthCheck": "2026-10-01T11:00:00+07:00",
       "healthDetails": {
         "GET /": 200,
-        "GET /assets/index-Bd-8x8JH.js": 200,
-        "auth": "LIVE - VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY set on prod/preview/dev via REST API; redeploy dpl_HAnRUoxrDo9gn1Vz4e4pFqe4Zjtg READY",
-        "admin login verified": "sign-in -> admin console rendered, console errors 0",
-        "guest button": "present (Choi khong can tai khoan)"
+        "GET /assets/index-Dc1CKqIn.js": 200,
+        "GET /assets/index-Bf86wkf7.css": 200,
+        "auth": "LIVE - login surface renders (Chao be!), guest button present",
+        "premium-max (CR-12)": "verified on prod - medal discs, gold star chip, halo mascot, ambient sky layer",
+        "console errors": 0
       },
-      "note": "Git-linked project under the personal account duylinhcn3-8443 (the earlier teamId field was wrong - list_projects on linhld7s-projects returns empty; project found via personal-scope listing). Supabase env vars added 2026-10-01 via REST API upsert; redeploy dpl_HAnRUoxrDo9gn1Vz4e4pFqe4Zjtg (commit ab094f4) is READY and serving auth bundle index-Bd-8x8JH.js - login surface verified live with real admin sign-in. Backend live: schema practice, RLS verified, edge function v1.",
+      "note": "Git-linked project under the personal account duylinhcn3-8443 (the earlier teamId field was wrong - list_projects on linhld7s-projects returns empty; project found via personal-scope listing). Supabase env vars added 2026-10-01 via REST API upsert; auth live since redeploy dpl_HAnRUoxrDo9gn1Vz4e4pFqe4Zjtg. CR-12 deploy (3d1261d) serves premium-max bundle index-Dc1CKqIn.js - login + guest journey verified live. Backend live: schema practice, RLS verified, edge function v1.",
       "scope": "personal account duylinhcn3-8443 (NOT linhld7s-projects team - corrected 2026-10-01)"
     }
   ]

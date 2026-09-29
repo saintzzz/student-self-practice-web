@@ -17,7 +17,7 @@
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
 | CR-10 | Real visual identity: theme, kid appeal, engagement layer | human request 2026-10-01 | resolved (deployed e316e8c) |
 | CR-11 | Visual polish: alignment bugs, balance, full responsive, premium finish | human request 2026-10-01 | resolved (deployed ab094f4) |
-| CR-12 | Premium-max pass: every screen, element, icon, test view | human request 2026-10-01 | implemented, gates green |
+| CR-12 | Premium-max pass: every screen, element, icon, test view | human request 2026-10-01 | resolved (deployed 3d1261d) |
 
 ---
 
