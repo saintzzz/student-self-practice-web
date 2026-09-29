@@ -44,3 +44,22 @@
 | Wiring `image-choice` into a live Round | Absorbed into the current run by human ruling D-1 (PRD US-9). No CR. |
 | Image-only vocabulary words (PRD 7.3 note) | Not approved (human, 2026-09-29). Future note only; no CR. |
 | GIPHY rewards | Out of scope per constitution intake ruling; not requested as a CR. |
+
+## CR-04: Vercel ignored build step for metadata-only commits
+
+- **Problem:** every push to `main` auto-deploys, so commits that touch
+  only docs/registry files burn a production build and churn deployment
+  IDs (registry entry always lags the live one by design).
+- **Evidence:** DevOps Lead review (Phase 7), minor finding 1.
+- **Proposed direction (for CR analysis, not decided):** Vercel Project
+  Settings -> Git -> Ignored Build Step:
+  `git diff --quiet HEAD^ HEAD ./src ./public ./index.html package.json`
+
+## CR-05: Branch protection + PR preview discipline
+
+- **Problem:** dashboard import wired `main` directly to production; no
+  staging/preview gate before merges.
+- **Evidence:** DevOps Lead review (Phase 7), staging-first assessment.
+- **Proposed direction (for CR analysis, not decided):** protect `main`,
+  route changes through feature branches and Vercel Preview deployments
+  for QA sign-off before merge.
