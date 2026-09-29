@@ -199,3 +199,11 @@ Format: Objection/Options/Ruling. Mọi quyết định vật liệu ghi ở đ�
   deployment + auto-deploy supersession note.
 - **Rollback:** no prior deployment exists; rollback = redeploy or git
   revert on main (auto-deploy handles the rest).
+
+## A-16: Phase 8 PM finalization - human gate APPROVED (2026-09-29)
+
+- User approved A-12 (AC-9.1 seed range s1..s40) and A-13 (AC-10.6
+  conditional <p>/<div>) at the final gate. Baseline debt
+  (mic-permission-denied) and CR-01..05 accepted as deferred.
+- Project closed. User then requested backlog processing ("xu ly tiep
+  ton dong CR, backlog") - new work stream opened under CR workflow.
