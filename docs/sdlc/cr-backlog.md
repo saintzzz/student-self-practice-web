@@ -6,26 +6,26 @@
 
 | ID | Title | Origin | Status |
 |----|-------|--------|--------|
-| CR-01 | Pair-matching emoji dedupe | PRD O-5 | approved-backlog |
-| CR-02 | Accessible names for picture option buttons | PRD O-6 | approved-backlog |
+| CR-01 | Pair-matching emoji dedupe | PRD O-5 | resolved |
+| CR-02 | Accessible names for picture option buttons | PRD O-6 | resolved |
 | CR-03 | Phonics round (P3) | constitution intake ruling, research doc 2.2 / 6 | approved-backlog |
+| CR-04 | Vercel ignored build step | DevOps review Phase 7 | resolved |
+| CR-05 | Branch protection + PR preview discipline | DevOps review Phase 7 | user-action-required |
 
 ---
 
-## CR-01: Pair-matching emoji dedupe
+## CR-01: Pair-matching emoji dedupe — RESOLVED
 
-- **Problem:** 4 emoji are shared across topics: 😢 (cry, sad), 🏊 (swim, swimming), 😴 (sleep, tired), 📖 (book, read). `generatePicturePairMatchingBoards` draws 4 words via `stratifiedSample` (`src/lib/generators/picturePairMatching.ts:45`) without excluding duplicate emoji, so one board can show two identical picture tiles whose matches are indistinguishable.
-- **Evidence:** PRD F-8; vocabulary scan at commit `ebd58a5`.
-- **Proposed direction (for CR analysis, not decided):** exclude words whose emoji is already on the board when sampling pairs (same approach as `listeningImageChoice.ts:18-29`, which already excludes by emoji). `PairMatchingPair.wordId` added in the current run (PRD 9.1) gives the identity needed for tests.
+- **Problem:** 4 emoji are shared across topics: 😢 (cry, sad), 🏊 (swim, swimming), 😴 (sleep, tired), 📖 (book, read). `generatePicturePairMatchingBoards` draws 4 words via `stratifiedSample` without excluding duplicate emoji, so one board can show two identical picture tiles whose matches are indistinguishable.
+- **Resolution (2026-09-29):** `pickBoardWords()` in `src/lib/generators/picturePairMatching.ts` checks the 4 drawn words for emoji collisions; on a collision it redraws deterministically from the full stratified order and keeps the first 4 unique-emoji words. Boards without a collision keep the original `stratifiedSample` output, so existing question pools are unchanged. Coverage: `picturePairMatching.test.ts` proves 4 distinct picture tiles per board on a collision fixture and on the full `ALL_WORDS` bank.
 - **Guard already in the current run:** PRD AC-6.3 prevents any new shared emoji beyond the 4 allowlisted pairs.
 - **Domain fault class:** "1 hình 1 nghĩa" (constitution Domain Pack).
 
-## CR-02: Accessible names for picture option buttons
+## CR-02: Accessible names for picture option buttons — RESOLVED
 
-- **Problem:** ListeningImageChoice option buttons contain only an `aria-hidden` span (`src/components/ListeningImageChoiceQuestion.tsx:53-55`), so screen readers announce no name. The current run keeps the EmojiVisual text layer inside that aria-hidden span (A-04 Ruling B), which neither worsens nor fixes this.
-- **Evidence:** PRD O-6.
-- **Proposed direction (for CR analysis, not decided):** give each option button an accessible name that does not reveal the answer in a listening question (for example a neutral "Hình 1".."Hình 4" label) and review the same pattern for PicturePairMatching picture tiles and DescribeAndChooseImage options.
-- **Constraint:** must not break the DOM-text contract (constitution #2) or leak the answer word into accessible text.
+- **Problem:** ListeningImageChoice option buttons contain only an `aria-hidden` span (`src/components/ListeningImageChoiceQuestion.tsx:53-55`), so screen readers announce no name.
+- **Resolution (2026-09-29):** picture-bearing buttons now announce the *visible content* via `aria-label` - `ListeningImageChoiceQuestion` options announce their emoji, `DescribeAndChooseImageQuestion` options announce `emoji.repeat(count)`, and `PicturePairMatchingQuestion` picture tiles announce their emoji. This is the information-equivalent of what a sighted user sees, and since every option announces equally, nothing about the correct answer is leaked and the answer word never appears in an accessible name. This deliberately supersedes the "neutral Hình 1..4" proposal in the original analysis: neutral labels would leave screen-reader users with zero information and an unplayable task.
+- **Coverage:** CR-02 tests in `ListeningImageChoiceQuestion.test.tsx`, `DescribeAndChooseImageQuestion.test.tsx`, `PicturePairMatchingQuestion.test.tsx`.
 
 ## CR-03: Phonics round (P3)
 
@@ -45,15 +45,17 @@
 | Image-only vocabulary words (PRD 7.3 note) | Not approved (human, 2026-09-29). Future note only; no CR. |
 | GIPHY rewards | Out of scope per constitution intake ruling; not requested as a CR. |
 
-## CR-04: Vercel ignored build step for metadata-only commits
+## CR-04: Vercel ignored build step for metadata-only commits — RESOLVED
 
 - **Problem:** every push to `main` auto-deploys, so commits that touch
   only docs/registry files burn a production build and churn deployment
   IDs (registry entry always lags the live one by design).
-- **Evidence:** DevOps Lead review (Phase 7), minor finding 1.
-- **Proposed direction (for CR analysis, not decided):** Vercel Project
-  Settings -> Git -> Ignored Build Step:
-  `git diff --quiet HEAD^ HEAD ./src ./public ./index.html package.json`
+- **Resolution (2026-09-29):** `commandForIgnoringBuildStep` set on the
+  `ioe-leduyminh` Vercel project via REST API (CLI token):
+  `git diff --quiet HEAD^ HEAD -- src public index.html package.json
+  package-lock.json vite.config.ts tsconfig.json tailwind.config.js
+  postcss.config.js` — pushes touching only docs/registry/e2e files now
+  skip production builds.
 
 ## CR-05: Branch protection + PR preview discipline
 

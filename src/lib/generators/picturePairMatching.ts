@@ -40,9 +40,33 @@ function buildExplanation(pairs: readonly PairMatchingPair[]): string {
  * plan.md v8 "drawn via stratifiedSample (topic balance)") and is not
  * guaranteed to appear on its own board.
  */
+/**
+ * Draws the 4 pair words for one board, guaranteeing the 4 picture tiles
+ * are visually distinct: if the plain stratified draw picks two words that
+ * share an emoji (the 4 allowlisted shared-emoji pairs in the bank, e.g.
+ * cry/sad -> 😢, CR-01/PRD F-8), the board redraws deterministically from
+ * the full stratified order and keeps the first 4 words with unique emojis.
+ * Boards without a collision keep the original stratifiedSample output
+ * byte-for-byte, so unchanged words keep their generated question pools.
+ */
+function pickBoardWords(words: readonly VocabWord[], seedBase: string): VocabWord[] {
+  const first = stratifiedSample(words, PAIRS_PER_BOARD, seedBase);
+  if (new Set(first.map((w) => w.emoji)).size === PAIRS_PER_BOARD) {
+    return first;
+  }
+
+  const seenEmojis = new Set<string>();
+  const deduped = stratifiedSample(words, words.length, seedBase).filter((w) => {
+    if (seenEmojis.has(w.emoji)) return false;
+    seenEmojis.add(w.emoji);
+    return true;
+  });
+  return deduped.length >= PAIRS_PER_BOARD ? deduped.slice(0, PAIRS_PER_BOARD) : first;
+}
+
 function buildBoard(anchorWord: VocabWord, words: readonly VocabWord[]): PicturePairMatchingQuestion {
   const seedBase = `ppm-${anchorWord.id}`;
-  const pairWords = stratifiedSample(words, PAIRS_PER_BOARD, seedBase);
+  const pairWords = pickBoardWords(words, seedBase);
   const pairs = pairWords.map(toPair) as [PairMatchingPair, PairMatchingPair, PairMatchingPair, PairMatchingPair];
 
   return {

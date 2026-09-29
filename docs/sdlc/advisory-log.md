@@ -207,3 +207,24 @@ Format: Objection/Options/Ruling. Mọi quyết định vật liệu ghi ở đ�
   (mic-permission-denied) and CR-01..05 accepted as deferred.
 - Project closed. User then requested backlog processing ("xu ly tiep
   ton dong CR, backlog") - new work stream opened under CR workflow.
+
+## A-17: CR backlog processing - CR-01/02/04 resolved (2026-09-29)
+
+- **CR-01 RESOLVED:** pickBoardWords() dedupes emoji collisions in
+  picture-pair-matching boards; deterministic, keeps original
+  stratifiedSample output for collision-free boards. Verified on
+  ALL_WORDS bank: 0 boards with duplicate picture tiles.
+- **CR-02 RESOLVED (with design deviation):** picture buttons announce
+  visible content via aria-label (emoji / emoji.repeat(count) / tile
+  emoji) instead of the proposed neutral "Hinh N" labels - neutral
+  labels give screen-reader users zero information and an unplayable
+  task. All options announce equally, so no answer leak; the answer
+  word never appears in an accessible name.
+- **CR-04 RESOLVED:** commandForIgnoringBuildStep set on ioe-leduyminh
+  via Vercel REST API with CLI auth (MCP token lacks project scope).
+  Docs/registry-only pushes now skip production builds.
+- **CR-05 pending user action:** GitHub branch protection needs gh CLI
+  or dashboard access (no auth available in this environment).
+- **CR-03 phonics:** held for user decision - new-feature scope.
+- Gates: 27/27 touched-file tests pass, tsc clean, build clean
+  (entry 90.51kB gzip <= 94.5), attribution OK.

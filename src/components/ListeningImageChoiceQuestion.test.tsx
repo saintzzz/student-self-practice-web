@@ -37,6 +37,20 @@ describe('ListeningImageChoiceQuestion', () => {
     expect(screen.queryByText('cat')).not.toBeInTheDocument();
   });
 
+  it('CR-02: option buttons announce their picture content (emoji) as accessible names, never the answer word', () => {
+    render(<ListeningImageChoiceQuestion question={QUESTION} selectedIndex={null} onSelectOption={vi.fn()} />);
+
+    // Same information a sighted user gets: which picture is on the button.
+    expect(screen.getByRole('button', { name: '🐱' })).toBe(screen.getByTestId('option-0'));
+    expect(screen.getByRole('button', { name: '🐶' })).toBe(screen.getByTestId('option-1'));
+    expect(screen.getByRole('button', { name: '🐟' })).toBe(screen.getByTestId('option-2'));
+    expect(screen.getByRole('button', { name: '🐦' })).toBe(screen.getByTestId('option-3'));
+    // The spoken word must not appear in any accessible name.
+    for (let i = 0; i < 4; i++) {
+      expect(screen.getByTestId(`option-${i}`)).not.toHaveAccessibleName(expect.stringContaining('cat'));
+    }
+  });
+
   it('calls speechSynthesis.speak with the target word via the play-audio-button, without throwing', async () => {
     const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();

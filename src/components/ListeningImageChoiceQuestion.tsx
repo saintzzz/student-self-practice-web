@@ -62,6 +62,10 @@ export default function ListeningImageChoiceQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            // CR-02: announce the picture content (the emoji char) so screen
+            // readers get the same information sighted users see - the
+            // matching task stays identical, the word itself is never leaked.
+            aria-label={emoji}
           >
             <span aria-hidden="true" className="text-6xl">
               <EmojiVisual

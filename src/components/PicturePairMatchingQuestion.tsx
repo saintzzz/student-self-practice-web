@@ -84,6 +84,10 @@ export default function PicturePairMatchingQuestion({
               disabled={hasAnswered || isMatched || outcome !== null}
               onClick={() => handleTileClick(index)}
               className={tileClassName(isMatched, isPending, isWrongFlash)}
+              // CR-02: picture tiles announce their emoji so screen readers
+              // can play the same matching game sighted users get; word
+              // tiles already carry their text label.
+              aria-label={tile.tileType === 'picture' ? tile.label : undefined}
             >
               {tile.tileType === 'picture' ? (
                 <span aria-hidden="true">

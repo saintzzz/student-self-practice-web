@@ -58,6 +58,19 @@ describe('DescribeAndChooseImageQuestion', () => {
     expect(screen.getByTestId('option-1')).toHaveTextContent('🐱');
   });
 
+  it('CR-02: option buttons announce their visible emoji content (emoji repeated count times)', () => {
+    render(<DescribeAndChooseImageQuestion question={COUNT_QUESTION} selectedIndex={null} onSelectOption={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: '🐱🐱🐱' })).toBe(screen.getByTestId('option-0'));
+    expect(screen.getByRole('button', { name: '🐱🐱' })).toBe(screen.getByTestId('option-1'));
+    expect(screen.getByRole('button', { name: '🐶🐶🐶' })).toBe(screen.getByTestId('option-2'));
+    expect(screen.getByRole('button', { name: '🐶🐶🐶🐶' })).toBe(screen.getByTestId('option-3'));
+    // Every option announces equally - nothing singles out the correct one.
+    for (let i = 0; i < 4; i++) {
+      expect(screen.getByTestId(`option-${i}`)).toHaveAccessibleName(expect.not.stringContaining('cat'));
+    }
+  });
+
   it('calls onSelectOption with the clicked index', async () => {
     const user = userEvent.setup();
     const onSelectOption = vi.fn();

@@ -37,6 +37,20 @@ describe('PicturePairMatchingQuestion', () => {
     expect(screen.getByTestId('pair-matching-mistake-count')).toHaveTextContent('Sai: 0/3');
   });
 
+  it('CR-02: picture tiles announce their emoji as accessible name; word tiles keep their text label', () => {
+    render(<PicturePairMatchingQuestion question={QUESTION} hasAnswered={false} onSubmit={vi.fn()} />);
+
+    // Tiles 1,3,5,7 are picture tiles (see QUESTION.tiles order).
+    for (const i of [1, 3, 5, 7]) {
+      const emoji = QUESTION.tiles[i]!.label;
+      expect(screen.getByRole('button', { name: emoji })).toBe(screen.getByTestId(`pair-tile-${i}`));
+    }
+    for (const i of [0, 2, 4, 6]) {
+      const word = QUESTION.tiles[i]!.label;
+      expect(screen.getByRole('button', { name: word })).toBe(screen.getByTestId(`pair-tile-${i}`));
+    }
+  });
+
   it('a full correct playthrough matches all 4 pairs and calls onSubmit(true) exactly once', { timeout: 15_000 }, async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();

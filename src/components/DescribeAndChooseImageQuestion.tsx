@@ -52,6 +52,10 @@ export default function DescribeAndChooseImageQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            // CR-02: announce the visible content (emoji repeated count
+            // times) - every option announces equally, so nothing about
+            // the correct answer is given away.
+            aria-label={option.emoji.repeat(option.count)}
           >
             <span aria-hidden="true" className="text-4xl leading-relaxed">
               <EmojiVisual emoji={option.emoji} count={option.count} />

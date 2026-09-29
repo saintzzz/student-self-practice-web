@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generatePicturePairMatchingBoards } from './picturePairMatching';
+import { ALL_WORDS } from '../../data/vocabulary';
 import type { PicturePairMatchingQuestion, VocabWord } from '../../types';
 
 function makeWords(topicCounts: Record<string, number>): VocabWord[] {
@@ -111,5 +112,35 @@ describe('generatePicturePairMatchingBoards', () => {
   it('returns an empty array when fewer than 4 words are available (defensive)', () => {
     const words = makeWords({ a: 3 });
     expect(generatePicturePairMatchingBoards(words)).toEqual([]);
+  });
+
+  it('CR-01: never puts two words sharing an emoji on the same board, even when the pool has emoji collisions', () => {
+    // Two word pairs share emoji-B and emoji-C; only 6 distinct emojis exist.
+    const words: VocabWord[] = [
+      { id: 'a1', topicId: 'a', word: 'w1', emoji: 'emoji-A', countable: true, explanation: 'x' },
+      { id: 'a2', topicId: 'a', word: 'w2', emoji: 'emoji-B', countable: true, explanation: 'x' },
+      { id: 'b1', topicId: 'b', word: 'w3', emoji: 'emoji-B', countable: true, explanation: 'x' },
+      { id: 'b2', topicId: 'b', word: 'w4', emoji: 'emoji-C', countable: true, explanation: 'x' },
+      { id: 'c1', topicId: 'c', word: 'w5', emoji: 'emoji-C', countable: true, explanation: 'x' },
+      { id: 'c2', topicId: 'c', word: 'w6', emoji: 'emoji-D', countable: true, explanation: 'x' },
+      { id: 'd1', topicId: 'd', word: 'w7', emoji: 'emoji-E', countable: true, explanation: 'x' },
+      { id: 'd2', topicId: 'd', word: 'w8', emoji: 'emoji-F', countable: true, explanation: 'x' },
+    ];
+    const boards = generatePicturePairMatchingBoards(words);
+    expect(boards).toHaveLength(words.length);
+
+    for (const board of boards) {
+      const emojis = new Set(board.pairs.map((pair) => pair.emoji));
+      expect(emojis.size, `board ${board.id} has a duplicate picture tile`).toBe(4);
+    }
+  });
+
+  it('CR-01: every board generated from the real vocabulary bank has 4 distinct picture tiles', () => {
+    const boards = generatePicturePairMatchingBoards(ALL_WORDS);
+
+    for (const board of boards) {
+      const emojis = new Set(board.pairs.map((pair) => pair.emoji));
+      expect(emojis.size, `board ${board.id} has a duplicate picture tile`).toBe(4);
+    }
   });
 });
