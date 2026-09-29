@@ -142,8 +142,27 @@ Entry chunk additionally verified **free of `dotlottie` runtime code and `.wasm`
 
 ## Known issues / deferred (all recorded, none blocking)
 
-- `PronunciationRecordingQuestion.test.tsx > mic-permission-denied` — pre-existing baseline failure (jsdom mock), debt register.
+- `PronunciationRecordingQuestion.test.tsx > mic-permission-denied` — RESOLVED (A-20): stale test mocked `getUserMedia` reject, but production fires denial via SpeechRecognition `onerror 'not-allowed'`; test now mocks that path. Suite fully green.
 - `AC-2.5` e2e asserts on the dev server (Playwright `webServer: npm run dev`); the production-build half of AC-2.5 is covered by the entry-chunk check inside `check-bundle-budget.mjs` and the budget numbers above.
 - AC-10.2 height bound is asserted on the default desktop viewport; the tighter 3-viewport line-height sweep is noted as residual risk (picture is inline `1em` by construction).
 - CR backlog: CR-01 pair-matching emoji dedupe, CR-02 accessible names for image options, CR-03 phonics Round 3 (`docs/sdlc/cr-backlog.md`).
 - Amendments awaiting human confirmation at PM finalization: A-12 (AC-9.1 seed range s1..s40), A-13 (AC-10.6 conditional `<p>`→`<div>`).
+
+## CR-06 gate results (phonics nang sau, 2026-09-29)
+
+- Unit suite: **660/660 passed** (79 files), including the previously-failing
+  mic-permission test.
+- New coverage: `finalSounds.test.ts` (11), `blends.test.ts` (7),
+  `rhymes.test.ts` (9 incl. bank-wide symmetry + false-positive splits),
+  `phonicsDeep.test.ts` (12 incl. exactly-one-rhyme and c/k-equivalence
+  guards), `PhonicsEndingChoiceQuestion.test.tsx` (7),
+  `PhonicsRhymeChoiceQuestion.test.tsx` (4); extended
+  `questionWordIds` (+3 bank-id cases), `feedbackPicture` (+3 picture
+  kinds), `round4` composition (+alternation invariants), batch/App
+  answer dispatch (+3 kinds).
+- E2E: **49/49 passed** (2.1m, chromium headless-shell-1187 via
+  `@playwright/test@1.55.0` - mac12 pin, advisory A-22).
+- Checks: `tsc -b` clean, `vite build` clean, `check-attribution` OK
+  (324 svg / 121 lottie), `check-bundle-budget` OK (JS 90.88 kB <= 94.5,
+  CSS 4.18 kB <= 5, entry lottie-free).
+- Dash guard: no U+2013/U+2014 in `src/` or `e2e/` (rg scan clean).

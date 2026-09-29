@@ -165,6 +165,9 @@ export async function runDescribeAndChooseImageRound(
       'picture-pair-matching',
       'phonics-sound-choice',
       'phonics-word-choice',
+      'phonics-final-choice',
+      'phonics-blend-choice',
+      'phonics-rhyme-choice',
     ]);
 
     if (kind === 'picture-pair-matching') {

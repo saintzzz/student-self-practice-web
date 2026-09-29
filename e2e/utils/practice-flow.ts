@@ -46,7 +46,10 @@ export type RoundQuestionKind =
   | 'describe-and-choose-image'
   | 'picture-pair-matching'
   | 'phonics-sound-choice'
-  | 'phonics-word-choice';
+  | 'phonics-word-choice'
+  | 'phonics-final-choice'
+  | 'phonics-blend-choice'
+  | 'phonics-rhyme-choice';
 
 export interface Fraction {
   current: number;

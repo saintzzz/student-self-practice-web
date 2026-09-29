@@ -571,3 +571,93 @@ No design surface (owned by BA/Tech Lead/Dev/Tester, listed for completeness): A
 - Human decisions resolved at the design gate: DS-4 approved B (60 px at <=420 px height; PRD patched), DS-2 confirmed loop per AC-2.1 (capped loop may return as a later CR). All other DS items are Designer rulings, reversible.
 - Tech Lead to confirm: DS-3 `onImageError` prop, DS-9 circuit breaker, 2500 ms timeout, `setup.ts` mock allowlist status, file locations (9.2), `hasLottie` key-set format.
 - PM note: dispatch assumptions corrected in DS-5 (Credits location) and DS-11 (76 px targets, BR-09 citation).
+
+---
+
+## 13. CR-06 design addendum - phonics nang sau (final sounds / blends / rhyming)
+
+Scope: three new phonics question kinds added to the CR-03 phonics block
+inside Round 4 (PRD section 15). Everything below reuses the CR-03
+phonics screen contract unless noted - same question-card shell, same
+option-button grid, same FeedbackPanel.
+
+### 13.1 Learning flows
+
+| Skill | Sees | Hears (TTS) | Does | Skill exercised |
+|-------|------|-------------|------|-----------------|
+| `phonics-final-choice` | word + picture, prompt "Từ này kết thúc bằng âm nào?" | the WORD (never a bare letter name - AC-Pd8) | picks 1 of 4 letter/digraph options | segment the ending sound |
+| `phonics-blend-choice` | word + picture, prompt "Từ này bắt đầu bằng cụm âm nào?" | the WORD | picks 1 of 4 cluster options (2-3 letters) | isolate the initial blend |
+| `phonics-rhyme-choice` | prompt word + picture, prompt "Từ nào có vần giống từ này?" | the prompt WORD | picks 1 of 4 WORD options | compare sound + spelling endings |
+
+Rationale (Designer ruling): all three are "hear/see the word, pick the
+answer" shaped - identical cognitive frame to CR-03 sound-choice, so the
+child reuses an already-learned interaction instead of learning a new
+one. The rhyme kind's options are WORD TEXT, not pictures: rhyming is a
+sound+spelling skill and a picture would hide the rime ending the child
+must compare (BA ruling 15.2, confirmed Designer).
+
+### 13.2 Prompt wording (Vietnamese-first, no English UI copy)
+
+- Final: `Từ này kết thúc bằng âm nào?` - mirrors CR-03's
+  `Từ này bắt đầu bằng âm nào?` so the pair reads as two directions of
+  the same skill.
+- Blend: `Từ này bắt đầu bằng cụm âm nào?` - "cụm âm" (cluster) chosen
+  over "âm đôi"/"phụ âm đôi" because blends can be 3 letters (str, thr).
+- Rhyme: `Từ nào có vần giống từ này?` - "vần" is the word Vietnamese
+  phonics lessons use for rhyming word families.
+
+### 13.3 Option layouts and states
+
+- Final + blend options: same 4-tile letter grid as
+  `PhonicsSoundChoiceQuestion` (`grid-cols-2 sm:grid-cols-4`,
+  `text-3xl font-extrabold`, `getOptionButtonClassName` for
+  default/hover/correct/incorrect states). One shared component
+  (`PhonicsEndingChoiceQuestion`) renders both kinds; prompt text and
+  option aria-label prefix switch on `question.kind`.
+- Rhyme options: 2x2 word grid (`grid-cols-2`, `text-2xl` at phone
+  landscape heights) - words are wider than letters so the grid stays
+  2-column at all breakpoints.
+- Post-answer states unchanged: clicked-wrong option gets incorrect
+  styling, correct option reveals, all options disable, FeedbackPanel
+  shows explanation + correct-word picture (AC-Pd8).
+
+### 13.4 Audio/TTS behavior
+
+- The only TTS surface is the prompt word via `useAudioPlayback` +
+  `speakWord` (same hook contract as every TTS kind): `🔊 Nghe` ->
+  `🔁 Nghe lại`, `AudioPlaybackWarning` on failure.
+- Option buttons are never spoken: a bare letter name ("c" -> "see")
+  would mislead on final/blend kinds, and letting the child hear each
+  rhyme option would leak the answer by ear alone (the skill must also
+  engage spelling).
+- No `getSoundUtterance` use on these kinds - that helper exists for
+  sound-choice where the sound IS the payload; here the word is.
+
+### 13.5 Accessibility
+
+- Final/blend option buttons carry explicit aria-labels naming the
+  option (`âm t`, `cụm fr`) - same contract as CR-03 (`âm c`), because a
+  bare letter/cluster glyph is not a self-describing accessible name.
+- Rhyme option buttons carry their word text as the accessible name
+  (implicit, no aria-label needed - the visible word IS the name).
+- Prompt word picture stays `aria-hidden` with `EmojiVisual animated`
+  (reward-context single image - Lottie allowed per BR-03).
+- Reduced-motion honored via EmojiVisual's existing chain.
+
+### 13.6 Responsive
+
+- Inherits the QuestionCard/BatchScreen landscape-phone contract
+  (`[@media(max-height:420px)]` shrink on emoji 6xl->5xl, word
+  4xl->3xl, vertical padding). Rhyme words get the same height-fallback
+  (2xl->xl).
+
+### 13.7 Designer rulings (CR-06)
+
+- DS-P1: ONE component (`PhonicsEndingChoiceQuestion`) renders
+  final+blend rather than two near-identical files - kind-keyed prompt
+  text, same shell. `Ruling: Designer - shared component keeps the
+  CR-03 layout contract in a single place.`
+- DS-P2: rhyme options are words, not pictures (BA 15.2 confirmed) -
+  see 13.1. `Ruling: Designer, confirmed.`
+- DS-P3: no per-option audio on any CR-06 kind (13.4). `Ruling:
+  Designer - answer leakage + letter-name mispronunciation risk.`

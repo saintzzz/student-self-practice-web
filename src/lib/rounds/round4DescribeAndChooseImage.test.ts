@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ROUND_4_DESCRIBE_COUNT,
   ROUND_4_PAIR_MATCHING_COUNT,
+  ROUND_4_PHONICS_FINAL_COUNT,
   ROUND_4_PHONICS_SOUND_COUNT,
   ROUND_4_PHONICS_WORD_COUNT,
   ROUND_4_QUESTION_COUNT,
@@ -20,6 +21,18 @@ const ROUND4_KINDS = [
   'picture-pair-matching',
   'phonics-sound-choice',
   'phonics-word-choice',
+  'phonics-final-choice',
+  'phonics-blend-choice',
+  'phonics-rhyme-choice',
+] as const;
+
+/** Kinds guaranteed in every Round 4 draw under the CR-06 composition. */
+const ALWAYS_PRESENT_KINDS = [
+  'describe-and-choose-image',
+  'picture-pair-matching',
+  'phonics-sound-choice',
+  'phonics-word-choice',
+  'phonics-final-choice',
 ] as const;
 
 describe('buildRound4Questions', () => {
@@ -30,18 +43,33 @@ describe('buildRound4Questions', () => {
     expect(questions.every((q) => (ROUND4_KINDS as readonly string[]).includes(q.kind))).toBe(true);
   });
 
-  it('AC31 + CR-03: includes every Round 4 kind in every draw', () => {
+  it('AC31 + CR-06: includes every always-present kind plus exactly one alternating blend/rhyme slot in every draw', () => {
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const questions = buildRound4Questions(seed);
       const kinds = new Set(questions.map((q) => q.kind));
 
-      for (const kind of ROUND4_KINDS) {
+      for (const kind of ALWAYS_PRESENT_KINDS) {
         expect(kinds.has(kind), `seed ${seed} must include ${kind}`).toBe(true);
       }
+      const alternating =
+        (kinds.has('phonics-blend-choice') ? 1 : 0) + (kinds.has('phonics-rhyme-choice') ? 1 : 0);
+      expect(alternating, `seed ${seed} must include exactly one of blend/rhyme`).toBe(1);
     }
   });
 
-  it('splits the mix per the documented ratio (4 describe / 3 pair-matching / 2 sound-choice / 1 word-choice)', () => {
+  it('CR-06: both blend and rhyme appear across seeds (seed-parity alternation, never starved)', () => {
+    const seen = new Set<string>();
+    for (const seed of ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10']) {
+      for (const q of buildRound4Questions(seed)) {
+        if (q.kind === 'phonics-blend-choice' || q.kind === 'phonics-rhyme-choice') {
+          seen.add(q.kind);
+        }
+      }
+    }
+    expect(seen).toEqual(new Set(['phonics-blend-choice', 'phonics-rhyme-choice']));
+  });
+
+  it('splits the mix per the documented ratio (3 describe / 3 pair-matching / 1 sound / 1 word / 1 final / 1 blend-or-rhyme)', () => {
     const questions = buildRound4Questions('seed-ratio');
 
     const count = (kind: string) => questions.filter((q) => q.kind === kind).length;
@@ -49,6 +77,8 @@ describe('buildRound4Questions', () => {
     expect(count('picture-pair-matching')).toBe(ROUND_4_PAIR_MATCHING_COUNT);
     expect(count('phonics-sound-choice')).toBe(ROUND_4_PHONICS_SOUND_COUNT);
     expect(count('phonics-word-choice')).toBe(ROUND_4_PHONICS_WORD_COUNT);
+    expect(count('phonics-final-choice')).toBe(ROUND_4_PHONICS_FINAL_COUNT);
+    expect(count('phonics-blend-choice') + count('phonics-rhyme-choice')).toBe(1);
   });
 
   it('every describe-and-choose-image question has a valid descriptionType, 4 options and a non-empty explanation', () => {

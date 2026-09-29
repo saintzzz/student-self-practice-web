@@ -79,29 +79,55 @@ describe('PronunciationRecordingQuestion', () => {
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
   });
 
-  it('renders mic-permission-denied-message and does not crash when getUserMedia rejects, with a working skip', async () => {
-    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockRejectedValue(new Error('Permission denied'));
+  it('renders mic-permission-denied-message and does not crash when SpeechRecognition reports not-allowed, with a working skip', async () => {
+    const original = { ...testWindow() };
+    class DeniedRecognitionStub {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: unknown) => void) | null = null;
+      onend: (() => void) | null = null;
+
+      start(): void {
+        setTimeout(() => {
+          this.onerror?.({ error: 'not-allowed' });
+          this.onend?.();
+        }, 0);
+      }
+
+      stop(): void {}
+      abort(): void {}
+    }
+    testWindow().SpeechRecognition = DeniedRecognitionStub;
+    testWindow().webkitSpeechRecognition = DeniedRecognitionStub;
 
     const onSubmit = vi.fn();
     const user = userEvent.setup();
-    render(
-      <PronunciationRecordingQuestion
-        question={PRONUNCIATION_QUESTION}
-        hasAnswered={false}
-        transcript={null}
-        score={null}
-        isCorrect={null}
-        onSubmit={onSubmit}
-      />,
-    );
+    try {
+      render(
+        <PronunciationRecordingQuestion
+          question={PRONUNCIATION_QUESTION}
+          hasAnswered={false}
+          transcript={null}
+          score={null}
+          isCorrect={null}
+          onSubmit={onSubmit}
+        />,
+      );
 
-    await user.click(screen.getByTestId('record-button'));
+      await user.click(screen.getByTestId('record-button'));
 
-    await waitFor(() => expect(screen.getByTestId('mic-permission-denied-message')).toBeVisible());
-    expect(screen.queryByTestId('record-button')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('mic-permission-denied-message')).toBeVisible());
+      expect(screen.queryByTestId('record-button')).not.toBeInTheDocument();
 
-    await user.click(screen.getByTestId('pronunciation-skip-button'));
-    expect(onSubmit).toHaveBeenCalledWith('');
+      await user.click(screen.getByTestId('pronunciation-skip-button'));
+      expect(onSubmit).toHaveBeenCalledWith('');
+    } finally {
+      testWindow().SpeechRecognition = original.SpeechRecognition;
+      testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
+    }
   });
 
   it('renders the pronunciation-feedback panel instead of the record control once answered', () => {

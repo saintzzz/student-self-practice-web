@@ -13,6 +13,8 @@ import DescribeAndChooseImageQuestion from './DescribeAndChooseImageQuestion';
 import PicturePairMatchingQuestion from './PicturePairMatchingQuestion';
 import PhonicsSoundChoiceQuestion from './PhonicsSoundChoiceQuestion';
 import PhonicsWordChoiceQuestion from './PhonicsWordChoiceQuestion';
+import PhonicsEndingChoiceQuestion from './PhonicsEndingChoiceQuestion';
+import PhonicsRhymeChoiceQuestion from './PhonicsRhymeChoiceQuestion';
 import FeedbackPanel from './FeedbackPanel';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 
@@ -141,6 +143,25 @@ function renderQuestionBody(
           onSelectOption={onSubmitOption}
         />
       );
+    case 'phonics-final-choice':
+    case 'phonics-blend-choice':
+      return (
+        <PhonicsEndingChoiceQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
+    case 'phonics-rhyme-choice':
+      return (
+        <PhonicsRhymeChoiceQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
   }
 }
 
@@ -155,12 +176,15 @@ function feedbackPictureWordId(question: Question): string | undefined {
     case 'extra-letter':
     case 'listening-sentence-fill-blank':
     case 'phonics-sound-choice':
+    case 'phonics-final-choice':
+    case 'phonics-blend-choice':
       return question.wordId;
     case 'counting-image':
       return question.promptWordId;
     case 'listening-image-choice':
     case 'describe-and-choose-image':
     case 'phonics-word-choice':
+    case 'phonics-rhyme-choice':
       return question.optionWordIds[question.correctIndex];
     default:
       return undefined;

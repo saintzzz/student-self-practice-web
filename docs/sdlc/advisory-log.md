@@ -274,3 +274,74 @@ Format: Objection/Options/Ruling. Mọi quyết định vật liệu ghi ở đ�
 - Final gates: targeted vitest 60/60, full unit suite 588/589 (baseline
   mic-permission-denied debt only), e2e 49/49, tsc/build clean, bundle
   budget 89.25kB <= 94.5.
+
+## A-20: Baseline debt mic-permission-denied RESOLVED (2026-09-29)
+
+- Root cause (confirmed by re-running the test): component intentionally
+  dropped the getUserMedia pre-flight in commit 66e2a2c (double mic
+  requests caused flaky failures on Android Chrome); permission denial
+  now surfaces via SpeechRecognition.onerror 'not-allowed' ->
+  onPermissionError -> phase 'permission-denied'. The stale test still
+  mocked getUserMedia, so the denial path never ran.
+- Fix applied per project-plan WBS 10b (test-only): the test now stubs
+  window.SpeechRecognition to fire onerror({error:'not-allowed'}) on
+  start(); asserts mic-permission-denied-message + working skip.
+- Verified: pronunciation/hook/lib suite 25/25 green. Production code
+  untouched; requestMicrophonePermission kept (documented API, covered
+  by its own unit tests) per the WBS 10b "do not touch production code"
+  ruling.
+
+## A-21: Human rulings for CR-06..CR-09 intake (2026-09-29)
+
+- **CR-07 content series:** Global Success (Ket Noi Tri Thuc) is the
+  primary skeleton (~60%); Cambridge Starters/Movers/Flyers theme words
+  supplement (~30%); other series (Friends Plus, Canh Dieu) referenced
+  where they overlap (~10%). Human answer: "60% A, 30% B, 10% C".
+- **CR-08 backend:** Supabase (Auth + Postgres + RLS). Constitution #4
+  ("same-origin, zero third-party runtime") will be amended at BA to
+  allow Supabase API calls - visual assets stay same-origin.
+- **CR-08 roles model:** admin + student (admin-issued username + PIN,
+  no email) AND guest practice allowed (try-before-login for marketing).
+  Teacher role deferred.
+- **Sequencing:** CR-06 phonics -> CR-09 UI refresh -> CR-07 grades 1-5
+  -> CR-08 accounts. The Designer phase for CR-09 covers the whole
+  target state including future login/admin screens so later screens
+  inherit the design system.
+
+## A-22: CR-06 phonics nang sau - pipeline rulings (2026-09-29)
+
+- **BA (PRD section 15):** three new derived phonics dimensions
+  (final sound, initial blend, rhyme group) + three new question kinds
+  + Round 4 re-composition. Data audit run first: 61 blend words / 21
+  clusters, 62 spelled-rime families (with false-positives needing a
+  corrections table), 59 silent-e words.
+- **Final-sound letter-level convention (BA 15.6):** groups key by the
+  letter the ending sounds like at Grade 2 level - `-se/-ce` -> `s`,
+  `-ge` -> `j`, `ck` -> `k`; voiced/unvoiced nuance (nose/cheese) is an
+  accepted residual at this level. Exceptions: eye->e, climb->m,
+  laugh->f.
+- **Rhyme model:** spelled-rime default + audit-driven overrides.
+  Bank-wide script enumerated every family; false-positive pairs split
+  (mountain/rain, elephant/ant, two/piano, cow/snow, fly/happy, ...),
+  true cross-spelling rhymes merged (plane->ain, square+chair->ear,
+  one->un, bread->ed, two/shoe/canoe/blue/kangaroo->u-long,
+  cry/fly/butterfly->i-rime). Containment exclusion: "hot dog"/"dog",
+  "notebook"/"book", "jellyfish"/"fish" never count as rhyme pairs.
+- **Designer (design-spec section 13):** prompt copy "Từ này kết thúc
+  bằng âm nào?" / "Từ này bắt đầu bằng cụm âm nào?" / "Từ nào có vần
+  giống từ này?"; final+blend share one component (kind-keyed prompt);
+  rhyme options are WORD text (not pictures - the rime must stay
+  visible); NO per-option TTS anywhere (bare letters mispronounce and
+  spoken rhyme options would leak the answer).
+- **Tech Lead (architecture section 9):** three derivation modules +
+  `generators/phonicsDeep.ts` (same pool-per-word contract as CR-03),
+  additive question types, `submitOptionAnswer` reuse (no new submit
+  path), `getCorrectWord`/`feedbackPictureWordId` extended (rhyme
+  picture = the correct rhyming word, not the prompt).
+- **Round 4 mix (ruling 15.3 A applied):** 3 describe + 3 pair + 4
+  phonics (sound/word/final + alternating blend-or-rhyme by seed
+  parity). Test asserts both alternating kinds appear across 10 seeds.
+- **Env note:** `@playwright/test` pinned to `1.55.0` - npm `^1.47.2`
+  resolved 1.62.x which ships no Chromium for macOS 12; 1.55.0 requests
+  headless-shell-1187 already cached on this machine. Documented for
+  the team's mac12 dev boxes; revisit on newer macOS.

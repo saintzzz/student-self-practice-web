@@ -1403,3 +1403,118 @@ rulings at the requirements gate (all 2026-09-29):
   FeedbackPanel with the correct word picture, and announce picture
   options via emoji aria-label (CR-02 pattern); phonics-word-choice reuses
   the all-or-nothing photo group (AC-5.2/5.3).
+
+## 15. CR-06 delta: Phonics nang sau - final sounds, blends, rhyming (intake 2026-09-29)
+
+CR-06 extends the phonics dimension (CR-03, section 14) with three new
+phonics skills. Human request 2026-09-29: "trien khai CR: phonics nang
+sau (am cuoi/blend/rhyming)". BA analysis below; rulings marked.
+
+### 15.1 Data model (derived dimensions, same D-Ph1 pattern)
+
+No VocabWord field changes; the bank and baseline fixtures stay
+untouched. Three new pure-derivation modules under `src/lib/phonics/`:
+
+- `finalSounds.ts` -> `getFinalSound(word)`: the last sounded
+  consonant/digraph of the word's final token. Default rule = last
+  letter; silent-e endings strip the trailing 'e' and re-derive
+  (cake->k, five->v, slide->d, grape->p, kite->t); ending digraphs win
+  over single letters (sh, ch, th, ng, ck->k); doubled endings collapse
+  to the single letter (-ll->l, -ss->s, -ff->f, -zz->z). Exceptions
+  table for the bank's remaining spelling-vs-sound mismatches
+  (mouse->s, juice->s, house->s via the -se/-ce->s rule; giraffe->f;
+  orange->j). Vowel-final words group by the final vowel letter, same
+  grouping-label convention as AC-Ph1.
+- `blends.ts` -> `getInitialBlend(word)`: the leading consonant cluster
+  of the first token (2- or 3-letter), or null. Bank audit 2026-09-29:
+  61 of 326 words carry a blend across 21 clusters: bl, br, cl, cr, dr,
+  fl, fr, gl, gr, pl, pr, sc, sk, sl, sn, sp, st, str, sw, tr, tw.
+- `rhymes.ts` -> `getRhymeGroup(word)`: the rime family the word belongs
+  to, keyed by its spelled ending (e.g. 'ake', 'ook', 'at', 'uck'), or
+  null when no other bank word shares it. Rhyming is sound-based, so a
+  corrections table removes spelling-matches that do not rhyme
+  (juice -/-> dice/rice; mountain -/-> rain/train; scared -/-> red/bed)
+  and an explicit family list may merge differently-spelled true rhymes
+  if the bank contains any (none found in the 2026-09-29 audit beyond
+  the corrections above). Bank audit: 58 families with >= 2 words
+  (-ake snake/cake/pancake/cupcake, -all, -ear, -ook, -ite, -ree,
+  -ket, -oon, -uck, -eep, -oat, -en, -ed, -oot, -at cat/hat, -og,
+  -ish, -ant, -ger, -key, -olf, -use, -rot, -own, -ad, -her, -and,
+  -ice dice/rice, -ain rain/train, -ing, -ock, -ion, -ter, -ple, -ar,
+  -der, -nge, -rry, -ach...).
+
+`Ruling: BA provisional - final-sound and blend/sound groups stay at
+letter level (spelling-with-exceptions), consistent with AC-Ph1's
+grouping-label convention; voiced/unvoiced pairs (-se as s not z) are
+accepted residual at this level.` Human may override at gate.
+
+### 15.2 Question kinds (additive)
+
+- `phonics-final-choice`: prompt word + picture + TTS (speaks the word);
+  4 text options, correct = getFinalSound(word); distractors from the
+  bank's final-sound universe, none sharing a phoneme with the answer
+  (same-phoneme exclusion reused from CR-03: a 'c' option can never
+  appear beside a 'k' answer and vice versa; -ck->k words make 'k'
+  answers common). UI = PhonicsSoundChoiceQuestion layout, prompt
+  "Tu nay ket thuc bang am nao?".
+- `phonics-blend-choice`: same layout; 4 blend options, correct =
+  getInitialBlend(word); only generated for blend words; distractors
+  are other blends present in the bank (never bare single letters -
+  the skill is isolating the cluster). Prompt
+  "Tu nay bat dau bang cum am nao?".
+- `phonics-rhyme-choice`: prompt word + picture + TTS; 4 WORD-text
+  options, exactly one shares the target's rhyme group; distractor
+  words carry optionWordIds (AC-5.8 pattern) for the FeedbackPanel
+  picture of the correct rhyming word. Options exclude the target word
+  itself and any word sharing the target's emoji (BR-15-style: pictures
+  are not the answer surface but identical emoji would confuse the
+  feedback picture). Prompt "Nghe roi chon tu co van giong nhe!".
+
+`Ruling: BA provisional - rhyme options are text words, not pictures:
+rhyming is a sound+spelling skill for grades 2-3 and picture options
+would hide the rime ending the child must compare.` Human may override.
+
+### 15.3 Round 4 composition (options matrix)
+
+| Option | Mix | Strengths | Weaknesses |
+|--------|-----|-----------|------------|
+| A | 3 describe + 3 pair + 4 phonics (1 sound + 1 word + 1 final + 1 blend-or-rhyme picked by seed parity) | Keeps 10 questions; all new kinds appear; describe share drops 4->3 | Blend vs rhyme alternates per Batch |
+| B | 4 describe + 3 pair + 3 phonics drawn from all 5 kinds | Minimal change | A kind can vanish for a whole Batch |
+| C | Bump Round 4 to 11-12 questions | Nothing lost | Breaks the ~10-question convention everywhere |
+
+`Ruling: BA provisional A - every phonics skill surfaces in every
+Batch and the total stays 10; describe drops to 3 (it is the kind
+with the most per-question interaction cost already).` Human may
+override at gate.
+
+### 15.4 ACs (CR-06)
+
+- AC-Pd1: getFinalSound maps every bank word to a final-sound key
+  (letter or digraph) per the rule + exceptions; silent-e words resolve
+  to the preceding sounded letter; -ck->k; -ng stays 'ng'; doubled
+  endings collapse; a bank-wide test lists every exception-table word.
+- AC-Pd2: getInitialBlend returns the cluster for all 61 blend words
+  and null for non-blend words; bank-wide test proves the full list.
+- AC-Pd3: getRhymeGroup partitions the bank into families; every word
+  in a family rhymes in pronunciation (corrections table enforced:
+  juice does not group with dice/rice, mountain not with rain/train);
+  every >= 2 family is listed in the test.
+- AC-Pd4: phonics-final-choice emits 4 distinct options, correct =
+  getFinalSound(word), distractors exist in the bank's final-sound
+  universe and none share a phoneme with the answer.
+- AC-Pd5: phonics-blend-choice emits 4 distinct blend options for every
+  blend word and none for non-blend words.
+- AC-Pd6: phonics-rhyme-choice emits 4 word options where exactly one
+  rhymes with the target, none is the target itself, optionWordIds
+  resolve (AC-5.8 parity) and the FeedbackPanel picture is the correct
+  rhyming word's.
+- AC-Pd7: Round 4 draws 3 describe + 3 pair-matching + 4 phonics per
+  ruling 15.3 A, topic-stratified and seeded; blend/rhyme slot
+  alternates by seed so both appear across batches.
+- AC-Pd8: all new kinds answer via the shared option-submit path, show
+  FeedbackPanel with the correct word picture (final/blend: the
+  prompt word's; rhyme: the correct option word's), and TTS drives the
+  prompt (word for final/blend/rhyme; no bare-letter utterances -
+  final-sound prompts read the WORD, not the sound key).
+- AC-Pd9: e2e helper coverage for the three new kinds; no regression in
+  the 588-test unit suite or the 49-test e2e suite.

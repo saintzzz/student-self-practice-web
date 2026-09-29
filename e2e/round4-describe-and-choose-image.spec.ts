@@ -5,7 +5,15 @@ import { answerOptionQuestion, currentDescriptionType, optionButtons } from './u
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 import { forceMistakeLimitExceeded } from './utils/pair-matching-flow';
 
-const ROUND4_KINDS = ['describe-and-choose-image', 'picture-pair-matching', 'phonics-sound-choice', 'phonics-word-choice'] as const;
+const ROUND4_KINDS = [
+  'describe-and-choose-image',
+  'picture-pair-matching',
+  'phonics-sound-choice',
+  'phonics-word-choice',
+  'phonics-final-choice',
+  'phonics-blend-choice',
+  'phonics-rhyme-choice',
+] as const;
 
 /**
  * Covers plan.md v5/v6 Round 4 (describe-and-choose-image -- AC20, AC25,

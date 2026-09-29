@@ -11,6 +11,9 @@ import {
   LISTENING_IMAGE_CHOICE_QUESTION,
   LISTENING_QUESTION,
   LISTENING_SENTENCE_QUESTION,
+  PHONICS_BLEND_CHOICE_QUESTION,
+  PHONICS_FINAL_CHOICE_QUESTION,
+  PHONICS_RHYME_CHOICE_QUESTION,
   PHONICS_SOUND_CHOICE_QUESTION,
   PHONICS_WORD_CHOICE_QUESTION,
   PICTURE_PAIR_MATCHING_QUESTION,
@@ -29,6 +32,8 @@ vi.mock('../lib/emoji/wordVisual', () => ({
       'fixture-dog': '🐶',
       'fixture-fish': '🐟',
       'fixture-bird': '🐦',
+      'fixture-frog': '🐸',
+      'fixture-hat': '🎩',
     };
     const emoji = emojiById[wordId];
     return emoji ? { emoji } : undefined;
@@ -94,6 +99,24 @@ describe('FeedbackPanel correct-word picture (AC-10.1)', () => {
       question: PHONICS_WORD_CHOICE_QUESTION,
       answer: { isCorrect: true, selectedIndex: 0 },
       expectedEmoji: '🐱', // optionWordIds[0]
+    },
+    {
+      label: 'phonics-final-choice (wordId)',
+      question: PHONICS_FINAL_CHOICE_QUESTION,
+      answer: { isCorrect: true, selectedIndex: 0 },
+      expectedEmoji: '🐱', // wordId: fixture-cat
+    },
+    {
+      label: 'phonics-blend-choice (wordId)',
+      question: PHONICS_BLEND_CHOICE_QUESTION,
+      answer: { isCorrect: true, selectedIndex: 0 },
+      expectedEmoji: '🐸', // wordId: fixture-frog
+    },
+    {
+      label: 'phonics-rhyme-choice (optionWordIds[correctIndex])',
+      question: PHONICS_RHYME_CHOICE_QUESTION,
+      answer: { isCorrect: true, selectedIndex: 0 },
+      expectedEmoji: '🎩', // optionWordIds[0] = fixture-hat
     },
   ];
 

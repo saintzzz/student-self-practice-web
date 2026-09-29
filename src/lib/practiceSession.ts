@@ -61,9 +61,14 @@ export function getCorrectWord(question: Question): string {
     case 'picture-pair-matching':
       return question.pairs.map((pair) => `${pair.word} - ${pair.emoji}`).join(', ');
     case 'phonics-sound-choice':
+    case 'phonics-final-choice':
       return `âm "${question.sound}"`;
+    case 'phonics-blend-choice':
+      return `cụm "${question.blend}"`;
     case 'phonics-word-choice':
       return question.word;
+    case 'phonics-rhyme-choice':
+      return question.options[question.correctIndex];
   }
 }
 
@@ -109,7 +114,10 @@ export function submitOptionAnswer(
       currentQuestion.kind !== 'describe-and-choose-image' &&
       currentQuestion.kind !== 'listening-image-choice' &&
       currentQuestion.kind !== 'phonics-sound-choice' &&
-      currentQuestion.kind !== 'phonics-word-choice')
+      currentQuestion.kind !== 'phonics-word-choice' &&
+      currentQuestion.kind !== 'phonics-final-choice' &&
+      currentQuestion.kind !== 'phonics-blend-choice' &&
+      currentQuestion.kind !== 'phonics-rhyme-choice')
   ) {
     return state;
   }

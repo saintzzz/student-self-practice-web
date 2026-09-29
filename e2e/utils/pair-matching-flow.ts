@@ -58,6 +58,9 @@ const ROUND4_KINDS: RoundQuestionKind[] = [
   'picture-pair-matching',
   'phonics-sound-choice',
   'phonics-word-choice',
+  'phonics-final-choice',
+  'phonics-blend-choice',
+  'phonics-rhyme-choice',
 ];
 
 export function pairTiles(page: Page): Locator {

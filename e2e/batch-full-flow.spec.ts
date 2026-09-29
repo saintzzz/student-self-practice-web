@@ -71,12 +71,15 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
         const roundProgress = await readRoundProgress(page);
         expect(roundProgress.current).toBe(4);
         await expect(questionCard(page)).toBeVisible();
-        // CR-03: Round 4's first question may be any of the 4 mixed kinds.
+        // CR-03/CR-06: Round 4's first question may be any of the mixed kinds.
         await currentQuestionKindOneOf(page, [
           'describe-and-choose-image',
           'picture-pair-matching',
           'phonics-sound-choice',
           'phonics-word-choice',
+          'phonics-final-choice',
+          'phonics-blend-choice',
+          'phonics-rhyme-choice',
         ]);
         return runDescribeAndChooseImageRound(page);
       });

@@ -45,7 +45,10 @@ export type QuestionKind =
   | 'listening-image-choice'
   | 'picture-pair-matching'
   | 'phonics-sound-choice'
-  | 'phonics-word-choice';
+  | 'phonics-word-choice'
+  | 'phonics-final-choice'
+  | 'phonics-blend-choice'
+  | 'phonics-rhyme-choice';
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -231,6 +234,75 @@ export interface PhonicsWordChoiceQuestion {
   explanation: string;
 }
 
+/**
+ * CR-06 phonics - final sound (PRD section 15.2): the student sees `word`
+ * plus its picture and hears it via TTS, then picks its FINAL sounded
+ * letter/digraph from `options` - same shell as PhonicsSoundChoiceQuestion
+ * but asks about the end of the word, not the start.
+ */
+export interface PhonicsFinalChoiceQuestion {
+  id: string;
+  topicId: string;
+  kind: 'phonics-final-choice';
+  word: string;
+  /** Id of the VocabWord for `word`; used to resolve the FeedbackPanel picture. */
+  wordId: string;
+  emoji: string;
+  /** The correct option - getFinalSound(word). */
+  sound: string;
+  options: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+/**
+ * CR-06 phonics - consonant blend (PRD section 15.2): the student sees
+ * `word` plus its picture and hears it via TTS, then picks its starting
+ * blend (a 2- or 3-letter consonant cluster like 'st' or 'str') from
+ * `options`. Only words where getInitialBlend(word) is non-null produce
+ * these questions.
+ */
+export interface PhonicsBlendChoiceQuestion {
+  id: string;
+  topicId: string;
+  kind: 'phonics-blend-choice';
+  word: string;
+  /** Id of the VocabWord for `word`; used to resolve the FeedbackPanel picture. */
+  wordId: string;
+  emoji: string;
+  /** The correct option - getInitialBlend(word). */
+  blend: string;
+  options: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+/**
+ * CR-06 phonics - rhyming (PRD section 15.2): the student sees/hears the
+ * prompt word, then picks the option word that rhymes with it. Options are
+ * WORD text (not pictures) - rhyming is a sound+spelling skill, and hiding
+ * the rime ending behind a picture would remove what the child must
+ * compare (BA ruling 15.2). Exactly one option shares the target's rhyme
+ * group; words that merely look alike but do not rhyme are split by the
+ * rhymes.ts overrides table.
+ */
+export interface PhonicsRhymeChoiceQuestion {
+  id: string;
+  topicId: string;
+  kind: 'phonics-rhyme-choice';
+  word: string;
+  /** Id of the prompt VocabWord (for TTS/disambiguation, not the picture). */
+  wordId: string;
+  emoji: string;
+  /** The rhyme-group key the correct option shares with `word`. */
+  rhymeGroup: string;
+  options: readonly [string, string, string, string];
+  /** VocabWord ids parallel to `options` (same additive pattern as ListeningImageChoiceQuestion). */
+  optionWordIds: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
 export type Question =
   | ImageChoiceQuestion
   | ListeningFillBlankQuestion
@@ -242,7 +314,10 @@ export type Question =
   | ListeningImageChoiceQuestion
   | PicturePairMatchingQuestion
   | PhonicsSoundChoiceQuestion
-  | PhonicsWordChoiceQuestion;
+  | PhonicsWordChoiceQuestion
+  | PhonicsFinalChoiceQuestion
+  | PhonicsBlendChoiceQuestion
+  | PhonicsRhymeChoiceQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:

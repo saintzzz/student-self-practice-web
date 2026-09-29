@@ -534,3 +534,111 @@ Estimated public/ growth: ~285 SVG x ~2-8 KB + ~130 Lottie JSON x ~30-100 KB = ~
 | `sharp` | devDependency | `0.35.x` (exact) | DEP-2; WebP normalize <=512px/<=80KB, metadata strip (AC-4.4) | maintainer-machine only; never in the bundle |
 
 No other dependency changes. Node >= 18 required for scripts (native `fetch`, `node:zlib`, `node:fs`).
+
+---
+
+## 9. CR-06 addendum - phonics nang sau (final sounds / blends / rhyming)
+
+Tech Lead artifact for PRD section 15. Extends the CR-03 derived-phonics
+model (ADR pattern: dimensions derived from `word`, never stored on
+`VocabWord`) with three new dimensions and three new question kinds.
+
+### 9.1 Derivation modules (new `src/lib/phonics/` files)
+
+| Module | Contract | Rule summary |
+|--------|----------|--------------|
+| `finalSounds.ts` | `getFinalSound(word) -> letter \| digraph` | last token; exceptions table; `-ck`->`k`; digraphs sh/ch/th/ng; doubled collapse; `-ee`->`e`; silent-e strip with soft-c->s/soft-g->j; fallback last letter |
+| `blends.ts` | `getInitialBlend(word) -> cluster \| null` | first token; 3-letter list (scr/shr/spl/spr/squ/str/thr/sch) checked before 2-letter list (bl..tw, qu); digraphs and silent onsets excluded by absence |
+| `rhymes.ts` | `getRhymeGroup(word) -> key`, `rhymesWith(a,b) -> boolean` | spelled rime of last token (last vowel cluster + tail, silent-e aware) + `RHYME_OVERRIDES` word->group for false-positive splits and cross-spelling merges; containment exclusion (token run or embedded compound) inside `rhymesWith` |
+
+Final-sound letter-level convention (BA 15.6): groups key by the letter
+the ending sounds like at Grade 2 level - `-se/-ce`->`s`, `-ge`->`j`,
+`ck`->`k`; voiced/unvoiced nuance is an accepted residual.
+
+Rhyme overrides are AUDIT-DRIVEN: a deterministic script enumerated all
+58+ spelled-rime families in the bank; every family was judged by sound,
+not spelling. Notable splits (same spelling, no rhyme): mountain/rain,
+elephant/eggplant->`ant-weak` (ant alone), scared/tired/surprised/
+excited/red, two/shoe/toe spellings, cow/`-ow`, cry+fly+butterfly/`-y`,
+read/bread, lion/`-ion`, cookie/`-ie`, foot/boot, hot/`-ot`, one/`-one`,
+ear/`-ear`, island/`-and`, swan/`-an`, chocolate/`-ate`. Notable merges
+(true rhyme, different spelling): plane->`ain`, square+chair->`ear`,
+one->`un`, bread->`ed`, two+shoe+canoe+blue+kangaroo->`u-long`,
+cry+fly+butterfly->`i-rime`, calendar+caterpillar->`ar-weak`. Any word
+without a real partner gets a `solo:<word>` key and can never generate a
+rhyme question.
+
+### 9.2 Generators (new `src/lib/generators/phonicsDeep.ts`)
+
+Same pool contract as `generators/phonics.ts`: up to 2 deterministic
+variants per eligible word; Round 4 draws a stratifiedSample slice.
+
+- `generatePhonicsFinalChoiceQuestions` - every word eligible; distractor
+  universe = all bank final sounds; excludes same-phoneme keys via
+  `equivalentSounds` (c/k guard carries over to 'c'-final words like
+  mechanic/garlic).
+- `generatePhonicsBlendChoiceQuestions` - only `getInitialBlend !==
+  null` words; distractors are other bank-present blends (never bare
+  letters - the skill is isolating the cluster).
+- `generatePhonicsRhymeChoiceQuestions` - only words with >= 1 real
+  partner (`rhymesWith` over the bank) generate; the correct option is a
+  seeded partner pick; distractors must be a different group AND not
+  token/embedded-contained in the prompt (a contained word would either
+  rhyme-by-rule or visibly leak the answer); `optionWordIds` parallel to
+  options for AC-5.8 + FeedbackPanel picture.
+
+All three return the question array directly (no nulls in the pool - a
+word that cannot form a valid question simply contributes no variant).
+
+### 9.3 Question payloads (additive, `src/types/index.ts`)
+
+| Kind | Key payload fields | Correct option | FeedbackPanel picture |
+|------|--------------------|----------------|------------------------|
+| `phonics-final-choice` | word, wordId, emoji, sound, options(4 letters) | sound = `getFinalSound(word)` | `wordId` (prompt word) |
+| `phonics-blend-choice` | word, wordId, emoji, blend, options(4 clusters) | blend = `getInitialBlend(word)` | `wordId` (prompt word) |
+| `phonics-rhyme-choice` | word, wordId, emoji, rhymeGroup, options(4 words), optionWordIds | the unique rhyming option | `optionWordIds[correctIndex]` (rhyming word) |
+
+`getCorrectWord` additions: `âm "X"` (final, same format as sound), `cụm
+"X"` (blend), the rhyming option word (rhyme). `submitOptionAnswer`
+kind allowlist extended - all three score via `selectedIndex ===
+correctIndex`, no new submit path.
+
+### 9.4 Round 4 re-composition (ruling 15.3 A)
+
+`round4DescribeAndChooseImage.ts`: 3 describe + 3 pair-matching + 4
+phonics = 10. The phonics block = 1 sound + 1 word + 1 final + 1 slot
+alternating blend/rhyme by `hashString` seed parity (empty-pool fallback
+to the other kind). Every phonics sub-skill surfaces in every Batch;
+blend AND rhyme both appear across any two consecutive seeds (test
+asserts over 10 seeds).
+
+### 9.5 File map
+
+New runtime: `src/lib/phonics/{finalSounds,blends,rhymes}.ts`,
+`src/lib/generators/phonicsDeep.ts`,
+`src/components/{PhonicsEndingChoiceQuestion,PhonicsRhymeChoiceQuestion}.tsx`.
+Modified: `src/types/index.ts`, `src/lib/practiceSession.ts`
+(getCorrectWord + submitOptionAnswer), `src/components/QuestionCard.tsx`
+(routing + feedbackPictureWordId), `src/lib/rounds/round4DescribeAndChooseImage.ts`
+(composition), `src/components/questionCardFixtures.ts` (3 fixtures),
+e2e kind allow-lists (`practice-flow.ts`, `round34-flow.ts`,
+`pair-matching-flow.ts`, `batch-flow.ts`, 2 spec files).
+New tests: 3 phonics module tests, `phonicsDeep.test.ts`, 2 component
+tests; extended `questionWordIds.test.ts`,
+`QuestionCard.feedbackPicture.test.tsx`, `round4DescribeAndChooseImage.test.ts`,
+`batchSession.test.ts`, `BatchScreen.test.tsx`, `App.test.tsx`.
+
+### 9.6 Invariants enforced by tests
+
+- Bank-wide: every word maps to a letter/digraph final key; blend
+  detection returns exactly the audit cluster set; `rhymesWith` is
+  symmetric over all bank pairs; every documented false-positive pair is
+  asserted non-rhyming and every cross-spelling merge pair asserted
+  rhyming.
+- Per-question: 4 distinct options, exactly one correct (final: matches
+  derived sound and no same-phoneme distractor; blend: derived cluster
+  only; rhyme: exactly one `rhymesWith` option, prompt never among
+  options).
+- Integration: wordId/optionWordIds resolve to bank words (AC-5.8);
+  Round 4 always carries the 5 base kinds + exactly one alternating
+  slot; determinism per seed.

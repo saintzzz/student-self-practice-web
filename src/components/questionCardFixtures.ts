@@ -7,6 +7,9 @@ import type {
   ListeningFillBlankQuestion,
   ListeningImageChoiceQuestion,
   ListeningSentenceFillBlankQuestion,
+  PhonicsBlendChoiceQuestion,
+  PhonicsFinalChoiceQuestion,
+  PhonicsRhymeChoiceQuestion,
   PhonicsSoundChoiceQuestion,
   PhonicsWordChoiceQuestion,
   PicturePairMatchingQuestion,
@@ -155,6 +158,46 @@ export const PHONICS_WORD_CHOICE_QUESTION: PhonicsWordChoiceQuestion = {
   optionWordIds: ['fixture-cat', 'fixture-dog', 'fixture-fish', 'fixture-bird'],
   correctIndex: 0,
   explanation: '"cat" bắt đầu bằng âm "c".',
+};
+
+export const PHONICS_FINAL_CHOICE_QUESTION: PhonicsFinalChoiceQuestion = {
+  id: 'q12',
+  topicId: 't1',
+  kind: 'phonics-final-choice',
+  word: 'cat',
+  wordId: 'fixture-cat',
+  emoji: '🐱',
+  sound: 't',
+  options: ['t', 'p', 'g', 's'],
+  correctIndex: 0,
+  explanation: 'Từ "cat" kết thúc bằng âm "t".',
+};
+
+export const PHONICS_BLEND_CHOICE_QUESTION: PhonicsBlendChoiceQuestion = {
+  id: 'q13',
+  topicId: 't1',
+  kind: 'phonics-blend-choice',
+  word: 'frog',
+  wordId: 'fixture-frog',
+  emoji: '🐸',
+  blend: 'fr',
+  options: ['fr', 'bl', 'st', 'tr'],
+  correctIndex: 0,
+  explanation: 'Từ "frog" bắt đầu bằng cụm "fr".',
+};
+
+export const PHONICS_RHYME_CHOICE_QUESTION: PhonicsRhymeChoiceQuestion = {
+  id: 'q14',
+  topicId: 't1',
+  kind: 'phonics-rhyme-choice',
+  word: 'cat',
+  wordId: 'fixture-cat',
+  emoji: '🐱',
+  rhymeGroup: 'at',
+  options: ['hat', 'dog', 'fish', 'bird'],
+  optionWordIds: ['fixture-hat', 'fixture-dog', 'fixture-fish', 'fixture-bird'],
+  correctIndex: 0,
+  explanation: '"hat" có vần giống "cat".',
 };
 
 export const noopHandlers = {
