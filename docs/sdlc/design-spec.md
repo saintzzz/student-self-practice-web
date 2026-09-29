@@ -836,3 +836,72 @@ BUTTON_*, CHIP_*, INPUT_*, pageBg). No new colors or type styles.
 - Guest skips auth entirely: AuthScreen -> guest-button -> GradeSelect
   with all grades; a subtle "Đăng nhập" chip stays visible for
   switching to account mode.
+
+
+## 16. CR-10 design system - "Hanh trinh cua Be Heo" (2026-10-01)
+
+Grounded in docs/research-visual-identity.md. Section 14 tokens stay;
+this section defines the WORLD layer on top.
+
+### 16.1 The world
+
+One adventure map: pig travels five lands, one per grade.
+
+| Grade | Land (Vi) | Palette | Scene motifs |
+|---|---|---|---|
+| 1 | San choi (Playground) | green + sun yellow | sun, clouds, hills, swing, flowers |
+| 2 | Thi tran (Town) | sky blue + peach | houses, road, trees, kite |
+| 3 | Rung ram (Jungle) | deep green + lime | big leaves, vines, toucan-eye dots |
+| 4 | Thanh pho (City) | indigo + coral | skyline, windows, bus, pigeons |
+| 5 | Vu tru (Space) | deep navy + violet + gold | stars, planets, rocket, moon |
+
+Non-grade surfaces use the shared "sky" land (saturated azure
+gradient, drifting clouds) so login/admin/credits feel part of the
+same world.
+
+### 16.2 Surface rules (DS-T1..T5)
+
+- DS-T1 Page background = land gradient (2-3 stops) + LandScene SVG
+  pinned bottom, pointer-events-none, aria-hidden.
+- DS-T2 Content sits on "cloud cards": white 92% opacity, 24px radius,
+  colored ring per land accent, chunky shadow (no blur ambiguity).
+- DS-T3 Saturated accents only inside content chrome; max 3 bright
+  hues per view (research rule).
+- DS-T4 Journey map: land cards zigzag (alternating left/right offset
+  on sm+, single column on mobile) with dotted path between them -
+  reads as a journey, not a settings list.
+- DS-T5 Locked-vs-earned legibility: star counts on land cards; zero-
+  star lands still fully playable (no locking - guest rule).
+
+### 16.3 Reward moments (DS-R1..R4)
+
+- DS-R1 Correct answer: ConfettiBurst - ~14 particles (circles +
+  squares, palette of 5) radiating from the feedback banner, 700ms,
+  transform+opacity only; reduced-motion = none. Mascot happy.
+- DS-R2 Wrong answer: no particles; mascot encouraging; rose banner
+  unchanged (status semantics frozen).
+- DS-R3 Round end: StarRain - 0-3 gold stars drop in sequence with
+  squash-bounce onto the points chip; reduced-motion = stars render
+  already landed. Points chip keeps amber semantics.
+- DS-R4 Batch end: ChestReveal - sticker chest (emoji + CSS) opens,
+  +stars ticker counts up, newly earned stickers slide in as chips;
+  reduced-motion = final state immediately.
+
+### 16.4 Stickers
+
+Emoji-based achievements (Twemoji already vendored): first batch
+🏅, 3-star round 🌟, 3-day streak 🔥, all-grades visited 🗺️,
+500-star bank 💎. Album panel on journey map: earned in color,
+locked at 30% opacity with "???" name.
+
+### 16.5 Mascot
+
+Moods (existing): greeting/happy/encouraging/celebrating/thinking.
+Land accessory tint: a tiny colored band behind the mascot per land
+(themed halo) - emoji itself stays Twemoji. On space land the halo is
+a starfield ring.
+
+### 16.6 Copy
+
+All VN copy hyphen-only. Land names on cards: "Lop 1 - San choi" etc.
+Streak chip label: "x ngay lien tiep". Star chip: "x sao".

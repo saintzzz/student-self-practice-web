@@ -1,11 +1,23 @@
+import { useEffect, useRef, useState } from 'react';
 import type { BatchResult } from '../lib/batch/batchSession';
 import { getScoreStatus } from '../lib/batch/scoreStatus';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { CARD, H1, H2, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import Mascot from './Mascot';
+import ChestReveal from './celebrations/ChestReveal';
+import {
+  checkStreakStickers,
+  getState,
+  recordBatchResult,
+  touchStreak,
+  type BatchAwardResult,
+  type Sticker,
+} from '../lib/engagement/store';
 
 interface BatchSummaryProps {
   result: BatchResult;
+  /** CR-10: the land this batch was played in. */
+  gradeId: string;
   onStartNewBatch: () => void;
   onChooseGrade: () => void;
 }
@@ -15,15 +27,39 @@ interface BatchSummaryProps {
  * plan.md v10: points is now the headline metric, matching IOE's own
  * raw-point-total convention, with the existing correct-count line kept as
  * a secondary detail).
+ *
+ * CR-10 DS-R4: one chest award per mount (ref guard for StrictMode):
+ * +2 chest stars, batch completion, day streak and sticker checks.
  */
-export default function BatchSummary({ result, onStartNewBatch, onChooseGrade }: BatchSummaryProps) {
+export default function BatchSummary({ result, gradeId, onStartNewBatch, onChooseGrade }: BatchSummaryProps) {
   const status = getScoreStatus(result.points, result.maxPoints);
+  const awarded = useRef<{ batch: BatchAwardResult; streakStickers: Sticker[]; totalStars: number } | null>(null);
+  const [award, setAward] = useState(awarded.current);
+
+  useEffect(() => {
+    if (!awarded.current) {
+      const batch = recordBatchResult(gradeId);
+      touchStreak();
+      const streakStickers = checkStreakStickers();
+      awarded.current = { batch, streakStickers, totalStars: getState().totalStars };
+      setAward(awarded.current);
+    }
+  }, [gradeId]);
+
+  const newStickers = award ? [...award.batch.newStickers, ...award.streakStickers] : [];
 
   return (
     <div className={`mx-auto max-w-2xl px-4 py-12 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
       <Mascot mood="celebrating" />
       <h1 className={`mb-3 ${H1}`}>Hoàn thành bài luyện tập!</h1>
+      {award && (
+        <ChestReveal
+          chestStars={award.batch.chestStars}
+          totalStars={award.totalStars}
+          newStickers={newStickers}
+        />
+      )}
       <p className="mb-1 flex justify-center">
         <span
           data-testid="batch-points-summary"

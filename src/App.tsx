@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
 import StartBatchScreen from './components/StartBatchScreen';
 import BatchScreen from './components/BatchScreen';
 import CreditsScreen from './components/CreditsScreen';
 import AuthScreen from './components/AuthScreen';
 import AdminScreen from './components/AdminScreen';
+import LandShell from './components/LandShell';
 import { isSupabaseConfigured } from './lib/supabase/client';
 import {
   fetchMyAccount,
@@ -173,30 +174,36 @@ export default function App() {
     setBatch(endRoundEarly(batch));
   }
 
+  // CR-10 DS-T1: every screen lives inside a land shell - sky for map/
+  // auth/admin surfaces, the grade's own land while playing in it.
+  const shell = (node: ReactNode, gradeId?: string | null) => (
+    <LandShell gradeId={gradeId ?? null}>{node}</LandShell>
+  );
+
   if (authMode === 'loading') {
-    return (
+    return shell(
       <div className="flex min-h-screen items-center justify-center text-lg font-bold text-sky-700">
         Đang tải...
-      </div>
+      </div>,
     );
   }
 
   if (configured && (authMode === 'login' || screen === 'login')) {
-    return <AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />;
+    return shell(<AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />);
   }
 
   if (screen === 'admin' && myAccount) {
-    return (
+    return shell(
       <AdminScreen
         account={myAccount}
         onSignOut={handleSignOut}
         onPractice={() => setScreen('grade-select')}
-      />
+      />,
     );
   }
 
   if (screen === 'credits') {
-    return <CreditsScreen onBack={handleCreditsBack} />;
+    return shell(<CreditsScreen onBack={handleCreditsBack} />);
   }
 
   const authChipProps =
@@ -207,7 +214,7 @@ export default function App() {
         : {};
 
   if (screen === 'grade-select') {
-    return (
+    return shell(
       <GradeSelect
         grades={GRADES}
         onSelectGrade={handleSelectGrade}
@@ -215,18 +222,21 @@ export default function App() {
         focusCreditsLink={focusCreditsLink}
         allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
         {...authChipProps}
-      />
+      />,
     );
   }
 
   const selectedGrade = GRADES.find((grade) => grade.id === selectedGradeId);
 
   if (screen === 'start-batch' && selectedGrade) {
-    return <StartBatchScreen grade={selectedGrade} onStartBatch={handleStartBatch} onBack={handleBackToGrades} />;
+    return shell(
+      <StartBatchScreen grade={selectedGrade} onStartBatch={handleStartBatch} onBack={handleBackToGrades} />,
+      selectedGradeId,
+    );
   }
 
   if (screen === 'batch' && batch) {
-    return (
+    return shell(
       <BatchScreen
         batch={batch}
         onSubmitOption={handleSubmitOption}
@@ -239,11 +249,12 @@ export default function App() {
         onStartNewBatch={handleStartBatch}
         onChooseGrade={handleBackToGrades}
         onRoundTimeExpired={handleRoundTimeExpired}
-      />
+      />,
+      batch.gradeId,
     );
   }
 
-  return (
+  return shell(
     <GradeSelect
       grades={GRADES}
       onSelectGrade={handleSelectGrade}
@@ -251,6 +262,6 @@ export default function App() {
       focusCreditsLink={focusCreditsLink}
       allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
       {...authChipProps}
-    />
+    />,
   );
 }

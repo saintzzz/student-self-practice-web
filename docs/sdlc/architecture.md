@@ -868,3 +868,60 @@ Implements PRD section 18 on project cxjpgfhqchjoernfmcra.
   login -> only scoped grades -> logout. All seeded via the real edge
   functions against the real project.
 - Regression: full 686 unit + 55 e2e unchanged in env-absent mode.
+
+
+## 13. CR-10 addendum - themed world + engagement layer (2026-10-01)
+
+Implements PRD section 19 / design-spec section 16.
+
+### 13.1 New modules
+
+- `src/lib/ui/theme.ts` - `getLand(gradeId?) -> Land` descriptor:
+  {key, nameVi, gradientClasses, accent ring/border classes, scene}
+  incl. neutral `sky`. Pure map, no DOM.
+- `src/lib/engagement/store.ts` - localStorage-backed state
+  (key `beheo-engagement-v1`); API: `getState()`,
+  `recordRoundResult(gradeId, roundIndex, pts, max) -> {stars, newStickers}`,
+  `recordBatchResult(gradeId, pts, max, perRoundStars)`,
+  `touchStreak()`, `hasSticker`, `resetForTests`. Falls back to an
+  in-memory map when localStorage throws (private mode / tests).
+- `src/components/scene/LandScene.tsx` - one `<svg>` switch per land
+  key (own vector art, aria-hidden, `absolute inset-0` behind
+  content, `preserveAspectRatio="xMidYMax slice"`).
+- `src/components/celebrations/Confetti.tsx` / `StarRain.tsx` /
+  `ChestReveal.tsx` - CSS keyframe layers defined in index.css,
+  `motion-reduce` variants.
+- `src/components/EngagementBar.tsx` - star bank + streak chips.
+- `src/components/StickerAlbum.tsx` - disclosure panel.
+- `src/components/Mascot.tsx` - gains `land?: LandKey` halo prop.
+
+### 13.2 Integration points
+
+- App.tsx wraps screens in a `LandShell` (gradient + LandScene) keyed
+  by selectedGradeId (sky when none / auth / admin).
+- BatchScreen reads grade from batch state - land chrome tints the
+  play header strip; round summaries call recordRoundResult, batch
+  summary calls recordBatchResult + touchStreak once per mount.
+- GradeSelect = journey map layout (zigzag via sm:translate-y offsets
+  + dotted path svg), per-land cards.
+- FeedbackPanel mounts ConfettiBurst when isCorrect (mounted only in
+  that branch - zero cost otherwise).
+
+### 13.3 Invariants
+
+- No testid changes; engagement writes happen in effects/handlers,
+  never during render, so existing render tests are unaffected.
+- localStorage guarded (`try/catch` + typeof check) - vitest env
+  without storage still passes.
+- Scenes are inline SVG (no new assets); stickers reuse vendored
+  Twemoji keys - attribution unchanged.
+- Budget: art + engagement ~+4-6 kB gzip JS target; CSS +3-4 kB
+  (keyframes + land utilities); re-base only with justification.
+
+### 13.4 Verification
+
+- unit: store boundary/streak/dedupe/idempotent tests (AC-T1), theme
+  map (AC-T2), GradeSelect/EngagementBar renders (AC-T3).
+- e2e: add `engagement.spec.ts` - answer questions, finish a round,
+  assert star chip > 0 and streak chip >= 1; all 58 prior specs keep
+  passing (gotoApp unchanged).

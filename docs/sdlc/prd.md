@@ -1722,3 +1722,87 @@ per human ruling A-21).
   with no Supabase env set (CI/dev unchanged).
 - AC-A7: 686+ unit tests green incl. new auth/scope tests; e2e green
   incl. new auth spec; Vercel env vars set and production verified.
+
+
+## 19. CR-10 addendum - Visual identity "Hanh trinh cua Be Heo" + engagement layer (2026-10-01)
+
+### 19.1 Why
+
+Human feedback on CR-09 output: no theme, not engaging enough for
+students, no research preceded the design. CR-10 is the corrective CR:
+research-first (docs/research-visual-identity.md), then a real visual
+identity and engagement layer.
+
+### 19.2 Goals
+
+- One coherent themed world applied to every screen a student sees:
+  "Hanh trinh cua Be Heo" - 5 lands, one per grade
+  (playground > town > jungle > city > space), pig mascot as companion.
+- Reward moments engineered per competitive research: correct-answer
+  burst, round-end star rain (0-3 stars by score), batch-end chest
+  celebration.
+- Persistent engagement on device: star bank, day streak, sticker
+  album - visible on the journey map and summaries.
+- Grade identity: each land has its own palette tint + scene motif so
+  progression reads as a journey.
+- Keep all guardrails: testids, 76px targets, reduced-motion, same-
+  origin assets, dash rule, semantic status colors, guest + student +
+  admin flows unchanged.
+
+### 19.3 Non-goals
+
+- No backend progress sync (progress tracking is a separate CR).
+- No new question kinds, no curriculum change.
+- No animated bitmap/video scenes - scenes are compact inline SVG art.
+- No paid currency, no monetization mechanics.
+
+### 19.4 Requirements
+
+- R-T1: `src/lib/ui/theme.ts` maps gradeId -> land descriptor
+  (palette, scene key, land name Vi, mascot note). Non-grade surfaces
+  (auth, admin, credits) get a neutral "sky" land.
+- R-T2: GradeSelect becomes the journey map: land cards themed per
+  land (scene SVG, tinted surface, land name + grade number), stars
+  earned per grade shown on the card; engagement bar shows star bank +
+  streak flame.
+- R-T3: `src/lib/engagement/store.ts` - localStorage singleton state:
+  totalStars, perGrade stars+rounds, streak {lastDayISO, count},
+  stickers[], batchesCompleted. Safe when localStorage unavailable
+  (in-memory fallback) and under vitest.
+- R-T4: Star economy: round end awards 0-3 stars by score ratio
+  (>=50%:1, >=75%:2, 100%:3); batch completion +2 chest stars; first-
+  ever-batch, 3-star round, 3-day streak, all-grades-visited award
+  stickers (emoji-based, vendored Twemoji, attribution reused).
+- R-T5: Celebration components: ConfettiBurst (correct answers),
+  StarRain (round summary), ChestReveal (batch summary). CSS
+  transform/opacity only, `motion-reduce` turns them into static
+  states, no layout shift, non-interactive (pointer-events none).
+- R-T6: Scene art: `src/components/scene/LandScene.tsx` - inline SVG
+  per land (sun/clouds/hills/buildings/jungle/city/stars+planets),
+  aria-hidden, behind content, saturated colors per land palette.
+- R-T7: Mascot upgrades: mood prop already exists; add land-aware
+  accessory hint (e.g. astronaut tint on G5) via a themed wrapper -
+  emoji stays Twemoji.
+- R-T8: StickerAlbum component (chip-opened panel) on the journey map
+  showing earned vs locked stickers.
+- R-T9: AuthScreen gets the sky land treatment + mascot greeting
+  (first impression); AdminScreen keeps a functional layout but
+  inherits theme shell colors.
+
+### 19.5 Acceptance criteria
+
+- AC-T1: unit - engagement store: star award boundaries (49/50/74/75/
+  99/100%), dedupe re-award on same round replay, streak same-day/
+  next-day/gap-day logic, sticker idempotent award, storage-unavailable
+  fallback.
+- AC-T2: unit - theme map covers all 5 grades + neutral sky.
+- AC-T3: journey map renders 5 themed land cards, each with scene +
+  per-grade stars; engagement bar shows totals; testids unchanged.
+- AC-T4: round summary shows StarRain matching awarded stars; batch
+  summary shows chest + total stars + newly earned stickers.
+- AC-T5: e2e - guest completes questions -> stars accumulate ->
+  journey map shows nonzero star count + streak >= 1. Existing 58
+  specs unchanged.
+- AC-T6: reduced-motion: confetti/starrain/chest render static states.
+- AC-T7: build/budget/attribution/dash-guard green; no new external
+  asset sources (scenes are own SVG art, stickers reuse Twemoji).

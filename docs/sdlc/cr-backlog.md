@@ -15,6 +15,7 @@
 | CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | resolved (deployed ec94500) |
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | resolved (backend + app implemented; prod auth pending Vercel env vars) |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
+| CR-10 | Real visual identity: theme, kid appeal, engagement layer | human request 2026-10-01 | resolved (pending deploy) |
 
 ---
 
@@ -243,3 +244,58 @@
 - Tester: 692/692 unit, 58/58 e2e incl. real-backend RBAC journey;
   RLS/edge-fn SQL proofs in test-report.
 - Deployer: pending Vercel env vars (dashboard) - guest mode ships now.
+
+## CR-10: Real visual identity + kid appeal - INTAKE (2026-10-01)
+
+- **Human feedback (verbatim):** "không có theme"; "không đủ hấp dẫn
+  cho học sinh"; "UIUX đang làm gì? có research trước khi làm không?
+  web trông quá tệ."
+- **Honest assessment:** CR-09 delivered a token system + font + card
+  surfaces (a reskin), NOT a visual identity. No competitive visual
+  research preceded it; design direction was invented internally. The
+  app has no theme/world, no reward moments, flat white surfaces -
+  unconvincing against Lingokids/Duolingo/Monkey Junior for ages 6-11.
+- **Process correction (the real ask):** DESIGN RESEARCH FIRST, then
+  designer phase, then implementation. No coding until the research
+  artifact + chosen direction exist.
+- **Scope sketch:**
+  - Competitive visual teardown: Duolingo (ABC + main), Lingokids,
+    Khan Academy Kids, Monkey Junior (VN), IXL - character systems,
+    color worlds, progression maps, reward loops, feedback moments.
+  - Age 6-11 design rules: reading level, visual density, target sizes,
+    delight vs distraction, VN parent co-presence patterns.
+  - Theme/world concept for THIS product (VN primary English practice,
+    pig mascot exists but is unused decoratively).
+  - Reward/engagement layer within existing structure: streaks,
+    points visualization, round-completion celebrations, mascot moods
+    (already modeled in code - currently under-leveraged).
+  - Full-screen visual identity applied to every screen incl. new
+    auth/admin surfaces.
+- **Impact assessment:**
+  - Large UI surface: every component restyled; possible new
+    celebration/reward components; asset pipeline additions
+    (backgrounds, character art - must stay self-hosted + attributed).
+  - Guardrails unchanged: testids, a11y targets (76px), reduced-motion,
+    same-origin assets, dash rule, bundle budget (backgrounds/art add
+    weight - lazy-load or compress, justify any re-base).
+  - Guest/auth flows (CR-08) must keep working identically.
+- **Open rulings for human:** theme direction (present 2-3 researched
+  options), how far to go on gamification layer now vs later.
+
+### CR-10 pipeline record (2026-10-01)
+
+- Research: docs/research-visual-identity.md (competitive teardown
+  Duolingo/Khan Kids/Monkey Junior/KidLearn + age 6-11 rules) - done
+  BEFORE design, per human feedback.
+- BA: PRD section 19 (world, reward moments, star bank/streak/
+  stickers, R-T1..T9, AC-T1..T7).
+- Designer: design-spec section 16 (5 lands palette/motifs, surface
+  rules DS-T1..T5, reward moments DS-R1..R4, sticker album, mascot).
+- Tech Lead: architecture section 13 (theme map, engagement store,
+  LandScene/celebration components, invariants).
+- Dev: theme.ts, engagement/store.ts, LandScene (6 inline-SVG lands),
+  Confetti/StarRain/ChestReveal, EngagementBar, StickerAlbum,
+  LandShell; GradeSelect -> journey map; Round/BatchSummary award
+  wiring; FeedbackPanel confetti; beheo-force-guest e2e hatch.
+- Tester: 712/712 unit, 60/60 e2e (+2 engagement), visual QA desktop
+  + 390px portrait, budget/attribution/dash green.

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * check-bundle-budget - AC-2.10 entry budget gate.
- * Entry JS gzip <= 111.1 kB, entry CSS gzip <= 6.25 kB
+ * Entry JS gzip <= 121 kB, entry CSS gzip <= 7.5 kB
  * (baseline 101.07 / 5.20 kB + headroom, measured with gzip level 9).
  * CSS baseline re-based for CR-09 (AC-UI6): +1.24 kB is the Baloo 2
  * @font-face rules + design-token utilities; headroom kept at ~1 kB.
@@ -12,6 +12,12 @@
  * making getWordsByGrade async would async-ify createBatch across ~50
  * call sites for ~10 kB; recorded as a CR-08+ optimization note in
  * docs/sdlc/advisory-log.md.
+ * Budgets re-based for CR-10 (advisory A-28): +10.56 kB JS over the
+ * CR-07 baseline is the themed-world layer (theme map, 6 inline-SVG
+ * land scenes, engagement store, confetti/star-rain/chest
+ * celebrations, journey-map GradeSelect); +1.50 kB CSS is the land +
+ * reward keyframes with reduced-motion fallbacks. Headroom kept:
+ * ~9.4 kB JS / ~0.8 kB CSS.
  * Run after `npm run build`.
  */
 import { readFile } from 'node:fs/promises';
@@ -22,8 +28,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
-const JS_MAX_KB = 111.1;
-const CSS_MAX_KB = 6.25;
+const JS_MAX_KB = 121;
+const CSS_MAX_KB = 7.5;
 const BASELINE = { js: 101.07, css: 5.2 };
 
 const kb = (buf) => gzipSync(buf, { level: 9 }).length / 1024;

@@ -313,3 +313,39 @@ Vercel env vars `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
 are required on the `ioe-leduyminh` project to enable auth in
 production; values are publishable by design. Until set, production
 runs the identical guest-only experience (no login surface).
+
+
+## CR-10 gate results (visual identity + engagement, 2026-10-01)
+
+| Gate | Command | Result |
+|---|---|---|
+| Unit (Vitest) | `npx vitest run` | **712/712 pass**, 84/84 files (+20: engagement store 17, theme map 3) |
+| Typecheck | `npx tsc --noEmit` | **Pass** |
+| Build | `npm run build` | **Pass** - entry JS 111.63 kB, CSS 6.70 kB gzip |
+| Bundle budget | `node scripts/check-bundle-budget.mjs` | **Pass** - re-based (A-28), entry lottie-runtime-free |
+| Attribution | `node scripts/check-attribution.mjs` | **Pass** - 520 svg / 166 lottie / font (no new sources; scenes are own SVG) |
+| Dash guard | manual sweep of all new files | **Pass** |
+| E2E (Playwright) | `npx playwright test` | **60/60 pass** (~3 min after beheo-force-guest infra fix) |
+| Visual QA | playwright-mcp + temp traversal spec | journey map desktop + 390px portrait, sky/playground lands, confetti burst, 3-star rain, chest reveal + sticker chips, album panel |
+
+### Coverage added
+- `store.test.ts` (17): star boundaries 49/50/74/75/99/100, sticker
+  idempotence, streak same/next/gap day, storage-error resilience.
+- `theme.test.ts` (3): all 5 grades map to distinct lands, sky
+  fallback, every land descriptor complete.
+- `engagement.spec.ts` (2 e2e): map chips + album panel; full Round 1
+  with deterministic correct answers -> star rain -> banked stars +
+  streak visible on the map.
+- `client.ts` gained `beheo-force-guest` escape hatch (see A-28).
+- `auth-flow.ts gotoApp` sets the flag via addInitScript.
+
+### AC map
+| AC | Evidence | Status |
+|---|---|---|
+| AC-T1 | store.test.ts | auto |
+| AC-T2 | theme.test.ts | auto |
+| AC-T3 | engagement.spec t1 + visual QA | auto |
+| AC-T4 | engagement.spec t2 + screenshots (star rain / chest) | auto |
+| AC-T5 | engagement.spec t2 | auto |
+| AC-T6 | reduced-motion media block in index.css disables all new keyframes | manual |
+| AC-T7 | gates above | auto |

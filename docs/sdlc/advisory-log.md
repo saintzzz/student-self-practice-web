@@ -443,3 +443,46 @@ change.
   env vars must be added via dashboard (values are publishable). Guest
   mode ships in the meantime; auth activates on the first build that
   sees the vars.
+
+## A-27: CR-10 rulings (2026-10-01)
+
+- **Theme:** "Hanh trinh cua Be Heo" - ONE adventure world combining all
+  three candidate directions: G1 playground/home (school-day motif),
+  G2 town, G3 jungle, G4 city, G5 space. Journey-map grade select;
+  pig mascot as travel companion. Human chose "ket hop ca 3" over
+  picking one of A/B/C.
+- **Gamification:** FULL tier (human picked A+C): correct-answer burst,
+  round-end star rain, batch-end chest celebration, mascot reactions,
+  localStorage star bank + day streak + sticker collection. All
+  client-side (no backend) - consistent with CR-08 deferral of
+  progress tracking: engagement state is per-device until a later CR
+  syncs it server-side.
+- **Research gate honored:** docs/research-visual-identity.md produced
+  BEFORE design work (the correction the human asked for).
+- **Status:** intake-approved, pipeline in progress.
+
+## A-28: CR-10 implementation notes (2026-10-01)
+
+- **Theme:** "Hanh trinh cua Be Heo" - one world, 5 lands
+  (playground/town/jungle/city/space mapped grade-1..5 + neutral sky).
+  `src/lib/ui/theme.ts` is the single land descriptor map;
+  `LandShell` owns page gradient + `LandScene` inline SVG art (own
+  vector art, no new attributed assets).
+- **Engagement:** `src/lib/engagement/store.ts` localStorage
+  `beheo-engagement-v1`: star bank (0-3/round by score ratio, +2 chest
+  stars/batch), day streak (touched on round completion), 5-sticker
+  album (emoji, vendored Twemoji). Memory fallback when storage
+  unavailable; StrictMode-safe via ref guards in summary components.
+- **E2E infra fix (load flake):** `beheo-force-guest` localStorage
+  flag in `isSupabaseConfigured()` - `gotoApp` sets it via
+  addInitScript so the 57 non-auth specs never wait on a real
+  session probe. Previous suite run stalled 31/60 specs on
+  getSession() under parallel load; with the flag the suite runs
+  60/60 in ~3 min. Flag can only ever reduce a client to the free
+  guest path (RBAC is server-side) - not a security surface.
+- **Budget re-base (AC-T7):** entry JS 111.63 kB max->121, CSS 6.70
+  kB max->7.5. Deltas = themed-world layer + keyframes; headroom
+  ~9.4 kB / ~0.8 kB kept.
+- **Round 3 tmp-QA lesson:** headless Chromium hangs on the real
+  SpeechRecognition path ("listening" forever); specs must use the
+  delete-SpeechRecognition init-script technique for fallback.

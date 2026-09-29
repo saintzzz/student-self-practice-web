@@ -1,6 +1,7 @@
 import type { QuestionKind } from '../types';
 import { EmojiVisual } from './EmojiVisual';
 import Mascot from './Mascot';
+import Confetti from './celebrations/Confetti';
 
 interface FeedbackPanelProps {
   kind: QuestionKind;
@@ -50,10 +51,11 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
   return (
     <div
       data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
-      className={`mt-3 rounded-2xl p-4 text-left ring-2 shadow-sm [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 ${
+      className={`relative mt-3 rounded-2xl p-4 text-left ring-2 shadow-sm [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 ${
         isCorrect ? 'bg-emerald-50 ring-emerald-300' : 'bg-rose-50 ring-rose-300'
       }`}
     >
+      {isCorrect && <Confetti />}
       <HeadlineTag
         className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}
       >

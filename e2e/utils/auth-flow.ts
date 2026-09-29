@@ -10,10 +10,21 @@ import { type Page, expect } from '@playwright/test';
  * guest-button check simply no-ops.
  */
 export async function gotoApp(page: Page): Promise<void> {
+  // Force the guest-only path BEFORE app scripts run: non-auth specs
+  // must not depend on a live Supabase session probe (it stalled under
+  // parallel-suite load). auth.spec.ts drives raw page.goto('/') and
+  // still exercises the real configured flows.
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('beheo-force-guest', '1');
+    } catch {
+      // storage blocked - the env gate alone decides the boot mode
+    }
+  });
   await page.goto('/');
   const guest = page.getByTestId('guest-button');
   if (await guest.isVisible({ timeout: 5_000 }).catch(() => false)) {
     await guest.click();
   }
-  await expect(page.getByTestId(/grade-card-/).first()).toBeVisible();
+  await expect(page.getByTestId(/grade-card-/).first()).toBeVisible({ timeout: 15_000 });
 }

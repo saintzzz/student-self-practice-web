@@ -61,6 +61,7 @@ export default function BatchScreen({
     return (
       <BatchSummary
         result={computeBatchResult(batch)}
+        gradeId={batch.gradeId}
         onStartNewBatch={onStartNewBatch}
         onChooseGrade={onChooseGrade}
       />
@@ -72,6 +73,7 @@ export default function BatchScreen({
     return (
       <BatchSummary
         result={computeBatchResult(batch)}
+        gradeId={batch.gradeId}
         onStartNewBatch={onStartNewBatch}
         onChooseGrade={onChooseGrade}
       />
@@ -121,7 +123,7 @@ export default function BatchScreen({
       )}
 
       {batch.phase === 'round-summary' && lastCompletedOutcome && (
-        <RoundSummary outcome={lastCompletedOutcome} onNextRound={onNextRound} />
+        <RoundSummary outcome={lastCompletedOutcome} gradeId={batch.gradeId} onNextRound={onNextRound} />
       )}
     </div>
   );

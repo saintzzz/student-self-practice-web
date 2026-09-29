@@ -55,32 +55,32 @@ const RESULT: BatchResult = {
 
 describe('BatchSummary (AC21)', () => {
   it('shows the batch-score-summary testid with the total "X/Y" fraction', () => {
-    render(<BatchSummary result={RESULT} onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
 
     expect(screen.getByTestId('batch-score-summary')).toHaveTextContent('14/20');
   });
 
   it('shows the points/maxPoints total as the headline metric (plan.md v10, AC36)', () => {
-    render(<BatchSummary result={RESULT} onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
 
     expect(screen.getByTestId('batch-points-summary')).toHaveTextContent('140/200');
   });
 
   it('shows an encouraging completion badge, never "failed"/"incomplete" (AC37)', () => {
-    render(<BatchSummary result={RESULT} onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
 
     const badge = screen.getByTestId('batch-completion-badge');
     expect(badge).not.toHaveTextContent(/thất bại|chưa hoàn thành|incomplete|failed/i);
   });
 
   it('shows the app-wide pig mascot in celebrating mood (AC38)', () => {
-    render(<BatchSummary result={RESULT} onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
 
     expect(screen.getByTestId('mascot')).toHaveAttribute('data-mascot-mood', 'celebrating');
   });
 
   it('renders a per-round breakdown entry for every round, including not-yet-implemented ones', () => {
-    render(<BatchSummary result={RESULT} onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
 
     expect(screen.getByTestId('round-breakdown-1')).toHaveTextContent('7/10');
     expect(screen.getByTestId('round-breakdown-1')).toHaveTextContent('70/100 điểm');
@@ -93,7 +93,7 @@ describe('BatchSummary (AC21)', () => {
     const onStartNewBatch = vi.fn();
     const onChooseGrade = vi.fn();
     const user = userEvent.setup();
-    render(<BatchSummary result={RESULT} onStartNewBatch={onStartNewBatch} onChooseGrade={onChooseGrade} />);
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={onStartNewBatch} onChooseGrade={onChooseGrade} />);
 
     await user.click(screen.getByTestId('practice-again-button'));
     await user.click(screen.getByTestId('back-to-grades'));
