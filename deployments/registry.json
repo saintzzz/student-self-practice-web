@@ -1,0 +1,28 @@
+{
+  "projects": [
+    {
+      "name": "ioe-leduyminh",
+      "platform": "vercel",
+      "team": "linhld7s-projects",
+      "teamId": "team_Aa3XmBpCS6gqVNxTNLxwx43e",
+      "repo": "saintzzz/student-self-practice-web",
+      "branch": "main",
+      "productionUrl": "https://ioe-leduyminh.vercel.app",
+      "deploymentId": "dpl_EW6dqdgPYn7aMmtBWyDWhQLuGvK9",
+      "deploymentUrl": "https://ioe-leduyminh-bkap7pfa6-linhld7s-projects.vercel.app",
+      "commit": "acda200",
+      "healthEndpoint": "/",
+      "healthStatus": "ready",
+      "lastHealthCheck": "2026-09-29T21:40:07+07:00",
+      "healthDetails": {
+        "GET /": 200,
+        "GET /assets/index-BwKWg8aP.js": 200,
+        "GET /assets/index-BPwf-9QE.css": 200,
+        "GET /attribution.json": 200,
+        "GET /emoji/svg/1f431.svg": 200,
+        "GET /emoji/svg/1f437.svg": 200,
+        "GET /emoji/lottie/2728.json": 200
+      }
+    }
+  ]
+}
