@@ -11,16 +11,19 @@
       "productionUrl": "https://ioe-leduyminh.vercel.app",
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh.vercel.app",
-      "commit": "996b801",
+      "commit": "5ae3bc2",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-09-30T00:30:00+07:00",
+      "lastHealthCheck": "2026-09-30T00:58:00+07:00",
       "healthDetails": {
         "GET /": 200,
-        "GET /assets/index-BhcXqFf2.js": 200,
-        "bundle matches local CR-06 build": true
+        "GET /assets/index-CBldL82Y.js": 200,
+        "GET /assets/index-DkYKHslv.css": 200,
+        "GET /fonts/baloo-2/baloo-2-vietnamese-800-normal.woff2": 200,
+        "GET /emoji/svg/23f1.svg": 200,
+        "bundle matches local CR-09 build": true
       },
-      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: 996b801 (CR-06 phonics deepening: final sounds, blends, rhyming) serving bundle index-BhcXqFf2.js. Earlier verified commits: 810b743 (CR-03 phonics round), 2a92991 (CR-01/02/04), 0829a52, acda200. Deployment-specific URLs 302 to Vercel SSO by design; the production alias is the verified surface."
+      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: 5ae3bc2 (CR-09 designer-led UI/UX refresh: design tokens, Baloo 2 self-hosted font, unified play chrome, scene cards) serving bundle index-CBldL82Y.js. Earlier verified commits: 996b801 (CR-06 phonics deepening), 810b743 (CR-03 phonics round), 2a92991 (CR-01/02/04), 0829a52, acda200. Deployment-specific URLs 302 to Vercel SSO by design; the production alias is the verified surface."
     }
   ]
 }
