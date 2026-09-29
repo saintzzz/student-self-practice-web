@@ -51,7 +51,7 @@ export default function App() {
   }
 
   function handleStartBatch(): void {
-    setBatch(createBatch());
+    setBatch(createBatch(undefined, selectedGradeId ?? 'grade-2'));
     setScreen('batch');
   }
 

@@ -12,7 +12,7 @@
 | CR-04 | Vercel ignored build step | DevOps review Phase 7 | resolved |
 | CR-05 | Branch protection + PR preview discipline | DevOps review Phase 7 | user-action-required |
 | CR-06 | Phonics nang sau: am cuoi / blends / rhyming | human request 2026-09-29 | resolved |
-| CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | intake - pending rulings |
+| CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | resolved (implemented; awaiting deploy commit) |
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | intake - pending rulings |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
 
@@ -215,3 +215,16 @@
   extended (UI chrome emoji enumeration, foreign-collection preserve).
 - Tester: 660/660 unit, gates green, visual QA found+fixed one
   portrait wrap defect; e2e record in test-report CR-09 section.
+
+### CR-07 pipeline record (2026-09-30)
+
+- BA: PRD section 17 (goals/non-goals, R-G1..R-G6, AC-G1..AC-G5).
+- Tech Lead: architecture section 11 (shared.ts pick model, pool seam,
+  sentence-class extension, emoji-fetch recursion, budget decision).
+- Dev: 51 new topic files under vocabulary/g{1,3,4,5}/ + shared.ts;
+  builders take (seed, words); createBatch(seed, gradeId='grade-2');
+  TOPIC_CLASSES/WORD_ID_OVERRIDES + 'country' class; flag-compliant
+  emoji audit (7 sanctioned pairs total); emoji fetch recursion fix.
+- Tester: 686/686 unit (+26 grades.test.ts AC-G1..G6, bank.test AC-6.1/
+  6.3/6.6 updated), tsc clean, build OK, attribution 520/166, budget
+  re-based, 55/55 e2e (+6 grades.spec.ts traversal).

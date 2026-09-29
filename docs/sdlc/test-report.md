@@ -221,3 +221,52 @@ chips single row, Next reachable).
 - Prompt emoji size on image-choice prompts is unchanged (existing
   EmojiVisual sizing); larger hero picture sizing is a candidate
   follow-up, not in CR-09 scope.
+
+## CR-07 gate results (grades 1-5 content, 2026-09-30)
+
+| Gate | Command | Result |
+|---|---|---|
+| Unit (Vitest) | `npx vitest run` | **686/686 pass**, 80/80 files (+26 over CR-09 baseline) |
+| Typecheck | `npx tsc --noEmit` | **Pass** |
+| Build | `npm run build` | **Pass** (Vite 5.4.21) |
+| Attribution | `node scripts/check-attribution.mjs` | **Pass** - 520 svg / 166 lottie / baloo-2 font preserved |
+| Bundle budget | `node scripts/check-bundle-budget.mjs` | **Pass** - JS 101.07 kB (re-based, see advisory A-24), CSS 5.23 kB |
+| Dash guard | `src/lib/dashGuard.test.ts` + manual sweep of new vocab files | **Pass** |
+| E2E (Playwright) | `npx playwright test` | **55/55 pass** (49 prior + 6 new grades.spec.ts) |
+| Visual QA | playwright-mcp manual pass | GradeSelect 5 cards OK desktop + 390px portrait; grade-1 batch renders real content |
+
+### CR-07 coverage added
+
+- `src/data/vocabulary/grades.test.ts` (26, new): GRADES registry, topic-to-grade assignment (79 topics all registered), per-grade pool invariants (dedupe, bank-resident, >= 60/300/130/120/110), shared-word same-object identity across grades, createBatch per grade + determinism per seed, cross-grade word-set divergence, **no-leakage sweep: all question wordIds across a full 4-round batch stay inside the selected grade's pool, for all 5 grades**.
+- `bank.test.ts`: AC-6.1 re-scoped to 524 words + non-baseline words must live under `g{1,3,4,5}-*` topics; AC-6.3 sanctioned shared-emoji list extended 4 -> 7 pairs; AC-6.6 grade sweep added (all 4 round builders over every grade pool).
+- `App.test.tsx`: AC1 updated for CR-07 (5 grade cards).
+- `e2e/grades.spec.ts` (6, new): all 5 cards visible; per-grade card -> start batch -> real Round 1 question -> revealed-answer feedback for each grade.
+- `index.test.ts`: existing per-topic invariants (>= 4 words, unique emoji within topic, unique ids) now cover all 79 topics unchanged - green with zero edits.
+
+### Content counts
+
+| Grade | Topics | Words | New (non-shared) |
+|---|---|---|---|
+| grade-1 | 8 | 65 | ~5 (pink, friend, yo-yo + shared core) |
+| grade-2 | 28 | 326 | baseline unchanged |
+| grade-3 | 15 | 147 | ~40 new |
+| grade-4 | 15 | 135 | ~75 new |
+| grade-5 | 13 | 123 | ~70 new |
+| **total** | **79** | **524 unique** | |
+
+### Emoji/vendor assets
+
+- 520 distinct emoji keys vendored (`npm run assets:emoji`), incl. emoji-14/15 glyphs (🫅 🩷 🪈 🫗); `fetch-emoji-assets.mjs` now recurses grade subfolders (was silently skipping them).
+- 166 Noto lottie keys within the 120 KB cap.
+
+### AC map
+
+| AC | Evidence | Status |
+|---|---|---|
+| AC-G1 | grades.test.ts GRADES registry + e2e/grades.spec.ts | auto |
+| AC-G2 | 524 total; pools 65/326/147/135/123 vs >= 55/130 floors (G2 unchanged at 326 superset) | auto |
+| AC-G3 | 686/686 unit | auto |
+| AC-G4 | 55/55 e2e incl. per-grade traversal spec | auto |
+| AC-G5 | check-attribution 520 svg/166 lottie; budget re-based w/ advisory A-24 | auto |
+| R-G4 generator minimums | bank.test AC-6.6 grade sweep (all builders x 5 pools) | auto |
+| AC-G6 no leakage | grades.test.ts full-batch wordId sweep per grade | auto |

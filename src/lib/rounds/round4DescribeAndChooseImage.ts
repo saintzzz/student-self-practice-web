@@ -6,8 +6,8 @@ import type {
   PhonicsSoundChoiceQuestion,
   PhonicsWordChoiceQuestion,
   PicturePairMatchingQuestion,
+  VocabWord,
 } from '../../types';
-import { ALL_WORDS } from '../../data/vocabulary';
 import { generateDescribeAndChooseImageQuestions } from '../generators/describeAndChooseImage';
 import { generatePicturePairMatchingBoards } from '../generators/picturePairMatching';
 import { generatePhonicsSoundChoiceQuestions, generatePhonicsWordChoiceQuestions } from '../generators/phonics';
@@ -48,7 +48,7 @@ export type Round4Question =
 /**
  * Round 4 - Describe and Choose Image + Picture-Pair-Matching + Phonics
  * (plan.md v5/v8 + CR-03/CR-06). Draws from the WHOLE vocabulary pool
- * (ALL_WORDS), not a single topic, same as every other Round. A fresh
+ * (words), not a single topic, same as every other Round. A fresh
  * `seed` per Batch samples a different ~10-question slice each time so
  * repeated batches vary.
  *
@@ -57,14 +57,14 @@ export type Round4Question =
  * then all slices are combined and shuffled together so the kinds
  * interleave within the Round (same pattern as round2ListeningSentence).
  */
-export function buildRound4Questions(seed: string): Round4Question[] {
-  const describePool = generateDescribeAndChooseImageQuestions(ALL_WORDS);
-  const pairMatchingPool = generatePicturePairMatchingBoards(ALL_WORDS);
-  const phonicsSoundPool = generatePhonicsSoundChoiceQuestions(ALL_WORDS);
-  const phonicsWordPool = generatePhonicsWordChoiceQuestions(ALL_WORDS);
-  const phonicsFinalPool = generatePhonicsFinalChoiceQuestions(ALL_WORDS);
-  const phonicsBlendPool = generatePhonicsBlendChoiceQuestions(ALL_WORDS);
-  const phonicsRhymePool = generatePhonicsRhymeChoiceQuestions(ALL_WORDS);
+export function buildRound4Questions(seed: string, words: readonly VocabWord[]): Round4Question[] {
+  const describePool = generateDescribeAndChooseImageQuestions(words);
+  const pairMatchingPool = generatePicturePairMatchingBoards(words);
+  const phonicsSoundPool = generatePhonicsSoundChoiceQuestions(words);
+  const phonicsWordPool = generatePhonicsWordChoiceQuestions(words);
+  const phonicsFinalPool = generatePhonicsFinalChoiceQuestions(words);
+  const phonicsBlendPool = generatePhonicsBlendChoiceQuestions(words);
+  const phonicsRhymePool = generatePhonicsRhymeChoiceQuestions(words);
 
   const describeQuestions = stratifiedSample(describePool, ROUND_4_DESCRIBE_COUNT, `round4-describe-${seed}`);
   const pairMatchingQuestions = stratifiedSample(

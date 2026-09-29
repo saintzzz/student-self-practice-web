@@ -1,5 +1,4 @@
-import type { ExtraLetterQuestion, ImageChoiceQuestion } from '../../types';
-import { ALL_WORDS } from '../../data/vocabulary';
+import type { ExtraLetterQuestion, ImageChoiceQuestion, VocabWord } from '../../types';
 import { generateExtraLetterQuestions } from '../generators/extraLetter';
 import { generateImageChoiceQuestions } from '../generators/imageChoice';
 import { seededShuffleIndices } from '../prng';
@@ -20,15 +19,15 @@ export type Round1Question = ExtraLetterQuestion | ImageChoiceQuestion;
 
 /**
  * Round 1 - mixed spelling + picture choice. Draws from the WHOLE
- * vocabulary pool (ALL_WORDS), not a single topic - a Batch is
+ * vocabulary pool (words), not a single topic - a Batch is
  * topic-agnostic. Each kind's slice is stratified by topic (plan.md v6
  * "Topic-Balanced Sampling", AC23), then the two slices are shuffled
  * together via the same seeded RNG Round 2 uses, so the kinds interleave
  * within the Round (D-10 A) instead of appearing as two blocks.
  */
-export function buildRound1Questions(seed: string): Round1Question[] {
-  const extraLetterPool = generateExtraLetterQuestions([...ALL_WORDS]);
-  const imageChoicePool = generateImageChoiceQuestions([...ALL_WORDS]);
+export function buildRound1Questions(seed: string, words: readonly VocabWord[]): Round1Question[] {
+  const extraLetterPool = generateExtraLetterQuestions([...words]);
+  const imageChoicePool = generateImageChoiceQuestions([...words]);
 
   const extraLetter = stratifiedSample(
     extraLetterPool,

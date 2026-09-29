@@ -1,5 +1,4 @@
-import type { ListeningImageChoiceQuestion, ListeningSentenceFillBlankQuestion } from '../../types';
-import { ALL_WORDS } from '../../data/vocabulary';
+import type { ListeningImageChoiceQuestion, ListeningSentenceFillBlankQuestion, VocabWord } from '../../types';
 import { generateListeningSentenceFillBlankQuestions } from '../generators/listeningSentenceFillBlank';
 import { generateListeningImageChoiceQuestions } from '../generators/listeningImageChoice';
 import { seededShuffleIndices } from '../prng';
@@ -26,7 +25,7 @@ export type Round2Question = ListeningSentenceFillBlankQuestion | ListeningImage
 /**
  * Round 2 - Listening (plan.md v5 "Round 2 - Listening Sentence Fill-Blank",
  * v8 "Round 2 Addition: Listening Image-Choice"). Draws from the WHOLE
- * vocabulary pool (ALL_WORDS), not a single topic, same as Round 1. A fresh
+ * vocabulary pool (words), not a single topic, same as Round 1. A fresh
  * `seed` per Batch samples a different ~10-question slice each time so
  * repeated batches vary.
  *
@@ -36,9 +35,9 @@ export type Round2Question = ListeningSentenceFillBlankQuestion | ListeningImage
  * Animals - then the two slices are combined and shuffled together so the
  * kinds interleave within the Round instead of appearing as two blocks.
  */
-export function buildRound2Questions(seed: string): Round2Question[] {
-  const typingPool = generateListeningSentenceFillBlankQuestions(ALL_WORDS);
-  const imageChoicePool = generateListeningImageChoiceQuestions(ALL_WORDS);
+export function buildRound2Questions(seed: string, words: readonly VocabWord[]): Round2Question[] {
+  const typingPool = generateListeningSentenceFillBlankQuestions(words);
+  const imageChoicePool = generateListeningImageChoiceQuestions(words);
 
   const typingQuestions = stratifiedSample(typingPool, ROUND_2_TYPING_COUNT, `round2-typing-${seed}`);
   const imageChoiceQuestions = stratifiedSample(

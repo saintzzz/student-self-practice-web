@@ -1586,3 +1586,66 @@ implementation.
   refreshed animations (same AC-2.7 technique).
 - AC-UI6: 660+ unit tests and 49 e2e pass unchanged post-refresh;
   bundle budget updated only if justified.
+
+## 17. CR-07 delta: full primary coverage - Grades 1-5 (intake 2026-09-30)
+
+Human request: "du an can trien khai cho toan bo cap tieu hoc, vi vay hay
+deep research va trien khai cho toan bo cac lop 1,2,3,4,5". Research
+record: docs/research-productization.md (Global Success unit maps for
+G3/G4/G5, ~60% GS / ~30% Cambridge themes / ~10% other VN-textbook mix
+per human ruling A-21).
+
+### 17.1 Goals
+
+- GRADES becomes 5 entries (grade-1..grade-5); selecting a grade yields
+  a Batch whose every Round draws ONLY from that grade's word pool.
+- New curated vocabulary: G1 ~60 words, G3/G4/G5 ~140-180 words each,
+  organized as per-grade topics mirroring Global Success units with the
+  approved Cambridge/other supplement.
+- Same 4-Round structure for every grade in this CR; the G1 skin knobs
+  (bigger targets/less text/decorative timer) stay a later config delta
+  (design-spec 14.7 already records them).
+
+### 17.2 Non-goals
+
+- No new question kinds, no account/RBAC (CR-08), no per-grade UI skin
+  beyond what exists, no images pipeline re-run (emoji-first as today).
+- No G2 bank changes beyond what shared-word support requires
+  (bank.baseline.json coverage stays authoritative for existing ids).
+
+### 17.3 BA requirements
+
+- R-G1: `createBatch(seed, gradeId)` records the grade on BatchState;
+  every Round builder receives the grade's word pool instead of
+  ALL_WORDS. Default gradeId = 'grade-2' so the existing 660-test
+  contract keeps its current content domain.
+- R-G2: `getWordsByGrade(gradeId)` returns the union of the grade's
+  topics' words, deduped by id. Words MAY be shared across grades as
+  the same object listed in multiple topic arrays (core review vocab:
+  colors, numbers, family, common animals/school objects). ALL_WORDS
+  dedupes by id so the global unique-id invariant survives.
+- R-G3: every new word: unique id, correct plural/countable, real
+  Twemoji-representable emoji, Vietnamese explanation (hyphen only).
+- R-G4: every new grade pool satisfies every generator's minimums:
+  >=4 image options, >=3 distractor sounds/finals/blends/rhymes
+  per question shape, >=4 pairs per pair-matching board, countable
+  share >= ~40% for describe/counting kinds.
+- R-G5: sentence-template classes extended for new topics
+  (countries/places/subjects/holidays etc.) via TOPIC_CLASSES +
+  WORD_ID_OVERRIDES - never a nonsensical template like "I want some
+  sick.".
+- R-G6: per-grade E2E proof: grade select -> batch -> round questions
+  draw only from that grade's bank.
+
+### 17.4 ACs (CR-07)
+
+- AC-G1: GRADES lists 5 grades; each grade card opens a batch scoped to
+  its own pool (question wordIds all belong to that grade's topics).
+- AC-G2: ~600+ total bank size; per-grade pools >= 55 (G1) and >= 130
+  (G3-5) words.
+- AC-G3: 660+ unit tests green incl. new invariants (per-grade minimums,
+  shared-word dedup, emoji rules updated for sanctioned cross-topic
+  sharing).
+- AC-G4: full e2e green + new per-grade traversal spec.
+- AC-G5: check-attribution covers the newly vendored emoji; budget
+  re-based only with recorded justification.

@@ -1,4 +1,5 @@
 import type { RoundType } from '../../types';
+import { getWordsByGrade } from '../../data/vocabulary';
 import { ROUND_DEFINITIONS } from '../rounds/roundDefinitions';
 import type { RoundContentDefinition } from '../rounds/types';
 import { POINTS_PER_CORRECT_ANSWER } from './points';
@@ -38,6 +39,8 @@ export type BatchPhase = 'active' | 'round-summary' | 'stub' | 'batch-summary';
 
 export interface BatchState {
   seed: string;
+  /** Grade this Batch's question pools are scoped to (CR-07, R-G1). */
+  gradeId: string;
   roundIndex: number;
   phase: BatchPhase;
   /** Set only while phase === 'active' - the current Round's question loop. */
@@ -79,15 +82,21 @@ function buildRoundOutcome(
   };
 }
 
-function startRound(roundIndex: number, completedRounds: RoundOutcome[], seed: string): BatchState {
+function startRound(
+  roundIndex: number,
+  completedRounds: RoundOutcome[],
+  seed: string,
+  gradeId: string,
+): BatchState {
   const definition = ROUND_DEFINITIONS[roundIndex];
   if (!definition) {
-    return { seed, roundIndex, phase: 'batch-summary', roundSession: null, completedRounds };
+    return { seed, gradeId, roundIndex, phase: 'batch-summary', roundSession: null, completedRounds };
   }
 
   if (!definition.buildQuestions) {
     return {
       seed,
+      gradeId,
       roundIndex,
       phase: 'stub',
       roundSession: null,
@@ -97,16 +106,22 @@ function startRound(roundIndex: number, completedRounds: RoundOutcome[], seed: s
 
   return {
     seed,
+    gradeId,
     roundIndex,
     phase: 'active',
-    roundSession: createSession(definition.buildQuestions(seed)),
+    roundSession: createSession(definition.buildQuestions(seed, getWordsByGrade(gradeId))),
     completedRounds,
   };
 }
 
-/** Starts a brand-new Batch: Round 1 of 4, freshly seeded unless a seed is given (tests). */
-export function createBatch(seed: string = randomSeed()): BatchState {
-  return startRound(0, [], seed);
+/**
+ * Starts a brand-new Batch: Round 1 of 4, freshly seeded unless a seed is
+ * given (tests). `gradeId` selects the vocabulary pool every Round draws
+ * from (CR-07); it defaults to 'grade-2' so the pre-existing suite keeps
+ * running on the G2 bank it was written against.
+ */
+export function createBatch(seed: string = randomSeed(), gradeId = 'grade-2'): BatchState {
+  return startRound(0, [], seed, gradeId);
 }
 
 export function currentRoundDefinition(state: BatchState): RoundContentDefinition | null {
@@ -187,7 +202,7 @@ export function goToNextRound(state: BatchState): BatchState {
   if (nextIndex >= ROUND_DEFINITIONS.length) {
     return { ...state, roundIndex: nextIndex, phase: 'batch-summary', roundSession: null };
   }
-  return startRound(nextIndex, state.completedRounds, state.seed);
+  return startRound(nextIndex, state.completedRounds, state.seed, state.gradeId);
 }
 
 /** Total score and per-round breakdown, shown on the Batch summary screen (AC21). */

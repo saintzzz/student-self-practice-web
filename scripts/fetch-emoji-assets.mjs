@@ -41,11 +41,22 @@ const CONCURRENCY = 8;
 
 const force = process.argv.includes('--force');
 
+async function* walkTs(dir) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      yield* walkTs(full);
+    } else if (entry.name.endsWith('.ts')) {
+      yield full;
+    }
+  }
+}
+
 async function collectEmoji() {
   const set = new Set([...MASCOT_EMOJI, ...UI_CHROME_EMOJI]);
-  for (const file of await readdir(VOCAB_DIR)) {
-    if (!file.endsWith('.ts')) continue;
-    const source = await readFile(path.join(VOCAB_DIR, file), 'utf8');
+  // Recurse: CR-07 grade folders (g1/, g3/, g4/, g5/) live under VOCAB_DIR.
+  for await (const file of walkTs(VOCAB_DIR)) {
+    const source = await readFile(file, 'utf8');
     for (const match of source.matchAll(/emoji:\s*['"]([^'"]+)['"]/g)) {
       set.add(match[1]);
     }

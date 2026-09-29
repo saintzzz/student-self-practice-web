@@ -11,7 +11,7 @@ import { generateListeningImageChoiceQuestions } from '../generators/listeningIm
 
 describe('buildRound2Questions', () => {
   it('returns about 10 questions, all of kind listening-sentence-fill-blank or listening-image-choice', () => {
-    const questions = buildRound2Questions('seed-a');
+    const questions = buildRound2Questions('seed-a', ALL_WORDS);
 
     expect(questions).toHaveLength(ROUND_2_QUESTION_COUNT);
     expect(
@@ -21,7 +21,7 @@ describe('buildRound2Questions', () => {
 
   it('AC30: includes both listening-sentence-fill-blank and listening-image-choice in every draw', () => {
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
-      const questions = buildRound2Questions(seed);
+      const questions = buildRound2Questions(seed, ALL_WORDS);
       const kinds = new Set(questions.map((q) => q.kind));
 
       expect(kinds.has('listening-sentence-fill-blank')).toBe(true);
@@ -30,7 +30,7 @@ describe('buildRound2Questions', () => {
   });
 
   it('splits the mix per the documented ratio (5 image-choice / 5 typing)', () => {
-    const questions = buildRound2Questions('seed-ratio');
+    const questions = buildRound2Questions('seed-ratio', ALL_WORDS);
 
     const imageChoiceCount = questions.filter((q) => q.kind === 'listening-image-choice').length;
     const typingCount = questions.filter((q) => q.kind === 'listening-sentence-fill-blank').length;
@@ -40,7 +40,7 @@ describe('buildRound2Questions', () => {
   });
 
   it('every listening-sentence-fill-blank question has a non-empty sentence, displaySentence and word', () => {
-    const questions = buildRound2Questions('seed-a').filter((q) => q.kind === 'listening-sentence-fill-blank');
+    const questions = buildRound2Questions('seed-a', ALL_WORDS).filter((q) => q.kind === 'listening-sentence-fill-blank');
 
     for (const q of questions) {
       expect(q.sentence.length).toBeGreaterThan(0);
@@ -50,7 +50,7 @@ describe('buildRound2Questions', () => {
   });
 
   it('every listening-image-choice question has a word and 4 distinct emoji options', () => {
-    const questions = buildRound2Questions('seed-a').filter((q) => q.kind === 'listening-image-choice');
+    const questions = buildRound2Questions('seed-a', ALL_WORDS).filter((q) => q.kind === 'listening-image-choice');
 
     for (const q of questions) {
       expect(q.word.length).toBeGreaterThan(0);
@@ -59,22 +59,22 @@ describe('buildRound2Questions', () => {
   });
 
   it('is deterministic for the same seed', () => {
-    const first = buildRound2Questions('seed-fixed').map((q) => q.id);
-    const second = buildRound2Questions('seed-fixed').map((q) => q.id);
+    const first = buildRound2Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
+    const second = buildRound2Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
 
     expect(first).toEqual(second);
   });
 
   it('varies its selection across different seeds (supports repeat batches without quick repetition)', () => {
-    const a = buildRound2Questions('seed-a').map((q) => q.id);
-    const b = buildRound2Questions('seed-b').map((q) => q.id);
+    const a = buildRound2Questions('seed-a', ALL_WORDS).map((q) => q.id);
+    const b = buildRound2Questions('seed-b', ALL_WORDS).map((q) => q.id);
 
     expect(a).not.toEqual(b);
   });
 
   it('does not always order the two kinds as two fixed blocks (kinds interleave across seeds)', () => {
     const orderings = ['s1', 's2', 's3', 's4', 's5'].map((seed) =>
-      buildRound2Questions(seed).map((q) => q.kind),
+      buildRound2Questions(seed, ALL_WORDS).map((q) => q.kind),
     );
     const isTwoBlocks = (kinds: string[]) => {
       const firstKind = kinds[0];
@@ -92,7 +92,7 @@ describe('buildRound2Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound2Questions(seed)
+        buildRound2Questions(seed, ALL_WORDS)
           .filter((q) => q.kind === 'listening-sentence-fill-blank')
           .map((q) => q.topicId),
       );
@@ -106,7 +106,7 @@ describe('buildRound2Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound2Questions(seed)
+        buildRound2Questions(seed, ALL_WORDS)
           .filter((q) => q.kind === 'listening-image-choice')
           .map((q) => q.topicId),
       );

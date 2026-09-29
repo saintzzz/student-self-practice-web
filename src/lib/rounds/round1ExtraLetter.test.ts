@@ -11,7 +11,7 @@ import { generateImageChoiceQuestions } from '../generators/imageChoice';
 
 describe('buildRound1Questions', () => {
   it('AC-9.1: returns 10 questions - 7 extra-letter + 3 image-choice, seeded-shuffled', () => {
-    const questions = buildRound1Questions('seed-a');
+    const questions = buildRound1Questions('seed-a', ALL_WORDS);
 
     expect(questions).toHaveLength(ROUND_1_QUESTION_COUNT);
     expect(questions.filter((q) => q.kind === 'extra-letter')).toHaveLength(ROUND_1_EXTRA_LETTER_COUNT);
@@ -24,7 +24,7 @@ describe('buildRound1Questions', () => {
     // original range; s24 and s33 do).
     const positions = new Set<number>();
     for (let i = 1; i <= 40; i++) {
-      const questions = buildRound1Questions(`s${i}`);
+      const questions = buildRound1Questions(`s${i}`, ALL_WORDS);
       questions.forEach((q, index) => {
         if (q.kind === 'image-choice') {
           positions.add(index);
@@ -37,15 +37,15 @@ describe('buildRound1Questions', () => {
   });
 
   it('is deterministic for the same seed', () => {
-    const first = buildRound1Questions('seed-fixed').map((q) => q.id);
-    const second = buildRound1Questions('seed-fixed').map((q) => q.id);
+    const first = buildRound1Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
+    const second = buildRound1Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
 
     expect(first).toEqual(second);
   });
 
   it('varies its selection across different seeds (supports repeat batches without quick repetition)', () => {
-    const a = buildRound1Questions('seed-a').map((q) => q.id);
-    const b = buildRound1Questions('seed-b').map((q) => q.id);
+    const a = buildRound1Questions('seed-a', ALL_WORDS).map((q) => q.id);
+    const b = buildRound1Questions('seed-b', ALL_WORDS).map((q) => q.id);
 
     expect(a).not.toEqual(b);
   });
@@ -53,7 +53,7 @@ describe('buildRound1Questions', () => {
   it('draws from the whole vocabulary pool, not a single topic (multiple topicIds appear across seeds)', () => {
     const topicIds = new Set<string>();
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
-      for (const q of buildRound1Questions(seed)) {
+      for (const q of buildRound1Questions(seed, ALL_WORDS)) {
         topicIds.add(q.topicId);
       }
     }
@@ -67,7 +67,7 @@ describe('buildRound1Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound1Questions(seed)
+        buildRound1Questions(seed, ALL_WORDS)
           .filter((q) => q.kind === 'extra-letter')
           .map((q) => q.topicId),
       );
@@ -81,7 +81,7 @@ describe('buildRound1Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound1Questions(seed)
+        buildRound1Questions(seed, ALL_WORDS)
           .filter((q) => q.kind === 'image-choice')
           .map((q) => q.topicId),
       );
@@ -95,7 +95,7 @@ describe('buildRound1Questions', () => {
     expect(eligibleTopics.size).toBeGreaterThanOrEqual(ROUND_1_QUESTION_COUNT);
 
     const counts = new Map<string, number>();
-    for (const q of buildRound1Questions('dominance-check-seed')) {
+    for (const q of buildRound1Questions('dominance-check-seed', ALL_WORDS)) {
       counts.set(q.topicId, (counts.get(q.topicId) ?? 0) + 1);
     }
 

@@ -357,3 +357,45 @@ budget re-based with recorded justification (AC-UI6). Implementation
 proceeds under CR-09 with the invariant that testids, accessible names,
 76px targets, landscape fallbacks and reduced-motion behavior never
 change.
+
+## A-24: CR-07 grades 1-5 implemented (2026-09-30)
+
+- **Content model (R-G2 shared.ts):** words taught in earlier grades are
+  reused as the SAME VocabWord objects in later-grade topic arrays via
+  `pick(words, ...ids)` (throws on typo'd ids). Canonical id/emoji/
+  explanation survive; `topicId` keeps pointing at the earliest topic,
+  which only feeds stratified topic-spreading. Grade pools and ALL_WORDS
+  dedupe by id. Authored: G1 65w/8t (mostly shared + pink/friend/yo-yo),
+  G3 147w/15t, G4 135w/15t, G5 123w/13t; bank total 524 words / 79
+  topics.
+- **PRD 7.3 flag compliance enforced on new words:** party 🥳, birthday
+  card 💌, cup/plate/fork/bowl/pot/glass, knife, marshmallow 🍡(dango
+  misread), barbecue 🍢(oden misread), cottage/hut 🛖, binoculars,
+  tag 🏷️, visit 🤝, trail/boot, pyramid/triangle, sailboat/boat and
+  chalkboard/square were all dropped or re-emojied to satisfy "1 hinh
+  1 nghia". worker->soldier (builder collision), paint->sewing,
+  queen->🫅, dentist->👨‍⚕️, fever->😷, geography->🌏, kitchen-room
+  dropped entirely.
+- **Sanctioned shared-emoji pairs grew 4 -> 7** (AC-6.3 amendment):
+  ⚽ ball/football, 🛝 slide/playground, 🏮 lantern/Mid-Autumn Festival
+  - same real-world object, same rationale as the existing book/read
+  pair. Image-choice distractor filtering already excludes same-emoji
+  options so the pairs cannot co-occur as answers.
+- **Sentence classes:** new `country` class ("I am from Vietnam.") for
+  the G5 flags topic; TOPIC_CLASSES extended to all new topics;
+  WORD_ID_OVERRIDES for verb-noun mixes (wake-up, brush-teeth, cycle,
+  meals->mass, seasons->mass, video-game/recorder->countable,
+  volunteer->occupation).
+- **Pipeline bug fixed in scripts/fetch-emoji-assets.mjs:** collectEmoji
+  only read top-level vocabulary files; CR-07 grade subfolders (g*/ )
+  were silently skipped (325 vs 520 keys). Now recurses; 520/520
+  Twemoji SVGs vendored incl. emoji-14/15 glyphs (🫅, 🩷, 🪈, 🫗).
+- **JS bundle re-based (AC-G8):** 84.46 -> 101.07 kB gzip = the five-
+  grade word bank (deliberate content data). Per-grade lazy chunking
+  evaluated and DEFERRED: getWordsByGrade->async would async-ify
+  createBatch across ~50 sync call sites for ~10 kB. Recorded as a
+  CR-08+ optimization candidate; max reset to 111.1 keeping ~10 kB
+  headroom.
+- **Batch seam:** createBatch(seed, gradeId='grade-2'); grade-2 default
+  keeps all pre-CR-07 test callers valid. App passes selectedGradeId;
+  GradeSelect renders all 5 cards (App.test AC1 updated 1 -> 5 cards).

@@ -1,4 +1,4 @@
-import type { Question, RoundType } from '../../types';
+import type { Question, RoundType, VocabWord } from '../../types';
 
 /**
  * One entry in the fixed 4-Round Batch registry (plan.md v5 "New
@@ -18,7 +18,9 @@ export interface RoundContentDefinition {
    * Builds this Round's ~10 question instances for one Batch attempt.
    * `seed` varies per Batch so repeated batches by the same student are not
    * quick repeats of each other (plan.md v5, "Multiple batches must be
-   * possible without quick repetition").
+   * possible without quick repetition"). CR-07: `words` is the selected
+   * grade's vocabulary pool - builders never read ALL_WORDS directly, so
+   * a Batch only ever draws from the grade the student picked.
    */
-  buildQuestions?: (seed: string) => Question[];
+  buildQuestions?: (seed: string, words: readonly VocabWord[]) => Question[];
 }

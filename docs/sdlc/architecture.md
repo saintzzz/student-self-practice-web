@@ -726,3 +726,64 @@ and unit contracts are the regression harness (AC-UI2/AC-UI6).
 - Gates: `check-attribution` extended to fonts; bundle budget re-based
   if the woff2 files land inside dist (they live in public/, copied
   verbatim - measure and record).
+
+---
+
+## 11. CR-07 addendum - per-grade vocabulary scoping
+
+Implements PRD section 17.
+
+### 11.1 Data model
+
+- `GRADES` = 5 entries (`grade-1`..`grade-5`, display "Lop N").
+- New topic files: `src/data/vocabulary/g1/*.ts`, `g3/*.ts`, `g4/*.ts`,
+  `g5/*.ts` mirroring Global Success unit structure (ids `g1-*`,
+  `g3-*`, `g4-*`, `g5-*`; existing `g2-*` untouched).
+- `src/data/vocabulary/shared.ts` exports `pick(words, ...ids)` - a
+  lookup that pulls the SAME `VocabWord` objects out of an earlier
+  grade's topic array (throws on a typo'd id). Topic files list picked
+  objects inline, so a shared word keeps ONE canonical id and is the
+  same object in every topic array (progress tracking treats it as the
+  same learned item).
+- `ALL_WORDS` = unique-by-id flatten (shared objects appear once).
+- `getWordsByGrade(gradeId)` = dedup union of that grade's topic words.
+
+### 11.2 Batch seam
+
+- `RoundContentDefinition.buildQuestions: (seed, words: readonly
+  VocabWord[]) => Question[]` - pool replaces every internal ALL_WORDS
+  reference in the four round builders.
+- `createBatch(seed = randomSeed(), gradeId = 'grade-2')` - gradeId is
+  stored on `BatchState` for later reporting/RBAC, and passed through
+  `startRound` into every `buildQuestions` call. Default keeps every
+  existing unit test on the G2 domain.
+- `App.tsx` passes the selected grade id through to createBatch.
+
+### 11.3 Sentence classes
+
+`TOPIC_CLASSES` gains entries for the new g1/g3/g4/g5 topics reusing the
+existing classes; new classes only if no existing template reads
+naturally:
+- `country`: "I am from {word}." / "I like {word}." (foreign-friends
+  topics)
+- everything else maps to countable/mass/action/feeling/occupation/
+  family/body-part/color/number/the-noun/sport.
+`WORD_ID_OVERRIDES` extended where a word's class differs from its
+topic's (same mechanism as `chef`/`moon`).
+
+### 11.4 Pipeline assets
+
+After authoring: `npm run assets:emoji` vendors every new emoji glyph
+(svg + noto lottie under the existing collections). New lottie files are
+attributed automatically via the noto collection prefix.
+
+### 11.5 Verification plan
+
+- New bank tests: per-grade word/topic minimums, cross-grade shared-word
+  dedup, per-grade generator-pool acceptance (each grade's pool feeds
+  every generator without throwing and yields >=4 distinct options).
+- `createBatch(seed, 'grade-1')` test: question wordIds subset of the
+  G1 pool (mirror for G5).
+- E2E: `grades.spec.ts` selects G1 and G5, traverses a round, asserts
+  the grade badge/pool (questions' words resolvable in that grade).
+- Full gates: unit, build, attribution, budget, 49+ e2e.

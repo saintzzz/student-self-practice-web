@@ -5,14 +5,14 @@ import { generatePronunciationRecordingQuestions } from '../generators/pronuncia
 
 describe('buildRound3Questions', () => {
   it('returns about 10 questions, all of kind pronunciation-recording', () => {
-    const questions = buildRound3Questions('seed-a');
+    const questions = buildRound3Questions('seed-a', ALL_WORDS);
 
     expect(questions).toHaveLength(ROUND_3_QUESTION_COUNT);
     expect(questions.every((q) => q.kind === 'pronunciation-recording')).toBe(true);
   });
 
   it('every question has a non-empty word and explanation', () => {
-    const questions = buildRound3Questions('seed-a');
+    const questions = buildRound3Questions('seed-a', ALL_WORDS);
 
     for (const q of questions) {
       expect(q.word.length).toBeGreaterThan(0);
@@ -21,15 +21,15 @@ describe('buildRound3Questions', () => {
   });
 
   it('is deterministic for the same seed', () => {
-    const first = buildRound3Questions('seed-fixed').map((q) => q.id);
-    const second = buildRound3Questions('seed-fixed').map((q) => q.id);
+    const first = buildRound3Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
+    const second = buildRound3Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
 
     expect(first).toEqual(second);
   });
 
   it('varies its selection across different seeds (supports repeat batches without quick repetition)', () => {
-    const a = buildRound3Questions('seed-a').map((q) => q.id);
-    const b = buildRound3Questions('seed-b').map((q) => q.id);
+    const a = buildRound3Questions('seed-a', ALL_WORDS).map((q) => q.id);
+    const b = buildRound3Questions('seed-b', ALL_WORDS).map((q) => q.id);
 
     expect(a).not.toEqual(b);
   });
@@ -39,7 +39,7 @@ describe('buildRound3Questions', () => {
     const minExpected = Math.min(eligibleTopics.size, 8);
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
-      const topicIds = new Set(buildRound3Questions(seed).map((q) => q.topicId));
+      const topicIds = new Set(buildRound3Questions(seed, ALL_WORDS).map((q) => q.topicId));
       expect(topicIds.size).toBeGreaterThanOrEqual(minExpected);
     }
   });
@@ -50,7 +50,7 @@ describe('buildRound3Questions', () => {
     expect(eligibleTopics.size).toBeGreaterThanOrEqual(ROUND_3_QUESTION_COUNT);
 
     const counts = new Map<string, number>();
-    for (const q of buildRound3Questions('dominance-check-seed')) {
+    for (const q of buildRound3Questions('dominance-check-seed', ALL_WORDS)) {
       counts.set(q.topicId, (counts.get(q.topicId) ?? 0) + 1);
     }
 

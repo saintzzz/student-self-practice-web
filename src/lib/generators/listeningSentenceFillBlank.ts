@@ -36,7 +36,8 @@ type SentenceClass =
   | 'color'
   | 'number'
   | 'the-noun'
-  | 'sport';
+  | 'sport'
+  | 'country';
 
 /** "I have a cat.", "I can see an elephant.", "This is a red." (see templatesForWord for gating). */
 const COUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
@@ -99,6 +100,12 @@ const SPORT_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `Do you like ${word}?`,
 ];
 
+/** CR-07: G5 "Where are you from?" unit - country nouns take the from-frame. */
+const COUNTRY_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I am from ${word}.`,
+  (word) => `I like ${word}.`,
+];
+
 const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[]>> = {
   countable: COUNTABLE_TEMPLATES,
   mass: UNCOUNTABLE_TEMPLATES,
@@ -111,6 +118,7 @@ const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[
   number: NUMBER_TEMPLATES,
   'the-noun': THE_NOUN_TEMPLATES,
   sport: SPORT_TEMPLATES,
+  country: COUNTRY_TEMPLATES,
 };
 
 /**
@@ -126,6 +134,28 @@ const TOPIC_CLASSES: Readonly<Record<string, SentenceClass>> = {
   'g2-numbers': 'number',
   'g2-weather': 'the-noun',
   'g2-sports': 'sport',
+  // CR-07 Table A extension - same classes reused for the new grade topics.
+  'g1-numbers': 'number',
+  'g1-colors': 'color',
+  'g1-family': 'family',
+  'g1-body': 'body-part',
+  'g3-classroom-actions': 'action',
+  'g3-body-parts': 'body-part',
+  'g3-hobbies': 'sport',
+  'g3-colours': 'color',
+  'g3-family': 'family',
+  'g3-jobs': 'occupation',
+  'g3-sports-games': 'sport',
+  'g3-weather': 'the-noun',
+  'g4-daily-routine': 'the-noun',
+  'g4-subjects': 'sport',
+  'g4-seasons': 'the-noun',
+  'g4-abilities': 'action',
+  'g4-jobs': 'occupation',
+  'g5-countries': 'country',
+  'g5-future-jobs': 'occupation',
+  'g5-club-activities': 'sport',
+  'g5-special-days': 'sport',
 };
 
 /**
@@ -139,6 +169,21 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   ocean: 'the-noun',
   fire: 'the-noun',
   skateboard: 'countable',
+  // CR-07 Table B extension.
+  'video-game': 'countable',
+  volunteer: 'occupation',
+  recorder: 'countable',
+  cycle: 'action',
+  'wake-up': 'action',
+  'brush-teeth': 'action',
+  breakfast: 'mass',
+  lunch: 'mass',
+  dinner: 'mass',
+  homework: 'mass',
+  spring: 'mass',
+  summer: 'mass',
+  autumn: 'mass',
+  winter: 'mass',
 };
 
 /** BR-16 precedence: word-id override -> actions topic -> topic class -> countable/mass. */

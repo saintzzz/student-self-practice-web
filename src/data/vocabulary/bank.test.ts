@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_WORDS, getTopicsByGrade, getWordsByTopic } from './index';
+import { ALL_WORDS, getTopicsByGrade, getWordsByGrade, getWordsByTopic } from './index';
 import { generateListeningSentenceFillBlankQuestions } from '../../lib/generators/listeningSentenceFillBlank';
 import { generateListeningImageChoiceQuestions } from '../../lib/generators/listeningImageChoice';
 import { generateExtraLetterQuestions } from '../../lib/generators/extraLetter';
@@ -8,6 +8,9 @@ import { generateDescribeAndChooseImageQuestions } from '../../lib/generators/de
 import { generatePronunciationRecordingQuestions } from '../../lib/generators/pronunciationRecording';
 import { generatePicturePairMatchingBoards } from '../../lib/generators/picturePairMatching';
 import { buildRound1Questions } from '../../lib/rounds/round1ExtraLetter';
+import { buildRound2Questions } from '../../lib/rounds/round2ListeningSentence';
+import { buildRound3Questions } from '../../lib/rounds/round3Pronunciation';
+import { buildRound4Questions } from '../../lib/rounds/round4DescribeAndChooseImage';
 import baselineJson from './bank.baseline.json';
 import type { VocabWord } from '../../types';
 
@@ -82,19 +85,23 @@ const byId = new Map(ALL_WORDS.map((w) => [w.id, w]));
 const baselineIds = Object.keys(baseline.words);
 
 describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => {
-  it('AC-6.1: exactly the 43 specified new entries exist, for 326 words total', () => {
+  it('AC-6.1: the 43 specified r3 entries exist; CR-07 adds only grade 1/3/4/5 topic words', () => {
     expect(NEW_ENTRIES).toHaveLength(43);
-    expect(ALL_WORDS).toHaveLength(326);
+    expect(ALL_WORDS).toHaveLength(524);
     for (const expected of NEW_ENTRIES) {
       const actual = byId.get(expected.id);
       expect(actual, `missing new entry ${expected.id}`).toBeDefined();
       expect({ ...actual, imageUrl: undefined }).toEqual({ ...expected, imageUrl: undefined });
     }
-    // No ids beyond the 283 baseline + 43 new
-    const extra = ALL_WORDS.map((w) => w.id).filter(
-      (id) => !baselineIds.includes(id) && !NEW_ENTRIES.some((e) => e.id === id),
+    // Words beyond the 283 baseline + 43 r3 entries are CR-07 additions and
+    // must live under the new grade-1/3/4/5 topics (R-G2: grade-2 bank frozen).
+    const extra = ALL_WORDS.filter(
+      (w) => !baselineIds.includes(w.id) && !NEW_ENTRIES.some((e) => e.id === w.id),
     );
-    expect(extra).toEqual([]);
+    expect(extra.length).toBeGreaterThan(0);
+    for (const w of extra) {
+      expect(w.topicId, `word ${w.id} must belong to a new-grade topic`).toMatch(/^g[1345]-/);
+    }
   });
 
   it('AC-6.2: the four new grade-2 topics are registered with >= 4 words each', () => {
@@ -114,7 +121,7 @@ describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => 
     }
   });
 
-  it('AC-6.3: the only shared emoji across the whole bank are the four sanctioned pairs', () => {
+  it('AC-6.3: the only shared emoji across the whole bank are the sanctioned pairs', () => {
     const byEmoji = new Map<string, string[]>();
     for (const w of ALL_WORDS) {
       const list = byEmoji.get(w.emoji) ?? [];
@@ -127,6 +134,12 @@ describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => 
       '😢': expect.arrayContaining(['cry', 'sad']),
       '😴': expect.arrayContaining(['sleep', 'tired']),
       '🏊': expect.arrayContaining(['swim', 'swimming']),
+      // CR-07 sanctioned additions - same real-world object as the emoji:
+      // ⚽ is literally a football; 🛝 is playground equipment; 🏮 is the
+      // Mid-Autumn lantern itself. Same rationale as the existing book/read pair.
+      '⚽': expect.arrayContaining(['ball', 'football']),
+      '🛝': expect.arrayContaining(['slide', 'playground']),
+      '🏮': expect.arrayContaining(['lantern', 'Mid-Autumn Festival']),
     });
     for (const [, words] of shared) {
       expect(words).toHaveLength(2);
@@ -153,7 +166,7 @@ describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => 
   });
 
   it('AC-6.6: every Round pool generator accepts the enlarged bank without throwing', () => {
-    expect(() => buildRound1Questions('seed-bank')).not.toThrow();
+    expect(() => buildRound1Questions('seed-bank', ALL_WORDS)).not.toThrow();
     expect(() => generateExtraLetterQuestions([...ALL_WORDS])).not.toThrow();
     expect(() => generateImageChoiceQuestions([...ALL_WORDS])).not.toThrow();
     expect(() => generateListeningSentenceFillBlankQuestions(ALL_WORDS)).not.toThrow();
@@ -161,6 +174,15 @@ describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => 
     expect(() => generatePronunciationRecordingQuestions(ALL_WORDS)).not.toThrow();
     expect(() => generateDescribeAndChooseImageQuestions(ALL_WORDS)).not.toThrow();
     expect(() => generatePicturePairMatchingBoards(ALL_WORDS)).not.toThrow();
+    // CR-07 AC-G7: per-grade pools must be safe for every pool generator,
+    // including the smallest grade (grade-1, 65 words).
+    for (const gradeId of ['grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5']) {
+      const pool = getWordsByGrade(gradeId);
+      expect(() => buildRound1Questions(`seed-${gradeId}`, pool), `round1 ${gradeId}`).not.toThrow();
+      expect(() => buildRound2Questions(`seed-${gradeId}`, pool), `round2 ${gradeId}`).not.toThrow();
+      expect(() => buildRound3Questions(`seed-${gradeId}`, pool), `round3 ${gradeId}`).not.toThrow();
+      expect(() => buildRound4Questions(`seed-${gradeId}`, pool), `round4 ${gradeId}`).not.toThrow();
+    }
     // Countable gate: every new countable word is eligible for describe-and-choose
     const describeQuestions = generateDescribeAndChooseImageQuestions(ALL_WORDS);
     const describeWordIds = new Set(describeQuestions.map((q) => q.optionWordIds[q.correctIndex]));

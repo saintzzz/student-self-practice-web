@@ -90,11 +90,13 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows exactly one grade card on load (AC1)', () => {
+  it('shows all five grade cards on load (AC1, CR-07 AC-G1)', () => {
     render(<App />);
 
-    expect(screen.getByTestId('grade-card-grade-2')).toBeVisible();
-    expect(screen.getAllByTestId(/^grade-card-/)).toHaveLength(1);
+    for (const id of ['grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5']) {
+      expect(screen.getByTestId(`grade-card-${id}`)).toBeVisible();
+    }
+    expect(screen.getAllByTestId(/^grade-card-/)).toHaveLength(5);
   });
 
   it('navigates grade -> start-batch screen -> Round 1, and back-to-grades returns to grade selection', async () => {
