@@ -11,19 +11,19 @@
       "productionUrl": "https://ioe-leduyminh.vercel.app",
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh.vercel.app",
-      "commit": "23814e9",
+      "commit": "e316e8c",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-01T09:20:00+07:00",
+      "lastHealthCheck": "2026-10-01T09:55:00+07:00",
       "healthDetails": {
         "GET /": 200,
-        "GET /assets/index-0BfYi0-S.js": 200,
-        "GET /assets/index-yTJtMZc_.css": 200,
+        "GET /assets/index-PhcR-2fk.js": 200,
+        "bundle contains": "Hanh trinh cua Be Heo, 5 lands, beheo-engagement-v1",
         "grade cards rendered": 5,
         "login surface (env absent -> guest mode)": "hidden",
         "console errors": 0
       },
-      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: 23814e9 (CR-08 Supabase accounts+RBAC: practice schema on cxjpgfhqchjoernfmcra, edge function practice-admin, env-gated auth) serving guest-mode bundle index-0BfYi0-S.js - production shows the pre-CR-08 guest experience until VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY are added to project env (dashboard) and a rebuild runs. Backend live: schema practice, RLS verified, edge function v1, admin account provisioned. Earlier verified commits: ec94500 (CR-07 grades 1-5), 5ae3bc2 (CR-09 UI refresh), 996b801 (CR-06), 810b743 (CR-03), 2a92991 (CR-01/02/04)."
+      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: e316e8c (CR-10 themed world + engagement: 5-land journey map, land SVG scenes, star bank/streak/sticker album, confetti/star-rain/chest celebrations) serving bundle index-PhcR-2fk.js - production remains in guest mode until VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY are added to project env (dashboard) and a rebuild runs. Backend live: schema practice, RLS verified, edge function v1, admin account provisioned. Earlier verified commits: 23814e9 (CR-08 accounts+RBAC), ec94500 (CR-07 grades 1-5), 5ae3bc2 (CR-09 UI refresh), 996b801 (CR-06), 810b743 (CR-03), 2a92991 (CR-01/02/04)."
     }
   ]
 }
