@@ -10,11 +10,17 @@ interface ExtraLetterQuestionProps {
 function getTileClassName(index: number, selectedLetterIndex: number | null, extraIndex: number): string {
   /* CR-12 DS-X3: letter tiles become "key caps" - gradient face, top
      sheen + deep bottom edge, lift on hover like a toy keyboard. */
+  /* CR-12 DS-X3: letter tiles become "key caps" - gradient face, top
+     sheen + deep bottom edge, lift on hover like a toy keyboard.
+     CR-12 fix: tiles must stay on ONE row so the letters still read as
+     a word - flex-1 lets them share the row, max-w caps at 76px, and
+     the 76px HEIGHT is preserved so the touch target stays generous
+     even when narrow screens make tiles thin. */
   const base =
-    'relative flex min-h-[76px] min-w-[76px] items-center justify-center rounded-2xl border-4 text-3xl ' +
+    'relative flex h-[76px] min-w-0 flex-1 max-w-[76px] items-center justify-center rounded-2xl border-4 text-3xl ' +
     'font-extrabold uppercase shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-4px_0_rgba(0,0,0,0.08),0_4px_10px_-4px_rgba(15,23,42,0.15)] ' +
     'transition hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none ' +
-    'motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-sky-500';
+    'motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-sky-500 [@media(max-width:360px)]:text-2xl';
 
   if (selectedLetterIndex === null) {
     return `${base} border-sky-200 bg-gradient-to-b from-white to-sky-50/80 text-sky-900 ` +
@@ -49,7 +55,7 @@ export default function ExtraLetterQuestion({
       <p className="mb-2 text-xl font-semibold text-sky-700 [@media(max-height:600px)]:text-base">
         Từ này có 1 chữ cái thừa! Bấm vào chữ cái em nghĩ là thừa nhé.
       </p>
-      <div className="mb-2 flex flex-wrap justify-center gap-x-3 gap-y-2">
+      <div className="mb-2 flex justify-center gap-1.5 sm:gap-3">
         {question.displayLetters.map((letter, index) => (
           <button
             key={`${letter}-${index}`}

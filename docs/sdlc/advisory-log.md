@@ -559,3 +559,13 @@ next-button assertion now uses expectWithinReasonableScrollDistance
 4's 8-tile board. Zero-horizontal-scroll assertion unchanged.
 
 Gates: 712/712 unit, 60/60 e2e, tsc/build/attribution/dash-guard clean.
+
+
+## A-32 (2026-10-01): Extra-letter tiles must stay on one row (human feedback)
+
+At 320px (and any width where tiles wrapped), displayLetters broke into
+2-3 rows - the letters no longer read as a WORD, defeating the exercise
+("how can a child visualize the word?"). Fix: tiles are now `flex-1
+max-w-[76px] h-[76px]` in a no-wrap row - width flexes down on narrow
+screens while the 76px touch HEIGHT is preserved; single-row also frees
+~150px of vertical space on short phones.
