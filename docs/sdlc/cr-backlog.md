@@ -16,7 +16,7 @@
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | resolved (backend + app implemented; prod auth pending Vercel env vars) |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
 | CR-10 | Real visual identity: theme, kid appeal, engagement layer | human request 2026-10-01 | resolved (deployed e316e8c) |
-| CR-11 | Visual polish: alignment bugs, balance, full responsive, premium finish | human request 2026-10-01 | resolved (pending deploy) |
+| CR-11 | Visual polish: alignment bugs, balance, full responsive, premium finish | human request 2026-10-01 | resolved (deployed ab094f4) |
 
 ---
 
