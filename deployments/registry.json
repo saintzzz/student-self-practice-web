@@ -11,19 +11,19 @@
       "productionUrl": "https://ioe-leduyminh.vercel.app",
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh.vercel.app",
-      "commit": "ec94500",
+      "commit": "23814e9",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-01T08:15:00+07:00",
+      "lastHealthCheck": "2026-10-01T09:20:00+07:00",
       "healthDetails": {
         "GET /": 200,
-        "GET /assets/index-DRzZuEtU.js": 200,
-        "GET /assets/index-DkYKHslv.css": 200,
-        "GET /emoji/svg/1f1fb-1f1f3.svg": 200,
-        "GET /emoji/lottie/1fa77.json": 200,
-        "bundle matches local CR-07 build": true
+        "GET /assets/index-0BfYi0-S.js": 200,
+        "GET /assets/index-yTJtMZc_.css": 200,
+        "grade cards rendered": 5,
+        "login surface (env absent -> guest mode)": "hidden",
+        "console errors": 0
       },
-      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: ec94500 (CR-07 grades 1-5 vocabulary coverage: 524 words / 79 topics, per-grade batch scoping via createBatch(seed, gradeId), sentence-class extensions, 7 sanctioned shared-emoji pairs, JS budget re-based to 101.07 kB) serving bundle index-DRzZuEtU.js. Earlier verified commits: 5ae3bc2 (CR-09 UI refresh), 996b801 (CR-06 phonics deepening), 810b743 (CR-03 phonics round), 2a92991 (CR-01/02/04), 0829a52, acda200. Deployment-specific URLs 302 to Vercel SSO by design; the production alias is the verified surface."
+      "note": "Git-linked project: every push to main auto-deploys, so the live deployment supersedes the recorded one. Last health-checked commit: 23814e9 (CR-08 Supabase accounts+RBAC: practice schema on cxjpgfhqchjoernfmcra, edge function practice-admin, env-gated auth) serving guest-mode bundle index-0BfYi0-S.js - production shows the pre-CR-08 guest experience until VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY are added to project env (dashboard) and a rebuild runs. Backend live: schema practice, RLS verified, edge function v1, admin account provisioned. Earlier verified commits: ec94500 (CR-07 grades 1-5), 5ae3bc2 (CR-09 UI refresh), 996b801 (CR-06), 810b743 (CR-03), 2a92991 (CR-01/02/04)."
     }
   ]
 }
