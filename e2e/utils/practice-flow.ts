@@ -44,7 +44,9 @@ export type RoundQuestionKind =
   | 'counting-image'
   | 'pronunciation-recording'
   | 'describe-and-choose-image'
-  | 'picture-pair-matching';
+  | 'picture-pair-matching'
+  | 'phonics-sound-choice'
+  | 'phonics-word-choice';
 
 export interface Fraction {
   current: number;

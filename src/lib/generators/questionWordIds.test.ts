@@ -7,6 +7,7 @@ import { generateImageChoiceQuestions } from './imageChoice';
 import { generateListeningImageChoiceQuestions } from './listeningImageChoice';
 import { generateListeningSentenceFillBlankQuestions } from './listeningSentenceFillBlank';
 import { generatePicturePairMatchingBoards } from './picturePairMatching';
+import { generatePhonicsSoundChoiceQuestions, generatePhonicsWordChoiceQuestions } from './phonics';
 
 /**
  * AC-5.8: every generated question carries ids that resolve to real words
@@ -115,6 +116,30 @@ describe('question wordId integrity (AC-5.8)', () => {
           expect(word?.emoji, `picture-pair-matching ${q.id}`).toBe(pair.emoji);
         }
       }
+    }
+  });
+
+  it('phonics-sound-choice wordId resolves to the bank word behind word/emoji', () => {
+    for (const q of generatePhonicsSoundChoiceQuestions(ALL_WORDS)) {
+      expectBankIds([q.wordId], `phonics-sound-choice ${q.id}`);
+      const word = BANK_WORDS_BY_ID.get(q.wordId);
+      expect(word?.word, `phonics-sound-choice ${q.id}`).toBe(q.word);
+      expect(word?.emoji, `phonics-sound-choice ${q.id}`).toBe(q.emoji);
+    }
+  });
+
+  it('phonics-word-choice optionWordIds resolve to real bank words matching the option emojis', () => {
+    for (const q of generatePhonicsWordChoiceQuestions(ALL_WORDS)) {
+      expectBankIds(q.optionWordIds, `phonics-word-choice ${q.id}`);
+      q.optionWordIds.forEach((id, i) => {
+        expect(
+          BANK_WORDS_BY_ID.get(id)?.emoji,
+          `phonics-word-choice ${q.id} option ${i}`,
+        ).toBe(q.options[i]);
+      });
+      // The carried correct word must back the correct option slot.
+      expect(BANK_WORDS_BY_ID.get(q.wordId)?.word, `phonics-word-choice ${q.id}`).toBe(q.word);
+      expect(q.optionWordIds[q.correctIndex], `phonics-word-choice ${q.id}`).toBe(q.wordId);
     }
   });
 });

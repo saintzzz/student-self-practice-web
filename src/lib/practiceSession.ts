@@ -60,6 +60,10 @@ export function getCorrectWord(question: Question): string {
       return question.word;
     case 'picture-pair-matching':
       return question.pairs.map((pair) => `${pair.word} - ${pair.emoji}`).join(', ');
+    case 'phonics-sound-choice':
+      return `âm "${question.sound}"`;
+    case 'phonics-word-choice':
+      return question.word;
   }
 }
 
@@ -103,7 +107,9 @@ export function submitOptionAnswer(
     (currentQuestion.kind !== 'image-choice' &&
       currentQuestion.kind !== 'counting-image' &&
       currentQuestion.kind !== 'describe-and-choose-image' &&
-      currentQuestion.kind !== 'listening-image-choice')
+      currentQuestion.kind !== 'listening-image-choice' &&
+      currentQuestion.kind !== 'phonics-sound-choice' &&
+      currentQuestion.kind !== 'phonics-word-choice')
   ) {
     return state;
   }

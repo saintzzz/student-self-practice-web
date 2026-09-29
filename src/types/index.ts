@@ -43,7 +43,9 @@ export type QuestionKind =
   | 'pronunciation-recording'
   | 'describe-and-choose-image'
   | 'listening-image-choice'
-  | 'picture-pair-matching';
+  | 'picture-pair-matching'
+  | 'phonics-sound-choice'
+  | 'phonics-word-choice';
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -186,6 +188,49 @@ export interface DescribeAndChooseImageQuestion {
 /** Picture-pair-matching types (plan.md v8) live in ./pairMatching.ts, split out for file-size hygiene. */
 export * from './pairMatching';
 
+/**
+ * Phonics direction A (CR-03, human ruling D-Ph2): the student sees `word`
+ * plus its picture and hears it via TTS, then picks its initial *sound*
+ * from `options` (4 lowercase letter/digraph keys like 'p', 'sh').
+ */
+export interface PhonicsSoundChoiceQuestion {
+  id: string;
+  topicId: string;
+  kind: 'phonics-sound-choice';
+  word: string;
+  /** Id of the VocabWord for `word`; used to resolve the FeedbackPanel picture. */
+  wordId: string;
+  emoji: string;
+  /** The correct option - getInitialSound(word). */
+  sound: string;
+  options: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+/**
+ * Phonics direction B (CR-03, human ruling D-Ph2): the student hears a
+ * letter sound (and sees its letter), then picks the picture/word that
+ * starts with that sound - the phonics twin of ListeningImageChoiceQuestion
+ * (audio prompt, image answer, same 4-option shell).
+ */
+export interface PhonicsWordChoiceQuestion {
+  id: string;
+  topicId: string;
+  kind: 'phonics-word-choice';
+  /** The target sound spoken/shown as the prompt. */
+  sound: string;
+  /** The correct word (carried for feedback text + getCorrectWord). */
+  word: string;
+  /** Id of the VocabWord for `word`; used to resolve the FeedbackPanel picture. */
+  wordId: string;
+  options: readonly [string, string, string, string];
+  /** VocabWord ids parallel to `options` (same additive pattern as ListeningImageChoiceQuestion). */
+  optionWordIds: readonly [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
 export type Question =
   | ImageChoiceQuestion
   | ListeningFillBlankQuestion
@@ -195,7 +240,9 @@ export type Question =
   | PronunciationRecordingQuestion
   | DescribeAndChooseImageQuestion
   | ListeningImageChoiceQuestion
-  | PicturePairMatchingQuestion;
+  | PicturePairMatchingQuestion
+  | PhonicsSoundChoiceQuestion
+  | PhonicsWordChoiceQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:

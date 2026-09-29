@@ -7,6 +7,8 @@ import type {
   ListeningFillBlankQuestion,
   ListeningImageChoiceQuestion,
   ListeningSentenceFillBlankQuestion,
+  PhonicsSoundChoiceQuestion,
+  PhonicsWordChoiceQuestion,
   PicturePairMatchingQuestion,
   PronunciationRecordingQuestion,
 } from '../types';
@@ -127,6 +129,32 @@ export const PICTURE_PAIR_MATCHING_QUESTION: PicturePairMatchingQuestion = {
     { pairIndex: 3, tileType: 'picture', label: '🐦' },
   ],
   explanation: 'Các cặp đúng trong bảng này là: cat - 🐱, dog - 🐶, fish - 🐟, bird - 🐦.',
+};
+
+export const PHONICS_SOUND_CHOICE_QUESTION: PhonicsSoundChoiceQuestion = {
+  id: 'q10',
+  topicId: 't1',
+  kind: 'phonics-sound-choice',
+  word: 'cat',
+  wordId: 'fixture-cat',
+  emoji: '🐱',
+  sound: 'c',
+  options: ['c', 'd', 'f', 'b'],
+  correctIndex: 0,
+  explanation: 'Từ "cat" bắt đầu bằng âm "c".',
+};
+
+export const PHONICS_WORD_CHOICE_QUESTION: PhonicsWordChoiceQuestion = {
+  id: 'q11',
+  topicId: 't1',
+  kind: 'phonics-word-choice',
+  word: 'cat',
+  wordId: 'fixture-cat',
+  sound: 'c',
+  options: ['🐱', '🐶', '🐟', '🐦'],
+  optionWordIds: ['fixture-cat', 'fixture-dog', 'fixture-fish', 'fixture-bird'],
+  correctIndex: 0,
+  explanation: '"cat" bắt đầu bằng âm "c".',
 };
 
 export const noopHandlers = {

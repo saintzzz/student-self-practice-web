@@ -53,7 +53,12 @@ import { answerOptionQuestion } from './option-flow';
  * not the assertions built on top of them -- are what need revision.
  */
 
-const ROUND4_KINDS: RoundQuestionKind[] = ['describe-and-choose-image', 'picture-pair-matching'];
+const ROUND4_KINDS: RoundQuestionKind[] = [
+  'describe-and-choose-image',
+  'picture-pair-matching',
+  'phonics-sound-choice',
+  'phonics-word-choice',
+];
 
 export function pairTiles(page: Page): Locator {
   return questionCard(page).locator('[data-testid^="pair-tile-"]');

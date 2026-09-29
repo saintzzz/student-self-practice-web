@@ -5,7 +5,7 @@ import { answerOptionQuestion, currentDescriptionType, optionButtons } from './u
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 import { forceMistakeLimitExceeded } from './utils/pair-matching-flow';
 
-const ROUND4_KINDS = ['describe-and-choose-image', 'picture-pair-matching'] as const;
+const ROUND4_KINDS = ['describe-and-choose-image', 'picture-pair-matching', 'phonics-sound-choice', 'phonics-word-choice'] as const;
 
 /**
  * Covers plan.md v5/v6 Round 4 (describe-and-choose-image -- AC20, AC25,
@@ -107,7 +107,7 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
         continue;
       }
 
-      const descriptionType = await currentDescriptionType(page);
+      const descriptionType = kind === 'describe-and-choose-image' ? await currentDescriptionType(page) : kind;
 
       // Structural choice (always click the first rendered option), never a
       // hardcoded content assumption -- same technique as
@@ -147,10 +147,11 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
 
     expect(
       foundWrongCase,
-      'expected at least one describe-and-choose-image question in this ~10-question round where clicking ' +
-        'option 0 was the wrong answer, which is where the immediate-incorrect-feedback assertions above ran -- ' +
-        'getting all questions correct by always picking option 0 is possible in principle (each question has 4 ' +
-        'options) but astronomically unlikely across ~10 questions; if this ever fires, it is worth investigating ' +
+      'expected at least one describe-and-choose-image question among the 4 guaranteed per round (the round ' +
+        'also mixes in pair-matching and phonics kinds, which this loop skips) where clicking option 0 was the ' +
+        'wrong answer, which is where the immediate-incorrect-feedback assertions above ran -- getting all ' +
+        'describe questions correct by always picking option 0 is possible in principle (each question has 4 ' +
+        'options) but astronomically unlikely; if this ever fires, it is worth investigating ' +
         'rather than assuming test flakiness',
     ).toBe(true);
   });

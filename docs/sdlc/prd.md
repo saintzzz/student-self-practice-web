@@ -1366,3 +1366,40 @@ Coverage check (an AC may cover several scope items): S1 = 12, S2 = 19, S3 = 23,
 | A-09 Player cap | <= 1 per screen before answering, <= 2 after (AC-2.9) | Human (advisory A-09) |
 | CR-01, CR-02, CR-03 | Approved as backlog items | Human, 2026-09-29 |
 | Image-only words | Not approved; note only | Human, 2026-09-29 |
+
+## 14. CR-03 delta: Phonics round (approved 2026-09-29)
+
+CR-03 was approved for implementation in a follow-up CR run. Human
+rulings at the requirements gate (all 2026-09-29):
+
+| Decision | Outcome |
+|----------|---------|
+| D-Ph1 Data model | `initialSound` as derived phonics dimension (rule + exceptions table; no VocabWord field, baseline fixtures untouched) |
+| D-Ph2 Question forms | Both directions: word->sound (`phonics-sound-choice`) and sound->word/picture (`phonics-word-choice`) |
+| D-Ph3 Placement | Mixed into Round 4's pool (4 describe + 3 pair-matching + 2 sound-choice + 1 word-choice out of ~10), same pattern as D-10 |
+
+### Phonics ACs (CR-03)
+
+- AC-Ph1: `getInitialSound(word)` maps every bank word to a sound group
+  key (`a`-`z` or digraph `ch`/`sh`/`th`), with an exceptions table for
+  spelling-vs-sound mismatches (chef->sh, giraffe->j, circle->s,
+  write->r, one->w; wh- collapses to w). Vowel-initial words are grouped
+  by letter (eye->e, eight->e, umbrella->u) - the group key is a
+  grouping label, and teaching vowel phoneme detail is out of scope.
+  Distinct keys sharing one phoneme (c/k, both /k/) must be treated as
+  equivalent in distractor logic via `soundsSharePhoneme`.
+- AC-Ph2: phonics-sound-choice shows the word + picture + TTS and offers
+  4 distinct sound options; the correct one equals getInitialSound(word);
+  distractor sounds always exist in the bank; no distractor may share a
+  phoneme with the answer (c/k equivalence).
+- AC-Ph3: phonics-word-choice shows/speaks the sound (utterance
+  "key, as in example-word" so TTS does not read a bare letter name) and
+  offers 4 picture options of which exactly one word starts with that
+  sound or an equivalent phoneme; all 4 option emojis are distinct;
+  optionWordIds parallel options (AC-5.8 pattern).
+- AC-Ph4: Round 4 draws 2 sound-choice + 1 word-choice per Batch
+  alongside 4 describe + 3 pair-matching, topic-stratified and seeded.
+- AC-Ph5: Both kinds answer via the shared option-submit path, show
+  FeedbackPanel with the correct word picture, and announce picture
+  options via emoji aria-label (CR-02 pattern); phonics-word-choice reuses
+  the all-or-nothing photo group (AC-5.2/5.3).

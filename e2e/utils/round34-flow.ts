@@ -156,10 +156,16 @@ export async function runDescribeAndChooseImageRound(
     const progress = await readQuestionProgress(page);
     expect(progress.current, `expected question ${q} of Round 4`).toBe(q);
     // v8 mixes picture-pair-matching into Round 4's pool alongside
-    // describe-and-choose-image (plan.md v8 AC31) - branch per kind, same
+    // describe-and-choose-image (plan.md v8 AC31); CR-03 adds the two
+    // phonics kinds (option-shaped like describe) - branch per kind, same
     // pattern already applied to Round 2's runListeningSentenceRound for its
     // v8 listening-image-choice addition.
-    const kind = await currentQuestionKindOneOf(page, ['describe-and-choose-image', 'picture-pair-matching']);
+    const kind = await currentQuestionKindOneOf(page, [
+      'describe-and-choose-image',
+      'picture-pair-matching',
+      'phonics-sound-choice',
+      'phonics-word-choice',
+    ]);
 
     if (kind === 'picture-pair-matching') {
       // This runner's job is to survive/traverse Round 4, not to exercise
@@ -178,8 +184,10 @@ export async function runDescribeAndChooseImageRound(
       continue;
     }
 
-    const descriptionType = await currentDescriptionType(page);
-    descriptionTypeCounts[descriptionType]++;
+    const descriptionType = kind === 'describe-and-choose-image' ? await currentDescriptionType(page) : 'count';
+    if (kind === 'describe-and-choose-image') {
+      descriptionTypeCounts[descriptionType]++;
+    }
 
     const result = await answerOptionQuestion(page, clickIndex);
     if (result.outcome === 'correct') {
@@ -198,9 +206,11 @@ export async function runDescribeAndChooseImageRound(
       throw new Error(`Round 4 question ${q}: unrecognized answer outcome`);
     }
 
-    const correctOptionText = (await optionButtons(page).nth(result.correctIndex).innerText()).trim();
-    const [firstChar] = Array.from(correctOptionText);
-    correctOptionEmojis.push(firstChar ?? '');
+    if (kind === 'describe-and-choose-image') {
+      const correctOptionText = (await optionButtons(page).nth(result.correctIndex).innerText()).trim();
+      const [firstChar] = Array.from(correctOptionText);
+      correctOptionEmojis.push(firstChar ?? '');
+    }
 
     await goToNextQuestion(page);
   }

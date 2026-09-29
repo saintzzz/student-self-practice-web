@@ -2,41 +2,53 @@ import { describe, expect, it } from 'vitest';
 import {
   ROUND_4_DESCRIBE_COUNT,
   ROUND_4_PAIR_MATCHING_COUNT,
+  ROUND_4_PHONICS_SOUND_COUNT,
+  ROUND_4_PHONICS_WORD_COUNT,
   ROUND_4_QUESTION_COUNT,
   buildRound4Questions,
 } from './round4DescribeAndChooseImage';
 import { ALL_WORDS } from '../../data/vocabulary';
 import { generateDescribeAndChooseImageQuestions } from '../generators/describeAndChooseImage';
 import { generatePicturePairMatchingBoards } from '../generators/picturePairMatching';
+import {
+  generatePhonicsSoundChoiceQuestions,
+  generatePhonicsWordChoiceQuestions,
+} from '../generators/phonics';
+
+const ROUND4_KINDS = [
+  'describe-and-choose-image',
+  'picture-pair-matching',
+  'phonics-sound-choice',
+  'phonics-word-choice',
+] as const;
 
 describe('buildRound4Questions', () => {
-  it('returns about 10 questions, all of kind describe-and-choose-image or picture-pair-matching', () => {
+  it('returns about 10 questions, all of a Round 4 kind', () => {
     const questions = buildRound4Questions('seed-a');
 
     expect(questions).toHaveLength(ROUND_4_QUESTION_COUNT);
-    expect(
-      questions.every((q) => q.kind === 'describe-and-choose-image' || q.kind === 'picture-pair-matching'),
-    ).toBe(true);
+    expect(questions.every((q) => (ROUND4_KINDS as readonly string[]).includes(q.kind))).toBe(true);
   });
 
-  it('AC31: includes both describe-and-choose-image and picture-pair-matching in every draw', () => {
+  it('AC31 + CR-03: includes every Round 4 kind in every draw', () => {
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const questions = buildRound4Questions(seed);
       const kinds = new Set(questions.map((q) => q.kind));
 
-      expect(kinds.has('describe-and-choose-image')).toBe(true);
-      expect(kinds.has('picture-pair-matching')).toBe(true);
+      for (const kind of ROUND4_KINDS) {
+        expect(kinds.has(kind), `seed ${seed} must include ${kind}`).toBe(true);
+      }
     }
   });
 
-  it('splits the mix per the documented ratio (3 pair-matching boards / 7 describe-and-choose-image)', () => {
+  it('splits the mix per the documented ratio (4 describe / 3 pair-matching / 2 sound-choice / 1 word-choice)', () => {
     const questions = buildRound4Questions('seed-ratio');
 
-    const pairMatchingCount = questions.filter((q) => q.kind === 'picture-pair-matching').length;
-    const describeCount = questions.filter((q) => q.kind === 'describe-and-choose-image').length;
-
-    expect(pairMatchingCount).toBe(ROUND_4_PAIR_MATCHING_COUNT);
-    expect(describeCount).toBe(ROUND_4_DESCRIBE_COUNT);
+    const count = (kind: string) => questions.filter((q) => q.kind === kind).length;
+    expect(count('describe-and-choose-image')).toBe(ROUND_4_DESCRIBE_COUNT);
+    expect(count('picture-pair-matching')).toBe(ROUND_4_PAIR_MATCHING_COUNT);
+    expect(count('phonics-sound-choice')).toBe(ROUND_4_PHONICS_SOUND_COUNT);
+    expect(count('phonics-word-choice')).toBe(ROUND_4_PHONICS_WORD_COUNT);
   });
 
   it('every describe-and-choose-image question has a valid descriptionType, 4 options and a non-empty explanation', () => {
@@ -106,6 +118,34 @@ describe('buildRound4Questions', () => {
       const topicIds = new Set(
         buildRound4Questions(seed)
           .filter((q) => q.kind === 'picture-pair-matching')
+          .map((q) => q.topicId),
+      );
+      expect(topicIds.size).toBeGreaterThanOrEqual(minExpected);
+    }
+  });
+
+  it('AC23: the phonics-sound-choice slice is spread across at least min(eligible topics, slice size) distinct topics', () => {
+    const eligibleTopics = new Set(generatePhonicsSoundChoiceQuestions(ALL_WORDS).map((q) => q.topicId));
+    const minExpected = Math.min(eligibleTopics.size, ROUND_4_PHONICS_SOUND_COUNT);
+
+    for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
+      const topicIds = new Set(
+        buildRound4Questions(seed)
+          .filter((q) => q.kind === 'phonics-sound-choice')
+          .map((q) => q.topicId),
+      );
+      expect(topicIds.size).toBeGreaterThanOrEqual(minExpected);
+    }
+  });
+
+  it('AC23: the phonics-word-choice slice is spread across at least min(eligible topics, slice size) distinct topics', () => {
+    const eligibleTopics = new Set(generatePhonicsWordChoiceQuestions(ALL_WORDS).map((q) => q.topicId));
+    const minExpected = Math.min(eligibleTopics.size, ROUND_4_PHONICS_WORD_COUNT);
+
+    for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
+      const topicIds = new Set(
+        buildRound4Questions(seed)
+          .filter((q) => q.kind === 'phonics-word-choice')
           .map((q) => q.topicId),
       );
       expect(topicIds.size).toBeGreaterThanOrEqual(minExpected);

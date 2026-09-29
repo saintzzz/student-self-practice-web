@@ -228,3 +228,49 @@ Format: Objection/Options/Ruling. Mọi quyết định vật liệu ghi ở đ�
 - **CR-03 phonics:** held for user decision - new-feature scope.
 - Gates: 27/27 touched-file tests pass, tsc clean, build clean
   (entry 90.51kB gzip <= 94.5), attribution OK.
+
+## A-18: CR-03 phonics round implemented (2026-09-29)
+
+- User approved CR-03 as a full feature run; re-entered at BA per CR
+  workflow. Human rulings D-Ph1..D-Ph3 (PRD section 14): derived
+  initialSound dimension (rule + exceptions), both question directions,
+  mixed into Round 4 pool.
+- Implementation: phonics/initialSounds.ts (28 sound keys incl. ch/sh/th
+  digraphs + exceptions: chef->sh, giraffe->j, circle->s, write->r,
+  wh->w), generators/phonics.ts, components PhonicsSoundChoiceQuestion +
+  PhonicsWordChoiceQuestion, Round 4 composition 4 describe + 3
+  pair-matching + 2 sound-choice + 1 word-choice.
+- Gates: phonics/round4 targeted 29/29, touched-component 52/52, full
+  unit suite 588/589 (only baseline mic-permission-denied debt), tsc
+  clean, build clean, bundle budget OK (JS 91.26kB <= 94.5).
+- E2E helpers updated for the two new kinds; full e2e 49/49 pass.
+- Attribution gate clean (324 svg / 121 lottie). Awaiting lead review
+  before commit.
+
+## A-19: CR-03 lead review round - APPROVE after fixes (2026-09-29)
+
+- Round 1: reviewer-claude APPROVE_WITH_CHANGES. Findings and fixes:
+  - M1: 'one' (/wun/) mapped to 'o' - added to exceptions table -> 'w'.
+    PRD section 14 amended (one->w listed; vowel-initial words explicitly
+    grouped by letter).
+  - M2: c and k both /k/ - hard-c words could be distractors under a 'k'
+    prompt and 'k' could be a distractor under a 'c' answer. Added
+    soundsSharePhoneme()/equivalentSounds() (SAME_PHONEME_GROUPS
+    [[c,k]]); both generators now exclude equivalent-phoneme keys.
+    Bank-wide tests prove no same-phoneme distractor survives.
+  - m1: TTS spoke the bare key ("c" reads "see"). Added
+    getSoundUtterance() - speaks "c, as in cat"; test asserts every bank
+    sound's example word maps back to its own group.
+  - m2: sound-choice returned malformed options on a tiny sound pool -
+    now returns null like word-choice and the loop skips it.
+  - m3: QuestionCard feedback-picture tests extended to both phonics
+    kinds incl. a correctIndex mutation guard.
+  - m4: stale e2e assertion message updated for the mixed round.
+- Round 2: reviewer-claude APPROVE (equivalence verified both
+  directions; reverting the old !== logic would have produced 13 bad
+  questions, so the new tests are proven to bite). Two cosmetic
+  follow-ups applied immediately: comment wording aligned to "c, as in
+  cat" and a speakWord mock test locking the utterance.
+- Final gates: targeted vitest 60/60, full unit suite 588/589 (baseline
+  mic-permission-denied debt only), e2e 49/49, tsc/build clean, bundle
+  budget 89.25kB <= 94.5.

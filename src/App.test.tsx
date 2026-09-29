@@ -57,7 +57,7 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
   } else if (kind === 'pronunciation-recording') {
     await user.click(screen.getByTestId('record-button'));
     await waitFor(() => expect(screen.getByTestId('pronunciation-feedback')).toBeVisible());
-  } else if (kind === 'describe-and-choose-image') {
+  } else if (kind === 'describe-and-choose-image' || kind === 'phonics-sound-choice' || kind === 'phonics-word-choice') {
     await user.click(screen.getByTestId('option-0'));
   } else if (kind === 'picture-pair-matching') {
     await resolvePicturePairMatchingBoard(user);
@@ -157,9 +157,13 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     // either kind.
     expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
     const round4FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
-    expect(['describe-and-choose-image', 'picture-pair-matching']).toContain(round4FirstKind);
+    expect(['describe-and-choose-image', 'picture-pair-matching', 'phonics-sound-choice', 'phonics-word-choice']).toContain(round4FirstKind);
     const round4Kinds = await completeActiveRound(user);
-    expect(round4Kinds).toEqual(new Set(['describe-and-choose-image', 'picture-pair-matching']));
+    // CR-03: Round 4 is built as 4 describe + 3 pair-matching + 2
+    // phonics-sound + 1 phonics-word, so all four kinds always appear.
+    expect(round4Kinds).toEqual(
+      new Set(['describe-and-choose-image', 'picture-pair-matching', 'phonics-sound-choice', 'phonics-word-choice']),
+    );
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 

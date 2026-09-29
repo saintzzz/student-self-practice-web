@@ -48,7 +48,9 @@ function answerCurrentQuestion(state: BatchState): BatchState {
     question.kind === 'describe-and-choose-image' ||
     question.kind === 'image-choice' ||
     question.kind === 'listening-image-choice' ||
-    question.kind === 'counting-image'
+    question.kind === 'counting-image' ||
+    question.kind === 'phonics-sound-choice' ||
+    question.kind === 'phonics-word-choice'
   ) {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
   }

@@ -11,6 +11,8 @@ import {
   LISTENING_IMAGE_CHOICE_QUESTION,
   LISTENING_QUESTION,
   LISTENING_SENTENCE_QUESTION,
+  PHONICS_SOUND_CHOICE_QUESTION,
+  PHONICS_WORD_CHOICE_QUESTION,
   PICTURE_PAIR_MATCHING_QUESTION,
   noopHandlers,
 } from './questionCardFixtures';
@@ -81,6 +83,18 @@ describe('FeedbackPanel correct-word picture (AC-10.1)', () => {
       answer: { isCorrect: true, selectedIndex: 0 },
       expectedEmoji: '🐱', // optionWordIds[0]
     },
+    {
+      label: 'phonics-sound-choice (wordId)',
+      question: PHONICS_SOUND_CHOICE_QUESTION,
+      answer: { isCorrect: true, selectedIndex: 0 },
+      expectedEmoji: '🐱', // wordId: fixture-cat
+    },
+    {
+      label: 'phonics-word-choice (optionWordIds[correctIndex])',
+      question: PHONICS_WORD_CHOICE_QUESTION,
+      answer: { isCorrect: true, selectedIndex: 0 },
+      expectedEmoji: '🐱', // optionWordIds[0]
+    },
   ];
 
   it.each(PICTURE_KINDS)('shows the correct word picture for $label', ({ question, answer, expectedEmoji }) => {
@@ -121,5 +135,15 @@ describe('FeedbackPanel correct-word picture (AC-10.1)', () => {
 
     const visual = wordLine().querySelector('[data-emoji-visual]');
     expect(visual).toHaveAttribute('data-emoji-visual', '🐶'); // optionWordIds[2] = fixture-dog
+  });
+
+  it('uses optionWordIds[correctIndex] - not optionWordIds[0] - for phonics-word-choice (mutation guard)', () => {
+    renderAnswered(
+      { ...PHONICS_WORD_CHOICE_QUESTION, correctIndex: 2 },
+      { isCorrect: true, selectedIndex: 2 },
+    );
+
+    const visual = wordLine().querySelector('[data-emoji-visual]');
+    expect(visual).toHaveAttribute('data-emoji-visual', '🐟'); // optionWordIds[2] = fixture-fish
   });
 });

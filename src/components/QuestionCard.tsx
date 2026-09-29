@@ -11,6 +11,8 @@ import ExtraLetterQuestion from './ExtraLetterQuestion';
 import PronunciationRecordingQuestion from './PronunciationRecordingQuestion';
 import DescribeAndChooseImageQuestion from './DescribeAndChooseImageQuestion';
 import PicturePairMatchingQuestion from './PicturePairMatchingQuestion';
+import PhonicsSoundChoiceQuestion from './PhonicsSoundChoiceQuestion';
+import PhonicsWordChoiceQuestion from './PhonicsWordChoiceQuestion';
 import FeedbackPanel from './FeedbackPanel';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 
@@ -121,6 +123,24 @@ function renderQuestionBody(
           onSubmit={onSubmitPairMatching}
         />
       );
+    case 'phonics-sound-choice':
+      return (
+        <PhonicsSoundChoiceQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
+    case 'phonics-word-choice':
+      return (
+        <PhonicsWordChoiceQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={currentAnswer?.selectedIndex ?? null}
+          onSelectOption={onSubmitOption}
+        />
+      );
   }
 }
 
@@ -134,11 +154,13 @@ function feedbackPictureWordId(question: Question): string | undefined {
   switch (question.kind) {
     case 'extra-letter':
     case 'listening-sentence-fill-blank':
+    case 'phonics-sound-choice':
       return question.wordId;
     case 'counting-image':
       return question.promptWordId;
     case 'listening-image-choice':
     case 'describe-and-choose-image':
+    case 'phonics-word-choice':
       return question.optionWordIds[question.correctIndex];
     default:
       return undefined;

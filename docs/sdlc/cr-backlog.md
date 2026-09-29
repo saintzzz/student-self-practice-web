@@ -8,7 +8,7 @@
 |----|-------|--------|--------|
 | CR-01 | Pair-matching emoji dedupe | PRD O-5 | resolved |
 | CR-02 | Accessible names for picture option buttons | PRD O-6 | resolved |
-| CR-03 | Phonics round (P3) | constitution intake ruling, research doc 2.2 / 6 | approved-backlog |
+| CR-03 | Phonics round (P3) | constitution intake ruling, research doc 2.2 / 6 | resolved |
 | CR-04 | Vercel ignored build step | DevOps review Phase 7 | resolved |
 | CR-05 | Branch protection + PR preview discipline | DevOps review Phase 7 | user-action-required |
 
@@ -27,12 +27,14 @@
 - **Resolution (2026-09-29):** picture-bearing buttons now announce the *visible content* via `aria-label` - `ListeningImageChoiceQuestion` options announce their emoji, `DescribeAndChooseImageQuestion` options announce `emoji.repeat(count)`, and `PicturePairMatchingQuestion` picture tiles announce their emoji. This is the information-equivalent of what a sighted user sees, and since every option announces equally, nothing about the correct answer is leaked and the answer word never appears in an accessible name. This deliberately supersedes the "neutral Hình 1..4" proposal in the original analysis: neutral labels would leave screen-reader users with zero information and an unplayable task.
 - **Coverage:** CR-02 tests in `ListeningImageChoiceQuestion.test.tsx`, `DescribeAndChooseImageQuestion.test.tsx`, `PicturePairMatchingQuestion.test.tsx`.
 
-## CR-03: Phonics round (P3)
+## CR-03: Phonics round (P3) — RESOLVED
 
 - **Problem / opportunity:** each SGK Tiếng Anh 2 unit is tied to one phonics sound; the app has no phonics dimension.
 - **Evidence:** research doc 2.2 ("Mỗi unit gắn 1 âm phonics"), 2.3 ("Phonics words theo chữ cái mở đầu"), 6 (P3 row); constitution intake ruling (P3 out of this run).
-- **Proposed direction (for CR analysis, not decided):** an `initialSound` (or word -> phonics letter map) data dimension plus either a new Round kind or an extension of the extra-letter Round.
-- **Dependencies:** benefits from the EmojiVisual layer and the SGK vocabulary added in the current run.
+- **CR workflow:** entered the CR workflow after Phase 8 close; BA analysis plus human rulings D-Ph1..D-Ph3 (PRD section 14 delta) — derived `initialSound` dimension, both directions (word->sound and sound->word/picture), mixed into the Round 4 pool.
+- **Resolution (2026-09-29):** `src/lib/phonics/initialSounds.ts` (rule + exceptions table, keys `a`-`z` plus digraphs `ch`/`sh`/`th`), `src/lib/generators/phonics.ts` (`buildPhonicsSoundChoice`, `buildPhonicsWordChoice`), components `PhonicsSoundChoiceQuestion` / `PhonicsWordChoiceQuestion`, and Round 4 composition now 4 describe + 3 pair-matching + 2 sound-choice + 1 word-choice (topic-stratified, seeded). Both kinds flow through the shared option-submit path and the all-or-nothing photo group pattern.
+- **Coverage:** `initialSounds.test.ts`, `phonics.test.ts` (generators), `PhonicsSoundChoiceQuestion.test.tsx`, `PhonicsWordChoiceQuestion.test.tsx`, `QuestionCard.feedbackPicture.test.tsx` (AC-10.1 for both kinds), updated `round4DescribeAndChooseImage.test.ts` and `questionWordIds.test.ts` (AC-5.8 parity for phonics options).
+- **Review:** lead review round 1 APPROVE_WITH_CHANGES (one->w exception; c/k same-phoneme equivalence via `soundsSharePhoneme`; utterance "c, as in cat"; small-pool null guard; QuestionCard coverage), round 2 APPROVE - see advisory A-19.
 
 ---
 

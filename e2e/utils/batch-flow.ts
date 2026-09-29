@@ -268,6 +268,8 @@ export async function advanceToQuestionKind(
       case 'listening-image-choice':
       case 'counting-image':
       case 'describe-and-choose-image':
+      case 'phonics-sound-choice':
+      case 'phonics-word-choice':
         await answerOptionQuestion(page, 0);
         break;
       case 'listening-sentence-fill-blank':
