@@ -5,6 +5,7 @@ import { answerExtraLetterTile, goToNextQuestion, selectGrade } from './utils/pr
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { toEmojiKey } from '../src/lib/emoji/emojiKey';
+import { gotoApp } from './utils/auth-flow';
 
 const lottieKeys = JSON.parse(
   readFileSync(path.resolve(process.cwd(), 'src/lib/emoji/lottieKeys.generated.json'), 'utf8'),
@@ -45,7 +46,7 @@ async function assertNoThirdParty(page: Page, seen: string[]): Promise<void> {
 
 test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
   test('mascot pig renders through EmojiVisual as a same-origin Twemoji SVG', async ({ page }) => {
-    await page.goto('/');
+    await gotoApp(page);
     await selectGrade(page);
 
     const pig = page.locator('[data-emoji-visual="🐷"]').first();
@@ -176,7 +177,7 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
 
   test('no Lottie player/WASM/JSON requests on pre-round screens (AC-2.5)', async ({ page }) => {
     const seen = watchRequests(page);
-    await page.goto('/');
+    await gotoApp(page);
     await selectGrade(page);
     // The start-batch screen shows a greeting mascot (static svg only -
     // greeting/encouraging moods carry no accent). Wait for it so any

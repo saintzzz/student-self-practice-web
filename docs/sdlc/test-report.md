@@ -270,3 +270,46 @@ chips single row, Next reachable).
 | AC-G5 | check-attribution 520 svg/166 lottie; budget re-based w/ advisory A-24 | auto |
 | R-G4 generator minimums | bank.test AC-6.6 grade sweep (all builders x 5 pools) | auto |
 | AC-G6 no leakage | grades.test.ts full-batch wordId sweep per grade | auto |
+
+## CR-08 gate results (accounts + RBAC on Supabase, 2026-10-01)
+
+| Gate | Command | Result |
+|---|---|---|
+| Unit (Vitest) | `npx vitest run` | **692/692 pass**, 82/82 files (+6: GradeSelect scope, practiceAuth, env gate) |
+| Typecheck | `npx tsc --noEmit` | **Pass** |
+| Build | `npm run build` | **Pass** - entry JS 104.90 kB gzip (+3.83 app code), supabase-js isolated in a 59.26 kB async chunk |
+| Bundle budget | `node scripts/check-bundle-budget.mjs` | **Pass** - max 111.1 kB unchanged |
+| E2E (Playwright) | `npx playwright test` | **58/58 pass** (55 prior + 3 new auth.spec.ts, real backend) |
+| Visual QA | playwright script | login screen + admin console render per DS 15.x |
+
+### Backend verification (real project cxjpgfhqchjoernfmcra, schema `practice`)
+
+- Schema applied via `execute_sql` (record: `supabase/migrations/0001_practice_schema.sql`); `pgrst.db_schemas = 'public, practice'` + config reload.
+- **RLS proofs (AC-A1):**
+  - student JWT `GET accounts` returns only own row (admin row invisible).
+  - student JWT `POST classes` -> `42501 new row violates row-level security policy`.
+  - anon `GET accounts` -> `42501 permission denied for schema practice` (no grants at all).
+  - student JWT `practice-admin` -> `{"error":"forbidden"}`.
+- **Edge function (AC-A2):** `practice-admin` v1 deployed, verify_jwt ON; admin JWT `create-account` returned accountId + accounts row; `delete-account` removed the test student; last-admin guard in code.
+- **Bootstrap:** admin auth user `33eb3ad4-...` (email `admin@students.ioe-practice.example`) created via GoTrue admin API; PIN stored locally at `~/.config/devin/secrets/practice_admin_credentials.json` (chmod 600, not committed).
+- **E2E auth.spec.ts (3):** guest path -> 5 grade cards + zero supabase.co REST/auth traffic; admin login -> create student -> create class -> enroll -> scope grade-1+3 -> sign out -> student login shows exactly 2 cards -> grade-1 batch starts -> cleanup deletes both; wrong PIN shows VN error.
+- **AC-A6 env-absent:** `isSupabaseConfigured()` force-false under `MODE=test`; full suite network-free.
+
+### AC map
+
+| AC | Evidence | Status |
+|---|---|---|
+| AC-A1 | SQL/REST probes above | verified |
+| AC-A2 | edge fn calls above | verified |
+| AC-A3 | auth.spec.ts login/error/signout + session reload path | auto |
+| AC-A4 | auth.spec.ts full journey | auto |
+| AC-A5 | auth.spec.ts guest test (network assertion) | auto |
+| AC-A6 | client.test.ts + 692/692 + 58/58 (gotoApp guest bypass) | auto |
+| AC-A7 | this table | auto |
+
+### Deployment note
+
+Vercel env vars `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
+are required on the `ioe-leduyminh` project to enable auth in
+production; values are publishable by design. Until set, production
+runs the identical guest-only experience (no login surface).

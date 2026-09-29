@@ -6,6 +6,7 @@ import {
   questionCard,
   readQuestionProgress,
 } from './utils/practice-flow';
+import { gotoApp } from './utils/auth-flow';
 
 /**
  * CR-07 AC-G1/AC-G4/AC-G6: every grade card opens a Batch whose Round 1
@@ -18,7 +19,7 @@ const GRADE_IDS = ['grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5'] as con
 
 test.describe('Grade selection -> per-grade Batch (CR-07)', () => {
   test('all five grade cards are visible on the grade screen', async ({ page }) => {
-    await page.goto('/');
+    await gotoApp(page);
     await expect(gradeCards(page)).toHaveCount(5);
     for (const id of GRADE_IDS) {
       await expect(page.getByTestId(`grade-card-${id}`)).toBeVisible();
@@ -29,7 +30,7 @@ test.describe('Grade selection -> per-grade Batch (CR-07)', () => {
     test(`${gradeId}: card -> start batch -> real Round 1 question with revealed answer`, async ({
       page,
     }) => {
-      await page.goto('/');
+      await gotoApp(page);
       await page.getByTestId(`grade-card-${gradeId}`).click();
       await page.getByTestId('start-batch-button').click();
 
@@ -57,7 +58,7 @@ test.describe('Grade selection -> per-grade Batch (CR-07)', () => {
       expect(revealed.length).toBeGreaterThanOrEqual(2);
 
       // Back out cleanly - the grade screen must restore for the next grade.
-      await page.goto('/');
+      await gotoApp(page);
       await expect(gradeCards(page)).toHaveCount(5);
     });
   }

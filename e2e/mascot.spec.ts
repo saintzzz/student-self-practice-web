@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { runExtraLetterRound, startBatch } from './utils/batch-flow';
 import { selectGrade } from './utils/practice-flow';
 import { expectMascotVisible, findExtraLetterOutcome, mascotLocator } from './utils/mascot-flow';
+import { gotoApp } from './utils/auth-flow';
 
 /**
  * Covers plan.md v10 ("App-Wide Mascot") AC38: the pig mascot (🐷) appears
@@ -23,7 +24,7 @@ import { expectMascotVisible, findExtraLetterOutcome, mascotLocator } from './ut
  */
 test.describe('App-wide pig mascot (plan.md v10 AC38)', () => {
   test('pig mascot is visible on the Start Batch screen', async ({ page }) => {
-    await page.goto('/');
+    await gotoApp(page);
     await selectGrade(page);
     await expect(
       page.getByTestId('start-batch-button'),
@@ -58,7 +59,7 @@ test.describe('App-wide pig mascot (plan.md v10 AC38)', () => {
   test('the same pig emoji glyph appears on the Start Batch screen and in the feedback panel (character consistency)', async ({
     page,
   }) => {
-    await page.goto('/');
+    await gotoApp(page);
     await selectGrade(page);
     const startScreenMascotText = (await mascotLocator(page).innerText()).trim();
 

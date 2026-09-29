@@ -399,3 +399,47 @@ change.
 - **Batch seam:** createBatch(seed, gradeId='grade-2'); grade-2 default
   keeps all pre-CR-07 test callers valid. App passes selectedGradeId;
   GradeSelect renders all 5 cards (App.test AC1 updated 1 -> 5 cards).
+
+## A-25: CR-08 infrastructure rulings (2026-10-01)
+
+- **Supabase project:** dedicated `practice` schema inside the existing
+  project cxjpgfhqchjoernfmcra (the school-management app's project,
+  human-chosen over the booking project and over a brand-new project).
+  Table-level isolation via schema; auth.users is shared per-project so
+  English-app accounts live in the same auth pool - RLS keeps all data
+  access denied-by-default on both sides.
+- **Scope:** full pipeline (BA -> Designer -> TL -> Dev -> Tester ->
+  Deployer -> PM) per approved plan.
+- **Auth model decided at BA:** Supabase Auth requires email, so
+  username+PIN maps to synthetic email `<username>@students.ioe-practice`
+  + PIN as the password (6+ chars enforced by Supabase Auth). Privileged
+  account ops go through Edge Functions holding the service role;
+  ordinary reads/writes use PostgREST + RLS on the exposed `practice`
+  schema. Publishable key in the client, never service/secret keys.
+- **DDL method:** `practice` schema objects are created via
+  `execute_sql` (no entry in the shared project's migration history -
+  that history belongs to the school app's own repo). Full DDL is
+  versioned in THIS repo under `supabase/migrations/` as the record.
+
+## A-26: CR-08 implementation notes (2026-10-01)
+
+- **Schema:** `practice` on the school project; 4 tables + is_admin()
+  security-definer helper (self-referential RLS trap avoided). Schema
+  exposed via ALTER ROLE authenticator db_schemas manual mode
+  (documented Supabase path). Grants: nothing to anon; students get
+  table grants but RLS confines them to own/enrolled rows.
+- **Edge function** `practice-admin` (one function, action routing):
+  create-account / reset-pin / delete-account; 401 anon, 403 non-admin,
+  rollback auth user on accounts insert failure, last-admin delete
+  guard. Deployed via MCP (v1, verify_jwt on).
+- **App:** env-gated - absent VITE_SUPABASE_* => pre-CR-08 guest-only
+  app, zero changes. supabase-js lives in an async chunk (dynamic
+  import inside getSupabase) so the entry bundle only grows ~3.8 kB.
+  MODE=test also force-disables the gate so vitest stays offline.
+- **E2E compat:** `e2e/utils/auth-flow.ts gotoApp()` clicks the guest
+  button when the login screen is up - all 55 pre-CR-08 specs exercise
+  the first-class guest flow unchanged.
+- **Vercel env:** MCP token and local CLI token both invalid/expired -
+  env vars must be added via dashboard (values are publishable). Guest
+  mode ships in the meantime; auth activates on the first build that
+  sees the vars.

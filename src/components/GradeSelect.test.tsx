@@ -24,3 +24,42 @@ describe('GradeSelect', () => {
     expect(onSelectGrade).toHaveBeenCalledWith('grade-2');
   });
 });
+
+const FIVE = [
+  { id: 'grade-1', name: 'Lớp 1' },
+  { id: 'grade-2', name: 'Lớp 2' },
+  { id: 'grade-3', name: 'Lớp 3' },
+  { id: 'grade-4', name: 'Lớp 4' },
+  { id: 'grade-5', name: 'Lớp 5' },
+];
+
+describe('GradeSelect RBAC scope (CR-08)', () => {
+  it('filters cards to allowedGrades for students', () => {
+    render(
+      <GradeSelect grades={FIVE} onSelectGrade={vi.fn()} allowedGrades={['grade-1', 'grade-3']} />,
+    );
+
+    expect(screen.getByTestId('grade-card-grade-1')).toBeVisible();
+    expect(screen.getByTestId('grade-card-grade-3')).toBeVisible();
+    expect(screen.queryByTestId('grade-card-grade-2')).toBeNull();
+    expect(screen.getAllByTestId(/^grade-card-/)).toHaveLength(2);
+  });
+
+  it('shows the empty-scope message instead of a blank grid', () => {
+    render(<GradeSelect grades={FIVE} onSelectGrade={vi.fn()} allowedGrades={[]} />);
+
+    expect(screen.getByTestId('no-scope-message')).toBeVisible();
+    expect(screen.queryByTestId(/^grade-card-/)).toBeNull();
+  });
+
+  it('renders sign-out chip for signed-in users and login chip for guests', () => {
+    const onSignOut = vi.fn();
+    const onLogin = vi.fn();
+    render(
+      <GradeSelect grades={FIVE} onSelectGrade={vi.fn()} onSignOut={onSignOut} onLogin={onLogin} />,
+    );
+
+    expect(screen.getByTestId('signout-button')).toBeVisible();
+    expect(screen.getByTestId('login-link')).toBeVisible();
+  });
+});

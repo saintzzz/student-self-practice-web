@@ -787,3 +787,52 @@ always paired with icon + text (never color alone).
 - DS-U4 semantics unchanged: emerald=correct/go, rose=wrong,
   amber=progress, sky=info, indigo=audio. `Ruling: Designer - kids
   already learned these meanings; restyle shells, not semantics.`
+
+## 15. CR-08 addendum - login + admin console surfaces (2026-10-01)
+
+All screens reuse the section-14 token system (SURFACE_*, TEXT_*,
+BUTTON_*, CHIP_*, INPUT_*, pageBg). No new colors or type styles.
+
+### 15.1 AuthScreen (`screen-login`)
+
+- Centered scene card (max-w-md): mascot + "Chào bé!" heading,
+  sub-line "Đăng nhập để vào lớp của mình".
+- Inputs: rounded-2xl INPUT field style, `inputMode="numeric"` for PIN,
+  PIN masked (type="password", pattern [0-9]*). Labels in Vietnamese.
+  testids: `login-username`, `login-pin`, `login-submit`,
+  `login-error`, `guest-button`.
+- Error: rose-tinted banner (ring-rose-300 bg-rose-50 text-rose-700),
+  copy "Tên đăng nhập hoặc mã PIN chưa đúng."
+- Guest entry: secondary BUTTON "Chơi không cần tài khoản" under the
+  form - never a dead end.
+- Busy state: submit disabled + spinner text "Đang vào...".
+
+### 15.2 AdminScreen (`screen-admin`)
+
+- Header strip identical to Batch chrome (back chip "Thoát", title
+  "Quản trị", admin name chip).
+- Tab bar: four CHIP-sized tabs - `admin-tab-accounts` "Tài khoản" /
+  `admin-tab-classes` "Lớp học" / `admin-tab-enroll` "Gán học sinh" /
+  `admin-tab-scope` "Nội dung". Active tab = indigo chip, inactive =
+  surface chip.
+- Lists are scene-card surfaces with row-per-item, right-aligned action
+  buttons (secondary BUTTON). Empty state: mascot + gray text.
+- Forms sit inside the tab panel; inline validation text in rose.
+- testids: `account-list`, `account-create-form`, `account-row-<id>`,
+  `class-list`, `class-create-form`, `enroll-class-select`,
+  `enroll-student-list`, `scope-class-select`, `scope-grade-<id>`,
+  `admin-toast` for success feedback.
+
+### 15.3 Student filtered GradeSelect
+
+- Same GradeSelect, `allowedGrades` prop filters the card list; a small
+  caption chip "Lớp của bé mở: ..." renders when filtered. A sign-out
+  chip sits top-right (`signout-button`).
+- Student with zero scope sees an empty-state card "Cô/Thầy chưa mở
+  nội dung cho bé - hãy hỏi cô nhé!" + sign-out chip (never blank).
+
+### 15.4 Guest flow
+
+- Guest skips auth entirely: AuthScreen -> guest-button -> GradeSelect
+  with all grades; a subtle "Đăng nhập" chip stays visible for
+  switching to account mode.

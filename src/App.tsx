@@ -1,8 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import GradeSelect from './components/GradeSelect';
 import StartBatchScreen from './components/StartBatchScreen';
 import BatchScreen from './components/BatchScreen';
 import CreditsScreen from './components/CreditsScreen';
+import AuthScreen from './components/AuthScreen';
+import AdminScreen from './components/AdminScreen';
+import { isSupabaseConfigured } from './lib/supabase/client';
+import {
+  fetchMyAccount,
+  fetchMyAllowedGrades,
+  getSession,
+  logout,
+  type PracticeAccount,
+} from './lib/auth/practiceAuth';
 import { GRADES } from './data/vocabulary';
 import {
   advanceRoundQuestion,
@@ -20,13 +30,80 @@ import {
   submitPronunciationAnswer,
 } from './lib/practiceSession';
 
-type Screen = 'grade-select' | 'start-batch' | 'batch' | 'credits';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits';
+/** 'off' = Supabase not configured (pre-CR-08 guest-only behavior). */
+type AuthMode = 'off' | 'loading' | 'login' | 'guest' | 'student' | 'admin';
 
 export default function App() {
+  const configured = isSupabaseConfigured();
+  const [authMode, setAuthMode] = useState<AuthMode>(configured ? 'loading' : 'off');
+  const [myAccount, setMyAccount] = useState<PracticeAccount | null>(null);
+  const [allowedGrades, setAllowedGrades] = useState<string[] | null>(null);
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
+
+  useEffect(() => {
+    if (!configured) return;
+    let cancelled = false;
+    void (async () => {
+      const session = await getSession();
+      if (!session || cancelled) {
+        if (!cancelled) setAuthMode('login');
+        return;
+      }
+      const account = await fetchMyAccount();
+      if (cancelled) return;
+      if (!account) {
+        setAuthMode('login');
+        return;
+      }
+      setMyAccount(account);
+      if (account.role === 'admin') {
+        setAuthMode('admin');
+        setScreen('admin');
+      } else {
+        setAllowedGrades(await fetchMyAllowedGrades());
+        if (!cancelled) {
+          setAuthMode('student');
+          setScreen('grade-select');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [configured]);
+
+  async function handleLoggedIn(): Promise<void> {
+    const account = await fetchMyAccount();
+    if (!account) return;
+    setMyAccount(account);
+    if (account.role === 'admin') {
+      setAuthMode('admin');
+      setScreen('admin');
+    } else {
+      setAllowedGrades(await fetchMyAllowedGrades());
+      setAuthMode('student');
+      setScreen('grade-select');
+    }
+  }
+
+  async function handleSignOut(): Promise<void> {
+    await logout();
+    setMyAccount(null);
+    setAllowedGrades(null);
+    setBatch(null);
+    setSelectedGradeId(null);
+    setAuthMode('login');
+    setScreen('login');
+  }
+
+  function handleGuest(): void {
+    setAuthMode('guest');
+    setScreen('grade-select');
+  }
 
   function handleSelectGrade(gradeId: string): void {
     setSelectedGradeId(gradeId);
@@ -96,9 +173,38 @@ export default function App() {
     setBatch(endRoundEarly(batch));
   }
 
+  if (authMode === 'loading') {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-lg font-bold text-sky-700">
+        Đang tải...
+      </div>
+    );
+  }
+
+  if (configured && (authMode === 'login' || screen === 'login')) {
+    return <AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />;
+  }
+
+  if (screen === 'admin' && myAccount) {
+    return (
+      <AdminScreen
+        account={myAccount}
+        onSignOut={handleSignOut}
+        onPractice={() => setScreen('grade-select')}
+      />
+    );
+  }
+
   if (screen === 'credits') {
     return <CreditsScreen onBack={handleCreditsBack} />;
   }
+
+  const authChipProps =
+    authMode === 'guest'
+      ? { onLogin: () => { setAuthMode('login'); setScreen('login'); } }
+      : authMode === 'student' || authMode === 'admin'
+        ? { onSignOut: handleSignOut }
+        : {};
 
   if (screen === 'grade-select') {
     return (
@@ -107,6 +213,8 @@ export default function App() {
         onSelectGrade={handleSelectGrade}
         onOpenCredits={handleOpenCredits}
         focusCreditsLink={focusCreditsLink}
+        allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
+        {...authChipProps}
       />
     );
   }
@@ -141,6 +249,8 @@ export default function App() {
       onSelectGrade={handleSelectGrade}
       onOpenCredits={handleOpenCredits}
       focusCreditsLink={focusCreditsLink}
+      allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
+      {...authChipProps}
     />
   );
 }

@@ -13,7 +13,7 @@
 | CR-05 | Branch protection + PR preview discipline | DevOps review Phase 7 | user-action-required |
 | CR-06 | Phonics nang sau: am cuoi / blends / rhyming | human request 2026-09-29 | resolved |
 | CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | resolved (deployed ec94500) |
-| CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | intake - pending rulings |
+| CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | resolved (backend + app implemented; prod auth pending Vercel env vars) |
 | CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | resolved (deployed 5ae3bc2) |
 
 ---
@@ -228,3 +228,18 @@
 - Tester: 686/686 unit (+26 grades.test.ts AC-G1..G6, bank.test AC-6.1/
   6.3/6.6 updated), tsc clean, build OK, attribution 520/166, budget
   re-based, 55/55 e2e (+6 grades.spec.ts traversal).
+
+### CR-08 pipeline record (2026-10-01)
+
+- BA: PRD section 18 (roles matrix admin/student/guest, R-A1..A7,
+  AC-A1..A7, constitution #4 amended for Supabase calls).
+- Designer: design-spec section 15 (AuthScreen, AdminScreen 4 tabs,
+  filtered GradeSelect, guest flow - all on section-14 tokens).
+- Tech Lead: architecture section 12 (schema/RLS/functions/env/verify).
+- Dev: practice schema + RLS applied on cxjpgfhqchjoernfmcra;
+  practice-admin edge function deployed; supabase client (env-gated,
+  lazy chunk), practiceAuth, AuthScreen, AdminScreen, GradeSelect scope
+  props, App auth modes; .env.local gitignored; gotoApp e2e shim.
+- Tester: 692/692 unit, 58/58 e2e incl. real-backend RBAC journey;
+  RLS/edge-fn SQL proofs in test-report.
+- Deployer: pending Vercel env vars (dashboard) - guest mode ships now.

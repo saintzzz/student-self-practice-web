@@ -787,3 +787,84 @@ attributed automatically via the noto collection prefix.
 - E2E: `grades.spec.ts` selects G1 and G5, traverses a round, asserts
   the grade badge/pool (questions' words resolvable in that grade).
 - Full gates: unit, build, attribution, budget, 49+ e2e.
+
+## 12. CR-08 addendum - Supabase practice schema + auth/RBAC (2026-10-01)
+
+Implements PRD section 18 on project cxjpgfhqchjoernfmcra.
+
+### 12.1 Backend layout
+
+- Dedicated schema `practice` (fully self-contained; does not touch the
+  host app's public.* objects). Exposed via PostgREST by appending it
+  to `authenticator`'s `pgrst.db_schemas` (`public, practice`).
+- Tables (all `enable row level security`, default-deny):
+  - `accounts(id uuid pk -> auth.users, username text unique [3-20
+    a-z0-9_-], display_name text, role text check admin|student,
+    created_at)`
+  - `classes(id uuid pk, name, grade_id text check grade-1..5,
+    school_year text, created_by -> accounts, created_at)`
+  - `enrollments(class_id, student_id, assigned_at, pk(class_id,
+    student_id))`
+  - `class_grade_scopes(class_id, grade_id, pk(class_id, grade_id))`
+- Helper `practice.is_admin() returns bool` - security definer, stable,
+  `set search_path = ''`, used by every admin policy (avoids the
+  self-referential RLS recursion trap on accounts).
+- Policies: accounts = admin-all / self-select; classes+enrollments+
+  scopes = admin-all / student-select-own-or-enrolled. No write
+  policies for students at all.
+- Grants: `usage` on schema + `select` (students' tables) / `all`
+  (admin paths gated by RLS) to `authenticated`; NOTHING to `anon` -
+  guests never reach the API.
+- DDL applied via `execute_sql` (record lives in this repo
+  `supabase/migrations/0001_practice_schema.sql`; the host project's
+  own migration history is untouched, per advisory A-25).
+
+### 12.2 Edge Functions (service-role, admin-gated)
+
+- `practice-create-account` {username, displayName, pin, role} -
+  verifies caller JWT -> accounts.role='admin'; creates auth user with
+  synthetic email `<username>@students.ioe-practice`,
+  `app_metadata {practice_role}`, inserts accounts row atomically
+  (rolls back auth user on insert failure).
+- `practice-reset-pin` {accountId, pin} - same admin gate,
+  `admin.updateUserById`.
+- `practice-delete-account` {accountId} - same gate, `admin.deleteUser`
+  (accounts row cascades). Refuses deleting the last admin.
+- All three return `{error}` JSON with VN messages; 401 anon / 403
+  non-admin.
+
+### 12.3 Client
+
+- `src/lib/supabase/client.ts`: lazy `createClient(url, publishable)`
+  singleton; `isSupabaseConfigured()` reads `import.meta.env` - absent
+  env => app behaves exactly as pre-CR-08 (no login surface).
+- `src/lib/auth/practiceAuth.ts`: session bootstrap (getSession +
+  onAuthStateChange), `login(username,pin)` mapping to the synthetic
+  email, `logout()`, `fetchMyRole()`, `fetchMyAllowedGrades()`.
+- App.tsx screen union gains `login` + `admin`; auth-gated only when
+  env configured. GradeSelect accepts `allowedGrades?: string[]`.
+- Admin ops for classes/enrollments/scopes go through PostgREST with
+  `.schema('practice')`; account ops call the edge functions via
+  `supabase.functions.invoke` (JWT auto-attached).
+- `npm i @supabase/supabase-js` pinned + lockfile committed.
+
+### 12.4 Environments
+
+- Local dev: `.env.local` (gitignored) with VITE_SUPABASE_URL +
+  VITE_SUPABASE_PUBLISHABLE_KEY.
+- Vercel: same vars set via CLI/MCP for production+preview.
+- Seed admin account created via edge-function bootstrap path
+  (first-admin SQL seed inserts auth user via service API, not raw SQL
+  into auth.users - auth.users inserts go through the admin API).
+
+### 12.5 Verification plan
+
+- SQL proof block in test-report: run policy checks as admin JWT /
+  student JWT / anon (execute_sql set local role + claims trick where
+  possible, else client-side RLS probes).
+- Unit: auth mapper, scope union, grade filter, env-absent fallback.
+- E2E: new `auth.spec.ts` - guest path (zero Supabase traffic),
+  admin login -> create account/class/enroll/scope -> logout -> student
+  login -> only scoped grades -> logout. All seeded via the real edge
+  functions against the real project.
+- Regression: full 686 unit + 55 e2e unchanged in env-absent mode.

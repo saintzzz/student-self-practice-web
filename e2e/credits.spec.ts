@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { gotoApp } from './utils/auth-flow';
 
 /**
  * Covers PRD r3 (docs/sdlc/prd.md) AC-7.x: a Credits screen listing the
@@ -14,7 +15,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Credits screen (PRD r3 AC-7.x)', () => {
   test('grade screen shows a credits entry point that opens the Credits screen', async ({ page }) => {
-    await page.goto('/');
+    await gotoApp(page);
 
     const link = page.getByTestId('credits-link');
     await expect(link, 'expected a Credits entry point on the grade screen').toBeVisible();
@@ -29,7 +30,7 @@ test.describe('Credits screen (PRD r3 AC-7.x)', () => {
   });
 
   test('credits screen lists emoji collections with license labels and source links', async ({ page }) => {
-    await page.goto('/');
+    await gotoApp(page);
     await page.getByTestId('credits-link').click();
 
     const twemoji = page.getByTestId('credits-collection-twemoji');
@@ -49,7 +50,7 @@ test.describe('Credits screen (PRD r3 AC-7.x)', () => {
   test('Credits is keyboard navigable: Tab + Enter opens and closes it, with a visible focus ring (AC-7.10)', async ({
     page,
   }) => {
-    await page.goto('/');
+    await gotoApp(page);
 
     // Tab forward until the credits entry point owns focus.
     const link = page.getByTestId('credits-link');
@@ -78,7 +79,7 @@ test.describe('Credits screen (PRD r3 AC-7.x)', () => {
   });
 
   test('credits back button returns to the grade screen', async ({ page }) => {
-    await page.goto('/');
+    await gotoApp(page);
     await page.getByTestId('credits-link').click();
     await expect(page.getByTestId('credits-collection-twemoji')).toBeVisible();
 

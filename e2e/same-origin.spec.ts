@@ -9,6 +9,7 @@ import {
   runDescribeAndChooseImageRound,
   runPronunciationRecordingRoundFallback,
 } from './utils/round34-flow';
+import { gotoApp } from './utils/auth-flow';
 
 /**
  * C4 runtime gate (PRD r3 AC-2.6 / constitution constraint C4): at runtime
@@ -47,7 +48,7 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
     });
 
     // 1. Grade select -> Credits -> back (attribution.json fetch included).
-    await page.goto('/');
+    await gotoApp(page);
     await page.getByTestId('credits-link').click();
     await expect(page.getByTestId('credits-collection-twemoji')).toBeVisible();
     await page.getByTestId('credits-back').click();

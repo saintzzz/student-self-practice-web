@@ -1649,3 +1649,76 @@ per human ruling A-21).
 - AC-G4: full e2e green + new per-grade traversal spec.
 - AC-G5: check-attribution covers the newly vendored emoji; budget
   re-based only with recorded justification.
+
+## 18. CR-08 delta - accounts, classes, per-class content RBAC (Supabase)
+
+**Status:** IMPLEMENTED (deployed pending; see test-report CR-08 section)
+
+### 18.1 Goals
+
+- Admin-issued accounts for kids: username + PIN (no email, no PII
+  beyond a display name). Two roles: `admin` and `student`. Teacher
+  role deferred.
+- Admin console inside the app: create/list accounts, reset PINs,
+  delete accounts; create/list classes; enroll students; assign which
+  grade content each class may access.
+- Students log in and only see grade cards their enrolled classes
+  unlock. Guests can still practice every grade (try-before-login for
+  marketing) - guest mode never touches the backend.
+- Backend: Supabase Auth + Postgres + RLS on project
+  `cxjpgfhqchjoernfmcra` in a dedicated `practice` schema (advisory
+  A-25). Constitution #4 amended: same-origin no longer absolute -
+  Supabase Auth/REST calls are permitted; all visual assets remain
+  same-origin/self-hosted (unchanged).
+
+### 18.2 Non-goals (deferred)
+
+- Server-side progress/score persistence and parent/teacher reports
+  (future CR).
+- Teacher role, parent accounts, self-signup, password recovery.
+- Per-topic (finer than per-grade) content scoping.
+- Reusing the host project's schools/classes/students tables - the
+  `practice` schema is fully self-contained.
+
+### 18.3 Requirements
+
+- R-A1: `practice` schema holds `accounts` (mirrors auth.users),
+  `classes`, `enrollments`, `class_grade_scopes`. All RLS-enabled,
+  default-deny; admin full access, student reads only own rows +
+  scopes of enrolled classes.
+- R-A2: Login maps username -> synthetic email
+  `<username>@students.ioe-practice`; PIN is the Supabase Auth password
+  (>=6 chars, UI enforces 4-8 digit PIN). Sessions persist via
+  supabase-js default storage.
+- R-A3: Privileged ops (create/reset/delete account) run in Edge
+  Functions under service role after verifying the caller's JWT maps
+  to an `admin` row. All other CRUD goes through PostgREST + RLS.
+- R-A4: Client uses `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
+  only. If env is absent the app runs exactly as before (guest mode,
+  no login surface) - all existing tests stay green.
+- R-A5: GradeSelect accepts an allowed-grade filter; student's
+  visible grades = union of `class_grade_scopes` across their
+  enrollments (empty scope = see nothing but can sign out). Guest and
+  admin see all grades.
+- R-A6: Child-safety: no email/phone collection, display names chosen
+  by admin, username pattern `^[a-z0-9_-]{3,20}$`, PIN numeric.
+- R-A7: The `practice` schema is exposed in the Data API alongside
+  `public`; grants + RLS keep every other schema/table unreachable.
+
+### 18.4 ACs (CR-08)
+
+- AC-A1: Schema + RLS applied; SQL proofs: student JWT selects only own
+  account/enrollments/scope rows, nothing from other tables; admin JWT
+  reads all practice rows; anon role reads zero practice rows.
+- AC-A2: Edge functions create-account / reset-pin / delete-account
+  work under an admin JWT and reject non-admin/student JWT and anon.
+- AC-A3: Login screen authenticates a real account; wrong PIN shows a
+  Vietnamese error; logout returns to login; session survives reload.
+- AC-A4: Admin console creates account -> creates class -> enrolls ->
+  assigns scope; student login then shows only the assigned grades.
+- AC-A5: Guest button bypasses login and all 5 grades remain playable;
+  no Supabase calls in guest mode (network assertion).
+- AC-A6: Env-absent mode: unit suite and e2e suite both fully green
+  with no Supabase env set (CI/dev unchanged).
+- AC-A7: 686+ unit tests green incl. new auth/scope tests; e2e green
+  incl. new auth spec; Vercel env vars set and production verified.

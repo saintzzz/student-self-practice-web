@@ -15,6 +15,7 @@ import {
   submitListeningAnswer,
 } from './practice-flow';
 import { answerOptionQuestion, optionButtons } from './option-flow';
+import { gotoApp } from './auth-flow';
 
 /**
  * Batch/Round navigation and Round 1/Round 2 runners for the v5/v6
@@ -35,7 +36,7 @@ import { answerOptionQuestion, optionButtons } from './option-flow';
 
 /** Starts a batch from a fresh page load: grade selection -> Start a Batch. */
 export async function startBatch(page: Page, gradeIndex = 0): Promise<void> {
-  await page.goto('/');
+  await gotoApp(page);
   await selectGrade(page, gradeIndex);
   await page.getByTestId('start-batch-button').click();
   await expect(page.getByTestId('round-progress')).toBeVisible();
