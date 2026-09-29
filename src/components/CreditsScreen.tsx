@@ -6,9 +6,10 @@ import {
   type AttributionLoadState,
 } from '../lib/credits/attribution';
 
-const PILL =
-  'rounded-full bg-sky-100 px-6 py-3 text-lg font-bold text-sky-700 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-500';
-const CARD = 'mb-3 rounded-2xl border-4 border-sky-200 bg-sky-50 p-4';
+import { NAV_PILL, H1, H2, SCREEN_ENTER } from '../lib/ui/tokens';
+
+const PILL = NAV_PILL;
+const CARD = 'mb-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-sky-200';
 
 interface CreditsScreenProps {
   onBack: () => void;
@@ -40,11 +41,11 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
   }, []);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 text-left">
+    <div className={`mx-auto max-w-2xl px-4 py-12 text-left ${SCREEN_ENTER}`}>
       <button type="button" data-testid="credits-back" onClick={onBack} className={`mb-6 ${PILL}`}>
         ← Quay lại
       </button>
-      <h1 ref={headingRef} tabIndex={-1} className="mb-3 text-3xl font-extrabold text-sky-900">
+      <h1 ref={headingRef} tabIndex={-1} className={`mb-3 ${H1}`}>
         Nguồn hình ảnh và giấy phép
       </h1>
       <p className="mb-8 text-lg text-sky-700">
@@ -74,7 +75,7 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
       {state.status === 'ready' && (
         <>
           <section>
-            <h2 className="mb-3 text-xl font-bold text-sky-900">Bộ biểu tượng cảm xúc</h2>
+            <h2 className={`mb-3 ${H2}`}>Tài nguyên đồ họa và phông chữ</h2>
             {state.manifest.collections.map((c) => (
               <div key={c.id} className={CARD} data-testid={`credits-collection-${c.id}`}>
                 <p className="text-base text-slate-700">
@@ -87,7 +88,7 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
           </section>
 
           <section>
-            <h2 className="mb-3 text-xl font-bold text-sky-900">Ảnh chụp trong kho ảnh</h2>
+            <h2 className={`mb-3 ${H2}`}>Ảnh chụp trong kho ảnh</h2>
             {state.manifest.images.length === 0 ? (
               <p className="text-base text-slate-700">Chưa có ảnh chụp nào trong kho ảnh.</p>
             ) : (

@@ -345,3 +345,15 @@ Format: Objection/Options/Ruling. Mọi quyết định vật liệu ghi ở đ�
   resolved 1.62.x which ships no Chromium for macOS 12; 1.55.0 requests
   headless-shell-1187 already cached on this machine. Documented for
   the team's mac12 dev boxes; revisit on newer macOS.
+
+### A-22: CR-09 Designer rulings adopted (2026-09-30)
+
+Human ask (2026-09-29): "chua chay designer UIUX nen update lai giao
+dien". Rulings recorded in design-spec s14.8 (DS-U1..U4): Baloo 2
+self-hosted display font + system body; single play-chrome strip;
+numbered-disc grade tiles (custom scene art deferred); status-color
+semantics frozen (emerald/rose/amber/sky/indigo keep meaning). CSS
+budget re-based with recorded justification (AC-UI6). Implementation
+proceeds under CR-09 with the invariant that testids, accessible names,
+76px targets, landscape fallbacks and reduced-motion behavior never
+change.

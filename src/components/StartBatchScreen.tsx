@@ -1,5 +1,6 @@
 import type { Grade } from '../types';
 import Mascot from './Mascot';
+import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
   grade: Grade;
@@ -15,28 +16,27 @@ interface StartBatchScreenProps {
  */
 export default function StartBatchScreen({ grade, onStartBatch, onBack }: StartBatchScreenProps) {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-      <button
-        type="button"
-        data-testid="back-to-grades"
-        onClick={onBack}
-        className="mb-6 rounded-full bg-sky-100 px-6 py-3 text-lg font-bold text-sky-700 transition hover:bg-sky-200 focus:outline-none focus:ring-4 focus:ring-sky-500"
-      >
-        ← Quay lại chọn lớp
-      </button>
-      <Mascot mood="greeting" />
-      <h1 className="mb-3 text-4xl font-extrabold text-sky-900">{grade.name}: Sẵn sàng luyện tập chưa?</h1>
-      <p className="mb-10 text-xl text-sky-700">
-        Một bài luyện tập gồm 4 vòng nhỏ, mỗi vòng khoảng 10 câu hỏi. Bấm nút bên dưới để bắt đầu nhé!
-      </p>
-      <button
-        type="button"
-        data-testid="start-batch-button"
-        onClick={onStartBatch}
-        className="rounded-3xl bg-emerald-500 px-12 py-8 text-3xl font-extrabold text-white shadow-md transition hover:scale-105 hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-500"
-      >
-        Bắt đầu luyện tập
-      </button>
+    <div className={`mx-auto max-w-2xl px-4 py-12 ${SCREEN_ENTER}`}>
+      <div className={`${CARD} text-center`}>
+        <div className="mb-4 text-left">
+          <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL}>
+            ← Quay lại chọn lớp
+          </button>
+        </div>
+        <Mascot mood="greeting" />
+        <h1 className={`mb-3 ${H1}`}>{grade.name}: Sẵn sàng luyện tập chưa?</h1>
+        <p className={`mb-10 ${PROMPT}`}>
+          Một bài luyện tập gồm 4 vòng nhỏ, mỗi vòng khoảng 10 câu hỏi. Bấm nút bên dưới để bắt đầu nhé!
+        </p>
+        <button
+          type="button"
+          data-testid="start-batch-button"
+          onClick={onStartBatch}
+          className="min-h-[76px] rounded-3xl bg-emerald-500 px-12 py-6 font-display text-3xl font-extrabold text-white shadow-lg transition hover:-translate-y-1 hover:bg-emerald-600 hover:shadow-xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-500"
+        >
+          Bắt đầu luyện tập →
+        </button>
+      </div>
     </div>
   );
 }

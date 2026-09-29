@@ -642,3 +642,87 @@ tests; extended `questionWordIds.test.ts`,
 - Integration: wordId/optionWordIds resolve to bank words (AC-5.8);
   Round 4 always carries the 5 base kinds + exactly one alternating
   slot; determinism per seed.
+
+---
+
+## 10. CR-09 addendum - app-level design system implementation
+
+Implements design-spec section 14. Approach: codify the design language
+as exported class-token constants (extending the established
+`actionButtonStyle.ts`/`optionButtonStyle.ts` pattern - the codebase
+already treats shared classes as constants, so tokens land as a bigger
+version of the same mechanism, no CSS-in-JS or theme plugin needed).
+
+### 10.1 Token module
+
+`src/lib/ui/tokens.ts` (new) exports class constants:
+
+- `PAGE_BG` - applied once on the app root (`App.tsx`), not per screen.
+- `CARD` / `CARD_TINT(color)` - content card + tint surfaces.
+- `H1` / `H2` / `BODY` / `PROMPT` - type tokens (display font on H1/H2).
+- `CHIP_*` - the header-bar pills (`CHIP_SKY`, `CHIP_AMBER`,
+  `CHIP_EMERALD`, `CHIP_NEUTRAL`): `inline-flex items-center gap-2
+  rounded-full bg-{c}-50 px-4 py-2 text-lg font-bold text-{c}-800
+  ring-1 ring-{c}-200`.
+- `NAV_PILL` - back/credits ghost buttons (>=76px-min target kept via
+  `min-h-[76px]` where used as standalone; inside rows `py-3` accepted
+  per existing conventions).
+- `SCREEN_ENTER` - `animate-screen-enter motion-reduce:animate-none`.
+- Reuses: `actionButtonStyle.ts` constants get token-aligned values in
+  place (same export names - zero call-site churn for buttons).
+
+`optionButtonStyle.ts` keeps its signature; internals restyled to the
+token semantics (ring borders, `active:scale-[0.97]`, `shadow-sm`).
+
+### 10.2 Tailwind config additions
+
+- `fontFamily.display: ['"Baloo 2"', 'system-ui', 'sans-serif']` used by
+  H1/H2/points/grade cards/CTAs.
+- `keyframes['screen-enter']`: `{ from: {opacity:0, transform:translateY(8px)}, to: {opacity:1, transform:none} }`,
+  `animation['screen-enter']: 'screen-enter 200ms ease-out'`.
+
+### 10.3 Font - Baloo 2 self-hosted (DS-U1, AC-UI4)
+
+- Source: `@fontsource/baloo-2` npm package (OFL-1.1). Copy the
+  vietnamese + latin `woff2` files for weights 600/700/800 into
+  `public/fonts/baloo-2/` at maintainer time (committed like the
+  Twemoji/Lottie bundles - same-origin, no CDN).
+- `@font-face` in `src/index.css` with `font-display: swap` and
+  `unicode-range` per subset.
+- License recorded: `public/attribution.json` gains a `fonts` entry +
+  Credits screen lists it (AC-UI4 reuses the existing attribution
+  pipeline + check-attribution gate).
+
+### 10.4 File-by-file refresh map
+
+| File | Change |
+|------|--------|
+| `src/App.tsx` | root gets `PAGE_BG` + `SCREEN_ENTER` on screen container |
+| `tailwind.config.js` | display font + screen-enter animation |
+| `src/index.css` | @font-face + body gradient support |
+| `actionButtonStyle.ts` / `optionButtonStyle.ts` | token values in place |
+| `GradeSelect.tsx` | scene layout + disc grade tiles |
+| `StartBatchScreen.tsx` | scene card + dominant CTA |
+| `BatchScreen.tsx` | header strip (progress pill + track + timer chip + score chip) replaces scattered lines |
+| `QuestionCard.tsx` | content card wrapper; progress line merges into header strip |
+| `FeedbackPanel.tsx` | tint banner treatment |
+| `RoundSummary.tsx` / `BatchSummary.tsx` | coin points + tint breakdown rows |
+| `CreditsScreen.tsx` | token typography + font entry |
+| `RoundProgress.tsx` / `RoundTimer.tsx` / `LiveScore.tsx` | render as header chips (same testids) |
+| `AudioPlaybackWarning.tsx` | tint banner token |
+| `public/fonts/baloo-2/*`, `public/attribution.json` | new assets + license |
+
+No testid, accessible name, DOM structure or logic changes - the e2e
+and unit contracts are the regression harness (AC-UI2/AC-UI6).
+
+### 10.5 Verification plan
+
+- Unit: full suite unchanged green; component tests that assert
+  styling use testids/roles not classes (verified in code review).
+- E2E: 49/49 unchanged; responsive specs re-verify reachability on
+  the new chrome at 420px landscape.
+- Visual: Playwright walkthrough of every screen by the agent (not
+  only assertions - actual look review on desktop + phone frames).
+- Gates: `check-attribution` extended to fonts; bundle budget re-based
+  if the woff2 files land inside dist (they live in public/, copied
+  verbatim - measure and record).

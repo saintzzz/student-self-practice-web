@@ -14,7 +14,7 @@
 | CR-06 | Phonics nang sau: am cuoi / blends / rhyming | human request 2026-09-29 | resolved |
 | CR-07 | Full elementary coverage: grades 1-5 | human request 2026-09-29 | intake - pending rulings |
 | CR-08 | Admin accounts + class enrollment + per-class RBAC | human request 2026-09-29 | intake - pending rulings |
-| CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | intake - pending rulings |
+| CR-09 | Designer-led UI/UX refresh (designer phase never ran for app-level look) | human request 2026-09-29 | implemented - pending deploy/e2e record |
 
 ---
 
@@ -203,3 +203,15 @@
 - **Open rulings:** timing (apply now vs after CR-07/08); keep 🐷 mascot
   and palette family vs full rebrand; any new illustration/mascot assets
   (license-clean sources only).
+
+### CR-09 pipeline record (2026-09-30)
+
+- BA delta: PRD section 16 (goals, non-goals, R-UI1..7, AC-UI1..6).
+- Designer: design-spec section 14 (tokens, 8 screen specs, states,
+  motion rules, a11y invariants, G1 readiness notes, rulings DS-U1..4).
+- Tech Lead: architecture section 10 (token module, tailwind additions,
+  font vendoring, file-by-file map, verification plan).
+- Dev: tokens module + font + all screens restyled; fetch-emoji-assets
+  extended (UI chrome emoji enumeration, foreign-collection preserve).
+- Tester: 660/660 unit, gates green, visual QA found+fixed one
+  portrait wrap defect; e2e record in test-report CR-09 section.

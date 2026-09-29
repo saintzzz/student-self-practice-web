@@ -50,8 +50,8 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
   return (
     <div
       data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
-      className={`mt-3 rounded-2xl border-4 p-4 text-left [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 ${
-        isCorrect ? 'border-emerald-400 bg-emerald-50' : 'border-rose-400 bg-rose-50'
+      className={`mt-3 rounded-2xl p-4 text-left ring-2 shadow-sm [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 ${
+        isCorrect ? 'bg-emerald-50 ring-emerald-300' : 'bg-rose-50 ring-rose-300'
       }`}
     >
       <HeadlineTag

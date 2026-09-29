@@ -3,11 +3,20 @@ import { fastForwardThroughRounds1And2, goToNextRound, readRoundProgress } from 
 import { currentQuestionKind, currentQuestionKindOneOf, questionCard } from './utils/practice-flow';
 import { runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 
-// Round 4 mixes describe-and-choose-image with picture-pair-matching (plan.md
-// v8) - which kind shuffles first is not deterministic, so tests here only
-// assert "a real Round 4 kind", never one specific kind, matching the
-// pattern already used by round34-flow.ts and round-topic-spread.spec.ts.
-const ROUND4_KINDS = ['describe-and-choose-image', 'picture-pair-matching'] as const;
+// Round 4 mixes describe-and-choose-image + picture-pair-matching + the
+// phonics kinds (CR-06 added 4 phonics slots) - which kind shuffles first
+// is not deterministic, so tests here only assert "a real Round 4 kind",
+// never one specific kind, matching the pattern already used by
+// round34-flow.ts and round-topic-spread.spec.ts.
+const ROUND4_KINDS = [
+  'describe-and-choose-image',
+  'picture-pair-matching',
+  'phonics-sound-choice',
+  'phonics-word-choice',
+  'phonics-final-choice',
+  'phonics-blend-choice',
+  'phonics-rhyme-choice',
+] as const;
 
 /**
  * Covers plan.md v5/v6 Round 3 (pronunciation-recording -- AC19, AC24, Data-

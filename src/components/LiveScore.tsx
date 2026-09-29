@@ -1,5 +1,7 @@
 import { computeLiveScore } from '../lib/liveScore';
 import { POINTS_PER_CORRECT_ANSWER } from '../lib/batch/points';
+import { CHIP_EMERALD } from '../lib/ui/tokens';
+import { EmojiVisual } from './EmojiVisual';
 import type { PracticeSessionState } from '../lib/practiceSession';
 
 interface LiveScoreProps {
@@ -21,7 +23,8 @@ export default function LiveScore({ session }: LiveScoreProps) {
   const points = correct * POINTS_PER_CORRECT_ANSWER;
 
   return (
-    <p data-testid="live-score" className="text-base font-bold text-emerald-700">
+    <p data-testid="live-score" className={CHIP_EMERALD}>
+      <EmojiVisual emoji="⭐" />
       {points} điểm ({correct}/{answered} đúng)
     </p>
   );

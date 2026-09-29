@@ -1,4 +1,6 @@
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
+import { computeLiveScore } from '../lib/liveScore';
+import { SCREEN_ENTER } from '../lib/ui/tokens';
 import { useRoundTimer } from '../hooks/useRoundTimer';
 import RoundProgress from './RoundProgress';
 import LiveScore from './LiveScore';
@@ -78,28 +80,44 @@ export default function BatchScreen({
 
   const lastCompletedOutcome = batch.completedRounds[batch.completedRounds.length - 1];
 
+  // CR-09 header track: live question progress while playing, whole-round
+  // position on stub/summary screens.
+  const progressFraction =
+    batch.phase === 'active' && batch.roundSession
+      ? computeLiveScore(batch.roundSession).answered / batch.roundSession.questions.length
+      : batch.completedRounds.length / TOTAL_ROUNDS;
+
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-2">
-      <RoundProgress roundNumber={definition.roundNumber} totalRounds={TOTAL_ROUNDS} titleVi={definition.titleVi} />
+    <div className={`mx-auto max-w-2xl px-4 pt-2 ${SCREEN_ENTER}`}>
+      {/* DS-U2 single play chrome: round chip + track + score/timer chips
+          in one card strip; title line drops on <=420px heights. */}
+      <div className="mb-2 flex flex-col gap-1.5 rounded-2xl bg-white/90 p-2 shadow-sm ring-1 ring-slate-200/60 sm:flex-row sm:items-start sm:gap-2 [@media(max-height:420px)]:mb-1">
+        <RoundProgress
+          roundNumber={definition.roundNumber}
+          totalRounds={TOTAL_ROUNDS}
+          titleVi={definition.titleVi}
+          progressFraction={progressFraction}
+        />
+        {batch.phase === 'active' && batch.roundSession && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2 self-end sm:self-auto">
+            <LiveScore session={batch.roundSession} />
+            <RoundTimer secondsRemaining={secondsRemaining} />
+          </div>
+        )}
+      </div>
 
       {batch.phase === 'stub' && <RoundStub titleVi={definition.titleVi} onNextRound={onNextRound} />}
 
       {batch.phase === 'active' && batch.roundSession && (
-        <>
-          <div className="mb-1 flex items-center justify-center gap-3 [@media(max-height:420px)]:mb-0">
-            <LiveScore session={batch.roundSession} />
-            <RoundTimer secondsRemaining={secondsRemaining} />
-          </div>
-          <ActiveRoundQuestion
-            session={batch.roundSession}
-            onSubmitOption={onSubmitOption}
-            onSubmitListening={onSubmitListening}
-            onSubmitExtraLetter={onSubmitExtraLetter}
-            onSubmitPronunciation={onSubmitPronunciation}
-            onSubmitPairMatching={onSubmitPairMatching}
-            onNextQuestion={onNextQuestion}
-          />
-        </>
+        <ActiveRoundQuestion
+          session={batch.roundSession}
+          onSubmitOption={onSubmitOption}
+          onSubmitListening={onSubmitListening}
+          onSubmitExtraLetter={onSubmitExtraLetter}
+          onSubmitPronunciation={onSubmitPronunciation}
+          onSubmitPairMatching={onSubmitPairMatching}
+          onNextQuestion={onNextQuestion}
+        />
       )}
 
       {batch.phase === 'round-summary' && lastCompletedOutcome && (

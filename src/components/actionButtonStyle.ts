@@ -9,12 +9,12 @@
 
 /** "Nghe" / "Nghe lại" audio-play buttons (listening + describe-image questions). */
 export const AUDIO_BUTTON_CLASSNAME =
-  'flex min-h-[76px] items-center justify-center rounded-full bg-indigo-500 px-8 py-3 text-2xl font-bold text-white shadow-md transition hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-400';
+  'flex min-h-[76px] items-center justify-center rounded-full bg-indigo-500 px-8 py-3 font-display text-2xl font-bold text-white shadow-lg transition hover:bg-indigo-600 active:scale-95 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-indigo-400';
 
 /** "Kiểm tra" submit buttons for the two typed-answer listening question kinds. */
 export const SUBMIT_ANSWER_BUTTON_CLASSNAME =
-  'flex min-h-[76px] items-center justify-center rounded-2xl bg-emerald-500 px-8 py-3 text-2xl font-bold text-white shadow-md transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300';
+  'flex min-h-[76px] items-center justify-center rounded-2xl bg-emerald-500 px-8 py-3 font-display text-2xl font-bold text-white shadow-lg transition hover:bg-emerald-600 active:scale-95 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-sm';
 
 /** "Câu tiếp theo" / "Vòng tiếp theo" / "Luyện tập bài mới" progression buttons. */
 export const CONTINUE_BUTTON_CLASSNAME =
-  'flex min-h-[76px] items-center justify-center rounded-2xl bg-amber-500 px-10 py-3 text-2xl font-bold text-white shadow-md transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-300';
+  'flex min-h-[76px] items-center justify-center rounded-2xl bg-amber-500 px-10 py-3 font-display text-2xl font-bold text-white shadow-lg transition hover:bg-amber-600 active:scale-95 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-sm';

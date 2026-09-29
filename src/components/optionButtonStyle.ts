@@ -10,8 +10,8 @@ export function getOptionButtonClassName(
   correctIndex: number,
 ): string {
   const base =
-    'flex min-h-[76px] w-full items-center justify-center rounded-2xl border-4 p-5 text-2xl font-bold ' +
-    'transition focus:outline-none focus:ring-4 focus:ring-sky-500';
+    'flex min-h-[76px] w-full items-center justify-center rounded-2xl border-4 p-5 text-2xl font-bold shadow-sm ' +
+    'transition active:scale-[0.97] motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-500';
 
   if (selectedIndex === null) {
     return `${base} border-sky-200 bg-white text-sky-900 hover:border-sky-400`;

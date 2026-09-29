@@ -1,4 +1,5 @@
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { CARD, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface RoundStubProps {
   titleVi: string;
@@ -15,11 +16,11 @@ interface RoundStubProps {
  */
 export default function RoundStub({ titleVi, onNextRound }: RoundStubProps) {
   return (
-    <div className="py-4 text-center">
+    <div className={`${CARD} ${SCREEN_ENTER} py-6 text-center`}>
       <div className="mb-3 text-6xl" aria-hidden="true">
         🚧
       </div>
-      <h2 className="mb-2 text-2xl font-extrabold text-sky-900">{titleVi}</h2>
+      <h2 className="mb-2 font-display text-2xl font-extrabold text-sky-900">{titleVi}</h2>
       <p className="mb-4 text-xl font-semibold text-sky-700">
         Vòng này đang được phát triển. Hẹn gặp lại em trong bản cập nhật tiếp theo nhé!
       </p>

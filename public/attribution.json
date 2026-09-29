@@ -28,6 +28,20 @@
         "/emoji/lottie/"
       ],
       "modified": false
+    },
+    {
+      "id": "baloo-2",
+      "title": "Baloo 2",
+      "author": "Ek Type",
+      "license": "OFL-1.1",
+      "licenseLabel": "SIL Open Font License 1.1",
+      "licenseUrl": "https://openfontlicense.org",
+      "sourceUrl": "https://fonts.google.com/specimen/Baloo+2",
+      "version": "5.3.0 (@fontsource/baloo-2)",
+      "paths": [
+        "/fonts/baloo-2/"
+      ],
+      "modified": false
     }
   ],
   "version": 1

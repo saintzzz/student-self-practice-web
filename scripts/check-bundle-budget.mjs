@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /**
  * check-bundle-budget - AC-2.10 entry budget gate.
- * Entry JS gzip <= 94.5 kB, entry CSS gzip <= 5.0 kB
- * (baseline 84.46 / 3.96 kB + headroom, measured with gzip level 9).
+ * Entry JS gzip <= 94.5 kB, entry CSS gzip <= 6.25 kB
+ * (baseline 84.46 / 5.20 kB + headroom, measured with gzip level 9).
+ * CSS baseline re-based for CR-09 (AC-UI6): +1.24 kB is the Baloo 2
+ * @font-face rules + design-token utilities; headroom kept at ~1 kB.
  * Run after `npm run build`.
  */
 import { readFile } from 'node:fs/promises';
@@ -14,8 +16,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
 const JS_MAX_KB = 94.5;
-const CSS_MAX_KB = 5.0;
-const BASELINE = { js: 84.46, css: 3.96 };
+const CSS_MAX_KB = 6.25;
+const BASELINE = { js: 84.46, css: 5.2 };
 
 const kb = (buf) => gzipSync(buf, { level: 9 }).length / 1024;
 

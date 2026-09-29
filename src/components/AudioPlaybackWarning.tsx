@@ -9,7 +9,10 @@
  */
 export default function AudioPlaybackWarning() {
   return (
-    <p data-testid="audio-playback-warning" className="mt-2 text-base font-semibold text-amber-700">
+    <p
+      data-testid="audio-playback-warning"
+      className="mt-2 inline-block rounded-full bg-amber-50 px-4 py-2 text-base font-semibold text-amber-800 ring-1 ring-amber-200"
+    >
       Không phát được âm thanh trên thiết bị này. Em thử kiểm tra âm lượng hoặc bấm Nghe lại nhé.
     </p>
   );

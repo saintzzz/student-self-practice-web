@@ -166,3 +166,58 @@ Entry chunk additionally verified **free of `dotlottie` runtime code and `.wasm`
   (324 svg / 121 lottie), `check-bundle-budget` OK (JS 90.88 kB <= 94.5,
   CSS 4.18 kB <= 5, entry lottie-free).
 - Dash guard: no U+2013/U+2014 in `src/` or `e2e/` (rg scan clean).
+
+---
+
+## CR-09 verification record (2026-09-30, Designer-led UI refresh)
+
+Scope: app-level design system (design-spec s14, architecture s10) -
+token module, Baloo 2 self-hosted display font, page gradient, scene
+cards, unified play-chrome header strip (round chip + progress track +
+score/timer chips), restyled options/buttons/feedback/summaries/credits.
+
+### Unit / component
+
+- `npm test`: 79 files, **660/660 green** (one test updated for the
+  restyled timer urgent state - RoundTimer rose chip + pulse replaces
+  the old `text-red-600` class assertion; one CreditsScreen test updated
+  for the renamed collections section heading).
+- `npx tsc --noEmit`: clean. `npm run build`: clean.
+
+### Gates
+
+- `check-attribution`: OK - 325 svg (+1 vendored 23f1.svg for the timer
+  chip), 121 lottie, 3 collections (baloo-2 OFL entry added). The
+  fetch-emoji-assets script now preserves foreign collections instead of
+  clobbering them (bug found + fixed during this CR).
+- `check-bundle-budget`: JS 91.76 kB OK (max 94.5). CSS re-based per
+  AC-UI6 justification: new baseline 5.20 kB, max 6.25 kB (font-face +
+  token utilities), measured 5.23 kB OK.
+
+### E2E
+
+- Full suite run during dev: 48/49 (one failure: timer chip emoji had
+  no vendored Twemoji svg -> rendered native, caught correctly by the
+  reduced-motion spec's asset-missing signal). Fixed by enumerating UI
+  chrome emoji in fetch-emoji-assets and vendoring 23f1.svg.
+- emoji-visual.spec.ts re-run in isolation: 11/11 green.
+- One CR-06-era spec debt surfaced by a seed-dependent flake:
+  round3-pronunciation-recording.spec.ts kept a stale local
+  ROUND4_KINDS allow-list missing the CR-06 phonics kinds; updated to
+  the full 7-kind list (test-only fix).
+- Final clean full-suite run: **49/49 passed (2.5m)**.
+
+### Visual QA (Playwright browser walkthrough)
+
+Screens reviewed live at desktop 1280x, portrait 390x844, landscape
+667x375 and 844x390: GradeSelect, StartBatch, active question + feedback,
+Credits. Portrait defect found and fixed during the pass: header chips
+wrapped vertically on 390px (chip nowrap + stacked strip layout on
+narrow widths). Landscape compact contract preserved (title drops,
+chips single row, Next reachable).
+
+### Residual / deferred
+
+- Prompt emoji size on image-choice prompts is unchanged (existing
+  EmojiVisual sizing); larger hero picture sizing is a candidate
+  follow-up, not in CR-09 scope.

@@ -60,7 +60,7 @@ describe('CreditsScreen (AC-7.x)', () => {
     expect(screen.getByTestId('credits-collection-twemoji')).toHaveTextContent(
       'Twemoji của Twitter, Inc and other contributors, giấy phép CC BY 4.0',
     );
-    expect(screen.getByText('Bộ biểu tượng cảm xúc')).toBeInTheDocument();
+    expect(screen.getByText('Tài nguyên đồ họa và phông chữ')).toBeInTheDocument();
     expect(screen.getByText('Ảnh chụp trong kho ảnh')).toBeInTheDocument();
   });
 

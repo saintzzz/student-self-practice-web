@@ -1518,3 +1518,71 @@ override at gate.
   final-sound prompts read the WORD, not the sound key).
 - AC-Pd9: e2e helper coverage for the three new kinds; no regression in
   the 588-test unit suite or the 49-test e2e suite.
+
+## 16. CR-09 delta: Designer-led UI/UX refresh (intake 2026-09-29)
+
+Human request: "chua chay designer UIUX nen update lai giao dien". The
+Designer phase ran only inside the visual-content feature (design-spec
+sections 1-12) and CR-06 (section 13); the app-level look never got a
+design pass - screens grew organically around components. This CR is the
+retroactive Designer phase for the whole product surface, then its
+implementation.
+
+### 16.1 Goals
+
+- A cohesive, kid-friendly design system for ages 6-11: playful but
+  readable, consistent tokens everywhere (color, type, radius,
+  elevation, motion), a recognizable "world" the pig mascot lives in.
+- Every screen gets the refresh: GradeSelect, StartBatchScreen,
+  BatchScreen active chrome (progress/timer/score header), QuestionCard
+  + all question kinds (shared shells), FeedbackPanel, RoundSummary,
+  BatchSummary, CreditsScreen.
+- The design system must ABSORB the upcoming screens from CR-08
+  (login, admin, class management) so those inherit tokens/components
+  instead of inventing new ones (human sequencing ruling, A-21).
+
+### 16.2 Non-goals
+
+- No feature/content changes: question mechanics, rounds, scoring,
+  word bank, TTS, speech-recognition flows stay identical.
+- No rebrand/name change, no dark mode, no new third-party fonts from
+  a CDN (any font must be self-hosted + licensed for redistribution).
+- No layout breakage on the phone-landscape contract
+  (max-height 420px fallbacks, 76px touch targets, reduced-motion).
+
+### 16.3 BA requirements
+
+- R-UI1: design tokens defined once and applied app-wide (palette,
+  type scale, radius, elevation, spacing rhythm, motion durations);
+  no ad-hoc color/scale choices left in components.
+- R-UI2: shared "game chrome" for active play: round progress + timer
+  + live score presented as one consistent header bar on every
+  question screen.
+- R-UI3: every interactive element keeps >= 76px targets, visible
+  focus rings, and honors prefers-reduced-motion (existing invariants
+  become design tokens, not conventions).
+- R-UI4: mascot usage is systematic (greeting/happy/encouraging/
+  celebrating map to moments), never decorative noise.
+- R-UI5: empty/error/edge states specified (audio warning, image
+  fallback, timer end, zero-score summary).
+- R-UI6: Grade-1-readiness notes (bigger targets / less text skin)
+  recorded for CR-07 to consume.
+- R-UI7: Playwright visual verification on every refreshed screen;
+  full unit + e2e suites stay green (visual change must not break
+  testids or DOM contract).
+
+### 16.4 ACs (CR-09)
+
+- AC-UI1: a token module/config is the single source for palette and
+  shared class constants; components reference it, not raw colors.
+- AC-UI2: all 7 screens/components groups render the new design and
+  every existing data-testid and accessible name is preserved
+  (e2e contract unchanged).
+- AC-UI3: the active-play header bar shows round progress, timer and
+  score as one unit on phone portrait AND landscape.
+- AC-UI4: any added font/asset is self-hosted under public/ with its
+  license recorded in attribution.json + Credits.
+- AC-UI5: reduced-motion produces zero animation requests/timing on
+  refreshed animations (same AC-2.7 technique).
+- AC-UI6: 660+ unit tests and 49 e2e pass unchanged post-refresh;
+  bundle budget updated only if justified.

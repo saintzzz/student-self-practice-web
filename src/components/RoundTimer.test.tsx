@@ -24,12 +24,16 @@ describe('RoundTimer (plan.md v7 "Round Timer", AC27)', () => {
   it('applies an urgent style in the final 30 seconds', () => {
     render(<RoundTimer secondsRemaining={30} />);
 
-    expect(screen.getByTestId('round-timer').className).toContain('text-red-600');
+    const cls = screen.getByTestId('round-timer').className;
+    expect(cls).toContain('rose');
+    expect(cls).toContain('animate-pulse');
   });
 
   it('does not apply the urgent style above 30 seconds remaining', () => {
     render(<RoundTimer secondsRemaining={31} />);
 
-    expect(screen.getByTestId('round-timer').className).not.toContain('text-red-600');
+    const cls = screen.getByTestId('round-timer').className;
+    expect(cls).not.toContain('rose');
+    expect(cls).not.toContain('animate-pulse');
   });
 });

@@ -32,13 +32,17 @@ const TWEMOJI_URL = `https://cdn.jsdelivr.net/gh/jdecked/twemoji@${TWEMOJI_PIN}/
 const NOTO_INDEX_URL = 'https://googlefonts.github.io/noto-emoji-animation/data/api.json';
 const NOTO_LOTTIE_URL = 'https://fonts.gstatic.com/s/e/notoemoji/latest';
 const MASCOT_EMOJI = ['🐷', '✨', '🎉'];
+// CR-09: decorative icon literals used by the new header chips
+// (RoundTimer / LiveScore) - enumerated here so the fetch pipeline keeps
+// them vendored like every other emoji literal in the app.
+const UI_CHROME_EMOJI = ['⏱️', '⭐'];
 const LOTTIE_MAX_BYTES = 120 * 1024;
 const CONCURRENCY = 8;
 
 const force = process.argv.includes('--force');
 
 async function collectEmoji() {
-  const set = new Set(MASCOT_EMOJI);
+  const set = new Set([...MASCOT_EMOJI, ...UI_CHROME_EMOJI]);
   for (const file of await readdir(VOCAB_DIR)) {
     if (!file.endsWith('.ts')) continue;
     const source = await readFile(path.join(VOCAB_DIR, file), 'utf8');
@@ -147,6 +151,12 @@ async function main() {
     ? JSON.parse(await readFile(ATTRIBUTION, 'utf8'))
     : { version: 1, images: [], collections: [] };
   attribution.version = 1;
+  // Rewrite only the collections this script manages; entries maintained
+  // elsewhere (e.g. CR-09's baloo-2 font collection) are preserved.
+  const MANAGED_COLLECTION_IDS = new Set(['twemoji', 'noto-animated-emoji']);
+  const foreignCollections = (attribution.collections ?? []).filter(
+    (c) => !MANAGED_COLLECTION_IDS.has(c.id),
+  );
   attribution.collections = [
     {
       id: 'twemoji',
@@ -172,6 +182,7 @@ async function main() {
       paths: ['/emoji/lottie/'],
       modified: false,
     },
+    ...foreignCollections,
   ];
   attribution.images = attribution.images ?? [];
   await writeFile(ATTRIBUTION, `${JSON.stringify(attribution, null, 2)}\n`);

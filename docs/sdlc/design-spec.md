@@ -661,3 +661,129 @@ must compare (BA ruling 15.2, confirmed Designer).
   see 13.1. `Ruling: Designer, confirmed.`
 - DS-P3: no per-option audio on any CR-06 kind (13.4). `Ruling:
   Designer - answer leakage + letter-name mispronunciation risk.`
+
+---
+
+## 14. CR-09 design addendum - app-level design system + screen refresh
+
+Retroactive Designer phase for the whole product surface (PRD section
+16). Everything below becomes token, not convention. Existing
+data-testids, accessible names, 76px targets, landscape fallbacks and
+reduced-motion behavior are INVARIANT - this pass changes how things
+look, never how they work.
+
+### 14.1 Design language - "lớp học vui" (playful classroom)
+
+Warm paper background, big friendly cards, chunky rounded controls,
+the pig mascot as the app's guide character. Every screen reads as one
+scene: a header area, a content card, one dominant action. Nothing
+crowds; whitespace is the design.
+
+### 14.2 Tokens (single source: `src/lib/ui/tokens.ts` + Tailwind)
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `bg.page` | `from-sky-50 via-amber-50/40 to-emerald-50` soft diagonal gradient | body |
+| `surface.card` | `bg-white rounded-3xl shadow-lg ring-1 ring-slate-200/60` | content cards, question card |
+| `surface.tint` | `bg-{color}-50 ring-1 ring-{color}-200` | feedback/summary accents |
+| `text.heading` | `text-sky-900 font-extrabold` | h1/h2 |
+| `text.body` | `text-slate-700` | copy |
+| `text.accent` | `text-sky-700` | prompt lines, progress |
+| `action.primary` | emerald-500/600 white | start/continue CTAs |
+| `action.listen` | indigo-500/600 white | TTS buttons |
+| `action.nav` | `bg-white ring-1 ring-sky-200 text-sky-700` | back/credits pills |
+| `choice.*` | sky default / emerald correct / rose incorrect / opacity-50 unchosen | option tiles (keep semantics, restyle shell) |
+| `radius` | `rounded-3xl` cards, `rounded-2xl` options, `rounded-full` pills | |
+| `target` | `min-h-[76px]` | all interactive |
+| `motion.ui` | enter 200ms fade+rise 8px; press `active:scale-95`; option flash <=300ms | transform/opacity only |
+| `font.display` | Baloo 2 (self-hosted woff2, OFL) | headings, numbers, buttons |
+| `font.body` | system stack | Vietnamese body copy |
+
+Font ruling (DS-U1): Baloo 2 for display/buttons - rounded, friendly,
+Vietnamese-complete subset, OFL-licensed, self-hosted under
+`public/fonts/` + `font-display: swap`. Body stays the system stack so
+long Vietnamese copy stays neutral and zero layout risk.
+
+### 14.3 Screen specs
+
+**GradeSelect:** centered scene - mascot `greeting` above a display
+headline "Chọn lớp của em", subline, then a 2-col grid (1-col small
+phones) of grade cards: big grade number in a colored disc, grade name
+display font, hover lift (`hover:-translate-y-1 hover:shadow-lg`).
+Credits pill below (nav style).
+
+**StartBatchScreen:** scene card containing mascot `greeting` + grade
+headline + explainer line + one dominant emerald CTA ("Bắt đầu luyện
+tập", display font, arrow). Back pill top-left of the card.
+
+**Active play chrome (BatchScreen header):** one `surface.card` strip:
+left `Vòng X/4` pill (sky tint), center animated progress track
+(sky gradient fill, rounded-full), right timer chip (amber tint, clock
+emoji) + score chip (emerald tint, star emoji). Same bar on portrait
+and landscape; at <=420px height it compacts to a single text row.
+
+**QuestionCard:** prompt + options live inside the big content card;
+question-kind prompt lines keep `text.accent`; phonics/big-word prompts
+use `font.display`. Option tiles: same getOptionButtonClassName
+semantics, restyled to `ring`-based borders (border-4 kept for state
+weight), `active:scale-[0.97]` press feedback, `shadow-sm` resting.
+
+**FeedbackPanel:** full-width tint banner inside the card
+(emerald-50/emerald ring correct, rose tint incorrect), mascot `happy`
+/`encouraging` inline, word+picture line unchanged (AC-10.x), then the
+next button (primary or amber per existing convention).
+
+**RoundSummary / BatchSummary:** celebration scene - mascot
+`celebrating`, points as a big "coin" (amber disc, display font),
+per-round breakdown rows as small tint cards (icon + `Vòng n` + score),
+CTA stack (primary + nav).
+
+**CreditsScreen:** card sections per collection, same heading/body
+tokens; links remain non-anchor text (AC-7.5), pill back.
+
+### 14.4 States
+
+- Loading/empty: muted card + body copy (existing empty states restyled,
+  no new copy).
+- Audio warning: amber tint banner (existing AudioPlaybackWarning
+  restyled to tokens).
+- Timer end: existing flow unchanged; timer chip pulses amber under
+  30s (transform/opacity only, motion-reduce off).
+- Error boundaries: existing EmojiVisualErrorBoundary unchanged.
+
+### 14.5 Motion rules
+
+- Screen enter: 200ms fade + 8px rise on the content card (CSS only,
+  `motion-reduce:animate-none`).
+- Button press: `active:scale-95` (universal, zero JS).
+- Mascot: existing 4 animations only; no new looping animation on
+  question screens (focus preservation).
+- No new Lottie call sites; CR-03 rules still cap option grids at
+  static.
+
+### 14.6 Accessibility invariants (restated as tokens)
+
+76px targets, ring-4 focus in each action color, option aria-labels
+unchanged, `aria-hidden` decorative emoji unchanged, status colors
+always paired with icon + text (never color alone).
+
+### 14.7 Grade-1 readiness notes (for CR-07)
+
+- G1 skin = same tokens, `text-*` one step larger, fewer options per
+  screen where the kind allows, no timer chip (or decorative-only),
+  TTS button duplicated next to every text option on listening kinds.
+- Recorded here so the G1 pass is a config delta, not a redesign.
+
+### 14.8 Designer rulings (CR-09)
+
+- DS-U1 font: Baloo 2 display + system body. `Ruling: Designer -
+  self-hosted OFL; body stays system for Vietnamese copy safety.`
+- DS-U2 header chrome: single card strip replaces scattered progress/
+  timer/score lines. `Ruling: Designer - one visual unit kids read
+  instantly.`
+- DS-U3 grade cards: numbered-disc tiles (not illustrated scenes yet -
+  custom art is a later CR; emoji glyph per grade allowed). `Ruling:
+  Designer - scope stays CSS-level.`
+- DS-U4 semantics unchanged: emerald=correct/go, rose=wrong,
+  amber=progress, sky=info, indigo=audio. `Ruling: Designer - kids
+  already learned these meanings; restyle shells, not semantics.`

@@ -213,7 +213,7 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="py-2 text-center [@media(max-height:420px)]:py-1"
+      className="rounded-3xl bg-white p-4 text-center shadow-lg ring-1 ring-slate-200/60 [@media(max-height:420px)]:p-2 sm:p-6"
     >
       {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
           wrapper already provides that exact centering/padding, and this
@@ -222,7 +222,7 @@ export default function QuestionCard({
           the width available for wrapped tile rows on narrow phones. */}
       <p
         data-testid="question-progress"
-        className="mb-1 text-base font-bold text-sky-600 [@media(max-height:420px)]:mb-0"
+        className="mx-auto mb-2 inline-block rounded-full bg-sky-50 px-3 py-0.5 text-sm font-bold text-sky-700 ring-1 ring-sky-200 [@media(max-height:420px)]:mb-1"
       >
         Câu {questionNumber}/{totalQuestions}
       </p>
