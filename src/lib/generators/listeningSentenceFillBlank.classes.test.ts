@@ -42,6 +42,8 @@ const CHANGED_WORD_IDS = new Set([
   'sun', 'rain', 'cloud', 'snow', 'wind', 'rainbow',
   // g2-nature overrides (2)
   'ocean', 'fire',
+  // CR-16: g2-places moved to the 'place' class ("I go to the ...").
+  'house', 'beach', 'street',
 ]);
 
 function word(id: string): VocabWord {
@@ -142,12 +144,12 @@ describe('baseline snapshot (AC-11.5, AC-11.6)', () => {
     }
   });
 
-  it('the changed set is exactly the 71 listed words (AC-11.6)', () => {
+  it('the changed set is exactly the 74 listed words (AC-11.6 + CR-16)', () => {
     const actuallyChanged = baseline.wordIds.filter(
       (id) => JSON.stringify(current.get(id)) !== JSON.stringify(baseline.questions[id]),
     );
     expect(new Set(actuallyChanged)).toEqual(CHANGED_WORD_IDS);
-    expect(actuallyChanged).toHaveLength(71);
+    expect(actuallyChanged).toHaveLength(74);
   });
 });
 

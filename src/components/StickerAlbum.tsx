@@ -17,9 +17,9 @@ export default function StickerAlbum({ earnedIds, onClose }: StickerAlbumProps) 
       data-testid="sticker-album"
       role="dialog"
       aria-label="Bộ sưu tập huy hiệu"
-      className="absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-2xl bg-white/95 p-4 text-left shadow-2xl ring-2 ring-amber-300 backdrop-blur-sm"
+      className="absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-2xl bg-[#0E1F42]/95 p-4 text-left shadow-2xl ring-2 ring-amber-300 backdrop-blur-sm"
     >
-      <p className="mb-3 font-display text-lg font-extrabold text-amber-900">Huy hiệu của em</p>
+      <p className="mb-3 font-display text-lg font-extrabold text-amber-100">Huy hiệu của em</p>
       <ul className="space-y-2">
         {STICKERS.map((s) => {
           const earned = earnedIds.includes(s.id);
@@ -28,13 +28,13 @@ export default function StickerAlbum({ earnedIds, onClose }: StickerAlbumProps) 
               key={s.id}
               data-testid={`sticker-${s.id}`}
               className={`flex items-center gap-3 rounded-xl p-2 ${
-                earned ? 'bg-amber-50 ring-1 ring-amber-200' : 'opacity-50'
+                earned ? 'bg-amber-500/15 ring-1 ring-amber-400/40' : 'opacity-50'
               }`}
             >
               <span className={`text-2xl ${earned ? '' : 'grayscale'}`}>
                 <EmojiVisual emoji={s.emoji} />
               </span>
-              <span className={`text-base font-bold ${earned ? 'text-amber-900' : 'text-slate-500'}`}>
+              <span className={`text-base font-bold ${earned ? 'text-amber-100' : 'text-slate-400'}`}>
                 {earned ? s.nameVi : '???'}
               </span>
             </li>
@@ -45,7 +45,7 @@ export default function StickerAlbum({ earnedIds, onClose }: StickerAlbumProps) 
         type="button"
         data-testid="sticker-album-close"
         onClick={onClose}
-        className="mt-3 w-full rounded-xl bg-sky-100 py-2 text-sm font-bold text-sky-800 transition hover:bg-sky-200 focus:outline-none focus:ring-2 focus:ring-sky-400"
+        className="mt-3 w-full rounded-xl bg-sky-500/20 py-2 text-sm font-bold text-sky-200 transition hover:bg-sky-500/30 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
       >
         Đóng
       </button>

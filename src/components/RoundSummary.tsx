@@ -67,8 +67,8 @@ export default function RoundSummary({
     <div className={`${CARD} ${SCREEN_ENTER} py-6 text-center [@media(max-height:420px)]:py-3`}>
       <Mascot mood="celebrating" />
       <StarRain stars={award?.stars ?? 0} />
-      <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-sky-900">{outcome.titleVi}</h2>
-      <p data-testid="round-score-summary" className="mt-3 text-2xl font-semibold text-sky-700">
+      <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-white">{outcome.titleVi}</h2>
+      <p data-testid="round-score-summary" className="mt-3 text-2xl font-semibold text-amber-200">
         Em trả lời đúng {outcome.correctCount}/{outcome.totalCount} câu ở vòng này.
       </p>
       <p className="mt-3 flex justify-center">
@@ -81,7 +81,7 @@ export default function RoundSummary({
           {award.newStickers.map((s) => (
             <span
               key={s.id}
-              className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-900 ring-2 ring-amber-300"
+              className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-100 ring-2 ring-amber-300"
             >
               <EmojiVisual emoji={s.emoji} /> Huy hiệu mới: {s.nameVi}
             </span>
@@ -90,19 +90,19 @@ export default function RoundSummary({
       )}
       <p
         data-testid="round-completion-badge"
-        className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-700' : 'text-sky-700'}`}
+        className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-300' : 'text-amber-200'}`}
       >
         {status.label}
       </p>
       {locked ? (
         <div
           data-testid="guest-lock-panel"
-          className="mt-6 rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-amber-50 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_28px_-12px_rgba(79,70,229,0.35)]"
+          className="mt-6 rounded-3xl border-2 border-indigo-400/40 bg-gradient-to-br from-indigo-500/20 via-[#162C55] to-amber-500/10 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_12px_28px_-12px_rgba(79,70,229,0.35)]"
         >
-          <p className="font-display text-xl font-extrabold tracking-tight text-indigo-900">
+          <p className="font-display text-xl font-extrabold tracking-tight text-indigo-200">
             Hết vòng chơi thử miễn phí
           </p>
-          <p className="mt-2 text-base font-semibold text-indigo-800/80">
+          <p className="mt-2 text-base font-semibold text-slate-300">
             Đăng nhập để mở đủ 4 vòng mỗi bài, lưu sao và huy hiệu vĩnh viễn.
           </p>
           <button
@@ -118,7 +118,7 @@ export default function RoundSummary({
               type="button"
               data-testid="guest-lock-exit"
               onClick={onExit}
-              className="mt-3 block w-full text-center text-sm font-bold text-indigo-600 underline-offset-2 hover:underline sm:inline sm:w-auto"
+              className="mt-3 block w-full text-center text-sm font-bold text-indigo-300 underline-offset-2 hover:underline sm:inline sm:w-auto"
             >
               Chơi thử lớp khác
             </button>

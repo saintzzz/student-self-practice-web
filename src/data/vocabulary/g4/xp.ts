@@ -110,7 +110,7 @@ export const G4_XP_GESTURES_WORDS: VocabWord[] = xp('g4-xp-gestures', [
   ['thumbs-down', 'thumbs down', 'thumbs-downs', '👎', 'Giơ ngón cái xuống - không thích', true],
   ['fist', 'fist', 'fists', '✊', 'Nắm đấm', true],
   ['fist-bump', 'fist bump', 'fist bumps', '👊', 'Đấm nắm tay chào', true],
-  ['peace', 'peace', null, '✌️', 'Ra hiệu hòa bình/chữ V', false],
+  ['peace-sign', 'peace sign', 'peace signs', '✌️', 'Dấu hiệu hòa bình', true],
   ['good-luck', 'good luck', null, '🤞', 'Khoanh ngón chúc may mắn', false],
   ['pray', 'pray', null, '🙏', 'Chắp tay cầu nguyện', false],
   ['handshake', 'handshake', 'handshakes', '🤝', 'Bắt tay', true],

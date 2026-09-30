@@ -40,9 +40,9 @@ export default function PhonicsWordChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">Nghe âm rồi chọn đúng hình nhé!</p>
+      <p className="mb-2 text-xl font-semibold text-amber-200">Nghe âm rồi chọn đúng hình nhé!</p>
       <div className="mb-3 flex items-center justify-center gap-3">
-        <span className="text-6xl font-extrabold text-sky-900 [@media(max-height:420px)]:text-5xl">
+        <span className="text-6xl font-extrabold text-white [@media(max-height:420px)]:text-5xl">
           {question.sound}
         </span>
         <button

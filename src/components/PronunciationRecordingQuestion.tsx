@@ -35,8 +35,8 @@ export default function PronunciationRecordingQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">Đọc to từ này lên nhé:</p>
-      <p className="mb-3 text-4xl font-extrabold text-sky-900">{question.word}</p>
+      <p className="mb-2 text-xl font-semibold text-amber-200">Đọc to từ này lên nhé:</p>
+      <p className="mb-3 text-4xl font-extrabold text-white">{question.word}</p>
 
       {hasAnswered ? (
         <PronunciationFeedbackPanel
@@ -48,7 +48,7 @@ export default function PronunciationRecordingQuestion({
         />
       ) : (
         <>
-          <p className="mb-3 text-base italic text-slate-500">{DISCLOSURE_TEXT}</p>
+          <p className="mb-3 text-base italic text-slate-400">{DISCLOSURE_TEXT}</p>
 
           {phase === 'unsupported' && (
             <PronunciationStatusMessage
@@ -79,7 +79,7 @@ export default function PronunciationRecordingQuestion({
                 {phase === 'recording' ? '⏹️ Đang ghi âm, nhấn để dừng' : '🎙️ Nhấn để ghi âm'}
               </button>
               {phase === 'recording' && (
-                <p data-testid="recording-indicator" className="mt-4 text-lg font-semibold text-rose-600">
+                <p data-testid="recording-indicator" className="mt-4 text-lg font-semibold text-rose-300">
                   🔴 Đang lắng nghe em đọc...
                 </p>
               )}

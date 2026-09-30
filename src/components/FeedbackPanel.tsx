@@ -9,6 +9,13 @@ interface FeedbackPanelProps {
   correctWord: string;
   explanation: string;
   /**
+   * CR-16: the answer the child actually picked, shown only when wrong so
+   * they can compare it against the correct one instead of guessing why.
+   */
+  pickedAnswer?: string;
+  /** CR-16: full correct sentence (sentence-cloze kinds) - "Câu đúng: ..." */
+  fullSentence?: string;
+  /**
    * Correct-word picture (D-11, US-10): presentational only - QuestionCard
    * resolves it via getWordVisual. Uses the full fallback chain
    * (photo -> lottie -> svg -> native), so a plain emoji works too.
@@ -26,7 +33,7 @@ const HEADLINE_CLASS =
   'flex items-center gap-1 text-2xl font-extrabold [@media(max-height:420px)]:text-lg';
 // Exact class order from ebd58a5 so the no-picture DOM is byte-identical.
 const WORD_LINE_BASE_CLASS =
-  'mt-2 text-xl font-semibold text-sky-900 [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base';
+  'mt-2 text-xl font-semibold text-white [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base';
 
 /**
  * Renders on every single question (plan.md v10 "App-Wide Mascot") - the
@@ -44,7 +51,7 @@ const WORD_LINE_BASE_CLASS =
  * <div> only when the happy accent is present (isCorrect), and the
  * correct-word line uses <div> only when a picture prop is present.
  */
-export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, picture }: FeedbackPanelProps) {
+export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture }: FeedbackPanelProps) {
   const HeadlineTag = isCorrect ? 'div' : 'p';
   const WordLineTag = picture ? 'div' : 'p';
 
@@ -53,8 +60,8 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
       data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
       className={`relative mt-3 overflow-hidden rounded-2xl p-4 pl-5 text-left ring-2 shadow-md [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
         isCorrect
-          ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/60 ring-emerald-300'
-          : 'bg-gradient-to-r from-rose-50 to-rose-100/60 ring-rose-300'
+          ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 ring-emerald-400/50'
+          : 'bg-gradient-to-r from-rose-500/20 to-rose-600/10 ring-rose-400/50'
       }`}
     >
       {/* CR-12 DS-X2: accent edge bar. */}
@@ -64,11 +71,16 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
       />
       {isCorrect && <Confetti />}
       <HeadlineTag
-        className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}
+        className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}
       >
         <Mascot mood={isCorrect ? 'happy' : 'encouraging'} size="inline" />
         {isCorrect ? 'Chính xác! Giỏi quá!' : 'Chưa đúng rồi, cố lên nhé!'}
       </HeadlineTag>
+      {!isCorrect && pickedAnswer && (
+        <p className="mt-2 text-lg font-semibold text-rose-300 [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-sm">
+          Em chọn: <span className="line-through opacity-80">{pickedAnswer}</span>
+        </p>
+      )}
       <WordLineTag
         className={picture ? `flex items-center gap-1 ${WORD_LINE_BASE_CLASS}` : WORD_LINE_BASE_CLASS}
       >
@@ -77,7 +89,12 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
           <EmojiVisual emoji={picture.emoji} imageUrl={picture.imageUrl} animated className="ml-[0.3em]" />
         )}
       </WordLineTag>
-      <p className="mt-1 text-lg text-slate-700 [@media(max-height:420px)]:text-sm">{explanation}</p>
+      {!isCorrect && fullSentence && (
+        <p className="mt-1 text-lg font-semibold text-sky-200 [@media(max-height:420px)]:text-sm">
+          Câu đúng: {fullSentence}
+        </p>
+      )}
+      <p className="mt-1 text-lg text-slate-300 [@media(max-height:420px)]:text-sm">{explanation}</p>
     </div>
   );
 }

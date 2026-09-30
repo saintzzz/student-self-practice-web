@@ -171,6 +171,41 @@ function renderQuestionBody(
  * IS the picture), picture-pair-matching has no single correct word, and
  * listening-fill-blank/pronunciation keep their existing feedback.
  */
+/**
+ * CR-16: the text of whatever the child actually picked/typed, so the
+ * wrong-answer panel can show "Em chọn: X" next to the correct answer.
+ * Returns undefined for kinds with no single pickable answer
+ * (pair-matching, pronunciation).
+ */
+function pickedAnswerText(question: Question, currentAnswer: CurrentAnswer): string | undefined {
+  switch (question.kind) {
+    case 'image-choice':
+    case 'listening-image-choice':
+    case 'phonics-word-choice':
+    case 'phonics-rhyme-choice':
+    case 'phonics-sound-choice':
+    case 'phonics-final-choice':
+    case 'phonics-blend-choice':
+      return currentAnswer.selectedIndex != null
+        ? question.options[currentAnswer.selectedIndex]
+        : undefined;
+    case 'counting-image':
+    case 'describe-and-choose-image':
+      return currentAnswer.selectedIndex != null
+        ? String(question.options[currentAnswer.selectedIndex])
+        : undefined;
+    case 'listening-fill-blank':
+    case 'listening-sentence-fill-blank':
+      return currentAnswer.typedAnswer || undefined;
+    case 'extra-letter':
+      return currentAnswer.selectedLetterIndex != null
+        ? question.displayLetters[currentAnswer.selectedLetterIndex]
+        : undefined;
+    default:
+      return undefined;
+  }
+}
+
 function feedbackPictureWordId(question: Question): string | undefined {
   switch (question.kind) {
     case 'extra-letter':
@@ -213,7 +248,7 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-4 text-center shadow-xl ring-1 ring-slate-200/70 [@media(max-height:420px)]:p-2 sm:p-6"
+      className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6"
     >
       {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
           wrapper already provides that exact centering/padding, and this
@@ -222,7 +257,7 @@ export default function QuestionCard({
           the width available for wrapped tile rows on narrow phones. */}
       <p
         data-testid="question-progress"
-        className="mx-auto mb-2 inline-block rounded-full bg-sky-50 px-3 py-0.5 text-sm font-bold text-sky-700 ring-1 ring-sky-200 [@media(max-height:420px)]:mb-1"
+        className="mx-auto mb-2 inline-block rounded-full bg-amber-500/15 px-3 py-0.5 text-sm font-bold text-amber-200 ring-1 ring-amber-400/30 [@media(max-height:420px)]:mb-1"
       >
         Câu {questionNumber}/{totalQuestions}
       </p>
@@ -245,6 +280,10 @@ export default function QuestionCard({
           isCorrect={currentAnswer.isCorrect}
           correctWord={getCorrectWord(question)}
           explanation={question.explanation}
+          pickedAnswer={pickedAnswerText(question, currentAnswer)}
+          fullSentence={
+            question.kind === 'listening-sentence-fill-blank' ? question.sentence : undefined
+          }
           picture={
             pictureVisual ? { emoji: pictureVisual.emoji, imageUrl: pictureVisual.imageUrl } : undefined
           }

@@ -83,7 +83,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       {guestTrial && (
         <p
           data-testid="guest-trial-hint"
-          className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-1.5 text-sm font-bold text-indigo-700 backdrop-blur"
+          className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-400/40 bg-indigo-500/15 px-4 py-1.5 text-sm font-bold text-indigo-200 backdrop-blur"
         >
           Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 4 vòng
         </p>
@@ -92,7 +92,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         <EngagementBar />
       </div>
       {visibleGrades.length === 0 ? (
-        <div data-testid="no-scope-message" className="rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-8 text-lg font-bold text-slate-600 shadow-lg ring-1 ring-slate-200">
+        <div data-testid="no-scope-message" className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-8 text-lg font-bold text-slate-300 shadow-lg ring-1 ring-white/15">
           Cô/Thầy chưa mở nội dung cho bé - hãy hỏi cô nhé!
         </div>
       ) : (
@@ -107,7 +107,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid={`grade-card-${grade.id}`}
               onClick={() => onSelectGrade(grade.id)}
-              className={`relative flex min-h-[76px] items-center gap-4 overflow-hidden rounded-3xl border-4 ${land.cardRing.replace('ring-', 'border-')} ${land.cardTint} bg-gradient-to-br from-white/70 via-white/10 to-transparent p-5 pb-16 text-left shadow-lg transition hover:-translate-y-1 hover:shadow-2xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-500 sm:px-6 sm:pt-6 ${
+              className={`relative flex min-h-[76px] items-center gap-4 overflow-hidden rounded-3xl border-4 ${land.cardRing.replace('ring-', 'border-')} ${land.cardTint} bg-gradient-to-br from-white/70 via-white/10 to-transparent p-5 pb-16 text-left shadow-lg transition hover:-translate-y-1 hover:shadow-2xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-400/60 sm:px-6 sm:pt-6 ${
                 isLoneLast ? 'sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.75rem)]' : ''
               }`}
             >
@@ -152,7 +152,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       )}
       <a
         href="https://vieschool.com"
-        className="mt-4 text-xs font-bold text-slate-500 underline-offset-2 transition hover:text-slate-700 hover:underline"
+        className="mt-4 text-xs font-bold text-slate-400 underline-offset-2 transition hover:text-slate-300 hover:underline"
       >
         English Arena - sản phẩm của VieSchool
       </a>

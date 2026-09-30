@@ -174,10 +174,12 @@ export default function App() {
     setBatch(endRoundEarly(batch));
   }
 
-  // CR-10 DS-T1: every screen lives inside a land shell - sky for map/
-  // auth/admin surfaces, the grade's own land while playing in it.
-  const shell = (node: ReactNode, gradeId?: string | null, land?: 'brand') => (
-    <LandShell gradeId={gradeId ?? null} land={land}>{node}</LandShell>
+  // CR-10 DS-T1: every screen lives inside a land shell. CR-16: the whole
+  // app rides the VieSchool navy/gold 'brand' surface so play screens match
+  // login/landing/admin - per-grade land identity stays inside the map's
+  // grade cards (kid-friendly accents on a branded backdrop).
+  const shell = (node: ReactNode, _gradeId?: string | null) => (
+    <LandShell land="brand">{node}</LandShell>
   );
 
   if (authMode === 'loading') {
@@ -189,7 +191,7 @@ export default function App() {
   }
 
   if (configured && (authMode === 'login' || screen === 'login')) {
-    return shell(<AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />, null, 'brand');
+    return shell(<AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />);
   }
 
   if (screen === 'admin' && myAccount) {
@@ -199,8 +201,6 @@ export default function App() {
         onSignOut={handleSignOut}
         onPractice={() => setScreen('grade-select')}
       />,
-      null,
-      'brand',
     );
   }
 

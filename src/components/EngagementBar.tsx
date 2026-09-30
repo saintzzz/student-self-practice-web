@@ -14,7 +14,7 @@ export default function EngagementBar() {
 
   /* CR-12 DS-X4: chip emojis sit in tinted mini-discs; star chip goes
      gold gradient. */
-  const iconDisc = 'mr-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/70 ring-1 ring-black/5';
+  const iconDisc = 'mr-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10';
   const goldChip = `${CHIP_AMBER} bg-gradient-to-b from-amber-100 to-amber-200/90 shadow-md ring-amber-300/80`;
 
   return (
@@ -30,7 +30,7 @@ export default function EngagementBar() {
         data-testid="sticker-album-button"
         onClick={() => setAlbumOpen((v) => !v)}
         aria-expanded={albumOpen}
-        className={`${CHIP_SKY} !min-h-0 cursor-pointer transition hover:bg-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-400`}
+        className={`${CHIP_SKY} !min-h-0 cursor-pointer transition hover:bg-sky-500/25 focus:outline-none focus:ring-4 focus:ring-amber-400/60`}
       >
         <span aria-hidden="true" className={iconDisc}>🏅</span> Huy hiệu ({state.stickerIds.length})
       </button>

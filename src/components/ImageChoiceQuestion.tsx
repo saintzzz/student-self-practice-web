@@ -18,7 +18,7 @@ export default function ImageChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">Từ nào đúng với hình này?</p>
+      <p className="mb-2 text-xl font-semibold text-amber-200">Từ nào đúng với hình này?</p>
       <div
         className="mb-3 text-8xl [@media(max-height:420px)]:text-6xl"
         aria-hidden="true"

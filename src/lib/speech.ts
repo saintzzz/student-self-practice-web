@@ -32,21 +32,44 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 }
 
 /**
- * Picks the best installed voice for English content: an exact "en-US"
- * match if present, otherwise any voice whose language starts with "en".
- * Returns null (letting the browser fall back to its own default) if no
- * English voice is installed at all - some Android devices only ship the
- * system's own display language's TTS voice, in which case no client-side
- * fix can make English speech possible; this is a device configuration gap
- * (Android Settings > Accessibility > Text-to-speech output), not a bug in
- * this app's code.
+ * Known clear voices ranked best-first for young learners. Cloud/neural
+ * voices (Google, Microsoft "Online Natural", Apple premium voices) sound
+ * dramatically better than legacy compact voices, so name-matching beats
+ * plain language matching. Entries are substring matches on voice.name.
+ */
+const PREFERRED_VOICE_NAMES: readonly string[] = [
+  'Google US English',          // Android/Chrome - neural, very clear
+  'Microsoft Aria Online',      // Edge - neural "Natural" family
+  'Microsoft Jenny Online',
+  'Microsoft Ana Online',
+  'Microsoft Zira',             // Windows desktop
+  'Samantha',                   // iOS/macOS - clear US female
+  'Allison',                    // iOS/macOS enhanced
+  'Ava',
+  'Zoe',
+  'Karen',                      // en-AU fallback, still clear
+  'Moira',                      // en-IE
+];
+
+/**
+ * Picks the best installed voice for English content: prefer a known
+ * high-quality voice from PREFERRED_VOICE_NAMES (en-* only), then any
+ * "en-US" match, then any other "en" voice. Returns null (letting the
+ * browser fall back to its own default) if no English voice is installed
+ * at all - some Android devices only ship the system's own display
+ * language's TTS voice, in which case no client-side fix can make English
+ * speech possible; this is a device configuration gap (Android Settings >
+ * Accessibility > Text-to-speech output), not a bug in this app's code.
  */
 function pickEnglishVoice(): SpeechSynthesisVoice | null {
   if (cachedVoices.length === 0) refreshVoiceCache();
-  const exact = cachedVoices.find((voice) => voice.lang?.toLowerCase() === 'en-us');
-  if (exact) return exact;
-  const anyEnglish = cachedVoices.find((voice) => voice.lang?.toLowerCase().startsWith('en'));
-  return anyEnglish ?? null;
+  const english = cachedVoices.filter((voice) => voice.lang?.toLowerCase().startsWith('en'));
+  for (const name of PREFERRED_VOICE_NAMES) {
+    const hit = english.find((voice) => voice.name?.includes(name));
+    if (hit) return hit;
+  }
+  const exact = english.find((voice) => voice.lang?.toLowerCase() === 'en-us');
+  return exact ?? english[0] ?? null;
 }
 
 /**
@@ -85,6 +108,11 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
 
     const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
+    // Slightly slower than default so early readers can catch each word;
+    // pitch nudged up a touch reads friendlier for kids without sounding
+    // cartoonish.
+    utterance.rate = 0.88;
+    utterance.pitch = 1.05;
     const voice = pickEnglishVoice();
     if (voice) utterance.voice = voice;
     activeUtterance = utterance;

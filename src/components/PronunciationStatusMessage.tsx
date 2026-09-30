@@ -14,9 +14,9 @@ interface PronunciationStatusMessageProps {
  */
 export default function PronunciationStatusMessage({ testId, heading, body, onSkip }: PronunciationStatusMessageProps) {
   return (
-    <div data-testid={testId} className="rounded-2xl border-4 border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100/60 p-5 text-left shadow-md">
-      <p className="text-xl font-extrabold text-amber-800">{heading}</p>
-      <p className="mt-2 text-lg text-amber-900">{body}</p>
+    <div data-testid={testId} className="rounded-2xl border-4 border-amber-400/50 bg-gradient-to-b from-amber-500/20 to-amber-600/10 p-5 text-left shadow-md">
+      <p className="text-xl font-extrabold text-amber-200">{heading}</p>
+      <p className="mt-2 text-lg text-amber-100">{body}</p>
       <button
         type="button"
         data-testid="pronunciation-skip-button"

@@ -42,7 +42,7 @@ export default function ListeningImageChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">Nghe từ rồi chọn đúng hình nhé!</p>
+      <p className="mb-2 text-xl font-semibold text-amber-200">Nghe từ rồi chọn đúng hình nhé!</p>
       <button
         type="button"
         data-testid="play-audio-button"

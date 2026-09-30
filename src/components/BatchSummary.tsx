@@ -68,12 +68,12 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
           {result.points}/{result.maxPoints} điểm
         </span>
       </p>
-      <p data-testid="batch-score-summary" className="mt-3 text-xl font-semibold text-sky-700">
+      <p data-testid="batch-score-summary" className="mt-3 text-xl font-semibold text-amber-200">
         Tổng điểm: {result.totalCorrect}/{result.totalQuestions} câu đúng.
       </p>
       <p
         data-testid="batch-completion-badge"
-        className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-700' : 'text-sky-700'}`}
+        className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-300' : 'text-amber-200'}`}
       >
         {status.label}
       </p>
@@ -85,10 +85,10 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
             <li
               key={round.roundNumber}
               data-testid={`round-breakdown-${round.roundNumber}`}
-              className="rounded-2xl bg-sky-50/80 p-4 shadow-sm ring-1 ring-sky-200"
+              className="rounded-2xl bg-sky-500/15 p-4 shadow-sm ring-1 ring-sky-400/30"
             >
-              <p className="font-display text-lg font-bold text-sky-900">{round.titleVi}</p>
-              <p className="mt-0.5 text-base text-slate-700">
+              <p className="font-display text-lg font-bold text-white">{round.titleVi}</p>
+              <p className="mt-0.5 text-base text-slate-300">
                 {round.implemented
                   ? `${round.correctCount}/${round.totalCount} câu đúng (${round.points}/${round.maxPoints} điểm)`
                   : 'Chưa có nội dung ở bản này'}

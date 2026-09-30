@@ -22,12 +22,12 @@ export default function CountingImageQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">
+      <p className="mb-2 text-xl font-semibold text-amber-200">
         {isCountToImage ? 'Chọn hình có đúng số lượng nhé!' : 'Đếm số lượng rồi chọn đáp án đúng!'}
       </p>
 
       {isCountToImage ? (
-        <p className="mb-3 text-4xl font-extrabold text-sky-900">{countLabel(question.prompt)}</p>
+        <p className="mb-3 text-4xl font-extrabold text-white">{countLabel(question.prompt)}</p>
       ) : (
         <div className="mb-3 text-6xl leading-relaxed" aria-hidden="true">
           <EmojiVisual emoji={question.prompt.emoji} count={question.prompt.count} />

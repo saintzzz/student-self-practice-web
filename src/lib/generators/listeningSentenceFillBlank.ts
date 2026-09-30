@@ -38,7 +38,11 @@ type SentenceClass =
   | 'the-noun'
   | 'sport'
   | 'country'
-  | 'time';
+  | 'time'
+  | 'season'
+  | 'substance'
+  | 'she-noun'
+  | 'place';
 
 /** "I have a cat.", "I can see an elephant.", "This is a red." (see templatesForWord for gating). */
 const COUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
@@ -113,6 +117,34 @@ const TIME_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `I get up at ${word}.`,
 ];
 
+/** CR-16: seasons are neither consumables ("I want some spring" was
+    nonsense) nor "the"-nouns - they take plain like/it-is frames. */
+const SEASON_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I like ${word}.`,
+  (word) => `It is ${word}.`,
+];
+
+/** CR-16: non-consumable mass nouns (blood, DNA, coral...) - "I want some
+    blood" is wrong; existential "there is" reads naturally for all. */
+const SUBSTANCE_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `There is some ${word}.`,
+  (word) => `I can see ${word}.`,
+];
+
+/** CR-16: female-coded person nouns - "He is a bride"/"I have a bride" are
+    both wrong; "She is a ..." is grammatical and pedagogically clean. */
+const SHE_NOUN_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `She is ${article(word)} ${word}.`,
+  (word) => `I can see ${article(word)} ${word}.`,
+];
+
+/** CR-16: places kids visit - "I have a bank" was nonsense; "I go to the
+    ..." teaches real usage (go to school / go to the park). */
+const PLACE_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I go to the ${word}.`,
+  (word) => `I can see the ${word}.`,
+];
+
 const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[]>> = {
   countable: COUNTABLE_TEMPLATES,
   mass: UNCOUNTABLE_TEMPLATES,
@@ -127,6 +159,10 @@ const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[
   sport: SPORT_TEMPLATES,
   country: COUNTRY_TEMPLATES,
   time: TIME_TEMPLATES,
+  season: SEASON_TEMPLATES,
+  substance: SUBSTANCE_TEMPLATES,
+  'she-noun': SHE_NOUN_TEMPLATES,
+  place: PLACE_TEMPLATES,
 };
 
 /**
@@ -157,7 +193,14 @@ const TOPIC_CLASSES: Readonly<Record<string, SentenceClass>> = {
   'g3-weather': 'the-noun',
   'g4-daily-routine': 'the-noun',
   'g4-subjects': 'sport',
-  'g4-seasons': 'the-noun',
+  'g4-seasons': 'season',
+  // CR-16: place topics teach "I go to the ..." instead of "I have a bank".
+  'g2-places': 'place',
+  'g3-rooms': 'place',
+  'g4-city-places': 'place',
+  'g4-homes': 'place',
+  'g4-facilities': 'place',
+  'g5-places': 'place',
   'g4-abilities': 'action',
   'g4-jobs': 'occupation',
   'g5-countries': 'country',
@@ -201,11 +244,12 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   breakfast: 'mass',
   lunch: 'mass',
   dinner: 'mass',
-  homework: 'mass',
-  spring: 'mass',
-  summer: 'mass',
-  autumn: 'mass',
-  winter: 'mass',
+  // CR-16: seasons are not consumables - "I want some spring" was the
+  // bug a user hit in production. They get their own class.
+  spring: 'season',
+  summer: 'season',
+  autumn: 'season',
+  winter: 'season',
   // CR-15 expansion-pack word overrides.
   // g3-xp-feelings holds verbs as well as adjectives - verbs take action frames.
   grin: 'action',
@@ -242,7 +286,6 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   // g4-xp-signs numbers and the non-countable checkpoint.
   hundred: 'number',
   zero: 'number',
-  'passport-control': 'the-noun',
   // g1-xp-nature nouns that need "the" (and a/an would misfire on Earth).
   earth: 'the-noun',
   sunrise: 'the-noun',
@@ -263,15 +306,49 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   ufo: 'the-noun',
   euro: 'the-noun',
   // Female-coded roles would get "He is a ..." from the occupation class;
-  // the countable frames are gender-neutral and grammatical.
-  policewoman: 'countable',
-  bride: 'countable',
-  mermaid: 'countable',
+  // the "She is a ..." frames are both gender-correct and grammatical.
+  policewoman: 'she-noun',
+  bride: 'she-noun',
+  mermaid: 'she-noun',
   // CR-15 wave 2.
   salute: 'action',
   'baggage-claim': 'the-noun',
   infinity: 'number',
   wifi: 'the-noun',
+  // CR-16 semantics sweep - "I want some X" is only right for consumables.
+  // Activities and routines take the sport/like frames instead.
+  homework: 'sport',
+  shopping: 'sport',
+  sightseeing: 'sport',
+  photography: 'sport',
+  'roller-skating': 'sport',
+  cheer: 'sport',
+  sauna: 'place',
+  weekend: 'the-noun',
+  'good-luck': 'sport',
+  // Non-consumable mass nouns.
+  blood: 'substance',
+  dna: 'substance',
+  coral: 'substance',
+  // Transport system, not a consumable.
+  'light-rail': 'the-noun',
+  // Places that live inside mixed countable topics.
+  mall: 'place',
+  bakery: 'place',
+  bookshop: 'place',
+  station: 'place',
+  // g3-xp-places members where "go to" beats "like the".
+  factory: 'place',
+  'convenience-store': 'place',
+  hotel: 'place',
+  church: 'place',
+  mosque: 'place',
+  synagogue: 'place',
+  'petrol-station': 'place',
+  atm: 'place',
+  elevator: 'place',
+  'construction-site': 'place',
+  'passport-control': 'place',
 };
 
 /** BR-16 precedence: word-id override -> actions topic -> topic class -> countable/mass. */

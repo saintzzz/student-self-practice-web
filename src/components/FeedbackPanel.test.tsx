@@ -127,7 +127,7 @@ describe('FeedbackPanel', () => {
       // Byte-identical to the ebd58a5 baseline markup for this line.
       expect(wordLine).toHaveAttribute(
         'class',
-        'mt-2 text-xl font-semibold text-sky-900 [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base',
+        'mt-2 text-xl font-semibold text-white [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base',
       );
     });
 

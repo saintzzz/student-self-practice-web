@@ -28,12 +28,12 @@ export default function PhonicsSoundChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">Từ này bắt đầu bằng âm nào?</p>
+      <p className="mb-2 text-xl font-semibold text-amber-200">Từ này bắt đầu bằng âm nào?</p>
       <div className="mb-3 flex items-center justify-center gap-3">
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
           <EmojiVisual emoji={question.emoji} animated variant="block" />
         </span>
-        <span className="text-4xl font-extrabold text-sky-900 [@media(max-height:420px)]:text-3xl">
+        <span className="text-4xl font-extrabold text-white [@media(max-height:420px)]:text-3xl">
           {question.word}
         </span>
         <button

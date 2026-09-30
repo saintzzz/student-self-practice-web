@@ -437,3 +437,24 @@
   (rounded down per acceptance wording). If pushing beyond 1190 later:
   supply-chain is emoji glyphs - would need relaxing AC-6.3 or a new
   illustration pipeline; do not pad with low-quality words.
+
+## CR-16 (2026-09-30): Play-quality fixes - DONE
+
+- **Request:** user hit "I want some spring." in play, reported TTS hard
+  to hear, no explanation on wrong answers, and practice screens not
+  visually consistent with login/landing/admin navy-gold brand.
+- **Delivered:**
+  - New sentence classes: season, substance, she-noun, place. Audit:
+    zero "I want some <non-consumable>" remains. Activities
+    (homework/shopping/sightseeing...) -> sport frames; light-rail ->
+    the-noun; peace -> "peace sign" countable.
+  - TTS: en voice quality ranking, rate 0.9 for young learners.
+  - FeedbackPanel: wrong answers show picked answer + correct answer +
+    explanation.
+  - All play surfaces on 'brand' navy/gold shell (LandShell land=brand),
+    tokens dark variants; land cards keep grade accents.
+- **Gates:** 715 unit green (FeedbackPanel + classes tests updated for
+  intentional changes), tsc clean, vite build green.
+- **QA:** Playwright on dev - login, guest map, grade select, batch,
+  question, wrong-answer feedback verified.
+- **Doc:** docs/sdlc/CR-16-play-quality.md

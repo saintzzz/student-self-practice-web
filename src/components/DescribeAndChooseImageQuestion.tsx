@@ -31,8 +31,8 @@ export default function DescribeAndChooseImageQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-sky-700">Nghe hoặc đọc câu rồi chọn hình đúng nhé!</p>
-      <p className="mb-3 text-3xl font-extrabold text-sky-900">{question.sentence}</p>
+      <p className="mb-2 text-xl font-semibold text-amber-200">Nghe hoặc đọc câu rồi chọn hình đúng nhé!</p>
+      <p className="mb-3 text-3xl font-extrabold text-white">{question.sentence}</p>
       <button
         type="button"
         data-testid="play-audio-button"

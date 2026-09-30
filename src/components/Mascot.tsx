@@ -74,7 +74,7 @@ export default function Mascot({ mood, size = 'block' }: MascotProps) {
       {block && (
         <span
           aria-hidden="true"
-          className="absolute -inset-4 rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0))]"
+          className="absolute -inset-4 rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.15),rgba(255,255,255,0))]"
         />
       )}
       <span
