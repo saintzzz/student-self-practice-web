@@ -5,12 +5,19 @@ import {
   type SpeechRecognitionController,
 } from '../lib/speechRecognition';
 
-export type PronunciationPhase = 'idle' | 'recording' | 'permission-denied' | 'unsupported';
+export type PronunciationPhase =
+  | 'idle'
+  | 'recording'
+  | 'permission-denied'
+  | 'unsupported'
+  | 'error';
 
 export interface UsePronunciationRecordingResult {
   phase: PronunciationPhase;
   startRecording: () => void;
   stopRecording: () => void;
+  /** Dismiss a transient 'error' state back to 'idle' so the child can tap record again. */
+  retry: () => void;
   /** Explicit "give up on recording, submit an empty attempt" escape hatch for the fallback messages. */
   skip: () => void;
 }
@@ -60,7 +67,12 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
     const controller = startSpeechRecognition({
       onResult: (transcript) => finish(transcript),
       onPermissionError: () => setPhase('permission-denied'),
-      onOtherError: () => finish(''),
+      // CR-17 follow-up: a transient failure (mobile 'network'/'audio-
+      // capture'/'no-speech', or the child tapping stop without speaking)
+      // must NOT silently submit an empty answer - it scored the question
+      // wrong with no explanation of why. Move to a retryable 'error'
+      // phase instead; the child chooses "thử lại" or "bỏ qua".
+      onOtherError: () => setPhase('error'),
     });
 
     if (!controller) {
@@ -76,9 +88,15 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
     controllerRef.current?.stop();
   }, []);
 
+  const retry = useCallback(() => {
+    if (settledRef.current) return;
+    controllerRef.current = null;
+    setPhase('idle');
+  }, []);
+
   const skip = useCallback(() => {
     finish('');
   }, [finish]);
 
-  return { phase, startRecording, stopRecording, skip };
+  return { phase, startRecording, stopRecording, retry, skip };
 }

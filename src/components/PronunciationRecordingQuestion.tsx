@@ -31,7 +31,7 @@ export default function PronunciationRecordingQuestion({
   isCorrect,
   onSubmit,
 }: PronunciationRecordingQuestionProps) {
-  const { phase, startRecording, stopRecording, skip } = usePronunciationRecording(onSubmit);
+  const { phase, startRecording, stopRecording, retry, skip } = usePronunciationRecording(onSubmit);
 
   return (
     <div>
@@ -64,6 +64,16 @@ export default function PronunciationRecordingQuestion({
               testId="mic-permission-denied-message"
               heading="Không thể truy cập micro"
               body="Trình duyệt không được cấp quyền dùng micro nên chưa ghi âm được. Em có thể bỏ qua câu này và làm câu tiếp theo nhé."
+              onSkip={skip}
+            />
+          )}
+
+          {phase === 'error' && (
+            <PronunciationStatusMessage
+              testId="speech-recognition-error-message"
+              heading="Chưa nghe được giọng em"
+              body="Micro chưa nhận được tiếng đọc của em - có thể do mạng chập chờn hoặc em chưa kịp đọc. Em thử lại hoặc bỏ qua câu này nhé."
+              onRetry={retry}
               onSkip={skip}
             />
           )}

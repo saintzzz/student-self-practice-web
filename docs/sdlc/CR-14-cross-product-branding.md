@@ -18,8 +18,12 @@
      latest amendment touches History/Geography/Civics, not English.
    - School regulation for Sổ CN: Thông tư 15/2026/TT-BGDĐT (eff. 10/5/2026)
      replaces TT 32/2020 + TT 28/2020.
-   - Marketing claim: "CTGDPT 2018 (cập nhật TT 17/2025)" + "Điều lệ trường
-     (TT 15/2026)" - accurate, not implying official certification.
+   - Marketing claim (corrected 2026-09-30): TT 17/2025 only amends
+     History/Geography/Civics - never cite it next to English/Global
+     Success. Correct copy: English Arena = "bam SGK Tieng Anh Global
+     Success theo CTGDPT 2018"; TVC360 = "CTGDPT 2018 (gom sua doi cua
+     TT 17/2025 cho Lich su, Dia li, GDCD)"; So CN = "Dieu le truong
+     (TT 15/2026)" stays accurate.
 5. **Vocabulary claim**: `524+ từ vựng bám SGK` - bank verified at exactly
    524 unique words (`ALL_WORDS.length = 524`, unique = 524). "524+" holds
    literally; expansion to 600+/700+ is a separate content CR.

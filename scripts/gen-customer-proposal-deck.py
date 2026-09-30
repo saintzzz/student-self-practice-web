@@ -164,7 +164,7 @@ kicker(s, "SO SÁNH ĐỐI THỦ")
 title(s, "Công cụ số Giáo viên vs các lựa chọn hiện có")
 table(s, [
     ("Tiêu chí", "TVC360", "MagicSchool (Mỹ)", "Azota"),
-    ("Chương trình áp dụng", "CTGDPT 2018 (cập nhật TT 17/2025),\ngắn mã yêu cầu cần đạt", "Chuẩn Mỹ - không áp cho VN", "Theo cấu trúc đề thi VN"),
+    ("Chương trình áp dụng", "CTGDPT 2018 (gồm sửa đổi của TT 17/2025\ncho Lịch sử, Địa lí, GDCD), gắn mã YCCĐ", "Chuẩn Mỹ - không áp cho VN", "Theo cấu trúc đề thi VN"),
     ("Phạm vi công cụ", "12 công cụ: ngân hàng câu hỏi,\nma trận, đề thi, kế hoạch bài dạy", "60+ công cụ nhưng toàn\ntiếng Anh, prompt Mỹ", "Chấm điểm, ngân hàng đề -\nmạnh về thi cử"),
     ("Xuất tài liệu", "DOCX có công thức toán\nWord-native + PDF", "Text / copy-paste", "DOCX / PDF"),
     ("Điểm yếu của chúng tôi", "Ngân hàng câu hỏi cộng đồng\nnhỏ hơn Azota", "", ""),
@@ -284,7 +284,7 @@ kicker(s, "VÌ SAO CHỌN VIESCHOOL")
 title(s, "Đúng chương trình Việt - trải nghiệm chuẩn quốc tế")
 why = [
     ("Đúng chương trình VN",
-     "Bám Global Success và CTGDPT 2018 (cập nhật TT 17/2025).\nLuyện trên app là học đúng điều đang học trên lớp."),
+     "Bám SGK Tiếng Anh Global Success theo CTGDPT 2018.\nLuyện trên app là học đúng điều đang học trên lớp."),
     ("Trọn trong một hệ sinh thái",
      "Một nền tảng thay ba ứng dụng rời rạc - cùng nhận diện,\ncùng đội hỗ trợ, cùng một hợp đồng."),
     ("Trọng tâm là trẻ em",

@@ -97,14 +97,7 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
   }
 
   try {
-    // Mobile Safari can get stuck mid-queue after backgrounding/locking, and
-    // a leftover queued utterance from a previous tap can otherwise block or
-    // delay this one - cancelling first keeps every tap of the play button
-    // starting from a clean state. resume() clears the related "stuck
-    // paused" state some Android/iOS builds enter after the same kind of
-    // interruption.
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
+    const synth = window.speechSynthesis;
 
     const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
@@ -116,15 +109,54 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
     const voice = pickEnglishVoice();
     if (voice) utterance.voice = voice;
     activeUtterance = utterance;
-    utterance.onstart = () => onStatus?.('started');
+
+    // Watchdog: mobile browsers can accept the utterance then never fire
+    // onstart (silent failure). If nothing is speaking/queued after a short
+    // grace period, report 'error' so the UI can show the fallback hint
+    // instead of a dead play button.
+    let statusSent = false;
+    const sendStatus = (status: SpeechPlaybackStatus) => {
+      if (statusSent) return;
+      statusSent = true;
+      onStatus?.(status);
+    };
+    utterance.onstart = () => sendStatus('started');
     utterance.onend = () => {
       if (activeUtterance === utterance) activeUtterance = null;
     };
     utterance.onerror = () => {
       if (activeUtterance === utterance) activeUtterance = null;
-      onStatus?.('error');
+      sendStatus('error');
     };
-    window.speechSynthesis.speak(utterance);
+    setTimeout(() => {
+      if (
+        activeUtterance === utterance &&
+        !synth.speaking &&
+        !synth.pending
+      ) {
+        activeUtterance = null;
+        sendStatus('error');
+      }
+    }, 2500);
+
+    // iOS Safari drops a speak() issued in the same event tick as cancel(),
+    // so only cancel when something is actually playing/queued/paused, and
+    // let the cancel settle for one tick before speaking. When the queue is
+    // already clean (the common first-tap path) speak() runs synchronously
+    // inside the user's tap gesture.
+    if (synth.speaking || synth.pending || synth.paused) {
+      synth.cancel();
+      synth.resume();
+      setTimeout(() => {
+        try {
+          synth.speak(utterance);
+        } catch {
+          sendStatus('error');
+        }
+      }, 60);
+    } else {
+      synth.speak(utterance);
+    }
   } catch {
     // Speech synthesis is a nice-to-have for this feature; swallow and
     // continue silently (see the function doc comment above), but still

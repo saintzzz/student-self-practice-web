@@ -85,6 +85,46 @@ describe('usePronunciationRecording', () => {
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
   });
 
+  it('moves to retryable error phase on transient failure instead of silently submitting', async () => {
+    class FlakyRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+
+      start(): void {
+        setTimeout(() => this.onerror?.({ error: 'no-speech' }), 0);
+      }
+
+      stop(): void {}
+      abort(): void {}
+    }
+
+    const original = { ...testWindow() };
+    testWindow().SpeechRecognition = FlakyRecognition;
+    testWindow().webkitSpeechRecognition = undefined;
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt));
+
+    act(() => {
+      result.current.startRecording();
+    });
+    await waitFor(() => expect(result.current.phase).toBe('error'));
+    expect(onAttempt).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.retry();
+    });
+    expect(result.current.phase).toBe('idle');
+
+    testWindow().SpeechRecognition = original.SpeechRecognition;
+    testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
+  });
+
   it('skip calls onAttempt with an empty string exactly once', async () => {
     const onAttempt = vi.fn();
     const { result } = renderHook(() => usePronunciationRecording(onAttempt));

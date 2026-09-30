@@ -96,7 +96,7 @@ s = slide(); kicker(s, 'SẢN PHẨM'); title(s, '3 sản phẩm - 1 nền tản
 card(s, Inches(0.6), Inches(1.9), Inches(4.0), Inches(4.6), 'English Arena',
      'ea.vieschool.com\n\nLuyện tiếng Anh cho học sinh.\n5 vùng đất phiêu lưu + mascot Bé Heo,\n4 vòng chơi, phát âm chấm điểm.\n\nHiện: Lớp 1-5 (cấp 1)\nLộ trình: mở rộng lớp 6-12')
 card(s, Inches(4.75), Inches(1.9), Inches(4.0), Inches(4.6), 'Công cụ số GV (TVC360)',
-     'congcuso.vieschool.com\n\n12 công cụ soạn học liệu cho giáo viên:\nngân hàng câu hỏi, ma trận, đề thi,\nxuất DOCX/PDF, AI hỗ trợ.\n\nBám CTGDPT 2018 (cập nhật TT 17/2025)\nDùng cho mọi cấp 1-3')
+     'congcuso.vieschool.com\n\n12 công cụ soạn học liệu cho giáo viên:\nngân hàng câu hỏi, ma trận, đề thi,\nxuất DOCX/PDF, AI hỗ trợ.\n\nBám CTGDPT 2018 (gồm sửa đổi\nTT 17/2025 - LS, ĐL, GDCD)\nDùng cho mọi cấp 1-3')
 card(s, Inches(8.9), Inches(1.9), Inches(4.0), Inches(4.6), 'Sổ Chủ Nhiệm Số',
      'sochunhiem.vieschool.com\n\nSố hóa công tác chủ nhiệm:\nđiểm danh, hạnh kiểm, sổ điểm,\nthông báo phụ huynh, báo cáo BGH.\n\nTheo Điều lệ trường mới nhất\n(Thông tư 15/2026/TT-BGDĐT)')
 
@@ -114,7 +114,7 @@ for i, (h, b) in enumerate(feats):
 # ---------- S5 Differentiator ----------
 s = slide(); kicker(s, 'ĐIỂM MẠNH NHẤT'); title(s, 'Đúng chương trình Việt - đẹp chuẩn quốc tế')
 tb(s, Inches(0.6), Inches(1.9), Inches(12), Inches(1.0),
-   'Nội dung bám Global Success và CTGDPT 2018 (cập nhật Thông tư 17/2025) -\n   luyện trên app là học đúng điều đang học trên lớp.', 18, WHITE)
+   'Nội dung bám SGK Tiếng Anh Global Success theo CTGDPT 2018 -\n   luyện trên app là học đúng điều đang học trên lớp.', 18, WHITE)
 card(s, Inches(0.6), Inches(3.1), Inches(4.0), Inches(2.6), 'Bám SGK Việt',
      'App quốc tế (Duolingo, Khan) không\ntheo chương trình VN. App nội địa\ntheo SGK nhưng thiếu trải nghiệm.\nVieSchool làm được cả hai.')
 card(s, Inches(4.75), Inches(3.1), Inches(4.0), Inches(2.6), 'Premium thật',
