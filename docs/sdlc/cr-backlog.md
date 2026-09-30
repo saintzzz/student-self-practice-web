@@ -458,3 +458,16 @@
 - **QA:** Playwright on dev - login, guest map, grade select, batch,
   question, wrong-answer feedback verified.
 - **Doc:** docs/sdlc/CR-16-play-quality.md
+
+## CR-17 (2026-09-30): Mobile PIN fix + self-service password change - DONE
+
+- **Bug:** PIN input had `inputMode="numeric"` while PIN is alphanumeric
+  (demo PIN "demo2026") - broke typing on mobile. Removed; verified on
+  mobile viewport.
+- **Feature:** students (EA) and all signed-in roles (TVC360 teacher +
+  moderation, SCN staff + portal) can change their own PIN/password via
+  Supabase auth.updateUser - no admin needed for routine changes. Admin
+  reset-pin remains for forgotten PINs.
+- **Verified:** E2E on real Supabase - demo_hs PIN changed and restored.
+- **Gates:** EA 718/718 unit, builds green on all 3 repos.
+- **Doc:** docs/sdlc/CR-17-account-security.md

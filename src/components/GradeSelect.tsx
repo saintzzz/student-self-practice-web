@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Grade } from '../types';
 import Mascot from './Mascot';
 import EngagementBar from './EngagementBar';
+import ChangePinDialog from './ChangePinDialog';
 import { getLand, type LandKey } from '../lib/ui/theme';
 import { getState } from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
@@ -33,6 +34,7 @@ interface GradeSelectProps {
  */
 export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
+  const [changePinOpen, setChangePinOpen] = useState(false);
 
   useEffect(() => {
     if (focusCreditsLink) {
@@ -52,7 +54,17 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
   return (
     <div className={`mx-auto max-w-3xl px-4 py-6 text-center sm:py-8 ${SCREEN_ENTER}`}>
       {(onSignOut || onLogin) && (
-        <div className="mb-2 flex justify-end">
+        <div className="mb-2 flex justify-end gap-2">
+          {onSignOut && (
+            <button
+              type="button"
+              data-testid="change-pin-button"
+              onClick={() => setChangePinOpen(true)}
+              className={`!min-h-0 px-4 py-2 text-sm ${NAV_PILL}`}
+            >
+              Đổi mã PIN
+            </button>
+          )}
           {onLogin && (
             <button
               type="button"
@@ -156,6 +168,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       >
         English Arena - sản phẩm của VieSchool
       </a>
+      {changePinOpen && <ChangePinDialog onClose={() => setChangePinOpen(false)} />}
     </div>
   );
 }

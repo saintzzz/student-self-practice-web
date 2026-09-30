@@ -33,6 +33,14 @@ export async function logout(): Promise<void> {
   await (await getSupabase()).auth.signOut();
 }
 
+/** CR-17: student self-service PIN change (Supabase password update on the
+ *  live session). PIN is alphanumeric, >= 6 chars - matches practice-admin. */
+export async function changePin(newPin: string): Promise<string | null> {
+  if (newPin.length < 6) return 'Mã PIN cần ít nhất 6 ký tự.';
+  const { error } = await (await getSupabase()).auth.updateUser({ password: newPin });
+  return error ? 'Chưa đổi được mã PIN - thử lại nhé.' : null;
+}
+
 export async function getSession(): Promise<Session | null> {
   const { data } = await (await getSupabase()).auth.getSession();
   return data.session;
