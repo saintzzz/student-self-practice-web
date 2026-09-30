@@ -221,6 +221,7 @@ export default function App() {
         onOpenCredits={handleOpenCredits}
         focusCreditsLink={focusCreditsLink}
         allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
+        guestTrial={authMode === 'guest'}
         {...authChipProps}
       />,
     );
@@ -249,6 +250,11 @@ export default function App() {
         onStartNewBatch={handleStartBatch}
         onChooseGrade={handleBackToGrades}
         onRoundTimeExpired={handleRoundTimeExpired}
+        guestLocked={authMode === 'guest'}
+        onRequestLogin={() => {
+          setAuthMode('login');
+          setScreen('login');
+        }}
       />,
       batch.gradeId,
     );
@@ -261,6 +267,7 @@ export default function App() {
       onOpenCredits={handleOpenCredits}
       focusCreditsLink={focusCreditsLink}
       allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
+      guestTrial={authMode === 'guest'}
       {...authChipProps}
     />,
   );

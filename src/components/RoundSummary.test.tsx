@@ -63,3 +63,36 @@ describe('RoundSummary', () => {
     expect(onNextRound).toHaveBeenCalledOnce();
   });
 });
+
+describe('CR-13 guest trial lock', () => {
+  it('locked=true hides next-round-button and shows the upsell panel', () => {
+    render(
+      <RoundSummary outcome={OUTCOME} gradeId="grade-2" onNextRound={vi.fn()} locked onRequestLogin={vi.fn()} onExit={vi.fn()} />,
+    );
+
+    expect(screen.queryByTestId('next-round-button')).toBeNull();
+    expect(screen.getByTestId('guest-lock-panel')).toBeTruthy();
+    expect(screen.getByTestId('guest-lock-login')).toHaveTextContent('Đăng nhập');
+    expect(screen.getByTestId('guest-lock-exit')).toBeTruthy();
+  });
+
+  it('login CTA calls onRequestLogin, exit calls onExit', async () => {
+    const onRequestLogin = vi.fn();
+    const onExit = vi.fn();
+    render(
+      <RoundSummary outcome={OUTCOME} gradeId="grade-2" onNextRound={vi.fn()} locked onRequestLogin={onRequestLogin} onExit={onExit} />,
+    );
+
+    await userEvent.click(screen.getByTestId('guest-lock-login'));
+    await userEvent.click(screen.getByTestId('guest-lock-exit'));
+    expect(onRequestLogin).toHaveBeenCalledTimes(1);
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('locked=false keeps the regular next-round button', () => {
+    render(<RoundSummary outcome={OUTCOME} gradeId="grade-2" onNextRound={vi.fn()} />);
+
+    expect(screen.getByTestId('next-round-button')).toBeTruthy();
+    expect(screen.queryByTestId('guest-lock-panel')).toBeNull();
+  });
+});

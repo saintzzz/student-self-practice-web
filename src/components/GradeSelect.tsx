@@ -20,6 +20,8 @@ interface GradeSelectProps {
   onSignOut?: () => void;
   /** CR-08: "Đăng nhập" chip for guests when Supabase is configured. */
   onLogin?: () => void;
+  /** CR-13: guest trial - show the "1 vong moi lop" trial hint. */
+  guestTrial?: boolean;
 }
 
 /**
@@ -29,7 +31,7 @@ interface GradeSelectProps {
  * shows the sky land; the card itself carries each land's identity so
  * all five lands are visible at once on the map.
  */
-export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin }: GradeSelectProps) {
+export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -78,6 +80,14 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       </div>
       <h1 className={`mb-2 ${H1}`}>Hành trình của Bé Heo</h1>
       <p className={`mb-4 ${PROMPT}`}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
+      {guestTrial && (
+        <p
+          data-testid="guest-trial-hint"
+          className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-1.5 text-sm font-bold text-indigo-700 backdrop-blur"
+        >
+          Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 4 vòng
+        </p>
+      )}
       <div className="mb-8 flex justify-center">
         <EngagementBar />
       </div>

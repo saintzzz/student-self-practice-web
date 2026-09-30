@@ -382,3 +382,28 @@
   assets only (no new art - all CSS/SVG), dash rule, budgets with
   justification, auth/guest flows identical.
 - **Rulings:** none open - "premium toi da" is the direction.
+
+## CR-13 (2026-10-01): VieSchool branding + landing + guest trial limit - RESOLVED
+
+- **Human rulings (verbatim):**
+  - "admin tao account duoc cho tat ca. khach le cung mua duoc qua
+    admin. ban cho truong thi giao vien se duoc CRUD."
+  - Guest limit ruling: "1 vong moi lop".
+- **Scope:**
+  - Branding: app title "English Arena - VieSchool", lang=vi,
+    pig favicon, OG tags, ENGLISH ARENA kicker + VieSchool footer
+    on AuthScreen.
+  - Landing: vieschool.com + www serve suite landing page
+    (3 products, stats, why-choose) via CF Worker proxy to the
+    vieschool-landing Vercel project (apex kept on ioe project
+    pending domain move; worker intercepts all requests).
+  - Registration model: admin-only account creation confirmed
+    (retail buyers get admin-created accounts too - no self-signup).
+  - Guest trial: guests can play Round 1 of each grade; after the
+    round-1 summary, further rounds lock behind a premium upsell
+    panel with login CTA (replay of round 1 stays free).
+- **Impact:** BatchScreen/RoundSummary props (+locked/onRequestLogin),
+  GradeSelect trial hint, App wiring. e2e unaffected (specs run
+  authMode 'off' via beheo-force-guest; lock only gates 'guest').
+- **Guardrails:** logged-in student/admin flows unchanged; round-1
+  replay free; testids preserved; lock copy uses hyphen only.

@@ -23,6 +23,9 @@ interface BatchScreenProps {
   onChooseGrade: () => void;
   /** Called exactly once when the active Round's 5:00 timer expires (plan.md v7 AC28). */
   onRoundTimeExpired: () => void;
+  /** CR-13: guest trial - lock rounds after the free Round 1 behind login. */
+  guestLocked?: boolean;
+  onRequestLogin?: () => void;
 }
 
 const TOTAL_ROUNDS = 4;
@@ -53,6 +56,8 @@ export default function BatchScreen({
   onStartNewBatch,
   onChooseGrade,
   onRoundTimeExpired,
+  guestLocked = false,
+  onRequestLogin,
 }: BatchScreenProps) {
   const roundKey = `${batch.seed}:${batch.roundIndex}`;
   const { secondsRemaining } = useRoundTimer(roundKey, batch.phase === 'active', onRoundTimeExpired);
@@ -123,7 +128,14 @@ export default function BatchScreen({
       )}
 
       {batch.phase === 'round-summary' && lastCompletedOutcome && (
-        <RoundSummary outcome={lastCompletedOutcome} gradeId={batch.gradeId} onNextRound={onNextRound} />
+        <RoundSummary
+          outcome={lastCompletedOutcome}
+          gradeId={batch.gradeId}
+          onNextRound={onNextRound}
+          locked={guestLocked}
+          onRequestLogin={onRequestLogin}
+          onExit={onChooseGrade}
+        />
       )}
     </div>
   );

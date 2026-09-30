@@ -18,6 +18,10 @@ interface RoundSummaryProps {
   /** CR-10: grade the batch belongs to - stars bank into that land. */
   gradeId: string;
   onNextRound: () => void;
+  /** CR-13: guest trial - after the free round, lock the rest behind login. */
+  locked?: boolean;
+  onRequestLogin?: () => void;
+  onExit?: () => void;
 }
 
 /**
@@ -36,7 +40,14 @@ interface RoundSummaryProps {
  * the centered inline-flex CTA finally honors text-center after the
  * Chromium flex-button quirk fix in actionButtonStyle.
  */
-export default function RoundSummary({ outcome, gradeId, onNextRound }: RoundSummaryProps) {
+export default function RoundSummary({
+  outcome,
+  gradeId,
+  onNextRound,
+  locked = false,
+  onRequestLogin,
+  onExit,
+}: RoundSummaryProps) {
   const status = getScoreStatus(outcome.points, outcome.maxPoints);
   const awarded = useRef<RoundAwardResult | null>(null);
   const [award, setAward] = useState<RoundAwardResult | null>(null);
@@ -83,14 +94,46 @@ export default function RoundSummary({ outcome, gradeId, onNextRound }: RoundSum
       >
         {status.label}
       </p>
-      <button
-        type="button"
-        data-testid="next-round-button"
-        onClick={onNextRound}
-        className={`mt-6 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}
-      >
-        Vòng tiếp theo →
-      </button>
+      {locked ? (
+        <div
+          data-testid="guest-lock-panel"
+          className="mt-6 rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-amber-50 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_28px_-12px_rgba(79,70,229,0.35)]"
+        >
+          <p className="font-display text-xl font-extrabold tracking-tight text-indigo-900">
+            Hết vòng chơi thử miễn phí
+          </p>
+          <p className="mt-2 text-base font-semibold text-indigo-800/80">
+            Đăng nhập để mở đủ 4 vòng mỗi bài, lưu sao và huy hiệu vĩnh viễn.
+          </p>
+          <button
+            type="button"
+            data-testid="guest-lock-login"
+            onClick={onRequestLogin}
+            className={`mt-4 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}
+          >
+            Đăng nhập để chơi tiếp →
+          </button>
+          {onExit && (
+            <button
+              type="button"
+              data-testid="guest-lock-exit"
+              onClick={onExit}
+              className="mt-3 block w-full text-center text-sm font-bold text-indigo-600 underline-offset-2 hover:underline sm:inline sm:w-auto"
+            >
+              Chơi thử lớp khác
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          data-testid="next-round-button"
+          onClick={onNextRound}
+          className={`mt-6 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}
+        >
+          Vòng tiếp theo →
+        </button>
+      )}
     </div>
   );
 }
