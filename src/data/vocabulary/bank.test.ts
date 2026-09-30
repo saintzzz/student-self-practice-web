@@ -87,7 +87,8 @@ const baselineIds = Object.keys(baseline.words);
 describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => {
   it('AC-6.1: the 43 specified r3 entries exist; CR-07 adds only grade 1/3/4/5 topic words', () => {
     expect(NEW_ENTRIES).toHaveLength(43);
-    expect(ALL_WORDS).toHaveLength(524);
+    // CR-15: +551 expansion-pack words across the g1/g3/g4/g5 xp topics.
+    expect(ALL_WORDS).toHaveLength(1190);
     for (const expected of NEW_ENTRIES) {
       const actual = byId.get(expected.id);
       expect(actual, `missing new entry ${expected.id}`).toBeDefined();

@@ -60,6 +60,19 @@ async function collectEmoji() {
     for (const match of source.matchAll(/emoji:\s*['"]([^'"]+)['"]/g)) {
       set.add(match[1]);
     }
+    // CR-15: xp() tuple files store the emoji as the 4th tuple element
+    // (['id', 'word', pluralOrNull, EMOJI, 'gloss', countable]) - no
+    // `emoji:` key exists there, so scan the tuple shape too. Only keep
+    // candidates holding an emoji-range code point (>= U+2190 covers
+    // arrows/symbols/pictographs and every flag/dingbat used in the bank);
+    // plain-ASCII 4th elements like 'grade-4' are skipped.
+    for (const match of source.matchAll(
+      /\[(?:'[^']*'|"[^"]*"),\s*(?:'[^']*'|"[^"]*"),\s*(?:'[^']*'|"[^"]*"|null),\s*'([^'\\]*(?:\\.[^'\\]*)*)',/g,
+    )) {
+      if ([...match[1]].some((ch) => ch.codePointAt(0) >= 0x2190)) {
+        set.add(match[1]);
+      }
+    }
   }
   return set;
 }
