@@ -37,7 +37,8 @@ type SentenceClass =
   | 'number'
   | 'the-noun'
   | 'sport'
-  | 'country';
+  | 'country'
+  | 'time';
 
 /** "I have a cat.", "I can see an elephant.", "This is a red." (see templatesForWord for gating). */
 const COUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
@@ -106,6 +107,12 @@ const COUNTRY_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `I like ${word}.`,
 ];
 
+/** CR-15: clock-face words ("one o'clock") read as time expressions. */
+const TIME_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `It's ${word}.`,
+  (word) => `I get up at ${word}.`,
+];
+
 const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[]>> = {
   countable: COUNTABLE_TEMPLATES,
   mass: UNCOUNTABLE_TEMPLATES,
@@ -119,6 +126,7 @@ const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[
   'the-noun': THE_NOUN_TEMPLATES,
   sport: SPORT_TEMPLATES,
   country: COUNTRY_TEMPLATES,
+  time: TIME_TEMPLATES,
 };
 
 /**
@@ -156,6 +164,20 @@ const TOPIC_CLASSES: Readonly<Record<string, SentenceClass>> = {
   'g5-future-jobs': 'occupation',
   'g5-club-activities': 'sport',
   'g5-special-days': 'sport',
+  // CR-15 expansion-pack topic classes. g3-xp-people is mostly character/
+  // person nouns that fit the occupation frames ("He is a ...", "I want to
+  // be a ..."); exceptions ride on WORD_ID_OVERRIDES below.
+  'g3-xp-feelings': 'feeling',
+  'g3-xp-people': 'occupation',
+  'g3-xp-sports': 'sport',
+  'g3-xp-places': 'the-noun',
+  'g4-xp-nature': 'the-noun',
+  'g4-xp-time': 'time',
+  'g4-xp-flags-europe': 'country',
+  'g5-xp-flags-asia': 'country',
+  'g5-xp-flags-americas': 'country',
+  'g5-xp-flags-africa': 'country',
+  'g5-xp-flags-oceania': 'country',
 };
 
 /**
@@ -184,6 +206,72 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   summer: 'mass',
   autumn: 'mass',
   winter: 'mass',
+  // CR-15 expansion-pack word overrides.
+  // g3-xp-feelings holds verbs as well as adjectives - verbs take action frames.
+  grin: 'action',
+  giggle: 'action',
+  wink: 'action',
+  yawn: 'action',
+  drool: 'action',
+  sob: 'action',
+  scream: 'action',
+  frown: 'action',
+  celebrate: 'action',
+  hug: 'action',
+  think: 'action',
+  sigh: 'action',
+  kiss: 'action',
+  liar: 'occupation',
+  // g3-xp-people exceptions to the occupation topic class.
+  person: 'countable',
+  skull: 'countable',
+  couple: 'the-noun',
+  family: 'family',
+  // g3-xp-sports object nouns among the sport names.
+  sled: 'countable',
+  parachute: 'countable',
+  boomerang: 'countable',
+  frisbee: 'countable',
+  joker: 'countable',
+  golfer: 'occupation',
+  // g4-xp-gestures verbs.
+  pray: 'action',
+  'point-left': 'action',
+  'point-up': 'action',
+  'point-down': 'action',
+  // g4-xp-signs numbers and the non-countable checkpoint.
+  hundred: 'number',
+  zero: 'number',
+  'passport-control': 'the-noun',
+  // g1-xp-nature nouns that need "the" (and a/an would misfire on Earth).
+  earth: 'the-noun',
+  sunrise: 'the-noun',
+  sunset: 'the-noun',
+  // g4-xp-tech words whose article() output would be wrong: "a hourglass"
+  // and "a X-ray" - route them to the "the" frames instead.
+  hourglass: 'the-noun',
+  'x-ray': 'the-noun',
+  // g4-xp-health body nouns read better with the body-part frames.
+  tongue: 'body-part',
+  lip: 'body-part',
+  // g5-xp-advanced activities and the flag-like symbol.
+  yoga: 'sport',
+  massage: 'sport',
+  'skull-and-crossbones': 'the-noun',
+  // "a/an" misfires: UFO and euro start with a consonant SOUND (/ju:/),
+  // not the vowel letter article() checks. The "the" frames are safe.
+  ufo: 'the-noun',
+  euro: 'the-noun',
+  // Female-coded roles would get "He is a ..." from the occupation class;
+  // the countable frames are gender-neutral and grammatical.
+  policewoman: 'countable',
+  bride: 'countable',
+  mermaid: 'countable',
+  // CR-15 wave 2.
+  salute: 'action',
+  'baggage-claim': 'the-noun',
+  infinity: 'number',
+  wifi: 'the-noun',
 };
 
 /** BR-16 precedence: word-id override -> actions topic -> topic class -> countable/mass. */
