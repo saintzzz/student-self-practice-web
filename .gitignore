@@ -14,3 +14,4 @@ vite.config.d.ts
 
 # image bank staging (approved files are published to public/images/vocab/)
 image-staging/
+.DS_Store

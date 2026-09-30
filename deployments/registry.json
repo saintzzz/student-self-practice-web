@@ -13,7 +13,7 @@
       ],
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh.vercel.app",
-      "commit": "7c7df2a",
+      "commit": "6d7d011",
       "healthEndpoint": "/",
       "healthStatus": "ready",
       "lastHealthCheck": "2026-10-01T16:30:00+07:00",
@@ -24,7 +24,9 @@
         "auth": "LIVE - login surface renders, real admin login verified, admin console mounts",
         "premium-max (CR-12)": "verified on prod",
         "extra-letter single-row fix (c63472c)": "verified - 5 tiles, 1 row",
-        "console errors": 0
+        "console errors": 0,
+        "guest-trial-lock (CR-13)": "verified - round 2 locked, login CTA works",
+        "demo accounts (CR-14)": "demo_admin + demo_hs (PIN demo2026), demo_hs scoped grade-1..5 via Lop Demo VieSchool"
       },
       "customDomain": {
         "registrar": "Porkbun",
@@ -33,12 +35,12 @@
         "records": "CNAME ea/www/apex -> cname.vercel-dns.com (proxied=false)",
         "vercelDomains": [
           "ea.vieschool.com -> this project (200)",
-          "vieschool.com -> 307 redirect to ea.vieschool.com (temporary, until landing site exists)",
-          "www.vieschool.com -> 307 redirect to ea.vieschool.com"
+          "vieschool.com -> landing via CF Worker (Vercel-side 307 dormant)",
+          "www.vieschool.com -> landing via CF Worker (dormant)"
         ],
         "note": "apex/www served by CF Worker vieschool-landing-proxy (routes vieschool.com/* + www.vieschool.com/* -> https://vieschool-landing.vercel.app); A 192.0.2.1 proxied placeholder - worker intercepts all traffic before origin. Vercel-side redirect to ea is dormant behind the worker."
       },
-      "note": "Git-linked project under the personal account duylinhcn3-8443. Supabase env vars added 2026-10-01 via REST API; auth live. Backend live: schema practice, RLS verified, edge function v1. 2026-10-01: umbrella brand VieSchool - this app is 'English Arena' on ea.vieschool.com; suite also covers congcuso.vieschool.com (tvc360-congcuso) and sochunhiem.vieschool.com (so-chu-nhiem-so).",
+      "note": "Git-linked project under the personal account duylinhcn3-8443. Supabase env vars added 2026-10-01 via REST API; auth live. Backend live: schema practice, RLS verified, edge function v1. 2026-10-01: umbrella brand VieSchool - this app is 'English Arena' on ea.vieschool.com; suite also covers congcuso.vieschool.com (tvc360-congcuso) and sochunhiem.vieschool.com (so-chu-nhiem-so). CR-14: branding sync done across suite.",
       "scope": "personal account duylinhcn3-8443 (NOT linhld7s-projects team - corrected 2026-10-01)"
     },
     {
@@ -51,14 +53,14 @@
         "https://tvc360-congcuso.vercel.app"
       ],
       "healthStatus": "ready",
-      "note": "VieSchool Tools - cong cu so giao vien. Domain attached + verified 2026-10-01 (200)."
+      "note": "VieSchool Tools - Công cụ số Giáo viên. Domain live (200). CR-14: title \"- VieSchool\" + link vieschool.com trên login (commit 6560542). Demo roles: admin@demo.tvc / gv@demo.tvc / kd@demo.tvc (demo1234)."
     },
     {
       "name": "so-chu-nhiem-so",
       "platform": "vercel",
       "productionUrl": "https://sochunhiem.vieschool.com",
       "healthStatus": "ready",
-      "note": "VieSchool So CN - so chu nhiem dien tu. Domain attached 2026-10-01 (307 -> /login, app working)."
+      "note": "VieSchool Sổ CN - sổ chủ nhiệm điện tử. Domain live (307 -> /login). CR-14: title \"- VieSchool\" + link vieschool.com trên login (commit 9284eea). Demo roles @demo.scn/demo1234: bgh, pht, gvcn(-th), gvbm, totruong, ketoan, hocsinh(-th), phuhuynh(-th), sogd, ubnd."
     },
     {
       "name": "vieschool-landing",
@@ -69,7 +71,7 @@
         "https://www.vieschool.com (via CF Worker vieschool-landing-proxy)"
       ],
       "healthStatus": "ready",
-      "note": "Static suite landing (single index.html) deployed via REST API dpl_HQxZxMGEAZrP1SRqJpPb7qLcrAk4. Source: /Users/kazu.nx/devin_app/vieschool-landing/index.html (not in a repo yet). Apex domain move to this project pending - Vercel OAuth token lacks DELETE/PATCH/move scope."
+      "note": "Static suite landing (single index.html) deployed via REST API; latest dpl_GBxxBjw5WeWsNxncRg3GGTHcwvvC (CR-14 copy: diacritics, lớp 1-12, TT 17/2025, TT 15/2026). Source: /Users/kazu.nx/devin_app/vieschool-landing/index.html (not in a repo yet). Apex/www via CF Worker."
     }
   ]
 }
