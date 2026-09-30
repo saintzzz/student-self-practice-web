@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import type { QuestionKind } from '../types';
+import { playSfx } from '../lib/sfx';
 import { EmojiVisual } from './EmojiVisual';
 import Mascot from './Mascot';
 import Confetti from './celebrations/Confetti';
@@ -52,6 +54,11 @@ const WORD_LINE_BASE_CLASS =
  * correct-word line uses <div> only when a picture prop is present.
  */
 export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture }: FeedbackPanelProps) {
+  // CR-20: verdict sound on mount - chime for correct, soft two-tone for wrong.
+  useEffect(() => {
+    playSfx(isCorrect ? 'correct' : 'wrong');
+  }, [isCorrect]);
+
   const HeadlineTag = isCorrect ? 'div' : 'p';
   const WordLineTag = picture ? 'div' : 'p';
 

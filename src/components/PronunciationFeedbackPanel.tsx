@@ -1,3 +1,6 @@
+import { useEffect } from 'react';
+import { playSfx } from '../lib/sfx';
+
 interface PronunciationFeedbackPanelProps {
   targetWord: string;
   transcript: string;
@@ -21,6 +24,11 @@ export default function PronunciationFeedbackPanel({
   explanation,
 }: PronunciationFeedbackPanelProps) {
   const hasTranscript = transcript.trim().length > 0;
+
+  // CR-20: same verdict chime/two-tone as the shared feedback panel.
+  useEffect(() => {
+    playSfx(isCorrect ? 'correct' : 'wrong');
+  }, [isCorrect]);
 
   return (
     <div
