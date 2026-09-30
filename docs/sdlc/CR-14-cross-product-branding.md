@@ -55,3 +55,25 @@ claims + cross-subdomain session handoff - tracked as future CR.
   marketing over aspirational claims.
 - R3: Demo PIN convention `demo2026` for EA; TVC360/SCN keep `demo1234`
   convention (pre-existing, documented).
+
+## Wave 2 - shared brand signature (2026-10-01)
+
+Audit showed reskin was done but the cross-app signature was incomplete
+(VieSchool mark only on some login screens, 3 different typefaces).
+Unified signature now applied to every app:
+
+- **Shared typeface:** Be Vietnam Pro across landing + TVC360 + Sổ CN +
+  EA body text (self-hosted woff2 in EA, next/font in the two Next apps).
+  EA keeps Baloo 2 for display headings - kid voice. Fixed latent bug:
+  SCN loaded Figtree without the `vietnamese` subset, so diacritics fell
+  back to system font.
+- **Signature element:** "sản phẩm của VieSchool" link to vieschool.com
+  present on every product surface - EA map footer, TVC360 hero +
+  teacher sidebar + moderation header, SCN sidebar (desktop + mobile
+  drawer) + login. Login pages already carried it.
+- Verified on prod: getComputedStyle font = Be Vietnam Pro on all 3
+  domains; SCN gvcn@demo.scn login -> dashboard renders with signature;
+  0 console errors.
+
+Commits: EA `32bb33d`, TVC360 `25acddf`, SCN `d339b24`,
+landing redeploy `dpl_AfHyqqYyMN3LUteB9ZioWALSnuMV`.
