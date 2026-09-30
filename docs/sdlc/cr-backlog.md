@@ -407,3 +407,39 @@
   authMode 'off' via beheo-force-guest; lock only gates 'guest').
 - **Guardrails:** logged-in student/admin flows unchanged; round-1
   replay free; testids preserved; lock copy uses hyphen only.
+
+## CR-15 (2026-09-30): Vocab bank expansion 524 -> ~1300 - PAUSED, work on branch
+
+- **Request:** "claim '3000+' tu mo rong ngan hang tu bam SGK,
+  Global Success..." -> calibrated via Q&A: keep emoji-unique rule,
+  expand to ~2000 target, claim actual count.
+- **State:** WIP committed on branch `cr15-vocab-expansion`
+  (commit 97db30e). Bank currently 1081 words there (557 authored:
+  23 new topics via xp() tuple builder - animals, foods, feelings,
+  people, sports, places, transport, objects, tech, health, gestures,
+  signs, clock times, nature, ~150 country flags). Emoji collisions
+  resolved; only the 7 sanctioned shared pairs remain.
+- **Remaining to merge:**
+  1. bank.test.ts AC-6.1: update `toHaveLength(524)` to new count.
+  2. listeningSentenceFillBlank: add TOPIC_CLASSES entries -
+     g3-xp-feelings->'feeling', g3-xp-people->'occupation' (with
+     overrides family->'family', couple->'the-noun', skull->'countable'),
+     g3-xp-sports->'sport' (object words override->'countable',
+     golfer->'occupation'), 4 flag topics + g4-xp-flags-europe->'country',
+     g4-xp-nature->'the-noun'; add new 'time' class
+     ("It is X." / "I go to bed at X.") for g4-xp-time.
+  3. g3-xp-feelings: re-add silly/hug/think (lost in a canceled edit);
+     verb words (hug, kiss, think, yawn, drool, grin, giggle, wink, lie,
+     sob, scream, frown, celebrate) need WORD_ID_OVERRIDES->'action'.
+  4. g4-xp-signs: reword to "... sign" countable nouns; hundred/zero
+     override->'number'.
+  5. g4-xp-gestures: like->'thumbs up', dislike->'thumbs down'
+     (countable), drop hooray; point-left/up/down override->'action'.
+  6. g5-xp-advanced: drop 'poo'; yoga/sauna/massage/bath
+     override->'sport'.
+  7. Optional push toward 1400-1500: remaining ~60 territory flags,
+     12 half-hour clock faces, card suits, colored squares/hearts.
+  8. Full gates: unit + e2e + tsc + build; then landing claim update
+     to actual count, deck regen, registry.
+- **Claim status:** landing still says "524+ tu vung bam SGK" - correct
+  as-is; do NOT bump until this CR merges.
