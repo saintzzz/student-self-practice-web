@@ -13,6 +13,7 @@ import {
   type BatchAwardResult,
   type Sticker,
 } from '../lib/engagement/store';
+import { savePracticeResult } from '../lib/practiceResults';
 
 interface BatchSummaryProps {
   result: BatchResult;
@@ -44,10 +45,12 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
       const batch = recordBatchResult(gradeId);
       touchStreak();
       const streakStickers = checkStreakStickers();
+      // Luu ket qua len Supabase cho bao cao tien do - no-op voi guest.
+      void savePracticeResult(gradeId, result);
       awarded.current = { batch, streakStickers, totalStars: getState().totalStars };
       setAward(awarded.current);
     }
-  }, [gradeId]);
+  }, [gradeId, result]);
 
   const newStickers = award ? [...award.batch.newStickers, ...award.streakStickers] : [];
 

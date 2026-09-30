@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
 import type { PracticeAccount } from '../lib/auth/practiceAuth';
+import { fetchRecentResults, type ResultWithStudent } from '../lib/practiceResults';
 import { GRADES } from '../data/vocabulary';
 import {
   BODY,
@@ -22,7 +23,7 @@ const BTN_SECONDARY =
 const BTN_DANGER =
   'rounded-2xl bg-white px-4 py-2 text-sm font-bold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 focus:outline-none focus:ring-4 focus:ring-rose-300';
 
-type Tab = 'accounts' | 'classes' | 'enroll' | 'scope';
+type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'progress';
 
 interface PracticeClass {
   id: string;
@@ -52,6 +53,12 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   const [newClass, setNewClass] = useState({ name: '', gradeId: 'grade-2', schoolYear: '' });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<ResultWithStudent[] | null>(null);
+
+  useEffect(() => {
+    if (tab !== 'progress' || results !== null) return;
+    void fetchRecentResults().then(setResults);
+  }, [tab, results]);
 
   const say = useCallback((msg: string) => {
     setToast(msg);
@@ -176,6 +183,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
     { id: 'classes', label: 'Lớp học' },
     { id: 'enroll', label: 'Gán học sinh' },
     { id: 'scope', label: 'Nội dung' },
+    { id: 'progress', label: 'Tiến độ' },
   ];
   const students = accounts.filter((a) => a.role === 'student');
 
@@ -420,6 +428,79 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
           )}
         </div>
       )}
+
+      {tab === 'progress' && (
+        <div className={CARD}>
+          <h2 className={`mb-4 ${H2}`}>Tiến độ học sinh</h2>
+          {results === null && <p className={BODY}>Đang tải...</p>}
+          {results !== null && results.length === 0 && (
+            <p className={BODY} data-testid="progress-empty">
+              Chưa có kết quả nào - học sinh hoàn thành bài luyện tập sẽ xuất hiện ở đây.
+            </p>
+          )}
+          {results !== null && results.length > 0 && (
+            <ProgressTable results={results} students={students} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const GRADE_NAME = new Map(GRADES.map((g) => [g.id, g.name]));
+
+/** Tong hop ket qua theo hoc sinh - moi hoc sinh 1 dong, sap xep theo lan choi gan nhat. */
+function ProgressTable({ results, students }: { results: ResultWithStudent[]; students: PracticeAccount[] }) {
+  const byAccount = new Map<string, ResultWithStudent[]>();
+  for (const r of results) {
+    const arr = byAccount.get(r.account_id) ?? [];
+    arr.push(r);
+    byAccount.set(r.account_id, arr);
+  }
+  const nameOf = (id: string) =>
+    students.find((s) => s.id === id)?.display_name ??
+    results.find((r) => r.account_id === id)?.accounts?.display_name ??
+    '-';
+  const rows = [...byAccount.entries()]
+    .map(([id, rs]) => {
+      const correct = rs.reduce((s, r) => s + r.correct_count, 0);
+      const total = rs.reduce((s, r) => s + r.total_questions, 0);
+      const grades = [...new Set(rs.map((r) => r.grade_id))].map((g) => GRADE_NAME.get(g) ?? g);
+      return { id, batches: rs.length, correct, total, pct: total ? Math.round((correct / total) * 100) : 0, last: rs[0]?.created_at, grades };
+    })
+    .sort((a, b) => (b.last ?? '').localeCompare(a.last ?? ''));
+  return (
+    <div className="overflow-x-auto" data-testid="progress-table">
+      <table className="w-full text-left text-sm">
+        <thead>
+          <tr className="border-b-2 border-sky-100 text-sky-700">
+            <th className="py-2 pr-3">Học sinh</th>
+            <th className="py-2 pr-3">Số bài</th>
+            <th className="py-2 pr-3">Đúng</th>
+            <th className="py-2 pr-3">Tỉ lệ</th>
+            <th className="py-2 pr-3">Vùng đất</th>
+            <th className="py-2">Lần cuối</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-sky-50">
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td className="py-2 pr-3 font-bold text-sky-900">{nameOf(r.id)}</td>
+              <td className="py-2 pr-3">{r.batches}</td>
+              <td className="py-2 pr-3">{r.correct}/{r.total}</td>
+              <td className="py-2 pr-3">
+                <span className={`inline-block min-w-12 rounded-full px-2 py-0.5 text-center font-bold ${r.pct >= 80 ? 'bg-emerald-100 text-emerald-700' : r.pct >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                  {r.pct}%
+                </span>
+              </td>
+              <td className="py-2 pr-3 text-xs">{r.grades.join(', ')}</td>
+              <td className="py-2 text-xs text-slate-500">
+                {r.last ? new Date(r.last).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
