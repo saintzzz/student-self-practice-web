@@ -40,6 +40,9 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
         <div className="mb-4 flex justify-center">
           <Mascot mood="greeting" />
         </div>
+        <p className="mb-1 text-center font-display text-sm font-extrabold uppercase tracking-[0.2em] text-indigo-500">
+          English Arena
+        </p>
         <h1 className={`mb-2 text-center ${H1}`}>Chào bé!</h1>
         <p className={`mb-6 text-center ${PROMPT}`}>Đăng nhập để vào lớp của mình</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -90,6 +93,9 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
       >
         Chơi không cần tài khoản
       </button>
+      <p className="mt-4 text-center text-xs font-semibold text-sky-800/50">
+        English Arena - sản phẩm của VieSchool
+      </p>
     </div>
   );
 }
