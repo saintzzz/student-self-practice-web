@@ -36,15 +36,29 @@ describe('speakWord', () => {
     expect(onStatus).toHaveBeenCalledWith('error');
   });
 
-  it('reports "error" via onStatus when the utterance itself later fires onerror', () => {
+  it('reports "error" via onStatus when the utterance fires onerror and the retry also fails', () => {
+    vi.useFakeTimers();
     vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utterance: SpeechSynthesisUtterance) => {
-      utterance.onerror?.({} as SpeechSynthesisErrorEvent);
+      utterance.onerror?.({ error: 'audio-busy' } as SpeechSynthesisErrorEvent);
+    });
+    const onStatus = vi.fn();
+
+    speakWord('cat', onStatus);
+    vi.runAllTimers();
+
+    expect(onStatus).toHaveBeenCalledWith('error');
+    vi.useRealTimers();
+  });
+
+  it('does not report an error when the utterance is canceled/interrupted by our own cancel()', () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utterance: SpeechSynthesisUtterance) => {
+      utterance.onerror?.({ error: 'interrupted' } as SpeechSynthesisErrorEvent);
     });
     const onStatus = vi.fn();
 
     speakWord('cat', onStatus);
 
-    expect(onStatus).toHaveBeenCalledWith('error');
+    expect(onStatus).not.toHaveBeenCalledWith('error');
   });
 
   it('reports "started" via onStatus when the utterance fires onstart', () => {

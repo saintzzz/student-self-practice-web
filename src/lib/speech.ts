@@ -90,7 +90,7 @@ export type SpeechPlaybackStatus = 'unsupported' | 'error' | 'started';
  * optional and best-effort; every caller must keep working with no status
  * feedback at all.
  */
-function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void): void {
+function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void, isRetry = false): void {
   if (typeof window === 'undefined' || !window.speechSynthesis) {
     onStatus?.('unsupported');
     return;
@@ -110,23 +110,39 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
     if (voice) utterance.voice = voice;
     activeUtterance = utterance;
 
-    // Watchdog: mobile browsers can accept the utterance then never fire
-    // onstart (silent failure). If nothing is speaking/queued after a short
-    // grace period, report 'error' so the UI can show the fallback hint
-    // instead of a dead play button.
+    // Watchdog + single auto-retry: Android Chrome is notorious for
+    // swallowing the FIRST utterance after page load (its TTS engine
+    // lazily spins up and the speak() call is silently dropped or the
+    // synthesis queue is left in a stuck "paused" state). Rather than
+    // immediately telling the student audio failed, we retry once after
+    // a beat - the retry almost always lands because the engine is warm
+    // by then. Only if the second attempt also never starts do we report
+    // 'error' so the UI can show the fallback hint.
     let statusSent = false;
     const sendStatus = (status: SpeechPlaybackStatus) => {
       if (statusSent) return;
       statusSent = true;
       onStatus?.(status);
     };
+    const retry = () => {
+      if (isRetry) {
+        sendStatus('error');
+        return;
+      }
+      setTimeout(() => speak(text, onStatus, true), 120);
+    };
     utterance.onstart = () => sendStatus('started');
     utterance.onend = () => {
       if (activeUtterance === utterance) activeUtterance = null;
     };
-    utterance.onerror = () => {
+    utterance.onerror = (event) => {
       if (activeUtterance === utterance) activeUtterance = null;
-      sendStatus('error');
+      // 'canceled'/'interrupted' are the expected results of our own
+      // cancel(), not failures - reporting them would flash a bogus
+      // error at the student. 'not-allowed' means a real rejection.
+      const reason = event?.error;
+      if (reason === 'canceled' || reason === 'interrupted') return;
+      retry();
     };
     setTimeout(() => {
       if (
@@ -135,9 +151,14 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
         !synth.pending
       ) {
         activeUtterance = null;
-        sendStatus('error');
+        retry();
       }
     }, 2500);
+
+    // Chrome Android can leave the synthesis queue paused after a prior
+    // cancel/long pause - resume() before speak() is a no-op when the
+    // queue is already running and unsticks it when it is not.
+    synth.resume();
 
     // iOS Safari drops a speak() issued in the same event tick as cancel(),
     // so only cancel when something is actually playing/queued/paused, and
@@ -151,7 +172,7 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
         try {
           synth.speak(utterance);
         } catch {
-          sendStatus('error');
+          retry();
         }
       }, 60);
     } else {

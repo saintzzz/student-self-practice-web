@@ -39,3 +39,21 @@ ghi âm được. Đây là lỗi."
 - Note: real-device audio still depends on the browser's speech stack
   (iOS requires voices downloaded in Settings). The watchdog ensures
   failure is now *visible* with guidance instead of silent.
+
+## Round 2 - user still hit the warning on Android Chrome
+Reported on a physical Android device in Chrome: tapping listen showed
+the warning immediately. Three additional mobile-Chrome gaps fixed:
+
+- `utterance.onerror` no longer treats `canceled`/`interrupted` as
+  failures - those are the expected result of our own `cancel()` and
+  were flashing bogus errors.
+- `synth.resume()` is now always called before `speak()` - Chrome
+  Android leaves the synthesis queue in a stuck-paused state that only
+  resume() unsticks.
+- First failure now auto-retries once (~120ms) instead of showing the
+  warning immediately - Android's TTS engine lazily spins up and often
+  drops the very first utterance; the retry lands once it is warm.
+  Only a second failure surfaces the warning (genuine gap: device has
+  no English TTS voice installed in Settings > Text-to-speech).
+- speech.test.ts: onerror test updated for the async retry path +
+  new test pinning that canceled/interrupted never reports error.
