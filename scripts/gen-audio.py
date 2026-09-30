@@ -12,7 +12,10 @@ import sys
 
 import edge_tts
 
-VOICE = "en-US-JennyNeural"  # clear US female neural voice, kid-friendly
+# CR-19 r2 voice split (user picked): Ana (child voice) reads bare words
+# and phonics utterances; Andrew (warm adult male) reads full sentences.
+VOICE_WORD = "en-US-AnaNeural"
+VOICE_SENTENCE = "en-US-AndrewNeural"
 RATE = "-8%"               # slightly slower for early readers
 OUT_DIR = "audio-out"
 CONCURRENCY = 24
@@ -21,7 +24,7 @@ sem = asyncio.Semaphore(CONCURRENCY)
 done = fail = 0
 
 
-async def render_one(name: str, text: str) -> None:
+async def render_one(name: str, kind: str, text: str) -> None:
     global done, fail
     path = os.path.join(OUT_DIR, f"{name}.mp3")
     if os.path.exists(path) and os.path.getsize(path) > 0:
@@ -30,7 +33,8 @@ async def render_one(name: str, text: str) -> None:
     async with sem:
         for attempt in range(3):
             try:
-                comm = edge_tts.Communicate(text, VOICE, rate=RATE)
+                voice = VOICE_SENTENCE if kind == "sentence" else VOICE_WORD
+                comm = edge_tts.Communicate(text, voice, rate=RATE)
                 await comm.save(path)
                 done += 1
                 if done % 250 == 0:
@@ -46,8 +50,8 @@ async def render_one(name: str, text: str) -> None:
 
 async def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
-    lines = [l.rstrip("\n").split("\t", 1) for l in open("audio-texts.tsv")]
-    tasks = [render_one(name, text) for name, text in lines if len(text) == 2 or True]
+    lines = [l.rstrip("\n").split("\t") for l in open("audio-texts.tsv")]
+    tasks = [render_one(name, kind, text) for name, kind, text in lines]
     await asyncio.gather(*tasks)
     print(f"done={done} fail={fail} total={len(lines)}")
     sys.exit(1 if fail else 0)

@@ -20,14 +20,14 @@ function article(word: string): 'a' | 'an' {
   return VOWEL_LETTERS.has(firstLetter) ? 'an' : 'a';
 }
 
-const texts = new Set<string>();
+const texts = new Map<string, 'word' | 'sentence'>();
 
 // 1. Bare words (ListeningFillBlank, ListeningImageChoice, phonics word questions)
-for (const w of ALL_WORDS) texts.add(w.word);
+for (const w of ALL_WORDS) texts.set(w.word, 'word');
 
 // 2. Sentence fill-blank: word x every template in its class
 for (const q of generateListeningSentenceFillBlankQuestions(ALL_WORDS)) {
-  texts.add(q.sentence);
+  texts.set(q.sentence, 'sentence');
 }
 
 // 3. Describe-and-choose-image: count + negation sentences (countable only)
@@ -35,13 +35,14 @@ const COUNT_SPREAD = [1, 2, 3, 4, 5];
 for (const w of ALL_WORDS) {
   if (!w.countable) continue;
   for (const count of COUNT_SPREAD) {
-    texts.add(
+    texts.set(
       count === 1
         ? `There is ${article(w.word)} ${w.word}.`
         : `There are ${count} ${w.plural ?? `${w.word}s`}.`,
+      'sentence',
     );
   }
-  texts.add(`There isn't ${article(w.word)} ${w.word} here.`);
+  texts.set(`There isn't ${article(w.word)} ${w.word} here.`, 'sentence');
 }
 
 // 4. Phonics sound utterances ("c, as in cat") - one per sound key
@@ -49,11 +50,12 @@ const SOUND_KEYS = [
   'a', 'b', 'c', 'ch', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
   'n', 'o', 'p', 'q', 'r', 's', 'sh', 't', 'th', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
-for (const s of SOUND_KEYS) texts.add(getSoundUtterance(s));
+for (const s of SOUND_KEYS) texts.set(getSoundUtterance(s), 'word');
 
-const lines = [...texts]
-  .sort()
-  .map((t) => `${createHash('sha1').update(t).digest('hex')}\t${t}`);
+// hash<TAB>type<TAB>text - Ana reads words, Andrew reads sentences (CR-19 r2)
+const lines = [...texts.entries()]
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([t, kind]) => `${createHash('sha1').update(t).digest('hex')}\t${kind}\t${t}`);
 
 writeFileSync('audio-texts.tsv', lines.join('\n') + '\n');
 console.log(`texts: ${lines.length}`);
