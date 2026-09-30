@@ -13,7 +13,9 @@ export default function LandScene({ land }: { land: LandKey }) {
           painted before the scene so content always stays above. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-white/40 to-transparent"
+        className={`pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b to-transparent ${
+          land === 'space' || land === 'brand' ? 'from-white/10' : 'from-white/40'
+        }`}
       />
       <div
         aria-hidden="true"
@@ -28,7 +30,7 @@ export default function LandScene({ land }: { land: LandKey }) {
           preserveAspectRatio="xMidYMax slice"
           className="block h-44 w-full sm:h-60"
         >
-          <AmbientSparkles dark={land === 'space'} />
+          <AmbientSparkles dark={land === 'space' || land === 'brand'} />
           {land === 'sky' && <SkyScene />}
           {land === 'playground' && <PlaygroundScene />}
           {land === 'town' && <TownScene />}

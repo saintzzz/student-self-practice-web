@@ -176,8 +176,8 @@ export default function App() {
 
   // CR-10 DS-T1: every screen lives inside a land shell - sky for map/
   // auth/admin surfaces, the grade's own land while playing in it.
-  const shell = (node: ReactNode, gradeId?: string | null) => (
-    <LandShell gradeId={gradeId ?? null}>{node}</LandShell>
+  const shell = (node: ReactNode, gradeId?: string | null, land?: 'brand') => (
+    <LandShell gradeId={gradeId ?? null} land={land}>{node}</LandShell>
   );
 
   if (authMode === 'loading') {
@@ -189,7 +189,7 @@ export default function App() {
   }
 
   if (configured && (authMode === 'login' || screen === 'login')) {
-    return shell(<AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />);
+    return shell(<AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />, null, 'brand');
   }
 
   if (screen === 'admin' && myAccount) {
@@ -199,6 +199,8 @@ export default function App() {
         onSignOut={handleSignOut}
         onPractice={() => setScreen('grade-select')}
       />,
+      null,
+      'brand',
     );
   }
 

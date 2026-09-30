@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Grade } from '../types';
 import Mascot from './Mascot';
 import EngagementBar from './EngagementBar';
-import { getLand } from '../lib/ui/theme';
+import { getLand, type LandKey } from '../lib/ui/theme';
 import { getState } from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
 import { NAV_PILL, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
@@ -155,8 +155,17 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
 }
 
 /** Compact per-land strip rendered inside each map card. */
-function LandStrip({ land }: { land: 'sky' | 'playground' | 'town' | 'jungle' | 'city' | 'space' }) {
+function LandStrip({ land }: { land: LandKey }) {
   switch (land) {
+    case 'brand':
+      return (
+        <g>
+          <rect x="0" y="200" width="1200" height="120" fill="#0b1224" opacity="0.8" />
+          {Array.from({ length: 18 }).map((_, i) => (
+            <circle key={i} cx={(i * 193) % 1200} cy={210 + ((i * 59) % 80)} r={(i % 3) + 1.2} fill="#f2c957" opacity="0.7" />
+          ))}
+        </g>
+      );
     case 'playground':
       return (
         <g>

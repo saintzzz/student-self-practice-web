@@ -22,6 +22,14 @@
 export const CARD =
   'rounded-3xl bg-gradient-to-b from-white to-sky-50/60 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_20px_40px_-16px_rgba(56,189,248,0.35),0_8px_16px_-8px_rgba(15,23,42,0.15)] ring-1 ring-slate-200/70 sm:p-8';
 
+/** CR-14: VieSchool dark card - navy glass + gold ring for brand
+    surfaces (login/admin) matching the vieschool.com landing. */
+export const CARD_DARK =
+  'rounded-3xl bg-[#121b33]/90 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_40px_-16px_rgba(0,0,0,0.6),0_8px_16px_-8px_rgba(0,0,0,0.4)] ring-1 ring-[#2a3a5e] backdrop-blur-sm sm:p-8';
+
+export const NAV_PILL_DARK =
+  'inline-flex min-h-[76px] items-center justify-center rounded-full bg-white/10 px-6 py-3 text-lg font-bold text-amber-200 shadow-md ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 hover:ring-amber-300/50 focus:outline-none focus:ring-4 focus:ring-amber-300/60 [@media(max-height:420px)]:min-h-0';
+
 /** Tinted card variant for feedback/summary accents. */
 export const CARD_TINT = {
   emerald: 'rounded-3xl bg-emerald-50 p-5 ring-1 ring-emerald-200',

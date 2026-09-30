@@ -6,7 +6,7 @@
  * same world. Pure descriptor map - no DOM here.
  */
 
-export type LandKey = 'sky' | 'playground' | 'town' | 'jungle' | 'city' | 'space';
+export type LandKey = 'sky' | 'playground' | 'town' | 'jungle' | 'city' | 'space' | 'brand';
 
 export interface Land {
   key: LandKey;
@@ -93,6 +93,19 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-violet-500',
     accentText: 'text-violet-800',
     motif: '🚀',
+  },
+  /** CR-14: VieSchool brand surface - deep navy + gold (landing palette)
+      for adult-facing surfaces (login, admin). */
+  brand: {
+    key: 'brand',
+    nameVi: 'VieSchool',
+    subtitleVi: '',
+    pageGradient: 'bg-gradient-to-b from-[#0b1224] via-[#101a36] to-[#0b1224]',
+    cardTint: 'bg-[#121b33]/90',
+    cardRing: 'ring-amber-300/50',
+    discBg: 'bg-amber-400',
+    accentText: 'text-amber-300',
+    motif: '✨',
   },
 };
 
