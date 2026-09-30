@@ -150,6 +150,12 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           Nguồn hình ảnh
         </button>
       )}
+      <a
+        href="https://vieschool.com"
+        className="mt-4 text-xs font-bold text-slate-500 underline-offset-2 transition hover:text-slate-700 hover:underline"
+      >
+        English Arena - sản phẩm của VieSchool
+      </a>
     </div>
   );
 }

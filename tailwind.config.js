@@ -11,6 +11,9 @@ export default {
        */
       fontFamily: {
         display: ['"Baloo 2"', 'system-ui', 'sans-serif'],
+        // CR-14: shared VieSchool body face - same Be Vietnam Pro as the
+        // landing page and teacher apps (self-hosted woff2 in index.css).
+        sans: ['"Be Vietnam Pro"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       /**
        * Pig mascot (🐷) animations (plan.md v10 "App-Wide Mascot"). Every
