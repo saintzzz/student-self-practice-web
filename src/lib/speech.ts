@@ -84,13 +84,77 @@ function pickEnglishVoice(): SpeechSynthesisVoice | null {
 export type SpeechPlaybackStatus = 'unsupported' | 'error' | 'started';
 
 /**
+ * CR-19: every text the app can speak is pre-rendered to an mp3 with a
+ * neural voice and hosted on Supabase Storage (public bucket `ea-audio`),
+ * named by sha1(text). Playing the file gives the SAME studio-quality
+ * voice on every device - devices with no English TTS voice at all
+ * (field-verified on a Redmi K90 where Chrome reports speaking=true but
+ * stays silent) get working audio for the first time.
+ * If the file is missing/fails to load, we fall through to the Web
+ * Speech API so the feature still works.
+ */
+let activeAudio: HTMLAudioElement | null = null;
+
+function audioUrlFor(text: string): Promise<string | null> {
+  try {
+    const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+    // MODE==='test' keeps vitest on the TTS-only path - Audio/file
+    // playback is covered by its own test with an explicit mock.
+    const base = env?.MODE === 'test' ? undefined : env?.VITE_SUPABASE_URL;
+    if (!base || typeof crypto === 'undefined' || !crypto.subtle) {
+      return Promise.resolve(null);
+    }
+    return crypto.subtle
+      .digest('SHA-1', new TextEncoder().encode(text))
+      .then((buf) => {
+        const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+        return `${base}/storage/v1/object/public/ea-audio/${hex}.mp3`;
+      })
+      .catch(() => null);
+  } catch {
+    return Promise.resolve(null);
+  }
+}
+
+/**
+ * Attempts file playback first. Resolves true if the file started
+ * playing ('started' reported), false if the caller should fall back to
+ * speechSynthesis. Reports nothing itself unless the file actually
+ * plays, so a missing file does not flash an error before the fallback
+ * even gets a chance.
+ */
+function tryPlayAudioFile(text: string, onStatus?: (status: SpeechPlaybackStatus) => void): Promise<boolean> {
+  return audioUrlFor(text).then((url) => {
+    if (!url) return false;
+    return new Promise<boolean>((resolve) => {
+      const audio = new Audio(url);
+      audio.preload = 'auto';
+      const giveUp = () => {
+        if (activeAudio === audio) activeAudio = null;
+        resolve(false);
+      };
+      audio.addEventListener('playing', () => {
+        activeAudio = audio;
+        onStatus?.('started');
+        resolve(true);
+      });
+      audio.addEventListener('ended', () => {
+        if (activeAudio === audio) activeAudio = null;
+      });
+      audio.addEventListener('error', giveUp);
+      audio.play().catch(giveUp);
+    });
+  });
+}
+
+/**
  * Shared core for speech synthesis calls. Never throws even if the browser
  * has no speech synthesis support or zero installed voices - a failure to
  * speak must never block the student from typing an answer. `onStatus` is
  * optional and best-effort; every caller must keep working with no status
  * feedback at all.
  */
-function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void, isRetry = false): void {
+function synthesize(text: string, onStatus?: (status: SpeechPlaybackStatus) => void, isRetry = false): void {
   if (typeof window === 'undefined' || !window.speechSynthesis) {
     onStatus?.('unsupported');
     return;
@@ -129,7 +193,7 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void, 
         sendStatus('error');
         return;
       }
-      setTimeout(() => speak(text, onStatus, true), 120);
+      setTimeout(() => synthesize(text, onStatus, true), 120);
     };
     utterance.onstart = () => sendStatus('started');
     utterance.onend = () => {
@@ -184,6 +248,24 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void, 
     // report the failure for a caller that wants to show something.
     onStatus?.('error');
   }
+}
+
+/**
+ * Speaks `text`: pre-recorded mp3 first (uniform neural voice on every
+ * device), Web Speech API as the fallback path. Inside the user's tap
+ * gesture the audio element starts loading immediately - the crypto
+ * hash lookup adds only a microtask hop, well inside the transient
+ * activation window Chrome grants media playback.
+ */
+function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void): void {
+  // Stop any file playback from a previous tap before starting anew.
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio = null;
+  }
+  void tryPlayAudioFile(text, onStatus).then((played) => {
+    if (!played) synthesize(text, onStatus);
+  });
 }
 
 /**

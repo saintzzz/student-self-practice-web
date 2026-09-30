@@ -87,23 +87,28 @@ describe('ListeningFillBlankQuestion', () => {
    * failed playback attempt from "everything is fine, just tap play".
    */
   it('shows audio-playback-warning when the utterance reports an error, and clears it on a successful replay', async () => {
+    // CR-18 r2: the first failure auto-retries once before surfacing an
+    // error, so pin BOTH attempts failing before the warning appears.
     const speakSpy = vi
       .spyOn(window.speechSynthesis, 'speak')
-      .mockImplementationOnce((utterance: SpeechSynthesisUtterance) => {
-        utterance.onerror?.({} as SpeechSynthesisErrorEvent);
-      })
-      .mockImplementationOnce((utterance: SpeechSynthesisUtterance) => {
-        utterance.onstart?.({} as unknown as SpeechSynthesisEvent);
+      .mockImplementation((utterance: SpeechSynthesisUtterance) => {
+        utterance.onerror?.({ error: 'audio-busy' } as SpeechSynthesisErrorEvent);
       });
     const user = userEvent.setup();
     render(<ListeningFillBlankQuestion question={QUESTION} hasAnswered={false} onSubmit={vi.fn()} />);
 
     const playButton = screen.getByTestId('play-audio-button');
     await user.click(playButton);
-    expect(screen.getByTestId('audio-playback-warning')).toBeVisible();
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('audio-playback-warning')).toBeVisible();
+    });
 
+    speakSpy.mockImplementation((utterance: SpeechSynthesisUtterance) => {
+      utterance.onstart?.({} as unknown as SpeechSynthesisEvent);
+    });
     await user.click(playButton);
-    expect(screen.queryByTestId('audio-playback-warning')).not.toBeInTheDocument();
-    expect(speakSpy).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => {
+      expect(screen.queryByTestId('audio-playback-warning')).not.toBeInTheDocument();
+    });
   });
 });
