@@ -103,7 +103,7 @@ card(s, Inches(8.9), Inches(1.9), Inches(4.0), Inches(4.6), 'Sổ Chủ Nhiệm 
 # ---------- S4 English Arena spotlight ----------
 s = slide(); kicker(s, 'SẢN PHẨM CHỦ LỰC'); title(s, 'English Arena - học mà chơi, chơi mà học')
 feats = [
-    ('524+ từ vựng bám SGK', 'Phủ trọn Global Success lớp 1-5, mỗi từ có emoji,\ngiải thích tiếng Việt, ví dụ gần gũi.'),
+    ('1100+ từ vựng bám SGK', 'Phủ trọn Global Success lớp 1-5, mỗi từ có emoji,\ngiải thích tiếng Việt, ví dụ gần gũi.'),
     ('4 vòng chơi', 'Nghe - chọn đáp án - ghép cặp - phát âm.\nĐa dạng kỹ năng, không đơn điệu.'),
     ('Gamification thật', 'Sao thưởng, huy hiệu, chuỗi ngày học, sticker.\nBé tự giác luyện tập.'),
     ('Không cần cài đặt', 'Web app - mở link là chơi. Chơi thử ngay\nkhông cần tài khoản (1 vòng/lớp).'),

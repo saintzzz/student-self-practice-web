@@ -408,38 +408,32 @@
 - **Guardrails:** logged-in student/admin flows unchanged; round-1
   replay free; testids preserved; lock copy uses hyphen only.
 
-## CR-15 (2026-09-30): Vocab bank expansion 524 -> ~1300 - PAUSED, work on branch
+## CR-15 (2026-09-30): Vocab bank expansion 524 -> 1190 - DONE, merged
 
 - **Request:** "claim '3000+' tu mo rong ngan hang tu bam SGK,
   Global Success..." -> calibrated via Q&A: keep emoji-unique rule,
-  expand to ~2000 target, claim actual count.
-- **State:** WIP committed on branch `cr15-vocab-expansion`
-  (commit 97db30e). Bank currently 1081 words there (557 authored:
-  23 new topics via xp() tuple builder - animals, foods, feelings,
-  people, sports, places, transport, objects, tech, health, gestures,
-  signs, clock times, nature, ~150 country flags). Emoji collisions
-  resolved; only the 7 sanctioned shared pairs remain.
-- **Remaining to merge:**
-  1. bank.test.ts AC-6.1: update `toHaveLength(524)` to new count.
-  2. listeningSentenceFillBlank: add TOPIC_CLASSES entries -
-     g3-xp-feelings->'feeling', g3-xp-people->'occupation' (with
-     overrides family->'family', couple->'the-noun', skull->'countable'),
-     g3-xp-sports->'sport' (object words override->'countable',
-     golfer->'occupation'), 4 flag topics + g4-xp-flags-europe->'country',
-     g4-xp-nature->'the-noun'; add new 'time' class
-     ("It is X." / "I go to bed at X.") for g4-xp-time.
-  3. g3-xp-feelings: re-add silly/hug/think (lost in a canceled edit);
-     verb words (hug, kiss, think, yawn, drool, grin, giggle, wink, lie,
-     sob, scream, frown, celebrate) need WORD_ID_OVERRIDES->'action'.
-  4. g4-xp-signs: reword to "... sign" countable nouns; hundred/zero
-     override->'number'.
-  5. g4-xp-gestures: like->'thumbs up', dislike->'thumbs down'
-     (countable), drop hooray; point-left/up/down override->'action'.
-  6. g5-xp-advanced: drop 'poo'; yoga/sauna/massage/bath
-     override->'sport'.
-  7. Optional push toward 1400-1500: remaining ~60 territory flags,
-     12 half-hour clock faces, card suits, colored squares/hearts.
-  8. Full gates: unit + e2e + tsc + build; then landing claim update
-     to actual count, deck regen, registry.
-- **Claim status:** landing still says "524+ tu vung bam SGK" - correct
-  as-is; do NOT bump until this CR merges.
+  expand to ~2000 target, claim actual count. Second calibration:
+  reachable ceiling without padding was ~1190 - real ceiling driven by
+  (a) emoji-unique rule AC-6.3 and (b) "reliable, make sense" quality bar
+  (user: words must be meaningful, not added to hit a number).
+- **Delivered:** bank 524 -> **1190 words** (666 authored across waves
+  1+2: animals, foods, feelings, people, sports, places, transport,
+  objects, tech, health, gestures, signs, clock times incl. half-hours,
+  nature, ~200 country/territory flags). Grade 2 frozen.
+- **Quality fixes during audit:** corrupted emoji (newspaper, sigh)
+  repaired; 'poo' dropped (unfit); gloss corrections (knot, ballet,
+  bolt, lotion, party popper); like/dislike -> 'thumbs up/down';
+  signs reworded to countable "... sign" nouns; reunion/family id
+  collisions resolved.
+- **Generator:** new 'time' sentence class; TOPIC_CLASSES for all new
+  topics; ~40 WORD_ID_OVERRIDES (verbs->action, policewoman/bride/
+  mermaid->countable, UFO/euro/hourglass/x-ray->the-noun to avoid
+  article errors). Full-bank sentence audit: zero grammar defects.
+- **Assets:** fetch script extended for xp() tuple format (incl.
+  double-quoted "o'clock" strings); 1183/1183 SVG vendored.
+- **Gates:** 715/715 unit, tsc clean, vite build green.
+- **Commits:** 5c7dace (branch) -> 33f480c merge to main, pushed.
+- **Claim status:** landing + deck + proposal updated to "1100+"
+  (rounded down per acceptance wording). If pushing beyond 1190 later:
+  supply-chain is emoji glyphs - would need relaxing AC-6.3 or a new
+  illustration pipeline; do not pad with low-quality words.
