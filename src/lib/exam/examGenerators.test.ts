@@ -57,8 +57,10 @@ describe('missing-letter', () => {
       expect(q.word.length).toBeGreaterThanOrEqual(4);
       expect(q.missing.length).toBeGreaterThan(0);
       expect(q.word.includes(q.missing)).toBe(true);
-      expect(q.maskedWord).toContain('___');
-      expect(q.displaySentence).toContain('___');
+      // CR-25: one blank per missing letter - "n_ _se" shows 2 blanks.
+      const blanks = (q.maskedWord.match(/_/g) ?? []).length;
+      expect(blanks).toBe(q.missing.length);
+      expect(q.displaySentence).toContain(q.maskedWord);
     }
   });
 });

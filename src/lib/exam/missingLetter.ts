@@ -34,7 +34,11 @@ export function generateMissingLetterQuestions(words: readonly VocabWord[]): Mis
     const maxStart = w.length - runLen - 1;
     const start = 1 + (hashString(`${word.id}-start`) % Math.max(1, maxStart));
     const missing = w.slice(start, start + runLen);
-    const maskedWord = `${w.slice(0, start)}___${w.slice(start + runLen)}`;
+    // One spaced blank per missing letter so the child sees exactly how
+    // many letters are gone (user report: "n___se" hides that it's 2
+    // letters - show "n_ _se" instead).
+    const blank = '_ '.repeat(runLen).trim();
+    const maskedWord = `${w.slice(0, start)}${blank}${w.slice(start + runLen)}`;
 
     const sentence = sentences[hashString(`${word.id}-s`) % sentences.length]!;
     const pattern = new RegExp(`\\b${escapeRegExp(w)}\\b`, 'i');
