@@ -15,6 +15,8 @@ export interface PracticeAccount {
   username: string;
   display_name: string;
   role: PracticeRole;
+  /** CR-23: lop goi y tu bai placement (null khi chua lam). */
+  placement_grade?: string | null;
 }
 
 export function usernameToEmail(username: string): string {
@@ -61,7 +63,7 @@ export async function fetchMyAccount(): Promise<PracticeAccount | null> {
   if (!user) return null;
   const { data } = await (await getSupabase())
     .from('accounts')
-    .select('id, username, display_name, role')
+    .select('id, username, display_name, role, placement_grade')
     .eq('id', user.id)
     .maybeSingle();
   return (data as PracticeAccount | null) ?? null;

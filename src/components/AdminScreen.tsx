@@ -68,7 +68,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   const refresh = useCallback(async () => {
     const supa = await getSupabase();
     const [a, c] = await Promise.all([
-      supa.from('accounts').select('id, username, display_name, role').order('username'),
+      supa.from('accounts').select('id, username, display_name, role, placement_grade').order('username'),
       supa.from('classes').select('id, name, grade_id, school_year').order('name'),
     ]);
     setAccounts((a.data as PracticeAccount[]) ?? []);
@@ -432,6 +432,9 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
       {tab === 'progress' && (
         <div className={CARD}>
           <h2 className={`mb-4 ${H2}`}>Tiến độ học sinh</h2>
+          {results !== null && (
+            <WeeklyReport results={results} classes={classes} enrolled={enrolled} />
+          )}
           {results === null && <p className={BODY}>Đang tải...</p>}
           {results !== null && results.length === 0 && (
             <p className={BODY} data-testid="progress-empty">
@@ -479,6 +482,7 @@ function ProgressTable({ results, students }: { results: ResultWithStudent[]; st
             <th className="py-2 pr-3">Đúng</th>
             <th className="py-2 pr-3">Tỉ lệ</th>
             <th className="py-2 pr-3">Vùng đất</th>
+            <th className="py-2 pr-3">Lớp gợi ý</th>
             <th className="py-2">Lần cuối</th>
           </tr>
         </thead>
@@ -494,6 +498,11 @@ function ProgressTable({ results, students }: { results: ResultWithStudent[]; st
                 </span>
               </td>
               <td className="py-2 pr-3 text-xs">{r.grades.join(', ')}</td>
+              <td className="py-2 pr-3 text-xs">
+                {students.find((s) => s.id === r.id)?.placement_grade
+                  ? (GRADE_NAME.get(students.find((s) => s.id === r.id)!.placement_grade!) ?? '-')
+                  : '-'}
+              </td>
               <td className="py-2 text-xs text-slate-500">
                 {r.last ? new Date(r.last).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '-'}
               </td>
@@ -501,6 +510,58 @@ function ProgressTable({ results, students }: { results: ResultWithStudent[]; st
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** CR-23: bao cao tuan - tong hop 7 ngay gan nhat theo lop de GV nam tien do. */
+function WeeklyReport({
+  results,
+  classes,
+  enrolled,
+}: {
+  results: ResultWithStudent[];
+  classes: PracticeClass[];
+  enrolled: Record<string, string[]>;
+}) {
+  const since = Date.now() - 7 * 24 * 3600 * 1000;
+  const week = results.filter((r) => new Date(r.created_at).getTime() >= since);
+  const active = new Set(week.map((r) => r.account_id)).size;
+  const correct = week.reduce((s, r) => s + r.correct_count, 0);
+  const total = week.reduce((s, r) => s + r.total_questions, 0);
+  const perClass = classes.map((c) => {
+    const ids = new Set(enrolled[c.id] ?? []);
+    const rows = week.filter((r) => ids.has(r.account_id));
+    const c2 = rows.reduce((s, r) => s + r.correct_count, 0);
+    const t2 = rows.reduce((s, r) => s + r.total_questions, 0);
+    return {
+      name: c.name,
+      sessions: rows.length,
+      active: new Set(rows.map((r) => r.account_id)).size,
+      students: ids.size,
+      pct: t2 ? Math.round((c2 / t2) * 100) : null,
+    };
+  });
+  return (
+    <div className="mb-4 rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-100" data-testid="weekly-report">
+      <h3 className="mb-2 text-base font-bold text-sky-900">Báo cáo tuần (7 ngày)</h3>
+      <p className={`${BODY} mb-3`}>
+        {week.length} lượt luyện - {active} học sinh hoạt động - tỉ lệ đúng{' '}
+        {total ? Math.round((correct / total) * 100) : 0}%
+      </p>
+      {perClass.length > 0 && (
+        <ul className="flex flex-col gap-1.5">
+          {perClass.map((c) => (
+            <li key={c.name} className="flex flex-wrap gap-2 text-sm">
+              <span className="font-bold text-sky-900">{c.name}</span>
+              <span className="text-sky-700">
+                {c.sessions} lượt - {c.active}/{c.students} HS -{' '}
+                {c.pct === null ? 'chưa có dữ liệu' : `${c.pct}% đúng`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

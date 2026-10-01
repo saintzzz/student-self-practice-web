@@ -38,6 +38,31 @@ export interface ResultWithStudent extends PracticeResultRow {
   accounts: { username: string; display_name: string } | null;
 }
 
+/** Luu ket qua bai placement: cap nhat accounts.placement_grade + 1 row results. */
+export async function savePlacementResult(
+  gradeId: string,
+  correctCount: number,
+  totalQuestions: number,
+): Promise<void> {
+  try {
+    const session = await getSession();
+    if (!session) return;
+    const supa = await getSupabase();
+    await supa.rpc('set_my_placement', { g: gradeId });
+    await supa.from('results').insert({
+      account_id: session.user.id,
+      grade_id: gradeId,
+      points: 0,
+      max_points: 1,
+      correct_count: correctCount,
+      total_questions: totalQuestions,
+      rounds_completed: 1,
+    });
+  } catch {
+    // Placement save la nen - khong lam gian doan flow.
+  }
+}
+
 export async function fetchRecentResults(limit = 300): Promise<ResultWithStudent[]> {
   const { data, error } = await (await getSupabase())
     .from('results')

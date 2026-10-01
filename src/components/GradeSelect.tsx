@@ -23,6 +23,8 @@ interface GradeSelectProps {
   onLogin?: () => void;
   /** CR-13: guest trial - show the "1 vong moi lop" trial hint. */
   guestTrial?: boolean;
+  /** CR-23: mo bai kiem tra dau vao (placement). */
+  onPlacement?: () => void;
 }
 
 /**
@@ -32,7 +34,7 @@ interface GradeSelectProps {
  * shows the sky land; the card itself carries each land's identity so
  * all five lands are visible at once on the map.
  */
-export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial }: GradeSelectProps) {
+export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
   const [changePinOpen, setChangePinOpen] = useState(false);
 
@@ -92,6 +94,16 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       </div>
       <h1 className={`mb-2 ${H1}`}>Hành trình của Bé Heo</h1>
       <p className={`mb-4 ${PROMPT}`}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
+      {onPlacement && (
+        <button
+          type="button"
+          data-testid="placement-start"
+          onClick={onPlacement}
+          className="mb-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-amber-300 to-amber-400 px-5 py-2 text-sm font-extrabold text-amber-950 shadow-md ring-1 ring-amber-500/50 transition hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-4 focus:ring-amber-300"
+        >
+          Làm bài kiểm tra đầu vào
+        </button>
+      )}
       {guestTrial && (
         <p
           data-testid="guest-trial-hint"

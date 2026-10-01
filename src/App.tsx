@@ -3,6 +3,7 @@ import GradeSelect from './components/GradeSelect';
 import StartBatchScreen from './components/StartBatchScreen';
 import BatchScreen from './components/BatchScreen';
 import CreditsScreen from './components/CreditsScreen';
+import PlacementScreen from './components/PlacementScreen';
 import AuthScreen from './components/AuthScreen';
 import AdminScreen from './components/AdminScreen';
 import LandShell from './components/LandShell';
@@ -31,7 +32,7 @@ import {
   submitPronunciationAnswer,
 } from './lib/practiceSession';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement';
 /** 'off' = Supabase not configured (pre-CR-08 guest-only behavior). */
 type AuthMode = 'off' | 'loading' | 'login' | 'guest' | 'student' | 'admin';
 
@@ -221,10 +222,21 @@ export default function App() {
         grades={GRADES}
         onSelectGrade={handleSelectGrade}
         onOpenCredits={handleOpenCredits}
+        onPlacement={() => setScreen('placement')}
         focusCreditsLink={focusCreditsLink}
         allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
         guestTrial={authMode === 'guest'}
         {...authChipProps}
+      />,
+    );
+  }
+
+  if (screen === 'placement') {
+    return shell(
+      <PlacementScreen
+        isLoggedIn={authMode === 'student'}
+        onStartGrade={(gradeId) => handleSelectGrade(gradeId)}
+        onBack={handleBackToGrades}
       />,
     );
   }
