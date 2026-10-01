@@ -1,10 +1,12 @@
 import type { Grade } from '../types';
+import type { ExamProgramId } from '../types/exam';
 import Mascot from './Mascot';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
   grade: Grade;
   onStartBatch: () => void;
+  onStartExam: (programId: ExamProgramId) => void;
   onBack: () => void;
 }
 
@@ -14,7 +16,14 @@ interface StartBatchScreenProps {
  * from the whole vocabulary pool, not one topic"). Greets with the app-wide
  * pig mascot (plan.md v10, AC38).
  */
-export default function StartBatchScreen({ grade, onStartBatch, onBack }: StartBatchScreenProps) {
+/** CR-24: IOE-style Thi thử - 3 chương trình riêng biệt. */
+const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: string; name: string; desc: string }[] = [
+  { id: 'english', icon: '🇬🇧', name: 'Tiếng Anh', desc: 'Nghe, đọc, ngữ pháp, sắp câu' },
+  { id: 'math', icon: '🔢', name: 'Toán tiếng Anh', desc: 'Tính nhẩm, đọc số, hình học' },
+  { id: 'science', icon: '🔬', name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
+];
+
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onBack }: StartBatchScreenProps) {
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
@@ -36,6 +45,29 @@ export default function StartBatchScreen({ grade, onStartBatch, onBack }: StartB
         >
           Bắt đầu luyện tập →
         </button>
+      </div>
+
+      {/* CR-24: Thi thử - formal exam, separate from self-practice. */}
+      <div className={`mt-4 ${CARD} text-center`}>
+        <h2 className="font-display text-xl font-extrabold text-amber-300">🏆 Thi thử - 200 câu, 30 phút</h2>
+        <p className="mt-1 text-sm font-semibold text-slate-300">
+          Đề thi thật: bấm số câu để di chuyển, không hiện đáp án khi đang làm.
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          {EXAM_PROGRAMS.map((program) => (
+            <button
+              key={program.id}
+              type="button"
+              data-testid={`exam-program-${program.id}`}
+              onClick={() => onStartExam(program.id)}
+              className="rounded-2xl bg-[#16232e] p-4 text-left ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:ring-amber-400/60 active:scale-95"
+            >
+              <div className="text-2xl">{program.icon}</div>
+              <div className="mt-1 font-extrabold text-white">{program.name}</div>
+              <div className="text-xs font-semibold text-slate-400">{program.desc}</div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

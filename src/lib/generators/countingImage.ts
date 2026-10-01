@@ -1,4 +1,5 @@
 import type { CountDirection, CountingImageOption, CountingImageQuestion, VocabWord } from '../../types';
+import { isLiteralImageWord } from '../content/imageSemantics';
 import { seededShuffleIndices } from '../prng';
 import { buildDistractorOptions } from './countingImageDistractors';
 
@@ -59,7 +60,9 @@ function buildInstance(
  * entirely - counting a color or a feeling does not make sense.
  */
 export function generateCountingImageQuestions(topicWords: VocabWord[]): CountingImageQuestion[] {
-  const countableWords = topicWords.filter((w) => w.countable);
+  // CR-24: literal-emoji words only (see imageSemantics.ts) - counting a
+  // figurative symbol makes the answer unguessable from the picture.
+  const countableWords = topicWords.filter((w) => w.countable && isLiteralImageWord(w));
   const questions: CountingImageQuestion[] = [];
 
   for (const word of countableWords) {

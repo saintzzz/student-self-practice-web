@@ -371,6 +371,15 @@ function templatesForWord(word: VocabWord): readonly SentenceTemplate[] {
   return CLASS_TEMPLATES[sentenceClassFor(word)];
 }
 
+/**
+ * CR-24: all sentences a word generates - shared with the word-order and
+ * missing-letter exam generators so every question family reuses the same
+ * curated, semantics-checked sentence bank instead of inventing its own.
+ */
+export function sentencesForWord(word: VocabWord): string[] {
+  return templatesForWord(word).map((buildSentence) => buildSentence(word.word));
+}
+
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

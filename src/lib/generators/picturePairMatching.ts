@@ -1,4 +1,5 @@
 import type { PairMatchingPair, PairMatchingTile, PicturePairMatchingQuestion, VocabWord } from '../../types';
+import { isLiteralImageWord } from '../content/imageSemantics';
 import { seededShuffleIndices } from '../prng';
 import { stratifiedSample } from '../rounds/stratifiedSample';
 
@@ -90,8 +91,11 @@ function buildBoard(anchorWord: VocabWord, words: readonly VocabWord[]): Picture
  * never happens against the real vocabulary bank).
  */
 export function generatePicturePairMatchingBoards(words: readonly VocabWord[]): PicturePairMatchingQuestion[] {
-  if (words.length < PAIRS_PER_BOARD) {
+  // CR-24: only literal-emoji words pair - matching "vlog" to 📹 teaches a
+  // wrong association (the tile is a camera, not a vlog).
+  const literal = words.filter(isLiteralImageWord);
+  if (literal.length < PAIRS_PER_BOARD) {
     return [];
   }
-  return words.map((anchorWord) => buildBoard(anchorWord, words));
+  return literal.map((anchorWord) => buildBoard(anchorWord, literal));
 }

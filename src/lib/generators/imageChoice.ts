@@ -1,4 +1,5 @@
 import type { ImageChoiceQuestion, VocabWord } from '../../types';
+import { isLiteralImageWord } from '../content/imageSemantics';
 import { pickDistinct, seededShuffleIndices } from '../prng';
 
 /**
@@ -52,7 +53,9 @@ function buildVariant(
 export function generateImageChoiceQuestions(topicWords: VocabWord[]): ImageChoiceQuestion[] {
   const questions: ImageChoiceQuestion[] = [];
 
-  for (const word of topicWords) {
+  // CR-24: skip figurative-emoji words (📹 for "vlog" etc.) - a child
+  // cannot name the target concept from the picture.
+  for (const word of topicWords.filter(isLiteralImageWord)) {
     const variantCount = Math.min(VARIANTS_PER_WORD, VARIANT_SEEDS.length);
     for (let i = 0; i < variantCount; i++) {
       questions.push(buildVariant(word, topicWords, VARIANT_SEEDS[i]!));

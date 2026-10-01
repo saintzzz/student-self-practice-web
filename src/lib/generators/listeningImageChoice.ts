@@ -1,4 +1,5 @@
 import type { ListeningImageChoiceQuestion, VocabWord } from '../../types';
+import { isLiteralImageWord } from '../content/imageSemantics';
 import { pickDistinct, seededShuffleIndices } from '../prng';
 
 /**
@@ -68,10 +69,14 @@ export function generateListeningImageChoiceQuestions(
 ): ListeningImageChoiceQuestion[] {
   const questions: ListeningImageChoiceQuestion[] = [];
 
-  for (const word of topicWords) {
+  // CR-24: figurative-emoji words are dropped as BOTH prompts and
+  // distractors - a 🏮 option meaning "mid-autumn" would collide with a
+  // "lantern" prompt and make the question ambiguous.
+  const literalWords = topicWords.filter(isLiteralImageWord);
+  for (const word of literalWords) {
     const variantCount = Math.min(VARIANTS_PER_WORD, VARIANT_SEEDS.length);
     for (let i = 0; i < variantCount; i++) {
-      questions.push(buildVariant(word, topicWords, VARIANT_SEEDS[i]!));
+      questions.push(buildVariant(word, literalWords, VARIANT_SEEDS[i]!));
     }
   }
 

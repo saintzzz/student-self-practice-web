@@ -6,6 +6,7 @@ import CreditsScreen from './components/CreditsScreen';
 import PlacementScreen from './components/PlacementScreen';
 import AuthScreen from './components/AuthScreen';
 import AdminScreen from './components/AdminScreen';
+import ExamScreen from './components/ExamScreen';
 import LandShell from './components/LandShell';
 import { isSupabaseConfigured } from './lib/supabase/client';
 import {
@@ -16,6 +17,7 @@ import {
   type PracticeAccount,
 } from './lib/auth/practiceAuth';
 import { GRADES } from './data/vocabulary';
+import type { ExamProgramId } from './types/exam';
 import {
   advanceRoundQuestion,
   createBatch,
@@ -32,7 +34,7 @@ import {
   submitPronunciationAnswer,
 } from './lib/practiceSession';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam';
 /** 'off' = Supabase not configured (pre-CR-08 guest-only behavior). */
 type AuthMode = 'off' | 'loading' | 'login' | 'guest' | 'student' | 'admin';
 
@@ -43,6 +45,7 @@ export default function App() {
   const [allowedGrades, setAllowedGrades] = useState<string[] | null>(null);
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
+  const [examProgramId, setExamProgramId] = useState<ExamProgramId>('english');
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
 
@@ -132,6 +135,12 @@ export default function App() {
   function handleStartBatch(): void {
     setBatch(createBatch(undefined, selectedGradeId ?? 'grade-2'));
     setScreen('batch');
+  }
+
+  /** CR-24: Thi thử - the grade stays selected, program picks the exam bank. */
+  function handleStartExam(programId: ExamProgramId): void {
+    setExamProgramId(programId);
+    setScreen('exam');
   }
 
   function handleSubmitOption(index: number): void {
@@ -245,8 +254,28 @@ export default function App() {
 
   if (screen === 'start-batch' && selectedGrade) {
     return shell(
-      <StartBatchScreen grade={selectedGrade} onStartBatch={handleStartBatch} onBack={handleBackToGrades} />,
+      <StartBatchScreen
+        grade={selectedGrade}
+        onStartBatch={handleStartBatch}
+        onStartExam={handleStartExam}
+        onBack={handleBackToGrades}
+      />,
       selectedGradeId,
+    );
+  }
+
+  // CR-24: exam runs full-screen on its own dark chrome (IOE-style) - not
+  // inside the brand LandShell, matching the real exam's "leave the app,
+  // enter the exam hall" feel.
+  if (screen === 'exam' && selectedGrade) {
+    return (
+      <ExamScreen
+        programId={examProgramId}
+        gradeId={selectedGrade.id}
+        gradeLabel={selectedGrade.name}
+        studentName={myAccount?.display_name}
+        onExit={() => setScreen('start-batch')}
+      />
     );
   }
 

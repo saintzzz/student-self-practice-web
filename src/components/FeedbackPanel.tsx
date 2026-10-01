@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { QuestionKind } from '../types';
 import { playSfx } from '../lib/sfx';
+import { WORD_IPA } from '../data/ipaMap';
 import { EmojiVisual } from './EmojiVisual';
 import Mascot from './Mascot';
 import Confetti from './celebrations/Confetti';
@@ -59,6 +60,10 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
     playSfx(isCorrect ? 'correct' : 'wrong');
   }, [isCorrect]);
 
+  // CR-24: IPA transcription next to the correct word (user request:
+  // "thêm phần phiên âm đọc") - e.g. "full moon" shows /fʊl mun/.
+  const ipa = WORD_IPA[correctWord.trim().toLowerCase()];
+
   const HeadlineTag = isCorrect ? 'div' : 'p';
   const WordLineTag = picture ? 'div' : 'p';
 
@@ -92,6 +97,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
         className={picture ? `flex items-center gap-1 ${WORD_LINE_BASE_CLASS}` : WORD_LINE_BASE_CLASS}
       >
         Từ đúng là: <span className="font-extrabold">{correctWord}</span>
+        {ipa && <span className="ml-1 font-mono font-semibold text-sky-300">/{ipa}/</span>}
         {picture && (
           <EmojiVisual emoji={picture.emoji} imageUrl={picture.imageUrl} animated className="ml-[0.3em]" />
         )}
