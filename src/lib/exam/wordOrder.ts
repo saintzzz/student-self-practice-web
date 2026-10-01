@@ -5,6 +5,9 @@ import { sentencesForWord } from '../generators/listeningSentenceFillBlank';
 
 const MIN_TOKENS = 4;
 const MAX_TOKENS = 8;
+/** CR-26 - authored sentences may run longer (real IOE reorders hit
+ * 9-10 words); template sentences stay capped at MAX_TOKENS. */
+const AUTHORED_MAX_TOKENS = 10;
 
 /** Splits into tap tiles, keeping punctuation glued to its word. */
 export function tokenizeSentence(sentence: string): string[] {
@@ -62,4 +65,32 @@ export function generateWordOrderQuestions(words: readonly VocabWord[]): WordOrd
 
 export function isWordOrderCorrect(sentence: string, pickedTokens: readonly string[]): boolean {
   return pickedTokens.join(' ') === sentence;
+}
+
+/**
+ * CR-26 - authored reorder sentences for grade 3+ (reorderBank). Real
+ * IOE reorders are longer and use grammar the word templates never
+ * reach, so these take the authored slot in the word-order quota.
+ */
+export function generateAuthoredWordOrderQuestions(
+  gradeId: string,
+  sentences: readonly string[],
+): WordOrderQuestion[] {
+  const questions: WordOrderQuestion[] = [];
+  sentences.forEach((sentence, index) => {
+    const tokens = tokenizeSentence(sentence);
+    if (tokens.length < MIN_TOKENS || tokens.length > AUTHORED_MAX_TOKENS) {
+      return;
+    }
+    const tiles = scramble(tokens, `${gradeId}-authored-${index}`);
+    questions.push({
+      id: `q-wo-a-${gradeId}-${index}`,
+      topicId: 'reorder',
+      kind: 'word-order',
+      sentence,
+      tiles,
+      explanation: `Sắp xếp đúng: "${sentence}"`,
+    });
+  });
+  return questions;
 }

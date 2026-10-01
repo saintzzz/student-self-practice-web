@@ -157,8 +157,38 @@ export const READING_G45: readonly ReadingPassage[] = [
     statements: [
       { text: 'Autumn weather is cool.', answer: true },
       { text: 'It is cold in summer.', answer: false },
+      { text: 'The north of Viet Nam has four seasons.', answer: true },
     ],
-    explanationVi: 'Mùa thu mát; mùa hè nóng, mùa đông lạnh.',
+    explanationVi: 'Mùa thu mát; mùa hè nóng, mùa đông lạnh; miền Bắc có 4 mùa.',
+  },
+  // CR-26 - timetable passage matching the real IOE G4 format
+  // ("On Mondays I have English and maths..." -> inference T/F).
+  {
+    passage: 'Hello. My name is Minh. I go to school from Monday to Friday. On Mondays, I have English and maths. On Tuesdays, I have science and PE. On Wednesdays, I have music and art. On Thursdays, I have IT. On Fridays, I have Vietnamese and history.',
+    statements: [
+      { text: 'Minh has PE on Wednesdays.', answer: false },
+      { text: 'Minh has English on Mondays.', answer: true },
+      { text: 'Minh goes to school on Saturdays.', answer: false },
+    ],
+    explanationVi: 'Thứ hai có English+maths; PE vào thứ ba; không đi học thứ bảy.',
+  },
+  {
+    passage: 'My name is Linh. My school is new and beautiful. It has twenty classrooms, a big library and a playground. My favourite place is the library because I love reading stories there. The playground is behind the school.',
+    statements: [
+      { text: 'The school has twelve classrooms.', answer: false },
+      { text: 'Linh loves reading in the library.', answer: true },
+      { text: 'The playground is in front of the school.', answer: false },
+    ],
+    explanationVi: 'Trường có 20 phòng học; sân chơi ở phía sau; Linh thích đọc sách.',
+  },
+  {
+    passage: 'Dear grandma, I am writing from Ha Long Bay. The weather is warm and sunny. Yesterday we took a boat trip and I saw many beautiful islands. Tomorrow we are going to eat seafood at a small restaurant. I miss you. Love, An.',
+    statements: [
+      { text: 'An is writing a letter to her grandma.', answer: true },
+      { text: 'The weather is cold and rainy.', answer: false },
+      { text: 'They ate seafood yesterday.', answer: false },
+    ],
+    explanationVi: 'Thư gửi bà từ Hạ Long; trời ấm nắng; hải sản là ngày mai chưa phải hôm qua.',
   },
 ];
 

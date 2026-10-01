@@ -4,10 +4,11 @@ import { generateImageChoiceQuestions } from '../generators/imageChoice';
 import { generateListeningSentenceFillBlankQuestions } from '../generators/listeningSentenceFillBlank';
 import { generateExtraLetterQuestions } from '../generators/extraLetter';
 import { seededPickN, seededShuffleIndices } from '../prng';
-import { generateWordOrderQuestions, isWordOrderCorrect } from './wordOrder';
+import { generateAuthoredWordOrderQuestions, generateWordOrderQuestions, isWordOrderCorrect } from './wordOrder';
 import { generateOddPronunciationQuestions } from './oddPronunciation';
 import { generateMissingLetterQuestions } from './missingLetter';
-import { generateGrammarMcqQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { reorderBankForGrade } from '../../data/reorderBank';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
 import { isLiteralImageWord } from '../content/imageSemantics';
@@ -136,6 +137,34 @@ export function examCorrectAnswerText(question: ExamQuestion): string {
 }
 
 /**
+ * CR-26 - per-grade-band quotas. The original mix gave grade 4 the same
+ * 40-image-recognition share as grade 1, which is why it felt too easy.
+ * Upper grades shift weight to authored MCQ (grammar + spelling +
+ * pronunciation + error correction + facts), longer authored reorders
+ * and reading; grades 1-2 keep the picture/phonics-heavy mix.
+ */
+interface EnglishQuotas {
+  image: number;
+  wordOrder: number;
+  oddPronunciation: number;
+  missingLetter: number;
+  mcq: number;
+  trueFalse: number;
+  listening: number;
+  extraLetter: number;
+}
+
+function englishQuotas(gradeId: string): EnglishQuotas {
+  if (gradeId === 'grade-4' || gradeId === 'grade-5') {
+    return { image: 22, wordOrder: 48, oddPronunciation: 25, missingLetter: 20, mcq: 50, trueFalse: 20, listening: 20, extraLetter: 12 };
+  }
+  if (gradeId === 'grade-3') {
+    return { image: 30, wordOrder: 42, oddPronunciation: 28, missingLetter: 25, mcq: 35, trueFalse: 16, listening: 24, extraLetter: 14 };
+  }
+  return { image: 40, wordOrder: 40, oddPronunciation: 30, missingLetter: 30, mcq: 20, trueFalse: 15, listening: 30, extraLetter: 15 };
+}
+
+/**
  * English-program pool: IOE-style mix. Each kind contributes a quota
  * slice stratified across topics so one giant topic cannot dominate.
  * Pool far exceeds 200 so repeated exams differ by seed.
@@ -143,16 +172,26 @@ export function examCorrectAnswerText(question: ExamQuestion): string {
 function buildEnglishPool(gradeId: string, seed: string): ExamQuestion[] {
   const words = getWordsByGrade(gradeId);
   const imageWords = words.filter(isLiteralImageWord);
+  const q = englishQuotas(gradeId);
+  // Authored reorders get their own slice (sharing one topicId would
+  // let stratification squeeze them out); template sentences fill the
+  // rest of the word-order quota.
+  const authoredReorder = generateAuthoredWordOrderQuestions(gradeId, reorderBankForGrade(gradeId));
+  const mcqPool = [
+    ...generateGrammarMcqQuestions(gradeId),
+    ...generateIoeMcqQuestions(gradeId),
+  ];
 
   const slices: ExamQuestion[][] = [
-    seededPickN(generateImageChoiceQuestions(imageWords), 40, `${seed}-ic`),
-    seededPickN(generateWordOrderQuestions(words), 40, `${seed}-wo`),
-    seededPickN(generateOddPronunciationQuestions(words), 30, `${seed}-odd`),
-    seededPickN(generateMissingLetterQuestions(words), 30, `${seed}-ml`),
-    seededPickN(generateGrammarMcqQuestions(gradeId), 20, `${seed}-g`),
-    seededPickN(generateTrueFalseQuestions(gradeId), 15, `${seed}-tf`),
-    seededPickN(generateListeningSentenceFillBlankQuestions(words), 30, `${seed}-ls`),
-    seededPickN(generateExtraLetterQuestions(words), 15, `${seed}-el`),
+    seededPickN(generateImageChoiceQuestions(imageWords), q.image, `${seed}-ic`),
+    seededPickN(authoredReorder, Math.min(authoredReorder.length, Math.floor(q.wordOrder / 2)), `${seed}-woa`),
+    seededPickN(generateWordOrderQuestions(words), q.wordOrder, `${seed}-wo`),
+    seededPickN(generateOddPronunciationQuestions(words), q.oddPronunciation, `${seed}-odd`),
+    seededPickN(generateMissingLetterQuestions(words), q.missingLetter, `${seed}-ml`),
+    seededPickN(mcqPool, q.mcq, `${seed}-g`),
+    seededPickN(generateTrueFalseQuestions(gradeId), q.trueFalse, `${seed}-tf`),
+    seededPickN(generateListeningSentenceFillBlankQuestions(words), q.listening, `${seed}-ls`),
+    seededPickN(generateExtraLetterQuestions(words), q.extraLetter, `${seed}-el`),
   ];
 
   const pool: ExamQuestion[] = slices.flat();
