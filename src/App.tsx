@@ -46,6 +46,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
   const [examProgramId, setExamProgramId] = useState<ExamProgramId>('english');
+  const [examMode, setExamMode] = useState<'practice' | 'exam'>('exam');
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
 
@@ -137,9 +138,10 @@ export default function App() {
     setScreen('batch');
   }
 
-  /** CR-24: Thi thử - the grade stays selected, program picks the exam bank. */
-  function handleStartExam(programId: ExamProgramId): void {
+  /** CR-24/25: 'practice' = 20-question drill; 'exam' = 200q/30min mock. */
+  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam'): void {
     setExamProgramId(programId);
+    setExamMode(mode);
     setScreen('exam');
   }
 
@@ -274,6 +276,7 @@ export default function App() {
         gradeId={selectedGrade.id}
         gradeLabel={selectedGrade.name}
         studentName={myAccount?.display_name}
+        mode={examMode}
         onExit={() => setScreen('start-batch')}
       />
     );

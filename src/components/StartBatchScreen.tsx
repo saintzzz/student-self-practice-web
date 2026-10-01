@@ -6,7 +6,8 @@ import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 interface StartBatchScreenProps {
   grade: Grade;
   onStartBatch: () => void;
-  onStartExam: (programId: ExamProgramId) => void;
+  /** CR-25: 'practice' = 20-question drill with instant verdicts; 'exam' = 200q/30min. */
+  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam') => void;
   onBack: () => void;
 }
 
@@ -35,7 +36,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onB
         <Mascot mood="greeting" />
         <h1 className={`mt-1 ${H1}`}>{grade.name}: Sẵn sàng luyện tập chưa?</h1>
         <p className={`mt-3 ${PROMPT}`}>
-          Một bài luyện tập gồm 4 vòng nhỏ, mỗi vòng khoảng 10 câu hỏi. Bấm nút bên dưới để bắt đầu nhé!
+          Luyện tập Tiếng Anh: 4 vòng game nhỏ, mỗi vòng khoảng 10 câu hỏi. Bấm nút bên dưới để bắt đầu nhé!
         </p>
         <button
           type="button"
@@ -47,25 +48,42 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onB
         </button>
       </div>
 
-      {/* CR-24: Thi thử - formal exam, separate from self-practice. */}
+      {/* CR-24/25: per-program Luyện đề (drill) + Thi thử (formal exam). */}
       <div className={`mt-4 ${CARD} text-center`}>
-        <h2 className="font-display text-xl font-extrabold text-amber-300">🏆 Thi thử - 200 câu, 30 phút</h2>
+        <h2 className="font-display text-xl font-extrabold text-amber-300">🏆 Luyện đề & Thi thử</h2>
         <p className="mt-1 text-sm font-semibold text-slate-300">
-          Đề thi thật: bấm số câu để di chuyển, không hiện đáp án khi đang làm.
+          Luyện đề: 20 câu, chữa ngay. Thi thử: 200 câu trong 30 phút, giống thi thật.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {EXAM_PROGRAMS.map((program) => (
-            <button
+            <div
               key={program.id}
-              type="button"
-              data-testid={`exam-program-${program.id}`}
-              onClick={() => onStartExam(program.id)}
-              className="rounded-2xl bg-[#16232e] p-4 text-left ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:ring-amber-400/60 active:scale-95"
+              className="rounded-2xl bg-[#16232e] p-4 text-left ring-1 ring-white/10"
             >
-              <div className="text-2xl">{program.icon}</div>
-              <div className="mt-1 font-extrabold text-white">{program.name}</div>
-              <div className="text-xs font-semibold text-slate-400">{program.desc}</div>
-            </button>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{program.icon}</span>
+                <div className="font-extrabold text-white">{program.name}</div>
+              </div>
+              <div className="mt-1 text-xs font-semibold text-slate-400">{program.desc}</div>
+              <div className="mt-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  data-testid={`drill-${program.id}`}
+                  onClick={() => onStartExam(program.id, 'practice')}
+                  className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-emerald-500 active:scale-95"
+                >
+                  ✏️ Luyện đề - 20 câu
+                </button>
+                <button
+                  type="button"
+                  data-testid={`exam-program-${program.id}`}
+                  onClick={() => onStartExam(program.id, 'exam')}
+                  className="w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95"
+                >
+                  🏆 Thi thử - 200 câu
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       </div>

@@ -5,13 +5,17 @@ import {
   computeExamResult,
   createExam,
   examCorrectAnswerText,
+  isExamAnswerCorrect,
   jumpTo,
   remainingSeconds,
   submitExam,
+  EXAM_QUESTION_COUNT,
+  PRACTICE_QUESTION_COUNT,
   type ExamAnswer,
   type ExamState,
 } from '../lib/exam/examSession';
 import { speakSentence } from '../lib/speech';
+import { playSfx } from '../lib/sfx';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
 
@@ -35,28 +39,33 @@ interface ExamScreenProps {
   gradeId: string;
   gradeLabel: string;
   studentName?: string;
+  /** CR-25: 'exam' = IOE mock (200q/30min); 'practice' = drill (20q, instant verdicts). */
+  mode: 'exam' | 'practice';
   onExit: () => void;
 }
 
-export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, onExit }: ExamScreenProps) {
+export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, onExit }: ExamScreenProps) {
+  const isPractice = mode === 'practice';
   const [exam, setExam] = useState<ExamState | null>(null);
   const [stripOffset, setStripOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  /** practice-mode verdict shown after each answer (null = awaiting answer). */
+  const [verdict, setVerdict] = useState<{ isCorrect: boolean } | null>(null);
 
-  // 1s heartbeat for the countdown + auto-submit on expiry.
+  // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
   useEffect(() => {
-    if (!exam || exam.finishedAtMs !== null) return;
+    if (isPractice || !exam || exam.finishedAtMs !== null) return;
     const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [exam]);
+  }, [exam, isPractice]);
 
   useEffect(() => {
-    if (exam && exam.finishedAtMs === null && remainingSeconds(exam, now) <= 0) {
+    if (!isPractice && exam && exam.finishedAtMs === null && remainingSeconds(exam, now) <= 0) {
       setExam((current) => (current ? submitExam(current, Date.now()) : current));
     }
-  }, [exam, now]);
+  }, [exam, now, isPractice]);
 
   const result = useMemo(
     () => (exam && exam.finishedAtMs !== null ? computeExamResult(exam) : null),
@@ -65,12 +74,25 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
 
   function begin(): void {
     const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    setExam(createExam(programId, gradeId, seed, Date.now()));
+    const count = isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
+    setExam(createExam(programId, gradeId, seed, Date.now(), count));
     setNow(Date.now());
     setStripOffset(0);
+    setVerdict(null);
   }
 
   function answer(answer: ExamAnswer): void {
+    if (isPractice) {
+      if (verdict) return; // already answered - wait for "Câu tiếp".
+      if (!exam) return;
+      const question = exam.questions[exam.currentIndex];
+      if (!question) return;
+      const isCorrect = isExamAnswerCorrect(question, answer);
+      setExam(answerCurrent(exam, answer));
+      setVerdict({ isCorrect });
+      playSfx(isCorrect ? 'correct' : 'wrong');
+      return;
+    }
     setExam((current) => {
       if (!current) return current;
       const next = answerCurrent(current, answer);
@@ -83,17 +105,30 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     });
   }
 
+  /** Practice-mode "Câu tiếp theo" - sequential, ends on the last question. */
+  function practiceNext(): void {
+    setVerdict(null);
+    setExam((current) => {
+      if (!current) return current;
+      const nextIndex = current.currentIndex + 1;
+      if (nextIndex >= current.questions.length) {
+        return submitExam(current, Date.now());
+      }
+      return jumpTo(current, nextIndex);
+    });
+  }
+
   function jump(index: number): void {
     setExam((current) => (current ? jumpTo(current, index) : current));
     setStripOffset(Math.floor(index / STRIP_PAGE) * STRIP_PAGE);
   }
 
   if (!exam) {
-    return <ExamIntro programId={programId} gradeLabel={gradeLabel} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
-    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} onExit={onExit} onRetry={begin} />;
+    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} onExit={onExit} onRetry={begin} />;
   }
 
   const question = exam.questions[exam.currentIndex]!;
@@ -102,6 +137,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const ss = String(left % 60).padStart(2, '0');
   const stripQuestions = exam.questions.slice(stripOffset, stripOffset + STRIP_PAGE);
   const answeredSet = exam.answers;
+  const isLastQuestion = exam.currentIndex >= exam.questions.length - 1;
 
   return (
     <div data-testid="exam-screen" className="flex min-h-screen flex-col bg-[#0d1b26] p-2 text-white sm:p-4">
@@ -109,96 +145,138 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       <header className="flex items-center justify-between gap-2 border-b-4 border-amber-800/80 bg-[#132433] px-3 py-2 sm:px-5">
         <div className="min-w-0">
           <div className="truncate text-sm font-extrabold tracking-wide text-sky-200 sm:text-lg">
-            Thi thử - {PROGRAM_LABEL[programId]} - {gradeLabel}
+            {isPractice ? 'Luyện đề' : 'Thi thử'} - {PROGRAM_LABEL[programId]} - {gradeLabel}
           </div>
           {studentName && <div className="truncate text-xs font-bold text-slate-400">{studentName}</div>}
         </div>
-        <div
-          data-testid="exam-timer"
-          className={`shrink-0 rounded-lg px-3 py-1 font-mono text-xl font-extrabold tabular-nums sm:text-2xl ${
-            left <= 60 ? 'animate-pulse bg-rose-600 text-white' : 'bg-[#0a1520] text-amber-300'
-          }`}
-        >
-          ⏰ {mm}:{ss}
-        </div>
+        {isPractice ? (
+          <div data-testid="exam-progress" className="shrink-0 rounded-lg bg-[#0a1520] px-3 py-1 text-lg font-extrabold text-amber-300">
+            Câu {exam.currentIndex + 1}/{exam.questions.length}
+          </div>
+        ) : (
+          <div
+            data-testid="exam-timer"
+            className={`shrink-0 rounded-lg px-3 py-1 font-mono text-xl font-extrabold tabular-nums sm:text-2xl ${
+              left <= 60 ? 'animate-pulse bg-rose-600 text-white' : 'bg-[#0a1520] text-amber-300'
+            }`}
+          >
+            ⏰ {mm}:{ss}
+          </div>
+        )}
         <button
           type="button"
           data-testid="exam-submit"
           onClick={() => setExam((c) => (c ? submitExam(c, Date.now()) : c))}
           className="shrink-0 rounded-lg bg-sky-600 px-4 py-2 text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95"
         >
-          NỘP BÀI
+          {isPractice ? 'KẾT THÚC' : 'NỘP BÀI'}
         </button>
       </header>
 
-      {/* Question number strip - IOE yellow numbered buttons, 10/page */}
-      <div className="flex items-center gap-1 overflow-x-auto bg-[#132433] px-2 py-1.5">
-        <button
-          type="button"
-          aria-label="Trước"
-          disabled={stripOffset === 0}
-          onClick={() => setStripOffset(Math.max(0, stripOffset - STRIP_PAGE))}
-          className="shrink-0 rounded-md bg-amber-500/90 px-2 py-1 text-sm font-extrabold text-amber-950 disabled:opacity-30"
-        >
-          ◀
-        </button>
-        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-          {stripQuestions.map((q, i) => {
-            const index = stripOffset + i;
-            const isCurrent = index === exam.currentIndex;
-            const answered = answeredSet[index] !== null && answeredSet[index] !== undefined;
-            return (
-              <button
-                key={q.id}
-                type="button"
-                data-testid={`exam-nav-${index}`}
-                onClick={() => jump(index)}
-                className={`h-8 w-8 shrink-0 rounded-md text-sm font-extrabold transition sm:h-9 sm:w-9 ${
-                  isCurrent
-                    ? 'bg-orange-500 text-white ring-2 ring-orange-300'
-                    : answered
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-amber-300 text-amber-950 hover:bg-amber-200'
-                }`}
-              >
-                {index + 1}
-              </button>
-            );
-          })}
+      {/* Question number strip - exam only; practice is sequential. */}
+      {!isPractice && (
+        <div className="flex items-center gap-1 overflow-x-auto bg-[#132433] px-2 py-1.5">
+          <button
+            type="button"
+            aria-label="Trước"
+            disabled={stripOffset === 0}
+            onClick={() => setStripOffset(Math.max(0, stripOffset - STRIP_PAGE))}
+            className="shrink-0 rounded-md bg-amber-500/90 px-2 py-1 text-sm font-extrabold text-amber-950 disabled:opacity-30"
+          >
+            ◀
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+            {stripQuestions.map((q, i) => {
+              const index = stripOffset + i;
+              const isCurrent = index === exam.currentIndex;
+              const answered = answeredSet[index] !== null && answeredSet[index] !== undefined;
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  data-testid={`exam-nav-${index}`}
+                  onClick={() => jump(index)}
+                  className={`h-8 w-8 shrink-0 rounded-md text-sm font-extrabold transition sm:h-9 sm:w-9 ${
+                    isCurrent
+                      ? 'bg-orange-500 text-white ring-2 ring-orange-300'
+                      : answered
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-amber-300 text-amber-950 hover:bg-amber-200'
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            aria-label="Sau"
+            disabled={stripOffset + STRIP_PAGE >= exam.questions.length}
+            onClick={() => setStripOffset(stripOffset + STRIP_PAGE)}
+            className="shrink-0 rounded-md bg-amber-500/90 px-2 py-1 text-sm font-extrabold text-amber-950 disabled:opacity-30"
+          >
+            ▶
+          </button>
         </div>
-        <button
-          type="button"
-          aria-label="Sau"
-          disabled={stripOffset + STRIP_PAGE >= exam.questions.length}
-          onClick={() => setStripOffset(stripOffset + STRIP_PAGE)}
-          className="shrink-0 rounded-md bg-amber-500/90 px-2 py-1 text-sm font-extrabold text-amber-950 disabled:opacity-30"
-        >
-          ▶
-        </button>
-      </div>
+      )}
 
       {/* Chalkboard */}
       <main className="mx-auto my-3 w-full max-w-3xl flex-1 rounded-lg border-8 border-amber-800/70 bg-[#16232e] p-4 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)] sm:p-8">
         <ExamQuestionView question={question} answer={exam.answers[exam.currentIndex] ?? null} onAnswer={answer} />
+        {isPractice && verdict && (
+          <div
+            data-testid="practice-verdict"
+            className={`mt-6 rounded-xl border-l-4 p-4 ${
+              verdict.isCorrect ? 'border-emerald-500 bg-emerald-500/15' : 'border-rose-500 bg-rose-500/15'
+            }`}
+          >
+            <div className={`text-lg font-extrabold ${verdict.isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {verdict.isCorrect ? 'Chính xác! 🎉' : 'Chưa đúng rồi.'}
+            </div>
+            <div className="mt-1 text-sm font-bold text-slate-200">
+              Đáp án đúng: <span className="font-extrabold text-emerald-300">{examCorrectAnswerText(question)}</span>
+            </div>
+            {question.explanation && <div className="mt-1 text-sm text-slate-300">{question.explanation}</div>}
+            <button
+              type="button"
+              data-testid="practice-next"
+              onClick={practiceNext}
+              className="mt-3 w-full rounded-lg bg-amber-400 px-4 py-2.5 font-extrabold text-amber-950 transition hover:bg-amber-300 active:scale-95 sm:w-auto"
+            >
+              {isLastQuestion ? 'Xem kết quả →' : 'Câu tiếp theo →'}
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
-function ExamIntro({ programId, gradeLabel, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeLabel, isPractice, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; isPractice: boolean; onBegin: () => void; onExit: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0d1b26] p-4 text-white">
       <div className="w-full max-w-lg rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center shadow-2xl sm:p-10">
-        <div className="mb-2 text-5xl">📝</div>
+        <div className="mb-2 text-5xl">{isPractice ? '✏️' : '📝'}</div>
         <h1 className="font-display text-2xl font-extrabold text-amber-300 sm:text-3xl">
-          Thi thử - {PROGRAM_LABEL[programId]}
+          {isPractice ? 'Luyện đề' : 'Thi thử'} - {PROGRAM_LABEL[programId]}
         </h1>
         <p className="mt-1 text-lg font-bold text-sky-200">{gradeLabel}</p>
         <ul className="mx-auto mt-5 max-w-sm space-y-2 text-left text-sm font-semibold text-slate-200 sm:text-base">
-          <li>• 200 câu hỏi - làm trong 30 phút</li>
-          <li>• Bấm số câu để nhảy tới câu bất kỳ, làm xong quay lại sửa được</li>
-          <li>• Không hiện đúng/sai trong lúc thi - đúng như thi thật</li>
-          <li>• Hết giờ tự động nộp bài</li>
+          {isPractice ? (
+            <>
+              <li>• {PRACTICE_QUESTION_COUNT} câu hỏi giống dạng đề thi thật</li>
+              <li>• Chữa từng câu ngay - có đáp án + giải thích + phiên âm</li>
+              <li>• Không giới hạn thời gian, cứ làm từ từ nhé</li>
+            </>
+          ) : (
+            <>
+              <li>• 200 câu hỏi - làm trong 30 phút</li>
+              <li>• Bấm số câu để nhảy tới câu bất kỳ, làm xong quay lại sửa được</li>
+              <li>• Không hiện đúng/sai trong lúc thi - đúng như thi thật</li>
+              <li>• Hết giờ tự động nộp bài</li>
+            </>
+          )}
         </ul>
         <button
           type="button"
@@ -206,7 +284,7 @@ function ExamIntro({ programId, gradeLabel, onBegin, onExit }: { programId: Exam
           onClick={onBegin}
           className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95"
         >
-          Bắt đầu làm bài
+          {isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
         </button>
         <button
           type="button"
@@ -418,11 +496,14 @@ function WordOrderView({ question, onAnswer }: { question: Extract<ExamQuestion,
   const remaining = question.tiles.map((_, i) => i).filter((i) => !picked.includes(i));
 
   function pick(i: number) {
-    const next = [...picked, i];
-    setPicked(next);
-    if (next.length === question.tiles.length) {
-      onAnswer({ type: 'order', indices: next });
-    }
+    setPicked((prev) => {
+      if (prev.includes(i)) return prev;
+      const next = [...prev, i];
+      if (next.length === question.tiles.length) {
+        onAnswer({ type: 'order', indices: next });
+      }
+      return next;
+    });
   }
 
   return (
@@ -436,7 +517,7 @@ function WordOrderView({ question, onAnswer }: { question: Extract<ExamQuestion,
             key={slot}
             type="button"
             data-testid={`exam-slot-${slot}`}
-            onClick={() => setPicked(picked.filter((_, s) => s !== slot))}
+            onClick={() => setPicked((prev) => prev.filter((_, s) => s !== slot))}
             className="rounded-lg bg-emerald-600 px-3 py-2 font-mono text-base font-bold text-white shadow"
           >
             {question.tiles[tileIndex]}
@@ -485,12 +566,14 @@ function ExamResult({
   result,
   programId,
   gradeLabel,
+  isPractice,
   onExit,
   onRetry,
 }: {
   result: ReturnType<typeof computeExamResult>;
   programId: ExamProgramId;
   gradeLabel: string;
+  isPractice: boolean;
   onExit: () => void;
   onRetry: () => void;
 }) {
@@ -504,7 +587,7 @@ function ExamResult({
       <div className="mx-auto max-w-2xl">
         <div className="rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center sm:p-10">
           <div className="text-5xl">{result.correctCount / Math.max(1, result.answeredCount) >= 0.8 ? '🏆' : '💪'}</div>
-          <h1 className="mt-2 font-display text-2xl font-extrabold text-amber-300">Kết quả thi thử</h1>
+          <h1 className="mt-2 font-display text-2xl font-extrabold text-amber-300">{isPractice ? 'Kết quả luyện đề' : 'Kết quả thi thử'}</h1>
           <p className="mt-1 text-sm font-bold text-slate-400">
             {PROGRAM_LABEL[programId]} - {gradeLabel}
           </p>
@@ -541,7 +624,7 @@ function ExamResult({
               onClick={onRetry}
               className="flex-1 rounded-xl bg-amber-400 px-4 py-3 font-extrabold text-amber-950 transition hover:bg-amber-300"
             >
-              Thi lại
+              {isPractice ? 'Luyện lại' : 'Thi lại'}
             </button>
             <button
               type="button"

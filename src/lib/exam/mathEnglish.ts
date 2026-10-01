@@ -81,6 +81,14 @@ function mcqOptions(correct: number, seed: string, max: number): { options: [str
 export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQuestion[] {
   const spec = band(gradeId);
   const questions: ExamQuestion[] = [];
+  /** Dedupe identical prompts - seeded families can collide on small bands. */
+  const seen = new Set<string>();
+  const push = (q: ExamQuestion) => {
+    const key = q.kind === 'text-answer' ? `ta:${q.displaySentence}` : `mcq:${'prompt' in q ? q.prompt : q.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    questions.push(q);
+  };
   const T = 'math';
   let n = 0;
   const id = (tag: string) => `q-${T}-${gradeId}-${tag}-${n++}`;
@@ -92,7 +100,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
   ];
   if (spec.maxMul > 0) OPS.push({ sym: 'x', words: 'times' });
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 90; i++) {
     const seed = `${seedPrefix}arith-${i}`;
     const a = seededNum(seed + 'a', 1, spec.maxMul > 0 ? spec.maxMul : spec.maxAdd);
     const b = seededNum(seed + 'b', 1, spec.maxMul > 0 ? spec.maxMul : spec.maxAdd);
@@ -106,7 +114,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
     const answer = prod - c;
     if (answer < 0) continue;
     const sentence = `${lead} minus ${numberToWords(answer)} equals ${numberToWords(c)}.`;
-    questions.push({
+    push({
       id: id('arith'),
       topicId: T,
       kind: 'text-answer',
@@ -118,7 +126,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
   }
 
   // B. "What is A plus/minus/times B?" MCQ
-  const total = 60;
+  const total = 90;
   for (let i = 0; i < total; i++) {
     const seed = `${seedPrefix}what-${i}`;
     const a = seededNum(seed + 'a', 2, spec.maxMul > 0 ? spec.maxMul * 2 : spec.maxAdd);
@@ -132,7 +140,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
     }
     const v = variants[i % variants.length]!;
     const { options, correctIndex } = mcqOptions(v.r, seed, Math.max(spec.maxNum, v.r + 9));
-    questions.push({
+    push({
       id: id('what'),
       topicId: T,
       kind: 'grammar-mcq',
@@ -144,7 +152,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
   }
 
   // C. Number reading: "Which number is 'seventy-two'?" -> digits
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 60; i++) {
     const seed = `${seedPrefix}read-${i}`;
     const value = seededNum(seed, 10, spec.maxNum);
     const pool = new Set<number>([value]);
@@ -156,7 +164,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
     const opts = four.map(String) as [string, string, string, string];
     const ordered = order.map((ix) => opts[ix]!);
     const ci = ordered.indexOf(String(value)) as 0 | 1 | 2 | 3;
-    questions.push({
+    push({
       id: id('read'),
       topicId: T,
       kind: 'grammar-mcq',
@@ -168,7 +176,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
   }
 
   // D. Biggest/smallest
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 50; i++) {
     const seed = `${seedPrefix}cmp-${i}`;
     const nums = new Set<number>();
     let t = 0;
@@ -178,7 +186,7 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
     const target = biggest ? Math.max(...arr) : Math.min(...arr);
     const order = seededShuffleIndices(4, `${seed}-o`);
     const options = order.map((ix) => String(arr[ix]!)) as [string, string, string, string];
-    questions.push({
+    push({
       id: id('cmp'),
       topicId: T,
       kind: 'grammar-mcq',
@@ -190,13 +198,13 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
   }
 
   // E. Sequences: "What comes next? 4, 8, 12, ___"
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 50; i++) {
     const seed = `${seedPrefix}seq-${i}`;
     const step = seededNum(seed + 's', 2, Math.min(10, spec.maxAdd));
     const start = seededNum(seed + 't', 1, 15);
     const seq = [start, start + step, start + 2 * step];
     const next = start + 3 * step;
-    questions.push({
+    push({
       id: id('seq'),
       topicId: T,
       kind: 'text-answer',
@@ -207,10 +215,51 @@ export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQue
     } satisfies TextAnswerQuestion);
   }
 
+  // G. Before/after: "What number comes after fifty-nine?"
+  for (let i = 0; i < 50; i++) {
+    const seed = `${seedPrefix}ba-${i}`;
+    const value = seededNum(seed, 2, spec.maxNum - 1);
+    const after = i % 2 === 0;
+    const target = after ? value + 1 : value - 1;
+    const { options, correctIndex } = mcqOptions(target, seed, spec.maxNum);
+    push({
+      id: id('ba'),
+      topicId: T,
+      kind: 'grammar-mcq',
+      prompt: `What number comes ${after ? 'after' : 'before'} ${numberToWords(value)}?`,
+      options,
+      correctIndex,
+      explanation: `Số ${after ? 'liền sau' : 'liền trước'} ${value} là ${target}.`,
+    } satisfies GrammarMcqQuestion);
+  }
+
+  // H. Double/half + "ten more/less than"
+  for (let i = 0; i < 50; i++) {
+    const seed = `${seedPrefix}dh-${i}`;
+    const base = seededNum(seed, 2, Math.min(50, spec.maxNum));
+    const variants: { q: string; r: number }[] = [
+      { q: `Double ${numberToWords(base)}`, r: base * 2 },
+      { q: `Half of ${numberToWords(base * 2)}`, r: base },
+      { q: `Ten more than ${numberToWords(base)}`, r: base + 10 },
+      { q: `Ten less than ${numberToWords(base + 10)}`, r: base },
+    ];
+    const v = variants[i % variants.length]!;
+    const { options, correctIndex } = mcqOptions(v.r, seed, Math.max(spec.maxNum, v.r + 9));
+    push({
+      id: id('dh'),
+      topicId: T,
+      kind: 'grammar-mcq',
+      prompt: `What is ${v.q.charAt(0).toLowerCase() + v.q.slice(1)}?`,
+      options,
+      correctIndex,
+      explanation: `${v.q} = ${v.r}.`,
+    } satisfies GrammarMcqQuestion);
+  }
+
   // F. Everyday facts (authored - per band)
   for (const [i, fact] of MATH_FACTS.entries()) {
     const { options, correctIndex } = mcqOptions(fact.answer, `${seedPrefix}fact-${i}`, 60);
-    questions.push({
+    push({
       id: id('fact'),
       topicId: T,
       kind: 'grammar-mcq',

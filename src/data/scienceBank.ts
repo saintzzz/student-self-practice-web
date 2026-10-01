@@ -74,3 +74,52 @@ export function scienceBankForGrade(gradeId: string): readonly ScienceFact[] {
   if (gradeId === 'grade-3') return SCIENCE_G3;
   return SCIENCE_G45;
 }
+
+/**
+ * CR-25 - classification lists for generated "Which one is a ...?" and
+ * "Which is NOT a ...?" questions. Members/nonMembers are authored so
+ * every generated item is factually unambiguous.
+ */
+export interface ScienceClass {
+  label: string;
+  labelVi: string;
+  members: readonly string[];
+  nonMembers: readonly string[];
+}
+
+const CLASSES_G12: readonly ScienceClass[] = [
+  { label: 'animal', labelVi: 'con vật', members: ['dog', 'cat', 'fish', 'bird', 'duck'], nonMembers: ['apple', 'chair', 'pen', 'car', 'tree'] },
+  { label: 'fruit', labelVi: 'trái cây', members: ['apple', 'banana', 'orange', 'mango', 'grape'], nonMembers: ['carrot', 'potato', 'rice', 'bread', 'egg'] },
+  { label: 'vegetable', labelVi: 'rau củ', members: ['carrot', 'potato', 'cabbage', 'tomato', 'onion'], nonMembers: ['apple', 'cake', 'milk', 'juice', 'candy'] },
+  { label: 'insect', labelVi: 'côn trùng', members: ['ant', 'bee', 'butterfly', 'mosquito', 'fly'], nonMembers: ['dog', 'frog', 'spider', 'fish', 'bird'] },
+  { label: 'thing in the sky', labelVi: 'vật trên trời', members: ['sun', 'moon', 'star', 'cloud', 'bird'], nonMembers: ['fish', 'rock', 'table', 'worm', 'dog'] },
+  { label: 'thing we can eat', labelVi: 'đồ ăn được', members: ['rice', 'bread', 'egg', 'apple', 'fish'], nonMembers: ['rock', 'chair', 'paper', 'soap', 'shoe'] },
+  { label: 'thing with legs', labelVi: 'đồ vật/con vật có chân', members: ['table', 'chair', 'dog', 'cat', 'bed'], nonMembers: ['ball', 'cup', 'book', 'fish', 'cloud'] },
+];
+
+const CLASSES_G3: readonly ScienceClass[] = [
+  { label: 'mammal', labelVi: 'động vật có vú', members: ['cat', 'whale', 'bat', 'elephant', 'cow'], nonMembers: ['frog', 'snake', 'eagle', 'shark', 'ant'] },
+  { label: 'insect', labelVi: 'côn trùng', members: ['ant', 'bee', 'beetle', 'butterfly', 'mosquito'], nonMembers: ['spider', 'worm', 'snail', 'frog', 'lizard'] },
+  { label: 'planet', labelVi: 'hành tinh', members: ['Earth', 'Mars', 'Venus', 'Jupiter', 'Saturn'], nonMembers: ['the Moon', 'the Sun', 'a comet', 'a star', 'Pluto'] },
+  { label: 'plant part', labelVi: 'bộ phận của cây', members: ['root', 'leaf', 'flower', 'stem', 'fruit'], nonMembers: ['rock', 'wing', 'fin', 'shell', 'tail'] },
+  { label: 'thing made of water', labelVi: 'dạng của nước', members: ['ice', 'snow', 'rain', 'steam', 'cloud'], nonMembers: ['sand', 'rock', 'fire', 'wind', 'soil'] },
+  { label: 'job that helps people', labelVi: 'nghề giúp người', members: ['doctor', 'teacher', 'farmer', 'firefighter', 'nurse'], nonMembers: ['clown', 'pirate', 'robot', 'ghost', 'giant'] },
+  { label: 'part of your body', labelVi: 'bộ phận cơ thể', members: ['arm', 'leg', 'head', 'hand', 'foot'], nonMembers: ['wing', 'fin', 'leaf', 'rock', 'cloud'] },
+];
+
+const CLASSES_G45: readonly ScienceClass[] = [
+  { label: 'mammal', labelVi: 'động vật có vú', members: ['whale', 'bat', 'dolphin', 'tiger', 'human'], nonMembers: ['crocodile', 'penguin', 'octopus', 'butterfly', 'shark'] },
+  { label: 'reptile', labelVi: 'bò sát', members: ['snake', 'lizard', 'crocodile', 'turtle', 'gecko'], nonMembers: ['frog', 'eagle', 'spider', 'whale', 'clam'] },
+  { label: 'solid', labelVi: 'chất rắn', members: ['rock', 'ice', 'wood', 'metal', 'glass'], nonMembers: ['water', 'air', 'steam', 'milk', 'oil'] },
+  { label: 'liquid', labelVi: 'chất lỏng', members: ['water', 'milk', 'juice', 'oil', 'rain'], nonMembers: ['ice', 'rock', 'steam', 'air', 'sand'] },
+  { label: 'gas', labelVi: 'chất khí', members: ['air', 'steam', 'oxygen', 'smoke', 'carbon dioxide'], nonMembers: ['water', 'ice', 'rock', 'oil', 'soil'] },
+  { label: 'planet', labelVi: 'hành tinh trong hệ Mặt Trời', members: ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Neptune'], nonMembers: ['the Moon', 'the Sun', 'a comet', 'an asteroid', 'a star'] },
+  { label: 'herbivore', labelVi: 'động vật ăn cỏ', members: ['cow', 'elephant', 'rabbit', 'deer', 'giraffe'], nonMembers: ['lion', 'eagle', 'shark', 'wolf', 'frog'] },
+  { label: 'sense organ', labelVi: 'cơ quan giác quan', members: ['eye', 'ear', 'nose', 'tongue', 'skin'], nonMembers: ['heart', 'lung', 'bone', 'muscle', 'brain'] },
+];
+
+export function scienceClassesForGrade(gradeId: string): readonly ScienceClass[] {
+  if (gradeId === 'grade-1' || gradeId === 'grade-2') return CLASSES_G12;
+  if (gradeId === 'grade-3') return CLASSES_G3;
+  return CLASSES_G45;
+}

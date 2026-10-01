@@ -13,6 +13,7 @@ import { generateScienceQuestions } from './scienceQuestions';
 import { isLiteralImageWord } from '../content/imageSemantics';
 
 export const EXAM_QUESTION_COUNT = 200;
+export const PRACTICE_QUESTION_COUNT = 20;
 export const EXAM_TIME_LIMIT_SEC = 30 * 60;
 export const EXAM_POINTS_PER_QUESTION = 10;
 
@@ -180,9 +181,10 @@ export function createExam(
   gradeId: string,
   seed: string,
   nowMs: number,
+  count = EXAM_QUESTION_COUNT,
 ): ExamState {
   const pool = buildExamPool(programId, gradeId, seed);
-  const questions = pool.slice(0, EXAM_QUESTION_COUNT);
+  const questions = pool.slice(0, count);
   return {
     programId,
     gradeId,

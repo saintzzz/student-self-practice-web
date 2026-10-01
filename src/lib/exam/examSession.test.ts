@@ -32,6 +32,19 @@ describe('createExam', () => {
     expect(a.questions.map((q) => q.id)).not.toEqual(c.questions.map((q) => q.id));
   });
 
+  it('respects the count override for practice drills (CR-25)', () => {
+    const drill = createExam('english', 'grade-4', 's', NOW, 20);
+    expect(drill.questions.length).toBe(20);
+  });
+
+  it('every program + grade now fills a full 200-question pool', () => {
+    for (const p of ['english', 'math', 'science'] as const) {
+      for (const g of ['grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5']) {
+        expect(buildExamPool(p, g, 's').length, `${p}/${g}`).toBeGreaterThanOrEqual(200);
+      }
+    }
+  });
+
   it('builds a non-empty math pool distinct from the english bank', () => {
     const math = createExam('math', 'grade-4', 's', NOW);
     expect(math.questions.length).toBeGreaterThan(50);
