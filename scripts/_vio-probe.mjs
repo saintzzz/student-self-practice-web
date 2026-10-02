@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launchPersistentContext('/tmp/vio-probe', { headless: false });
+const page = browser.pages()[0] || await browser.newPage();
+await page.goto('https://violympic.vn', { waitUntil: 'domcontentloaded' }).catch(()=>{});
+await page.waitForTimeout(8000);
+console.log('url:', page.url());
+console.log('title:', await page.title());
+const txt = await page.locator('body').innerText().catch(()=>'');
+console.log(txt.slice(0, 1500));
+await page.screenshot({ path: '/tmp/vio-home.png' });
+const links = await page.locator('a').evaluateAll(els => els.map(e => ({t: e.textContent?.trim().slice(0,40), h: e.href})).filter(x => /đăng ký|dang ky|register|toán.*anh|english/i.test(x.t+x.h)));
+console.log(JSON.stringify(links, null, 1).slice(0, 2000));
+await browser.close();
