@@ -184,6 +184,8 @@ export const IOE_BANK: Record<string, IoeGradeBank> = {
     'Fine',
     'Hello, Lucy. I\'m Mary.',
     'Hello, Andy!',
+    'Hello, Johnny!',
+    'Fine, thank you.',
   ],
   tf: [
 
@@ -877,6 +879,16 @@ export const IOE_BANK: Record<string, IoeGradeBank> = {
     'There are modern towers in my city.',
     'My parents live in Ho Chi Minh city.',
     'Happy birthday. This gift is for you.',
+    'Happy to see my friends!',
+    'My house is on the 12th floor of Green Tower.',
+    'Thu is my new classmate.',
+    'Hanoi is the capital of Vietnam.',
+    'Who does Ngoc Linh live with?',
+    'I often read books at night.',
+    'She comes from a small village in Nam Dinh Province.',
+    'Jenny lives at 19 Bridge Street.',
+    'I like drawing. How about you?',
+    'Read and do all the tasks in your book, please.',
   ],
   masked: [
 
@@ -900,6 +912,9 @@ export const IOE_BANK: Record<string, IoeGradeBank> = {
     'Where',
     'Lisa is singing a song.',
     'Her favourite food is a banana.',
+    'Whale',
+    'Chicken',
+    'What\'s the island like?',
   ],
   tf: [
 
