@@ -4,6 +4,8 @@
  * items use 7-10 word sentences ("It is a picture of our sports day").
  * These take the authored slot in the word-order quota for grade 3+.
  */
+import { ioeBankForGrade } from './ioeRealBank';
+
 export const REORDER_G3: readonly string[] = [
   'I usually get up at six o\'clock.',
   'She is reading a book in the library.',
@@ -43,7 +45,10 @@ export const REORDER_G45: readonly string[] = [
 ];
 
 export function reorderBankForGrade(gradeId: string): readonly string[] {
-  if (gradeId === 'grade-3') return REORDER_G3;
-  if (gradeId === 'grade-4' || gradeId === 'grade-5') return REORDER_G45;
-  return [];
+  const ioe = ioeBankForGrade(gradeId)?.reorder ?? [];
+  if (gradeId === 'grade-3') return [...REORDER_G3, ...ioe];
+  // Grade 5 shares the G4 harvest - same difficulty band.
+  if (gradeId === 'grade-4') return [...REORDER_G45, ...ioe];
+  if (gradeId === 'grade-5') return [...REORDER_G45, ...ioe, ...(ioeBankForGrade('grade-4')?.reorder ?? [])];
+  return ioe;
 }

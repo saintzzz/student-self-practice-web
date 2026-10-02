@@ -1,0 +1,22 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const browser = await chromium.launchPersistentContext('/tmp/ioe-pw-profile', { headless: false });
+const page = browser.pages()[0] || await browser.newPage();
+await page.route('**/*getinfo*', async route => {
+  const resp = await route.fetch();
+  const body = await resp.text();
+  fs.writeFileSync('docs/research/ioe/game-getinfo.json', body);
+  console.log('CAPTURED', body.length, 'bytes <-', route.request().url());
+  await route.fulfill({ response: resp });
+});
+await page.goto('https://edu.go.vn/user/dang-nhap', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(2500);
+await page.locator('input[placeholder*="đăng nhập" i], input[name*=user i], input[type=text]').first().fill(process.env.IOE_USER);
+await page.locator('input[type=password]').first().fill(process.env.IOE_PASS);
+await page.locator('button:has-text("Đăng nhập"), input[type=submit]').first().click();
+await page.waitForTimeout(5000);
+console.log('after login url:', page.url());
+await page.goto('https://ioe.vn/hoc-sinh/tu-luyen', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(4000);
+console.log('tuluyen url:', page.url());
+console.log((await page.locator('body').innerText()).slice(0, 500));

@@ -7,7 +7,7 @@ import { seededPickN, seededShuffleIndices } from '../prng';
 import { generateAuthoredWordOrderQuestions, generateWordOrderQuestions, isWordOrderCorrect } from './wordOrder';
 import { generateOddPronunciationQuestions } from './oddPronunciation';
 import { generateMissingLetterQuestions } from './missingLetter';
-import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealMaskedQuestions, generateIoeRealMcqQuestions, generateIoeRealTfQuestions, generateTrueFalseQuestions } from './englishGenerators';
 import { reorderBankForGrade } from '../../data/reorderBank';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
@@ -181,8 +181,22 @@ function buildEnglishPool(gradeId: string, seed: string): ExamQuestion[] {
     ...generateGrammarMcqQuestions(gradeId),
     ...generateIoeMcqQuestions(gradeId),
   ];
+  // Real harvested IOE items take priority over generated fillers.
+  // Quotas follow what the harvest actually covers per grade: G4-5 are
+  // the deep Thi thử bank; G1-2 contribute makeWord/masked items; G3
+  // real reorder sentences flow in via reorderBankForGrade.
+  const real = {
+    'grade-1': { mcq: 10, masked: 10, tf: 0 },
+    'grade-2': { mcq: 10, masked: 0, tf: 0 },
+    'grade-3': { mcq: 0, masked: 0, tf: 0 },
+    'grade-4': { mcq: 55, masked: 45, tf: 15 },
+    'grade-5': { mcq: 55, masked: 45, tf: 15 },
+  }[gradeId] ?? { mcq: 0, masked: 0, tf: 0 };
 
   const slices: ExamQuestion[][] = [
+    seededPickN(generateIoeRealMcqQuestions(gradeId), real.mcq, `${seed}-rmcq`),
+    seededPickN(generateIoeRealMaskedQuestions(gradeId), real.masked, `${seed}-rml`),
+    seededPickN(generateIoeRealTfQuestions(gradeId), real.tf, `${seed}-rtf`),
     seededPickN(generateImageChoiceQuestions(imageWords), q.image, `${seed}-ic`),
     seededPickN(authoredReorder, Math.min(authoredReorder.length, Math.floor(q.wordOrder / 2)), `${seed}-woa`),
     seededPickN(generateWordOrderQuestions(words), q.wordOrder, `${seed}-wo`),

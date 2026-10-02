@@ -1,0 +1,20 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const urlgame = JSON.parse(fs.readFileSync('/tmp/urlgame.txt', 'utf8'));
+const browser = await chromium.launchPersistentContext('/tmp/ioe-pw-profile2', { headless: false });
+let captured = 0;
+await browser.route('**/api-edu.go.vn/**', async route => {
+  const resp = await route.fetch();
+  const body = await resp.text();
+  const u = route.request().url();
+  const f = `/tmp/ioe-cap-${++captured}-${u.split('/').pop().split('?')[0]}.json`;
+  fs.writeFileSync(f, body);
+  console.log('CAP', u.replace('https://api-edu.go.vn','').slice(0,90), '->', f, body.length);
+  await route.fulfill({ response: resp });
+});
+const page = browser.pages()[0] || await browser.newPage();
+await page.goto(urlgame, { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(20000);
+console.log('final:', page.url().slice(0, 90));
+console.log('captured:', captured);
+await browser.close();

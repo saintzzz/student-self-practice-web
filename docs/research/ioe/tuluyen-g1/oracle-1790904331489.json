@@ -1,0 +1,270 @@
+{
+ "examKey": "2026081417A7AF.00010",
+ "results": [
+  {
+   "id": 1675237,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "P",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "B",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "A",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "LL",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675239,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "P",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "B",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "OO",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "K",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675238,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "B",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "I",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "Y",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "LL",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675240,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "B",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "I",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "K",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "E",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "X",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675241,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "S",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "A",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "I",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "Y",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675243,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "HE",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "J",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "LL",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "O",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675244,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "B",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "Y",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "X",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "E",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675242,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "H",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "I",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "X",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675245,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "CH",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "L",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "OO",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "K",
+     "point": null,
+     "code": 85
+    }
+   ]
+  },
+  {
+   "id": 1675246,
+   "type": 25,
+   "tries": [
+    {
+     "ans": "X",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "SC",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "H",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "OO",
+     "point": null,
+     "code": 85
+    },
+    {
+     "ans": "L",
+     "point": null,
+     "code": 85
+    }
+   ]
+  }
+ ]
+}
