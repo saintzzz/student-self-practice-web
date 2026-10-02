@@ -94,7 +94,7 @@ for i, (h, b) in enumerate(probs):
 # ---------- S3 Suite ----------
 s = slide(); kicker(s, 'SẢN PHẨM'); title(s, '3 sản phẩm - 1 nền tảng VieSchool')
 card(s, Inches(0.6), Inches(1.9), Inches(4.0), Inches(4.6), 'English Arena',
-     'ea.vieschool.com\n\nLuyện tiếng Anh cho học sinh.\n5 vùng đất phiêu lưu + mascot Bé Heo,\n4 vòng chơi, phát âm chấm điểm.\n\nHiện: Lớp 1-5 (cấp 1)\nLộ trình: mở rộng lớp 6-12')
+     'ea.vieschool.com\n\nLuyện tiếng Anh cho học sinh.\n5 vùng đất phiêu lưu + mascot Bé Heo,\n4 vòng chơi, phát âm chấm điểm.\nLuyện đề + Thi thử 200 câu/30 phút,\nđề bám format IOE theo khối.\n\nHiện: Lớp 1-5 (cấp 1)\nLộ trình: mở rộng lớp 6-12')
 card(s, Inches(4.75), Inches(1.9), Inches(4.0), Inches(4.6), 'Công cụ số GV (TVC360)',
      'congcuso.vieschool.com\n\n12 công cụ soạn học liệu cho giáo viên:\nngân hàng câu hỏi, ma trận, đề thi,\nxuất DOCX/PDF, AI hỗ trợ.\n\nBám CTGDPT 2018 (gồm sửa đổi\nTT 17/2025 - LS, ĐL, GDCD)\nDùng cho mọi cấp 1-3')
 card(s, Inches(8.9), Inches(1.9), Inches(4.0), Inches(4.6), 'Sổ Chủ Nhiệm Số',
