@@ -8,6 +8,7 @@ import LeaderboardCard from './LeaderboardCard';
 import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
+import { examConfigForGrade } from '../lib/exam/examSession';
 
 interface StartBatchScreenProps {
   grade: Grade;
@@ -40,6 +41,8 @@ const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: string; name: string; d
 ];
 
 export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, onLogin }: StartBatchScreenProps) {
+  // CR-46: same modes for every grade - only question counts scale.
+  const examConfig = examConfigForGrade(grade.id);
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
@@ -91,7 +94,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
       <div className={`mt-4 ${CARD} text-center`}>
         <h2 className="font-display text-xl font-extrabold text-amber-300">🏆 Luyện đề & Thi thử</h2>
         <p className="mt-1 text-sm font-semibold text-slate-300">
-          Luyện đề: 20 câu, chữa ngay. Thi thử: 200 câu trong 30 phút, giống thi thật.
+          Luyện đề: {examConfig.drillCount} câu, chữa ngay. Thi thử: {examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút, giống thi thật.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {EXAM_PROGRAMS.map((program) => (
@@ -111,7 +114,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   onClick={() => onStartExam(program.id, 'practice')}
                   className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-emerald-500 active:scale-95"
                 >
-                  ✏️ Luyện đề - 20 câu
+                  ✏️ Luyện đề - {examConfig.drillCount} câu
                 </button>
                 <button
                   type="button"
@@ -119,7 +122,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   onClick={() => onStartExam(program.id, 'exam')}
                   className="w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95"
                 >
-                  🏆 Thi thử - 200 câu
+                  🏆 Thi thử - {examConfig.examCount} câu
                 </button>
               </div>
             </div>

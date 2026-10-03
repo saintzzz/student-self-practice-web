@@ -6,6 +6,7 @@ import {
   buildExamPool,
   computeExamResult,
   createExam,
+  examConfigForGrade,
   examCorrectAnswerText,
   isExamAnswerCorrect,
   jumpTo,
@@ -15,13 +16,41 @@ import {
 
 const NOW = 1_700_000_000_000;
 
+describe('examConfigForGrade (CR-46)', () => {
+  it('every grade gets the full feature set - only the sitting length scales', () => {
+    expect(examConfigForGrade('grade-1')).toEqual({ drillCount: 10, examCount: 50, examTimeSec: 15 * 60 });
+    expect(examConfigForGrade('grade-2')).toEqual({ drillCount: 15, examCount: 80, examTimeSec: 20 * 60 });
+    expect(examConfigForGrade('grade-3')).toEqual({ drillCount: 20, examCount: 120, examTimeSec: 25 * 60 });
+    expect(examConfigForGrade('grade-4')).toEqual({ drillCount: 25, examCount: 160, examTimeSec: 30 * 60 });
+    // Grade 5 keeps the official 200-question / 30-minute format.
+    expect(examConfigForGrade('grade-5')).toEqual({ drillCount: 30, examCount: 200, examTimeSec: 30 * 60 });
+    expect(examConfigForGrade('bogus').examCount).toBe(200);
+  });
+
+  it('time pressure ramps toward the 9s/question IOE pace', () => {
+    for (const g of ['grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5']) {
+      const c = examConfigForGrade(g);
+      const secPerQuestion = c.examTimeSec / c.examCount;
+      expect(secPerQuestion, g).toBeGreaterThanOrEqual(9);
+      expect(secPerQuestion, g).toBeLessThanOrEqual(20);
+    }
+  });
+});
+
 describe('createExam', () => {
-  it('builds a 200-question english exam for a grade with a deep bank', () => {
-    const exam = createExam('english', 'grade-4', 's', NOW);
-    expect(exam.questions.length).toBe(200);
-    expect(exam.answers).toEqual(exam.questions.map(() => null));
-    expect(exam.timeLimitSec).toBe(EXAM_TIME_LIMIT_SEC);
-    expect(exam.finishedAtMs).toBeNull();
+  it('sizes the exam by grade config (CR-46)', () => {
+    const g1 = createExam('english', 'grade-1', 's', NOW);
+    expect(g1.questions.length).toBe(50);
+    expect(g1.timeLimitSec).toBe(15 * 60);
+
+    const g5 = createExam('english', 'grade-5', 's', NOW);
+    expect(g5.questions.length).toBe(200);
+    expect(g5.timeLimitSec).toBe(EXAM_TIME_LIMIT_SEC);
+
+    const g4 = createExam('english', 'grade-4', 's', NOW);
+    expect(g4.questions.length).toBe(160);
+    expect(g4.answers).toEqual(g4.questions.map(() => null));
+    expect(g4.finishedAtMs).toBeNull();
   });
 
   it('is deterministic for the same seed and differs across seeds', () => {

@@ -11,6 +11,16 @@ dữ liệu thật. Không commit file này ra nơi public.
 | Học sinh | `demo_hs` | `demo2026` | Lớp Demo VieSchool - đủ 5 khối (grade-1..5) |
 | Guest (không cần acc) | - | - | 1 vòng miễn phí mỗi lớp, vòng 2+ khóa |
 
+## Lớp demo cho leaderboard (CR-46)
+
+36 tài khoản học sinh demo (tên Việt Nam thật, ~7-8 em/khối) để bảng xếp
+hạng tuần trông như lớp thật khi demo bán hàng. Tất cả username dạng
+`hs_<ten><khoi>` (vd `hs_minhanh1`, `hs_thaovy4`), PIN `demo2026`, enroll
+vào "Lớp Demo VieSchool". Results đã seed cho tuần hiện tại - hết tuần
+leaderboard lại rỗng, chạy lại seed trước buổi demo nếu cần
+(`scripts/seed-demo-class.mjs` tạo account; results insert qua SQL service
+theo mẫu trong `docs/sdlc/CR-46-per-grade-exam-config.md`).
+
 ## TVC360 Công cụ số Giáo viên - congcuso.vieschool.com (email + password)
 
 | Role | Email | Password |

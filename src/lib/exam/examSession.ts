@@ -19,6 +19,34 @@ export const PRACTICE_QUESTION_COUNT = 20;
 export const EXAM_TIME_LIMIT_SEC = 30 * 60;
 export const EXAM_POINTS_PER_QUESTION = 10;
 
+/**
+ * CR-46 - same feature set for every grade; only the load scales.
+ * Grade 5 keeps the official 200-question / 30-minute format; lower
+ * grades get shorter sittings a younger child can actually finish
+ * (~18s/question for grade 1 ramping to the 9s IOE pace by grade 5).
+ * Difficulty itself comes from the per-grade banks/quotas below.
+ */
+export interface GradeExamConfig {
+  drillCount: number;
+  examCount: number;
+  examTimeSec: number;
+}
+
+export function examConfigForGrade(gradeId: string): GradeExamConfig {
+  switch (gradeId) {
+    case 'grade-1':
+      return { drillCount: 10, examCount: 50, examTimeSec: 15 * 60 };
+    case 'grade-2':
+      return { drillCount: 15, examCount: 80, examTimeSec: 20 * 60 };
+    case 'grade-3':
+      return { drillCount: 20, examCount: 120, examTimeSec: 25 * 60 };
+    case 'grade-4':
+      return { drillCount: 25, examCount: 160, examTimeSec: 30 * 60 };
+    default:
+      return { drillCount: 30, examCount: EXAM_QUESTION_COUNT, examTimeSec: EXAM_TIME_LIMIT_SEC };
+  }
+}
+
 /** What the student entered on one exam question. */
 export type ExamAnswer =
   | { type: 'option'; index: number }
@@ -229,19 +257,21 @@ export function buildExamPool(programId: ExamProgramId, gradeId: string, seed: s
 }
 
 /**
- * Creates a 200-question / 30-minute exam. If the pool is smaller than
- * 200 the exam is capped at the pool size (documented floor: early
- * grades and the science bank may not fill 200).
+ * Creates a formal exam. CR-46: count and time default to the grade
+ * config (50c/15p for grade 1 up to 200c/30p for grade 5); an explicit
+ * `count` still overrides (drill/arena callers). If the pool is smaller
+ * than the target the exam is capped at the pool size.
  */
 export function createExam(
   programId: ExamProgramId,
   gradeId: string,
   seed: string,
   nowMs: number,
-  count = EXAM_QUESTION_COUNT,
+  count?: number,
 ): ExamState {
+  const config = examConfigForGrade(gradeId);
   const pool = buildExamPool(programId, gradeId, seed);
-  const questions = pool.slice(0, count);
+  const questions = pool.slice(0, count ?? config.examCount);
   return {
     programId,
     gradeId,
@@ -249,7 +279,7 @@ export function createExam(
     answers: questions.map(() => null),
     currentIndex: 0,
     startedAtMs: nowMs,
-    timeLimitSec: EXAM_TIME_LIMIT_SEC,
+    timeLimitSec: config.examTimeSec,
     finishedAtMs: null,
   };
 }

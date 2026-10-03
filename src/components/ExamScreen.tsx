@@ -9,9 +9,8 @@ import {
   jumpTo,
   remainingSeconds,
   submitExam,
-  EXAM_QUESTION_COUNT,
+  examConfigForGrade,
   EXAM_POINTS_PER_QUESTION,
-  PRACTICE_QUESTION_COUNT,
   type ExamAnswer,
   type ExamState,
 } from '../lib/exam/examSession';
@@ -158,7 +157,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         finishedAtMs: null,
       });
     } else {
-      const count = isArena ? ARENA_QUESTION_COUNT : isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
+      // CR-46: counts come from the grade config - every grade gets the
+      // same features, only the sitting length scales.
+      const gradeConfig = examConfigForGrade(gradeId);
+      const count = isArena ? ARENA_QUESTION_COUNT : isPractice ? gradeConfig.drillCount : undefined;
       setExam(createExam(programId, gradeId, seed, Date.now(), count));
     }
     setNow(Date.now());
@@ -249,7 +251,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
@@ -384,7 +386,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeLabel, isPractice, isReview, isArena, reviewCount, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
     : isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
@@ -415,13 +417,13 @@ function ExamIntro({ programId, gradeLabel, isPractice, isReview, isArena, revie
             </>
           ) : isPractice ? (
             <>
-              <li>• {PRACTICE_QUESTION_COUNT} câu hỏi giống dạng đề thi thật</li>
+              <li>• {examConfigForGrade(gradeId).drillCount} câu hỏi giống dạng đề thi thật</li>
               <li>• Chữa từng câu ngay - có đáp án + giải thích + phiên âm</li>
               <li>• Không giới hạn thời gian, cứ làm từ từ nhé</li>
             </>
           ) : (
             <>
-              <li>• 200 câu hỏi - làm trong 30 phút</li>
+              <li>• {examConfigForGrade(gradeId).examCount} câu hỏi - làm trong {Math.floor(examConfigForGrade(gradeId).examTimeSec / 60)} phút</li>
               <li>• Bấm số câu để nhảy tới câu bất kỳ, làm xong quay lại sửa được</li>
               <li>• Không hiện đúng/sai trong lúc thi - đúng như thi thật</li>
               <li>• Hết giờ tự động nộp bài</li>
