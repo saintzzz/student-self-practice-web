@@ -96,7 +96,9 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       <div className="mb-1 flex justify-center">
         <Mascot mood="greeting" />
       </div>
-      <h1 className={`mb-2 ${H1}`}>Hành trình của Bé {studentName?.trim() || 'Heo'}</h1>
+      <h1 className={`mb-2 ${H1}`}>
+        Hành trình của Bé {studentName?.trim().replace(/^bé\s+/i, '') || 'Heo'}
+      </h1>
       <p className={`mb-4 ${PROMPT}`}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
       {onPlacement && (
         <button

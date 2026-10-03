@@ -33,6 +33,11 @@ describe('GradeSelect', () => {
     render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Heo');
   });
+
+  it('does not double the Bé prefix when the name already has it', () => {
+    render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} studentName="Bé Demo" />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Demo');
+  });
 });
 
 const FIVE = [
