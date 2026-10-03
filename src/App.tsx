@@ -292,6 +292,7 @@ export default function App() {
         focusCreditsLink={focusCreditsLink}
         allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
         guestTrial={authMode === 'guest'}
+        studentName={myAccount?.display_name}
         {...authChipProps}
       />,
     );
