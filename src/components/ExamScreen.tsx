@@ -30,7 +30,8 @@ import { saveExamResult } from '../lib/practiceResults';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
-import { createExamFromBank } from '../lib/qb/bank';
+import { createExamFromBank, gradeNumber } from '../lib/qb/bank';
+import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
@@ -97,6 +98,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const [loadingBank, setLoadingBank] = useState(false);
   /** CR-48 phase 4: bank fetch failed - bundled bank is retired for exam/drill. */
   const [loadError, setLoadError] = useState(false);
+  /** CR-49: per-answer telemetry + adaptive shadow log (V7 slice 1). */
+  const telemetryRef = useRef<ExamTelemetry | null>(null);
+  /** When the current question first rendered - latency basis. */
+  const questionShownAtRef = useRef<number>(0);
 
   // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
   useEffect(() => {
@@ -117,6 +122,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     () => (exam && exam.finishedAtMs !== null ? computeExamResult(exam) : null),
     [exam],
   );
+
+  // CR-49: latency basis per question + flush telemetry on finish/unmount.
+  useEffect(() => {
+    questionShownAtRef.current = Date.now();
+  }, [exam?.currentIndex, exam?.questions]);
+  useEffect(() => {
+    if (exam?.finishedAtMs !== null && exam) void telemetryRef.current?.flush();
+  }, [exam]);
+  useEffect(() => () => { void telemetryRef.current?.flush(); }, []);
 
   // CR-27: record the mode-complete quest once per finished exam instance
   // (ref guard keeps StrictMode double-effects from double-marking).
@@ -140,6 +154,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           points: result.points,
           totalCount: result.totalCount,
           correctCount: result.correctCount,
+        }, {
+          formId,
+          questionIds: exam.questions.map((q) => String(q.id)),
         });
       }
     }
@@ -178,6 +195,12 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       if (!isArena && isSupabaseConfigured()) {
         setLoadingBank(true);
         setLoadError(false);
+        telemetryRef.current = createExamTelemetry({
+          programId,
+          grade: gradeNumber(gradeId),
+          mode: formId ? 'form' : isPractice ? (isReview ? 'review' : 'practice') : 'mock',
+          formId,
+        });
         try {
           const bankExam = await createExamFromBank(programId, gradeId, Date.now(), {
             count,
@@ -218,6 +241,8 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       const question = exam.questions[exam.currentIndex];
       if (!question) return;
       const isCorrect = isExamAnswerCorrect(question, answer);
+      telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current);
+      telemetryRef.current?.logAdaptive(question, isCorrect);
       setExam(answerCurrent(exam, answer));
       setVerdict({ isCorrect });
       playSfx(isCorrect ? 'correct' : 'wrong');
@@ -248,6 +273,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // CR-27: same at-answer counting in exam mode (no verdict shown,
     // but the quest still credits the correct answer immediately).
     const examCorrect = isExamAnswerCorrect(currentQuestion, answer);
+    telemetryRef.current?.record(currentQuestion, answer, Date.now() - questionShownAtRef.current);
     if (examCorrect && !creditedRef.current.has(exam.currentIndex)) {
       creditedRef.current.add(exam.currentIndex);
       recordCorrectAnswers(1);

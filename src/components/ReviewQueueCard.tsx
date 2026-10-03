@@ -26,11 +26,18 @@ interface QuestionRow {
   review_status: string | null;
 }
 
+interface ItemStat {
+  question_id: string;
+  attempts: number;
+  learners: number;
+  facility: number | null;
+}
+
 const PRIORITY_ORDER = ['P0', 'P1', 'P2', 'P3'];
 const PAGE = 20;
 
 export default function ReviewQueueCard() {
-  const [rows, setRows] = useState<(QueueRow & { q?: QuestionRow })[] | null>(null);
+  const [rows, setRows] = useState<(QueueRow & { q?: QuestionRow; stats?: ItemStat })[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'flagged'>('pending');
   const [offset, setOffset] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -59,7 +66,15 @@ export default function ReviewQueueCard() {
           .in('id', ids)
       : { data: [] };
     const qmap = new Map(((qs.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
-    setRows(items.map((i) => ({ ...i, q: qmap.get(i.question_id) })));
+    // CR-49: item statistics from real attempt events (admin RLS).
+    const stats = ids.length
+      ? await supa
+          .from('qb_item_stats')
+          .select('question_id, attempts, learners, facility')
+          .in('question_id', ids)
+      : { data: [] };
+    const smap = new Map(((stats.data ?? []) as ItemStat[]).map((s) => [s.question_id, s]));
+    setRows(items.map((i) => ({ ...i, q: qmap.get(i.question_id), stats: smap.get(i.question_id) })));
   }, [statusFilter, offset]);
 
   useEffect(() => { setRows(null); void load(); }, [load]);
@@ -121,6 +136,12 @@ export default function ReviewQueueCard() {
             )}
             {r.q?.explanation_vi && <p className="mt-1 text-xs italic text-slate-500">{r.q.explanation_vi}</p>}
             <div className="mt-1 text-[11px] text-amber-700">⚑ {(r.issues ?? []).join(', ')}</div>
+            {r.stats && (
+              <div className="mt-1 text-[11px] font-bold text-slate-500">
+                📊 {r.stats.attempts} lượt làm · {r.stats.learners} HS · tỉ lệ đúng{' '}
+                {r.stats.facility !== null ? `${Math.round(r.stats.facility * 100)}%` : '-'}
+              </div>
+            )}
             {statusFilter === 'pending' && (
               <div className="mt-3 flex gap-2">
                 <button

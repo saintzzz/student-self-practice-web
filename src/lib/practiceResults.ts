@@ -41,6 +41,8 @@ export async function saveExamResult(
   gradeId: string,
   programId: ExamProgramId,
   result: { points: number; totalCount: number; correctCount: number },
+  /** CR-49: V6 form snapshot - replay/re-grade dung bo cau da thi. */
+  snapshot?: { formId?: string; questionIds?: string[] },
 ): Promise<void> {
   try {
     const session = await getSession();
@@ -54,6 +56,10 @@ export async function saveExamResult(
       total_questions: result.totalCount,
       rounds_completed: 1,
       program: programId,
+      form_id: snapshot?.formId ?? null,
+      question_snapshot: snapshot?.questionIds?.length
+        ? { questionIds: snapshot.questionIds }
+        : null,
     });
   } catch {
     // Best-effort - never break the exam flow over a stats insert.
