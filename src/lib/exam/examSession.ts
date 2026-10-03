@@ -7,7 +7,7 @@ import { seededPickN, seededShuffleIndices } from '../prng';
 import { generateAuthoredWordOrderQuestions, generateWordOrderQuestions, isWordOrderCorrect } from './wordOrder';
 import { generateOddPronunciationQuestions } from './oddPronunciation';
 import { generateMissingLetterQuestions } from './missingLetter';
-import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealMaskedQuestions, generateIoeRealMcqQuestions, generateIoeRealTfQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealListenQuestions, generateIoeRealMaskedQuestions, generateIoeRealMcqQuestions, generateIoeRealTfQuestions, generateTrueFalseQuestions } from './englishGenerators';
 import { reorderBankForGrade } from '../../data/reorderBank';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
@@ -187,17 +187,20 @@ function buildEnglishPool(gradeId: string, seed: string): ExamQuestion[] {
   // the deep Thi thử bank; G1-2 contribute makeWord/masked items; G3
   // real reorder sentences flow in via reorderBankForGrade.
   const real = {
-    'grade-1': { mcq: 10, masked: 10, tf: 0 },
-    'grade-2': { mcq: 10, masked: 0, tf: 0 },
-    'grade-3': { mcq: 0, masked: 0, tf: 0 },
-    'grade-4': { mcq: 55, masked: 45, tf: 15 },
-    'grade-5': { mcq: 55, masked: 45, tf: 15 },
-  }[gradeId] ?? { mcq: 0, masked: 0, tf: 0 };
+    'grade-1': { mcq: 10, masked: 10, tf: 0, listen: 10 },
+    'grade-2': { mcq: 10, masked: 0, tf: 0, listen: 10 },
+    'grade-3': { mcq: 0, masked: 0, tf: 0, listen: 12 },
+    'grade-4': { mcq: 55, masked: 45, tf: 15, listen: 15 },
+    'grade-5': { mcq: 55, masked: 45, tf: 15, listen: 15 },
+  }[gradeId] ?? { mcq: 0, masked: 0, tf: 0, listen: 0 };
 
   const slices: ExamQuestion[][] = [
     seededPickN(generateIoeRealMcqQuestions(gradeId), real.mcq, `${seed}-rmcq`),
     seededPickN(generateIoeRealMaskedQuestions(gradeId), real.masked, `${seed}-rml`),
     seededPickN(generateIoeRealTfQuestions(gradeId), real.tf, `${seed}-rtf`),
+    // CR-35: harvested listen transcripts take part of the listening
+    // quota; template vocab listening fills the remainder.
+    seededPickN(generateIoeRealListenQuestions(gradeId), real.listen, `${seed}-rl`),
     seededPickN(generateImageChoiceQuestions(imageWords), q.image, `${seed}-ic`),
     seededPickN(authoredReorder, Math.min(authoredReorder.length, Math.floor(q.wordOrder / 2)), `${seed}-woa`),
     seededPickN(generateWordOrderQuestions(words), q.wordOrder, `${seed}-wo`),
@@ -205,7 +208,7 @@ function buildEnglishPool(gradeId: string, seed: string): ExamQuestion[] {
     seededPickN(generateMissingLetterQuestions(words), q.missingLetter, `${seed}-ml`),
     seededPickN(mcqPool, q.mcq, `${seed}-g`),
     seededPickN(generateTrueFalseQuestions(gradeId), q.trueFalse, `${seed}-tf`),
-    seededPickN(generateListeningSentenceFillBlankQuestions(words), q.listening, `${seed}-ls`),
+    seededPickN(generateListeningSentenceFillBlankQuestions(words), Math.max(0, q.listening - real.listen), `${seed}-ls`),
     seededPickN(generateExtraLetterQuestions(words), q.extraLetter, `${seed}-el`),
   ];
 

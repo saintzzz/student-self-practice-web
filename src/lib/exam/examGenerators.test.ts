@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateAuthoredWordOrderQuestions, generateWordOrderQuestions, isWordOrderCorrect, tokenizeSentence } from './wordOrder';
 import { generateOddPronunciationQuestions } from './oddPronunciation';
 import { generateMissingLetterQuestions } from './missingLetter';
-import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealListenQuestions, generateTrueFalseQuestions } from './englishGenerators';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
 import { getWordsByGrade } from '../../data/vocabulary';
@@ -187,6 +187,47 @@ describe('CR-26 grade-calibrated difficulty', () => {
         expect(buildExamPool(program, gradeId, 's').length).toBeGreaterThanOrEqual(200);
       }
     }
+  });
+});
+
+describe('CR-35 harvested IOE listening', () => {
+  it('every grade with a listen bank produces real listening questions', () => {
+    for (const gradeId of GRADES) {
+      const qs = generateIoeRealListenQuestions(gradeId);
+      expect(qs.length, gradeId).toBeGreaterThanOrEqual(10);
+      for (const q of qs) {
+        if (q.kind === 'listening-fill-blank') {
+          expect(q.word.length).toBeGreaterThan(0);
+        } else if (q.kind === 'listening-sentence-fill-blank') {
+          expect(q.displaySentence).toContain('___');
+          expect(q.sentence).not.toContain('___');
+          expect(q.sentence).toContain(q.word);
+        } else {
+          throw new Error(`unexpected kind ${q.kind}`);
+        }
+        expect(q.explanation.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('blanks a trailing content word, never the leading "I"', () => {
+    const qs = generateIoeRealListenQuestions('grade-2')
+      .filter((q) => q.kind === 'listening-sentence-fill-blank');
+    expect(qs.length).toBeGreaterThan(0);
+    for (const q of qs) {
+      if (q.kind !== 'listening-sentence-fill-blank') continue;
+      expect(q.word).not.toBe('I');
+      // The blank stands where the word was in the original sentence.
+      const idx = q.displaySentence.indexOf('___');
+      expect(q.displaySentence.slice(0, idx) + q.word + q.displaySentence.slice(idx + 3))
+        .toBe(q.sentence);
+    }
+  });
+
+  it('the exam pool now contains harvested listening items', () => {
+    const pool = buildExamPool('english', 'grade-4', 's');
+    const ioe = pool.filter((q) => q.id.startsWith('q-ioe-l'));
+    expect(ioe.length).toBeGreaterThanOrEqual(10);
   });
 });
 
