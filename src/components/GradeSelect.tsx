@@ -27,6 +27,8 @@ interface GradeSelectProps {
   onPlacement?: () => void;
   /** CR-29: mo man hinh bao cao cho ba me. */
   onReport?: () => void;
+  /** CR-41: signed-in student's name - the journey title personalizes to them. */
+  studentName?: string;
 }
 
 /**
@@ -36,7 +38,7 @@ interface GradeSelectProps {
  * shows the sky land; the card itself carries each land's identity so
  * all five lands are visible at once on the map.
  */
-export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement, onReport }: GradeSelectProps) {
+export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement, onReport, studentName }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
   const [changePinOpen, setChangePinOpen] = useState(false);
 
@@ -94,7 +96,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       <div className="mb-1 flex justify-center">
         <Mascot mood="greeting" />
       </div>
-      <h1 className={`mb-2 ${H1}`}>Hành trình của Bé Heo</h1>
+      <h1 className={`mb-2 ${H1}`}>Hành trình của Bé {studentName?.trim() || 'Heo'}</h1>
       <p className={`mb-4 ${PROMPT}`}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
       {onPlacement && (
         <button

@@ -23,6 +23,16 @@ describe('GradeSelect', () => {
 
     expect(onSelectGrade).toHaveBeenCalledWith('grade-2');
   });
+
+  it('personalizes the journey title with the student name (CR-41)', () => {
+    render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} studentName="Sóc Xinh" />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Sóc Xinh');
+  });
+
+  it('keeps the Bé Heo fallback for guests', () => {
+    render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} />);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Heo');
+  });
 });
 
 const FIVE = [
