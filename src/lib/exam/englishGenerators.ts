@@ -194,7 +194,9 @@ export function generateIoeRealTfQuestions(gradeId: string): TrueFalseQuestion[]
   const items = gradeId === 'grade-5'
     ? [...bank.tf, ...(ioeBankForGrade('grade-4')?.tf ?? [])]
     : bank.tf;
-  return items.map((item, i) => ({
+  // Never ship a T/F card without its passage - an audio T/F item that
+  // lost its media is unanswerable (CR-38).
+  return items.filter((item) => item.passage.trim().length >= 20).map((item, i) => ({
     id: `q-ioe-tf-${i}`,
     topicId: 'reading',
     kind: 'true-false-reading' as const,

@@ -176,11 +176,20 @@ const DROP_IDS = new Set([
 
 // Hand-solved True/False (image/audio-passage items are dropped).
 const TF_ANSWERS = new Map(Object.entries({
+  // G4 thi thu
   1692590: true, 1692588: true, 1692715: true, 1690105: true,
   1690123: true,
   1692610: false, 1692600: false, 1692829: false, 1692825: false,
   1692841: false, 1692844: false, 1692709: false, 1692723: false,
   1692722: false, 1690102: false,
+  // G5 - solved by reading the harvested passage (2026-10).
+  1572625: false, 1499941: true, 1499940: false, 1499943: true,
+  1499944: false, 1499946: false, 1572628: true, 1499945: false,
+  1680580: true, 1680582: false, 1572627: false, 1680574: false,
+  1572623: true, 1572629: true, 1680581: false, 1680578: false,
+  1680575: false, 1499942: true, 1680577: true, 1499947: false,
+  1572630: false, 1572624: false, 1680579: false, 1499949: false,
+  1499948: true, 1572632: true,
 }));
 
 // Type-25 "make the correct word" answers - chunks sorted/selected by hand.
@@ -258,10 +267,13 @@ for (const [g, questions] of Object.entries(raw)) {
       const maskedDisplay = sentence.replace(/[*_]+/, (mm) => '_ '.repeat(mm.length).trim());
       bank.masked.push({ word, missing, sentence: full, displaySentence: maskedDisplay });
     } else if (q.type === 1) {
-      if (/^https?:/.test(content)) { skipped.media++; continue; }
+      // CR-38: the reading passage lives in Description.content - items
+      // whose passage is a media URL or empty are audio T/F on IOE and
+      // must stay dropped (they rendered as a broken no-passage card).
+      if (/^https?:/.test(content) || isMedia(desc) || desc.trim().length < 20) { skipped.media++; continue; }
       const answer = TF_ANSWERS.get(String(q.id));
       if (answer === undefined) { skipped.noAnswer++; continue; }
-      bank.tf.push({ passage: '', statement: content, answer });
+      bank.tf.push({ passage: desc.trim(), statement: content, answer });
     } else if (q.type === 12 || q.type === 13) {
       if (!isMedia(desc) || !content) continue;
       bank.listen.push(content.trim());

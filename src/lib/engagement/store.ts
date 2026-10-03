@@ -19,6 +19,8 @@ export interface Sticker {
   id: string;
   nameVi: string;
   emoji: string;
+  /** CR-37: album grouping. */
+  category: 'luyen' | 'skill' | 'streak' | 'arena' | 'quest' | 'pet';
 }
 
 /** CR-27: daily quest slice - keyed by local date, resets each new day. */
@@ -72,11 +74,32 @@ const STARS_PER_ROUND_CAP = 4 * 3; // 4 rounds x 3 stars
 const BATCH_CHEST_STARS = 2;
 
 export const STICKERS: readonly Sticker[] = [
-  { id: 'first-batch', nameVi: 'Bài luyện đầu tiên', emoji: '🏅' },
-  { id: 'perfect-round', nameVi: 'Vòng 3 sao', emoji: '🌟' },
-  { id: 'streak-3', nameVi: '3 ngày liên tiếp', emoji: '🔥' },
-  { id: 'explorer', nameVi: 'Khám phá 5 vùng đất', emoji: '🗺️' },
-  { id: 'star-hoard', nameVi: 'Kho báu 50 sao', emoji: '💎' },
+  // Luyện tập - milestones from batches, rounds and raw effort.
+  { id: 'first-batch', nameVi: 'Bài luyện đầu tiên', emoji: '🏅', category: 'luyen' },
+  { id: 'perfect-round', nameVi: 'Vòng 3 sao', emoji: '🌟', category: 'luyen' },
+  { id: 'explorer', nameVi: 'Khám phá 5 vùng đất', emoji: '🗺️', category: 'luyen' },
+  { id: 'star-hoard', nameVi: 'Kho báu 50 sao', emoji: '💎', category: 'luyen' },
+  { id: 'correct-100', nameVi: '100 câu đúng', emoji: '💯', category: 'luyen' },
+  { id: 'correct-500', nameVi: '500 câu đúng', emoji: '🚀', category: 'luyen' },
+  { id: 'review-10', nameVi: 'Chữa xong 10 câu sai', emoji: '📚', category: 'luyen' },
+  // Kỹ năng - >= 20 câu và đúng >= 80% trong một nhóm kỹ năng.
+  { id: 'skill-grammar', nameVi: 'Vua ngữ pháp', emoji: '🧠', category: 'skill' },
+  { id: 'skill-listening', nameVi: 'Tai vàng', emoji: '🎧', category: 'skill' },
+  { id: 'skill-spelling', nameVi: 'Ong chính tả', emoji: '🐝', category: 'skill' },
+  { id: 'skill-reading', nameVi: 'Cú đọc hiểu', emoji: '📖', category: 'skill' },
+  // Streak.
+  { id: 'streak-3', nameVi: '3 ngày liên tiếp', emoji: '🔥', category: 'streak' },
+  { id: 'streak-7', nameVi: '7 ngày liên tiếp', emoji: '☄️', category: 'streak' },
+  // Đấu trường.
+  { id: 'arena-first', nameVi: 'Trận đấu đầu tiên', emoji: '⚔️', category: 'arena' },
+  { id: 'arena-win', nameVi: 'Chiến thắng Arena', emoji: '🏆', category: 'arena' },
+  { id: 'arena-5', nameVi: '5 trận đấu trường', emoji: '�️', category: 'arena' },
+  // Nhiệm vụ ngày.
+  { id: 'quest-perfect', nameVi: 'Hết nhiệm vụ ngày', emoji: '✨', category: 'quest' },
+  { id: 'quest-3', nameVi: '3 ngày hoàn thành nhiệm vụ', emoji: '🌈', category: 'quest' },
+  // Pet.
+  { id: 'pet-baby', nameVi: 'Pet nở ra', emoji: '🐣', category: 'pet' },
+  { id: 'pet-adult', nameVi: 'Pet trưởng thành', emoji: '�', category: 'pet' },
 ] as const;
 
 const EMPTY_STATE: EngagementState = {
