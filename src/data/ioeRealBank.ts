@@ -960,6 +960,12 @@ export const IOE_BANK: Record<string, IoeGradeBank> = {
 },
 };
 
-export function ioeBankForGrade(gradeId: string): IoeGradeBank | undefined {
-  return IOE_BANK[gradeId];
+export function ioeBankForGrade(_gradeId: string): IoeGradeBank | undefined {
+  // CR-48 phase 4 - REFERENCE-ONLY. This bank is harvested third-party
+  // content ("Review licensing before shipping verbatim"); per the V6
+  // publicationPolicy contract it must not enter any practice/mock/
+  // exam pool until rights clearance is recorded. Returning undefined
+  // retires it from every generator; callers all handle empty banks.
+  void _gradeId;
+  return undefined;
 }

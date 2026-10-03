@@ -93,18 +93,44 @@ Caveats da danh gia:
 - constructed-response/speaking-prompt -> giai doan nay exclude khoi
   pool auto-score; danh dau rubric cho phase sau.
 
-### Phase 4 - retire bank cu
+### Phase 4 - retire bank cu [DONE]
 
-- Xoa/ngung dung: ioeRealBank, ioeBanks, vioMathBank, scienceBank,
-  readingBank, reorderBank, grammarBank, vocabulary/, generators.
-- export-question-bank.mjs chuyen sang export tu DB V6.
+Ruling thuc te (refine tu scope goc): bundled bank khong xoa han -
+no con 2 vai tro hop phap la (a) Arena duel can deterministic
+client-side generation de 2 nguoi choi thay cung 1 bo cau, (b)
+dev/offline build khong co Supabase config. Moi duong
+practice/exam/form deu CHI qua V6 RPC - khong co fallback lang ve
+bank cu (loi mang -> man hinh "Thu lai").
 
-### Phase 5 - forms engine + review queue
+- Harvested content retire qua choke point:
+  `ioeBankForGrade` tra undefined (ioeRealBank 965 dong) +
+  `VIO_MATH_BANK` go khoi mathEnglish pool (376 cau Violympic).
+  Ca hai chuyen REFERENCE-ONLY cho toi khi clear ban quyen -
+  theo dung publicationPolicy cua V6.
+- Bank authored (grammarBank, ioeBanks, scienceBank, readingBank,
+  vocabulary, reorderBank-authored) giu cho 2 vai tro tren.
+- Invariant test: `exam pools contain no harvested question ids`
+  quet 15 to hop grade x program - bat lai bat ky ai re-introduce
+  vio-*/ioe-* ids.
+- export-question-bank.mjs van export tu bundled data (tool dev) -
+  chuyen sang DB V6 la follow-up nho, khong chan dong goi.
 
-- UI "De theo don vi" dung qb_exam_forms; mode mock ton trong
-  variantGroupId.
-- AdminScreen: review queue tab (627 items) - approve/reject cap nhat
-  review_status + publicationPolicy.examEligible.
+### Phase 5 - forms engine + review queue [DONE]
+
+- `fetch_questions_public` RPC (migration 0015): guest lay V6
+  practice-pool qua SECURITY DEFINER, anon khong cham mock pool
+  (verify: anon mock fetch -> 401).
+- `list_assessment_forms` + `fetch_form`: FormPicker trong
+  StartBatchScreen hien den 50 de/khoi-mon (unit-test, chuan doan,
+  giua ky, cuoi ky), replay deterministic theo questionIds.
+- Review queue (AdminScreen tab "Duyet cau hoi"): 627 pending,
+  filter pending/approved/rejected/flagged, paging, hien prompt +
+  choices + dap an + issues. `review_question` RPC admin-only
+  (verify: student -> "admin only"); approve cap examEligible
+  (human signoff), reject rut khoi moi pool, flag giu nguyen.
+- `qb_review_events` (migration 0016): immutable audit - moi quyet
+  dinh ghi actor + action + reason + timestamp; reject/flag bat
+  buoc ly do (V7-AR-002 subset).
 
 ## Rulings da chot (founder)
 

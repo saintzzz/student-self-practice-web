@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
 import type { PracticeAccount } from '../lib/auth/practiceAuth';
 import { fetchRecentResults, type ResultWithStudent } from '../lib/practiceResults';
+import ReviewQueueCard from './ReviewQueueCard';
 import { GRADES } from '../data/vocabulary';
 import {
   BODY,
@@ -23,7 +24,7 @@ const BTN_SECONDARY =
 const BTN_DANGER =
   'rounded-2xl bg-white px-4 py-2 text-sm font-bold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 focus:outline-none focus:ring-4 focus:ring-rose-300';
 
-type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'progress';
+type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'progress' | 'review';
 
 interface PracticeClass {
   id: string;
@@ -185,6 +186,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
     { id: 'enroll', label: 'Gán học sinh' },
     { id: 'scope', label: 'Nội dung' },
     { id: 'progress', label: 'Tiến độ' },
+    { id: 'review', label: 'Duyệt câu hỏi' },
   ];
   const students = accounts.filter((a) => a.role === 'student');
 
@@ -434,6 +436,12 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {tab === 'review' && (
+        <div className={CARD}>
+          <ReviewQueueCard />
         </div>
       )}
 

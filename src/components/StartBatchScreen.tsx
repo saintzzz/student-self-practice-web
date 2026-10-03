@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import type { Grade } from '../types';
 import type { ExamProgramId } from '../types/exam';
 import type { ArenaOpenChallenge } from '../lib/arena';
+import { isSupabaseConfigured } from '../lib/supabase/client';
+import { listBankForms, type AssessmentFormInfo } from '../lib/qb/bank';
 import Mascot from './Mascot';
 import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
@@ -16,7 +19,7 @@ interface StartBatchScreenProps {
   /** CR-25: 'practice' = 20-question drill with instant verdicts; 'exam' = 200q/30min.
    *  CR-28: 'review' = spaced-repetition session over due wrong questions.
    *  CR-34: 'arena' = 10-question 1v1 duel on a shared seed. */
-  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review') => void;
+  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string) => void;
   /** CR-34: arena entry points - create / accept / guest bot run. */
   onArenaCreate?: () => void;
   onArenaAccept?: (challenge: ArenaOpenChallenge) => void;
@@ -39,6 +42,58 @@ const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: string; name: string; d
   { id: 'math', icon: '🔢', name: 'Toán tiếng Anh', desc: 'Tính nhẩm, đọc số, hình học' },
   { id: 'science', icon: '🔬', name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
 ];
+
+const FORM_KIND_LABEL: Record<string, string> = {
+  'unit-test': 'Kiểm tra unit',
+  diagnostic: 'Chẩn đoán đầu vào',
+  'midterm-1': 'Giữa kỳ 1',
+  'final-1': 'Cuối kỳ 1',
+  'midterm-2': 'Giữa kỳ 2',
+  'final-2': 'Cuối kỳ 2',
+};
+
+/** CR-48 phase 5: collapsible V6 assessment forms per program. */
+function FormPicker({ gradeId, programId, isGuest, onStartExam }: { gradeId: string; programId: ExamProgramId; isGuest: boolean; onStartExam: (p: ExamProgramId, m: 'exam', formId: string) => void }) {
+  const [forms, setForms] = useState<AssessmentFormInfo[] | null>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (isGuest || !isSupabaseConfigured()) return;
+    let alive = true;
+    listBankForms(gradeId, programId)
+      .then((f) => { if (alive) setForms(f); })
+      .catch(() => { if (alive) setForms([]); });
+    return () => { alive = false; };
+  }, [gradeId, programId, isGuest]);
+  if (!forms || forms.length === 0) return null;
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        data-testid={`forms-toggle-${programId}`}
+        onClick={() => setOpen((v) => !v)}
+        className="w-full rounded-lg bg-white/5 px-3 py-2 text-xs font-extrabold text-slate-300 transition hover:bg-white/10"
+      >
+        📋 Đề có sẵn ({forms.length}) {open ? '▲' : '▼'}
+      </button>
+      {open && (
+        <div className="mt-1 max-h-52 space-y-1 overflow-y-auto pr-1">
+          {forms.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              data-testid={`form-${f.id}`}
+              onClick={() => onStartExam(programId, 'exam', f.id)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg bg-indigo-600/80 px-3 py-2 text-left text-xs font-bold text-white transition hover:bg-indigo-500 active:scale-[0.98]"
+            >
+              <span>{f.kind === 'unit-test' ? f.title : FORM_KIND_LABEL[f.kind] ?? f.kind} - đề {f.id.slice(-2)} · {f.total_questions} câu</span>
+              <span className="text-indigo-200">→</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, onLogin }: StartBatchScreenProps) {
   // CR-46: same modes for every grade - only question counts scale.
@@ -124,6 +179,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                 >
                   🏆 Thi thử - {examConfig.examCount} câu
                 </button>
+                <FormPicker gradeId={grade.id} programId={program.id} isGuest={isGuest ?? false} onStartExam={onStartExam} />
               </div>
             </div>
           ))}

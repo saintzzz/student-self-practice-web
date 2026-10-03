@@ -257,6 +257,14 @@ export function buildExamPool(programId: ExamProgramId, gradeId: string, seed: s
 }
 
 /**
+ * LEGACY-FALLBACK (CR-48 phase 4): the bundled pool below is no longer
+ * the canonical bank. Practice/exam forms always load V6 questions from
+ * Supabase via createExamFromBank; this path only remains for (a) Arena
+ * duels that need deterministic client-side generation so both players
+ * see the identical set, and (b) dev/offline builds with no Supabase
+ * config. Harvested third-party content (ioeRealBank, vioMathBank) is
+ * reference-only and returns nothing here.
+ *
  * Creates a formal exam. CR-46: count and time default to the grade
  * config (50c/15p for grade 1 up to 200c/30p for grade 5); an explicit
  * `count` still overrides (drill/arena callers). If the pool is smaller

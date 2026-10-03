@@ -73,10 +73,14 @@ interface ExamScreenProps {
    *  10-question duel run on a shared seed (practice pacing). */
   mode: 'exam' | 'practice' | 'review' | 'arena';
   arena?: ArenaRun;
+  /** CR-48 phase 5: pinned V6 assessment form (unit test/diagnostic/
+   *  midterm/final). When set, questions come from fetch_form in form
+   *  order instead of a random mock sample. */
+  formId?: string;
   onExit: () => void;
 }
 
-export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, onExit }: ExamScreenProps) {
+export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, formId, onExit }: ExamScreenProps) {
   const isArena = mode === 'arena';
   const isPractice = mode !== 'exam';
   const isReview = mode === 'review';
@@ -91,6 +95,8 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const creditedRef = useRef<Set<string | number>>(new Set());
   /** CR-48: fetching the V6 canonical bank over RPC before a session starts. */
   const [loadingBank, setLoadingBank] = useState(false);
+  /** CR-48 phase 4: bank fetch failed - bundled bank is retired for exam/drill. */
+  const [loadError, setLoadError] = useState(false);
 
   // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
   useEffect(() => {
@@ -165,15 +171,18 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // same features, only the sitting length scales.
       const gradeConfig = examConfigForGrade(gradeId);
       const count = isArena ? ARENA_QUESTION_COUNT : isPractice ? gradeConfig.drillCount : undefined;
-      // CR-48: practice/exam draw from the canonical V6 bank over RPC
-      // (publicationPolicy + variant-group enforced server-side). Guests
-      // and offline sessions fall back to the bundled bank.
+      // CR-48 phase 4: practice/exam ONLY draw from the canonical V6
+      // bank (publicationPolicy + variant-group enforced server-side);
+      // the bundled bank is retired for these modes. Guests reach the
+      // practice pool via the public RPC inside createExamFromBank.
       if (!isArena && isSupabaseConfigured()) {
         setLoadingBank(true);
+        setLoadError(false);
         try {
           const bankExam = await createExamFromBank(programId, gradeId, Date.now(), {
             count,
             mode: isPractice ? 'practice' : 'mock',
+            formId,
           });
           if (bankExam) {
             setExam(bankExam);
@@ -183,12 +192,17 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             creditedRef.current = new Set<string | number>();
             return;
           }
+          setLoadError(true);
         } catch {
-          // No session / network error -> bundled bank below.
+          setLoadError(true);
         } finally {
           setLoadingBank(false);
         }
+        return;
       }
+      // Arena duels keep the seeded bundled bank: both players must see
+      // the identical question set, which requires deterministic local
+      // generation - documented CR-48 ruling.
       setExam(createExam(programId, gradeId, seed, Date.now(), count));
     }
     setNow(Date.now());
@@ -279,7 +293,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
@@ -414,7 +428,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, loading, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; loading?: boolean; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, loading, loadError, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; loading?: boolean; loadError?: boolean; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
     : isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
@@ -458,6 +472,11 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             </>
           )}
         </ul>
+        {loadError && (
+          <p className="mt-4 rounded-lg bg-red-500/15 px-4 py-2 text-sm font-bold text-red-300">
+            Không tải được đề - kiểm tra mạng rồi bấm Thử lại nhé.
+          </p>
+        )}
         {(!isReview || (reviewCount ?? 0) > 0) && (
           <button
             type="button"
@@ -466,7 +485,7 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             disabled={loading}
             className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-60"
           >
-            {loading ? 'Đang tải đề...' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
+            {loading ? 'Đang tải đề...' : loadError ? 'Thử lại' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
           </button>
         )}
         <button

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateAuthoredWordOrderQuestions, generateWordOrderQuestions, isWordOrderCorrect, tokenizeSentence } from './wordOrder';
 import { generateOddPronunciationQuestions } from './oddPronunciation';
 import { generateMissingLetterQuestions } from './missingLetter';
-import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealListenQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealListenQuestions, generateIoeRealMaskedQuestions, generateIoeRealMcqQuestions, generateIoeRealTfQuestions, generateTrueFalseQuestions } from './englishGenerators';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
 import { getWordsByGrade } from '../../data/vocabulary';
@@ -190,44 +190,25 @@ describe('CR-26 grade-calibrated difficulty', () => {
   });
 });
 
-describe('CR-35 harvested IOE listening', () => {
-  it('every grade with a listen bank produces real listening questions', () => {
+describe('CR-48 phase 4 - harvested IOE bank is reference-only', () => {
+  // The harvested generators stay in the codebase so the content can be
+  // re-enabled after rights clearance, but until then ioeBankForGrade
+  // returns nothing and every consumer must tolerate an empty bank.
+  it('real-IOE generators yield nothing while the bank is retired', () => {
     for (const gradeId of GRADES) {
-      const qs = generateIoeRealListenQuestions(gradeId);
-      expect(qs.length, gradeId).toBeGreaterThanOrEqual(10);
-      for (const q of qs) {
-        if (q.kind === 'listening-fill-blank') {
-          expect(q.word.length).toBeGreaterThan(0);
-        } else if (q.kind === 'listening-sentence-fill-blank') {
-          expect(q.displaySentence).toContain('___');
-          expect(q.sentence).not.toContain('___');
-          expect(q.sentence).toContain(q.word);
-        } else {
-          throw new Error(`unexpected kind ${q.kind}`);
-        }
-        expect(q.explanation.length).toBeGreaterThan(0);
+      expect(generateIoeRealListenQuestions(gradeId), gradeId).toEqual([]);
+      expect(generateIoeRealMcqQuestions(gradeId), gradeId).toEqual([]);
+      expect(generateIoeRealMaskedQuestions(gradeId), gradeId).toEqual([]);
+      expect(generateIoeRealTfQuestions(gradeId), gradeId).toEqual([]);
+    }
+  });
+
+  it('reorder bank serves authored sentences only', () => {
+    for (const gradeId of GRADES) {
+      for (const sentence of reorderBankForGrade(gradeId)) {
+        expect(sentence.length).toBeGreaterThan(0);
       }
     }
-  });
-
-  it('blanks a trailing content word, never the leading "I"', () => {
-    const qs = generateIoeRealListenQuestions('grade-2')
-      .filter((q) => q.kind === 'listening-sentence-fill-blank');
-    expect(qs.length).toBeGreaterThan(0);
-    for (const q of qs) {
-      if (q.kind !== 'listening-sentence-fill-blank') continue;
-      expect(q.word).not.toBe('I');
-      // The blank stands where the word was in the original sentence.
-      const idx = q.displaySentence.indexOf('___');
-      expect(q.displaySentence.slice(0, idx) + q.word + q.displaySentence.slice(idx + 3))
-        .toBe(q.sentence);
-    }
-  });
-
-  it('the exam pool now contains harvested listening items', () => {
-    const pool = buildExamPool('english', 'grade-4', 's');
-    const ioe = pool.filter((q) => q.id.startsWith('q-ioe-l'));
-    expect(ioe.length).toBeGreaterThanOrEqual(10);
   });
 });
 
@@ -241,5 +222,28 @@ describe('science program', () => {
     for (const q of qs) {
       expect(q.explanation.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('CR-48 phase 4 - harvested content retired', () => {
+  // Rights-uncleared third-party banks (ioeRealBank, vioMathBank) are
+  // reference-only. This invariant fails if anything reintroduces
+  // harvested ids (ioe-*, vio-*) into any bundled pool.
+  const HARVESTED = /^(?:vio-|q-ioe-|ioe-)/;
+
+  it('exam pools contain no harvested question ids', () => {
+    for (const gradeId of ['grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5']) {
+      for (const programId of ['english', 'math', 'science'] as const) {
+        const pool = buildExamPool(programId, gradeId, 's');
+        const leaked = pool.filter((q) => HARVESTED.test(String(q.id)));
+        expect(leaked, `${programId}/${gradeId}: ${leaked.map((q) => q.id).slice(0, 3).join(',')}`).toEqual([]);
+      }
+    }
+  });
+
+  it('grade-2 math pool no longer serves harvested Violympic items', () => {
+    const qs = generateMathQuestions('grade-2', 's');
+    expect(qs.length).toBeGreaterThan(50);
+    expect(qs.filter((q) => String(q.id).startsWith('vio-'))).toEqual([]);
   });
 });

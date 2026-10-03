@@ -49,14 +49,44 @@ export async function fetchBankQuestions(
   count: number,
   mode: BankMode,
 ): Promise<QbRow[]> {
-  const { data, error } = await (await getSupabase()).rpc('fetch_questions', {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('fetch_questions', {
     p_grade: gradeNumber(gradeId),
     p_subject: SUBJECTS[programId],
     p_count: count,
     p_mode: mode,
   });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as QbRow[];
+  if (!error) return (data ?? []) as QbRow[];
+  // Guests (no session) cannot call the authenticated RPC - fall back
+  // to the public practice-only path so they still get real V6 content.
+  const pub = await supabase.rpc('fetch_questions_public', {
+    p_grade: gradeNumber(gradeId),
+    p_subject: SUBJECTS[programId],
+    p_count: count,
+  });
+  if (pub.error) throw new Error(pub.error.message);
+  return (pub.data ?? []) as QbRow[];
+}
+
+export interface AssessmentFormInfo {
+  id: string;
+  kind: string;
+  grade: number;
+  subject: string;
+  title: string;
+  total_questions: number;
+}
+
+export async function listBankForms(
+  gradeId: string,
+  programId: ExamProgramId,
+): Promise<AssessmentFormInfo[]> {
+  const { data, error } = await (await getSupabase()).rpc('list_assessment_forms', {
+    p_grade: gradeNumber(gradeId),
+    p_subject: SUBJECTS[programId],
+  });
+  if (error) return [];
+  return (data ?? []) as AssessmentFormInfo[];
 }
 
 export async function fetchBankForm(formId: string): Promise<QbRow[]> {

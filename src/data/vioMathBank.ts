@@ -6,6 +6,11 @@ import type { ExamQuestion } from '../types/exam';
  * verified through the submit-single-answer oracle and manual
  * solving. Images are self-hosted under /images/vio/; attribution
  * is recorded in public/attribution.json.
+ *
+ * CR-48 phase 4 - REFERENCE-ONLY. Harvested third-party content has
+ * no cleared commercial rights; per the V6 publicationPolicy contract
+ * it must NOT be imported into any practice/mock/exam pool until
+ * rights clearance is recorded. Nothing may import this file.
  */
 export const VIO_MATH_BANK: ExamQuestion[] = [
   {

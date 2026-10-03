@@ -53,6 +53,8 @@ export default function App() {
   const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review' | 'arena'>('exam');
   /** CR-34: pending arena duel context for the exam screen. */
   const [arenaRun, setArenaRun] = useState<import('./components/ExamScreen').ArenaRun | null>(null);
+  /** CR-48 phase 5: pinned V6 assessment form for the current exam run. */
+  const [examFormId, setExamFormId] = useState<string | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
 
@@ -162,9 +164,10 @@ export default function App() {
 
   /** CR-24/25: 'practice' = 20-question drill; 'exam' = 200q/30min mock.
    *  CR-28: 'review' = spaced-repetition session over due wrong questions. */
-  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam' | 'review'): void {
+  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string): void {
     setExamProgramId(programId);
     setExamMode(mode);
+    setExamFormId(formId ?? null);
     setArenaRun(null);
     setScreen('exam');
   }
@@ -360,6 +363,7 @@ export default function App() {
         studentName={myAccount?.display_name}
         mode={examMode}
         arena={arenaRun ?? undefined}
+        formId={examFormId ?? undefined}
         onExit={() => setScreen('start-batch')}
       />
     );
