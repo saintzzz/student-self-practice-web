@@ -22,4 +22,20 @@ describe('isLiteralImageWord', () => {
       expect(isLiteralImageWord(w(id)), id).toBe(true);
     }
   });
+
+  it('rejects flag emojis - a flag thumbnail cannot be identified from the picture (CR-39)', () => {
+    const flag = (id: string, emoji: string): VocabWord => ({ id, word: id, emoji, topicId: 't', countable: false }) as VocabWord;
+    for (const word of [
+      flag('guam', '🇬🇺'),
+      flag('mayotte', '🇾🇹'),
+      flag('western-sahara', '🇪🇭'),
+      flag('fiji', '🇫🇯'),
+      flag('laos', '🇱🇦'),
+    ]) {
+      expect(isLiteralImageWord(word), word.id).toBe(false);
+    }
+    // Non-flag pictographs that merely contain variation selectors stay.
+    expect(isLiteralImageWord(flag('white-flag', '🏳️'))).toBe(true);
+    expect(isLiteralImageWord(flag('skull-and-crossbones', '☠️'))).toBe(true);
+  });
 });

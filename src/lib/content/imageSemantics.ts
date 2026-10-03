@@ -52,9 +52,28 @@ const FIGURATIVE_IMAGE_WORDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * CR-39 (user report): country/territory words use flag emojis (pairs of
+ * regional-indicator symbols, or tag-sequence flags like 🏴󠁧󠁢󠁥󠁮󠁧󠁿). At
+ * question size a flag glyph is an unrecognisable thumbnail - and even
+ * rendered large, "identify the flag of Guam/Mayotte" is not a question
+ * a primary student can answer from the picture. Country words still
+ * appear in text and audio kinds; flags are only excluded from
+ * image-prompted generators.
+ */
+function isFlagEmoji(emoji: string): boolean {
+  for (const ch of emoji) {
+    const cp = ch.codePointAt(0)!;
+    if (cp >= 0x1f1e6 && cp <= 0x1f1ff) return true; // regional indicator
+    if (cp >= 0xe0020 && cp <= 0xe007f) return true; // tag sequence char
+  }
+  return false;
+}
+
+/**
  * True when `word`'s emoji literally depicts the word's meaning and can
  * safely appear as an image prompt.
  */
 export function isLiteralImageWord(word: VocabWord): boolean {
+  if (isFlagEmoji(word.emoji)) return false;
   return !FIGURATIVE_IMAGE_WORDS.has(word.id);
 }
