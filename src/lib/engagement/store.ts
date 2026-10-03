@@ -44,6 +44,8 @@ export interface EngagementState {
   review?: Record<string, ReviewItem[]>;
   /** CR-29: per-day + per-skill answer stats for the parent report. */
   stats?: StatsSlice;
+  /** CR-36: companion pet - XP grows with every correct answer. */
+  pet?: PetState;
 }
 
 /** CR-29: answer counters backing the parent report screen. */
@@ -317,6 +319,9 @@ export function recordCorrectAnswers(count: number, now: Date = new Date()): voi
   const state = load();
   const q = questFor(state, now);
   q.correctToday = Math.min(q.correctToday + count, DAILY_QUEST_TARGET);
+  // CR-36: every correct answer feeds the companion pet - uncapped,
+  // unlike the daily quest target which maxes at DAILY_QUEST_TARGET.
+  bumpPetXp(state, count);
   persist(state);
 }
 
@@ -519,6 +524,92 @@ export function getReportSnapshot(now: Date = new Date()): ReportSnapshot {
       .sort((a, b) => a.accuracy - b.accuracy || a.key.localeCompare(b.key));
   }
   return { days, skills };
+}
+
+// ---- CR-36: companion pet ----------------------------------------------
+
+export type PetSpecies = 'cat' | 'dragon' | 'bunny';
+
+export interface PetState {
+  /** null until the learner picks a companion - XP still accumulates. */
+  species: PetSpecies | null;
+  xp: number;
+  /** Highest stage already celebrated on screen (one-time congrats). */
+  seenStage: number;
+}
+
+/** 10 XP per correct answer - same as exam points so the pet literally
+ *  grows on the same effort the scoreboard shows. */
+export const PET_XP_PER_CORRECT = 10;
+/** XP thresholds per stage: egg -> baby -> kid -> adult. */
+export const PET_STAGE_XP = [0, 50, 250, 600] as const;
+const PET_STAGE_NAMES = ['Trứng', 'Bé', 'Nhỏ', 'Trưởng thành'] as const;
+
+export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly [string, string, string, string] }> = {
+  cat: { nameVi: 'Mèo Mun', emojis: ['🥚', '🐱', '🐈', '🐯'] },
+  dragon: { nameVi: 'Rồng Con', emojis: ['🥚', '🦎', '🐲', '🐉'] },
+  bunny: { nameVi: 'Thỏ Trắng', emojis: ['🥚', '🐰', '🐇', '🦄'] },
+};
+
+export function petStageForXp(xp: number): number {
+  let stage = 0;
+  for (let i = PET_STAGE_XP.length - 1; i >= 0; i--) {
+    if (xp >= PET_STAGE_XP[i]!) return i;
+  }
+  return stage;
+}
+
+function petSliceFor(state: EngagementState): PetState {
+  if (!state.pet) state.pet = { species: null, xp: 0, seenStage: 0 };
+  return state.pet;
+}
+
+function bumpPetXp(state: EngagementState, correctCount: number): void {
+  if (correctCount <= 0) return;
+  petSliceFor(state).xp += correctCount * PET_XP_PER_CORRECT;
+}
+
+export interface PetSnapshot {
+  species: PetSpecies | null;
+  nameVi: string | null;
+  emoji: string;
+  xp: number;
+  stage: number;
+  stageName: string;
+  /** XP still needed to reach the next stage; null at the last stage. */
+  xpToNext: number | null;
+  /** True once when the pet has grown past `seenStage` - celebrate then mark. */
+  justEvolved: boolean;
+}
+
+export function getPet(): PetSnapshot {
+  const pet = petSliceFor(load());
+  const stage = petStageForXp(pet.xp);
+  const species = pet.species;
+  const next = PET_STAGE_XP[stage + 1];
+  return {
+    species,
+    nameVi: species ? PET_SPECIES[species].nameVi : null,
+    emoji: species ? PET_SPECIES[species].emojis[stage]! : '🥚',
+    xp: pet.xp,
+    stage,
+    stageName: PET_STAGE_NAMES[stage]!,
+    xpToNext: next === undefined ? null : next - pet.xp,
+    justEvolved: stage > pet.seenStage,
+  };
+}
+
+export function choosePet(species: PetSpecies): void {
+  const state = load();
+  petSliceFor(state).species = species;
+  persist(state);
+}
+
+/** Call after showing the evolution congrats so it only fires once. */
+export function markPetStageSeen(): void {
+  const state = load();
+  petSliceFor(state).seenStage = petStageForXp(state.pet?.xp ?? 0);
+  persist(state);
 }
 
 /** Test helper - clears persisted + in-memory state. */

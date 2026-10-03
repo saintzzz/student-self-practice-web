@@ -6,6 +6,7 @@ import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
 import LeaderboardCard from './LeaderboardCard';
 import ArenaCard from './ArenaCard';
+import PetCard from './PetCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
@@ -67,6 +68,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
 
       {/* CR-28: spaced repetition - only renders when items are due. */}
       <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
+
+      {/* CR-36: companion pet - grows on every correct answer. */}
+      <PetCard />
 
       {/* CR-30: weekly leaderboard - aggregate standings via rpc. */}
       <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
