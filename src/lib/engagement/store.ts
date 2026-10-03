@@ -50,6 +50,11 @@ export interface EngagementState {
   pet?: PetState;
   /** CR-37: aggregate counters feeding the extended badge rules. */
   badgeStats?: BadgeStats;
+  /** CR-45: tombstones - question id -> ISO date it was mastered out of
+   *  the review queue. Timestamped so a question re-earned wrong after
+   *  mastery (newer updatedAtISO) is not swallowed by its own
+   *  tombstone on the next merge. */
+  reviewMastered?: Record<string, string>;
 }
 
 /** CR-37: counters the extended badge rules read. */
@@ -78,9 +83,15 @@ export interface ReviewItem {
   stage: 0 | 1 | 2 | 3;
   addedAtISO: string;
   dueISO: string;
+  /** CR-45: last mutation time - the merge key for multi-device sync. */
+  updatedAtISO?: string;
 }
 
 const STORAGE_KEY = 'beheo-engagement-v1';
+/** CR-45: which account the local blob belongs to - null/absent means
+ *  guest state. Prevents one student's progress leaking into the next
+ *  account on a shared device (review B1). */
+const OWNER_KEY = 'beheo-engagement-owner';
 const STARS_PER_ROUND_CAP = 4 * 3; // 4 rounds x 3 stars
 const BATCH_CHEST_STARS = 2;
 
@@ -122,6 +133,35 @@ const EMPTY_STATE: EngagementState = {
   gradesPlayed: [],
 };
 
+/** CR-45: a fresh empty state - the sync module needs it to sanitize
+ *  malformed remote rows and to base owner-discard merges on. */
+export function emptyEngagement(): EngagementState {
+  return structuredClone(EMPTY_STATE);
+}
+
+/** CR-45 (B1): account that owns the local blob - null = guest state. */
+export function getOwnerAccountId(): string | null {
+  const s = storage();
+  if (!s) return null;
+  try {
+    return s.getItem(OWNER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** CR-45 (B1): mark which account the local blob belongs to. */
+export function markOwnerAccountId(accountId: string | null): void {
+  const s = storage();
+  if (!s) return;
+  try {
+    if (accountId) s.setItem(OWNER_KEY, accountId);
+    else s.removeItem(OWNER_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 let memory: EngagementState | null = null;
 
 function storage(): Storage | null {
@@ -157,6 +197,21 @@ function load(): EngagementState {
   return memory;
 }
 
+const listeners = new Set<() => void>();
+
+/** CR-45: subscribers run after every persist - used by the sync
+ *  module (debounced push) and UI that re-reads on change. */
+export function subscribe(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
+/** CR-45: replace the whole state after a server merge and notify.
+ *  Only the sync module should call this - mutations use persist(). */
+export function writeState(state: EngagementState): void {
+  persist(state);
+}
+
 function persist(state: EngagementState): void {
   memory = state;
   const s = storage();
@@ -165,6 +220,17 @@ function persist(state: EngagementState): void {
       s.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       // ignore write failures - memory copy is authoritative
+    }
+  }
+  for (const cb of listeners) {
+    /* Defer to a microtask: persist() can run during a render (e.g.
+       DailyQuestCard seeds today's quests), and a synchronous setState
+       in a subscriber would then fire React's cross-component
+       render-update warning. */
+    try {
+      queueMicrotask(cb);
+    } catch {
+      cb();
     }
   }
 }
@@ -302,12 +368,13 @@ function freshDailyQuest(dateISO: string): DailyQuestState {
   return { dateISO, drillDone: false, correctToday: 0, bigDone: false, bonusClaimed: false };
 }
 
-/** Returns today's quest slice, resetting it when the stored date is stale. */
+/** Returns today's quest slice, resetting it when the stored date is
+ *  stale. In-memory only - callers persist themselves, so a pure read
+ *  (DailyQuestCard render) never writes or notifies mid-render. */
 function questFor(state: EngagementState, now: Date): DailyQuestState {
   const today = todayISO(now);
   if (!state.dailyQuest || state.dailyQuest.dateISO !== today) {
     state.dailyQuest = freshDailyQuest(today);
-    persist(state);
   }
   return state.dailyQuest;
 }
@@ -381,7 +448,9 @@ export function claimDailyBonus(now: Date = new Date()): { granted: boolean; sta
 
 // ---- CR-28: spaced repetition (on lai cau sai) --------------------------
 
-const REVIEW_CAP = 60;
+export const REVIEW_CAP = 60;
+/** CR-45: tombstone list size - enough to cover the queue + churn. */
+export const REVIEW_MASTERED_CAP = 200;
 /** Days to wait before re-asking at each stage (index = stage). */
 const REVIEW_INTERVAL_DAYS = [1, 3, 7] as const;
 
@@ -417,6 +486,7 @@ export function recordWrongExamQuestion(
     stage: 0,
     addedAtISO: today,
     dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[0]),
+    updatedAtISO: now.toISOString(),
   };
   // Re-recording refreshes the item AND moves it to the end, so
   // insertion order always equals least-recently-wrong order - the
@@ -426,6 +496,9 @@ export function recordWrongExamQuestion(
   if (list.length > REVIEW_CAP) {
     list.splice(0, list.length - REVIEW_CAP);
   }
+  /* Re-earned wrong after mastery lifts the tombstone - otherwise the
+     next merge would drop this freshly queued item. */
+  if (state.reviewMastered) delete state.reviewMastered[question.id];
   persist(state);
 }
 
@@ -455,21 +528,30 @@ export function recordReviewOutcome(
   if (index === -1) return;
   const today = todayISO(now);
   if (!correct) {
-    list[index] = { ...list[index], stage: 0, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[0]) };
+    list[index] = { ...list[index], stage: 0, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[0]), updatedAtISO: now.toISOString() };
   } else if (list[index].stage >= 2) {
     list.splice(index, 1); // mastered after stage 2 (+7d) success
+    /* CR-45: tombstone the id so a merge never resurrects it. */
+    if (!state.reviewMastered) state.reviewMastered = {};
+    state.reviewMastered[questionId] = now.toISOString();
+    const masteredKeys = Object.keys(state.reviewMastered);
+    if (masteredKeys.length > REVIEW_MASTERED_CAP) {
+      for (const k of masteredKeys.slice(0, masteredKeys.length - REVIEW_MASTERED_CAP)) {
+        delete state.reviewMastered[k];
+      }
+    }
     badgeStatsFor(state).reviewMastered += 1;
     evaluateBadges(state, new Set<string>());
   } else {
     const nextStage = (list[index].stage + 1) as 1 | 2;
-    list[index] = { ...list[index], stage: nextStage, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[nextStage]) };
+    list[index] = { ...list[index], stage: nextStage, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[nextStage]), updatedAtISO: now.toISOString() };
   }
   persist(state);
 }
 
 // ---- CR-29: parent-report stats ----------------------------------------
 
-const DAY_STATS_CAP = 30;
+export const DAY_STATS_CAP = 30;
 
 function statsSliceFor(state: EngagementState): StatsSlice {
   if (!state.stats) state.stats = { days: {}, skills: {} };
@@ -716,6 +798,22 @@ export function markPetStageSeen(): void {
   persist(state);
 }
 
+/** CR-45: sign-out leaves a clean slate - the next user of a shared
+ *  classroom device starts empty and no foreign blob can later be
+ *  merged into another account. Remote state already synced survives
+ *  (it was pushed before unbind). */
+export function clearEngagementLocal(): void {
+  persist(structuredClone(EMPTY_STATE));
+  const s = storage();
+  if (s) {
+    try {
+      s.removeItem(OWNER_KEY);
+    } catch {
+      // ignore
+    }
+  }
+}
+
 /** Test helper - clears persisted + in-memory state. */
 export function resetForTests(): void {
   memory = structuredClone(EMPTY_STATE);
@@ -723,6 +821,7 @@ export function resetForTests(): void {
   if (s) {
     try {
       s.removeItem(STORAGE_KEY);
+      s.removeItem(OWNER_KEY);
     } catch {
       // ignore
     }

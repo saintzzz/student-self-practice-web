@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { getState } from '../lib/engagement/store';
+import { useEffect, useState } from 'react';
+import { getState, subscribe } from '../lib/engagement/store';
 import { CHIP_GOLD, CHIP_SKY } from '../lib/ui/tokens';
 import StickerAlbum from './StickerAlbum';
 
@@ -10,6 +10,10 @@ import StickerAlbum from './StickerAlbum';
  */
 export default function EngagementBar() {
   const [albumOpen, setAlbumOpen] = useState(false);
+  const [, setTick] = useState(0);
+  /* CR-45: re-read the store on every persist so synced stars/streaks
+     show without a remount. */
+  useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
   const state = getState();
 
   /* CR-12 DS-X4: chip emojis sit in tinted mini-discs; star chip goes

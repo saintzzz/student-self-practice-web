@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getDueReviewItems,
+  getState,
   recordReviewOutcome,
   recordWrongExamQuestion,
   resetForTests,
@@ -98,5 +99,19 @@ describe('spaced-repetition review queue', () => {
     recordWrongExamQuestion('grade-4', Q('q1'), DAY0);
     expect(getDueReviewItems('grade-3', DAY1)).toHaveLength(0);
     expect(getDueReviewItems('grade-4', DAY1)).toHaveLength(1);
+  });
+
+  it('CR-45: re-earning a mastered question lifts its tombstone', () => {
+    /* Master q1 through the queue, then answer it wrong again the same
+       afternoon - the re-add must delete the tombstone so a merge can
+       never swallow the fresh item. */
+    recordWrongExamQuestion('grade-4', Q('q1'), DAY0);
+    recordReviewOutcome('grade-4', 'q1', true, DAY1);
+    recordReviewOutcome('grade-4', 'q1', true, DAY4);
+    recordReviewOutcome('grade-4', 'q1', true, DAY9); // mastered
+    expect(getState().reviewMastered?.q1).toBeTruthy();
+    recordWrongExamQuestion('grade-4', Q('q1'), new Date('2026-10-09T15:00:00'));
+    expect(getState().reviewMastered?.q1).toBeUndefined();
+    expect(getDueReviewItems('grade-4', DAY11).map((i) => i.id)).toContain('q1');
   });
 });

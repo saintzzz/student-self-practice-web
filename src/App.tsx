@@ -17,6 +17,8 @@ import {
   logout,
   type PracticeAccount,
 } from './lib/auth/practiceAuth';
+import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagement/sync';
+import { clearEngagementLocal, getOwnerAccountId } from './lib/engagement/store';
 import { GRADES } from './data/vocabulary';
 import type { ExamProgramId } from './types/exam';
 import {
@@ -73,6 +75,7 @@ export default function App() {
         setAuthMode('admin');
         setScreen('admin');
       } else {
+        void bindEngagement(account.id);
         setAllowedGrades(await fetchMyAllowedGrades());
         if (!cancelled) {
           setAuthMode('student');
@@ -93,6 +96,7 @@ export default function App() {
       setAuthMode('admin');
       setScreen('admin');
     } else {
+      void bindEngagement(account.id);
       setAllowedGrades(await fetchMyAllowedGrades());
       setAuthMode('student');
       setScreen('grade-select');
@@ -100,13 +104,27 @@ export default function App() {
   }
 
   async function handleSignOut(): Promise<void> {
-    await logout();
-    setMyAccount(null);
-    setAllowedGrades(null);
-    setBatch(null);
-    setSelectedGradeId(null);
-    setAuthMode('login');
-    setScreen('login');
+    /* CR-45 (M4): flush while the session is still valid, then unbind,
+       then clear the blob - but only when the flush actually reached
+       the server. Clearing after a failed/offline flush would destroy
+       progress that exists nowhere else; the owner marker keeps the
+       blob safe until the same account resumes (and B1's pre-pull
+       discard still protects any different account that logs in).
+       logout runs last inside try/finally so local cleanup always
+       happens even if sign-out throws. */
+    const synced = await flushEngagement().catch(() => false);
+    unbindEngagement();
+    if (synced && getOwnerAccountId()) clearEngagementLocal();
+    try {
+      await logout();
+    } finally {
+      setMyAccount(null);
+      setAllowedGrades(null);
+      setBatch(null);
+      setSelectedGradeId(null);
+      setAuthMode('login');
+      setScreen('login');
+    }
   }
 
   function handleGuest(): void {
