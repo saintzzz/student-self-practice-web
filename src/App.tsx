@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
+import ParentReportScreen from './components/ParentReportScreen';
 import StartBatchScreen from './components/StartBatchScreen';
 import BatchScreen from './components/BatchScreen';
 import CreditsScreen from './components/CreditsScreen';
@@ -34,7 +35,7 @@ import {
   submitPronunciationAnswer,
 } from './lib/practiceSession';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report';
 /** 'off' = Supabase not configured (pre-CR-08 guest-only behavior). */
 type AuthMode = 'off' | 'loading' | 'login' | 'guest' | 'student' | 'admin';
 
@@ -235,11 +236,18 @@ export default function App() {
         onSelectGrade={handleSelectGrade}
         onOpenCredits={handleOpenCredits}
         onPlacement={() => setScreen('placement')}
+        onReport={() => setScreen('report')}
         focusCreditsLink={focusCreditsLink}
         allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
         guestTrial={authMode === 'guest'}
         {...authChipProps}
       />,
+    );
+  }
+
+  if (screen === 'report') {
+    return shell(
+      <ParentReportScreen grades={GRADES} onBack={handleBackToGrades} />,
     );
   }
 

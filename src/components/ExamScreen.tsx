@@ -22,8 +22,10 @@ import {
   recordDrillComplete,
   recordReviewOutcome,
   recordWrongExamQuestion,
+  recordSkillAnswer,
   getDueReviewItems,
 } from '../lib/engagement/store';
+import { skillKeyFor } from '../lib/engagement/skills';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
@@ -63,9 +65,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const [now, setNow] = useState(() => Date.now());
   /** practice-mode verdict shown after each answer (null = awaiting answer). */
   const [verdict, setVerdict] = useState<{ isCorrect: boolean } | null>(null);
-  /** CR-27: question indexes already credited toward the daily quest -
-   *  a re-answer during exam review must not count twice. */
-  const creditedRef = useRef<Set<number>>(new Set());
+  /** CR-27/29: question indexes already credited toward the daily quest
+   *  (number keys) and the skill stats (`s${index}` keys) - a re-answer
+   *  during exam review must not count twice. */
+  const creditedRef = useRef<Set<string | number>>(new Set());
 
   // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
   useEffect(() => {
@@ -126,7 +129,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     setNow(Date.now());
     setStripOffset(0);
     setVerdict(null);
-    creditedRef.current = new Set();
+    creditedRef.current = new Set<string | number>();
   }
 
   function answer(answer: ExamAnswer): void {
@@ -145,6 +148,11 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         creditedRef.current.add(exam.currentIndex);
         recordCorrectAnswers(1);
       }
+      // CR-29: parent-report stats - one entry per answered question.
+      if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
+        creditedRef.current.add(`s${exam.currentIndex}`);
+        recordSkillAnswer(gradeId, skillKeyFor(question), isCorrect);
+      }
       // CR-28: review mode advances/resets the item's stage; a normal
       // drill instead captures the wrong question for future review.
       if (isReview) recordReviewOutcome(gradeId, question.id, isCorrect);
@@ -156,9 +164,17 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     if (!currentQuestion) return;
     // CR-27: same at-answer counting in exam mode (no verdict shown,
     // but the quest still credits the correct answer immediately).
-    if (isExamAnswerCorrect(currentQuestion, answer) && !creditedRef.current.has(exam.currentIndex)) {
+    const examCorrect = isExamAnswerCorrect(currentQuestion, answer);
+    if (examCorrect && !creditedRef.current.has(exam.currentIndex)) {
       creditedRef.current.add(exam.currentIndex);
       recordCorrectAnswers(1);
+    }
+    // CR-29: skill stats per answer; a re-answer during review does not
+    // double-count - the stats reflect the FIRST answer, matching what
+    // a real exam score sheet records.
+    if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
+      creditedRef.current.add(`s${exam.currentIndex}`);
+      recordSkillAnswer(gradeId, skillKeyFor(currentQuestion), examCorrect);
     }
     setExam((current) => {
       if (!current) return current;

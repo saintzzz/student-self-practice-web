@@ -10,9 +10,11 @@ import {
   checkStreakStickers,
   recordCorrectAnswers,
   recordRoundResult,
+  recordSkillAnswers,
   touchStreak,
   type RoundAwardResult,
 } from '../lib/engagement/store';
+import { skillKeyForRound } from '../lib/engagement/skills';
 
 interface RoundSummaryProps {
   outcome: RoundOutcome;
@@ -61,6 +63,8 @@ export default function RoundSummary({
       // CR-27: round boundary is the right grain for the correct-answer
       // quest - a student who exits mid-batch still keeps progress.
       recordCorrectAnswers(outcome.correctCount);
+      // CR-29: same granularity for the parent-report skill stats.
+      recordSkillAnswers(gradeId, skillKeyForRound(outcome.roundType), outcome.correctCount, outcome.totalCount);
       const streakStickers = checkStreakStickers();
       awarded.current = { ...r, newStickers: [...r.newStickers, ...streakStickers] };
       setAward(awarded.current);

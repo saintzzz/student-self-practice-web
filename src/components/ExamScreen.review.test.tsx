@@ -4,6 +4,7 @@ import ExamScreen from './ExamScreen';
 import {
   getDailyQuests,
   getDueReviewItems,
+  getReportSnapshot,
   recordWrongExamQuestion,
   resetForTests,
 } from '../lib/engagement/store';
@@ -54,6 +55,10 @@ describe('ExamScreen review mode', () => {
     fireEvent.click(screen.getByTestId('exam-option-0')); // correct
     fireEvent.click(screen.getByTestId('practice-next'));
     expect(screen.getByTestId('exam-result')).toBeInTheDocument();
+    // CR-29: the answer landed in skill stats exactly once
+    expect(getReportSnapshot().skills['grade-4']).toEqual([
+      { key: 'grammar', correct: 1, total: 1, accuracy: 1 },
+    ]);
     // Stage advanced - nothing due today any more
     expect(getDueReviewItems('grade-4')).toHaveLength(0);
     // CR-27 integration: a review session counts as the drill quest

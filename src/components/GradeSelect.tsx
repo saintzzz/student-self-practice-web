@@ -25,6 +25,8 @@ interface GradeSelectProps {
   guestTrial?: boolean;
   /** CR-23: mo bai kiem tra dau vao (placement). */
   onPlacement?: () => void;
+  /** CR-29: mo man hinh bao cao cho ba me. */
+  onReport?: () => void;
 }
 
 /**
@@ -34,7 +36,7 @@ interface GradeSelectProps {
  * shows the sky land; the card itself carries each land's identity so
  * all five lands are visible at once on the map.
  */
-export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement }: GradeSelectProps) {
+export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement, onReport }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
   const [changePinOpen, setChangePinOpen] = useState(false);
 
@@ -115,6 +117,16 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       <div className="mb-8 flex justify-center">
         <EngagementBar />
       </div>
+      {onReport && (
+        <button
+          type="button"
+          data-testid="open-parent-report"
+          onClick={onReport}
+          className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-extrabold text-sky-200 ring-1 ring-sky-300/40 transition hover:bg-white/20 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-300/60"
+        >
+          📊 Báo cáo cho ba mẹ
+        </button>
+      )}
       {visibleGrades.length === 0 ? (
         <div data-testid="no-scope-message" className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-8 text-lg font-bold text-slate-300 shadow-lg ring-1 ring-white/15">
           Cô/Thầy chưa mở nội dung cho bé - hãy hỏi cô nhé!

@@ -42,6 +42,16 @@ export interface EngagementState {
   dailyQuest?: DailyQuestState;
   /** CR-28: spaced-repetition wrong-answer queue per grade. */
   review?: Record<string, ReviewItem[]>;
+  /** CR-29: per-day + per-skill answer stats for the parent report. */
+  stats?: StatsSlice;
+}
+
+/** CR-29: answer counters backing the parent report screen. */
+export interface StatsSlice {
+  /** dateISO -> answers recorded that day (capped to 30 newest days). */
+  days: Record<string, { correct: number; total: number }>;
+  /** gradeId -> skillKey -> counters. */
+  skills: Record<string, Record<string, { correct: number; total: number }>>;
 }
 
 /** CR-28: one wrong question waiting to be re-asked. */
@@ -407,6 +417,108 @@ export function recordReviewOutcome(
     list[index] = { ...list[index], stage: nextStage, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[nextStage]) };
   }
   persist(state);
+}
+
+// ---- CR-29: parent-report stats ----------------------------------------
+
+const DAY_STATS_CAP = 30;
+
+function statsSliceFor(state: EngagementState): StatsSlice {
+  if (!state.stats) state.stats = { days: {}, skills: {} };
+  return state.stats;
+}
+
+function bumpDay(stats: StatsSlice, today: string, correct: number, total: number): void {
+  const day = stats.days[today] ?? { correct: 0, total: 0 };
+  day.correct += correct;
+  day.total += total;
+  stats.days[today] = day;
+  // Bound storage: keep only the 30 newest calendar days.
+  const keys = Object.keys(stats.days).sort();
+  if (keys.length > DAY_STATS_CAP) {
+    for (const key of keys.slice(0, keys.length - DAY_STATS_CAP)) {
+      delete stats.days[key];
+    }
+  }
+}
+
+function bumpSkill(stats: StatsSlice, gradeId: string, skillKey: string, correct: number, total: number): void {
+  const grade = stats.skills[gradeId] ?? {};
+  const skill = grade[skillKey] ?? { correct: 0, total: 0 };
+  skill.correct += correct;
+  skill.total += total;
+  grade[skillKey] = skill;
+  stats.skills[gradeId] = grade;
+}
+
+/** Records one answered question toward today's and the skill's stats. */
+export function recordSkillAnswer(
+  gradeId: string,
+  skillKey: string,
+  correct: boolean,
+  now: Date = new Date(),
+): void {
+  const state = load();
+  const stats = statsSliceFor(state);
+  bumpDay(stats, todayISO(now), correct ? 1 : 0, 1);
+  bumpSkill(stats, gradeId, skillKey, correct ? 1 : 0, 1);
+  persist(state);
+}
+
+/** Aggregated variant for round-level outcomes (batch practice). */
+export function recordSkillAnswers(
+  gradeId: string,
+  skillKey: string,
+  correct: number,
+  total: number,
+  now: Date = new Date(),
+): void {
+  if (total <= 0) return;
+  const state = load();
+  const stats = statsSliceFor(state);
+  bumpDay(stats, todayISO(now), correct, total);
+  bumpSkill(stats, gradeId, skillKey, correct, total);
+  persist(state);
+}
+
+export interface ReportDay {
+  dateISO: string;
+  correct: number;
+  total: number;
+}
+
+export interface ReportSkill {
+  key: string;
+  correct: number;
+  total: number;
+  /** 0..1 */
+  accuracy: number;
+}
+
+export interface ReportSnapshot {
+  /** Rolling last 7 calendar days ending today (empty days included). */
+  days: ReportDay[];
+  /** gradeId -> skills sorted weakest-first. */
+  skills: Record<string, ReportSkill[]>;
+}
+
+/** Read-only snapshot for the parent report screen. */
+export function getReportSnapshot(now: Date = new Date()): ReportSnapshot {
+  const state = load();
+  const days: ReportDay[] = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(now.getTime() - i * 86_400_000);
+    const iso = todayISO(d);
+    const stat = state.stats?.days[iso];
+    days.push({ dateISO: iso, correct: stat?.correct ?? 0, total: stat?.total ?? 0 });
+  }
+  const skills: Record<string, ReportSkill[]> = {};
+  for (const [gradeId, gradeSkills] of Object.entries(state.stats?.skills ?? {})) {
+    skills[gradeId] = Object.entries(gradeSkills)
+      .map(([key, s]) => ({ key, correct: s.correct, total: s.total, accuracy: s.total > 0 ? s.correct / s.total : 0 }))
+      .sort((a, b) => a.accuracy - b.accuracy || a.key.localeCompare(b.key));
+  }
+  return { days, skills };
 }
 
 /** Test helper - clears persisted + in-memory state. */

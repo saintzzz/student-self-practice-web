@@ -1,5 +1,12 @@
 # CR-28 - On lai cau sai (spaced repetition 1/3/7 ngay) - Tier-1
 
+## Status
+
+- 2026-10-01: **RESOLVED** - pushed `d448f50`. Cross-model review round
+  1: 3 findings fixed (empty-queue retry crash -> queue-aware retry +
+  empty intro, refresh-aware eviction order, player/capture test
+  coverage). 788/788 tests, tsc + build clean.
+
 ## Trigger
 
 Product-owner review (2026-10-01): wrong answers are never seen again.
