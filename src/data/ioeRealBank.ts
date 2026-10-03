@@ -95,7 +95,20 @@ export const IOE_BANK: Record<string, IoeGradeBank> = {
 
   ],
   masked: [
-
+    { word: 'star', missing: 'a', sentence: 'A star is very bright.', displaySentence: 'A st_r is very bright.' },
+    { word: 'gate', missing: 'a', sentence: 'Please close the gate', displaySentence: 'Please close the g_te.' },
+    { word: 'Football', missing: 'ot', sentence: 'Football', displaySentence: 'Fo_ _ball' },
+    { word: 'pond', missing: 'n', sentence: 'Ducks swim in the pond', displaySentence: 'Ducks swim in the po_d.' },
+    { word: 'shoe', missing: 'e', sentence: 'Toy shoe', displaySentence: 'Toy sho_' },
+    { word: 'honey', missing: 'ey', sentence: 'Bees make honey', displaySentence: 'Bees make hon_ _.' },
+    { word: 'Bedroom', missing: 'e', sentence: 'Bedroom', displaySentence: 'B_droom' },
+    { word: 'Playground', missing: 'a', sentence: 'Playground', displaySentence: 'Pl_yground' },
+    { word: 'Classroom', missing: 'as', sentence: 'Classroom', displaySentence: 'Cl_ _sroom' },
+    { word: 'fox', missing: 'o', sentence: 'A fox has a long tail.', displaySentence: 'A f_x has a long tail.' },
+    { word: 'farmer', missing: 'mer', sentence: 'A farmer works on a farm.', displaySentence: 'A far_ _ _ works on a farm.' },
+    { word: 'Bus', missing: 'u', sentence: 'Bus stop', displaySentence: 'B_s stop' },
+    { word: 'moon', missing: 'o', sentence: 'I can see the moon at night.', displaySentence: 'I can see the mo_n at night.' },
+    { word: 'canteen', missing: 'a', sentence: 'School canteen', displaySentence: 'School c_nteen' },
   ],
   makeWord: [
     { word: 'LOOK', chunks: ['L', 'A', 'OO', 'K'] },

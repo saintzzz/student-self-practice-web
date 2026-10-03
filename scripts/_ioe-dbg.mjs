@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launchPersistentContext('/tmp/ioe-real-profile', { headless: true });
+const page = browser.pages()[0] || await browser.newPage();
+await page.goto('https://ioe.vn/hoc-sinh/tu-luyen', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(8000);
+await page.screenshot({ path: '/tmp/ioe-tl.png', fullPage: true });
+console.log('URL:', page.url());
+const txt = await page.locator('body').innerText();
+console.log(txt.slice(0, 1200));
+console.log('--- round items:', await page.locator('[data-testid^="round-list-item"]').count());
+console.log('--- do btns:', await page.locator('.ioe-exam-detail__do-btn').count());
+await browser.close();
