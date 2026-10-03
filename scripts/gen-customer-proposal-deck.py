@@ -131,12 +131,12 @@ title(s, "English Arena - học mà chơi, chơi mà học")
 feats = [
     ("1100+ từ vựng bám SGK",
      "Phủ Global Success lớp 1-5, mỗi từ có hình minh họa,\ngiải thích tiếng Việt, câu ví dụ được kiểm duyệt ngữ pháp."),
-    ("4 vòng chơi mỗi bài",
-     "Nghe - chọn đáp án - ghép cặp - phát âm có chấm điểm.\nGiọng đọc rõ, tốc độ chậm phù hợp trẻ nhỏ."),
-    ("Phản hồi học tập",
-     "Trả lời sai vẫn được giải thích: đáp án đã chọn,\nđáp án đúng kèm nghĩa tiếng Việt - bé hiểu vì sao."),
+    ("Luyện đề + Thi thử theo khối",
+     "Đề luyện và thi thử theo format đề IOE - số câu và thời gian\nchỉnh riêng từng khối (lớp 1 nhẹ hơn lớp 5)."),
+    ("Thi đua có đối thủ",
+     "Bảng xếp hạng tuần theo khối, đấu trường 1v1, sao - huy hiệu -\nchuỗi ngày học. Tiến độ đồng bộ mọi thiết bị, không mất khi đổi máy."),
     ("An toàn & quản lý",
-     "Username + PIN do giáo viên cấp, học sinh tự đổi PIN.\nKhông quảng cáo, không thu thập liên hệ trẻ em."),
+     "Username + PIN do giáo viên cấp, học sinh tự đổi PIN. Vào lớp bằng\nmã lớp 6 ký tự - không qua admin. Không quảng cáo, không chat."),
 ]
 for i, (h, b) in enumerate(feats):
     card(s, Inches(0.6 + (i % 2) * 6.2), Inches(1.9 + (i // 2) * 2.55),
@@ -194,7 +194,8 @@ tb(s, Inches(0.6), Inches(1.85), Inches(12), Inches(1.3),
    "- Mở ea.vieschool.com từ trình duyệt bất kỳ - không cần cài đặt.\n"
    "- Chưa có tài khoản: nhấn 'Chơi không cần tài khoản' - 1 vòng miễn phí mỗi lớp.\n"
    "- Học sinh: đăng nhập username + PIN do giáo viên cấp, tự đổi PIN khi cần.\n"
-   "- Quản trị: tạo tài khoản học sinh, gán phạm vi lớp, xem tiến độ.",
+   "- Vào lớp: nhập mã lớp 6 ký tự cô gửi (VD lớp demo: R8WHYF) - không cần admin gán tay.\n"
+   "- Quản trị: tạo tài khoản học sinh, tạo lớp sinh mã tự động, gán phạm vi lớp, xem tiến độ.",
    13, WHITE)
 table(s, [
     ("Vai trò", "Username", "PIN", "Phạm vi"),
@@ -249,9 +250,10 @@ title(s, "English Arena")
 table(s, [
     ("Gói", "Giá", "Quyền lợi"),
     ("Khách (Guest)", "Miễn phí", "Chơi thử 1 vòng mỗi lớp, không cần tài khoản"),
-    ("Gia đình", "249.000đ / học sinh / năm", "Đủ 5 khối, đủ 4 vòng, lưu tiến độ và thành tích"),
-    ("Nhà trường", "30.000 - 50.000đ / học sinh / năm", "Theo quy mô; kèm console quản lý lớp và báo cáo"),
-], Inches(0.6), Inches(2.1), Inches(12.1), Inches(3.0),
+    ("Gia đình", "249.000đ / 6 tháng\nhoặc 399.000đ / năm", "Đủ 5 khối, đủ 4 vòng, lưu tiến độ và thành tích"),
+    ("Nhóm lớp (PH mua)", "199.000đ / học sinh / năm", "Tối thiểu 15 học sinh; vào lớp tự phục vụ bằng mã lớp"),
+    ("Nhà trường", "99.000đ / học sinh / năm\n(79.000đ từ 300 HS)", "Console quản lý lớp, báo cáo; 800+ HS báo giá riêng"),
+], Inches(0.6), Inches(2.1), Inches(12.1), Inches(3.4),
     col_widths=[Inches(2.4), Inches(3.9), Inches(5.8)], font_size=13)
 
 s = slide()
