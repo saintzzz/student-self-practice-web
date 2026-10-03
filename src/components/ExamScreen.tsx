@@ -450,7 +450,8 @@ function ExamIntro({ programId, gradeLabel, isPractice, isReview, isArena, revie
   );
 }
 
-function ExamQuestionView({
+/** Exported for the real-bank render contract tests (CR-42). */
+export function ExamQuestionView({
   question,
   answer,
   onAnswer,
