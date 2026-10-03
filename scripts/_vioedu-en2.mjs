@@ -1,0 +1,20 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const browser = await chromium.launchPersistentContext('/tmp/vioedu-profile', { headless: true });
+const page = browser.pages()[0] || await browser.newPage();
+await page.goto('https://vio.edu.vn/skill-list', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(5000);
+const dong = page.getByText('Đóng').first();
+if (await dong.count()) await dong.click().catch(()=>{});
+// find subject tab elements
+const tab = page.locator('text="Tiếng Anh"').last();
+console.log('tieng anh els:', await page.locator('text="Tiếng Anh"').count());
+await tab.scrollIntoViewIfNeeded().catch(()=>{});
+await tab.click({ force: true }).catch(e=>console.log('click', e.message.slice(0,60)));
+await page.waitForTimeout(4000);
+console.log('URL:', page.url());
+const txt = await page.locator('body').innerText();
+const i = txt.indexOf('Toàn bộ chủ đề');
+console.log(txt.slice(i, i+1200));
+await page.screenshot({ path: '/tmp/vioedu-en2.png' });
+await browser.close();

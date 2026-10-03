@@ -87,3 +87,20 @@ data.game.ans[]  - partial answer key (25 entries, fill-in answers;
 IOE's bank is proprietary. Use harvested items to calibrate difficulty,
 patterns and distractor style - author our own equivalent items rather
 than shipping theirs verbatim.
+
+## Cập nhật: nguồn thật bổ sung (CR-33, tài khoản thật)
+
+### Violympic (account thật, lớp 2)
+- Login GraphQL `violympic.vn/graphql`; practice flow: `begin-round` -> `load-exam` -> `submit-single-answer` (trả `isCorrect` = oracle) -> `submit-exam` (trả `nextExam`). Mỗi vòng 3 exam, ~10 câu/exam.
+- Grade 2 chỉ có 3 môn: Toán, **Toán Tiếng Anh**, Tiếng Việt. KHÔNG có Tiếng Anh/KHTN riêng ở lớp 2.
+- Harvest "Thi thử Toán Tiếng Anh" (9 vòng sơ loại, không giới hạn lượt): 425 câu unique raw -> convert 376 câu vào `src/data/vioMathBank.ts` (116 MCQ text + 119 MCQ ảnh + 141 text-answer). 2,178 ảnh self-host tại `public/images/vio/`, attribution trong `public/attribution.json`.
+- Đáp án: giải tay từ ảnh + oracle `isCorrect` verify; 4 câu sai đã sửa lại đúng.
+
+### IOE (account thật `minhld2019`, lớp 2, đang ở vòng 7)
+- Vòng đã "Hoàn thành" (1-6) KHÔNG replay được; chỉ vòng hiện tại playable.
+- Harvest vòng 7: 78 raw unique -> +5 câu usable vào slice g2 của `ioeRealBank.ts` (masked/makeWord/listen tự mang ground-truth; MCQ ảnh drop).
+- Vòng 8+ vẫn unlock tuần tự.
+
+### VioEdu (account `dtds1-0014`, lớp 2)
+- Login OK qua form (`vio.edu.vn`, GraphQL API). Môn lớp 2: Toán, Tiếng Việt, Toán TA, **Tiếng Anh**, Tài Chính.
+- HẦU HẾT PAYWALL: chỉ chủ điểm đầu mỗi môn "Miễn phí", còn lại "Mua khoá học". Không harvest bulk được nếu không mua khoá học.
