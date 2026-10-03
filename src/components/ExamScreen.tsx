@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ExamProgramId, ExamQuestion } from '../types/exam';
 import {
   answerCurrent,
@@ -16,6 +16,11 @@ import {
 } from '../lib/exam/examSession';
 import { speakSentence } from '../lib/speech';
 import { playSfx } from '../lib/sfx';
+import {
+  recordBigModeComplete,
+  recordCorrectAnswers,
+  recordDrillComplete,
+} from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
 
@@ -51,6 +56,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const [now, setNow] = useState(() => Date.now());
   /** practice-mode verdict shown after each answer (null = awaiting answer). */
   const [verdict, setVerdict] = useState<{ isCorrect: boolean } | null>(null);
+  /** CR-27: question indexes already credited toward the daily quest -
+   *  a re-answer during exam review must not count twice. */
+  const creditedRef = useRef<Set<number>>(new Set());
 
   // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
   useEffect(() => {
@@ -72,6 +80,16 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     [exam],
   );
 
+  // CR-27: record the mode-complete quest once per finished exam instance
+  // (ref guard keeps StrictMode double-effects from double-marking).
+  const questRecordedFor = useRef<ExamState | null>(null);
+  useEffect(() => {
+    if (!exam || !result || questRecordedFor.current === exam) return;
+    questRecordedFor.current = exam;
+    if (isPractice) recordDrillComplete();
+    else recordBigModeComplete();
+  }, [exam, result, isPractice]);
+
   function begin(): void {
     const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     const count = isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
@@ -79,6 +97,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     setNow(Date.now());
     setStripOffset(0);
     setVerdict(null);
+    creditedRef.current = new Set();
   }
 
   function answer(answer: ExamAnswer): void {
@@ -91,7 +110,22 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       setExam(answerCurrent(exam, answer));
       setVerdict({ isCorrect });
       playSfx(isCorrect ? 'correct' : 'wrong');
+      // CR-27: count at answer time - correct answers land on the day
+      // they were earned even if the session crosses midnight.
+      if (isCorrect && !creditedRef.current.has(exam.currentIndex)) {
+        creditedRef.current.add(exam.currentIndex);
+        recordCorrectAnswers(1);
+      }
       return;
+    }
+    if (!exam) return;
+    const currentQuestion = exam.questions[exam.currentIndex];
+    if (!currentQuestion) return;
+    // CR-27: same at-answer counting in exam mode (no verdict shown,
+    // but the quest still credits the correct answer immediately).
+    if (isExamAnswerCorrect(currentQuestion, answer) && !creditedRef.current.has(exam.currentIndex)) {
+      creditedRef.current.add(exam.currentIndex);
+      recordCorrectAnswers(1);
     }
     setExam((current) => {
       if (!current) return current;

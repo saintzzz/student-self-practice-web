@@ -8,6 +8,7 @@ import StarRain from './celebrations/StarRain';
 import { EmojiVisual } from './EmojiVisual';
 import {
   checkStreakStickers,
+  recordCorrectAnswers,
   recordRoundResult,
   touchStreak,
   type RoundAwardResult,
@@ -57,6 +58,9 @@ export default function RoundSummary({
       const r = recordRoundResult(gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints);
       // A finished round is real practice - it counts toward the day streak.
       touchStreak();
+      // CR-27: round boundary is the right grain for the correct-answer
+      // quest - a student who exits mid-batch still keeps progress.
+      recordCorrectAnswers(outcome.correctCount);
       const streakStickers = checkStreakStickers();
       awarded.current = { ...r, newStickers: [...r.newStickers, ...streakStickers] };
       setAward(awarded.current);

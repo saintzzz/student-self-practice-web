@@ -19,6 +19,15 @@ export interface Sticker {
   emoji: string;
 }
 
+/** CR-27: daily quest slice - keyed by local date, resets each new day. */
+export interface DailyQuestState {
+  dateISO: string;
+  drillDone: boolean;
+  correctToday: number;
+  bigDone: boolean;
+  bonusClaimed: boolean;
+}
+
 export interface EngagementState {
   totalStars: number;
   grades: Record<string, GradeProgress>;
@@ -27,6 +36,8 @@ export interface EngagementState {
   batchesCompleted: number;
   /** Grade ids the learner has opened a batch in (for the map sticker). */
   gradesPlayed: string[];
+  /** CR-27: optional for backward compat with older stored payloads. */
+  dailyQuest?: DailyQuestState;
 }
 
 const STORAGE_KEY = 'beheo-engagement-v1';
@@ -201,6 +212,100 @@ export function checkStreakStickers(): Sticker[] {
   if (state.streak.count >= 3) awardSticker(state, 'streak-3', newly);
   persist(state);
   return [...newly].map((id) => STICKERS.find((s) => s.id === id)!);
+}
+
+// ---- CR-27: Daily Quest ------------------------------------------------
+
+export const DAILY_QUEST_TARGET = 10;
+export const DAILY_QUEST_BONUS = 3;
+
+export type DailyQuestId = 'drill' | 'correct' | 'big';
+
+export interface DailyQuestItem {
+  id: DailyQuestId;
+  done: boolean;
+  progress: number;
+  target: number;
+}
+
+export interface DailyQuestSnapshot {
+  dateISO: string;
+  quests: DailyQuestItem[];
+  allDone: boolean;
+  bonusClaimed: boolean;
+}
+
+function freshDailyQuest(dateISO: string): DailyQuestState {
+  return { dateISO, drillDone: false, correctToday: 0, bigDone: false, bonusClaimed: false };
+}
+
+/** Returns today's quest slice, resetting it when the stored date is stale. */
+function questFor(state: EngagementState, now: Date): DailyQuestState {
+  const today = todayISO(now);
+  if (!state.dailyQuest || state.dailyQuest.dateISO !== today) {
+    state.dailyQuest = freshDailyQuest(today);
+    persist(state);
+  }
+  return state.dailyQuest;
+}
+
+export function getDailyQuests(now: Date = new Date()): DailyQuestSnapshot {
+  const state = load();
+  const q = questFor(state, now);
+  const quests: DailyQuestItem[] = [
+    { id: 'drill', done: q.drillDone, progress: q.drillDone ? 1 : 0, target: 1 },
+    {
+      id: 'correct',
+      done: q.correctToday >= DAILY_QUEST_TARGET,
+      progress: Math.min(q.correctToday, DAILY_QUEST_TARGET),
+      target: DAILY_QUEST_TARGET,
+    },
+    { id: 'big', done: q.bigDone, progress: q.bigDone ? 1 : 0, target: 1 },
+  ];
+  return {
+    dateISO: q.dateISO,
+    quests,
+    allDone: quests.every((item) => item.done),
+    bonusClaimed: q.bonusClaimed,
+  };
+}
+
+/** Marks the "Luyen de" (20-question drill) quest done for today. */
+export function recordDrillComplete(now: Date = new Date()): void {
+  const state = load();
+  const q = questFor(state, now);
+  q.drillDone = true;
+  persist(state);
+}
+
+/** Marks the big-mode quest (Thi thu exam or 4-round practice batch). */
+export function recordBigModeComplete(now: Date = new Date()): void {
+  const state = load();
+  const q = questFor(state, now);
+  q.bigDone = true;
+  persist(state);
+}
+
+/** Accumulates correct answers toward the daily target (any mode). */
+export function recordCorrectAnswers(count: number, now: Date = new Date()): void {
+  if (count <= 0) return;
+  const state = load();
+  const q = questFor(state, now);
+  q.correctToday = Math.min(q.correctToday + count, DAILY_QUEST_TARGET);
+  persist(state);
+}
+
+/** Grants the daily bonus once all quests are done; idempotent per day. */
+export function claimDailyBonus(now: Date = new Date()): { granted: boolean; stars: number } {
+  const state = load();
+  const q = questFor(state, now);
+  const allDone = q.drillDone && q.correctToday >= DAILY_QUEST_TARGET && q.bigDone;
+  if (!allDone || q.bonusClaimed) return { granted: false, stars: 0 };
+  q.bonusClaimed = true;
+  state.totalStars += DAILY_QUEST_BONUS;
+  persist(state);
+  touchStreak(now);
+  return { granted: true, stars: DAILY_QUEST_BONUS };
 }
 
 /** Test helper - clears persisted + in-memory state. */

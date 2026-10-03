@@ -1,6 +1,7 @@
 import type { Grade } from '../types';
 import type { ExamProgramId } from '../types/exam';
 import Mascot from './Mascot';
+import DailyQuestCard from './DailyQuestCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
@@ -47,6 +48,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onB
           Bắt đầu luyện tập →
         </button>
       </div>
+
+      {/* CR-27: daily quests - the first thing the student sees. */}
+      <DailyQuestCard />
 
       {/* CR-24/25: per-program Luyện đề (drill) + Thi thử (formal exam). */}
       <div className={`mt-4 ${CARD} text-center`}>

@@ -95,4 +95,14 @@ describe('CR-13 guest trial lock', () => {
     expect(screen.getByTestId('next-round-button')).toBeTruthy();
     expect(screen.queryByTestId('guest-lock-panel')).toBeNull();
   });
+
+  it('CR-27: credits the round correct answers toward the daily quest (also for the guest-locked round)', async () => {
+    const { getDailyQuests, resetForTests } = await import('../lib/engagement/store');
+    resetForTests();
+    render(<RoundSummary outcome={OUTCOME} gradeId="grade-2" onNextRound={vi.fn()} locked onRequestLogin={vi.fn()} onExit={vi.fn()} />);
+
+    const correct = getDailyQuests().quests.find((q) => q.id === 'correct')!;
+    expect(correct.progress).toBe(7);
+    resetForTests();
+  });
 });

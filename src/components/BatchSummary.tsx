@@ -9,6 +9,7 @@ import {
   checkStreakStickers,
   getState,
   recordBatchResult,
+  recordBigModeComplete,
   touchStreak,
   type BatchAwardResult,
   type Sticker,
@@ -44,6 +45,10 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
     if (!awarded.current) {
       const batch = recordBatchResult(gradeId);
       touchStreak();
+      // CR-27: a finished 4-round batch counts as the daily big-mode
+      // quest. Correct answers are already recorded per-round in
+      // RoundSummary - re-recording here would double-count.
+      recordBigModeComplete();
       const streakStickers = checkStreakStickers();
       // Luu ket qua len Supabase cho bao cao tien do - no-op voi guest.
       void savePracticeResult(gradeId, result);
