@@ -1,3 +1,5 @@
+import type { ExamQuestion } from '../../types/exam';
+
 /**
  * CR-10 engagement layer (PRD s19 R-T3/R-T4). LocalStorage-backed
  * per-device state: star bank, day streak, sticker album, per-grade
@@ -38,6 +40,19 @@ export interface EngagementState {
   gradesPlayed: string[];
   /** CR-27: optional for backward compat with older stored payloads. */
   dailyQuest?: DailyQuestState;
+  /** CR-28: spaced-repetition wrong-answer queue per grade. */
+  review?: Record<string, ReviewItem[]>;
+}
+
+/** CR-28: one wrong question waiting to be re-asked. */
+export interface ReviewItem {
+  /** The question's own id - dedupe key. */
+  id: string;
+  question: ExamQuestion;
+  /** Leitner stage: 0 -> +1d, 1 -> +3d, 2 -> +7d, 3 -> mastered. */
+  stage: 0 | 1 | 2 | 3;
+  addedAtISO: string;
+  dueISO: string;
 }
 
 const STORAGE_KEY = 'beheo-engagement-v1';
@@ -306,6 +321,92 @@ export function claimDailyBonus(now: Date = new Date()): { granted: boolean; sta
   persist(state);
   touchStreak(now);
   return { granted: true, stars: DAILY_QUEST_BONUS };
+}
+
+// ---- CR-28: spaced repetition (on lai cau sai) --------------------------
+
+const REVIEW_CAP = 60;
+/** Days to wait before re-asking at each stage (index = stage). */
+const REVIEW_INTERVAL_DAYS = [1, 3, 7] as const;
+
+function addDaysISO(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return todayISO(d);
+}
+
+function reviewListFor(state: EngagementState, gradeId: string): ReviewItem[] {
+  if (!state.review) state.review = {};
+  if (!state.review[gradeId]) state.review[gradeId] = [];
+  return state.review[gradeId];
+}
+
+/**
+ * Records a wrong answer from Luyen de / Thi thu. Re-wronging the same
+ * question refreshes it (back to stage 0, due tomorrow, newer add date)
+ * instead of duplicating.
+ */
+export function recordWrongExamQuestion(
+  gradeId: string,
+  question: ExamQuestion,
+  now: Date = new Date(),
+): void {
+  const state = load();
+  const list = reviewListFor(state, gradeId);
+  const today = todayISO(now);
+  const existing = list.findIndex((item) => item.id === question.id);
+  const item: ReviewItem = {
+    id: question.id,
+    question,
+    stage: 0,
+    addedAtISO: today,
+    dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[0]),
+  };
+  // Re-recording refreshes the item AND moves it to the end, so
+  // insertion order always equals least-recently-wrong order - the
+  // cap eviction below then drops the truly oldest entries.
+  if (existing !== -1) list.splice(existing, 1);
+  list.push(item);
+  if (list.length > REVIEW_CAP) {
+    list.splice(0, list.length - REVIEW_CAP);
+  }
+  persist(state);
+}
+
+/** Due items for a grade, oldest-due first. */
+export function getDueReviewItems(gradeId: string, now: Date = new Date()): ReviewItem[] {
+  const state = load();
+  const today = todayISO(now);
+  return (state.review?.[gradeId] ?? [])
+    .filter((item) => item.dueISO <= today)
+    .sort((a, b) => (a.dueISO < b.dueISO ? -1 : a.dueISO > b.dueISO ? 1 : 0));
+}
+
+/**
+ * Records the outcome of a review-session answer: correct advances the
+ * stage (mastered items leave the queue), wrong resets to stage 0.
+ */
+export function recordReviewOutcome(
+  gradeId: string,
+  questionId: string,
+  correct: boolean,
+  now: Date = new Date(),
+): void {
+  const state = load();
+  const list = state.review?.[gradeId];
+  if (!list) return;
+  const index = list.findIndex((item) => item.id === questionId);
+  if (index === -1) return;
+  const today = todayISO(now);
+  if (!correct) {
+    list[index] = { ...list[index], stage: 0, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[0]) };
+  } else if (list[index].stage >= 2) {
+    list.splice(index, 1); // mastered after stage 2 (+7d) success
+  } else {
+    const nextStage = (list[index].stage + 1) as 1 | 2;
+    list[index] = { ...list[index], stage: nextStage, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[nextStage]) };
+  }
+  persist(state);
 }
 
 /** Test helper - clears persisted + in-memory state. */

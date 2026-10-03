@@ -20,7 +20,11 @@ import {
   recordBigModeComplete,
   recordCorrectAnswers,
   recordDrillComplete,
+  recordReviewOutcome,
+  recordWrongExamQuestion,
+  getDueReviewItems,
 } from '../lib/engagement/store';
+import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
 
@@ -44,13 +48,16 @@ interface ExamScreenProps {
   gradeId: string;
   gradeLabel: string;
   studentName?: string;
-  /** CR-25: 'exam' = IOE mock (200q/30min); 'practice' = drill (20q, instant verdicts). */
-  mode: 'exam' | 'practice';
+  /** CR-25: 'exam' = IOE mock (200q/30min); 'practice' = drill (20q, instant
+   *  verdicts). CR-28: 'review' = practice-style session over the due
+   *  spaced-repetition queue (pulled fresh at begin()). */
+  mode: 'exam' | 'practice' | 'review';
   onExit: () => void;
 }
 
 export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, onExit }: ExamScreenProps) {
-  const isPractice = mode === 'practice';
+  const isPractice = mode !== 'exam';
+  const isReview = mode === 'review';
   const [exam, setExam] = useState<ExamState | null>(null);
   const [stripOffset, setStripOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
@@ -88,12 +95,34 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     questRecordedFor.current = exam;
     if (isPractice) recordDrillComplete();
     else recordBigModeComplete();
-  }, [exam, result, isPractice]);
+    // CR-28: exam-mode wrongs are only known after submit - capture
+    // every answered-and-wrong question into the review queue.
+    if (!isPractice) captureExamWrongAnswers(gradeId, result.review);
+  }, [exam, result, isPractice, gradeId]);
 
   function begin(): void {
     const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    const count = isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
-    setExam(createExam(programId, gradeId, seed, Date.now(), count));
+    if (isReview) {
+      // CR-28: the session is the due review queue itself - same
+      // ExamState shape, no countdown (practice-style pacing). Re-fetch
+      // on every begin so "Luyen lai" drops items just mastered; an
+      // empty queue means nothing left to review - stay on the intro.
+      const questions = getDueReviewItems(gradeId).map((item) => item.question);
+      if (questions.length === 0) return;
+      setExam({
+        programId,
+        gradeId,
+        questions,
+        answers: questions.map(() => null),
+        currentIndex: 0,
+        startedAtMs: Date.now(),
+        timeLimitSec: 0,
+        finishedAtMs: null,
+      });
+    } else {
+      const count = isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
+      setExam(createExam(programId, gradeId, seed, Date.now(), count));
+    }
     setNow(Date.now());
     setStripOffset(0);
     setVerdict(null);
@@ -116,6 +145,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         creditedRef.current.add(exam.currentIndex);
         recordCorrectAnswers(1);
       }
+      // CR-28: review mode advances/resets the item's stage; a normal
+      // drill instead captures the wrong question for future review.
+      if (isReview) recordReviewOutcome(gradeId, question.id, isCorrect);
+      else if (!isCorrect) recordWrongExamQuestion(gradeId, question);
       return;
     }
     if (!exam) return;
@@ -158,11 +191,17 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   }
 
   if (!exam) {
-    return <ExamIntro programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} onBegin={begin} onExit={onExit} />;
+    // Fresh count at render time - items may have been mastered in a
+    // just-finished session, leaving nothing to review right now.
+    const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
+    return <ExamIntro programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} reviewCount={reviewCount} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
-    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} onExit={onExit} onRetry={begin} />;
+    // CR-28: after a review session the queue may be fully rescheduled -
+    // a retry with zero due items would have nothing to render.
+    const canRetry = !isReview || getDueReviewItems(gradeId).length > 0;
+    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} onExit={onExit} onRetry={canRetry ? begin : undefined} />;
   }
 
   const question = exam.questions[exam.currentIndex]!;
@@ -179,7 +218,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       <header className="flex items-center justify-between gap-2 border-b-4 border-amber-800/80 bg-[#132433] px-3 py-2 sm:px-5">
         <div className="min-w-0">
           <div className="truncate text-sm font-extrabold tracking-wide text-sky-200 sm:text-lg">
-            {isPractice ? 'Luyện đề' : 'Thi thử'} - {PROGRAM_LABEL[programId]} - {gradeLabel}
+            {isReview ? 'Ôn lại câu sai' : isPractice ? 'Luyện đề' : 'Thi thử'} - {isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}
           </div>
           {studentName && <div className="truncate text-xs font-bold text-slate-400">{studentName}</div>}
         </div>
@@ -287,17 +326,28 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeLabel, isPractice, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; isPractice: boolean; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeLabel, isPractice, isReview, reviewCount, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; isPractice: boolean; isReview?: boolean; reviewCount?: number; onBegin: () => void; onExit: () => void }) {
+  const title = isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0d1b26] p-4 text-white">
       <div className="w-full max-w-lg rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center shadow-2xl sm:p-10">
-        <div className="mb-2 text-5xl">{isPractice ? '✏️' : '📝'}</div>
+        <div className="mb-2 text-5xl">{isReview ? '📚' : isPractice ? '✏️' : '📝'}</div>
         <h1 className="font-display text-2xl font-extrabold text-amber-300 sm:text-3xl">
-          {isPractice ? 'Luyện đề' : 'Thi thử'} - {PROGRAM_LABEL[programId]}
+          {title}
         </h1>
-        <p className="mt-1 text-lg font-bold text-sky-200">{gradeLabel}</p>
+        {!isReview && <p className="mt-1 text-lg font-bold text-sky-200">{gradeLabel}</p>}
         <ul className="mx-auto mt-5 max-w-sm space-y-2 text-left text-sm font-semibold text-slate-200 sm:text-base">
-          {isPractice ? (
+          {isReview ? (
+            (reviewCount ?? 0) > 0 ? (
+              <>
+                <li>• {reviewCount} câu em từng trả lời sai - làm lại để nhớ lâu hơn</li>
+                <li>• Chữa từng câu ngay - có đáp án + giải thích + phiên âm</li>
+                <li>• Trả lời đúng vài lần cách ngày, câu sẽ "tốt nghiệp" nhé</li>
+              </>
+            ) : (
+              <li>• Không còn câu nào cần ôn - tuyệt vời! Làm Luyện đề hoặc Thi thử để thêm nhé</li>
+            )
+          ) : isPractice ? (
             <>
               <li>• {PRACTICE_QUESTION_COUNT} câu hỏi giống dạng đề thi thật</li>
               <li>• Chữa từng câu ngay - có đáp án + giải thích + phiên âm</li>
@@ -312,14 +362,16 @@ function ExamIntro({ programId, gradeLabel, isPractice, onBegin, onExit }: { pro
             </>
           )}
         </ul>
-        <button
-          type="button"
-          data-testid="exam-begin"
-          onClick={onBegin}
-          className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95"
-        >
-          {isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
-        </button>
+        {(!isReview || (reviewCount ?? 0) > 0) && (
+          <button
+            type="button"
+            data-testid="exam-begin"
+            onClick={onBegin}
+            className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95"
+          >
+            {isReview ? 'Bắt đầu ôn' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onExit}
@@ -609,7 +661,8 @@ function ExamResult({
   gradeLabel: string;
   isPractice: boolean;
   onExit: () => void;
-  onRetry: () => void;
+  /** CR-28: hidden when the review queue is drained (nothing to retry). */
+  onRetry?: () => void;
 }) {
   const mm = Math.floor(result.timeUsedSec / 60);
   const ss = result.timeUsedSec % 60;
@@ -652,14 +705,16 @@ function ExamResult({
             >
               Xem đáp án ({wrong.length} câu sai)
             </button>
-            <button
-              type="button"
-              data-testid="exam-retry"
-              onClick={onRetry}
-              className="flex-1 rounded-xl bg-amber-400 px-4 py-3 font-extrabold text-amber-950 transition hover:bg-amber-300"
-            >
-              {isPractice ? 'Luyện lại' : 'Thi lại'}
-            </button>
+            {onRetry && (
+              <button
+                type="button"
+                data-testid="exam-retry"
+                onClick={onRetry}
+                className="flex-1 rounded-xl bg-amber-400 px-4 py-3 font-extrabold text-amber-950 transition hover:bg-amber-300"
+              >
+                {isPractice ? 'Luyện lại' : 'Thi lại'}
+              </button>
+            )}
             <button
               type="button"
               onClick={onExit}

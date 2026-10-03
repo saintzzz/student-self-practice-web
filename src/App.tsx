@@ -46,7 +46,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
   const [examProgramId, setExamProgramId] = useState<ExamProgramId>('english');
-  const [examMode, setExamMode] = useState<'practice' | 'exam'>('exam');
+  const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review'>('exam');
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
 
@@ -138,8 +138,9 @@ export default function App() {
     setScreen('batch');
   }
 
-  /** CR-24/25: 'practice' = 20-question drill; 'exam' = 200q/30min mock. */
-  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam'): void {
+  /** CR-24/25: 'practice' = 20-question drill; 'exam' = 200q/30min mock.
+   *  CR-28: 'review' = spaced-repetition session over due wrong questions. */
+  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam' | 'review'): void {
     setExamProgramId(programId);
     setExamMode(mode);
     setScreen('exam');

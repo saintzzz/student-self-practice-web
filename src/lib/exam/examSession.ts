@@ -12,6 +12,7 @@ import { reorderBankForGrade } from '../../data/reorderBank';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
 import { isLiteralImageWord } from '../content/imageSemantics';
+import { recordWrongExamQuestion } from '../engagement/store';
 
 export const EXAM_QUESTION_COUNT = 200;
 export const PRACTICE_QUESTION_COUNT = 20;
@@ -277,6 +278,18 @@ export function submitExam(state: ExamState, nowMs: number): ExamState {
 export function remainingSeconds(state: ExamState, nowMs: number): number {
   const elapsed = Math.floor((nowMs - state.startedAtMs) / 1000);
   return Math.max(0, state.timeLimitSec - elapsed);
+}
+
+/**
+ * CR-28: capture every answered-and-wrong question into the spaced-
+ * repetition review queue. Unanswered (skipped) questions are excluded.
+ */
+export function captureExamWrongAnswers(gradeId: string, review: readonly ExamReviewItem[]): void {
+  for (const item of review) {
+    if (item.answer !== null && !item.isCorrect) {
+      recordWrongExamQuestion(gradeId, item.question);
+    }
+  }
 }
 
 export function computeExamResult(state: ExamState): ExamResult {

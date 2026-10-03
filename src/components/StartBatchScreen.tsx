@@ -2,13 +2,15 @@ import type { Grade } from '../types';
 import type { ExamProgramId } from '../types/exam';
 import Mascot from './Mascot';
 import DailyQuestCard from './DailyQuestCard';
+import ReviewCard from './ReviewCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
   grade: Grade;
   onStartBatch: () => void;
-  /** CR-25: 'practice' = 20-question drill with instant verdicts; 'exam' = 200q/30min. */
-  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam') => void;
+  /** CR-25: 'practice' = 20-question drill with instant verdicts; 'exam' = 200q/30min.
+   *  CR-28: 'review' = spaced-repetition session over due wrong questions. */
+  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review') => void;
   onBack: () => void;
 }
 
@@ -51,6 +53,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onB
 
       {/* CR-27: daily quests - the first thing the student sees. */}
       <DailyQuestCard />
+
+      {/* CR-28: spaced repetition - only renders when items are due. */}
+      <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
 
       {/* CR-24/25: per-program Luyện đề (drill) + Thi thử (formal exam). */}
       <div className={`mt-4 ${CARD} text-center`}>

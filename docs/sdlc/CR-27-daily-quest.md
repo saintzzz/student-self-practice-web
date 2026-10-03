@@ -53,8 +53,11 @@ Estimate: M (~1 phase-cycle). No WBS re-run per CR rules.
 
 ## Status
 
-- 2026-10-01: intake + impact assessment. Human-approved direction
-  ("lam lan luot tu Tier 1"). Proceeding to BA artifact + implementation.
+- 2026-10-01: **RESOLVED** - deployed `d717ae2`, verified live on
+  ea.vieschool.com (quest card renders on grade home; 773/773 tests).
+  Cross-model review round 1: 3 findings fixed (round-level correct-answer
+  crediting incl. guest-locked path, card auto-refresh at midnight,
+  answer-time attribution with per-question dedupe).
 
 ## BA artifact
 
