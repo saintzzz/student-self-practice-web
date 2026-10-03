@@ -12,8 +12,13 @@ export type PronunciationPhase =
   | 'unsupported'
   | 'error';
 
+/** SpeechRecognition error codes worth an invisible re-listen before giving up. */
+const RETRYABLE_CODES = new Set(['no-speech', 'network', 'audio-capture', 'aborted']);
+
 export interface UsePronunciationRecordingResult {
   phase: PronunciationPhase;
+  /** Browser error code behind the 'error' phase ('no-speech', 'network', 'audio-capture', ...) for tailored messaging. */
+  errorReason: string | null;
   startRecording: () => void;
   stopRecording: () => void;
   /** Dismiss a transient 'error' state back to 'idle' so the child can tap record again. */
@@ -36,8 +41,19 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
   const [phase, setPhase] = useState<PronunciationPhase>(() =>
     isSpeechRecognitionSupported() ? 'idle' : 'unsupported',
   );
+  const [errorReason, setErrorReason] = useState<string | null>(null);
   const controllerRef = useRef<SpeechRecognitionController | null>(null);
   const settledRef = useRef(false);
+  // Transient failures ('no-speech' = silence timeout, 'network' = the
+  // service is unreachable, 'audio-capture' = mic hiccup) get ONE silent
+  // automatic retry while the child still sees "đang ghi âm" - field
+  // feedback: kids tapped record, spoke, and got an error screen for a
+  // failure the app could just have retried.
+  const attemptsRef = useRef(0);
+  // Self-reference so an auto-retry can start a fresh recognizer from
+  // inside its own error callback - launch() intentionally skips the
+  // 'already recording' guard that startRecording() enforces.
+  const launchRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     return () => {
@@ -54,8 +70,7 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
     [onAttempt],
   );
 
-  const startRecording = useCallback(() => {
-    if (settledRef.current || phase === 'recording') return;
+  const launch = useCallback(() => {
 
     // Goes straight to SpeechRecognition.start() instead of pre-flighting a
     // separate getUserMedia() call - requesting the microphone twice in a
@@ -67,12 +82,21 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
     const controller = startSpeechRecognition({
       onResult: (transcript) => finish(transcript),
       onPermissionError: () => setPhase('permission-denied'),
-      // CR-17 follow-up: a transient failure (mobile 'network'/'audio-
-      // capture'/'no-speech', or the child tapping stop without speaking)
-      // must NOT silently submit an empty answer - it scored the question
-      // wrong with no explanation of why. Move to a retryable 'error'
-      // phase instead; the child chooses "thử lại" or "bỏ qua".
-      onOtherError: () => setPhase('error'),
+      // CR-17 follow-up: a transient failure must NOT silently submit an
+      // empty answer - it scored the question wrong with no explanation
+      // of why. Silent-retry transient codes once, then move to a
+      // retryable 'error' phase; the child chooses "thử lại"/"bỏ qua".
+      onOtherError: (code) => {
+        if (RETRYABLE_CODES.has(code) && attemptsRef.current < 2) {
+          attemptsRef.current += 1;
+          controllerRef.current = null;
+          // Small beat so the recognizer can tear down cleanly.
+          setTimeout(() => launchRef.current?.(), 150);
+          return;
+        }
+        setErrorReason(code);
+        setPhase('error');
+      },
     });
 
     if (!controller) {
@@ -82,7 +106,13 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
 
     controllerRef.current = controller;
     setPhase('recording');
-  }, [phase, finish]);
+  }, [finish]);
+  launchRef.current = launch;
+
+  const startRecording = useCallback(() => {
+    if (settledRef.current || phase === 'recording') return;
+    launch();
+  }, [phase, launch]);
 
   const stopRecording = useCallback(() => {
     controllerRef.current?.stop();
@@ -91,6 +121,8 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
   const retry = useCallback(() => {
     if (settledRef.current) return;
     controllerRef.current = null;
+    attemptsRef.current = 0;
+    setErrorReason(null);
     setPhase('idle');
   }, []);
 
@@ -98,5 +130,5 @@ export function usePronunciationRecording(onAttempt: (transcript: string) => voi
     finish('');
   }, [finish]);
 
-  return { phase, startRecording, stopRecording, retry, skip };
+  return { phase, errorReason, startRecording, stopRecording, retry, skip };
 }

@@ -123,12 +123,28 @@ function audioUrlFor(text: string): Promise<string | null> {
  * plays, so a missing file does not flash an error before the fallback
  * even gets a chance.
  */
-function tryPlayAudioFile(text: string, onStatus?: (status: SpeechPlaybackStatus) => void): Promise<boolean> {
+/**
+ * Kid-paced speech speeds. The default play is deliberately slower than
+ * a normal adult speaking rate - early readers were missing whole words
+ * at rate ~0.9. "Nghe chậm" replays at an even gentler speed.
+ */
+const NORMAL_UTTERANCE_RATE = 0.7;
+const NORMAL_FILE_RATE = 0.8;
+const SLOW_FACTOR = 0.7;
+
+export type SpeechSpeed = 'normal' | 'slow';
+
+function tryPlayAudioFile(
+  text: string,
+  onStatus: ((status: SpeechPlaybackStatus) => void) | undefined,
+  speed: SpeechSpeed,
+): Promise<boolean> {
   return audioUrlFor(text).then((url) => {
     if (!url) return false;
     return new Promise<boolean>((resolve) => {
       const audio = new Audio(url);
       audio.preload = 'auto';
+      audio.playbackRate = speed === 'slow' ? NORMAL_FILE_RATE * SLOW_FACTOR : NORMAL_FILE_RATE;
       const giveUp = () => {
         if (activeAudio === audio) activeAudio = null;
         resolve(false);
@@ -154,7 +170,12 @@ function tryPlayAudioFile(text: string, onStatus?: (status: SpeechPlaybackStatus
  * optional and best-effort; every caller must keep working with no status
  * feedback at all.
  */
-function synthesize(text: string, onStatus?: (status: SpeechPlaybackStatus) => void, isRetry = false): void {
+function synthesize(
+  text: string,
+  onStatus?: (status: SpeechPlaybackStatus) => void,
+  speed: SpeechSpeed = 'normal',
+  isRetry = false,
+): void {
   if (typeof window === 'undefined' || !window.speechSynthesis) {
     onStatus?.('unsupported');
     return;
@@ -165,10 +186,10 @@ function synthesize(text: string, onStatus?: (status: SpeechPlaybackStatus) => v
 
     const utterance = new window.SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    // Slightly slower than default so early readers can catch each word;
-    // pitch nudged up a touch reads friendlier for kids without sounding
-    // cartoonish.
-    utterance.rate = 0.88;
+    // Kid-paced rate (field feedback: the previous ~0.9 read words too
+    // fast for early readers to catch); pitch nudged up a touch reads
+    // friendlier for kids without sounding cartoonish.
+    utterance.rate = speed === 'slow' ? NORMAL_UTTERANCE_RATE * SLOW_FACTOR : NORMAL_UTTERANCE_RATE;
     utterance.pitch = 1.05;
     const voice = pickEnglishVoice();
     if (voice) utterance.voice = voice;
@@ -193,7 +214,7 @@ function synthesize(text: string, onStatus?: (status: SpeechPlaybackStatus) => v
         sendStatus('error');
         return;
       }
-      setTimeout(() => synthesize(text, onStatus, true), 120);
+      setTimeout(() => synthesize(text, onStatus, speed, true), 120);
     };
     utterance.onstart = () => sendStatus('started');
     utterance.onend = () => {
@@ -257,14 +278,18 @@ function synthesize(text: string, onStatus?: (status: SpeechPlaybackStatus) => v
  * hash lookup adds only a microtask hop, well inside the transient
  * activation window Chrome grants media playback.
  */
-function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void): void {
+function speak(
+  text: string,
+  onStatus?: (status: SpeechPlaybackStatus) => void,
+  speed: SpeechSpeed = 'normal',
+): void {
   // Stop any file playback from a previous tap before starting anew.
   if (activeAudio) {
     activeAudio.pause();
     activeAudio = null;
   }
-  void tryPlayAudioFile(text, onStatus).then((played) => {
-    if (!played) synthesize(text, onStatus);
+  void tryPlayAudioFile(text, onStatus, speed).then((played) => {
+    if (!played) synthesize(text, onStatus, speed);
   });
 }
 
@@ -273,8 +298,12 @@ function speak(text: string, onStatus?: (status: SpeechPlaybackStatus) => void):
  * English word aloud so a 7-year-old can practice listening (see
  * mvp-decisions.md "v2 Correction" - Audio source).
  */
-export function speakWord(word: string, onStatus?: (status: SpeechPlaybackStatus) => void): void {
-  speak(word, onStatus);
+export function speakWord(
+  word: string,
+  onStatus?: (status: SpeechPlaybackStatus) => void,
+  speed: SpeechSpeed = 'normal',
+): void {
+  speak(word, onStatus, speed);
 }
 
 /**
@@ -283,6 +312,10 @@ export function speakWord(word: string, onStatus?: (status: SpeechPlaybackStatus
  * longer utterance - kept as a distinct named export so callers make their
  * intent explicit (a whole sentence vs. a bare word).
  */
-export function speakSentence(sentence: string, onStatus?: (status: SpeechPlaybackStatus) => void): void {
-  speak(sentence, onStatus);
+export function speakSentence(
+  sentence: string,
+  onStatus?: (status: SpeechPlaybackStatus) => void,
+  speed: SpeechSpeed = 'normal',
+): void {
+  speak(sentence, onStatus, speed);
 }

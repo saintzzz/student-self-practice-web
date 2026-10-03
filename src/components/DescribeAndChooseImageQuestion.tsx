@@ -4,7 +4,7 @@ import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName } from './optionButtonStyle';
-import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
+import ListenButtons from './ListenButtons';
 
 interface DescribeAndChooseImageQuestionProps {
   question: DescribeAndChooseImageQuestionType;
@@ -24,8 +24,8 @@ export default function DescribeAndChooseImageQuestion({
   selectedIndex,
   onSelectOption,
 }: DescribeAndChooseImageQuestionProps) {
-  const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) =>
-    speakSentence(question.sentence, onStatus),
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
+    speakSentence(question.sentence, onStatus, speed),
   );
   const hasAnswered = selectedIndex !== null;
 
@@ -33,14 +33,7 @@ export default function DescribeAndChooseImageQuestion({
     <div>
       <p className="mb-2 text-xl font-semibold text-amber-200">Nghe hoặc đọc câu rồi chọn hình đúng nhé!</p>
       <p className="mb-3 text-3xl font-extrabold text-white">{question.sentence}</p>
-      <button
-        type="button"
-        data-testid="play-audio-button"
-        onClick={play}
-        className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
-      >
-        {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
-      </button>
+      <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

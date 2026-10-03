@@ -89,7 +89,10 @@ class MockSpeechRecognitionStub {
     setTimeout(() => {
       this.onresult?.({
         resultIndex: 0,
-        results: { length: 1, 0: { length: 1, 0: { transcript: 'practice attempt', confidence: 0.9 } } },
+        results: {
+          length: 1,
+          0: { isFinal: true, length: 1, 0: { transcript: 'practice attempt', confidence: 0.9 } },
+        },
       });
       this.onend?.();
     }, 0);

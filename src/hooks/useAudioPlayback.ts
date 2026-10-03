@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { SpeechPlaybackStatus } from '../lib/speech';
+import type { SpeechPlaybackStatus, SpeechSpeed } from '../lib/speech';
 
 export interface UseAudioPlaybackResult {
   /** True once the play button has been tapped at least once (drives the "Nghe" -> "Nghe lại" label). */
@@ -12,6 +12,8 @@ export interface UseAudioPlaybackResult {
    */
   playbackFailed: boolean;
   play: () => void;
+  /** Replays the same audio at kid-paced "slow" speed (field feedback: default rate was still too fast to catch). */
+  playSlow: () => void;
 }
 
 /**
@@ -23,20 +25,29 @@ export interface UseAudioPlaybackResult {
  * existed.
  */
 export function useAudioPlayback(
-  speak: (onStatus: (status: SpeechPlaybackStatus) => void) => void,
+  speak: (onStatus: (status: SpeechPlaybackStatus) => void, speed: SpeechSpeed) => void,
 ): UseAudioPlaybackResult {
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playbackFailed, setPlaybackFailed] = useState(false);
 
-  const play = useCallback(() => {
-    setHasPlayed(true);
-    setPlaybackFailed(false);
-    speak((status) => {
-      if (status === 'unsupported' || status === 'error') {
-        setPlaybackFailed(true);
-      }
-    });
-  }, [speak]);
+  const playAt = useCallback(
+    (speed: SpeechSpeed) => {
+      setHasPlayed(true);
+      setPlaybackFailed(false);
+      speak(
+        (status) => {
+          if (status === 'unsupported' || status === 'error') {
+            setPlaybackFailed(true);
+          }
+        },
+        speed,
+      );
+    },
+    [speak],
+  );
 
-  return { hasPlayed, playbackFailed, play };
+  const play = useCallback(() => playAt('normal'), [playAt]);
+  const playSlow = useCallback(() => playAt('slow'), [playAt]);
+
+  return { hasPlayed, playbackFailed, play, playSlow };
 }

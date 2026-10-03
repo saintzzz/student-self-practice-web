@@ -3,7 +3,8 @@ import type { ListeningSentenceFillBlankQuestion as ListeningSentenceFillBlankQu
 import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
-import { AUDIO_BUTTON_CLASSNAME, SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
+import ListenButtons from './ListenButtons';
 
 interface ListeningSentenceFillBlankQuestionProps {
   question: ListeningSentenceFillBlankQuestionType;
@@ -24,8 +25,8 @@ export default function ListeningSentenceFillBlankQuestion({
   onSubmit,
 }: ListeningSentenceFillBlankQuestionProps) {
   const [inputValue, setInputValue] = useState('');
-  const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) =>
-    speakSentence(question.sentence, onStatus),
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
+    speakSentence(question.sentence, onStatus, speed),
   );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
@@ -38,14 +39,7 @@ export default function ListeningSentenceFillBlankQuestion({
     <div>
       <p className="mb-2 text-xl font-semibold text-amber-200">Nghe câu và điền từ còn thiếu nhé!</p>
       <p className="mb-3 text-3xl font-extrabold text-white">{question.displaySentence}</p>
-      <button
-        type="button"
-        data-testid="play-audio-button"
-        onClick={play}
-        className={`mb-3 ${AUDIO_BUTTON_CLASSNAME}`}
-      >
-        {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
-      </button>
+      <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
       <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <input

@@ -16,6 +16,21 @@ const DISCLOSURE_TEXT =
   'Đây là cách kiểm tra gần đúng dựa trên nhận diện giọng nói của trình duyệt, không phải chấm điểm phát âm ' +
   'chuẩn xác tuyệt đối như chuyên gia đâu nhé. Cứ mạnh dạn đọc to lên nào!';
 
+/** Friendly copy per real browser error code (generic hint as fallback). */
+function errorBodyFor(reason: string | null): string {
+  switch (reason) {
+    case 'no-speech':
+    case 'aborted':
+      return 'Micro đã bật nhưng chưa nghe rõ tiếng em - em đứng gần micro hơn, đọc thật to và rõ từng chữ ngay sau khi bấm nhé.';
+    case 'network':
+      return 'Dịch vụ nhận diện giọng nói cần mạng ổn định - mạng đang chập chờn nên chưa nghe được. Em kiểm tra mạng rồi thử lại nhé.';
+    case 'audio-capture':
+      return 'Micro đang gặp trục trặc - em kiểm tra micro (hoặc tai nghe) đang bật rồi thử lại nhé.';
+    default:
+      return 'Micro chưa nhận được tiếng đọc của em - có thể do mạng chập chờn hoặc em chưa kịp đọc. Em thử lại hoặc bỏ qua câu này nhé.';
+  }
+}
+
 /**
  * Round 3 - Pronunciation Recording (plan.md v5/v6). Once `hasAnswered` is
  * true (the parent's practice-session reducer has already scored the
@@ -31,7 +46,7 @@ export default function PronunciationRecordingQuestion({
   isCorrect,
   onSubmit,
 }: PronunciationRecordingQuestionProps) {
-  const { phase, startRecording, stopRecording, retry, skip } = usePronunciationRecording(onSubmit);
+  const { phase, errorReason, startRecording, stopRecording, retry, skip } = usePronunciationRecording(onSubmit);
 
   return (
     <div>
@@ -72,7 +87,7 @@ export default function PronunciationRecordingQuestion({
             <PronunciationStatusMessage
               testId="speech-recognition-error-message"
               heading="Chưa nghe được giọng em"
-              body="Micro chưa nhận được tiếng đọc của em - có thể do mạng chập chờn hoặc em chưa kịp đọc. Em thử lại hoặc bỏ qua câu này nhé."
+              body={errorBodyFor(errorReason)}
               onRetry={retry}
               onSkip={skip}
             />

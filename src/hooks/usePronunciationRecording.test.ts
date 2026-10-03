@@ -125,6 +125,57 @@ describe('usePronunciationRecording', () => {
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
   });
 
+  it('silently retries a transient no-speech failure before surfacing an error', async () => {
+    let attempts = 0;
+    class FirstFailRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+
+      start(): void {
+        attempts += 1;
+        if (attempts === 1) {
+          setTimeout(() => this.onerror?.({ error: 'no-speech' }), 0);
+        } else {
+          setTimeout(() => {
+            this.onresult?.({
+              resultIndex: 0,
+              results: {
+                length: 1,
+                0: { isFinal: true, length: 1, 0: { transcript: 'practice attempt', confidence: 0.9 } },
+              },
+            });
+          }, 0);
+        }
+      }
+      stop(): void {}
+      abort(): void {}
+    }
+
+    const original = { ...testWindow() };
+    testWindow().SpeechRecognition = FirstFailRecognition;
+    testWindow().webkitSpeechRecognition = undefined;
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt));
+
+    act(() => {
+      result.current.startRecording();
+    });
+
+    // The error never surfaces - the retry lands and the transcript wins.
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
+    expect(result.current.phase).not.toBe('error');
+    expect(attempts).toBe(2);
+
+    testWindow().SpeechRecognition = original.SpeechRecognition;
+    testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
+  });
+
   it('skip calls onAttempt with an empty string exactly once', async () => {
     const onAttempt = vi.fn();
     const { result } = renderHook(() => usePronunciationRecording(onAttempt));

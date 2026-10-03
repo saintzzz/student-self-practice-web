@@ -26,7 +26,7 @@ export default function PhonicsRhymeChoiceQuestion({
   selectedIndex,
   onSelectOption,
 }: PhonicsRhymeChoiceQuestionProps) {
-  const { hasPlayed, playbackFailed, play } = useAudioPlayback((onStatus) => speakWord(question.word, onStatus));
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed));
   const hasAnswered = selectedIndex !== null;
 
   return (
@@ -47,6 +47,16 @@ export default function PhonicsRhymeChoiceQuestion({
         >
           {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
         </button>
+        {hasPlayed && (
+          <button
+            type="button"
+            data-testid="play-slow-button"
+            onClick={playSlow}
+            className="inline-flex min-h-[56px] items-center justify-center rounded-full bg-slate-700/80 px-5 py-2 text-lg font-bold text-sky-200 ring-1 ring-sky-400/40 transition hover:bg-slate-600/80 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-400"
+          >
+            🐢 Nghe chậm
+          </button>
+        )}
       </div>
       {playbackFailed && <AudioPlaybackWarning />}
 

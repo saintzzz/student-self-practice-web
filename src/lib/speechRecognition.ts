@@ -14,6 +14,7 @@
 
 export interface SpeechRecognitionResultLike {
   readonly [index: number]: { transcript: string; confidence: number };
+  readonly isFinal: boolean;
   readonly length: number;
 }
 
@@ -86,7 +87,8 @@ export async function requestMicrophonePermission(): Promise<boolean> {
 export interface SpeechRecognitionHandlers {
   onResult: (transcript: string) => void;
   onPermissionError: () => void;
-  onOtherError: () => void;
+  /** Called with the browser's error code ('no-speech', 'network', ...) so callers can auto-retry transient failures and tailor the fallback message. */
+  onOtherError: (code: string) => void;
 }
 
 export interface SpeechRecognitionController {
@@ -109,24 +111,32 @@ export function startSpeechRecognition(handlers: SpeechRecognitionHandlers): Spe
   const recognizer = new RecognitionCtor();
   recognizer.lang = 'en-US';
   recognizer.continuous = false;
-  recognizer.interimResults = false;
+  // Interim results keep the service's no-speech timeout from firing as
+  // aggressively and let the caller settle on the first FINAL result only.
+  recognizer.interimResults = true;
   recognizer.maxAlternatives = 1;
 
   let handled = false;
 
   recognizer.onresult = (event) => {
-    handled = true;
+    if (handled) return;
+    // With interimResults on, non-final events fire mid-utterance - only
+    // settle on a final transcript so a hesitant first syllable is not
+    // scored as the whole attempt.
     const lastResult = event.results[event.results.length - 1];
-    const transcript = lastResult?.[0]?.transcript ?? '';
+    if (!lastResult?.isFinal) return;
+    handled = true;
+    const transcript = lastResult[0]?.transcript ?? '';
     handlers.onResult(transcript);
   };
 
   recognizer.onerror = (event) => {
+    if (handled) return;
     handled = true;
     if (PERMISSION_ERROR_CODES.has(event.error)) {
       handlers.onPermissionError();
     } else {
-      handlers.onOtherError();
+      handlers.onOtherError(event.error ?? 'unknown');
     }
   };
 
@@ -136,7 +146,7 @@ export function startSpeechRecognition(handlers: SpeechRecognitionHandlers): Spe
     // attempt rather than leaving the UI stuck waiting.
     if (!handled) {
       handled = true;
-      handlers.onOtherError();
+      handlers.onOtherError('no-speech');
     }
   };
 

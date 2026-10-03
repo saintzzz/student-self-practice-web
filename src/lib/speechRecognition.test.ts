@@ -46,7 +46,7 @@ function makeResultEvent(transcript: string): SpeechRecognitionEventLike {
     resultIndex: 0,
     results: {
       length: 1,
-      0: { length: 1, 0: { transcript, confidence: 0.9 } },
+      0: { isFinal: true, length: 1, 0: { transcript, confidence: 0.9 } },
     },
   };
 }
@@ -117,7 +117,7 @@ describe('startSpeechRecognition', () => {
     expect(created).not.toBeNull();
     expect(created!.lang).toBe('en-US');
     expect(created!.continuous).toBe(false);
-    expect(created!.interimResults).toBe(false);
+    expect(created!.interimResults).toBe(true);
     expect(created!.startCalled).toBe(true);
   });
 
