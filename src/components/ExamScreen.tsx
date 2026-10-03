@@ -29,6 +29,7 @@ import {
 import { skillKeyFor } from '../lib/engagement/skills';
 import { saveExamResult } from '../lib/practiceResults';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
+import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
@@ -924,33 +925,48 @@ function ArenaResult({
   const [duel, setDuel] = useState<ArenaDuelResult | null>(null);
   const [created, setCreated] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [newBadges, setNewBadges] = useState<Sticker[]>([]);
   const settled = useRef(false);
 
   useEffect(() => {
     if (settled.current) return;
     settled.current = true;
+    // CR-37: a finished duel (win or loss) feeds the arena badges -
+    // guests earn them too, the counters are localStorage-based.
+    const settle = (won: boolean) => setNewBadges(recordArenaDuel(won));
     if (arena.kind === 'bot') {
       const ghost = botGhost(arena.seed, result.totalCount * EXAM_POINTS_PER_QUESTION);
+      const iWon = myScore > ghost.score || (myScore === ghost.score && myTimeMs < ghost.timeMs);
       setDuel({
         my_score: myScore,
         my_time_ms: myTimeMs,
         opp_name: ghost.name,
         opp_score: ghost.score,
         opp_time_ms: ghost.timeMs,
-        i_won: myScore > ghost.score || (myScore === ghost.score && myTimeMs < ghost.timeMs),
+        i_won: iWon,
         is_draw: myScore === ghost.score && myTimeMs === ghost.timeMs,
       });
+      settle(iWon);
       return;
     }
     void (async () => {
       if (arena.kind === 'create') {
         const id = await arenaCreate(arena.seed, gradeId, programId, myScore, myTimeMs);
-        if (id) setCreated(true);
-        else setFailed(true);
+        if (id) {
+          setCreated(true);
+          // A posted challenge is still a played arena run for badges.
+          settle(false);
+        } else {
+          setFailed(true);
+        }
       } else if (arena.challengeId) {
         const r = await arenaAccept(arena.challengeId, myScore, myTimeMs);
-        if (r) setDuel(r);
-        else setFailed(true);
+        if (r) {
+          setDuel(r);
+          settle(r.i_won && !r.is_draw);
+        } else {
+          setFailed(true);
+        }
       }
     })();
   }, [arena, gradeId, programId, myScore, myTimeMs]);
@@ -1025,6 +1041,12 @@ function ArenaResult({
                   </p>
                 </>
               )}
+            </div>
+          )}
+
+          {newBadges.length > 0 && (
+            <div data-testid="arena-new-badges" className="mt-4 rounded-xl bg-amber-400/15 p-3 text-sm font-extrabold text-amber-200 ring-1 ring-amber-400/40">
+              🏅 Huy hiệu mới: {newBadges.map((b) => `${b.emoji} ${b.nameVi}`).join(' - ')}
             </div>
           )}
 

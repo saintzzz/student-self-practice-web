@@ -102,9 +102,24 @@ describe('store resilience', () => {
     expect(STICKERS.map((s) => s.id)).toEqual([
       'first-batch',
       'perfect-round',
-      'streak-3',
       'explorer',
       'star-hoard',
+      'correct-100',
+      'correct-500',
+      'review-10',
+      'skill-grammar',
+      'skill-listening',
+      'skill-spelling',
+      'skill-reading',
+      'streak-3',
+      'streak-7',
+      'arena-first',
+      'arena-win',
+      'arena-5',
+      'quest-perfect',
+      'quest-3',
+      'pet-baby',
+      'pet-adult',
     ]);
   });
 });

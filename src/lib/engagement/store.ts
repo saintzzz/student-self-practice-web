@@ -48,6 +48,17 @@ export interface EngagementState {
   stats?: StatsSlice;
   /** CR-36: companion pet - XP grows with every correct answer. */
   pet?: PetState;
+  /** CR-37: aggregate counters feeding the extended badge rules. */
+  badgeStats?: BadgeStats;
+}
+
+/** CR-37: counters the extended badge rules read. */
+export interface BadgeStats {
+  totalCorrect: number;
+  reviewMastered: number;
+  questPerfectDays: number;
+  arenaPlayed: number;
+  arenaWon: number;
 }
 
 /** CR-29: answer counters backing the parent report screen. */
@@ -93,13 +104,13 @@ export const STICKERS: readonly Sticker[] = [
   // Đấu trường.
   { id: 'arena-first', nameVi: 'Trận đấu đầu tiên', emoji: '⚔️', category: 'arena' },
   { id: 'arena-win', nameVi: 'Chiến thắng Arena', emoji: '🏆', category: 'arena' },
-  { id: 'arena-5', nameVi: '5 trận đấu trường', emoji: '�️', category: 'arena' },
+  { id: 'arena-5', nameVi: '5 trận đấu trường', emoji: '🎖️', category: 'arena' },
   // Nhiệm vụ ngày.
   { id: 'quest-perfect', nameVi: 'Hết nhiệm vụ ngày', emoji: '✨', category: 'quest' },
   { id: 'quest-3', nameVi: '3 ngày hoàn thành nhiệm vụ', emoji: '🌈', category: 'quest' },
   // Pet.
   { id: 'pet-baby', nameVi: 'Pet nở ra', emoji: '🐣', category: 'pet' },
-  { id: 'pet-adult', nameVi: 'Pet trưởng thành', emoji: '�', category: 'pet' },
+  { id: 'pet-adult', nameVi: 'Pet trưởng thành', emoji: '👑', category: 'pet' },
 ] as const;
 
 const EMPTY_STATE: EngagementState = {
@@ -133,14 +144,16 @@ function load(): EngagementState {
       const raw = s.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as EngagementState;
-        memory = { ...EMPTY_STATE, ...parsed };
+        // structuredClone: a shallow spread would share EMPTY_STATE's
+        // stickerIds array with every loaded state.
+        memory = { ...structuredClone(EMPTY_STATE), ...parsed };
         return memory;
       }
     } catch {
       // corrupt state -> start fresh
     }
   }
-  memory = { ...EMPTY_STATE };
+  memory = structuredClone(EMPTY_STATE);
   return memory;
 }
 
@@ -259,7 +272,7 @@ export function recordBatchResult(gradeId: string): BatchAwardResult {
 export function checkStreakStickers(): Sticker[] {
   const state = load();
   const newly = new Set<string>();
-  if (state.streak.count >= 3) awardSticker(state, 'streak-3', newly);
+  evaluateBadges(state, newly);
   persist(state);
   return [...newly].map((id) => STICKERS.find((s) => s.id === id)!);
 }
@@ -345,6 +358,9 @@ export function recordCorrectAnswers(count: number, now: Date = new Date()): voi
   // CR-36: every correct answer feeds the companion pet - uncapped,
   // unlike the daily quest target which maxes at DAILY_QUEST_TARGET.
   bumpPetXp(state, count);
+  // CR-37: lifetime correct counter for effort badges.
+  badgeStatsFor(state).totalCorrect += count;
+  evaluateBadges(state, new Set<string>());
   persist(state);
 }
 
@@ -356,6 +372,8 @@ export function claimDailyBonus(now: Date = new Date()): { granted: boolean; sta
   if (!allDone || q.bonusClaimed) return { granted: false, stars: 0 };
   q.bonusClaimed = true;
   state.totalStars += DAILY_QUEST_BONUS;
+  badgeStatsFor(state).questPerfectDays += 1;
+  evaluateBadges(state, new Set<string>());
   persist(state);
   touchStreak(now);
   return { granted: true, stars: DAILY_QUEST_BONUS };
@@ -440,6 +458,8 @@ export function recordReviewOutcome(
     list[index] = { ...list[index], stage: 0, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[0]) };
   } else if (list[index].stage >= 2) {
     list.splice(index, 1); // mastered after stage 2 (+7d) success
+    badgeStatsFor(state).reviewMastered += 1;
+    evaluateBadges(state, new Set<string>());
   } else {
     const nextStage = (list[index].stage + 1) as 1 | 2;
     list[index] = { ...list[index], stage: nextStage, dueISO: addDaysISO(today, REVIEW_INTERVAL_DAYS[nextStage]) };
@@ -490,6 +510,7 @@ export function recordSkillAnswer(
   const stats = statsSliceFor(state);
   bumpDay(stats, todayISO(now), correct ? 1 : 0, 1);
   bumpSkill(stats, gradeId, skillKey, correct ? 1 : 0, 1);
+  evaluateBadges(state, new Set<string>());
   persist(state);
 }
 
@@ -506,6 +527,7 @@ export function recordSkillAnswers(
   const stats = statsSliceFor(state);
   bumpDay(stats, todayISO(now), correct, total);
   bumpSkill(stats, gradeId, skillKey, correct, total);
+  evaluateBadges(state, new Set<string>());
   persist(state);
 }
 
@@ -547,6 +569,65 @@ export function getReportSnapshot(now: Date = new Date()): ReportSnapshot {
       .sort((a, b) => a.accuracy - b.accuracy || a.key.localeCompare(b.key));
   }
   return { days, skills };
+}
+
+// ---- CR-37: extended badges ----------------------------------------------
+
+function badgeStatsFor(state: EngagementState): BadgeStats {
+  if (!state.badgeStats) {
+    state.badgeStats = { totalCorrect: 0, reviewMastered: 0, questPerfectDays: 0, arenaPlayed: 0, arenaWon: 0 };
+  }
+  return state.badgeStats;
+}
+
+/** Skill key -> badge id for the >=20 answers && >=80% accuracy rules. */
+const SKILL_BADGES: Record<string, string> = {
+  grammar: 'skill-grammar',
+  listening: 'skill-listening',
+  spelling: 'skill-spelling',
+  reading: 'skill-reading',
+};
+
+/** Evaluates every stat-driven badge; merges wins into `newly`. */
+function evaluateBadges(state: EngagementState, newly: Set<string>): void {
+  const bs = badgeStatsFor(state);
+  if (bs.totalCorrect >= 100) awardSticker(state, 'correct-100', newly);
+  if (bs.totalCorrect >= 500) awardSticker(state, 'correct-500', newly);
+  if (bs.reviewMastered >= 10) awardSticker(state, 'review-10', newly);
+  if (bs.questPerfectDays >= 1) awardSticker(state, 'quest-perfect', newly);
+  if (bs.questPerfectDays >= 3) awardSticker(state, 'quest-3', newly);
+  if (state.streak.count >= 3) awardSticker(state, 'streak-3', newly);
+  if (state.streak.count >= 7) awardSticker(state, 'streak-7', newly);
+  if (bs.arenaPlayed >= 1) awardSticker(state, 'arena-first', newly);
+  if (bs.arenaWon >= 1) awardSticker(state, 'arena-win', newly);
+  if (bs.arenaPlayed >= 5) awardSticker(state, 'arena-5', newly);
+  if (petStageForXp(state.pet?.xp ?? 0) >= 1) awardSticker(state, 'pet-baby', newly);
+  if (petStageForXp(state.pet?.xp ?? 0) >= 3) awardSticker(state, 'pet-adult', newly);
+  // Skill badges: >=20 answers at >=80% accuracy, summed across grades.
+  const acc: Record<string, { c: number; t: number }> = {};
+  for (const grade of Object.values(state.stats?.skills ?? {})) {
+    for (const [key, s2] of Object.entries(grade)) {
+      const a = acc[key] ?? { c: 0, t: 0 };
+      a.c += s2.correct; a.t += s2.total;
+      acc[key] = a;
+    }
+  }
+  for (const [key, badgeId] of Object.entries(SKILL_BADGES)) {
+    const a = acc[key];
+    if (a && a.t >= 20 && a.c / a.t >= 0.8) awardSticker(state, badgeId, newly);
+  }
+}
+
+/** CR-37: records a finished arena duel (bot or real) for badge rules. */
+export function recordArenaDuel(won: boolean): Sticker[] {
+  const state = load();
+  const bs = badgeStatsFor(state);
+  bs.arenaPlayed += 1;
+  if (won) bs.arenaWon += 1;
+  const newly = new Set<string>();
+  evaluateBadges(state, newly);
+  persist(state);
+  return [...newly].map((id) => STICKERS.find((x) => x.id === id)!);
 }
 
 // ---- CR-36: companion pet ----------------------------------------------
@@ -637,7 +718,7 @@ export function markPetStageSeen(): void {
 
 /** Test helper - clears persisted + in-memory state. */
 export function resetForTests(): void {
-  memory = { ...EMPTY_STATE };
+  memory = structuredClone(EMPTY_STATE);
   const s = storage();
   if (s) {
     try {
