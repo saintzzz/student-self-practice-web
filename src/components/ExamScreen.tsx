@@ -30,6 +30,8 @@ import { saveExamResult } from '../lib/practiceResults';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
+import { createExamFromBank } from '../lib/qb/bank';
+import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
 
@@ -87,6 +89,8 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
    *  (number keys) and the skill stats (`s${index}` keys) - a re-answer
    *  during exam review must not count twice. */
   const creditedRef = useRef<Set<string | number>>(new Set());
+  /** CR-48: fetching the V6 canonical bank over RPC before a session starts. */
+  const [loadingBank, setLoadingBank] = useState(false);
 
   // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
   useEffect(() => {
@@ -135,7 +139,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     }
   }, [exam, result, isPractice, isReview, isArena, gradeId, programId]);
 
-  function begin(): void {
+  async function begin(): Promise<void> {
     // CR-34: arena duels run on the challenge seed so both players get
     // the identical question set - the only fair basis for a comparison.
     const seed = isArena && arena ? arena.seed : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -161,6 +165,30 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // same features, only the sitting length scales.
       const gradeConfig = examConfigForGrade(gradeId);
       const count = isArena ? ARENA_QUESTION_COUNT : isPractice ? gradeConfig.drillCount : undefined;
+      // CR-48: practice/exam draw from the canonical V6 bank over RPC
+      // (publicationPolicy + variant-group enforced server-side). Guests
+      // and offline sessions fall back to the bundled bank.
+      if (!isArena && isSupabaseConfigured()) {
+        setLoadingBank(true);
+        try {
+          const bankExam = await createExamFromBank(programId, gradeId, Date.now(), {
+            count,
+            mode: isPractice ? 'practice' : 'mock',
+          });
+          if (bankExam) {
+            setExam(bankExam);
+            setNow(Date.now());
+            setStripOffset(0);
+            setVerdict(null);
+            creditedRef.current = new Set<string | number>();
+            return;
+          }
+        } catch {
+          // No session / network error -> bundled bank below.
+        } finally {
+          setLoadingBank(false);
+        }
+      }
       setExam(createExam(programId, gradeId, seed, Date.now(), count));
     }
     setNow(Date.now());
@@ -251,7 +279,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
@@ -386,7 +414,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, loading, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; loading?: boolean; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
     : isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
@@ -435,9 +463,10 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             type="button"
             data-testid="exam-begin"
             onClick={onBegin}
-            className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95"
+            disabled={loading}
+            className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-60"
           >
-            {isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
+            {loading ? 'Đang tải đề...' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
           </button>
         )}
         <button
@@ -475,6 +504,9 @@ export function ExamQuestionView({
     case 'odd-pronunciation':
       return (
         <div>
+          {question.kind === 'grammar-mcq' && question.transcript && (
+            <ListenButton text={question.transcript} />
+          )}
           <PromptLine
             text={question.kind === 'odd-pronunciation' ? 'Chọn từ có phát âm khác với 3 từ còn lại.' : question.prompt}
             imageUrl={question.kind === 'grammar-mcq' ? question.imageUrl : undefined}

@@ -83,6 +83,12 @@ export interface GrammarMcqQuestion {
    * Must be the same length/order as `options`.
    */
   optionImages?: readonly [string, string, string, string];
+  /**
+   * CR-48 - V6 listening items: canonical transcript spoken via TTS.
+   * When present the prompt is a placeholder and a listen button is
+   * rendered instead of leaking the spoken text on screen.
+   */
+  transcript?: string;
 }
 
 /**
