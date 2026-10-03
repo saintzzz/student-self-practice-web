@@ -8,7 +8,7 @@
  */
 import { build } from 'esbuild';
 import { mkdirSync, writeFileSync, copyFileSync, existsSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -35,24 +35,22 @@ mkdirSync(OUT, { recursive: true });
 /* ---------- helpers ---------- */
 
 const copied = new Set();
+/** '/images/vio/x.png' -> copy to OUT/images/vio/x.png, return 'images/vio/x.png' */
 function image(src) {
-  // '/images/vio/x.png' -> copy to OUT/images/vio/x.png, return relative path from grade file
   if (!src) return null;
-  const rel = src.replace(/^\//, ''); // images/vio/x.png
+  const rel = src.replace(/^\//, '');
   const dest = join(OUT, rel);
   if (!copied.has(rel)) {
     copied.add(rel);
     const srcAbs = join(ROOT, 'public', rel);
     if (existsSync(srcAbs)) {
-      mkdirSync(join(OUT, 'images'), { recursive: true });
-      mkdirSync(join(OUT, 'images/vio'), { recursive: true });
-      mkdirSync(join(OUT, 'images/vocab'), { recursive: true });
+      mkdirSync(dirname(dest), { recursive: true });
       copyFileSync(srcAbs, dest);
     } else {
-      return `(thieu file: ${src})`;
+      return `(THIEU FILE: ${src})`;
     }
   }
-  return `../${rel}`;
+  return rel;
 }
 
 const VOICE_NOTE =
@@ -98,8 +96,9 @@ function englishMd(g, d) {
   L.push(`# ${GRADE_VI[g]} - TIENG ANH (English)\n`);
   L.push(`> Cau hoi lay tu: ngan hang IOE harvest that + bank tac gia + tu vung (nguon sinh cau luyen tap).\n`);
 
+  let sec = 1;
   // vocabulary
-  L.push(`## 1. Tu vung (nguon sinh cau hoi luyen tap)\n`);
+  L.push(`## ${sec++}. Tu vung (nguon sinh cau hoi luyen tap)\n`);
   L.push(`> Moi tu sinh ra cac dang cau: chon hinh/emoji dung tu, nghe dien tu, dem hinh, chu thua, doc phat am (voice), mo ta chon hinh...\n`);
   L.push(`| Tu | So nhieu | Emoji | Giai thich (VI) | Anh |`);
   L.push(`|---|---|---|---|---|`);
@@ -110,18 +109,17 @@ function englishMd(g, d) {
   L.push('');
 
   if (b?.listen?.length) {
-    L.push(`## 2. Nghe (Listening) - ${b.listen.length} cau\n`);
+    L.push(`## ${sec++}. Nghe (Listening) - ${b.listen.length} cau\n`);
     L.push(VOICE_NOTE);
     b.listen.forEach((t, i) => L.push(`${i + 1}. 🔊 "${t}"`));
     L.push('');
   }
   if (extra.pronunciation?.length) {
-    L.push(`## 3. Phat am (Pronunciation MCQ) - ${extra.pronunciation.length} cau\n`);
+    L.push(`## ${sec++}. Phat am (Pronunciation MCQ) - ${extra.pronunciation.length} cau\n`);
     L.push(`> 🔊 **VOICE-ADJACENT:** cau trac nghiem ve am doc - hoc sinh tu doc, app co the doc mau bang TTS. Chu thich IPA trong giai thich.\n`);
     extra.pronunciation.forEach((q, i) => L.push(mcq(q, i)));
     L.push('');
   }
-  let sec = 4;
   if (b?.mcq?.length) {
     L.push(`## ${sec++}. Trac nghiem IOE (MCQ) - ${b.mcq.length} cau\n`);
     b.mcq.forEach((q, i) => L.push(mcq(q, i)));
@@ -170,44 +168,37 @@ function englishMd(g, d) {
   return L.join('\n');
 }
 
-function examPoolMd(g, pool, title, note) {
-  const L = [`# ${GRADE_VI[g]} - ${title}\n`];
-  if (note) L.push(`> ${note}\n`);
-  pool.forEach((q, i) => L.push(examQ(q, i)));
-  return L.join('\n');
-}
+/* ---------- write everything into ONE markdown ---------- */
 
-/* ---------- write everything ---------- */
+const md = [`# NGAN HANG CAU HOI - English Arena`];
+md.push(`Export: ${new Date().toISOString().slice(0, 10)} | Nguon: src/data + generators (deterministic)\n`);
+md.push(`## Quy uoc doc\n\n- **✅** = dap an dung trong trac nghiem; moi cau kem **Dap an** + **Giai thich** (tieng Viet).\n- **🔊 VOICE** = cau co audio. App SINH audio bang TTS luc chay tu transcript - KHONG co file audio. Transcript in ra la dung noi dung be nghe.\n- **Anh** = duoc copy vao \`images/\` va link tuong doi \`images/vio/*.png\` - mo duoc ngay.\n- Cau id \`vio-*\` = item that harvest tu Violympic (co anh kem).\n- Tieu chi trong ngoac \`[ ]\` = dang cau (kind) khi khong ro rang tu ngu canh.\n`);
+md.push(`## So lieu tong quan\n\n| Khoi | Tu vung | Nghe 🔊 | MCQ IOE | Dien chu | Ghep tu | Sap xep | Doc D/S | Ngu phap | Toan TA | KH TA |\n|---|---|---|---|---|---|---|---|---|---|---|`);
 
-const index = [`# Ngan hang cau hoi English Arena - export ${new Date().toISOString().slice(0, 10)}\n`];
-index.push(`## Cau truc\n\n- \`<grade>/english.md\` - tieng Anh (tu vung + nghe + MCQ + dien chu + ghep tu + sap xep + doc hieu + ngu phap)\n- \`<grade>/math-english.md\` - Toan bang tieng Anh (Violympic-style)\n- \`<grade>/science-english.md\` - Khoa hoc bang tieng Anh\n- \`question-bank.json\` - toan bo du lieu, machine-readable\n- \`images/\` - anh cau hoi tu host (public/images) duoc copy kem\n`);
-index.push(`## Quy uoc\n\n- ✅ = dap an dung trong cau trac nghiem\n- 🔊 **VOICE**: cau co audio. App SINH audio bang TTS luc chay tu transcript - khong co file audio. Transcript in ra la dung noi dung be nghe.\n- Cau co anh: anh duoc copy vao \`images/\`, md link tuong doi.\n\n## So lieu\n\n| Khoi | Tu vung | Nghe | MCQ IOE | Dien chu | Ghep tu | Sap xep | Doc D/S | Ngu phap | Toan TA | KH TA |\n|---|---|---|---|---|---|---|---|---|---|---|`);
-
+const body = [];
 const full = {};
 for (const g of GRADE_IDS) {
   const d = GRADES[g];
-  const dir = join(OUT, g);
-  mkdirSync(dir, { recursive: true });
-
-  writeFileSync(join(dir, 'english.md'), englishMd(g, d));
-  writeFileSync(
-    join(dir, 'math-english.md'),
-    examPoolMd(g, d.mathPool, 'TOAN TIENG ANH', 'Pool day du (da merge ngan hang Violympic that cho lop 2 + cau sinh tu generator, deterministic). Cau id `vio-*` = ngan hang that co anh kem.'),
-  );
-  writeFileSync(
-    join(dir, 'science-english.md'),
-    examPoolMd(g, d.sciencePool, 'KHOA HOC TIENG ANH', 'Pool sinh tu fact bank: moi fact -> MCQ + Dung/Sai + dien tu; + cau phan loai "Which one is a ...?".'),
-  );
-
   const b = d.ioe ?? {};
-  index.push(`| ${GRADE_VI[g]} | ${d.vocabulary.words.length} | ${b.listen?.length ?? 0} | ${b.mcq?.length ?? 0} | ${b.masked?.length ?? 0} | ${b.makeWord?.length ?? 0} | ${(b.reorder?.length ?? 0) + d.reorderAuthored.length} | ${(b.tf?.length ?? 0) + d.reading.reduce((a, p) => a + p.statements.length, 0)} | ${d.grammar.length} | ${d.mathPool.length} | ${d.sciencePool.length} |`);
+  md.push(`| ${GRADE_VI[g]} | ${d.vocabulary.words.length} | ${b.listen?.length ?? 0} | ${b.mcq?.length ?? 0} | ${b.masked?.length ?? 0} | ${b.makeWord?.length ?? 0} | ${(b.reorder?.length ?? 0) + d.reorderAuthored.length} | ${(b.tf?.length ?? 0) + d.reading.reduce((a, p) => a + p.statements.length, 0)} | ${d.grammar.length} | ${d.mathPool.length} | ${d.sciencePool.length} |`);
+
+  body.push(`\n\n---\n\n# ${GRADE_VI[g].toUpperCase()}\n`);
+  body.push(`\n## TIENG ANH (English)\n`);
+  body.push(englishMd(g, d).replace(/^# .*\n/, '').replace(/^## /gm, '### '));
+  body.push(`\n## TOAN TIENG ANH (Math in English)\n`);
+  body.push(`> Pool day du: ngan hang Violympic that (lop 2) + cau generator deterministic.\n`);
+  d.mathPool.forEach((q, i) => body.push(examQ(q, i)));
+  body.push(`\n## KHOA HOC TIENG ANH (Science in English)\n`);
+  body.push(`> Moi fact -> MCQ + Dung/Sai + dien tu; + cau phan loai "Which one is a ...?".\n`);
+  d.sciencePool.forEach((q, i) => body.push(examQ(q, i)));
 
   full[g] = d;
 }
 
-index.push('');
-writeFileSync(join(OUT, 'INDEX.md'), index.join('\n'));
+md.push('\n\n## Muc luc\n\nMoi khoi co 3 mon: **TIENG ANH** | **TOAN TIENG ANH** | **KHOA HOC TIENG ANH**.\n');
+
+writeFileSync(join(OUT, 'question-bank.md'), md.join('\n') + body.join('\n'));
 writeFileSync(join(OUT, 'question-bank.json'), JSON.stringify(full, null, 1));
 
-console.log(`Exported -> ${OUT}`);
+console.log(`Exported -> ${OUT}/question-bank.md`);
 console.log(`Images copied: ${copied.size}`);
