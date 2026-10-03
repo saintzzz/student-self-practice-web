@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getDueReviewItems, getReportSnapshot, getState, STICKERS } from '../lib/engagement/store';
 import { SKILL_LABELS } from '../lib/engagement/skills';
+import { fetchParentContact, isValidParentEmail, saveParentContact } from '../lib/parentContact';
 import { CARD, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import type { Grade } from '../types';
 
 interface ParentReportScreenProps {
   grades: readonly Grade[];
   onBack: () => void;
+  /** CR-31: parent email section only exists for logged-in students. */
+  isLoggedIn?: boolean;
 }
 
 const DAY_LABEL = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -26,9 +29,35 @@ function accuracyColor(accuracy: number): string {
  * the local engagement store (guest-safe). Shows 7-day activity,
  * per-grade progress, weakest-first skill breakdown, review queue.
  */
-export default function ParentReportScreen({ grades, onBack }: ParentReportScreenProps) {
+export default function ParentReportScreen({ grades, onBack, isLoggedIn = false }: ParentReportScreenProps) {
   const [report] = useState(() => getReportSnapshot());
   const engagement = getState();
+  const [parentEmail, setParentEmail] = useState('');
+  const [emailOptIn, setEmailOptIn] = useState(true);
+  const [emailSaved, setEmailSaved] = useState<'idle' | 'saved' | 'error'>('idle');
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let cancelled = false;
+    void fetchParentContact().then((contact) => {
+      if (!cancelled && contact) {
+        setParentEmail(contact.email);
+        setEmailOptIn(contact.opted_in);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
+
+  async function handleSaveEmail(): Promise<void> {
+    if (!isValidParentEmail(parentEmail)) {
+      setEmailSaved('error');
+      return;
+    }
+    const ok = await saveParentContact(parentEmail, emailOptIn);
+    setEmailSaved(ok ? 'saved' : 'error');
+  }
   const totalAnswered = report.days.reduce((sum, d) => sum + d.total, 0);
   const maxDay = Math.max(1, ...report.days.map((d) => d.total));
 
@@ -155,6 +184,57 @@ export default function ParentReportScreen({ grades, onBack }: ParentReportScree
           <p className="mt-2 text-sm font-semibold text-slate-400">
             Chưa có dữ liệu kỹ năng - sẽ hiện sau khi bé làm bài.
           </p>
+        )}
+
+        {/* CR-31: weekly parent report email - logged-in only. */}
+        {isLoggedIn && (
+          <div data-testid="parent-email-section" className="mt-5 rounded-2xl bg-[#16232e] p-4 ring-1 ring-white/10">
+            <h2 className="font-display text-lg font-extrabold text-sky-300">✉️ Nhận báo cáo qua email</h2>
+            <p className="mt-1 text-xs font-semibold text-slate-400">
+              Mỗi Chủ nhật, ba mẹ nhận email tóm tắt bé luyện gì trong tuần.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <input
+                type="email"
+                data-testid="parent-email-input"
+                value={parentEmail}
+                onChange={(e) => {
+                  setParentEmail(e.target.value);
+                  setEmailSaved('idle');
+                }}
+                placeholder="email-cua-ba-me@example.com"
+                className="min-w-0 flex-1 rounded-xl bg-[#0e1a24] px-3 py-2 text-sm font-semibold text-white ring-1 ring-white/15 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400"
+              />
+              <button
+                type="button"
+                data-testid="parent-email-save"
+                onClick={() => void handleSaveEmail()}
+                className="shrink-0 rounded-xl bg-sky-600 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+              >
+                Lưu
+              </button>
+            </div>
+            <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-300">
+              <input
+                type="checkbox"
+                data-testid="parent-email-optin"
+                checked={emailOptIn}
+                onChange={(e) => setEmailOptIn(e.target.checked)}
+                className="h-4 w-4 accent-sky-500"
+              />
+              Nhận báo cáo mỗi tuần
+            </label>
+            {emailSaved === 'saved' && (
+              <p data-testid="parent-email-saved" className="mt-2 text-sm font-bold text-emerald-400">
+                Đã lưu! Ba mẹ sẽ nhận báo cáo vào Chủ nhật.
+              </p>
+            )}
+            {emailSaved === 'error' && (
+              <p data-testid="parent-email-error" className="mt-2 text-sm font-bold text-rose-400">
+                Email chưa đúng định dạng - ba mẹ kiểm tra lại nhé.
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

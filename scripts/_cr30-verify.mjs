@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+await page.goto('https://ea.vieschool.com', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(2500);
+await page.locator('[data-testid="guest-button"]').click();
+await page.waitForTimeout(1500);
+await page.locator('[data-testid="grade-card-grade-4"]').click();
+await page.waitForTimeout(2000);
+const card = page.locator('[data-testid="leaderboard-card"]');
+console.log('CARD COUNT:', await card.count());
+console.log('CARD TEXT:', (await card.textContent())?.slice(0, 200));
+console.log('LOGIN BTN:', await page.locator('[data-testid="leaderboard-login"]').count());
+await browser.close();

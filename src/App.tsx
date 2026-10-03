@@ -247,7 +247,11 @@ export default function App() {
 
   if (screen === 'report') {
     return shell(
-      <ParentReportScreen grades={GRADES} onBack={handleBackToGrades} />,
+      <ParentReportScreen
+        grades={GRADES}
+        onBack={handleBackToGrades}
+        isLoggedIn={authMode === 'student'}
+      />,
     );
   }
 
