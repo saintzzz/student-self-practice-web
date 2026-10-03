@@ -1,6 +1,8 @@
 import { getSupabase } from './supabase/client';
 import { getSession } from './auth/practiceAuth';
 import type { BatchResult } from './batch/batchSession';
+import type { ExamProgramId } from '../types/exam';
+import { EXAM_POINTS_PER_QUESTION } from './exam/examSession';
 
 export interface PracticeResultRow {
   id: string;
@@ -27,9 +29,34 @@ export async function savePracticeResult(gradeId: string, result: BatchResult): 
       correct_count: result.totalCorrect,
       total_questions: result.totalQuestions,
       rounds_completed: result.rounds.length,
+      program: 'batch',
     });
   } catch {
     // Luu ket qua la nen - khong bao gio lam gian doan flow choi.
+  }
+}
+
+/** CR-30: luu ket qua Luyen de / Thi thu - leaderboard counts these too. */
+export async function saveExamResult(
+  gradeId: string,
+  programId: ExamProgramId,
+  result: { points: number; totalCount: number; correctCount: number },
+): Promise<void> {
+  try {
+    const session = await getSession();
+    if (!session) return;
+    await (await getSupabase()).from('results').insert({
+      account_id: session.user.id,
+      grade_id: gradeId,
+      points: result.points,
+      max_points: result.totalCount * EXAM_POINTS_PER_QUESTION,
+      correct_count: result.correctCount,
+      total_questions: result.totalCount,
+      rounds_completed: 1,
+      program: programId,
+    });
+  } catch {
+    // Best-effort - never break the exam flow over a stats insert.
   }
 }
 

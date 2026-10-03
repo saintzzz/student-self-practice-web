@@ -26,6 +26,7 @@ import {
   getDueReviewItems,
 } from '../lib/engagement/store';
 import { skillKeyFor } from '../lib/engagement/skills';
+import { saveExamResult } from '../lib/practiceResults';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
@@ -101,7 +102,17 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // CR-28: exam-mode wrongs are only known after submit - capture
     // every answered-and-wrong question into the review queue.
     if (!isPractice) captureExamWrongAnswers(gradeId, result.review);
-  }, [exam, result, isPractice, gradeId]);
+    // CR-30: persist drill/exam completions - the weekly leaderboard
+    // counts all results rows, not only 4-round batches. Review sessions
+    // replay already-earned points, so they don't insert again.
+    if (!isReview) {
+      void saveExamResult(gradeId, programId, {
+        points: result.points,
+        totalCount: result.totalCount,
+        correctCount: result.correctCount,
+      });
+    }
+  }, [exam, result, isPractice, isReview, gradeId, programId]);
 
   function begin(): void {
     const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

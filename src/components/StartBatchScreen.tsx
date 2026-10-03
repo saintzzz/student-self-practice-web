@@ -3,6 +3,7 @@ import type { ExamProgramId } from '../types/exam';
 import Mascot from './Mascot';
 import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
+import LeaderboardCard from './LeaderboardCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
@@ -12,6 +13,9 @@ interface StartBatchScreenProps {
    *  CR-28: 'review' = spaced-repetition session over due wrong questions. */
   onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review') => void;
   onBack: () => void;
+  /** CR-30: guests see a lock prompt on the leaderboard card. */
+  isGuest?: boolean;
+  onLogin?: () => void;
 }
 
 /**
@@ -27,7 +31,7 @@ const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: string; name: string; d
   { id: 'science', icon: '🔬', name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
 ];
 
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onBack }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onBack, isGuest, onLogin }: StartBatchScreenProps) {
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
@@ -56,6 +60,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onB
 
       {/* CR-28: spaced repetition - only renders when items are due. */}
       <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
+
+      {/* CR-30: weekly leaderboard - aggregate standings via rpc. */}
+      <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
 
       {/* CR-24/25: per-program Luyện đề (drill) + Thi thử (formal exam). */}
       <div className={`mt-4 ${CARD} text-center`}>

@@ -270,6 +270,8 @@ export default function App() {
         onStartBatch={handleStartBatch}
         onStartExam={handleStartExam}
         onBack={handleBackToGrades}
+        isGuest={authMode !== 'student'}
+        onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
       />,
       selectedGradeId,
     );
