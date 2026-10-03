@@ -67,6 +67,20 @@ describe('GradeSelect RBAC scope (CR-08)', () => {
     expect(screen.queryByTestId(/^grade-card-/)).toBeNull();
   });
 
+  it('renders the joinClassSlot so students with no scope can still join a class (CR-47)', () => {
+    render(
+      <GradeSelect
+        grades={FIVE}
+        onSelectGrade={vi.fn()}
+        allowedGrades={[]}
+        joinClassSlot={<div data-testid="join-class-card" />}
+      />,
+    );
+
+    expect(screen.getByTestId('no-scope-message')).toBeVisible();
+    expect(screen.getByTestId('join-class-card')).toBeVisible();
+  });
+
   it('renders sign-out chip for signed-in users and login chip for guests', () => {
     const onSignOut = vi.fn();
     const onLogin = vi.fn();

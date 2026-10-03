@@ -29,6 +29,8 @@ interface GradeSelectProps {
   onReport?: () => void;
   /** CR-41: signed-in student's name - the journey title personalizes to them. */
   studentName?: string;
+  /** CR-47: class join card rendered below the grade grid (students). */
+  joinClassSlot?: React.ReactNode;
 }
 
 /**
@@ -38,7 +40,7 @@ interface GradeSelectProps {
  * shows the sky land; the card itself carries each land's identity so
  * all five lands are visible at once on the map.
  */
-export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement, onReport, studentName }: GradeSelectProps) {
+export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement, onReport, studentName, joinClassSlot }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
   const [changePinOpen, setChangePinOpen] = useState(false);
 
@@ -179,6 +181,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         })}
       </div>
       )}
+      {joinClassSlot}
       {/* CR-43: footer stacks vertically - the old inline elements
           rendered glued together on one line. */}
       <footer className="mt-12 flex flex-col items-center gap-3">

@@ -30,6 +30,7 @@ interface PracticeClass {
   name: string;
   grade_id: string;
   school_year: string | null;
+  join_code: string;
 }
 
 interface AdminScreenProps {
@@ -69,7 +70,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
     const supa = await getSupabase();
     const [a, c] = await Promise.all([
       supa.from('accounts').select('id, username, display_name, role, placement_grade').order('username'),
-      supa.from('classes').select('id, name, grade_id, school_year').order('name'),
+      supa.from('classes').select('id, name, grade_id, school_year, join_code').order('name'),
     ]);
     setAccounts((a.data as PracticeAccount[]) ?? []);
     setClasses((c.data as PracticeClass[]) ?? []);
@@ -336,6 +337,13 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
                 <span className="text-sm text-sky-600">
                   {GRADES.find((g) => g.id === c.grade_id)?.name ?? c.grade_id}
                   {c.school_year ? ` · ${c.school_year}` : ''}
+                </span>
+                <span
+                  data-testid={`class-code-${c.name}`}
+                  className="rounded-lg bg-sky-100 px-2.5 py-1 font-display text-sm font-extrabold tracking-[0.2em] text-sky-800 ring-1 ring-sky-200"
+                  title="Mã lớp - học sinh nhập mã này để tự vào lớp"
+                >
+                  {c.join_code}
                 </span>
                 <button type="button" className={`ml-auto ${BTN_DANGER}`} onClick={() => handleDeleteClass(c)}>
                   Xóa

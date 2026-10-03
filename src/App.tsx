@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
+import JoinClassCard from './components/JoinClassCard';
 import ParentReportScreen from './components/ParentReportScreen';
 import StartBatchScreen from './components/StartBatchScreen';
 import BatchScreen from './components/BatchScreen';
@@ -281,6 +282,15 @@ export default function App() {
         ? { onSignOut: handleSignOut }
         : {};
 
+  // CR-47: joining a class can open new grade scopes - refetch them so
+  // the newly unlocked lands show without a reload.
+  const joinClassSlot = (
+    <JoinClassCard
+      isGuest={authMode !== 'student'}
+      onJoined={() => void fetchMyAllowedGrades().then(setAllowedGrades).catch(() => {})}
+    />
+  );
+
   if (screen === 'grade-select') {
     return shell(
       <GradeSelect
@@ -293,6 +303,7 @@ export default function App() {
         allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
         guestTrial={authMode === 'guest'}
         studentName={myAccount?.display_name}
+        joinClassSlot={joinClassSlot}
         {...authChipProps}
       />,
     );
@@ -387,6 +398,7 @@ export default function App() {
       allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
       guestTrial={authMode === 'guest'}
       studentName={myAccount?.display_name}
+      joinClassSlot={joinClassSlot}
       {...authChipProps}
     />,
   );
