@@ -1,17 +1,24 @@
 import type { Grade } from '../types';
 import type { ExamProgramId } from '../types/exam';
+import type { ArenaOpenChallenge } from '../lib/arena';
 import Mascot from './Mascot';
 import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
 import LeaderboardCard from './LeaderboardCard';
+import ArenaCard from './ArenaCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface StartBatchScreenProps {
   grade: Grade;
   onStartBatch: () => void;
   /** CR-25: 'practice' = 20-question drill with instant verdicts; 'exam' = 200q/30min.
-   *  CR-28: 'review' = spaced-repetition session over due wrong questions. */
+   *  CR-28: 'review' = spaced-repetition session over due wrong questions.
+   *  CR-34: 'arena' = 10-question 1v1 duel on a shared seed. */
   onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review') => void;
+  /** CR-34: arena entry points - create / accept / guest bot run. */
+  onArenaCreate?: () => void;
+  onArenaAccept?: (challenge: ArenaOpenChallenge) => void;
+  onArenaBot?: () => void;
   onBack: () => void;
   /** CR-30: guests see a lock prompt on the leaderboard card. */
   isGuest?: boolean;
@@ -31,7 +38,7 @@ const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: string; name: string; d
   { id: 'science', icon: '🔬', name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
 ];
 
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onBack, isGuest, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, onLogin }: StartBatchScreenProps) {
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
@@ -63,6 +70,18 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onB
 
       {/* CR-30: weekly leaderboard - aggregate standings via rpc. */}
       <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
+
+      {/* CR-34: arena duels - create/accept challenges or guest bot race. */}
+      {onArenaCreate && onArenaAccept && onArenaBot && (
+        <ArenaCard
+          gradeId={grade.id}
+          isGuest={isGuest ?? false}
+          onCreate={onArenaCreate}
+          onAccept={onArenaAccept}
+          onBot={onArenaBot}
+          onLogin={onLogin}
+        />
+      )}
 
       {/* CR-24/25: per-program Luyện đề (drill) + Thi thử (formal exam). */}
       <div className={`mt-4 ${CARD} text-center`}>

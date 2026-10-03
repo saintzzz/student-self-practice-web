@@ -47,7 +47,9 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
   const [examProgramId, setExamProgramId] = useState<ExamProgramId>('english');
-  const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review'>('exam');
+  const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review' | 'arena'>('exam');
+  /** CR-34: pending arena duel context for the exam screen. */
+  const [arenaRun, setArenaRun] = useState<import('./components/ExamScreen').ArenaRun | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
 
@@ -144,6 +146,38 @@ export default function App() {
   function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam' | 'review'): void {
     setExamProgramId(programId);
     setExamMode(mode);
+    setArenaRun(null);
+    setScreen('exam');
+  }
+
+  /** CR-34: arena duels always run the English program - the app is
+   *  "English Arena" and the bank is deepest there. */
+  function newSeed(): string {
+    return `arena-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function handleArenaCreate(): void {
+    setExamProgramId('english');
+    setExamMode('arena');
+    setArenaRun({ kind: 'create', seed: newSeed() });
+    setScreen('exam');
+  }
+
+  function handleArenaAccept(challenge: { id: string; seed: string; program_id?: string }): void {
+    // The accepted duel must replay the challenge's OWN program with its
+    // seed - otherwise an identical seed would render a different set.
+    const pid: ExamProgramId =
+      challenge.program_id === 'math' || challenge.program_id === 'science' ? challenge.program_id : 'english';
+    setExamProgramId(pid);
+    setExamMode('arena');
+    setArenaRun({ kind: 'accept', seed: challenge.seed, challengeId: challenge.id });
+    setScreen('exam');
+  }
+
+  function handleArenaBot(): void {
+    setExamProgramId('english');
+    setExamMode('arena');
+    setArenaRun({ kind: 'bot', seed: newSeed() });
     setScreen('exam');
   }
 
@@ -273,6 +307,9 @@ export default function App() {
         grade={selectedGrade}
         onStartBatch={handleStartBatch}
         onStartExam={handleStartExam}
+        onArenaCreate={handleArenaCreate}
+        onArenaAccept={handleArenaAccept}
+        onArenaBot={handleArenaBot}
         onBack={handleBackToGrades}
         isGuest={authMode !== 'student'}
         onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
@@ -292,6 +329,7 @@ export default function App() {
         gradeLabel={selectedGrade.name}
         studentName={myAccount?.display_name}
         mode={examMode}
+        arena={arenaRun ?? undefined}
         onExit={() => setScreen('start-batch')}
       />
     );

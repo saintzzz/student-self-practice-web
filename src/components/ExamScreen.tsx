@@ -10,6 +10,7 @@ import {
   remainingSeconds,
   submitExam,
   EXAM_QUESTION_COUNT,
+  EXAM_POINTS_PER_QUESTION,
   PRACTICE_QUESTION_COUNT,
   type ExamAnswer,
   type ExamState,
@@ -27,6 +28,7 @@ import {
 } from '../lib/engagement/store';
 import { skillKeyFor } from '../lib/engagement/skills';
 import { saveExamResult } from '../lib/practiceResults';
+import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { EmojiVisual } from './EmojiVisual';
 import { WORD_IPA } from '../data/ipaMap';
@@ -45,6 +47,18 @@ export const PROGRAM_LABEL: Record<ExamProgramId, string> = {
 };
 
 const STRIP_PAGE = 10;
+/** CR-34: arena duels are 10 questions - long enough to matter, short
+ *  enough for a quick challenge. */
+const ARENA_QUESTION_COUNT = 10;
+
+/** CR-34: arena duel context. 'create' opens a challenge after the run;
+ *  'accept' plays the challenge's seed and submits to arena_accept;
+ *  'bot' races a deterministic local ghost (guest mode, no RPC). */
+export interface ArenaRun {
+  kind: 'create' | 'accept' | 'bot';
+  seed: string;
+  challengeId?: string;
+}
 
 interface ExamScreenProps {
   programId: ExamProgramId;
@@ -53,12 +67,15 @@ interface ExamScreenProps {
   studentName?: string;
   /** CR-25: 'exam' = IOE mock (200q/30min); 'practice' = drill (20q, instant
    *  verdicts). CR-28: 'review' = practice-style session over the due
-   *  spaced-repetition queue (pulled fresh at begin()). */
-  mode: 'exam' | 'practice' | 'review';
+   *  spaced-repetition queue (pulled fresh at begin()). CR-34: 'arena' =
+   *  10-question duel run on a shared seed (practice pacing). */
+  mode: 'exam' | 'practice' | 'review' | 'arena';
+  arena?: ArenaRun;
   onExit: () => void;
 }
 
-export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, onExit }: ExamScreenProps) {
+export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, onExit }: ExamScreenProps) {
+  const isArena = mode === 'arena';
   const isPractice = mode !== 'exam';
   const isReview = mode === 'review';
   const [exam, setExam] = useState<ExamState | null>(null);
@@ -97,25 +114,31 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   useEffect(() => {
     if (!exam || !result || questRecordedFor.current === exam) return;
     questRecordedFor.current = exam;
-    if (isPractice) recordDrillComplete();
-    else recordBigModeComplete();
-    // CR-28: exam-mode wrongs are only known after submit - capture
-    // every answered-and-wrong question into the review queue.
-    if (!isPractice) captureExamWrongAnswers(gradeId, result.review);
-    // CR-30: persist drill/exam completions - the weekly leaderboard
-    // counts all results rows, not only 4-round batches. Review sessions
-    // replay already-earned points, so they don't insert again.
-    if (!isReview) {
-      void saveExamResult(gradeId, programId, {
-        points: result.points,
-        totalCount: result.totalCount,
-        correctCount: result.correctCount,
-      });
+    // CR-34: arena runs are a duel, not practice - they must not feed
+    // quests, stats, the review queue, or the weekly leaderboard.
+    if (!isArena) {
+      if (isPractice) recordDrillComplete();
+      else recordBigModeComplete();
+      // CR-28: exam-mode wrongs are only known after submit - capture
+      // every answered-and-wrong question into the review queue.
+      if (!isPractice) captureExamWrongAnswers(gradeId, result.review);
+      // CR-30: persist drill/exam completions - the weekly leaderboard
+      // counts all results rows, not only 4-round batches. Review sessions
+      // replay already-earned points, so they don't insert again.
+      if (!isReview) {
+        void saveExamResult(gradeId, programId, {
+          points: result.points,
+          totalCount: result.totalCount,
+          correctCount: result.correctCount,
+        });
+      }
     }
-  }, [exam, result, isPractice, isReview, gradeId, programId]);
+  }, [exam, result, isPractice, isReview, isArena, gradeId, programId]);
 
   function begin(): void {
-    const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    // CR-34: arena duels run on the challenge seed so both players get
+    // the identical question set - the only fair basis for a comparison.
+    const seed = isArena && arena ? arena.seed : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     if (isReview) {
       // CR-28: the session is the due review queue itself - same
       // ExamState shape, no countdown (practice-style pacing). Re-fetch
@@ -134,7 +157,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         finishedAtMs: null,
       });
     } else {
-      const count = isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
+      const count = isArena ? ARENA_QUESTION_COUNT : isPractice ? PRACTICE_QUESTION_COUNT : EXAM_QUESTION_COUNT;
       setExam(createExam(programId, gradeId, seed, Date.now(), count));
     }
     setNow(Date.now());
@@ -153,21 +176,25 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       setExam(answerCurrent(exam, answer));
       setVerdict({ isCorrect });
       playSfx(isCorrect ? 'correct' : 'wrong');
-      // CR-27: count at answer time - correct answers land on the day
-      // they were earned even if the session crosses midnight.
-      if (isCorrect && !creditedRef.current.has(exam.currentIndex)) {
-        creditedRef.current.add(exam.currentIndex);
-        recordCorrectAnswers(1);
+      // CR-34: arena answers never feed engagement - a duel is not
+      // practice progress.
+      if (!isArena) {
+        // CR-27: count at answer time - correct answers land on the day
+        // they were earned even if the session crosses midnight.
+        if (isCorrect && !creditedRef.current.has(exam.currentIndex)) {
+          creditedRef.current.add(exam.currentIndex);
+          recordCorrectAnswers(1);
+        }
+        // CR-29: parent-report stats - one entry per answered question.
+        if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
+          creditedRef.current.add(`s${exam.currentIndex}`);
+          recordSkillAnswer(gradeId, skillKeyFor(question), isCorrect);
+        }
+        // CR-28: review mode advances/resets the item's stage; a normal
+        // drill instead captures the wrong question for future review.
+        if (isReview) recordReviewOutcome(gradeId, question.id, isCorrect);
+        else if (!isCorrect) recordWrongExamQuestion(gradeId, question);
       }
-      // CR-29: parent-report stats - one entry per answered question.
-      if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
-        creditedRef.current.add(`s${exam.currentIndex}`);
-        recordSkillAnswer(gradeId, skillKeyFor(question), isCorrect);
-      }
-      // CR-28: review mode advances/resets the item's stage; a normal
-      // drill instead captures the wrong question for future review.
-      if (isReview) recordReviewOutcome(gradeId, question.id, isCorrect);
-      else if (!isCorrect) recordWrongExamQuestion(gradeId, question);
       return;
     }
     if (!exam) return;
@@ -221,10 +248,13 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} reviewCount={reviewCount} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
+    if (isArena && arena) {
+      return <ArenaResult exam={exam} result={result} arena={arena} gradeId={gradeId} gradeLabel={gradeLabel} programId={programId} studentName={studentName} onExit={onExit} />;
+    }
     // CR-28: after a review session the queue may be fully rescheduled -
     // a retry with zero due items would have nothing to render.
     const canRetry = !isReview || getDueReviewItems(gradeId).length > 0;
@@ -353,12 +383,14 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeLabel, isPractice, isReview, reviewCount, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; isPractice: boolean; isReview?: boolean; reviewCount?: number; onBegin: () => void; onExit: () => void }) {
-  const title = isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
+function ExamIntro({ programId, gradeLabel, isPractice, isReview, isArena, reviewCount, onBegin, onExit }: { programId: ExamProgramId; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; onBegin: () => void; onExit: () => void }) {
+  const title = isArena
+    ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
+    : isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0d1b26] p-4 text-white">
       <div className="w-full max-w-lg rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center shadow-2xl sm:p-10">
-        <div className="mb-2 text-5xl">{isReview ? '📚' : isPractice ? '✏️' : '📝'}</div>
+        <div className="mb-2 text-5xl">{isArena ? '⚔️' : isReview ? '📚' : isPractice ? '✏️' : '📝'}</div>
         <h1 className="font-display text-2xl font-extrabold text-amber-300 sm:text-3xl">
           {title}
         </h1>
@@ -374,6 +406,12 @@ function ExamIntro({ programId, gradeLabel, isPractice, isReview, reviewCount, o
             ) : (
               <li>• Không còn câu nào cần ôn - tuyệt vời! Làm Luyện đề hoặc Thi thử để thêm nhé</li>
             )
+          ) : isArena ? (
+            <>
+              <li>• {ARENA_QUESTION_COUNT} câu hỏi - cả hai chơi đúng cùng một đề</li>
+              <li>• Ai nhiều điểm hơn thắng - hòa điểm thì ai nhanh hơn thắng</li>
+              <li>• Biết đúng/sai ngay sau mỗi câu - làm nhanh nhưng đừng vội nhé</li>
+            </>
           ) : isPractice ? (
             <>
               <li>• {PRACTICE_QUESTION_COUNT} câu hỏi giống dạng đề thi thật</li>
@@ -396,7 +434,7 @@ function ExamIntro({ programId, gradeLabel, isPractice, isReview, reviewCount, o
             onClick={onBegin}
             className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95"
           >
-            {isReview ? 'Bắt đầu ôn' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
+            {isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
           </button>
         )}
         <button
@@ -856,4 +894,150 @@ function answerText(answer: ExamAnswer | null, q: ExamQuestion): string {
       return '';
     }
   }
+}
+
+/** CR-34: arena duel result. Settles the challenge exactly once per
+ *  finished run (ref guard) then shows the two-sided scoreboard. */
+function ArenaResult({
+  exam,
+  result,
+  arena,
+  gradeId,
+  gradeLabel,
+  programId,
+  studentName,
+  onExit,
+}: {
+  exam: ExamState;
+  result: ReturnType<typeof computeExamResult>;
+  arena: ArenaRun;
+  gradeId: string;
+  gradeLabel: string;
+  programId: ExamProgramId;
+  studentName?: string;
+  onExit: () => void;
+}) {
+  const myScore = result.points;
+  // Arena has no time limit so result.timeUsedSec clamps to 0 - the
+  // "faster wins" tie-break needs the REAL elapsed wall-clock time.
+  const myTimeMs = Math.max(0, (exam.finishedAtMs ?? Date.now()) - exam.startedAtMs);
+  const [duel, setDuel] = useState<ArenaDuelResult | null>(null);
+  const [created, setCreated] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const settled = useRef(false);
+
+  useEffect(() => {
+    if (settled.current) return;
+    settled.current = true;
+    if (arena.kind === 'bot') {
+      const ghost = botGhost(arena.seed, result.totalCount * EXAM_POINTS_PER_QUESTION);
+      setDuel({
+        my_score: myScore,
+        my_time_ms: myTimeMs,
+        opp_name: ghost.name,
+        opp_score: ghost.score,
+        opp_time_ms: ghost.timeMs,
+        i_won: myScore > ghost.score || (myScore === ghost.score && myTimeMs < ghost.timeMs),
+        is_draw: myScore === ghost.score && myTimeMs === ghost.timeMs,
+      });
+      return;
+    }
+    void (async () => {
+      if (arena.kind === 'create') {
+        const id = await arenaCreate(arena.seed, gradeId, programId, myScore, myTimeMs);
+        if (id) setCreated(true);
+        else setFailed(true);
+      } else if (arena.challengeId) {
+        const r = await arenaAccept(arena.challengeId, myScore, myTimeMs);
+        if (r) setDuel(r);
+        else setFailed(true);
+      }
+    })();
+  }, [arena, gradeId, programId, myScore, myTimeMs]);
+
+  const mm = Math.floor(result.timeUsedSec / 60);
+  const ss = result.timeUsedSec % 60;
+
+  return (
+    <div data-testid="arena-result" className="min-h-screen bg-[#0d1b26] p-4 text-white">
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center sm:p-10">
+          <div className="text-5xl">⚔️</div>
+          <h1 className="mt-2 font-display text-2xl font-extrabold text-amber-300">Đấu trường Arena</h1>
+          <p className="mt-1 text-sm font-bold text-slate-400">
+            {PROGRAM_LABEL[programId]} - {gradeLabel}
+          </p>
+
+          {arena.kind === 'create' && (
+            <div data-testid="arena-created" className="mt-6 rounded-xl bg-white/5 p-5">
+              {created ? (
+                <>
+                  <div className="text-4xl">📨</div>
+                  <p className="mt-2 font-extrabold text-emerald-300">Đã tạo thử thách!</p>
+                  <p className="mt-1 text-sm font-bold text-slate-300">
+                    Điểm của bạn: <span className="text-amber-300">{myScore}</span> - thời gian{' '}
+                    {mm}:{String(ss).padStart(2, '0')}
+                  </p>
+                  <p className="mt-2 text-xs font-bold text-slate-400">
+                    Bạn bè cùng khối sẽ thấy thử thách này trong mục Đấu trường và chơi đúng bộ câu của bạn.
+                  </p>
+                </>
+              ) : failed ? (
+                <p className="font-bold text-rose-300">Chưa lưu được thử thách. Kiểm tra đăng nhập rồi thử lại nhé.</p>
+              ) : (
+                <p className="font-bold text-slate-300">Đang tạo thử thách...</p>
+              )}
+            </div>
+          )}
+
+          {(arena.kind === 'accept' || arena.kind === 'bot') && (
+            <div className="mt-6">
+              {!duel && !failed && <p className="font-bold text-slate-300">Đang so kèo...</p>}
+              {failed && <p className="font-bold text-rose-300">Thử thách này đã có người nhận hoặc bị lỗi.</p>}
+              {duel && (
+                <>
+                  <div
+                    data-testid="arena-verdict"
+                    className={`rounded-xl p-4 font-display text-xl font-extrabold ${
+                      duel.is_draw
+                        ? 'bg-sky-500/20 text-sky-300'
+                        : duel.i_won
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-rose-500/20 text-rose-300'
+                    }`}
+                  >
+                    {duel.is_draw ? '🤝 Hòa nhau!' : duel.i_won ? '🏆 Bạn thắng!' : '💪 Đối thủ thắng - cố lên!'}
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-white/5 p-4">
+                      <div className="text-sm font-bold text-sky-300">{studentName ?? 'Bạn'}</div>
+                      <div className="mt-1 text-2xl font-extrabold text-amber-300">{duel.my_score}</div>
+                      <div className="text-xs font-bold text-slate-400">{Math.floor(duel.my_time_ms / 60000)}:{String(Math.floor(duel.my_time_ms / 1000) % 60).padStart(2, '0')}</div>
+                    </div>
+                    <div className="rounded-xl bg-white/5 p-4">
+                      <div className="text-sm font-bold text-rose-300">{duel.opp_name}</div>
+                      <div className="mt-1 text-2xl font-extrabold text-amber-300">{duel.opp_score}</div>
+                      <div className="text-xs font-bold text-slate-400">{Math.floor(duel.opp_time_ms / 60000)}:{String(Math.floor(duel.opp_time_ms / 1000) % 60).padStart(2, '0')}</div>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs font-bold text-slate-400">
+                    {result.correctCount}/{result.totalCount} câu đúng - hòa điểm thì ai nhanh hơn sẽ thắng.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          <button
+            type="button"
+            data-testid="arena-exit"
+            onClick={onExit}
+            className="mt-6 w-full rounded-xl bg-amber-400 px-4 py-3 font-extrabold text-amber-950 transition hover:bg-amber-300"
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
