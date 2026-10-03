@@ -1,5 +1,6 @@
 import type { ExamQuestion, GrammarMcqQuestion, TextAnswerQuestion } from '../../types/exam';
 import { hashString, seededShuffleIndices } from '../prng';
+import { VIO_MATH_BANK } from '../../data/vioMathBank';
 
 /**
  * CR-24 - "Toán tiếng Anh" program: math questions phrased in English,
@@ -81,6 +82,9 @@ function mcqOptions(correct: number, seed: string, max: number): { options: [str
 export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQuestion[] {
   const spec = band(gradeId);
   const questions: ExamQuestion[] = [];
+  // CR-33 - grade 2 draws from the harvested Violympic Math-English
+  // bank first; synthetic families top up / serve other grades.
+  if (gradeId === 'grade-2') questions.push(...VIO_MATH_BANK);
   /** Dedupe identical prompts - seeded families can collide on small bands. */
   const seen = new Set<string>();
   const push = (q: ExamQuestion) => {

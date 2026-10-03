@@ -72,6 +72,17 @@ export interface GrammarMcqQuestion {
   options: readonly [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
   explanation: string;
+  /**
+   * CR-33 - optional self-hosted illustration/prompt image (harvested
+   * Violympic items). Rendered above the prompt when present.
+   */
+  imageUrl?: string;
+  /**
+   * CR-33 - when every option is an image rather than text, these are
+   * rendered inside the option buttons instead of `options` text.
+   * Must be the same length/order as `options`.
+   */
+  optionImages?: readonly [string, string, string, string];
 }
 
 /**
@@ -90,6 +101,8 @@ export interface TextAnswerQuestion {
   /** All accepted answers, compared case-insensitive trimmed. */
   accept: readonly string[];
   explanation: string;
+  /** CR-33 - optional self-hosted question illustration. */
+  imageUrl?: string;
 }
 
 export type ExamOnlyQuestion =

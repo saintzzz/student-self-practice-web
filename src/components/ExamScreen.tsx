@@ -433,8 +433,17 @@ function ExamQuestionView({
     case 'odd-pronunciation':
       return (
         <div>
-          <PromptLine text={question.kind === 'odd-pronunciation' ? 'Chọn từ có phát âm khác với 3 từ còn lại.' : question.prompt} />
-          <OptionButtons options={question.options} selected={answer?.type === 'option' ? answer.index : null} onPick={(i) => onAnswer({ type: 'option', index: i })} ipa={question.kind === 'odd-pronunciation'} />
+          <PromptLine
+            text={question.kind === 'odd-pronunciation' ? 'Chọn từ có phát âm khác với 3 từ còn lại.' : question.prompt}
+            imageUrl={question.kind === 'grammar-mcq' ? question.imageUrl : undefined}
+          />
+          <OptionButtons
+            options={question.options}
+            selected={answer?.type === 'option' ? answer.index : null}
+            onPick={(i) => onAnswer({ type: 'option', index: i })}
+            ipa={question.kind === 'odd-pronunciation'}
+            optionImages={question.kind === 'grammar-mcq' ? question.optionImages : undefined}
+          />
         </div>
       );
     case 'true-false-reading':
@@ -479,6 +488,7 @@ function ExamQuestionView({
           key={question.id}
           prompt={question.displaySentence}
           hint="Gõ đáp án"
+          imageUrl={question.imageUrl}
           onSubmit={(text) => onAnswer({ type: 'text', text })}
         />
       );
@@ -530,8 +540,20 @@ function ExamQuestionView({
   }
 }
 
-function PromptLine({ text }: { text: string }) {
-  return <div className="mx-auto mb-6 max-w-xl text-center font-mono text-lg leading-relaxed text-slate-100 sm:text-2xl">{text}</div>;
+function PromptLine({ text, imageUrl }: { text: string; imageUrl?: string }) {
+  return (
+    <div className="mx-auto mb-6 max-w-xl text-center font-mono text-lg leading-relaxed text-slate-100 sm:text-2xl">
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt=""
+          data-testid="exam-question-image"
+          className="mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain"
+        />
+      )}
+      {text}
+    </div>
+  );
 }
 
 function OptionButtons({
@@ -539,11 +561,13 @@ function OptionButtons({
   selected,
   onPick,
   ipa,
+  optionImages,
 }: {
   options: readonly string[];
   selected: number | null;
   onPick: (index: number) => void;
   ipa?: boolean;
+  optionImages?: readonly string[];
 }) {
   const labels = ['A', 'B', 'C', 'D'];
   return (
@@ -561,7 +585,11 @@ function OptionButtons({
           }`}
         >
           <span className="mr-2 font-extrabold text-amber-400">{labels[i]}.</span>
-          {option}
+          {optionImages?.[i] ? (
+            <img src={optionImages[i]} alt={option} data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1" />
+          ) : (
+            option
+          )}
           {ipa && WORD_IPA[option.toLowerCase()] && (
             <span className="ml-2 text-sm font-normal text-sky-300">/{WORD_IPA[option.toLowerCase()]}/</span>
           )}
@@ -571,11 +599,11 @@ function OptionButtons({
   );
 }
 
-function TextInputView({ prompt, hint, ipa, onSubmit }: { prompt: string; hint: string; ipa?: string; onSubmit: (text: string) => void }) {
+function TextInputView({ prompt, hint, ipa, imageUrl, onSubmit }: { prompt: string; hint: string; ipa?: string; imageUrl?: string; onSubmit: (text: string) => void }) {
   const [value, setValue] = useState('');
   return (
     <div>
-      <PromptLine text={prompt} />
+      <PromptLine text={prompt} imageUrl={imageUrl} />
       {ipa && <div className="mb-2 text-center font-mono text-lg text-sky-300">/{ipa}/</div>}
       <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
         <input
