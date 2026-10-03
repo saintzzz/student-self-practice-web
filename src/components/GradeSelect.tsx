@@ -177,23 +177,27 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         })}
       </div>
       )}
-      {onOpenCredits && (
-        <button
-          ref={creditsRef}
-          type="button"
-          data-testid="credits-link"
-          onClick={onOpenCredits}
-          className={`mt-12 ${NAV_PILL}`}
+      {/* CR-43: footer stacks vertically - the old inline elements
+          rendered glued together on one line. */}
+      <footer className="mt-12 flex flex-col items-center gap-3">
+        {onOpenCredits && (
+          <button
+            ref={creditsRef}
+            type="button"
+            data-testid="credits-link"
+            onClick={onOpenCredits}
+            className={NAV_PILL}
+          >
+            Nguồn hình ảnh
+          </button>
+        )}
+        <a
+          href="https://vieschool.com"
+          className="text-xs font-bold text-slate-400 underline-offset-2 transition hover:text-slate-300 hover:underline"
         >
-          Nguồn hình ảnh
-        </button>
-      )}
-      <a
-        href="https://vieschool.com"
-        className="mt-4 text-xs font-bold text-slate-400 underline-offset-2 transition hover:text-slate-300 hover:underline"
-      >
-        English Arena - sản phẩm của VieSchool
-      </a>
+          English Arena - sản phẩm của VieSchool
+        </a>
+      </footer>
       {changePinOpen && <ChangePinDialog onClose={() => setChangePinOpen(false)} />}
     </div>
   );
