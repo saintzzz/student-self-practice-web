@@ -75,14 +75,14 @@ export default function PlacementScreen({ isLoggedIn, onStartGrade, onBack }: Pl
           <ul data-testid="placement-breakdown" className="mx-auto mt-4 flex max-w-sm flex-col gap-2 text-left">
             {GRADES.map((g, i) => (
               <li key={g.id} className="flex items-center gap-3">
-                <span className="w-16 font-bold text-sky-900">{g.name}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-sky-100">
+                <span className="w-16 font-bold text-sky-200">{g.name}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/15">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500"
                     style={{ width: `${(placement.correctByGrade[i] / QUESTIONS_PER_GRADE) * 100}%` }}
                   />
                 </div>
-                <span className="w-10 text-right text-sm font-bold text-sky-700">
+                <span className="w-10 text-right text-sm font-bold text-sky-300">
                   {placement.correctByGrade[i]}/{QUESTIONS_PER_GRADE}
                 </span>
               </li>

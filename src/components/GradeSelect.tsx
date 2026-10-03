@@ -168,7 +168,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
                 <span className="text-base font-bold text-slate-600">
                   {land.nameVi} {land.motif && <EmojiVisual emoji={land.motif} className="inline-block text-sm" />}
                 </span>
-                <span data-testid={`grade-stars-${grade.id}`} className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-amber-600">
+                <span data-testid={`grade-stars-${grade.id}`} className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-amber-700">
                   <EmojiVisual emoji="⭐" className="text-xs" /> {gp?.stars ?? 0} sao
                 </span>
               </span>

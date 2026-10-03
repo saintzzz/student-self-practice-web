@@ -57,6 +57,9 @@ export const CHIP_SKY = `${CHIP_BASE} bg-sky-500/15 text-sky-200 ring-sky-400/30
 export const CHIP_AMBER = `${CHIP_BASE} bg-amber-500/15 text-amber-200 ring-amber-400/30`;
 export const CHIP_AMBER_URGENT = `${CHIP_BASE} bg-rose-500/20 text-rose-200 ring-rose-400/40 animate-pulse motion-reduce:animate-none`;
 export const CHIP_EMERALD = `${CHIP_BASE} bg-emerald-500/15 text-emerald-200 ring-emerald-400/30`;
+/** Light gold "treasure" chip - needs DARK text on the light gradient
+ * (CR-44: never reuse CHIP_AMBER's amber-200 text here - invisible). */
+export const CHIP_GOLD = `${CHIP_BASE} bg-gradient-to-b from-amber-100 to-amber-200/90 text-amber-950 shadow-md ring-amber-300/80`;
 
 /** Gold gradient score pills - the "treasure" look on summary screens. */
 export const SCORE_PILL =

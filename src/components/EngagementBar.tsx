@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getState } from '../lib/engagement/store';
-import { CHIP_AMBER, CHIP_SKY } from '../lib/ui/tokens';
+import { CHIP_GOLD, CHIP_SKY } from '../lib/ui/tokens';
 import StickerAlbum from './StickerAlbum';
 
 /**
@@ -13,9 +13,9 @@ export default function EngagementBar() {
   const state = getState();
 
   /* CR-12 DS-X4: chip emojis sit in tinted mini-discs; star chip goes
-     gold gradient. */
+     gold gradient - CHIP_GOLD pairs dark text with the light bg. */
   const iconDisc = 'mr-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10';
-  const goldChip = `${CHIP_AMBER} bg-gradient-to-b from-amber-100 to-amber-200/90 shadow-md ring-amber-300/80`;
+  const goldChip = CHIP_GOLD;
 
   return (
     <div className="relative flex flex-wrap items-center justify-center gap-2">

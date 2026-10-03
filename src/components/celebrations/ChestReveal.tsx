@@ -39,14 +39,14 @@ export default function ChestReveal({ chestStars, totalStars, newStickers }: Che
         {shown > 0 && (
           <span
             data-testid="chest-stars-pop"
-            className="stars-pop absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-2xl font-extrabold text-amber-600"
+            className="stars-pop absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-2xl font-extrabold text-amber-400"
           >
             +{shown} sao
           </span>
         )}
       </div>
-      <p className="mt-2 text-base font-bold text-sky-700">
-        Tổng kho sao của em: <span className="text-amber-600">{totalStars} sao</span>
+      <p className="mt-2 text-base font-bold text-sky-300">
+        Tổng kho sao của em: <span className="text-amber-400">{totalStars} sao</span>
       </p>
       {newStickers.length > 0 && (
         <div data-testid="new-stickers" className="mt-3 flex flex-wrap items-center justify-center gap-2">

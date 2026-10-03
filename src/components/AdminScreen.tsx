@@ -473,7 +473,7 @@ function ProgressTable({ results, students }: { results: ResultWithStudent[]; st
     })
     .sort((a, b) => (b.last ?? '').localeCompare(a.last ?? ''));
   return (
-    <div className="overflow-x-auto" data-testid="progress-table">
+    <div className="overflow-x-auto rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-100" data-testid="progress-table">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b-2 border-sky-100 text-sky-700">
