@@ -366,9 +366,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               {verdict.isCorrect ? 'Chính xác! 🎉' : 'Chưa đúng rồi.'}
             </div>
             <div className="mt-1 text-sm font-bold text-slate-200">
-              Đáp án đúng: <span className="font-extrabold text-emerald-300">{examCorrectAnswerText(question)}</span>
+              Đáp án đúng: <span className="font-extrabold text-emerald-300"><MarkupText text={examCorrectAnswerText(question)} /></span>
             </div>
-            {question.explanation && <div className="mt-1 text-sm text-slate-300">{question.explanation}</div>}
+            {question.explanation && <div className="mt-1 text-sm text-slate-300"><MarkupText text={question.explanation} /></div>}
             <button
               type="button"
               data-testid="practice-next"
@@ -590,8 +590,28 @@ function PromptLine({ text, imageUrl }: { text: string; imageUrl?: string }) {
           className="mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain"
         />
       )}
-      {text}
+      <MarkupText text={text} />
     </div>
+  );
+}
+
+/**
+ * CR-40: IOE bank strings carry literal `<u>underline</u>` markup for the
+ * "underlined part" pronunciation questions. Render it as real underlines
+ * instead of leaking raw tags.
+ */
+function MarkupText({ text }: { text: string }) {
+  const parts = text.split(/(<u>.*?<\/u>)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith('<u>') && p.endsWith('</u>') ? (
+          <u key={i}>{p.slice(3, -4)}</u>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
   );
 }
 
@@ -627,7 +647,7 @@ function OptionButtons({
           {optionImages?.[i] ? (
             <img src={optionImages[i]} alt={option} data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1" />
           ) : (
-            option
+            <MarkupText text={option} />
           )}
           {ipa && WORD_IPA[option.toLowerCase()] && (
             <span className="ml-2 text-sm font-normal text-sky-300">/{WORD_IPA[option.toLowerCase()]}/</span>
@@ -829,19 +849,19 @@ function ExamResult({
                 }`}
               >
                 <div className="text-xs font-bold text-slate-400">Câu {item.index + 1}</div>
-                <div className="mt-1 font-mono text-sm text-slate-100">{reviewPrompt(item.question)}</div>
+                <div className="mt-1 font-mono text-sm text-slate-100"><MarkupText text={reviewPrompt(item.question)} /></div>
                 <div className="mt-2 text-sm">
                   <span className="font-bold text-slate-300">Đáp án đúng: </span>
-                  <span className="font-extrabold text-emerald-300">{examCorrectAnswerText(item.question)}</span>
+                  <span className="font-extrabold text-emerald-300"><MarkupText text={examCorrectAnswerText(item.question)} /></span>
                 </div>
                 {!item.isCorrect && (
                   <div className="mt-1 text-sm">
                     <span className="font-bold text-slate-300">Em chọn: </span>
-                    <span className="text-rose-300">{answerText(item.answer, item.question)}</span>
+                    <span className="text-rose-300"><MarkupText text={answerText(item.answer, item.question)} /></span>
                   </div>
                 )}
                 {item.question.explanation && (
-                  <div className="mt-1 text-xs text-slate-400">{item.question.explanation}</div>
+                  <div className="mt-1 text-xs text-slate-400"><MarkupText text={item.question.explanation} /></div>
                 )}
               </div>
             ))}
