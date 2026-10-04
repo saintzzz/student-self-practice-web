@@ -72,6 +72,28 @@ answer or give no reason:
   đỏ, trắng và xanh lá cây..." - teaches the flag, not just the word.
 - service_role UPDATE/SELECT grant revoked after backfill (verified 403).
 
+### F5 - accented/exotic names + non-sovereign flag questions
+- Generator used a full world-flags list: accented spellings shown to
+  kids ("Which picture shows: piñata?", "Türkiye", "Curaçao") plus ~40
+  non-sovereign territories as CORRECT answers (Aland, Jersey,
+  Guernsey, Greenland, Hong Kong, Taiwan, Palestine, Antarctica...) -
+  neither curriculum vocabulary nor real countries. Reported via user
+  screenshot (pinata item).
+- `scripts/v6-flag-fix.mjs` (ops-only): normalized accented ->
+  standard English in prompt_text/choices/explanation_vi/
+  learning_objective (pinata, Turkey, Curacao, Reunion, Aland,
+  Saint Barthelemy, Sao Tome and Principe) - 40 rows renamed.
+- Set practiceEligible=false on 93 rows whose correct answer or
+  prompted term is a non-sovereign territory (word-to-image,
+  image-to-word, img-true-false, and a few listen/phonics items that
+  leaked into flag sets). Territories remain acceptable as
+  distractors inside surviving rows.
+- Sovereign but oddly-named kept as-is (America, Bosnia); UK
+  constituent flags (England/Scotland/Wales/Britain) kept - common in
+  ESL flag sets.
+- Verified: 0 accented names left in served prompts/choices;
+  service_role grant revoked.
+
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their
   explanations still get rewritten for the review queue.
