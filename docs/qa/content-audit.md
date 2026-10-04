@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-04T06:37:40.647Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-04T07:48:05.921Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -13,50 +13,58 @@ Generated: 2026-10-04T06:37:40.647Z · rows: 11406 · regenerate: `node scripts/
 | `prompt-answer-leak` | P0 | **0** | Prompt literally contains the quoted correct answer (guessable without skill) |
 | `explanation-missing` | P0 | **0** | No explanation at all |
 | `explanation-template-residue` | P0 | **0** | Leftover generator template text |
+| `wrong-answer-math` | P0 | **0** | Marked answer contradicts the computed value of the prompt |
+| `wrong-comparison-answer` | P0 | **0** | Compare X and Y items: marked answer wrong for the numbers |
 | `prompt-placeholder` | P0 | **0** | Prompt contains placeholder tokens (undefined/null/TODO) |
-| `explanation-not-vietnamese` | P1 | **1513** | Explanation has no Vietnamese characters (untranslated?) |
-| `explanation-too-short` | P1 | **446** | Explanation under 20 chars - teaches nothing |
+| `form-missing-question` | P0 | **0** | Form references a question id that does not exist |
+| `form-ineligible-question` | P0 | **0** | Form includes a question not eligible for serving (flagged/excluded) |
+| `form-missing-answerkey` | P0 | **0** | Form question has no entry in answerKey |
+| `form-answerkey-mismatch` | P0 | **0** | Form answerKey disagrees with the question stored answer |
+| `form-duplicate-variant` | P0 | **0** | Two questions in the same form share a variant group or identical content |
+| `explanation-not-vietnamese` | P1 | **1014** | Explanation has no Vietnamese characters (untranslated?) |
+| `explanation-too-short` | P1 | **401** | Explanation under 20 chars - teaches nothing |
 | `explanation-mentions-other-answer` | P1 | **3** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
 | `duplicate-choices` | P1 | **0** | Two identical choices in one question |
+| `form-grade-subject-mismatch` | P1 | **0** | Question grade/subject differs from its form |
 | `dup-prompt-same-grade` | P2 | **0** | Identical prompt+answer that can co-appear in one exam (no shared variant_group_id) |
 | `ambiguous-country-name` | P2 | **0** | Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...) |
 | `accented-text` | P2 | **0** | Non-ASCII beyond punctuation/math in served prompt or choices |
 
-## explanation-not-vietnamese (P1) - 1513 rows
+## explanation-not-vietnamese (P1) - 1014 rows
 
-- `g5-math-v5-1212-a60df76525` — What is 20% of 400? → **80**
-- `g5-math-v5-1222-bc54f759ec` — What is 20% of 400? → **80**
-- `g5-math-v5-1223-88b05f67d6` — A cuboid is 12 cm × 10 cm × 8 cm. What is its volume? → **960**
-- `g5-math-v5-1253-4e015b9025` — A cuboid is 12 cm × 10 cm × 8 cm. What is its volume? → **960**
-- `g5-math-v5-5015-6069b91c42` — Convert 12 kilometres to metres. → **12000**
-- `g5-math-v5-1226-8b107571b7` — A vehicle travels at 34 km/h for 2 hours. How far does it travel? → **68**
-- `g5-math-v5-5025-5436770abc` — Convert 15 kilometres to metres. → **15000**
-- `g3-math-v6-cbd8ae1f179d` — A rectangle is 10 cm long and 10 cm wide. What is its perimeter? → **40**
-- `g1-math-v6-efdc867e2026` — What number comes next? 8, 9, 10, 11, ___ → **12**
-- `g2-math-v6-8156e19ea596` — Which shape has 4 straight sides? → **square**
-- `g3-math-v5-5015-c11f21e67b` — A rectangle is 9 cm long and 6 cm wide. What is its perimeter? → **30**
-- `g3-math-v6-f5353db4dca7` — A rectangle is 9 cm long and 6 cm wide. What is its perimeter? → **30**
-- _…and 1501 more (see --json)_
+- `g1-eng-v4b-reading-basic-097bbc300ca3` — Read: "Hoa has a red cake. Hoa likes it." What colour is the cake? → **red**
+- `g1-eng-v4b-reading-basic-1c4c97ec80f4` — Read: "Anna has a red yellow. Anna likes it." What colour is the yellow? → **red**
+- `g1-eng-v4b-reading-basic-76934170e33a` — Read: "Lan has a red tree. Lan likes it." What colour is the tree? → **red**
+- `g1-eng-v4b-reading-basic-7ad5d6a41f5c` — Read: "Lucy has a red doll. Lucy likes it." What colour is the doll? → **red**
+- `g1-eng-v4b-reading-basic-836dc672e90e` — Read: "Emma has a red milk. Emma likes it." What colour is the milk? → **red**
+- `g1-eng-v4b-reading-basic-96fc1221e3b9` — Read: "Linda has a blue book. Linda likes it." What colour is the book? → **blue**
+- `g1-eng-v4b-reading-basic-a58f23604137` — Read: "Minh has a red school. Minh likes it." What colour is the school? → **red**
+- `g1-eng-v4b-reading-basic-a9a73829b9ac` — Read: "Nam has a red pencil. Nam likes it." What colour is the pencil? → **red**
+- `g1-eng-v4b-reading-basic-ae808bd26394` — Read: "Emma has a blue banana. Emma likes it." What colour is the banana? → **blue**
+- `g1-eng-v4b-reading-basic-bb268fb86d54` — Read: "Peter has a blue apple. Peter likes it." What colour is the apple? → **blue**
+- `g1-eng-v4b-reading-basic-c51eb3bbf528` — Read: "Tony has a blue bird. Tony likes it." What colour is the bird? → **blue**
+- `g1-eng-v4b-reading-basic-c8ffbe05a323` — Read: "Alex has a red kite. Alex likes it." What colour is the kite? → **red**
+- _…and 1002 more (see --json)_
 
-## explanation-too-short (P1) - 446 rows
+## explanation-too-short (P1) - 401 rows
 
-- `g5-math-v5-1212-a60df76525` — What is 20% of 400? → **80**
-- `g5-math-v5-1222-bc54f759ec` — What is 20% of 400? → **80**
-- `g5-math-v5-5015-6069b91c42` — Convert 12 kilometres to metres. → **12000**
-- `g5-math-v5-1265-19bbe6ce6e` — Convert 9 kilometres to metres. → **9000**
-- `g5-math-v5-5035-9e0c5931de` — Convert 9 kilometres to metres. → **9000**
-- `g5-math-v5-5025-5436770abc` — Convert 15 kilometres to metres. → **15000**
-- `g3-math-v5-5053-104f2a64d8` — What is 70 ÷ 7? → **10**
-- `g1-math-v6-df7018c3a5c6` — There are 7 stickers. 2 stickers are given away. How many stickers are left? → **5**
-- `g1-math-v6-a667be540747` — There are 4 stickers. 2 stickers are given away. How many stickers are left? → **2**
-- `g5-math-v5-1035-edfef7e528` — Convert 20 kilometres to metres. → **20000**
-- `g5-math-v5-1038-6109ead195` — A shop has 6 packs of 21 bottles. It sells 19 bottles. How many remain? → **107**
-- `g5-math-v5-1039-505c006019` — A rule is “multiply by 2, then add 5”. What is the output for 28? → **61**
-- _…and 434 more (see --json)_
+- `g1-eng-v4b-reading-basic-097bbc300ca3` — Read: "Hoa has a red cake. Hoa likes it." What colour is the cake? → **red**
+- `g1-eng-v4b-reading-basic-1c4c97ec80f4` — Read: "Anna has a red yellow. Anna likes it." What colour is the yellow? → **red**
+- `g1-eng-v4b-reading-basic-76934170e33a` — Read: "Lan has a red tree. Lan likes it." What colour is the tree? → **red**
+- `g1-eng-v4b-reading-basic-7ad5d6a41f5c` — Read: "Lucy has a red doll. Lucy likes it." What colour is the doll? → **red**
+- `g1-eng-v4b-reading-basic-836dc672e90e` — Read: "Emma has a red milk. Emma likes it." What colour is the milk? → **red**
+- `g1-eng-v4b-reading-basic-96fc1221e3b9` — Read: "Linda has a blue book. Linda likes it." What colour is the book? → **blue**
+- `g1-eng-v4b-reading-basic-a58f23604137` — Read: "Minh has a red school. Minh likes it." What colour is the school? → **red**
+- `g1-eng-v4b-reading-basic-a9a73829b9ac` — Read: "Nam has a red pencil. Nam likes it." What colour is the pencil? → **red**
+- `g1-eng-v4b-reading-basic-ae808bd26394` — Read: "Emma has a blue banana. Emma likes it." What colour is the banana? → **blue**
+- `g1-eng-v4b-reading-basic-b23298835ac7` — Read: "Nam has a red bag. Nam likes it." What colour is the bag? → **red**
+- `g1-eng-v4b-reading-basic-b2ead93ed267` — Read: "Hoa has a red sun. Hoa likes it." What colour is the sun? → **red**
+- `g1-eng-v4b-reading-basic-bb268fb86d54` — Read: "Peter has a blue apple. Peter likes it." What colour is the apple? → **blue**
+- _…and 389 more (see --json)_
 
 ## explanation-mentions-other-answer (P1) - 3 rows
 
-- `g4-math-v5-1033-aa29b97fa3` — An angle measures 90°. What type of angle is it? → **right**
-- `g3-gs-u19-v6-cloze-086c447b45c7` — Choose the best word or phrase to complete the sentence: We ride our bikes in the ___. → **park**
 - `g3-gs-u01-v6-cloze-6e30be760cdb` — Choose the best word or phrase to complete the sentence: I say hello to my ___. → **friend**
+- `g3-gs-u19-v6-cloze-086c447b45c7` — Choose the best word or phrase to complete the sentence: We ride our bikes in the ___. → **park**
+- `g4-math-v5-1033-aa29b97fa3` — An angle measures 90°. What type of angle is it? → **right**
 

@@ -130,6 +130,36 @@ answer or give no reason:
   after quota reset. Ops scripts persisted: `v6-quick-fix.mjs`,
   `v6-dedup-variants.mjs`, `v6-flag-fix.mjs`.
 
+### F7 - wrong marked answer + exam-form bundle integrity (quality escalation)
+- User direction: product value is per-question and per-exam answer +
+  explanation quality, so verification had to go beyond structure.
+- `wrong-answer-math` (new P0 check): evaluates arithmetic/comparison/
+  pattern prompts deterministically and compares with the marked answer.
+  First run caught `g5-mat-v4b-percent-intro-a1351ee9fd85` -
+  "Find 25% of 50." marked 12 (true: 12.5, explanation even taught
+  rounding). Fixed prompt to "Find 25% of 48." keeping answer 12.
+- Form-bundle checks (section E in audit) over `qb_exam_forms`:
+  missing question refs, ineligible items inside forms, missing/mismatched
+  answerKey entries, duplicate variant groups inside one form, and
+  grade/subject mismatch. First run found:
+  - `form-duplicate-variant`: **188 slots** where a form contained two
+    members of one variant group (e.g. func + listencomp of "How do you
+    greet a friend?" - same choices, shuffled index).
+  - `form-ineligible-question`: 1 flagged question inside a diagnostic
+    form.
+  - 314 answerKey entries missing or disagreeing with stored answers.
+- Repair: `scripts/v6-form-fix.mjs` swaps each bad slot for an eligible
+  same grade+subject (+unit for unit tests, preferring same type/
+  transcript/assets) or drops it when no replacement exists, then
+  rebuilds answerKey from stored answers. Applied: 188 forms patched,
+  231 swapped, 52 dropped, 314 rekeyed. Re-audit: all form checks = 0.
+- `scripts/qb-answer-verify.mjs`: LLM correctness pass over every
+  eligible question - checks the marked answer is actually right and
+  the explanation supports it; resumable cache
+  (`docs/qa/.answer-verify-cache.jsonl`), report `docs/qa/answer-verify.md`,
+  `--apply` flags confirmed-wrong items (review_status='flagged' +
+  removed from all pools pending human review).
+
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their
   explanations still get rewritten for the review queue.

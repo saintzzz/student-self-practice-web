@@ -32,12 +32,12 @@ const HEADERS = {
   'Accept-Profile': 'practice', 'Content-Profile': 'practice',
 };
 
-async function fetchTable(table, cols) {
+async function fetchTable(table, cols, order = 'id') {
   const out = [];
   const PAGE = 1000;
   for (let off = 0; ; off += PAGE) {
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/${table}?select=${cols}&offset=${off}&limit=${PAGE}`,
+      `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=${PAGE}`,
       { headers: HEADERS },
     );
     if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
@@ -76,7 +76,7 @@ const AMBIGUOUS_NAMES = new Set(['Bosnia', 'Congo', 'Korea', 'America']);
 
 const questions = await fetchTable('qb_questions',
   'id,grade,subject,question_type,prompt_text,transcript,passage,choices,answer,explanation_vi,publication_policy,review_status,variant_group_id');
-const links = await fetchTable('qb_question_assets', 'question_id');
+const links = await fetchTable('qb_question_assets', 'question_id', 'question_id');
 const assetCount = new Map();
 for (const l of links) assetCount.set(l.question_id, (assetCount.get(l.question_id) ?? 0) + 1);
 
@@ -171,6 +171,65 @@ check('explanation-not-vietnamese', 'P1',
   'Explanation has no Vietnamese characters (untranslated?)',
   questions.filter((q) => eligible(q) && q.explanation_vi && q.explanation_vi.length > 15 && !VN_MARK.test(q.explanation_vi)));
 
+/* ---------- B2. deterministic answer verification ---------- */
+
+// Evaluate simple arithmetic/comparison prompts and check the marked
+// answer actually is correct - catches wrong-answer generator bugs.
+function expectedMath(prompt) {
+  const p = prompt.replace(/,/g, '');
+  let m;
+  if ((m = p.match(/What is (\d+)\s*plus\s*(\d+)/i))) return +m[1] + +m[2];
+  if ((m = p.match(/What is (\d+)\s*minus\s*(\d+)/i))) return +m[1] - +m[2];
+  if ((m = p.match(/What is (\d+)\s*(?:times|multiplied by)\s*(\d+)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/What is (\d+)\s*divided by\s*(\d+)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/What is (\d+)\s*[+]\s*(\d+)/i))) return +m[1] + +m[2];
+  if ((m = p.match(/What is (\d+)\s*-\s*(\d+)/i))) return +m[1] - +m[2];
+  if ((m = p.match(/What is (\d+)\s*[×x*]\s*(\d+)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/What is (\d+)\s*÷\s*(\d+)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/Compute (\d+)\s*÷\s*(\d+)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/Compute (\d+)\s*[×x*]\s*(\d+)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+)\s*[+]\s*(\d+)/i))) return +m[1] + +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+)\s*-\s*(\d+)/i))) return +m[1] - +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+)\s*[×x*]\s*(\d+)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+)\s*÷\s*(\d+)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/(\d+)\s*[+]\s*(\d+)\s*=\s*[_?]/))) return +m[1] + +m[2];
+  if ((m = p.match(/(\d+)\s*-\s*(\d+)\s*=\s*[_?]/))) return +m[1] - +m[2];
+  if ((m = p.match(/(\d+)\s*[×x]\s*(\d+)\s*=\s*[_?]/))) return +m[1] * +m[2];
+  if ((m = p.match(/(\d+)\s*÷\s*(\d+)\s*=\s*[_?]/))) return +m[1] / +m[2];
+  if ((m = p.match(/one more than (\d+)/i))) return +m[1] + 1;
+  if ((m = p.match(/one less than (\d+)/i))) return +m[1] - 1;
+  if ((m = p.match(/comes immediately after (\d+)/i))) return +m[1] + 1;
+  if ((m = p.match(/comes immediately before (\d+)/i))) return +m[1] - 1;
+  if ((m = p.match(/Which number is the greatest:? ([\d, ]+)/i))) return Math.max(...m[1].split(/[,\s]+/).map(Number).filter(Number.isFinite));
+  if ((m = p.match(/Which number is the (?:smallest|least):? ([\d, ]+)/i))) return Math.min(...m[1].split(/[,\s]+/).map(Number).filter(Number.isFinite));
+  if ((m = p.match(/(\d+)% of (\d+)/i))) return (+m[1] / 100) * +m[2];
+  if ((m = p.match(/Continue the pattern:? ((?:\d+[,\s]+){2,}\d+)[,\s]*_+/i))) {
+    const seq = m[1].split(/[,\s]+/).map(Number).filter(Number.isFinite);
+    if (seq.length >= 2 && seq.every((v, i) => i === 0 || v - seq[i - 1] === seq[1] - seq[0])) return seq[seq.length - 1] + (seq[1] - seq[0]);
+  }
+  return undefined;
+}
+
+check('wrong-answer-math', 'P0',
+  'Marked answer contradicts the computed value of the prompt',
+  questions.filter((q) => {
+    if (!eligible(q)) return false;
+    const exp = expectedMath(q.prompt_text ?? '');
+    if (exp === undefined || !Number.isFinite(exp)) return false;
+    const ans = Number(String(correctLabel(q)).replace(/,/g, ''));
+    return !Number.isFinite(ans) || Math.abs(ans - exp) > 1e-9;
+  }));
+
+check('wrong-comparison-answer', 'P0',
+  'Compare X and Y items: marked answer wrong for the numbers',
+  questions.filter((q) => {
+    if (!eligible(q)) return false;
+    const m = (q.prompt_text ?? '').match(/Compare (\d+) and (\d+)\.\s*\d+ is _+ \d+/i);
+    if (!m) return false;
+    const want = +m[1] > +m[2] ? 'greater than' : +m[1] < +m[2] ? 'less than' : 'equal to';
+    return correctLabel(q).toLowerCase() !== want;
+  }));
+
 /* ---------- D. content sanity ---------- */
 
 check('prompt-placeholder', 'P0',
@@ -213,6 +272,76 @@ check('accented-text', 'P2',
     const t = (q.prompt_text ?? '') + JSON.stringify(q.choices ?? []);
     return /[ñçãõÅéíüî]/i.test(t);
   }));
+
+/* ---------- E. exam-form bundle integrity ---------- */
+
+const forms = await fetchTable('qb_exam_forms', 'id,grade,subject,kind,mode,payload');
+const qById = new Map(questions.map((q) => [q.id, q]));
+
+check('form-missing-question', 'P0',
+  'Form references a question id that does not exist',
+  forms.flatMap((f) =>
+    (f.payload?.questionIds ?? [])
+      .filter((id) => !qById.has(id))
+      .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: `missing from form ${f.id}` }))));
+
+check('form-ineligible-question', 'P0',
+  'Form includes a question not eligible for serving (flagged/excluded)',
+  forms.flatMap((f) =>
+    (f.payload?.questionIds ?? [])
+      .filter((id) => { const q = qById.get(id); return q && !eligible(q); })
+      .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: qById.get(id)?.prompt_text ?? '' }))));
+
+check('form-missing-answerkey', 'P0',
+  'Form question has no entry in answerKey',
+  forms.flatMap((f) =>
+    (f.payload?.questionIds ?? [])
+      .filter((id) => !(f.payload?.answerKey ?? {})[id])
+      .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: qById.get(id)?.prompt_text ?? '' }))));
+
+check('form-answerkey-mismatch', 'P0',
+  'Form answerKey disagrees with the question stored answer',
+  forms.flatMap((f) => {
+    const key = f.payload?.answerKey ?? {};
+    return (f.payload?.questionIds ?? [])
+      .filter((id) => {
+        const q = qById.get(id);
+        const k = key[id];
+        if (!q || !k) return false;
+        const stored = correctLabel(q).toLowerCase();
+        const kt = String(k.text ?? '').toLowerCase();
+        if (kt && stored && kt !== stored) return true;
+        if (k.index !== undefined && q.answer?.index !== undefined && k.index !== q.answer.index) return true;
+        return false;
+      })
+      .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: qById.get(id)?.prompt_text ?? '' }));
+  }));
+
+check('form-duplicate-variant', 'P0',
+  'Two questions in the same form share a variant group or identical content',
+  forms.flatMap((f) => {
+    const ids = f.payload?.questionIds ?? [];
+    const seen = new Map();
+    const bad = [];
+    for (const id of ids) {
+      const q = qById.get(id);
+      if (!q) continue;
+      const k = q.variant_group_id ?? `${(q.prompt_text ?? '').toLowerCase()}|${correctLabel(q).toLowerCase()}`;
+      if (seen.has(k)) bad.push({ id: `${f.id} -> ${id}`, prompt_text: `dup of ${seen.get(k)}` });
+      else seen.set(k, id);
+    }
+    return bad;
+  }));
+
+check('form-grade-subject-mismatch', 'P1',
+  'Question grade/subject differs from its form',
+  forms.flatMap((f) =>
+    (f.payload?.questionIds ?? [])
+      .filter((id) => {
+        const q = qById.get(id);
+        return q && (q.grade !== f.grade || q.subject !== f.subject);
+      })
+      .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: qById.get(id)?.prompt_text ?? '' }))));
 
 /* ---------- report ---------- */
 
