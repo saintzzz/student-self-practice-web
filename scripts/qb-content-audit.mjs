@@ -161,6 +161,9 @@ check('explanation-mentions-other-answer', 'P1',
     if (!eligible(q) || !Array.isArray(q.choices) || q.answer?.index === undefined) return false;
     const m = (q.explanation_vi ?? '').match(QUOTED);
     if (!m) return false;
+    const expl = q.explanation_vi ?? '';
+    // contrasting distractors on purpose is good pedagogy, not a mismatch
+    if (/không (phù hợp|đúng)|còn lại|các (từ|lựa chọn|đáp án) khác|là sai/i.test(expl)) return false;
     const quoted = m[1].trim().toLowerCase();
     const labels = q.choices.map((c) => choiceLabel(c).toLowerCase());
     const correct = correctLabel(q).toLowerCase();

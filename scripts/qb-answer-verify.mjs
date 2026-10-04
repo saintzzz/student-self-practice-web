@@ -16,8 +16,16 @@
  *   node scripts/qb-answer-verify.mjs --limit 60 # smoke run
  *   node scripts/qb-answer-verify.mjs --apply    # flag wrong answers in DB
  *
- * Env: GEMINI_API_KEY (required), AI_MODEL (default gemini-3.5-flash-lite),
- *      BATCH_DELAY_MS (default 3500), SUPABASE_SERVICE_KEY for --apply.
+ * Provider chain (first configured key wins; 429/quota falls back to the
+ * next provider instead of retrying forever):
+ *   GEMINI_API_KEY    + AI_MODEL          (default gemini-3.5-flash-lite)
+ *   ANTHROPIC_API_KEY + ANTHROPIC_MODEL   (default claude-haiku-4-5-20251001)
+ *   OPENAI_API_KEY    + OPENAI_MODEL      (default gpt-4o-mini)
+ *   AI_PROVIDER can pin a single provider (gemini|anthropic|openai).
+ *   BATCH_DELAY_MS (default 3500), SUPABASE_SERVICE_KEY for --apply.
+ *   When NO direct provider key exists, seed remaining items into
+ *   practice.qb_verify_todo for SWE-2/Devin session workers instead
+ *   (see qb-answer-confirm.mjs / docs/qa/answer-verify.md).
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -39,7 +47,6 @@ const LIMIT = (() => {
 })();
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_KEY) { console.error('GEMINI_API_KEY required'); process.exit(1); }
 
 function serviceKey() {
   if (process.env.SUPABASE_SERVICE_KEY) return process.env.SUPABASE_SERVICE_KEY;
@@ -91,51 +98,142 @@ const hash = (q) => createHash('sha1')
   .update(JSON.stringify([q.prompt_text, q.choices, q.answer, q.passage, q.transcript]))
   .digest('hex').slice(0, 12);
 
-async function llm(items, attempt = 0) {
+const VERIFY_PROMPT = (items) =>
+  `You are auditing a Vietnamese primary-school practice question bank (English, Math-in-English, Science-in-English).\n` +
+  `For EACH item decide:\n` +
+  `- "answer_ok": is marked_correct actually the correct answer given prompt/choices/passage/transcript? Check facts, arithmetic, grammar, spelling.\n` +
+  `- "expl_ok": does the explanation justify WHY marked_correct is right (teaching value for a child)? Thin but correct still counts as ok=false only if it teaches nothing or is wrong.\n` +
+  `Return ONLY a JSON array, one object per item, preserving id:\n` +
+  `[{"id":"...","answer_ok":true,"expl_ok":true,"note":""}]\n` +
+  `Set note (short, English) only when something is wrong. If unsure, answer_ok=true.\n\n` +
+  JSON.stringify(items);
+
+class QuotaError extends Error {}
+
+async function callGemini(items) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text:
-              `You are auditing a Vietnamese primary-school practice question bank (English, Math-in-English, Science-in-English).\n` +
-              `For EACH item decide:\n` +
-              `- "answer_ok": is marked_correct actually the correct answer given prompt/choices/passage/transcript? Check facts, arithmetic, grammar, spelling.\n` +
-              `- "expl_ok": does the explanation justify WHY marked_correct is right (teaching value for a child)? Thin but correct still counts as ok=false only if it teaches nothing or is wrong.\n` +
-              `Return ONLY a JSON array, one object per item, preserving id:\n` +
-              `[{"id":"...","answer_ok":true,"expl_ok":true,"note":""}]\n` +
-              `Set note (short, English) only when something is wrong. If unsure, answer_ok=true.\n\n` +
-              JSON.stringify(items),
-          }],
-        }],
+        contents: [{ parts: [{ text: VERIFY_PROMPT(items) }] }],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
       }),
     });
-  if (!res.ok) {
-    const t = await res.text();
-    if ((res.status === 429 || res.status === 503) && attempt < 6) {
-      const wait = Math.min(60000, 8000 * 2 ** attempt);
-      console.log(`  ${res.status} - retry in ${wait / 1000}s`);
-      await new Promise((r) => setTimeout(r, wait));
-      return llm(items, attempt + 1);
-    }
-    throw new Error(`Gemini ${res.status}: ${t.slice(0, 160)}`);
-  }
+  if (res.status === 429 || res.status === 503) throw new QuotaError(`gemini ${res.status}`);
+  if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 160)}`);
   const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    if (attempt < 3) {
-      console.log('  malformed JSON - retrying batch');
-      await new Promise((r) => setTimeout(r, 4000));
-      return llm(items, attempt + 1);
-    }
-    throw e;
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+}
+
+async function callAnthropic(items) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
+      max_tokens: 8192,
+      temperature: 0.1,
+      messages: [{ role: 'user', content: VERIFY_PROMPT(items) }],
+    }),
+  });
+  if (res.status === 429 || res.status === 529) throw new QuotaError(`anthropic ${res.status}`);
+  if (!res.ok) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 160)}`);
+  const data = await res.json();
+  return data.content?.map((b) => b.text).join('') ?? '';
+}
+
+async function callOpenAI(items) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: 'Return JSON only, wrapped as {"verdicts":[...]}.' },
+        { role: 'user', content: VERIFY_PROMPT(items) },
+      ],
+    }),
+  });
+  if (res.status === 429 || res.status === 503) throw new QuotaError(`openai ${res.status}`);
+  if (!res.ok) throw new Error(`openai ${res.status}: ${(await res.text()).slice(0, 160)}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? '';
+}
+
+// Provider chain: gemini -> anthropic -> openai. A provider returning
+// 429/quota cools down for QUOTA_COOLDOWN_MS so later batches skip straight
+// to the next configured provider instead of retrying a dead quota.
+const QUOTA_COOLDOWN_MS = 15 * 60 * 1000;
+const ALL_PROVIDERS = [
+  { name: 'gemini', key: GEMINI_KEY, call: callGemini },
+  { name: 'anthropic', key: process.env.ANTHROPIC_API_KEY, call: callAnthropic },
+  { name: 'openai', key: process.env.OPENAI_API_KEY, call: callOpenAI },
+];
+const PIN = process.env.AI_PROVIDER;
+let providers = ALL_PROVIDERS.filter((p) => p.key && (!PIN || p.name === PIN));
+if (!providers.length && !PIN) providers = ALL_PROVIDERS.filter((p) => p.key);
+const providerState = new Map(providers.map((p) => [p.name, { cooldownUntil: 0, failures: 0 }]));
+
+function extractJson(text) {
+  try { return JSON.parse(text); } catch {}
+  const m = text.match(/\[[\s\S]*\]/);
+  if (m) { try { return JSON.parse(m[0]); } catch {} }
+  const obj = text.match(/\{[\s\S]*\}/);
+  if (obj) {
+    try {
+      const o = JSON.parse(obj[0]);
+      if (Array.isArray(o)) return o;
+      return o.verdicts ?? o.items ?? o;
+    } catch {}
   }
+  throw new Error('malformed JSON from model');
+}
+
+async function llm(items, attempt = 0) {
+  if (!providers.length) {
+    throw new QuotaError('no AI provider key configured - use qb_verify_todo/SWE-2 fallback');
+  }
+  const now = Date.now();
+  for (const p of providers) {
+    const st = providerState.get(p.name);
+    if (st.cooldownUntil > now) continue;
+    try {
+      return extractJson(await p.call(items));
+    } catch (e) {
+      if (e instanceof QuotaError) {
+        st.cooldownUntil = now + QUOTA_COOLDOWN_MS;
+        console.log(`  ${p.name} quota - cooling down 15min, trying next provider`);
+        continue;
+      }
+      if (e.message?.startsWith('malformed')) {
+        if (attempt < 3) {
+          console.log('  malformed JSON - retrying batch');
+          await new Promise((r) => setTimeout(r, 4000));
+          return llm(items, attempt + 1);
+        }
+        throw e;
+      }
+      // non-quota provider error: try next provider too
+      console.log(`  ${p.name} error: ${e.message?.slice(0, 100)} - trying next`);
+    }
+  }
+  // all providers exhausted: one retry pass for transient errors
+  if (attempt < 2) {
+    await new Promise((r) => setTimeout(r, 15000));
+    return llm(items, attempt + 1);
+  }
+  throw new QuotaError('all providers unavailable/quota-exhausted');
 }
 
 const questions = (await fetchAll('qb_questions',

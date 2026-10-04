@@ -121,14 +121,11 @@ answer or give no reason:
 - Audit false positives fixed in-script: numeric choices decoded to '',
   speaking-prompt matched listen regex, explanation quoting wrong
   answers intentionally is valid pedagogy.
-- Result: **all 10 P0 checks = 0**, P2 = 0. Remaining P1 is the thin-
-  explanation backlog: ~4,200/5,687 rewritten before Gemini daily
-  quota exhausted (3 models, both keys). Audit tracks the rest
-  (`explanation-not-vietnamese` ~1,513 + `explanation-too-short`
-  ~446); finish with
-  `AI_MODEL=gemini-3.5-flash BATCH_DELAY_MS=6000 node scripts/v6-content-fix.mjs explain-thin`
-  after quota reset. Ops scripts persisted: `v6-quick-fix.mjs`,
-  `v6-dedup-variants.mjs`, `v6-flag-fix.mjs`.
+- Result: **all 10 P0 checks = 0**, P2 = 0. Thin-explanation backlog
+  fully rewritten after quota reset (`gemini-3.5-flash-lite`, two
+  idempotent passes): `explanation-not-vietnamese` 1,513 -> 0,
+  `explanation-too-short` 446 -> 0. Ops scripts persisted:
+  `v6-quick-fix.mjs`, `v6-dedup-variants.mjs`, `v6-flag-fix.mjs`.
 
 ### F7 - wrong marked answer + exam-form bundle integrity (quality escalation)
 - User direction: product value is per-question and per-exam answer +
@@ -158,7 +155,20 @@ answer or give no reason:
   the explanation supports it; resumable cache
   (`docs/qa/.answer-verify-cache.jsonl`), report `docs/qa/answer-verify.md`,
   `--apply` flags confirmed-wrong items (review_status='flagged' +
-  removed from all pools pending human review).
+  removed from all pools pending human review). Provider chain
+  `gemini -> anthropic -> openai` (env keys, `AI_PROVIDER` to pin);
+  a 429/503 cools the provider down 15 min and the batch falls through
+  to the next provider instead of retrying a dead quota. When no
+  direct provider key is available, unverified items are seeded into
+  `practice.qb_verify_todo` and processed by parallel SWE-2/Devin
+  sessions via token-gated `qb_verify_take`/`qb_verify_report` RPCs
+  (anon key only, EXECUTE revoked after the run).
+- Full-bank verification finished: all 11,312 eligible items judged
+  (~7.4k Gemini + 3.9k SWE-2 queue + adjudicated second pass).
+  218 questions flagged out of all pools (malformed answers,
+  ambiguous/multi-answer items, confirmed wrong answers); 68
+  explanations rewritten to match their answers; all affected exam
+  forms re-swapped. Final audit: every P0/P1 check = 0.
 
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their
