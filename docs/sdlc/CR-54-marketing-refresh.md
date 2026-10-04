@@ -49,12 +49,12 @@ khách hàng (`proposal-vieschool-khach-hang.docx/.pptx` + `04-one-pager.md`)
 - Deck/docx: regen, mở kiểm tra số liệu khớp bảng trên.
 - Không đụng code app -> không cần test suite.
 
-## 6. Trạng thái deploy landing (2026-10-04)
+## 6. Trạng thái deploy landing (2026-10-04) - DA DEPLOY
 
 - `vieschool-landing` giờ là git repo `saintzzz/vieschool-landing` (private,
   trước đây chỉ là file lẻ không version).
-- Deploy lên project Vercel `vieschool-landing` bị chặn: MCP token không có
-  quyền `create_deployment`/`create_git_project` (403). Cần founder:
-  vào Vercel dashboard -> project `vieschool-landing` -> Settings -> Git ->
-  Connect `saintzzz/vieschool-landing`, hoặc `vercel --prod` trong thư mục
-  local. Sau khi link, push `main` sẽ auto-deploy.
+- Founder đã connect Git repo trong Vercel dashboard; push `main` giờ
+  auto-deploy production (xác nhận qua deployment `dpl_4WnG9ypu8F1j55y9LqQisBL24vmS`
+  READY với git meta `githubCommitSha=8b643d1` từ `saintzzz/vieschool-landing`).
+- Live check `https://vieschool.com`: stats mới "11.400+ câu hỏi / 270 đề thi
+  / 3 môn" + card English Arena cập nhật - Playwright-verified, không vỡ layout.
