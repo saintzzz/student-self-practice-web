@@ -7,6 +7,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
+import { optionLabel } from '../lib/qb/bank';
 import { H2 } from '../lib/ui/tokens';
 
 interface QueueRow {
@@ -20,7 +21,7 @@ interface QuestionRow {
   subject: string;
   question_type: string;
   prompt_text: string;
-  choices: string[] | null;
+  choices: unknown[] | null;
   answer: Record<string, unknown>;
   explanation_vi: string | null;
   review_status: string | null;
@@ -129,7 +130,7 @@ export default function ReviewQueueCard() {
               <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
                 {r.q.choices.map((c, i) => (
                   <li key={i} className={i === (r.q?.answer?.index as number) ? 'font-extrabold text-emerald-700' : ''}>
-                    {String.fromCharCode(65 + i)}. {String(c)}
+                    {String.fromCharCode(65 + i)}. {optionLabel(c)}
                   </li>
                 ))}
               </ul>

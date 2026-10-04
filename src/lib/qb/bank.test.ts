@@ -114,6 +114,34 @@ describe('toExamQuestion', () => {
     expect(ta).toMatchObject({ kind: 'text-answer', accept: ['11'] });
   });
 
+  it('labels {assetId} choices from the concept slug - no [object Object]', () => {
+    // Real V6 shape for word-to-image-mcq (1,462 rows).
+    const q = toExamQuestion(row({
+      question_type: 'word-to-image-mcq',
+      choices: [
+        { assetId: 'concept-dentist-fed1df' },
+        { assetId: 'concept-engineer-616954' },
+        { assetId: 'concept-architect-cadcfc' },
+        { assetId: 'concept-banker-9cc826' },
+      ],
+      answer: { index: 2 },
+      asset_paths: [
+        'images/concepts/concept-dentist-fed1df.webp',
+        'images/concepts/concept-engineer-616954.webp',
+        'images/concepts/concept-architect-cadcfc.webp',
+        'images/concepts/concept-banker-9cc826.webp',
+      ],
+    }));
+    expect(q).toMatchObject({
+      kind: 'grammar-mcq',
+      options: ['dentist', 'engineer', 'architect', 'banker'],
+      correctIndex: 2,
+    });
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect(q.optionImages).toHaveLength(4);
+    expect(isExamAnswerCorrect(q, { type: 'option', index: 2 })).toBe(true);
+  });
+
   it('returns null when choices are not exactly 4', () => {
     expect(toExamQuestion(row({ choices: ['a', 'b', 'c'], answer: { index: 0 } }))).toBeNull();
   });

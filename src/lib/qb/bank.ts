@@ -21,7 +21,8 @@ export interface QbRow {
   topic_key: string | null;
   prompt_text: string;
   transcript: string | null;
-  choices: string[] | null;
+  /** word-to-image-mcq carries {assetId} objects, not strings. */
+  choices: unknown[] | null;
   answer: { index?: number; boolean?: boolean; text?: string };
   explanation_vi: string | null;
   variant_group_id: string | null;
@@ -112,6 +113,25 @@ function str(v: unknown): string {
 }
 
 /**
+ * V6 choice values are not always plain strings: word-to-image-mcq
+ * rows carry {assetId: 'concept-architect-cadcfc'} objects. Extract a
+ * human label so verdicts/review never render "[object Object]".
+ */
+export function optionLabel(choice: unknown): string {
+  if (typeof choice === 'string') return choice;
+  if (choice !== null && typeof choice === 'object') {
+    const c = choice as Record<string, unknown>;
+    if (typeof c.text === 'string') return c.text;
+    if (typeof c.label === 'string') return c.label;
+    if (typeof c.assetId === 'string') {
+      const m = c.assetId.match(/^concept-(.+)-[0-9a-f]{6}$/);
+      return m ? m[1]!.replace(/-/g, ' ') : c.assetId;
+    }
+  }
+  return String(choice ?? '');
+}
+
+/**
  * Map 1 V6 row -> ExamQuestion. Tra null khi row khong auto-score duoc
  * bang engine hien co (choices khong phai 4, answer thieu...).
  */
@@ -127,7 +147,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
     case 'word-to-image-mcq':
     case 'visual-mcq':
     case 'visual-count-mcq': {
-      const options = toFour(row.choices?.map(str));
+      const options = toFour(row.choices?.map(optionLabel));
       const correctIndex = row.answer.index;
       if (!options || correctIndex === undefined || correctIndex < 0 || correctIndex > 3) return null;
       const optionImages =
