@@ -75,7 +75,7 @@ const TEMPLATE_RESIDUE = [
 const AMBIGUOUS_NAMES = new Set(['Bosnia', 'Congo', 'Korea', 'America']);
 
 const questions = await fetchTable('qb_questions',
-  'id,grade,subject,question_type,prompt_text,transcript,passage,choices,answer,explanation_vi,publication_policy,review_status,variant_group_id');
+  'id,grade,subject,question_type,prompt_text,transcript,passage,statement,choices,answer,explanation_vi,publication_policy,review_status,variant_group_id');
 const links = await fetchTable('qb_question_assets', 'question_id', 'question_id');
 const assetCount = new Map();
 for (const l of links) assetCount.set(l.question_id, (assetCount.get(l.question_id) ?? 0) + 1);
@@ -235,6 +235,54 @@ check('wrong-comparison-answer', 'P0',
 
 /* ---------- D. content sanity ---------- */
 
+const wordBag = (s) =>
+  String(s).toLowerCase().replace(/[.,!?;:'"]/g, '').split(/\s+/).filter(Boolean).sort().join(' ');
+
+check('reorder-bank-mismatch', 'P0',
+  'Reorder prompt word bank is not a permutation of the answer sentence',
+  questions.filter((q) => {
+    if (!eligible(q) || q.question_type !== 'reorder') return false;
+    const ans = q.answer?.text;
+    if (!ans) return false;
+    // word bank can live in `tokens` or inside the prompt "order: a / b / c."
+    const m = (q.prompt_text ?? '').match(/order:?\s*(.+\/.+)$/i);
+    const bank = Array.isArray(q.tokens) && q.tokens.length >= 2
+      ? q.tokens.join(' ')
+      : m ? m[1].split('/').map((w) => w.trim()).join(' ') : null;
+    if (!bank) return false;
+    return wordBag(bank) !== wordBag(ans);
+  }));
+
+check('reorder-trivial', 'P1',
+  'Reorder answer is a single word - nothing to arrange',
+  questions.filter((q) => eligible(q) && q.question_type === 'reorder'
+    && String(q.answer?.text ?? '').trim().split(/\s+/).length < 2));
+
+check('text-answer-empty', 'P0',
+  'text-answer item has no usable answer text or accepted list',
+  questions.filter((q) => {
+    if (!eligible(q) || q.question_type !== 'text-answer') return false;
+    const a = q.answer ?? {};
+    if (String(a.text ?? '').trim()) return false;
+    return !(Array.isArray(a.accepted) && a.accepted.some((s) => String(s).trim()));
+  }));
+
+check('heard-word-not-in-transcript', 'P1',
+  '"Which word did you hear" answer is not spoken in the transcript',
+  questions.filter((q) => {
+    if (!eligible(q) || !/word did you hear/i.test(q.prompt_text ?? '') || !q.transcript) return false;
+    const heard = correctLabel(q).toLowerCase();
+    return !new RegExp(`\\b${heard.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(q.transcript);
+  }));
+
+check('dup-option-assets', 'P0',
+  'Two options reference the same image asset (visually identical choices)',
+  questions.filter((q) => {
+    if (!eligible(q) || !Array.isArray(q.choices)) return false;
+    const assets = q.choices.map((c) => c && c.assetId).filter(Boolean);
+    return assets.length > 1 && new Set(assets).size !== assets.length;
+  }));
+
 check('prompt-placeholder', 'P0',
   'Prompt contains placeholder tokens (undefined/null/TODO)',
   questions.filter((q) => /\b(undefined|null|TODO|FIXME|lorem)\b/i.test(q.prompt_text ?? '')));
@@ -245,7 +293,8 @@ check('dup-prompt-same-grade', 'P2',
     const byKey = new Map();
     for (const q of questions) {
       if (!eligible(q)) continue;
-      const k = `${q.grade}|${q.subject}|${(q.prompt_text ?? '').trim().toLowerCase()}|${correctLabel(q).toLowerCase()}`;
+      const discriminating = ((q.prompt_text ?? '') + '|' + (q.statement ?? '') + '|' + (q.transcript ?? '')).trim().toLowerCase();
+      const k = `${q.grade}|${q.subject}|${discriminating}|${correctLabel(q).toLowerCase()}`;
       if (!byKey.has(k)) byKey.set(k, []);
       byKey.get(k).push(q);
     }
@@ -278,7 +327,7 @@ check('accented-text', 'P2',
 
 /* ---------- E. exam-form bundle integrity ---------- */
 
-const forms = await fetchTable('qb_exam_forms', 'id,grade,subject,kind,mode,payload');
+const forms = await fetchTable('qb_exam_forms', 'id,grade,subject,kind,mode,blueprint_id,payload');
 const qById = new Map(questions.map((q) => [q.id, q]));
 
 check('form-missing-question', 'P0',
@@ -345,6 +394,30 @@ check('form-grade-subject-mismatch', 'P1',
         return q && (q.grade !== f.grade || q.subject !== f.subject);
       })
       .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: qById.get(id)?.prompt_text ?? '' }))));
+
+/* blueprint conformance - each form should match its blueprint's target size */
+let blueprints = [];
+try {
+  blueprints = await fetchTable('qb_exam_blueprints', 'id,payload');
+} catch { /* table may not exist in older snapshots */ }
+const bpById = new Map(blueprints.map((b) => [b.id, b.payload ?? {}]));
+// forms link to blueprints by naming convention: '<blueprintId>-form-NN'
+const formBlueprintId = (f) =>
+  f.blueprint_id ?? f.payload?.blueprintId ?? f.id.replace(/-form-\d+$/, '');
+
+check('form-blueprint-size', 'P1',
+  'Form question count differs from blueprint targetQuestions',
+  forms.filter((f) => {
+    const bp = bpById.get(formBlueprintId(f));
+    const target = bp?.targetQuestions;
+    if (!target) return false;
+    return (f.payload?.questionIds ?? []).length !== target;
+  }).map((f) => ({ id: f.id, prompt_text: `${(f.payload?.questionIds ?? []).length} questions vs blueprint target ${bpById.get(formBlueprintId(f))?.targetQuestions}` })));
+
+check('form-blueprint-missing', 'P1',
+  'Form references a blueprint that does not exist',
+  forms.filter((f) => !bpById.has(formBlueprintId(f)))
+    .map((f) => ({ id: f.id, prompt_text: `blueprint ${formBlueprintId(f)} not found` })));
 
 /* ---------- report ---------- */
 

@@ -23,9 +23,13 @@ export interface QbRow {
   transcript: string | null;
   /** CR-51 - reading-comprehension passage (was dropped by the v6 import). */
   passage: string | null;
+  /** CR-51 - the sentence a true-false item asks the learner to judge. */
+  statement?: string | null;
+  /** CR-51 - reorder word bank from source (preferred over splitting answer). */
+  tokens?: string[] | null;
   /** word-to-image-mcq carries {assetId} objects, not strings. */
   choices: unknown[] | null;
-  answer: { index?: number; boolean?: boolean; text?: string };
+  answer: { index?: number; boolean?: boolean; text?: string; accepted?: unknown[] };
   explanation_vi: string | null;
   variant_group_id: string | null;
   asset_paths: string[];
@@ -171,20 +175,37 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
       };
     }
     case 'true-false': {
-      if (row.answer.boolean === undefined) return null;
+      // V6 stores the verdict as boolean (sci banks) or {text:'True'|'False',
+      // index} (readtf banks) - normalize both.
+      const tfChoices =
+        Array.isArray(row.choices) &&
+        optionLabel(row.choices[0]) === 'True' &&
+        optionLabel(row.choices[1]) === 'False';
+      const bool =
+        row.answer.boolean ??
+        (row.answer.text === 'True' || (tfChoices && row.answer.index === 0)
+          ? true
+          : row.answer.text === 'False' || (tfChoices && row.answer.index === 1)
+            ? false
+            : undefined);
+      if (bool === undefined) return null;
       return {
         id: row.id,
         topicId,
         kind: 'true-false-reading',
         passage: str(row.passage ?? row.transcript),
-        statement: str(row.prompt_text),
-        answer: row.answer.boolean,
+        statement: str(row.statement ?? row.prompt_text),
+        answer: bool,
         explanation,
       };
     }
     case 'text-answer': {
-      const accept = row.answer.text !== undefined ? [str(row.answer.text)] : null;
-      if (!accept) return null;
+      const accept = row.answer.text !== undefined
+        ? [str(row.answer.text)]
+        : Array.isArray(row.answer.accepted)
+          ? row.answer.accepted.map(str).filter(Boolean)
+          : null;
+      if (!accept || accept.length === 0) return null;
       return {
         id: row.id,
         topicId,
@@ -199,7 +220,10 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
     case 'reorder': {
       const sentence = str(row.answer.text);
       if (!sentence) return null;
-      const tokens = sentence.split(/\s+/).filter(Boolean);
+      const tokens =
+        Array.isArray(row.tokens) && row.tokens.length >= 2
+          ? row.tokens.map(str)
+          : sentence.split(/\s+/).filter(Boolean);
       if (tokens.length < 2) return null;
       // Scramble deterministic theo id; lap lai neu trung dung thu tu.
       let tiles = tokens.slice();

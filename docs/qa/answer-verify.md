@@ -48,3 +48,33 @@ model: gemini-3.5-flash-lite | verified: 60/11312 eligible
 ## Wrong answers (0)
 
 ## Weak explanations (0)
+### Flagged-item salvage (CR-51 F8)
+All 232 flagged items adjudicated into: salvage vs unfixable.
+
+| Class | Count | Action |
+|---|---:|---|
+| text-answer with `{'boolean': True}` literal | 102 + 117 | converted to `true-false` (statement + boolean answer + True/False choices) |
+| MCQ ambiguous distractors / off-theme answers | 76 | per-item distractor or context rewrite (see below) |
+| visual-mcq `Option 4` placeholder | 2 | replaced with a plausible wrong-clock distractor |
+| reorder missing word bank | 191 | unflagged (tiles derive from `answer.text` split; `tokens` column backfilled where source had them) |
+| reorder 1-word answer ("Hi", "Goodbye.") | 4 | kept flagged - nothing to arrange |
+| text-answer keyword tautologies | 16 | kept flagged |
+| visual-count of abstracts ("How many weekends...") | 4 | kept flagged |
+| constructed-response w/o usable rubric | 2 | kept flagged |
+| "I like three." (non-sentence reorder) | 1 | kept flagged |
+
+Net: 205 items restored to the serving pool, 27 kept flagged for
+human review in `qb_review_queue`. Every restored item was re-checked
+against the full deterministic audit - 32/32 checks at 0.
+
+Also fixed in this pass: `answer.index` pointing at the wrong choice
+after distractor rewrites (14 rows re-indexed), duplicated
+`answer.accepted[]` entries (553 rows deduped), and 20 extra
+duplicate-content groups unified under one `variant_group_id`.
+
+### Form blueprint conformance
+`qb-content-audit` gained `form-blueprint-size` + `form-blueprint-missing`.
+62 unit-test forms were short of `targetQuestions` after flagged-question
+drops; topped up with eligible same-grade+same-subject items (unit-matched
+first, then grade pool) - 55 forms patched, +105 questions, answerKey
+rebuilt for every added slot. All 270 forms now meet their blueprint.
