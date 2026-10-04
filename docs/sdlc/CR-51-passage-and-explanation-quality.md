@@ -45,6 +45,19 @@ answer or give no reason:
 4. Regression gates: tsc, tests, build, Playwright on a real
    "Read the passage" item.
 
+### F3 - listening items with no transcript (105 rows, added post-report)
+- v4/v4b generator produced "Listen and choose..." prompts with
+  `transcript: null` and no `audioIds` - rendered as a listen prompt
+  with no listen button. Unanswerable without guessing.
+- Recovery: spoken text recoverable from source for 99/105 rows -
+  `Người nói: "..."` and `Listen: "..."` quotes in explanationVi /
+  promptText, `Từ được nghe là "..."`, `Người nói nêu môn X` rebuilt as
+  "<Name> has <subj> on <day>.", 2 plan-to-drink items.
+- Backfilled `qb_questions.transcript` (99 rows). Adapter already maps
+  transcript -> ListenButton, so no code change needed.
+- 6 remaining "orphans" are false positives (word "listen" inside a
+  non-listening prompt) - correctly have no transcript.
+
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their
   explanations still get rewritten for the review queue.
