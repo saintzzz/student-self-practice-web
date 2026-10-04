@@ -14,6 +14,7 @@ function row(partial: Partial<QbRow>): QbRow {
     topic_key: 'school-objects',
     prompt_text: 'Choose the correct word.',
     transcript: null,
+    passage: null,
     choices: null,
     answer: {},
     explanation_vi: 'Giai thich.',
@@ -65,6 +66,34 @@ describe('toExamQuestion', () => {
     expect(q).toMatchObject({
       kind: 'grammar-mcq',
       optionImages: ['/images/a.webp', '/images/b.webp', '/images/c.webp', '/images/d.webp'],
+    });
+  });
+
+  it('maps reading mcq: passage flows through (CR-51)', () => {
+    const q = toExamQuestion(row({
+      prompt_text: 'Read the passage. Where does Lan go on Sunday?',
+      passage: 'On Sunday, Lan goes to the sports centre with a friend.',
+      choices: ['library', 'sports centre', 'school', 'park'],
+      answer: { index: 1 },
+    }));
+    expect(q).toMatchObject({
+      kind: 'grammar-mcq',
+      passage: 'On Sunday, Lan goes to the sports centre with a friend.',
+      correctIndex: 1,
+    });
+  });
+
+  it('maps true-false reading: passage preferred over transcript (CR-51)', () => {
+    const q = toExamQuestion(row({
+      question_type: 'true-false',
+      prompt_text: 'Read the passage and decide: True or False?',
+      passage: 'I say hello to my friend.',
+      answer: { boolean: true },
+    }));
+    expect(q).toMatchObject({
+      kind: 'true-false-reading',
+      passage: 'I say hello to my friend.',
+      answer: true,
     });
   });
 

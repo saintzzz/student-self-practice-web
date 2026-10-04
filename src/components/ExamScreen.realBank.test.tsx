@@ -65,3 +65,69 @@ describe('real-bank questions render cleanly through the production UI (CR-42)',
     }
   });
 });
+
+describe('V6 row -> ExamQuestion -> rendered UI (CR-51)', () => {
+  const base: import('../lib/qb/bank').QbRow = {
+    id: 'q1', grade: 4, subject: 'english', domain: 'reading', skill: 'reading',
+    question_type: 'mcq', difficulty: 2, topic_key: 'reading', prompt_text: '',
+    transcript: null, passage: null, choices: null, answer: {},
+    explanation_vi: 'e', variant_group_id: null, asset_paths: [], audio_transcripts: [],
+  };
+
+  it('reading mcq shows the passage above the prompt', async () => {
+    const { toExamQuestion } = await import('../lib/qb/bank');
+    const q = toExamQuestion({
+      ...base,
+      prompt_text: 'Read the passage. Where does Lan go on Sunday?',
+      passage: 'On Sunday, Lan goes to the sports centre with a friend.',
+      choices: ['library', 'sports centre', 'school', 'park'],
+      answer: { index: 1 },
+    });
+    const el = renderQuestion(q!);
+    const passage = el.querySelector('[data-testid="exam-passage"]');
+    expect(passage?.textContent).toContain('sports centre');
+    expect(el.textContent).toContain('Where does Lan go on Sunday?');
+  });
+
+  it('true-false reading shows the passage', async () => {
+    const { toExamQuestion } = await import('../lib/qb/bank');
+    const q = toExamQuestion({
+      ...base,
+      question_type: 'true-false',
+      prompt_text: 'Read the passage and decide: True or False?',
+      passage: 'I say hello to my friend.',
+      answer: { boolean: true },
+    });
+    const el = renderQuestion(q!);
+    expect(el.textContent).toContain('I say hello to my friend.');
+    expect(JUNK.test(el.textContent ?? '')).toBe(false);
+  });
+
+  it('word-to-image-mcq renders image options with text labels, never junk', async () => {
+    const { toExamQuestion } = await import('../lib/qb/bank');
+    const q = toExamQuestion({
+      ...base,
+      question_type: 'word-to-image-mcq',
+      prompt_text: 'Which picture shows: architect?',
+      choices: [
+        { assetId: 'concept-dentist-fed1df' },
+        { assetId: 'concept-engineer-616954' },
+        { assetId: 'concept-architect-cadcfc' },
+        { assetId: 'concept-banker-9cc826' },
+      ],
+      answer: { index: 2 },
+      asset_paths: [
+        'images/concepts/concept-dentist-fed1df.webp',
+        'images/concepts/concept-engineer-616954.webp',
+        'images/concepts/concept-architect-cadcfc.webp',
+        'images/concepts/concept-banker-9cc826.webp',
+      ],
+    });
+    const el = renderQuestion(q!);
+    const text = el.textContent ?? '';
+    expect(JUNK.test(text)).toBe(false);
+    expect(el.querySelectorAll('[data-testid^="exam-option-image-"]')).toHaveLength(4);
+    expect(el.querySelector('[data-testid="exam-option-image-2"]')?.getAttribute('src'))
+      .toBe('/images/concepts/concept-architect-cadcfc.webp');
+  });
+});

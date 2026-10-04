@@ -89,6 +89,11 @@ export interface GrammarMcqQuestion {
    * rendered instead of leaking the spoken text on screen.
    */
   transcript?: string;
+  /**
+   * CR-51 - V6 reading-comprehension items: the passage the prompt
+   * refers to ("Read the passage. ..."), rendered above the prompt.
+   */
+  passage?: string;
 }
 
 /**

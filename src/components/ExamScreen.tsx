@@ -552,6 +552,14 @@ export function ExamQuestionView({
           {question.kind === 'grammar-mcq' && question.transcript && (
             <ListenButton text={question.transcript} />
           )}
+          {question.kind === 'grammar-mcq' && question.passage && (
+            <p
+              data-testid="exam-passage"
+              className="mx-auto mb-4 max-w-xl rounded-lg bg-white/5 p-4 font-mono text-base leading-relaxed text-slate-100 sm:text-lg"
+            >
+              {question.passage}
+            </p>
+          )}
           <PromptLine
             text={question.kind === 'odd-pronunciation' ? 'Chọn từ có phát âm khác với 3 từ còn lại.' : question.prompt}
             imageUrl={question.kind === 'grammar-mcq' ? question.imageUrl : undefined}

@@ -21,6 +21,8 @@ export interface QbRow {
   topic_key: string | null;
   prompt_text: string;
   transcript: string | null;
+  /** CR-51 - reading-comprehension passage (was dropped by the v6 import). */
+  passage: string | null;
   /** word-to-image-mcq carries {assetId} objects, not strings. */
   choices: unknown[] | null;
   answer: { index?: number; boolean?: boolean; text?: string };
@@ -165,6 +167,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         imageUrl: row.question_type === 'word-to-image-mcq' ? undefined : imageUrl,
         optionImages,
         transcript,
+        passage: row.passage ?? undefined,
       };
     }
     case 'true-false': {
@@ -173,7 +176,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         id: row.id,
         topicId,
         kind: 'true-false-reading',
-        passage: str(row.transcript),
+        passage: str(row.passage ?? row.transcript),
         statement: str(row.prompt_text),
         answer: row.answer.boolean,
         explanation,
