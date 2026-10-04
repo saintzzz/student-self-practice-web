@@ -94,7 +94,21 @@ const LAZY = [
 
 const isLazy = (s) => typeof s === 'string' && LAZY.some((re) => re.test(s.trim()));
 
-async function fetchLazyRows() {
+// CR-51 F4: image questions whose "explanation" only restates the
+// translation ("Nước Hungary tiếng Anh là 'Hungary'") - teaches nothing
+// about which picture is correct.
+const VISUAL_TYPES = ['word-to-image-mcq', 'image-to-word-mcq'];
+// Generator lazy shape: whole explanation is one translation sentence and
+// the English word is double-quoted ("... tiếng Anh là \"pencil\".").
+// Rewritten text never re-uses the quoted-word shape, so this predicate is
+// also the idempotency check for re-runs.
+const isTransOnly = (s) =>
+  typeof s === 'string'
+  && /"/.test(s)
+  && /^[^.!?]*(tiếng Anh là|nghĩa là)[^.!?]*\.?\s*$/i.test(s.trim());
+const isStillLazy = isTransOnly;
+
+async function fetchLazyRows(visualOnly = false) {
   const out = [];
   const PAGE = 1000;
   for (let off = 0; ; off += PAGE) {
@@ -104,7 +118,12 @@ async function fetchLazyRows() {
     );
     if (!res.ok) throw new Error(`fetch page: ${res.status} ${await res.text()}`);
     const page = await res.json();
-    out.push(...page.filter((r) => isLazy(r.explanation_vi)));
+    out.push(
+      ...page.filter((r) =>
+        visualOnly
+          ? VISUAL_TYPES.includes(r.question_type) && isTransOnly(r.explanation_vi)
+          : isLazy(r.explanation_vi)),
+    );
     if (page.length < PAGE) break;
   }
   return out;
@@ -119,6 +138,33 @@ function answerText(q) {
     return typeof c === 'string' ? c : JSON.stringify(c);
   }
   return '';
+}
+
+function geminiPromptVisual(batch) {
+  const items = batch.map((q) => ({
+    id: q.id,
+    grade: q.grade,
+    type: q.question_type,
+    prompt: q.prompt_text,
+    options: (q.choices ?? []).map((c) =>
+      typeof c === 'string' ? c : String(c.assetId ?? '').replace(/^concept-/, '').replace(/-[0-9a-f]{6}$/, '').replace(/-/g, ' ')),
+    correct_answer: answerText(q) || (Array.isArray(q.choices) && q.answer?.index !== undefined
+      ? (typeof q.choices[q.answer.index] === 'string' ? q.choices[q.answer.index] : String(q.choices[q.answer.index]?.assetId ?? '').replace(/^concept-/, '').replace(/-[0-9a-f]{6}$/, '').replace(/-/g, ' '))
+      : undefined),
+  }));
+  return `Bạn là giáo viên tiếng Anh tiểu học Việt Nam. Mỗi câu hỏi dưới đây là câu GHÉP HÌNH (word-to-image: chọn tranh đúng với từ; image-to-word: nhìn tranh chọn từ đúng). Viết lời giải thích NGẮN (1-2 câu) bằng tiếng Việt đơn giản cho học sinh lớp đã nêu.
+
+Yêu cầu:
+- Giải thích nghĩa của từ/cụm đúng VÀ gợi ý nhận ra hình đúng (đặc điểm nhìn thấy: màu cờ, hình dáng, hành động, đối tượng).
+- Với tên nước: nêu màu sắc/họa tiết trên lá cờ (ví dụ: cờ Hungary có 3 sọc ngang đỏ-trắng-xanh lá).
+- Với nghề nghiệp/đồ vật/động vật/hoạt động: nêu đặc điểm dễ nhận biết trong tranh (kiến trúc sư cầm bản vẽ, nha sĩ bên ghế khám răng).
+- Có thể nói ngắn vì sao các tranh còn lại sai.
+- KHÔNG chỉ dịch từ (cấu trúc "X tiếng Anh là Y" đơn lẻ là CHƯA ĐỦ). KHÔNG gạch dài, không markdown. Tối đa ~45 từ.
+
+Trả về JSON duy nhất: {"<id>": "<explanation>", ...}
+
+Câu hỏi:
+${JSON.stringify(items, null, 0)}`;
 }
 
 function geminiPrompt(batch) {
@@ -174,9 +220,10 @@ async function callGemini(prompt) {
   return JSON.parse(text);
 }
 
-async function rewriteExplanations({ dry, limit }) {
-  let rows = await fetchLazyRows();
-  console.log(`lazy explanations: ${rows.length}`);
+async function rewriteExplanations({ dry, limit, visual = false }) {
+  const promptFn = visual ? geminiPromptVisual : geminiPrompt;
+  let rows = await fetchLazyRows(visual);
+  console.log(`${visual ? 'visual trans-only' : 'lazy'} explanations: ${rows.length}`);
   if (limit) rows = rows.slice(0, limit);
 
   const BATCH = 15;
@@ -184,10 +231,11 @@ async function rewriteExplanations({ dry, limit }) {
   for (let i = 0; i < rows.length; i += BATCH) {
     const batch = rows.slice(i, i + BATCH);
     try {
-      const map = await callGemini(geminiPrompt(batch));
+      const map = await callGemini(promptFn(batch));
       for (const q of batch) {
         const text = map[q.id]?.trim();
-        if (!text || text.length < 15 || isLazy(text)) {
+        const stillBad = visual ? isTransOnly(text) : isLazy(text);
+        if (!text || text.length < 15 || stillBad) {
           failed++;
           console.error(`bad/empty explanation for ${q.id}: ${JSON.stringify(text)}`);
           continue;
@@ -248,11 +296,12 @@ const limitIdx = flags.indexOf('--limit');
 const limit = limitIdx >= 0 ? Number(flags[limitIdx + 1]) : 0;
 
 if (cmd === 'passage') await backfillPassage();
-else if (cmd === 'explain') await rewriteExplanations({ dry, limit });
-else if (cmd === 'transcript') {
+else if (cmd === 'explain' || cmd === 'explain-visual') {
+  await rewriteExplanations({ dry, limit, visual: cmd === 'explain-visual' });
+} else if (cmd === 'transcript') {
   const p = flags[0] ?? '/tmp/transcript_map.json';
   await backfillTranscripts(p);
 } else {
-  console.log('usage: v6-content-fix.mjs passage | transcript <map.json> | explain [--dry] [--limit N]');
+  console.log('usage: v6-content-fix.mjs passage | transcript <map.json> | explain|explain-visual [--dry] [--limit N]');
   process.exit(1);
 }

@@ -58,6 +58,20 @@ answer or give no reason:
 - 6 remaining "orphans" are false positives (word "listen" inside a
   non-listening prompt) - correctly have no transcript.
 
+### F4 - image questions with translation-only explanations (2,924 rows)
+- All `word-to-image-mcq` + `image-to-word-mcq` rows explained only the
+  translation ("Nước Hungary tiếng Anh là \"Hungary\".") - useless for
+  "which picture is correct". Reported via user screenshot
+  (Hungary flag item).
+- New `explain-visual` command in `scripts/v6-content-fix.mjs`: visual-
+  specific prompt (word meaning + how to spot the right picture -
+  flag colours, object shape, distractor contrast). Idempotent via the
+  quoted-word lazy shape; 2,924 rows rewritten over 2 passes
+  (2,329 + 143 retries for model-dropped ids).
+- Example: Hungary item now reads "...tìm hình lá cờ gồm ba sọc ngang
+  đỏ, trắng và xanh lá cây..." - teaches the flag, not just the word.
+- service_role UPDATE/SELECT grant revoked after backfill (verified 403).
+
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their
   explanations still get rewritten for the review queue.
