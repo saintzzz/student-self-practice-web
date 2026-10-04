@@ -115,7 +115,7 @@ title(s, "3 sản phẩm - 1 hệ sinh thái",
 table(s, [
     ("Sản phẩm", "Địa chỉ", "Dành cho", "Nội dung chính"),
     ("English Arena", "ea.vieschool.com", "Học sinh lớp 1-5 (lộ trình 6-12)",
-     "Luyện tiếng Anh bám SGK Global Success qua hành trình phiêu lưu"),
+     "Luyện Tiếng Anh, Toán và Khoa học tiếng Anh bám SGK Global Success"),
     ("Công cụ số Giáo viên", "congcuso.vieschool.com", "Giáo viên các cấp",
      "12 công cụ biên soạn học liệu theo CTGDPT 2018"),
     ("Sổ Chủ Nhiệm Số", "sochunhiem.vieschool.com", "Nhà trường, GVCN, BGH",
@@ -129,14 +129,14 @@ s = slide()
 kicker(s, "SẢN PHẨM CHỦ LỰC")
 title(s, "English Arena - học mà chơi, chơi mà học")
 feats = [
-    ("1100+ từ vựng bám SGK",
-     "Phủ Global Success lớp 1-5, mỗi từ có hình minh họa,\ngiải thích tiếng Việt, câu ví dụ được kiểm duyệt ngữ pháp."),
-    ("Luyện đề + Thi thử theo khối",
-     "Đề luyện và thi thử theo format đề IOE - số câu và thời gian\nchỉnh riêng từng khối (lớp 1 nhẹ hơn lớp 5)."),
-    ("Thi đua có đối thủ",
-     "Bảng xếp hạng tuần theo khối, đấu trường 1v1, sao - huy hiệu -\nchuỗi ngày học. Tiến độ đồng bộ mọi thiết bị, không mất khi đổi máy."),
-    ("An toàn & quản lý",
-     "Username + PIN do giáo viên cấp, học sinh tự đổi PIN. Vào lớp bằng\nmã lớp 6 ký tự - không qua admin. Không quảng cáo, không chat."),
+    ("11.400+ câu hỏi có giải thích",
+     "Bám SGK Global Success lớp 1-5 - mỗi câu kèm đáp án và giải thích\ntiếng Việt đã kiểm duyệt, hình minh họa bản quyền rõ ràng."),
+    ("270 đề thi + luyện đề theo khối",
+     "Đề thi chuẩn theo format đề IOE - số câu và thời gian chỉnh riêng\ntừng khối. Ôn luyện có đồng hồ đo giờ, câu sai tự vào hàng đợi ôn lại."),
+    ("3 môn luyện bằng tiếng Anh",
+     "Tiếng Anh + Toán tiếng Anh + Khoa học tiếng Anh trong cùng app -\nđúng nhu cầu luyện IOE và Violympic của phụ huynh."),
+    ("Thi đua & an toàn",
+     "Bảng xếp hạng tuần, đấu trường 1v1, sao - huy hiệu - chuỗi ngày học.\nVào lớp bằng mã 6 ký tự. Không quảng cáo, không chat."),
 ]
 for i, (h, b) in enumerate(feats):
     card(s, Inches(0.6 + (i % 2) * 6.2), Inches(1.9 + (i // 2) * 2.55),
@@ -149,12 +149,12 @@ title(s, "English Arena vs các lựa chọn hiện có",
       "Bảng so sánh trung thực - gồm cả điểm đối thủ làm tốt hơn")
 table(s, [
     ("Tiêu chí", "English Arena", "App quốc tế\n(Duolingo, Khan Kids)", "App nội địa\n(Monkey, VioEdu)"),
-    ("Bám SGK Việt Nam", "Trọn Global Success lớp 1-5,\nmỗi từ gắn đúng bài học", "Không theo chương trình VN", "Theo chương trình chung,\nkhông bám từng unit"),
+    ("Bám SGK Việt Nam", "Trọn Global Success lớp 1-5,\nmỗi câu kèm giải thích tiếng Việt", "Không theo chương trình VN", "Theo chương trình chung,\nkhông bám từng unit"),
     ("Trải nghiệm trẻ em", "Thế giới phiêu lưu, mascot,\nsao - huy hiệu - sticker", "Rất tốt - đồ họa đầu tư lớn", "Đa số form trắc nghiệm, UI khô"),
-    ("Kỹ năng luyện", "Nghe - đọc - ghép cặp -\nphát âm chấm điểm", "Nghe - đọc - nói\n(chấm phát âm tốt)", "Chủ yếu đọc/nghe trắc nghiệm"),
+    ("Môn luyện", "Tiếng Anh + Toán tiếng Anh +\nKhoa học tiếng Anh", "Chủ yếu tiếng Anh/ngôn ngữ", "Tách nhiều app/gói\ncho từng môn"),
     ("Mô hình trường học", "Trường cấp tài khoản,\nGV quản lý lớp, báo cáo", "Không có quản lý lớp\nkiểu trường VN", "Một số có,\nthường phức tạp"),
     ("Chi phí", "Miễn phí chơi thử;\ngói gia đình + gói trường", "Đắt (thu bằng USD)", "Trung bình"),
-    ("Điểm yếu của chúng tôi", "Chỉ tiếng Anh, mới phủ lớp 1-5;\nvốn từ nhỏ hơn app quốc tế", "", ""),
+    ("Điểm yếu của chúng tôi", "Mới phủ lớp 1-5 (lộ trình 6-12);\nvốn từ nhỏ hơn app quốc tế", "", ""),
 ], Inches(0.6), Inches(2.0), Inches(12.1), Inches(5.0),
     col_widths=[Inches(2.4), Inches(3.5), Inches(3.1), Inches(3.1)],
     font_size=11)
@@ -194,6 +194,7 @@ tb(s, Inches(0.6), Inches(1.85), Inches(12), Inches(1.3),
    "- Mở ea.vieschool.com từ trình duyệt bất kỳ - không cần cài đặt.\n"
    "- Chưa có tài khoản: nhấn 'Chơi không cần tài khoản' - 1 vòng miễn phí mỗi lớp.\n"
    "- Học sinh: đăng nhập username + PIN do giáo viên cấp, tự đổi PIN khi cần.\n"
+   "- Chọn khối - chọn môn (Tiếng Anh / Toán / Khoa học) - Luyện đề có đồng hồ đo giờ, Thi thử đếm ngược.\n"
    "- Vào lớp: nhập mã lớp 6 ký tự cô gửi (VD lớp demo: R8WHYF) - không cần admin gán tay.\n"
    "- Quản trị: tạo tài khoản học sinh, tạo lớp sinh mã tự động, gán phạm vi lớp, xem tiến độ.",
    13, WHITE)

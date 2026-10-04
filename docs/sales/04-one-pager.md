@@ -12,22 +12,23 @@
 **Học sinh tự luyện IOE và Toán tiếng Anh mỗi ngày. Thầy cô và phụ huynh thấy rõ tiến bộ.**
 
 ### Sub-headline
-English Arena (ea.vieschool.com) - nền tảng web luyện tiếng Anh và Toán tiếng Anh cho học sinh Lớp 1-5, thuộc hệ sinh thái VieSchool.
+English Arena (ea.vieschool.com) - nền tảng web luyện Tiếng Anh, Toán và Khoa học tiếng Anh cho học sinh Lớp 1-5, thuộc hệ sinh thái VieSchool.
 
 ### 3 lợi ích chính
 
 1. **Luyện đúng dạng đề thi**
-   Thi thử theo format IOE: 200 câu trong 30 phút. Luyện Toán tiếng Anh với dạng câu Violympic ngay trong cùng một app.
+   270 đề thi chuẩn theo format đề IOE - số câu và thời gian chỉnh riêng từng khối lớp. Toán tiếng Anh và Khoa học tiếng Anh ngay trong cùng một app.
 2. **Ôn đúng chỗ còn yếu**
-   Câu nào sai, hệ thống đưa quay lại ôn theo lịch (phương pháp Leitner). Báo cáo tách 4 kỹ năng: nghe, ngữ pháp, chính tả, đọc.
+   Câu nào sai, hệ thống đưa quay lại ôn theo lịch. Ôn luyện có đồng hồ đo giờ làm bài. Báo cáo tách theo kỹ năng: nghe, ngữ pháp, chính tả, đọc.
 3. **Dễ triển khai, an toàn cho trẻ**
    VieSchool tạo sẵn tài khoản cho cả lớp. Học sinh đăng nhập bằng tên đăng nhập + mã PIN, không cần email. Tiến độ đồng bộ trên mọi thiết bị.
 
 ### Proof points (chỉ dùng số có thật)
 
 - Nội dung bám chương trình: khoảng 60% Global Success, 30% chủ đề Cambridge, 10% SGK khác.
-- Ngân hàng câu hỏi theo dạng đề IOE (Lớp 2, 4, 5) và Toán tiếng Anh Lớp 2 (376 câu), Lớp 2 khoảng 326 từ vựng.
-- 5 chế độ: Luyện tập, Thi thử IOE, Ôn lại câu sai, Đấu trường 1v1, Kiểm tra đầu vào.
+- Ngân hàng 11.400+ câu hỏi có giải thích tiếng Việt, phủ đủ 3 môn (Tiếng Anh, Toán tiếng Anh, Khoa học tiếng Anh) và 5 khối lớp.
+- Chế độ: Luyện đề, Thi thử theo khối, Ôn lại câu sai, Đấu trường 1v1 - ôn luyện và thi đều ghi nhận thời gian làm bài.
+- 1.400+ hình minh họa và 470 bài nghe, tài sản có bản quyền khai báo rõ ràng.
 - Động lực mỗi ngày: sao, streak, 20 huy hiệu, pet đồng hành, nhiệm vụ hằng ngày.
 - Quản lý lớp và học sinh cho nhà trường/trung tâm.
 - **[Chờ số liệu pilot]** "X% học sinh luyện đều mỗi tuần trong 4 tuần pilot tại [đơn vị]" - chỉ điền khi có case study được khách đồng ý.
@@ -48,14 +49,14 @@ Demo 10 phút qua Zalo: [SĐT/Zalo] - Email: [email] - Dùng thử ngay: ea.vies
 **15 phút mỗi ngày, con tự luyện tiếng Anh như chơi game. Mẹ biết con yếu ở đâu.**
 
 ### Sub-headline
-English Arena - luyện tiếng Anh và Toán tiếng Anh Lớp 1-5, bám chương trình ở trường và dạng đề IOE, Violympic.
+English Arena - luyện Tiếng Anh, Toán và Khoa học tiếng Anh Lớp 1-5, bám chương trình ở trường và dạng đề IOE, Violympic.
 
 ### 3 lợi ích chính
 
 1. **Con tự muốn học**
    Streak mỗi ngày, pet đồng hành lớn dần, huy hiệu và nhiệm vụ hằng ngày. Đấu trường 1v1 cho con thử thách.
 2. **Sẵn sàng cho kỳ thi**
-   Thi thử theo format IOE (200 câu/30 phút) và Toán tiếng Anh trong cùng app. Câu sai được ôn lại theo lịch.
+   Thi thử theo format đề IOE - số câu và thời gian chỉnh riêng từng khối - cùng Toán tiếng Anh và Khoa học tiếng Anh trong một app. Câu sai được ôn lại theo lịch, ôn luyện có đồng hồ đo giờ.
 3. **Bố mẹ yên tâm**
    Báo cáo theo 4 kỹ năng. Con đăng nhập bằng tên + mã PIN, không cần email. Học trên máy tính bảng, laptop hay điện thoại đều giữ tiến độ.
 
