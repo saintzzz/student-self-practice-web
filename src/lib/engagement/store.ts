@@ -734,7 +734,10 @@ const PET_STAGE_NAMES = ['Trứng', 'Bé', 'Nhỏ', 'Trưởng thành'] as const
 export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly [string, string, string, string] }> = {
   cat: { nameVi: 'Mèo Mun', emojis: ['🥚', '🐱', '🐈', '🐯'] },
   dragon: { nameVi: 'Rồng Con', emojis: ['🥚', '🦎', '🐲', '🐉'] },
-  bunny: { nameVi: 'Thỏ Trắng', emojis: ['🥚', '🐰', '🐇', '🦄'] },
+  // CR-57: adult bunny is a crowned rabbit, not the unicorn that used to
+  // render as "a weird horse". Unicode has only two rabbit glyphs, so the
+  // 👑 carries the apex-stage signal - same crown as the pet-adult badge.
+  bunny: { nameVi: 'Thỏ Trắng', emojis: ['🥚', '🐰', '🐇', '🐇👑'] },
 };
 
 export function petStageForXp(xp: number): number {

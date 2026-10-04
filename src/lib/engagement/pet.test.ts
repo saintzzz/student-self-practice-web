@@ -53,6 +53,15 @@ describe('pet stages (AC-36.2)', () => {
     expect(pet.xpToNext).toBe(250 - 60);
   });
 
+  it('CR-57: the adult bunny stays a rabbit - crowned, never a horse-like glyph', () => {
+    recordCorrectAnswers(70); // 700 xp -> adult
+    choosePet('bunny');
+    const pet = getPet();
+    expect(pet.stageName).toBe('Trưởng thành');
+    expect(pet.emoji).toContain('🐇');
+    expect(pet.emoji).not.toContain('🦄');
+  });
+
   it('a maxed pet reports no next stage', () => {
     recordCorrectAnswers(70); // 700 xp -> adult
     choosePet('cat');
