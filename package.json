@@ -13,7 +13,8 @@
     "assets:emoji": "node scripts/fetch-emoji-assets.mjs",
     "assets:images": "node scripts/fetch-vocab-images.mjs",
     "assets:images:publish": "node scripts/publish-vocab-images.mjs",
-    "audit:qb": "node scripts/qb-content-audit.mjs"
+    "audit:qb": "node scripts/qb-content-audit.mjs",
+    "audit:perf": "node scripts/perf-check.mjs"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "0.19.16",

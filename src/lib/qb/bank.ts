@@ -6,6 +6,7 @@
  * nen scoring/review khong thay doi.
  */
 import { getSupabase, isSupabaseConfigured } from '../supabase/client';
+import { getSession } from '../auth/practiceAuth';
 import type { ExamProgramId, ExamQuestion } from '../../types/exam';
 import { examConfigForGrade, type ExamState } from '../exam/examSession';
 import { seededShuffleIndices } from '../prng';
@@ -57,6 +58,19 @@ export async function fetchBankQuestions(
   mode: BankMode,
 ): Promise<QbRow[]> {
   const supabase = await getSupabase();
+  // Guests always 401 on the authenticated RPC - check the (local,
+  // cached) session first so guest starts skip a wasted ~600ms
+  // round-trip that can never succeed.
+  const session = await getSession();
+  if (!session) {
+    const pub = await supabase.rpc('fetch_questions_public', {
+      p_grade: gradeNumber(gradeId),
+      p_subject: SUBJECTS[programId],
+      p_count: count,
+    });
+    if (pub.error) throw new Error(pub.error.message);
+    return (pub.data ?? []) as QbRow[];
+  }
   const { data, error } = await supabase.rpc('fetch_questions', {
     p_grade: gradeNumber(gradeId),
     p_subject: SUBJECTS[programId],
