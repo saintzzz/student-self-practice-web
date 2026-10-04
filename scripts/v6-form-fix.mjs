@@ -58,6 +58,29 @@ const correctLabel = (q) => {
 const eligible = (q) => q.publication_policy?.practiceEligible || q.publication_policy?.examEligible || q.publication_policy?.mockEligible;
 const contentKey = (q) => q.variant_group_id ?? `${(q.prompt_text ?? '').trim().toLowerCase()}|${correctLabel(q).toLowerCase()}`;
 
+// Same normalization as qb-content-audit's form-near-dup-content check:
+// two slots collide when their content is identical modulo names/numbers.
+const NORM_NAMES = /\b(Peter|Mai|Lan|Nam|Hoa|Lucy|Anna|Tom|Minh|Linh|Hung|Phong|Linda|Mary|John|David|Amy|Jack|Ben|Sue|Bill|Nick|Tony|Alice|Jane|Kate|Mike|Sam|Sarah|Emma|Leo|Max|Nina|Alex|Vy|Trang|Dung|Long|Ha|Binh|Anh|Quan|Tuan|Nga|Thu|Thao|Hieu|Khanh|Bao|Chi|Duy|Giang|Huong|Khoa|Lam|My|Ngoc|Oanh|Phuong|Quynh|Son|Thanh|Trinh|Uyen|Viet|Xuan|Yen)\b/gi;
+const normText = (s) =>
+  String(s ?? '').toLowerCase().replace(NORM_NAMES, 'x')
+    .replace(/\d+/g, '#')
+    .replace(/[^a-z#]+/g, ' ').replace(/\s+/g, ' ').trim();
+const nearDupKey = (q) => {
+  if (/order|reorder|sentence-build/i.test(q.question_type ?? '') || /put the words in order/i.test(q.prompt_text ?? '')) {
+    const bank = (q.prompt_text ?? '').split(':').slice(1).join(' ');
+    const t = normText(bank.length > 5 ? bank : (q.answer?.text ?? ''));
+    return 'ro:' + t.split(' ').sort().join(' ');
+  }
+  const ctx = normText((q.passage ?? '') + ' ' + (q.statement ?? '') + ' ' + (q.transcript ?? ''));
+  if (ctx.length >= 15) return 'ctx:' + ctx;
+  const p = normText(q.prompt_text);
+  if (p.split(' ').length < 6) return 'short:' + q.id;
+  const ch = Array.isArray(q.choices)
+    ? q.choices.map((c) => normText(choiceLabel(c))).sort().join('|')
+    : '';
+  return 'qa:' + p + '|' + ctx + '|' + ch;
+};
+
 function answerKeyEntry(q) {
   const a = q.answer ?? {};
   if (a.index !== undefined) return { text: correctLabel(q), index: a.index };
@@ -68,7 +91,7 @@ function answerKeyEntry(q) {
 }
 
 const questions = await fetchAll('qb_questions',
-  'id,grade,subject,question_type,prompt_text,transcript,choices,answer,publication_policy,variant_group_id');
+  'id,grade,subject,question_type,prompt_text,passage,statement,transcript,choices,answer,publication_policy,variant_group_id,review_status');
 const assetIds = new Set((await fetchAll('qb_question_assets', 'question_id', 'question_id')).map((l) => l.question_id));
 const forms = await fetchAll('qb_exam_forms', 'id,grade,subject,kind,payload');
 const qById = new Map(questions.map((q) => [q.id, q]));
@@ -81,7 +104,7 @@ function replacementFor(form, oldQ, usedKeys, usedIds) {
   const pool = questions.filter((q) =>
     q.id !== oldQ.id && !usedIds.has(q.id) && eligible(q) &&
     q.grade === form.grade && q.subject === form.subject &&
-    !usedKeys.has(contentKey(q)) &&
+    !usedKeys.has(contentKey(q)) && !usedKeys.has(nearDupKey(q)) &&
     (wantUnit ? unitOf(q.id) === wantUnit : true));
   const score = (q) =>
     (q.question_type === oldQ.question_type ? 4 : 0) +
@@ -102,16 +125,17 @@ for (const f of forms) {
   for (const id of ids) {
     const q = qById.get(id);
     const ck = q ? contentKey(q) : null;
-    const isDup = q && (usedKeys.has(ck) || usedIds.has(id));
+    const nk = q ? nearDupKey(q) : null;
+    const isDup = q && (usedKeys.has(ck) || usedKeys.has(nk) || usedIds.has(id));
     const bad = !q || isDup || !eligible(q);
     if (!bad) {
-      newIds.push(id); usedKeys.add(ck); usedIds.add(id);
+      newIds.push(id); usedKeys.add(ck); usedKeys.add(nk); usedIds.add(id);
       continue;
     }
     const reason = !q ? 'missing' : isDup ? 'duplicate-variant' : 'ineligible';
     const rep = q ? replacementFor(f, q, usedKeys, usedIds) : null;
     if (rep) {
-      newIds.push(rep.id); usedKeys.add(contentKey(rep)); usedIds.add(rep.id);
+      newIds.push(rep.id); usedKeys.add(contentKey(rep)); usedKeys.add(nearDupKey(rep)); usedIds.add(rep.id);
       delete key[id]; key[rep.id] = answerKeyEntry(rep);
       swapped++; console.log(`${f.id}: swap ${id} (${reason}) -> ${rep.id}`);
     } else {

@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-04T11:41:27.208Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-04T11:50:52.281Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Generated: 2026-10-04T11:41:27.208Z · rows: 11406 · regenerate: `node scripts/
 | `explanation-tautology` | P1 | **0** | Explanation only restates "answer fits the theme" without a reason or contrast |
 | `reorder-trivial` | P1 | **0** | Reorder answer is a single word - nothing to arrange |
 | `heard-word-not-in-transcript` | P1 | **0** | "Which word did you hear" answer is not spoken in the transcript |
-| `form-near-dup-content` | P1 | **0** | Same form contains two questions identical modulo names (or identical prompt+choices+answer) |
+| `form-near-dup-content` | P1 | **0** | Same form contains two questions identical modulo names/numbers (same template) |
 | `form-grade-subject-mismatch` | P1 | **0** | Question grade/subject differs from its form |
 | `form-blueprint-size` | P1 | **0** | Form question count differs from blueprint targetQuestions |
 | `form-blueprint-missing` | P1 | **0** | Form references a blueprint that does not exist |

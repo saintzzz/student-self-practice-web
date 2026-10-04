@@ -185,3 +185,15 @@ answer or give no reason:
 - forms re-patched: 76 forms, 64 swaps, 2 drops (then topped back to blueprint)
 - new audit check `explanation-tautology` (P1) guards against bare restatements permanently
 - script: scripts/v6-theme-fit-fix.mjs (idempotent)
+
+## F11 - deep near-dup sweep (all forms, fuzzy + normalized)
+
+- Strengthened `form-near-dup-content`: numbers normalized to '#', prompt-only
+  items dedupe on prompt+choices (answer excluded - number-swap templates have
+  different answers by construction), short drill prompts (<6 tokens) exempt,
+  reorder dedupes on sorted answer/bank token set
+- 537 slots across 52 forms were same-template-different-numbers/word-problem
+  duplicates ("A lesson starts at 7:30..." twice, "X has N cards..." x3 in one
+  form) - all swapped for distinct eligible questions, 0 drops, 0 failures
+- v6-form-fix now enforces nearDupKey on both existing slots and replacements
+- verified: 34/34 audit checks clean after fix

@@ -401,21 +401,38 @@ check('form-duplicate-variant', 'P0',
 const NORM_NAMES = /\b(Peter|Mai|Lan|Nam|Hoa|Lucy|Anna|Tom|Minh|Linh|Hung|Phong|Linda|Mary|John|David|Amy|Jack|Ben|Sue|Bill|Nick|Tony|Alice|Jane|Kate|Mike|Sam|Sarah|Emma|Leo|Max|Nina|Alex|Vy|Trang|Dung|Long|Ha|Binh|Anh|Quan|Tuan|Nga|Thu|Thao|Hieu|Khanh|Bao|Chi|Duy|Giang|Huong|Khoa|Lam|My|Ngoc|Oanh|Phuong|Quynh|Son|Thanh|Trinh|Uyen|Viet|Xuan|Yen)\b/gi;
 const normText = (s) =>
   String(s ?? '').toLowerCase().replace(NORM_NAMES, 'x')
-    .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    .replace(/\d+/g, '#')
+    .replace(/[^a-z#]+/g, ' ').replace(/\s+/g, ' ').trim();
 const nearDupKey = (q) => {
+  // reorder items: same word bank / same target sentence = same question even
+  // when the presented bank order differs.
+  if (/order|reorder|sentence-build/i.test(q.question_type ?? '') || /put the words in order/i.test(q.prompt_text ?? '')) {
+    const bank = (q.prompt_text ?? '').split(':').slice(1).join(' ');
+    const t = normText(bank.length > 5 ? bank : (q.answer?.text ?? ''));
+    return 'ro:' + t.split(' ').sort().join(' ');
+  }
   // context-bearing items (passage/statement/transcript) dup when the shared
-  // context is identical modulo names - regardless of the question asked.
+  // context is identical modulo names/numbers - regardless of the question asked.
   const ctx = normText((q.passage ?? '') + ' ' + (q.statement ?? '') + ' ' + (q.transcript ?? ''));
   if (ctx.length >= 15) return 'ctx:' + ctx;
-  // context-free items dup only when prompt + option set + answer all match.
+  // context-free items dup when prompt + option set match modulo names/numbers.
+  // The correct answer is NOT part of the key: template items that only swap
+  // numbers ("lesson starts at 7:30" vs "6:30") have different answers by
+  // construction, but they are still the same question. A short context
+  // (e.g. a one-word transcript) is kept in the key so genuinely different
+  // items sharing a generic prompt do not collide. Short normalized prompts
+  // (<6 tokens, e.g. "what is # x #") are pure drill formats - repetition of
+  // arithmetic is normal, so they are not flagged.
+  const p = normText(q.prompt_text);
+  if (p.split(' ').length < 6) return 'short:' + q.id;
   const ch = Array.isArray(q.choices)
     ? q.choices.map((c) => normText(typeof c === 'string' ? c : c?.assetId ?? c?.label ?? c?.text ?? '')).sort().join('|')
     : '';
-  return 'qa:' + normText(q.prompt_text) + '|' + ch + '|' + correctLabel(q).toLowerCase();
+  return 'qa:' + p + '|' + ctx + '|' + ch;
 };
 
 check('form-near-dup-content', 'P1',
-  'Same form contains two questions identical modulo names (or identical prompt+choices+answer)',
+  'Same form contains two questions identical modulo names/numbers (same template)',
   forms.flatMap((f) => {
     const seen = new Map();
     const bad = [];
