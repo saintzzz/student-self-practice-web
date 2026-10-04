@@ -27,6 +27,8 @@ interface StartBatchScreenProps {
   onBack: () => void;
   /** CR-30: guests see a lock prompt on the leaderboard card. */
   isGuest?: boolean;
+  /** CR-50: assessment forms are a teacher surface - admin only. */
+  isAdmin?: boolean;
   onLogin?: () => void;
 }
 
@@ -52,18 +54,19 @@ const FORM_KIND_LABEL: Record<string, string> = {
   'final-2': 'Cuối kỳ 2',
 };
 
-/** CR-48 phase 5: collapsible V6 assessment forms per program. */
-function FormPicker({ gradeId, programId, isGuest, onStartExam }: { gradeId: string; programId: ExamProgramId; isGuest: boolean; onStartExam: (p: ExamProgramId, m: 'exam', formId: string) => void }) {
+/** CR-48 phase 5 + CR-50: collapsible V6 assessment forms per program.
+ *  Teacher-only surface - students drill via Luyen de / Thi thu. */
+function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: string; programId: ExamProgramId; isAdmin: boolean; onStartExam: (p: ExamProgramId, m: 'exam', formId: string) => void }) {
   const [forms, setForms] = useState<AssessmentFormInfo[] | null>(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (isGuest || !isSupabaseConfigured()) return;
+    if (!isAdmin || !isSupabaseConfigured()) return;
     let alive = true;
     listBankForms(gradeId, programId)
       .then((f) => { if (alive) setForms(f); })
       .catch(() => { if (alive) setForms([]); });
     return () => { alive = false; };
-  }, [gradeId, programId, isGuest]);
+  }, [gradeId, programId, isAdmin]);
   if (!forms || forms.length === 0) return null;
   return (
     <div className="mt-2">
@@ -95,7 +98,7 @@ function FormPicker({ gradeId, programId, isGuest, onStartExam }: { gradeId: str
   );
 }
 
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   // CR-46: same modes for every grade - only question counts scale.
   const examConfig = examConfigForGrade(grade.id);
   return (
@@ -179,7 +182,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                 >
                   🏆 Thi thử - {examConfig.examCount} câu
                 </button>
-                <FormPicker gradeId={grade.id} programId={program.id} isGuest={isGuest ?? false} onStartExam={onStartExam} />
+                <FormPicker gradeId={grade.id} programId={program.id} isAdmin={isAdmin ?? false} onStartExam={onStartExam} />
               </div>
             </div>
           ))}

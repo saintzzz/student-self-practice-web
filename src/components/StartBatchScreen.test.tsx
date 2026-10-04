@@ -1,7 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StartBatchScreen from './StartBatchScreen';
+
+vi.mock('../lib/qb/bank', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../lib/qb/bank')>();
+  return {
+    ...mod,
+    listBankForms: vi.fn(async () => [
+      { id: 'g2-english-unit-01-form-01', kind: 'unit-test', grade: 2, subject: 'english', title: 'Unit 1', total_questions: 20 },
+    ]),
+  };
+});
+vi.mock('../lib/supabase/client', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../lib/supabase/client')>();
+  return { ...mod, isSupabaseConfigured: () => true };
+});
 
 const GRADE = { id: 'grade-2', name: 'Lớp 2' };
 
@@ -37,5 +51,19 @@ describe('StartBatchScreen', () => {
     await user.click(screen.getByTestId('back-to-grades'));
 
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('CR-50: assessment forms picker is hidden from students and guests', async () => {
+    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    await waitFor(() => {
+      expect(screen.queryByTestId('forms-toggle-english')).not.toBeInTheDocument();
+    });
+  });
+
+  it('CR-50: admin (teacher preview) sees the forms picker', async () => {
+    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} isAdmin />);
+    await waitFor(() => {
+      expect(screen.getByTestId('forms-toggle-english')).toBeInTheDocument();
+    });
   });
 });

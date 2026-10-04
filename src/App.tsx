@@ -345,6 +345,7 @@ export default function App() {
         onArenaBot={handleArenaBot}
         onBack={handleBackToGrades}
         isGuest={authMode !== 'student'}
+        isAdmin={authMode === 'admin'}
         onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
       />,
       selectedGradeId,
