@@ -21,6 +21,8 @@ interface BatchScreenProps {
   onNextRound: () => void;
   onStartNewBatch: () => void;
   onChooseGrade: () => void;
+  /** CR-55: ends the whole Batch mid-flight - lands on the Batch summary. */
+  onEndBatch: () => void;
   /** Called exactly once when the active Round's 5:00 timer expires (plan.md v7 AC28). */
   onRoundTimeExpired: () => void;
   /** CR-13: guest trial - lock rounds after the free Round 1 behind login. */
@@ -55,6 +57,7 @@ export default function BatchScreen({
   onNextRound,
   onStartNewBatch,
   onChooseGrade,
+  onEndBatch,
   onRoundTimeExpired,
   guestLocked = false,
   onRequestLogin,
@@ -111,6 +114,16 @@ export default function BatchScreen({
             <RoundTimer secondsRemaining={secondsRemaining} />
           </div>
         )}
+        {/* CR-55: same-purpose "KẾT THÚC" as the drill/exam header - ends the
+            whole Batch from any phase and lands on the Batch summary. */}
+        <button
+          type="button"
+          data-testid="batch-end-early"
+          onClick={onEndBatch}
+          className="shrink-0 self-end rounded-full bg-sky-600 px-3 py-1.5 font-display text-xs font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:self-auto"
+        >
+          KẾT THÚC
+        </button>
       </div>
 
       {batch.phase === 'stub' && <RoundStub titleVi={definition.titleVi} onNextRound={onNextRound} />}

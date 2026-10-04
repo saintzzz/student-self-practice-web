@@ -127,6 +127,11 @@ exception surface (paper reports). No theme switch.
   - `SCREEN_ENTER` - shared enter animation.
 - **Buttons:** gradient pill (amber CTA) / `BTN`, `BTN_SECONDARY` (white pill on
   light), `BTN_DANGER` (rose); all with hover-lift/press-scale + `focus:ring-4`.
+- **End-session control (CR-55):** every in-progress play surface carries a
+  `bg-sky-600` uppercase action in the top chrome - `KẾT THÚC` (drill,
+  batch) / `NỘP BÀI` (exam). Solid sky (not a translucent chip) so it reads
+  as an action, `active:scale-95`, `focus-visible` ring; it resolves to the
+  result screen, never a dead confirm.
 
 ## 7. Card & section style
 

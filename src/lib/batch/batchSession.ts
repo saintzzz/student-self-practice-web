@@ -203,6 +203,28 @@ export function endRoundEarly(state: BatchState): BatchState {
   };
 }
 
+/**
+ * CR-55: ends the whole Batch mid-flight from any phase before
+ * 'batch-summary' - the 4-round counterpart of the drill/exam "KET THUC /
+ * NOP BAI" button. An active Round is scored on whatever was answered so
+ * far (same partial-scoring path `endRoundEarly` uses), stub/round-summary
+ * keep the outcome they already recorded, and the Batch lands on its
+ * summary so the student still sees - and banks - what they did.
+ */
+export function endBatchEarly(state: BatchState): BatchState {
+  if (state.phase === 'batch-summary') {
+    return state;
+  }
+  if (state.phase === 'active' && state.roundSession) {
+    const definition = ROUND_DEFINITIONS[state.roundIndex];
+    const rounds = definition
+      ? [...state.completedRounds, buildRoundOutcome(definition, state.roundSession)]
+      : state.completedRounds;
+    return { ...state, phase: 'batch-summary', roundSession: null, completedRounds: rounds };
+  }
+  return { ...state, phase: 'batch-summary', roundSession: null };
+}
+
 /** Moves from the current Round's summary/stub to the next Round, or to the Batch summary after Round 4. */
 export function goToNextRound(state: BatchState): BatchState {
   const nextIndex = state.roundIndex + 1;

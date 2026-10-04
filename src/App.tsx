@@ -25,6 +25,7 @@ import type { ExamProgramId } from './types/exam';
 import {
   advanceRoundQuestion,
   createBatch,
+  endBatchEarly,
   endRoundEarly,
   goToNextRound,
   updateRoundSession,
@@ -244,6 +245,11 @@ export default function App() {
     setBatch(endRoundEarly(batch));
   }
 
+  function handleEndBatchEarly(): void {
+    if (!batch) return;
+    setBatch(endBatchEarly(batch));
+  }
+
   // CR-10 DS-T1: every screen lives inside a land shell. CR-16: the whole
   // app rides the VieSchool navy/gold 'brand' surface so play screens match
   // login/landing/admin - per-grade land identity stays inside the map's
@@ -383,6 +389,7 @@ export default function App() {
         onNextRound={handleNextRound}
         onStartNewBatch={handleStartBatch}
         onChooseGrade={handleBackToGrades}
+        onEndBatch={handleEndBatchEarly}
         onRoundTimeExpired={handleRoundTimeExpired}
         guestLocked={authMode === 'guest'}
         onRequestLogin={() => {

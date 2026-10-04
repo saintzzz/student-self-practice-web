@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import BatchScreen from './BatchScreen';
 import {
   advanceRoundQuestion,
@@ -29,6 +29,7 @@ function buildNoopHandlers() {
     onNextRound: vi.fn(),
     onStartNewBatch: vi.fn(),
     onChooseGrade: vi.fn(),
+    onEndBatch: vi.fn(),
     onRoundTimeExpired: vi.fn(),
   };
 }
@@ -129,6 +130,30 @@ describe('BatchScreen', () => {
     expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
   });
 
+  it('CR-55: shows a KẾT THÚC control during the active Round that calls onEndBatch', () => {
+    const handlers = buildNoopHandlers();
+    const batch = createBatch('fixed-seed');
+
+    render(<BatchScreen batch={batch} {...handlers} />);
+
+    const endButton = screen.getByTestId('batch-end-early');
+    expect(endButton).toHaveTextContent('KẾT THÚC');
+    fireEvent.click(endButton);
+    expect(handlers.onEndBatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('CR-55: keeps the KẾT THÚC control on the round-summary screen', () => {
+    const handlers = buildNoopHandlers();
+    let batch = createBatch('fixed-seed');
+    batch = completeActiveRound(batch);
+
+    render(<BatchScreen batch={batch} {...handlers} />);
+
+    expect(screen.getByTestId('round-score-summary')).toBeVisible();
+    fireEvent.click(screen.getByTestId('batch-end-early'));
+    expect(handlers.onEndBatch).toHaveBeenCalledTimes(1);
+  });
+
   it('renders batch-score-summary after Round 4, with no round-progress', () => {
     let batch = createBatch('fixed-seed');
     batch = completeActiveRound(batch);
@@ -144,6 +169,7 @@ describe('BatchScreen', () => {
 
     expect(screen.getByTestId('batch-score-summary')).toBeVisible();
     expect(screen.queryByTestId('round-progress')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('batch-end-early')).not.toBeInTheDocument();
   });
 });
 

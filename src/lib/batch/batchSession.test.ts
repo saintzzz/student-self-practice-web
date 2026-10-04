@@ -4,6 +4,7 @@ import {
   computeBatchResult,
   createBatch,
   currentRoundDefinition,
+  endBatchEarly,
   endRoundEarly,
   goToNextRound,
   updateRoundSession,
@@ -249,6 +250,73 @@ describe('endRoundEarly (plan.md v7 "Round Timer", AC28)', () => {
     expect(result.rounds).toHaveLength(4);
     expect(result.totalQuestions).toBe(0);
     expect(result.totalCorrect).toBe(0);
+  });
+});
+
+describe('endBatchEarly (CR-55 "Kết thúc giữa chừng")', () => {
+  it('is a no-op once the Batch is already on its summary', () => {
+    let batch = createBatch('fixed-seed');
+    for (let round = 0; round < 4; round++) {
+      batch = completeActiveRound(batch);
+      batch = goToNextRound(batch);
+    }
+    expect(batch.phase).toBe('batch-summary');
+
+    expect(endBatchEarly(batch)).toBe(batch);
+  });
+
+  it('scores the partial active Round on answered questions only, then lands on batch-summary', () => {
+    let batch = createBatch('fixed-seed');
+    for (let i = 0; i < 3; i += 1) {
+      batch = answerCurrentQuestion(batch);
+      batch = advanceRoundQuestion(batch);
+    }
+    expect(batch.phase).toBe('active');
+
+    const ended = endBatchEarly(batch);
+
+    expect(ended.phase).toBe('batch-summary');
+    expect(ended.roundSession).toBeNull();
+    expect(ended.completedRounds).toHaveLength(1);
+    expect(ended.completedRounds[0]?.totalCount).toBe(3);
+    const result = computeBatchResult(ended);
+    expect(result.rounds).toHaveLength(1);
+    expect(result.totalQuestions).toBe(3);
+  });
+
+  it('ends with an empty outcome when tapped before any answer', () => {
+    const ended = endBatchEarly(createBatch('fixed-seed'));
+
+    expect(ended.phase).toBe('batch-summary');
+    expect(ended.completedRounds).toHaveLength(1);
+    expect(ended.completedRounds[0]?.totalCount).toBe(0);
+    expect(computeBatchResult(ended).totalQuestions).toBe(0);
+  });
+
+  it('keeps already-completed Rounds when tapped from a round-summary (no double record)', () => {
+    let batch = createBatch('fixed-seed');
+    batch = completeActiveRound(batch); // -> round-summary with Round 1 recorded
+
+    const ended = endBatchEarly(batch);
+
+    expect(ended.phase).toBe('batch-summary');
+    expect(ended.completedRounds).toHaveLength(1);
+    expect(ended.completedRounds[0]?.roundNumber).toBe(1);
+    const result = computeBatchResult(ended);
+    expect(result.rounds).toHaveLength(1);
+    expect(result.totalQuestions).toBe(ROUND_1_QUESTION_COUNT);
+  });
+
+  it('keeps the batch elapsed-time source so a partial batch still reports real timeUsedSec', () => {
+    const T0 = 1_700_000_000_000;
+    let batch = createBatch('fixed-seed', 'grade-2', T0);
+    batch = answerCurrentQuestion(batch);
+    batch = advanceRoundQuestion(batch);
+
+    const ended = endBatchEarly(batch);
+
+    expect(ended.startedAtMs).toBe(T0);
+    expect(computeBatchResult(ended, T0 + 95_000).timeUsedSec).toBe(95);
   });
 });
 

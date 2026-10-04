@@ -376,7 +376,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           type="button"
           data-testid="exam-submit"
           onClick={() => setExam((c) => (c ? submitExam(c, Date.now()) : c))}
-          className="shrink-0 rounded-lg bg-sky-600 px-4 py-2 text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95"
+          className="shrink-0 rounded-lg bg-sky-600 px-4 py-2 text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
         >
           {isPractice ? 'KẾT THÚC' : 'NỘP BÀI'}
         </button>
