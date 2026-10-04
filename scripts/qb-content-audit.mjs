@@ -121,7 +121,7 @@ check('choices-too-few', 'P0',
 
 check('option-placeholder', 'P0',
   'A choice is a literal generator placeholder like "option-4"',
-  questions.filter((q) => eligible(q) && Array.isArray(q.choices) && q.choices.some((c) => typeof c === 'string' && /^option-\d+$/.test(c))));
+  questions.filter((q) => eligible(q) && Array.isArray(q.choices) && q.choices.some((c) => typeof c === 'string' && /^option[\s_-]?\d+$/i.test(c))));
 
 check('duplicate-choices', 'P1',
   'Two identical choices in one question',
@@ -380,6 +380,38 @@ check('form-duplicate-variant', 'P0',
       if (!q) continue;
       const k = q.variant_group_id ?? `${(q.prompt_text ?? '').toLowerCase()}|${correctLabel(q).toLowerCase()}`;
       if (seen.has(k)) bad.push({ id: `${f.id} -> ${id}`, prompt_text: `dup of ${seen.get(k)}` });
+      else seen.set(k, id);
+    }
+    return bad;
+  }));
+
+const NORM_NAMES = /\b(Peter|Mai|Lan|Nam|Hoa|Lucy|Anna|Tom|Minh|Linh|Hung|Phong|Linda|Mary|John|David|Amy|Jack|Ben|Sue|Bill|Nick|Tony|Alice|Jane|Kate|Mike|Sam|Sarah|Emma|Leo|Max|Nina|Alex|Vy|Trang|Dung|Long|Ha|Binh|Anh|Quan|Tuan|Nga|Thu|Thao|Hieu|Khanh|Bao|Chi|Duy|Giang|Huong|Khoa|Lam|My|Ngoc|Oanh|Phuong|Quynh|Son|Thanh|Trinh|Uyen|Viet|Xuan|Yen)\b/gi;
+const normText = (s) =>
+  String(s ?? '').toLowerCase().replace(NORM_NAMES, 'x')
+    .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+const nearDupKey = (q) => {
+  // context-bearing items (passage/statement/transcript) dup when the shared
+  // context is identical modulo names - regardless of the question asked.
+  const ctx = normText((q.passage ?? '') + ' ' + (q.statement ?? '') + ' ' + (q.transcript ?? ''));
+  if (ctx.length >= 15) return 'ctx:' + ctx;
+  // context-free items dup only when prompt + option set + answer all match.
+  const ch = Array.isArray(q.choices)
+    ? q.choices.map((c) => normText(typeof c === 'string' ? c : c?.assetId ?? c?.label ?? c?.text ?? '')).sort().join('|')
+    : '';
+  return 'qa:' + normText(q.prompt_text) + '|' + ch + '|' + correctLabel(q).toLowerCase();
+};
+
+check('form-near-dup-content', 'P1',
+  'Same form contains two questions identical modulo names (or identical prompt+choices+answer)',
+  forms.flatMap((f) => {
+    const seen = new Map();
+    const bad = [];
+    for (const id of f.payload?.questionIds ?? []) {
+      const q = qById.get(id);
+      if (!q) continue;
+      const k = nearDupKey(q);
+      if (k.length < 20) continue;
+      if (seen.has(k)) bad.push({ id: `${f.id} -> ${id}`, prompt_text: `near-dup of ${seen.get(k)}` });
       else seen.set(k, id);
     }
     return bad;

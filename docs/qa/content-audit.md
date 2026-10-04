@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-04T11:14:37.427Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-04T11:31:17.776Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -30,6 +30,7 @@ Generated: 2026-10-04T11:14:37.427Z · rows: 11406 · regenerate: `node scripts/
 | `explanation-not-vietnamese` | P1 | **0** | Explanation has no Vietnamese characters (untranslated?) |
 | `reorder-trivial` | P1 | **0** | Reorder answer is a single word - nothing to arrange |
 | `heard-word-not-in-transcript` | P1 | **0** | "Which word did you hear" answer is not spoken in the transcript |
+| `form-near-dup-content` | P1 | **0** | Same form contains two questions identical modulo names (or identical prompt+choices+answer) |
 | `form-grade-subject-mismatch` | P1 | **0** | Question grade/subject differs from its form |
 | `form-blueprint-size` | P1 | **0** | Form question count differs from blueprint targetQuestions |
 | `form-blueprint-missing` | P1 | **0** | Form references a blueprint that does not exist |
