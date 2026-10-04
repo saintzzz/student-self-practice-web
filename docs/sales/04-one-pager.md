@@ -19,7 +19,7 @@ English Arena (ea.vieschool.com) - nền tảng web luyện Tiếng Anh, Toán v
 1. **Luyện đúng dạng đề thi**
    270 đề thi chuẩn theo format đề IOE - số câu và thời gian chỉnh riêng từng khối lớp. Toán tiếng Anh và Khoa học tiếng Anh ngay trong cùng một app.
 2. **Ôn đúng chỗ còn yếu**
-   Câu nào sai, hệ thống đưa quay lại ôn theo lịch. Ôn luyện có đồng hồ đo giờ làm bài. Báo cáo tách theo kỹ năng: nghe, ngữ pháp, chính tả, đọc.
+   Hệ thống tự phân tích kỹ năng còn yếu sau 1 tuần làm bài và gợi ý bài ôn riêng cho từng em. Câu nào sai, hệ thống đưa quay lại ôn theo lịch. Ôn luyện có đồng hồ đo giờ làm bài. Báo cáo tách theo kỹ năng: nghe, ngữ pháp, chính tả, đọc. Chế độ Nâng cao cho học sinh muốn thử thách thêm.
 3. **Dễ triển khai, an toàn cho trẻ**
    VieSchool tạo sẵn tài khoản cho cả lớp. Học sinh đăng nhập bằng tên đăng nhập + mã PIN, không cần email. Tiến độ đồng bộ trên mọi thiết bị.
 
@@ -58,7 +58,7 @@ English Arena - luyện Tiếng Anh, Toán và Khoa học tiếng Anh Lớp 1-5,
 2. **Sẵn sàng cho kỳ thi**
    Thi thử theo format đề IOE - số câu và thời gian chỉnh riêng từng khối - cùng Toán tiếng Anh và Khoa học tiếng Anh trong một app. Câu sai được ôn lại theo lịch, ôn luyện có đồng hồ đo giờ.
 3. **Bố mẹ yên tâm**
-   Báo cáo theo 4 kỹ năng. Con đăng nhập bằng tên + mã PIN, không cần email. Học trên máy tính bảng, laptop hay điện thoại đều giữ tiến độ.
+   Báo cáo theo 4 kỹ năng. Sau 1 tuần làm bài, app tự chỉ ra kỹ năng con còn yếu và gợi ý đúng bài ôn. Con đăng nhập bằng tên + mã PIN, không cần email. Học trên máy tính bảng, laptop hay điện thoại đều giữ tiến độ.
 
 ### Proof points
 - Bám khoảng 60% Global Success, 30% chủ đề Cambridge.

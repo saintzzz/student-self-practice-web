@@ -157,6 +157,32 @@ export function mergeEngagement(
     skills[gid] = mergedSkill;
   }
 
+  // CR-58: skillDays = date -> grade -> skill -> counters. Remote first,
+  // then local - max per counter (same rule as skills), 30-day cap.
+  const skillDays: NonNullable<NonNullable<EngagementState['stats']>['skillDays']> = {};
+  for (const [dk, dayEntry] of Object.entries(remote.stats?.skillDays ?? {})) {
+    skillDays[dk] = { ...dayEntry };
+    for (const [gid, perSkill] of Object.entries(dayEntry)) {
+      skillDays[dk]![gid] = { ...perSkill };
+    }
+  }
+  for (const [dk, dayEntry] of Object.entries(local.stats?.skillDays ?? {})) {
+    const mergedDay = skillDays[dk] ?? {};
+    for (const [gid, perSkill] of Object.entries(dayEntry)) {
+      const mergedSkill = mergedDay[gid] ?? {};
+      for (const [sk, c] of Object.entries(perSkill)) {
+        const r = mergedSkill[sk];
+        mergedSkill[sk] = r
+          ? { correct: Math.max(c.correct, r.correct), total: Math.max(c.total, r.total) }
+          : c;
+      }
+      mergedDay[gid] = mergedSkill;
+    }
+    skillDays[dk] = mergedDay;
+  }
+  const skillDayKeys = Object.keys(skillDays).sort();
+  for (const k of skillDayKeys.slice(0, Math.max(0, skillDayKeys.length - DAY_STATS_CAP))) delete skillDays[k];
+
   const localXp = local.pet?.xp ?? 0;
   const remoteXp = remote.pet?.xp ?? 0;
   const petFrom = localXp >= remoteXp ? local.pet : remote.pet;
@@ -189,7 +215,10 @@ export function mergeEngagement(
     gradesPlayed: [...new Set([...local.gradesPlayed, ...remote.gradesPlayed])],
     dailyQuest,
     review: Object.keys(review).length ? review : undefined,
-    stats: Object.keys(days).length || Object.keys(skills).length ? { days, skills } : undefined,
+    stats:
+      Object.keys(days).length || Object.keys(skills).length || Object.keys(skillDays).length
+        ? { days, skills, skillDays }
+        : undefined,
     pet,
     badgeStats,
     reviewMastered: masteredEntries.length ? Object.fromEntries(masteredEntries) : undefined,
@@ -302,7 +331,26 @@ function sanitizeRemote(raw: unknown): EngagementState {
         if (Object.keys(inner).length) skills[gid] = inner;
       }
     }
-    if (Object.keys(days).length || Object.keys(skills).length) out.stats = { days, skills };
+    const skillDays: NonNullable<NonNullable<EngagementState['stats']>['skillDays']> = {};
+    if (isObj(raw.stats.skillDays)) {
+      for (const [dk, dayEntry] of Object.entries(raw.stats.skillDays)) {
+        if (!isObj(dayEntry)) continue;
+        const inner: Record<string, Record<string, { correct: number; total: number }>> = {};
+        for (const [gid, perSkill] of Object.entries(dayEntry)) {
+          if (!isObj(perSkill)) continue;
+          const skills2: Record<string, { correct: number; total: number }> = {};
+          for (const [sk, c] of Object.entries(perSkill)) {
+            const cc = counter(c);
+            if (cc) skills2[sk] = cc;
+          }
+          if (Object.keys(skills2).length) inner[gid] = skills2;
+        }
+        if (Object.keys(inner).length) skillDays[dk] = inner;
+      }
+    }
+    if (Object.keys(days).length || Object.keys(skills).length || Object.keys(skillDays).length) {
+      out.stats = { days, skills, skillDays };
+    }
   }
   if (isObj(raw.pet)) {
     const species = str(raw.pet.species);

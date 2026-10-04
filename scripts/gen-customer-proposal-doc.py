@@ -91,6 +91,9 @@ bullets([
     "hàng đợi ôn lại.",
     "3 môn luyện bằng tiếng Anh trong cùng app: Tiếng Anh, Toán tiếng Anh, "
     "Khoa học tiếng Anh - đúng nhu cầu luyện IOE và Violympic.",
+    "Cá nhân hóa theo điểm yếu: hệ thống tự phân tích kỹ năng còn yếu "
+    "sau 1 tuần làm bài và gợi ý bài ôn riêng cho từng em. Chế độ "
+    "Nâng cao riêng cho học sinh muốn thử thách thêm.",
     "1.400+ hình minh họa và 470 bài nghe có transcript - toàn bộ tài sản "
     "hình ảnh khai báo bản quyền rõ ràng, không dùng nội dung bên thứ ba "
     "chưa được cấp phép.",

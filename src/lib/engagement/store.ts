@@ -72,6 +72,10 @@ export interface StatsSlice {
   days: Record<string, { correct: number; total: number }>;
   /** gradeId -> skillKey -> counters. */
   skills: Record<string, Record<string, { correct: number; total: number }>>;
+  /** CR-58: dateISO -> gradeId -> skillKey -> counters, same 30-day cap
+   *  - lets the coach reason over the trailing week, not all time.
+   *  Optional: blobs stored before CR-58 lack it; writers fill lazily. */
+  skillDays?: Record<string, Record<string, Record<string, { correct: number; total: number }>>>;
 }
 
 /** CR-28: one wrong question waiting to be re-asked. */
@@ -554,7 +558,8 @@ export function recordReviewOutcome(
 export const DAY_STATS_CAP = 30;
 
 function statsSliceFor(state: EngagementState): StatsSlice {
-  if (!state.stats) state.stats = { days: {}, skills: {} };
+  if (!state.stats) state.stats = { days: {}, skills: {}, skillDays: {} };
+  if (!state.stats.skillDays) state.stats.skillDays = {};
   return state.stats;
 }
 
@@ -581,6 +586,25 @@ function bumpSkill(stats: StatsSlice, gradeId: string, skillKey: string, correct
   stats.skills[gradeId] = grade;
 }
 
+/** CR-58: same counters keyed by calendar day for the 7-day window. */
+function bumpSkillDay(stats: StatsSlice, today: string, gradeId: string, skillKey: string, correct: number, total: number): void {
+  const skillDays = stats.skillDays ?? (stats.skillDays = {});
+  const day = skillDays[today] ?? {};
+  const grade = day[gradeId] ?? {};
+  const skill = grade[skillKey] ?? { correct: 0, total: 0 };
+  skill.correct += correct;
+  skill.total += total;
+  grade[skillKey] = skill;
+  day[gradeId] = grade;
+  skillDays[today] = day;
+  const keys = Object.keys(skillDays).sort();
+  if (keys.length > DAY_STATS_CAP) {
+    for (const key of keys.slice(0, keys.length - DAY_STATS_CAP)) {
+      delete skillDays[key];
+    }
+  }
+}
+
 /** Records one answered question toward today's and the skill's stats. */
 export function recordSkillAnswer(
   gradeId: string,
@@ -592,6 +616,7 @@ export function recordSkillAnswer(
   const stats = statsSliceFor(state);
   bumpDay(stats, todayISO(now), correct ? 1 : 0, 1);
   bumpSkill(stats, gradeId, skillKey, correct ? 1 : 0, 1);
+  bumpSkillDay(stats, todayISO(now), gradeId, skillKey, correct ? 1 : 0, 1);
   evaluateBadges(state, new Set<string>());
   persist(state);
 }
@@ -609,6 +634,7 @@ export function recordSkillAnswers(
   const stats = statsSliceFor(state);
   bumpDay(stats, todayISO(now), correct, total);
   bumpSkill(stats, gradeId, skillKey, correct, total);
+  bumpSkillDay(stats, todayISO(now), gradeId, skillKey, correct, total);
   evaluateBadges(state, new Set<string>());
   persist(state);
 }

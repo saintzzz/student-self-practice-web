@@ -7,19 +7,22 @@ import { listBankForms, type AssessmentFormInfo } from '../lib/qb/bank';
 import Mascot from './Mascot';
 import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
+import CoachCard from './CoachCard';
 import LeaderboardCard from './LeaderboardCard';
 import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
 import { CARD, H1, PROMPT, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import { examConfigForGrade } from '../lib/exam/examSession';
+import type { BankFetchFocus } from '../lib/qb/bank';
 
 interface StartBatchScreenProps {
   grade: Grade;
   onStartBatch: () => void;
   /** CR-25: 'practice' = 20-question drill with instant verdicts; 'exam' = 200q/30min.
    *  CR-28: 'review' = spaced-repetition session over due wrong questions.
-   *  CR-34: 'arena' = 10-question 1v1 duel on a shared seed. */
-  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string) => void;
+   *  CR-34: 'arena' = 10-question 1v1 duel on a shared seed.
+   *  CR-58/59: focus = skill drill (coach) or advanced tier filter. */
+  onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string, focus?: BankFetchFocus & { label?: string }) => void;
   /** CR-34: arena entry points - create / accept / guest bot run. */
   onArenaCreate?: () => void;
   onArenaAccept?: (challenge: ArenaOpenChallenge) => void;
@@ -130,6 +133,17 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
       {/* CR-28: spaced repetition - only renders when items are due. */}
       <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
 
+      {/* CR-58: personalized weak-skill drills from the last 7 days. */}
+      <CoachCard
+        gradeId={grade.id}
+        onDrill={(programId, focus) =>
+          onStartExam(programId, 'practice', undefined, {
+            ...focus,
+            label: 'Ôn kỹ năng yếu',
+          })
+        }
+      />
+
       {/* CR-36: companion pet - grows on every correct answer. */}
       <PetCard />
 
@@ -181,6 +195,14 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   className="w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95"
                 >
                   🏆 Thi thử - {examConfig.examCount} câu
+                </button>
+                <button
+                  type="button"
+                  data-testid={`advanced-${program.id}`}
+                  onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 4, label: 'Nâng cao' })}
+                  className="w-full rounded-lg bg-rose-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-rose-500 active:scale-95"
+                >
+                  🔥 Nâng cao - {examConfig.drillCount} câu
                 </button>
                 <FormPicker gradeId={grade.id} programId={program.id} isAdmin={isAdmin ?? false} onStartExam={onStartExam} />
               </div>

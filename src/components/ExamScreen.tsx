@@ -25,7 +25,7 @@ import {
   recordSkillAnswer,
   getDueReviewItems,
 } from '../lib/engagement/store';
-import { skillKeyFor } from '../lib/engagement/skills';
+import { bankSkillOf, skillKeyFor } from '../lib/engagement/skills';
 import { saveExamResult } from '../lib/practiceResults';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
@@ -78,10 +78,13 @@ interface ExamScreenProps {
    *  midterm/final). When set, questions come from fetch_form in form
    *  order instead of a random mock sample. */
   formId?: string;
+  /** CR-58/59: drill focus - qb skill filter (coach) or difficulty floor
+   *  (advanced tier). label shows on the intro screen. */
+  focus?: { skills?: string[]; minDifficulty?: number; label?: string };
   onExit: () => void;
 }
 
-export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, formId, onExit }: ExamScreenProps) {
+export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, formId, focus, onExit }: ExamScreenProps) {
   const isArena = mode === 'arena';
   const isPractice = mode !== 'exam';
   const isReview = mode === 'review';
@@ -209,6 +212,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             count,
             mode: isPractice ? 'practice' : 'mock',
             formId,
+            focus,
           });
           if (bankExam) {
             setExam(bankExam);
@@ -261,7 +265,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         // CR-29: parent-report stats - one entry per answered question.
         if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
           creditedRef.current.add(`s${exam.currentIndex}`);
-          recordSkillAnswer(gradeId, skillKeyFor(question), isCorrect);
+          recordSkillAnswer(gradeId, bankSkillOf(question) ?? skillKeyFor(question), isCorrect);
         }
         // CR-28: review mode advances/resets the item's stage; a normal
         // drill instead captures the wrong question for future review.
@@ -286,7 +290,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // a real exam score sheet records.
     if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
       creditedRef.current.add(`s${exam.currentIndex}`);
-      recordSkillAnswer(gradeId, skillKeyFor(currentQuestion), examCorrect);
+      recordSkillAnswer(gradeId, bankSkillOf(currentQuestion) ?? skillKeyFor(currentQuestion), examCorrect);
     }
     setExam((current) => {
       if (!current) return current;
@@ -322,7 +326,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} focusLabel={focus?.label} onBegin={begin} onExit={onExit} />;
   }
 
   if (result) {
@@ -462,10 +466,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, loading, loadError, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; loading?: boolean; loadError?: boolean; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, loading, loadError, focusLabel, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; loading?: boolean; loadError?: boolean; focusLabel?: string; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
-    : isReview ? `Ôn lại câu sai - ${gradeLabel}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
+    : isReview ? `Ôn lại câu sai - ${gradeLabel}` : focusLabel ? `${focusLabel} - ${PROGRAM_LABEL[programId]}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0d1b26] p-4 text-white">
       <div className="w-full max-w-lg rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center shadow-2xl sm:p-10">
@@ -508,7 +512,9 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
         </ul>
         {loadError && (
           <p className="mt-4 rounded-lg bg-red-500/15 px-4 py-2 text-sm font-bold text-red-300">
-            Không tải được đề - kiểm tra mạng rồi bấm Thử lại nhé.
+            {focusLabel
+              ? 'Phần này đang được bổ sung thêm câu hỏi - em thử Luyện đề nhé!'
+              : 'Không tải được đề - kiểm tra mạng rồi bấm Thử lại nhé.'}
           </p>
         )}
         {(!isReview || (reviewCount ?? 0) > 0) && (

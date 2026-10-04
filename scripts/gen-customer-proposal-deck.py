@@ -135,12 +135,14 @@ feats = [
      "Đề thi chuẩn theo format đề IOE - số câu và thời gian chỉnh riêng\ntừng khối. Ôn luyện có đồng hồ đo giờ, câu sai tự vào hàng đợi ôn lại."),
     ("3 môn luyện bằng tiếng Anh",
      "Tiếng Anh + Toán tiếng Anh + Khoa học tiếng Anh trong cùng app -\nđúng nhu cầu luyện IOE và Violympic của phụ huynh."),
+    ("Cá nhân hóa theo điểm yếu",
+     "Hệ thống tự phân tích kỹ năng còn yếu sau 1 tuần làm bài và gợi ý\nbài ôn riêng cho từng em. Chế độ Nâng cao cho học sinh muốn thử thách."),
     ("Thi đua & an toàn",
      "Bảng xếp hạng tuần, đấu trường 1v1, sao - huy hiệu - chuỗi ngày học.\nVào lớp bằng mã 6 ký tự. Không quảng cáo, không chat."),
 ]
 for i, (h, b) in enumerate(feats):
-    card(s, Inches(0.6 + (i % 2) * 6.2), Inches(1.9 + (i // 2) * 2.55),
-         Inches(6.0), Inches(2.35), h, b)
+    card(s, Inches(0.6 + (i % 2) * 6.2), Inches(1.55 + (i // 2) * 1.85),
+         Inches(6.0), Inches(1.75), h, b, body_size=11)
 
 # ---------- S4-6 Comparison ----------
 s = slide()

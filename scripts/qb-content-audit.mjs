@@ -163,7 +163,7 @@ check('explanation-mentions-other-answer', 'P1',
     if (!m) return false;
     const expl = q.explanation_vi ?? '';
     // contrasting distractors on purpose is good pedagogy, not a mismatch
-    if (/không (phù hợp|đúng)|còn lại|các (từ|lựa chọn|đáp án) khác|là sai/i.test(expl)) return false;
+    if (/không (phù hợp|đúng)|còn lại|các (từ|lựa chọn|đáp án) khác|là sai|nhiễu|bẫy|khác hẳn|nhầm/i.test(expl)) return false;
     const quoted = m[1].trim().toLowerCase();
     const labels = q.choices.map((c) => choiceLabel(c).toLowerCase());
     const correct = correctLabel(q).toLowerCase();
@@ -191,9 +191,42 @@ check('explanation-tautology', 'P1',
 
 // Evaluate simple arithmetic/comparison prompts and check the marked
 // answer actually is correct - catches wrong-answer generator bugs.
+// Left-assoc with * / precedence for multi-operand chains (7 + 3 + 5,
+// 100 - 45 - 20, 6 x 7 + 8) that the two-operand regexes below miss.
+function evalChain(expr) {
+  const toks = String(expr).match(/\d+|[+\-×x*÷/]/g);
+  if (!toks || toks.length < 3) return undefined;
+  const out = [+toks[0]];
+  const ops = [];
+  for (let i = 1; i < toks.length; i += 2) {
+    const op = toks[i];
+    const n = +toks[i + 1];
+    if (!Number.isFinite(n)) return undefined;
+    if (op === '+' || op === '-') { ops.push(op); out.push(n); }
+    else {
+      const a = out.pop();
+      out.push(op === '÷' || op === '/' ? a / n : a * n);
+    }
+  }
+  let r = out[0];
+  ops.forEach((op, i) => { r = op === '+' ? r + out[i + 1] : r - out[i + 1]; });
+  return Number.isFinite(r) ? r : undefined;
+}
+
 function expectedMath(prompt) {
   const p = prompt.replace(/,/g, '');
   let m;
+  // Multi-operand chains first - the two-operand patterns below would
+  // otherwise match only the first pair and report a false wrong answer.
+  if ((m = p.match(/What is ([\d\s+\-×x*÷]+?)\s*[?=]/i)) ||
+      (m = p.match(/What is ((?:\d+\s*[+\-×x*÷]\s*){2,}\d+)/i))) {
+    const v = evalChain(m[1]);
+    if (v !== undefined) return v;
+  }
+  if ((m = p.match(/Solve[^?\d]*((?:\d+\s*[+\-×x*÷]\s*){2,}\d+)/i))) {
+    const v = evalChain(m[1]);
+    if (v !== undefined) return v;
+  }
   if ((m = p.match(/What is (\d+)\s*plus\s*(\d+)/i))) return +m[1] + +m[2];
   if ((m = p.match(/What is (\d+)\s*minus\s*(\d+)/i))) return +m[1] - +m[2];
   if ((m = p.match(/What is (\d+)\s*(?:times|multiplied by)\s*(\d+)/i))) return +m[1] * +m[2];

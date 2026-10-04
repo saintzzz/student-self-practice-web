@@ -51,40 +51,44 @@ export function gradeNumber(gradeId: string): number {
   return Number.isFinite(n) && n >= 1 && n <= 5 ? n : 5;
 }
 
+/** CR-58/59: optional drill focus - qb skill filter + difficulty floor. */
+export interface BankFetchFocus {
+  skills?: string[];
+  minDifficulty?: number;
+}
+
 export async function fetchBankQuestions(
   programId: ExamProgramId,
   gradeId: string,
   count: number,
   mode: BankMode,
+  focus?: BankFetchFocus,
 ): Promise<QbRow[]> {
   const supabase = await getSupabase();
   // Guests always 401 on the authenticated RPC - check the (local,
   // cached) session first so guest starts skip a wasted ~600ms
   // round-trip that can never succeed.
+  const params = {
+    p_grade: gradeNumber(gradeId),
+    p_subject: SUBJECTS[programId],
+    p_count: count,
+    p_skills: focus?.skills?.length ? focus.skills : null,
+    p_min_difficulty: focus?.minDifficulty ?? null,
+  };
   const session = await getSession();
   if (!session) {
-    const pub = await supabase.rpc('fetch_questions_public', {
-      p_grade: gradeNumber(gradeId),
-      p_subject: SUBJECTS[programId],
-      p_count: count,
-    });
+    const pub = await supabase.rpc('fetch_questions_public', params);
     if (pub.error) throw new Error(pub.error.message);
     return (pub.data ?? []) as QbRow[];
   }
   const { data, error } = await supabase.rpc('fetch_questions', {
-    p_grade: gradeNumber(gradeId),
-    p_subject: SUBJECTS[programId],
-    p_count: count,
+    ...params,
     p_mode: mode,
   });
   if (!error) return (data ?? []) as QbRow[];
   // Guests (no session) cannot call the authenticated RPC - fall back
   // to the public practice-only path so they still get real V6 content.
-  const pub = await supabase.rpc('fetch_questions_public', {
-    p_grade: gradeNumber(gradeId),
-    p_subject: SUBJECTS[programId],
-    p_count: count,
-  });
+  const pub = await supabase.rpc('fetch_questions_public', params);
   if (pub.error) throw new Error(pub.error.message);
   return (pub.data ?? []) as QbRow[];
 }
@@ -186,6 +190,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         optionImages,
         transcript,
         passage: row.passage ?? undefined,
+        bankSkill: row.skill ?? undefined,
       };
     }
     case 'true-false': {
@@ -211,6 +216,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         statement: str(row.statement ?? row.prompt_text),
         answer: bool,
         explanation,
+        bankSkill: row.skill ?? undefined,
       };
     }
     case 'text-answer': {
@@ -229,6 +235,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         accept,
         explanation,
         imageUrl,
+        bankSkill: row.skill ?? undefined,
       };
     }
     case 'reorder': {
@@ -246,7 +253,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         tiles = order.map((i) => tokens[i]!);
         if (tiles.join(' ') !== tokens.join(' ')) break;
       }
-      return { id: row.id, topicId, kind: 'word-order', sentence, tiles, explanation };
+      return { id: row.id, topicId, kind: 'word-order', sentence, tiles, explanation, bankSkill: row.skill ?? undefined };
     }
     default:
       return null;
@@ -264,14 +271,14 @@ export async function createExamFromBank(
   programId: ExamProgramId,
   gradeId: string,
   nowMs: number,
-  opts: { count?: number; mode?: BankMode; formId?: string },
+  opts: { count?: number; mode?: BankMode; formId?: string; focus?: BankFetchFocus },
 ): Promise<ExamState | null> {
   if (!isSupabaseConfigured()) return null;
   const config = examConfigForGrade(gradeId);
   const target = opts.count ?? config.examCount;
   const rows = opts.formId
     ? await fetchBankForm(opts.formId)
-    : await fetchBankQuestions(programId, gradeId, Math.ceil(target * 1.3), opts.mode ?? 'practice');
+    : await fetchBankQuestions(programId, gradeId, Math.ceil(target * 1.3), opts.mode ?? 'practice', opts.focus);
   const questions = rows
     .map(toExamQuestion)
     .filter((q): q is ExamQuestion => q !== null)

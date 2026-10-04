@@ -17,6 +17,9 @@ export interface WordOrderQuestion {
   /** Display tokens in scrambled order (never the correct order). */
   tiles: readonly string[];
   explanation: string;
+  /** CR-58: canonical qb skill taxonomy when the item came from the V6
+   *  bank - precise per-subject key for skill stats + coach drills. */
+  bankSkill?: string;
 }
 
 /**
@@ -60,6 +63,7 @@ export interface TrueFalseQuestion {
   statement: string;
   answer: boolean;
   explanation: string;
+  bankSkill?: string;
 }
 
 /** Grammar MCQ: "Lien ___ lunch at 11:30." -> has. */
@@ -94,6 +98,7 @@ export interface GrammarMcqQuestion {
    * refers to ("Read the passage. ..."), rendered above the prompt.
    */
   passage?: string;
+  bankSkill?: string;
 }
 
 /**
@@ -114,6 +119,7 @@ export interface TextAnswerQuestion {
   explanation: string;
   /** CR-33 - optional self-hosted question illustration. */
   imageUrl?: string;
+  bankSkill?: string;
 }
 
 export type ExamOnlyQuestion =
