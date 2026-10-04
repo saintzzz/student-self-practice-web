@@ -14,6 +14,9 @@ export interface ArenaOpenChallenge {
   program_id: string;
   seed: string;
   created_at: string;
+  /** CR-56: true when the viewer posted this challenge - render "waiting"
+   *  instead of an accept button (you cannot accept your own). */
+  i_created: boolean;
 }
 
 export interface ArenaDuelResult {

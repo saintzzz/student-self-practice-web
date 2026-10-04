@@ -23,6 +23,11 @@ export default function ArenaCard({
   const [open, setOpen] = useState<ArenaOpenChallenge[] | null>(null);
   const [recent, setRecent] = useState<ArenaRecentRow[] | null>(null);
 
+  // CR-56: my own open challenges wait for an accepter - they are not
+  // accept-able and must not hide behind the "nothing here" empty state.
+  const mine = open?.filter((c) => c.i_created) ?? [];
+  const theirs = open?.filter((c) => !c.i_created) ?? [];
+
   useEffect(() => {
     if (isGuest) return;
     let cancelled = false;
@@ -65,14 +70,43 @@ export default function ArenaCard({
 
       {!isGuest && open !== null && (
         <div className="mt-4">
-          <div className="text-sm font-extrabold text-slate-300">Thử thách đang mở</div>
-          {open.length === 0 ? (
+          {mine.length > 0 && (
+            <>
+              <div className="text-sm font-extrabold text-slate-300">
+                Thử thách của em - đang chờ bạn nhận
+              </div>
+              <ul className="mt-2 space-y-2">
+                {mine.map((c) => (
+                  <li
+                    key={c.id}
+                    data-testid="arena-own-challenge"
+                    className="flex items-center justify-between gap-2 rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-sky-400/30"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-extrabold text-white">{c.creator_name}</div>
+                      <div className="text-xs font-bold text-slate-400">
+                        {c.creator_score} điểm - {Math.floor(c.creator_time_ms / 60000)}:
+                        {String(Math.floor(c.creator_time_ms / 1000) % 60).padStart(2, '0')}
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded-lg bg-sky-500/20 px-3 py-2 text-sm font-extrabold text-sky-300">
+                      ⏳ Đang chờ
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <div className={`${mine.length > 0 ? 'mt-4 ' : ''}text-sm font-extrabold text-slate-300`}>
+            Thử thách đang mở
+          </div>
+          {theirs.length === 0 ? (
             <p className="mt-2 text-sm font-semibold text-slate-400">
-              Chưa có thử thách nào - hãy là người đầu tiên tạo nhé!
+              Chưa có thử thách nào của bạn bè - em có thể tạo thử thách mới nhé!
             </p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {open.map((c) => (
+              {theirs.map((c) => (
                 <li
                   key={c.id}
                   className="flex items-center justify-between gap-2 rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-white/10"

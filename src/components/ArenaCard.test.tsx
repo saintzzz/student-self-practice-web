@@ -21,6 +21,14 @@ const openChallenge: ArenaOpenChallenge = {
   program_id: 'english',
   seed: 'arena-x',
   created_at: '2026-10-03T00:00:00Z',
+  i_created: false,
+};
+
+const ownChallenge: ArenaOpenChallenge = {
+  ...openChallenge,
+  id: 'ch-own',
+  creator_name: 'Tôi',
+  i_created: true,
 };
 
 beforeEach(() => {
@@ -58,6 +66,20 @@ describe('ArenaCard - logged in', () => {
     expect(screen.getByText(/80 điểm/)).toBeTruthy();
     fireEvent.click(screen.getByTestId('arena-accept-ch-1'));
     expect(onAccept).toHaveBeenCalledWith(openChallenge);
+  });
+
+  it('CR-56: shows my own open challenge as waiting, without an accept button', async () => {
+    vi.mocked(arenaOpen).mockResolvedValue([ownChallenge, openChallenge]);
+    vi.mocked(arenaRecent).mockResolvedValue([]);
+    render(
+      <ArenaCard gradeId="grade-2" isGuest={false} onCreate={vi.fn()} onAccept={vi.fn()} onBot={vi.fn()} />,
+    );
+    await waitFor(() => expect(screen.getByTestId('arena-own-challenge')).toBeTruthy());
+    expect(screen.getByText(/Thử thách của em - đang chờ bạn nhận/)).toBeTruthy();
+    expect(screen.getByText(/Đang chờ/)).toBeTruthy();
+    // Own challenge gets no accept button; the friend's one still does.
+    expect(screen.queryByTestId('arena-accept-ch-own')).toBeNull();
+    expect(screen.getByTestId('arena-accept-ch-1')).toBeTruthy();
   });
 
   it('shows an empty state when no challenges are open', async () => {
