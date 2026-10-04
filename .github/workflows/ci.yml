@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Attribution legal gate
+        run: npm run audit:attribution
+
       - name: Unit tests
         run: npm test
 

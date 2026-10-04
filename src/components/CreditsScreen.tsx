@@ -49,7 +49,8 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
         Nguồn hình ảnh và giấy phép
       </h1>
       <p className="mb-8 text-lg text-amber-200">
-        Ứng dụng dùng hình ảnh miễn phí từ các nguồn dưới đây. Cảm ơn các tác giả!
+        Ứng dụng dùng hình ảnh, phông chữ và âm thanh từ các nguồn dưới đây, gồm tài nguyên mở có
+        ghi công và nội dung do VieSchool tự sản xuất. Cảm ơn các tác giả!
       </p>
 
       {state.status === 'loading' && (
@@ -81,8 +82,12 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
                 <p className="text-base text-slate-300">
                   {c.title} của {c.author}, giấy phép {c.licenseLabel}
                 </p>
-                <p className="break-all text-sm text-slate-300">Giấy phép: {c.licenseUrl}</p>
-                <p className="break-all text-sm text-slate-300">Nguồn: {c.sourceUrl}</p>
+                {c.licenseUrl && (
+                  <p className="break-all text-sm text-slate-300">Giấy phép: {c.licenseUrl}</p>
+                )}
+                {c.sourceUrl && (
+                  <p className="break-all text-sm text-slate-300">Nguồn: {c.sourceUrl}</p>
+                )}
               </div>
             ))}
           </section>

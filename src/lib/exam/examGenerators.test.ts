@@ -1,8 +1,9 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { generateAuthoredWordOrderQuestions, generateWordOrderQuestions, isWordOrderCorrect, tokenizeSentence } from './wordOrder';
 import { generateOddPronunciationQuestions } from './oddPronunciation';
 import { generateMissingLetterQuestions } from './missingLetter';
-import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateIoeRealListenQuestions, generateIoeRealMaskedQuestions, generateIoeRealMcqQuestions, generateIoeRealTfQuestions, generateTrueFalseQuestions } from './englishGenerators';
+import { generateGrammarMcqQuestions, generateIoeMcqQuestions, generateTrueFalseQuestions } from './englishGenerators';
 import { generateMathQuestions } from './mathEnglish';
 import { generateScienceQuestions } from './scienceQuestions';
 import { getWordsByGrade } from '../../data/vocabulary';
@@ -190,17 +191,20 @@ describe('CR-26 grade-calibrated difficulty', () => {
   });
 });
 
-describe('CR-48 phase 4 - harvested IOE bank is reference-only', () => {
-  // The harvested generators stay in the codebase so the content can be
-  // re-enabled after rights clearance, but until then ioeBankForGrade
-  // returns nothing and every consumer must tolerate an empty bank.
-  it('real-IOE generators yield nothing while the bank is retired', () => {
-    for (const gradeId of GRADES) {
-      expect(generateIoeRealListenQuestions(gradeId), gradeId).toEqual([]);
-      expect(generateIoeRealMcqQuestions(gradeId), gradeId).toEqual([]);
-      expect(generateIoeRealMaskedQuestions(gradeId), gradeId).toEqual([]);
-      expect(generateIoeRealTfQuestions(gradeId), gradeId).toEqual([]);
+describe('CR-53 - harvested content removed from the repository', () => {
+  // The harvested third-party banks (ioeRealBank, vioMathBank) had no
+  // redistribution rights and were deleted. This invariant fails if
+  // either file ever comes back.
+  it('harvested bank files do not exist', () => {
+    for (const rel of ['../../data/ioeRealBank.ts', '../../data/vioMathBank.ts']) {
+      const p = new URL(rel, import.meta.url);
+      expect(existsSync(p), p.pathname).toBe(false);
     }
+  });
+
+  it('public/images/vio does not exist', () => {
+    const p = new URL('../../../public/images/vio', import.meta.url);
+    expect(existsSync(p), p.pathname).toBe(false);
   });
 
   it('reorder bank serves authored sentences only', () => {
@@ -225,10 +229,10 @@ describe('science program', () => {
   });
 });
 
-describe('CR-48 phase 4 - harvested content retired', () => {
-  // Rights-uncleared third-party banks (ioeRealBank, vioMathBank) are
-  // reference-only. This invariant fails if anything reintroduces
-  // harvested ids (ioe-*, vio-*) into any bundled pool.
+describe('CR-53 - harvested content removed', () => {
+  // Rights-uncleared third-party banks (ioeRealBank, vioMathBank) were
+  // deleted. This invariant fails if anything reintroduces harvested
+  // ids (ioe-*, vio-*) into any bundled pool.
   const HARVESTED = /^(?:vio-|q-ioe-|ioe-)/;
 
   it('exam pools contain no harvested question ids', () => {

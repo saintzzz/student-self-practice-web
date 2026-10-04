@@ -44,16 +44,47 @@
    "modified": false
   },
   {
-   "id": "violympic-math-english",
-   "title": "Violympic - Luyen thi Toan Tieng Anh (practice rounds)",
-   "author": "FPT - Violympic.vn",
-   "license": "reference-only",
-   "licenseLabel": "Tham khao - harvested via account practice",
-   "licenseUrl": "https://violympic.vn/",
-   "sourceUrl": "https://violympic.vn/practice",
-   "version": "2026-10-03",
+   "id": "bevietnam-pro",
+   "title": "Be Vietnam Pro",
+   "author": "Bao Anh Bui, Ngan Bui and beVietnam contributors",
+   "license": "OFL-1.1",
+   "licenseLabel": "SIL Open Font License 1.1",
+   "licenseUrl": "https://openfontlicense.org",
+   "sourceUrl": "https://fonts.google.com/specimen/Be+Vietnam+Pro",
+   "version": "@fontsource/be-vietnam-pro",
    "paths": [
-    "/images/vio/"
+    "/fonts/bevietnam-pro/"
+   ],
+   "modified": false
+  },
+  {
+   "id": "noto-symbol-renders",
+   "title": "Concept illustrations - rendered from Noto Color Emoji glyphs",
+   "author": "Google (Noto Color Emoji) - rendered and composed by VieSchool",
+   "license": "Apache-2.0",
+   "licenseLabel": "Apache License 2.0",
+   "licenseUrl": "https://www.apache.org/licenses/LICENSE-2.0",
+   "sourceUrl": "https://fonts.google.com/noto/specimen/Noto+Color+Emoji",
+   "version": "2026-10-04",
+   "paths": [
+    "/images/concepts/",
+    "/images/counting/",
+    "/images/v3/"
+   ],
+   "modified": true
+  },
+  {
+   "id": "vieschool-original-assets",
+   "title": "VieSchool original diagrams and sound effects",
+   "author": "VieSchool",
+   "license": "proprietary",
+   "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
+   "licenseUrl": "",
+   "sourceUrl": "",
+   "version": "2026-10-04",
+   "paths": [
+    "/images/v6/",
+    "/sfx/"
    ],
    "modified": false
   }

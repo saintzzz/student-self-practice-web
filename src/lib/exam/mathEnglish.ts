@@ -81,9 +81,8 @@ function mcqOptions(correct: number, seed: string, max: number): { options: [str
 export function generateMathQuestions(gradeId: string, seedPrefix = ''): ExamQuestion[] {
   const spec = band(gradeId);
   const questions: ExamQuestion[] = [];
-  // CR-48 phase 4: the harvested Violympic bank (vioMathBank) is
-  // REFERENCE-ONLY - rights uncleared, must not enter any pool until
-  // cleared per the V6 publicationPolicy contract.
+  // CR-53: the harvested Violympic bank was deleted - rights unclear
+  // and never redistributable. Only generated items below.
   /** Dedupe identical prompts - seeded families can collide on small bands. */
   const seen = new Set<string>();
   const push = (q: ExamQuestion) => {

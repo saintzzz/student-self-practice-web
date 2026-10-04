@@ -54,7 +54,9 @@ describe('public/attribution.json schema (PRD 9.2, AC-4.9)', () => {
         expect(c, `collection ${c.id} missing ${field}`).toHaveProperty(field);
       }
       expect(Array.isArray(c.paths)).toBe(true);
-      expect(c.modified).toBe(false);
+      // CR-53: collections may legitimately be modified (e.g. rendered
+      // glyph compositions); the field just has to be declared.
+      expect(typeof c.modified).toBe('boolean');
     }
     expect(manifest.collections.map((c) => c.id)).toEqual(
       expect.arrayContaining(['twemoji', 'noto-animated-emoji']),

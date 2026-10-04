@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * check-attribution - C3 bidirectional inventory gate (AC-4.9, AC-7.11).
+ * check-attribution - C3 bidirectional inventory gate (AC-4.9, AC-7.11)
+ * plus the CR-53 legal gate.
  *
  *   - every file in public/emoji/svg/ appears in the 'twemoji' collection
  *     paths, and vice versa;
@@ -10,6 +11,12 @@
  *     images[] record that is approved (reviewStatus, reviewedBy,
  *     reviewedAt all set), licensed cc0|by, and id exists in ALL_WORDS;
  *   - every images[] record's file exists;
+ *   - every declared collection path exists on disk;
+ *   - every asset subdirectory under public/{images,emoji,fonts,sfx} is
+ *     covered by a declared collection path;
+ *   - every public/fonts/<dir>/ ships its license file (OFL condition);
+ *   - no forbidden prefixes (public/images/vio/ - harvested third-party
+ *     assets removed in CR-53, no redistribution rights);
  *   - no assets under src/assets/ (A-07).
  *
  * Exit non-zero listing every violation.
@@ -67,6 +74,12 @@ async function ls(dir) {
   return (await readdir(dir)).sort();
 }
 
+async function lsDirs(dir) {
+  if (!existsSync(dir)) return [];
+  const entries = await readdir(dir, { withFileTypes: true });
+  return entries.filter((e) => e.isDirectory()).map((e) => e.name).sort();
+}
+
 async function collectWordIds() {
   const ids = new Set();
   for (const file of await ls(VOCAB_DIR)) {
@@ -89,14 +102,63 @@ async function main() {
 
   check(attribution.version === 1, 'attribution.json: version must be 1');
 
-  // collections: required fields; every svg file must live under a declared
-  // directory prefix of the twemoji collection (PRD 9.2 prefix style).
+  // collections: required fields; every declared path must exist on disk.
   const svgFiles = await ls(path.join(PUBLIC_DIR, 'emoji/svg'));
+  const declaredPrefixes = [];
   for (const c of collections) {
     for (const field of REQUIRED_COLLECTION_FIELDS) {
       check(field in c, `collection "${c.id}": missing field "${field}"`);
     }
     check(Array.isArray(c.paths), `collection "${c.id}": paths must be an array`);
+    for (const p of c.paths ?? []) {
+      const rel = p.replace(/^\//, '');
+      declaredPrefixes.push(rel);
+      check(
+        existsSync(path.join(PUBLIC_DIR, rel)),
+        `collection "${c.id}": declared path does not exist: ${p}`,
+      );
+    }
+  }
+
+  // CR-53 legal gate: prefixes that must never ship (rights unclear).
+  const FORBIDDEN_PREFIXES = ['images/vio/'];
+  for (const prefix of FORBIDDEN_PREFIXES) {
+    check(
+      !existsSync(path.join(PUBLIC_DIR, prefix)),
+      `forbidden asset directory exists: public/${prefix}`,
+    );
+    check(
+      !declaredPrefixes.some((d) => d.startsWith(prefix) || prefix.startsWith(d)),
+      `forbidden path declared in attribution.json: ${prefix}`,
+    );
+  }
+
+  // Every asset subdirectory in public/ must be covered by a declared
+  // collection path (reverse direction: nothing ships unattributed).
+  for (const topLevel of ['images', 'emoji', 'fonts']) {
+    for (const dir of await lsDirs(path.join(PUBLIC_DIR, topLevel))) {
+      const rel = `${topLevel}/${dir}/`;
+      check(
+        declaredPrefixes.some((prefix) => rel.startsWith(prefix) || prefix.startsWith(rel)),
+        `asset directory without attribution collection: public/${rel}`,
+      );
+    }
+  }
+  // Top-level dirs holding files directly (e.g. public/sfx/*.mp3) must
+  // also be declared.
+  for (const topLevel of ['sfx']) {
+    if (!existsSync(path.join(PUBLIC_DIR, topLevel))) continue;
+    check(
+      declaredPrefixes.some((prefix) => `${topLevel}/`.startsWith(prefix) || prefix.startsWith(`${topLevel}/`)),
+      `asset directory without attribution collection: public/${topLevel}/`,
+    );
+  }
+
+  // OFL fonts must ship the license text inside their directory.
+  for (const fontDir of await lsDirs(path.join(PUBLIC_DIR, 'fonts'))) {
+    const dir = path.join(PUBLIC_DIR, 'fonts', fontDir);
+    const hasLicense = (await ls(dir)).some((f) => /^(OFL|LICENSE|COPYING)/i.test(f));
+    check(hasLicense, `font directory missing license file: public/fonts/${fontDir}/`);
   }
   const twemoji = collections.find((c) => c.id === 'twemoji');
   check(!!twemoji, 'attribution.json: no "twemoji" collection');
