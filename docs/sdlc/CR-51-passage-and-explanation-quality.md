@@ -175,3 +175,13 @@ answer or give no reason:
   explanations still get rewritten for the review queue.
 - Source JSONL on Desktop is upstream artifact; DB is canonical. The
   fix notes the drift so future regenerations keep the column.
+
+## F10 - theme-fit word items (user-reported: "Our summer holidays" -> mountains)
+
+110 eligible word items of shape "Which word/phrase best fits theme/Unit X" audited by hand:
+- 23 flagged out of pool: all-choices-fit (healthy/family/weather/instructions...) or wrong-theme answers (bathroom->classroom, goodbye->names)
+- 58 explanations rewritten from tautology ("X phu hop voi chu de Y") to teaching gloss+reason
+- 7 challenge-sentence tautologies rewritten with contrast
+- forms re-patched: 76 forms, 64 swaps, 2 drops (then topped back to blueprint)
+- new audit check `explanation-tautology` (P1) guards against bare restatements permanently
+- script: scripts/v6-theme-fit-fix.mjs (idempotent)

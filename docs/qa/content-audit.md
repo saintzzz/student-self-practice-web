@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-04T11:31:17.776Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-04T11:41:27.208Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -28,6 +28,7 @@ Generated: 2026-10-04T11:31:17.776Z · rows: 11406 · regenerate: `node scripts/
 | `explanation-too-short` | P1 | **0** | Explanation under 20 chars - teaches nothing |
 | `explanation-mentions-other-answer` | P1 | **0** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
 | `explanation-not-vietnamese` | P1 | **0** | Explanation has no Vietnamese characters (untranslated?) |
+| `explanation-tautology` | P1 | **0** | Explanation only restates "answer fits the theme" without a reason or contrast |
 | `reorder-trivial` | P1 | **0** | Reorder answer is a single word - nothing to arrange |
 | `heard-word-not-in-transcript` | P1 | **0** | "Which word did you hear" answer is not spoken in the transcript |
 | `form-near-dup-content` | P1 | **0** | Same form contains two questions identical modulo names (or identical prompt+choices+answer) |

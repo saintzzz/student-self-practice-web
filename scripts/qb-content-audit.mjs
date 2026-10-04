@@ -174,6 +174,19 @@ check('explanation-not-vietnamese', 'P1',
   'Explanation has no Vietnamese characters (untranslated?)',
   questions.filter((q) => eligible(q) && q.explanation_vi && q.explanation_vi.length > 15 && !VN_MARK.test(q.explanation_vi)));
 
+// Bare restatement explanations teach nothing: "X phù hợp với chủ đề Y." with
+// no reason, gloss, or contrast. A teaching explanation must say WHY.
+check('explanation-tautology', 'P1',
+  'Explanation only restates "answer fits the theme" without a reason or contrast',
+  questions.filter((q) => {
+    if (!eligible(q)) return false;
+    const e = (q.explanation_vi ?? '').trim();
+    if (!e) return false;
+    // "X" phù hợp với chủ đề "Y". (one sentence, nothing else)
+    return /^[“"']?.{1,40}[”"']?\s*(là|phù hợp với|thuộc) (chủ đề|đúng chủ đề)[^.]{0,40}\.?\s*$/i.test(e)
+      && !/vì|nên|nghĩa là|còn lại|khác|không|trong khi|\(/.test(e);
+  }));
+
 /* ---------- B2. deterministic answer verification ---------- */
 
 // Evaluate simple arithmetic/comparison prompts and check the marked
