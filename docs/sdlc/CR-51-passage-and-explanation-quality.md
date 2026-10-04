@@ -121,6 +121,14 @@ answer or give no reason:
 - Audit false positives fixed in-script: numeric choices decoded to '',
   speaking-prompt matched listen regex, explanation quoting wrong
   answers intentionally is valid pedagogy.
+- Result: **all 10 P0 checks = 0**, P2 = 0. Remaining P1 is the thin-
+  explanation backlog: ~4,200/5,687 rewritten before Gemini daily
+  quota exhausted (3 models, both keys). Audit tracks the rest
+  (`explanation-not-vietnamese` ~1,513 + `explanation-too-short`
+  ~446); finish with
+  `AI_MODEL=gemini-3.5-flash BATCH_DELAY_MS=6000 node scripts/v6-content-fix.mjs explain-thin`
+  after quota reset. Ops scripts persisted: `v6-quick-fix.mjs`,
+  `v6-dedup-variants.mjs`, `v6-flag-fix.mjs`.
 
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their

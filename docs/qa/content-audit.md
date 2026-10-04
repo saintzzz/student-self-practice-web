@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-04T06:12:20.984Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-04T06:37:40.647Z · rows: 11406 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -14,64 +14,49 @@ Generated: 2026-10-04T06:12:20.984Z · rows: 11406 · regenerate: `node scripts/
 | `explanation-missing` | P0 | **0** | No explanation at all |
 | `explanation-template-residue` | P0 | **0** | Leftover generator template text |
 | `prompt-placeholder` | P0 | **0** | Prompt contains placeholder tokens (undefined/null/TODO) |
-| `explanation-not-vietnamese` | P1 | **1709** | Explanation has no Vietnamese characters (untranslated?) |
-| `explanation-too-short` | P1 | **587** | Explanation under 20 chars - teaches nothing |
-| `explanation-mentions-other-answer` | P1 | **2** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
+| `explanation-not-vietnamese` | P1 | **1513** | Explanation has no Vietnamese characters (untranslated?) |
+| `explanation-too-short` | P1 | **446** | Explanation under 20 chars - teaches nothing |
+| `explanation-mentions-other-answer` | P1 | **3** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
 | `duplicate-choices` | P1 | **0** | Two identical choices in one question |
-| `dup-prompt-same-grade` | P2 | **106** | Identical prompt+answer that can co-appear in one exam (no shared variant_group_id) |
+| `dup-prompt-same-grade` | P2 | **0** | Identical prompt+answer that can co-appear in one exam (no shared variant_group_id) |
 | `ambiguous-country-name` | P2 | **0** | Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...) |
 | `accented-text` | P2 | **0** | Non-ASCII beyond punctuation/math in served prompt or choices |
 
-## explanation-not-vietnamese (P1) - 1709 rows
+## explanation-not-vietnamese (P1) - 1513 rows
 
-- `g3-mat-v4-time-money-57fed8a0b1` — Which digital time is 45 minutes past 10? → **10:45**
-- `g4-mat-v4-time-money-96411db473` — Which digital time is 45 minutes past 4? → **4:45**
-- `g3-math-v6-acbf08a179c5` — A rectangle is 14 cm long and 8 cm wide. What is its perimeter? → **44**
-- `g1-math-v5-5008-91ef7323a8` — How many sides does a square have? → **4**
-- `g2-math-v5-5034-667dd08f5f` — A notebook costs 1000 dong and a pen costs 5000 dong. What is the total? → **6000**
-- `g1-math-v5-5007-99b067632c` — What comes next? 7, 12, 17, 22, ___ → **27**
-- `g2-math-v5-5046-e3031f8ae9` — How many sides does a pentagon have? → **5**
-- `g2-math-v5-5013-a7d56f79a6` — How many sides does a triangle have? → **3**
-- `g2-math-v5-5035-5a50fed5c8` — How many sides does a pentagon have? → **5**
-- `g2-math-v5-5057-b44345440e` — How many sides does a pentagon have? → **5**
-- `g2-math-v5-5002-f82ad9311a` — How many sides does a rectangle have? → **4**
-- `g3-math-v5-5046-f6b50136f7` — How many minutes are in 1 hour(s)? → **60**
-- _…and 1697 more (see --json)_
+- `g5-math-v5-1212-a60df76525` — What is 20% of 400? → **80**
+- `g5-math-v5-1222-bc54f759ec` — What is 20% of 400? → **80**
+- `g5-math-v5-1223-88b05f67d6` — A cuboid is 12 cm × 10 cm × 8 cm. What is its volume? → **960**
+- `g5-math-v5-1253-4e015b9025` — A cuboid is 12 cm × 10 cm × 8 cm. What is its volume? → **960**
+- `g5-math-v5-5015-6069b91c42` — Convert 12 kilometres to metres. → **12000**
+- `g5-math-v5-1226-8b107571b7` — A vehicle travels at 34 km/h for 2 hours. How far does it travel? → **68**
+- `g5-math-v5-5025-5436770abc` — Convert 15 kilometres to metres. → **15000**
+- `g3-math-v6-cbd8ae1f179d` — A rectangle is 10 cm long and 10 cm wide. What is its perimeter? → **40**
+- `g1-math-v6-efdc867e2026` — What number comes next? 8, 9, 10, 11, ___ → **12**
+- `g2-math-v6-8156e19ea596` — Which shape has 4 straight sides? → **square**
+- `g3-math-v5-5015-c11f21e67b` — A rectangle is 9 cm long and 6 cm wide. What is its perimeter? → **30**
+- `g3-math-v6-f5353db4dca7` — A rectangle is 9 cm long and 6 cm wide. What is its perimeter? → **30**
+- _…and 1501 more (see --json)_
 
-## explanation-too-short (P1) - 587 rows
+## explanation-too-short (P1) - 446 rows
 
-- `g3-mat-v4-time-money-57fed8a0b1` — Which digital time is 45 minutes past 10? → **10:45**
-- `g4-mat-v4-time-money-96411db473` — Which digital time is 45 minutes past 4? → **4:45**
-- `g1-math-v5-5004-1ba78bd43b` — What is 17 plus 2? → **19**
-- `g2-math-v5-5008-c65f381036` — 20 sweets are shared equally among 10 children. How many sweets does each child get? → **2**
-- `g2-math-v5-5051-c80874c55e` — What is 2 × 1? → **2**
-- `g2-math-v5-5021-43b9894378` — A ribbon is 48 cm long. What is its length in centimetres? → **48**
-- `g4-math-v5-1085-37d594ec89` — Convert 5 metres to centimetres. → **500**
-- `g4-math-v5-1165-a5ce610bc3` — Convert 5 metres to centimetres. → **500**
-- `g4-math-v5-1036-13ac919fde` — How many minutes are in 1 hours 30 minutes? → **90**
-- `g4-math-v5-1236-35d6e534e2` — How many minutes are in 1 hours 30 minutes? → **90**
-- `g4-math-v5-1158-ab09c747e9` — A shop packs 47 items in each box and makes 2 boxes. How many items are packed? → **94**
-- `g4-math-v5-1055-d060fa83f3` — Convert 6 metres to centimetres. → **600**
-- _…and 575 more (see --json)_
+- `g5-math-v5-1212-a60df76525` — What is 20% of 400? → **80**
+- `g5-math-v5-1222-bc54f759ec` — What is 20% of 400? → **80**
+- `g5-math-v5-5015-6069b91c42` — Convert 12 kilometres to metres. → **12000**
+- `g5-math-v5-1265-19bbe6ce6e` — Convert 9 kilometres to metres. → **9000**
+- `g5-math-v5-5035-9e0c5931de` — Convert 9 kilometres to metres. → **9000**
+- `g5-math-v5-5025-5436770abc` — Convert 15 kilometres to metres. → **15000**
+- `g3-math-v5-5053-104f2a64d8` — What is 70 ÷ 7? → **10**
+- `g1-math-v6-df7018c3a5c6` — There are 7 stickers. 2 stickers are given away. How many stickers are left? → **5**
+- `g1-math-v6-a667be540747` — There are 4 stickers. 2 stickers are given away. How many stickers are left? → **2**
+- `g5-math-v5-1035-edfef7e528` — Convert 20 kilometres to metres. → **20000**
+- `g5-math-v5-1038-6109ead195` — A shop has 6 packs of 21 bottles. It sells 19 bottles. How many remain? → **107**
+- `g5-math-v5-1039-505c006019` — A rule is “multiply by 2, then add 5”. What is the output for 28? → **61**
+- _…and 434 more (see --json)_
 
-## explanation-mentions-other-answer (P1) - 2 rows
+## explanation-mentions-other-answer (P1) - 3 rows
 
+- `g4-math-v5-1033-aa29b97fa3` — An angle measures 90°. What type of angle is it? → **right**
 - `g3-gs-u19-v6-cloze-086c447b45c7` — Choose the best word or phrase to complete the sentence: We ride our bikes in the ___. → **park**
 - `g3-gs-u01-v6-cloze-6e30be760cdb` — Choose the best word or phrase to complete the sentence: I say hello to my ___. → **friend**
 
-
-## dup-prompt-same-grade (P2) - 106 rows
-
-- `g5-mat-v4-percent-intro-3c860e0081` — What is 50% of 100? → **50**
-- `g5-math-v5-5032-de0044128f` — What is 50% of 100? → **50**
-- `g5-math-v5-1182-8ec4cbebfb` — What is 50% of 100? → **50**
-- `g3-gs-u02-listen-008-5992a78720` — Listen and choose the sentence you hear. → **Hello!**
-- `g3-gs-u01-listen-008-5992a78720` — Listen and choose the sentence you hear. → **Hello!**
-- `g3-gs-u03-listen-008-5992a78720` — Listen and choose the sentence you hear. → **Hello!**
-- `g1-math-v5-1093-3d6883aa3a` — How many sides does a triangle have? → **3**
-- `g1-math-v5-1201-ee49697b69` — How many sides does a triangle have? → **3**
-- `g1-math-v5-1210-b6c1b512b4` — How many sides does a triangle have? → **3**
-- `g1-math-v5-1300-0abf6aebd4` — How many sides does a triangle have? → **3**
-- `g1-mat-v4-shapes-e7311d4677` — How many sides does a triangle have? → **3**
-- `g1-math-v5-1084-30f3b7cad3` — How many sides does a triangle have? → **3**
-- _…and 94 more (see --json)_
