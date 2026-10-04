@@ -271,6 +271,8 @@ export async function createExamFromBank(
     currentIndex: 0,
     startedAtMs: nowMs,
     timeLimitSec: config.examTimeSec,
+    // CR-52: practice sittings are stopwatched, not countdown-bounded.
+    untimed: opts.mode !== 'mock',
     finishedAtMs: null,
   };
 }

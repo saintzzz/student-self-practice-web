@@ -9,6 +9,7 @@ const RESULT: BatchResult = {
   totalQuestions: 20,
   points: 140,
   maxPoints: 200,
+  timeUsedSec: 754,
   rounds: [
     {
       roundNumber: 1,
@@ -58,6 +59,12 @@ describe('BatchSummary (AC21)', () => {
     render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
 
     expect(screen.getByTestId('batch-score-summary')).toHaveTextContent('14/20');
+  });
+
+  it('CR-52: shows total time used as mm:ss', () => {
+    render(<BatchSummary result={RESULT} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+
+    expect(screen.getByTestId('batch-time-summary')).toHaveTextContent('12:34');
   });
 
   it('shows the points/maxPoints total as the headline metric (plan.md v10, AC36)', () => {

@@ -64,6 +64,12 @@ export interface ExamState {
   /** ms epoch when the countdown started (UI owns the ticking). */
   startedAtMs: number;
   timeLimitSec: number;
+  /**
+   * CR-52: untimed sessions (practice/review/arena) still track elapsed
+   * time but the result is NOT clamped to `timeLimitSec` - the limit is
+   * informational only and never auto-submits.
+   */
+  untimed?: boolean;
   /** Set when the student pressed SUBMIT or time ran out. */
   finishedAtMs: number | null;
 }
@@ -341,12 +347,15 @@ export function computeExamResult(state: ExamState): ExamResult {
   const correctCount = review.filter((r) => r.isCorrect).length;
   const answeredCount = state.answers.filter((a) => a !== null).length;
   const finished = state.finishedAtMs ?? state.startedAtMs + state.timeLimitSec * 1000;
+  const elapsedSec = Math.max(0, Math.floor((finished - state.startedAtMs) / 1000));
   return {
     totalCount: state.questions.length,
     answeredCount,
     correctCount,
     points: correctCount * EXAM_POINTS_PER_QUESTION,
-    timeUsedSec: Math.min(state.timeLimitSec, Math.max(0, Math.floor((finished - state.startedAtMs) / 1000))),
+    // CR-52: untimed (practice/review) sessions report the real elapsed
+    // time - clamping to the exam limit would lie for long sittings.
+    timeUsedSec: state.untimed ? elapsedSec : Math.min(state.timeLimitSec, elapsedSec),
     review,
   };
 }

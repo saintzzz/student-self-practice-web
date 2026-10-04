@@ -145,6 +145,21 @@ describe('full Batch flow (AC17, AC21, AC24, AC25)', () => {
     expect(result.totalCorrect).toBeGreaterThanOrEqual(0);
     expect(result.totalCorrect).toBeLessThanOrEqual(result.totalQuestions);
   });
+
+  it('CR-52: carries startedAtMs through every round and reports elapsed time', () => {
+    const T0 = 1_700_000_000_000;
+    let batch = createBatch('fixed-seed', 'grade-2', T0);
+    expect(batch.startedAtMs).toBe(T0);
+    for (let round = 0; round < 4; round++) {
+      batch = completeActiveRound(batch);
+      batch = goToNextRound(batch);
+      expect(batch.startedAtMs).toBe(T0); // survives every transition
+    }
+    const result = computeBatchResult(batch, T0 + 754_000);
+    expect(result.timeUsedSec).toBe(754);
+    // Negative skew (clock edge case) clamps to 0.
+    expect(computeBatchResult(batch, T0 - 5_000).timeUsedSec).toBe(0);
+  });
 });
 
 describe('updateRoundSession / advanceRoundQuestion guards', () => {

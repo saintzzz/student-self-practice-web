@@ -79,6 +79,9 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
       <p data-testid="batch-score-summary" className="mt-3 text-xl font-semibold text-amber-200">
         Tổng điểm: {result.totalCorrect}/{result.totalQuestions} câu đúng.
       </p>
+      <p data-testid="batch-time-summary" className="mt-1 text-base font-semibold text-sky-300">
+        Thời gian làm bài: {Math.floor(result.timeUsedSec / 60)}:{String(result.timeUsedSec % 60).padStart(2, '0')}
+      </p>
       <p
         data-testid="batch-completion-badge"
         className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-300' : 'text-amber-200'}`}

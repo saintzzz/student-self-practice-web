@@ -32,6 +32,8 @@ export interface BatchResult {
   points: number;
   /** Sum of every Round's maxPoints. */
   maxPoints: number;
+  /** CR-52: tong giay lam bai tu khi vao Round 1 den man tong ket. */
+  timeUsedSec: number;
   rounds: RoundOutcome[];
 }
 
@@ -46,6 +48,8 @@ export interface BatchState {
   /** Set only while phase === 'active' - the current Round's question loop. */
   roundSession: PracticeSessionState | null;
   completedRounds: RoundOutcome[];
+  /** CR-52: ms epoch khi Round 1 bat dau - nen tinh thoi gian lam bai. */
+  startedAtMs: number;
 }
 
 function randomSeed(): string {
@@ -87,10 +91,11 @@ function startRound(
   completedRounds: RoundOutcome[],
   seed: string,
   gradeId: string,
+  startedAtMs: number,
 ): BatchState {
   const definition = ROUND_DEFINITIONS[roundIndex];
   if (!definition) {
-    return { seed, gradeId, roundIndex, phase: 'batch-summary', roundSession: null, completedRounds };
+    return { seed, gradeId, roundIndex, phase: 'batch-summary', roundSession: null, completedRounds, startedAtMs };
   }
 
   if (!definition.buildQuestions) {
@@ -101,6 +106,7 @@ function startRound(
       phase: 'stub',
       roundSession: null,
       completedRounds: [...completedRounds, buildRoundOutcome(definition, null)],
+      startedAtMs,
     };
   }
 
@@ -111,6 +117,7 @@ function startRound(
     phase: 'active',
     roundSession: createSession(definition.buildQuestions(seed, getWordsByGrade(gradeId))),
     completedRounds,
+    startedAtMs,
   };
 }
 
@@ -120,8 +127,8 @@ function startRound(
  * from (CR-07); it defaults to 'grade-2' so the pre-existing suite keeps
  * running on the G2 bank it was written against.
  */
-export function createBatch(seed: string = randomSeed(), gradeId = 'grade-2'): BatchState {
-  return startRound(0, [], seed, gradeId);
+export function createBatch(seed: string = randomSeed(), gradeId = 'grade-2', startedAtMs = Date.now()): BatchState {
+  return startRound(0, [], seed, gradeId, startedAtMs);
 }
 
 export function currentRoundDefinition(state: BatchState): RoundContentDefinition | null {
@@ -202,14 +209,15 @@ export function goToNextRound(state: BatchState): BatchState {
   if (nextIndex >= ROUND_DEFINITIONS.length) {
     return { ...state, roundIndex: nextIndex, phase: 'batch-summary', roundSession: null };
   }
-  return startRound(nextIndex, state.completedRounds, state.seed, state.gradeId);
+  return startRound(nextIndex, state.completedRounds, state.seed, state.gradeId, state.startedAtMs);
 }
 
 /** Total score and per-round breakdown, shown on the Batch summary screen (AC21). */
-export function computeBatchResult(state: BatchState): BatchResult {
+export function computeBatchResult(state: BatchState, nowMs = Date.now()): BatchResult {
   const totalCorrect = state.completedRounds.reduce((sum, round) => sum + round.correctCount, 0);
   const totalQuestions = state.completedRounds.reduce((sum, round) => sum + round.totalCount, 0);
   const points = state.completedRounds.reduce((sum, round) => sum + round.points, 0);
   const maxPoints = state.completedRounds.reduce((sum, round) => sum + round.maxPoints, 0);
-  return { totalCorrect, totalQuestions, points, maxPoints, rounds: state.completedRounds };
+  const timeUsedSec = Math.max(0, Math.floor((nowMs - state.startedAtMs) / 1000));
+  return { totalCorrect, totalQuestions, points, maxPoints, timeUsedSec, rounds: state.completedRounds };
 }

@@ -103,14 +103,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   /** When the current question first rendered - latency basis. */
   const questionShownAtRef = useRef<number>(0);
 
-  // 1s heartbeat for the countdown + auto-submit on expiry (exam mode only).
+  // 1s heartbeat - countdown + auto-submit in exam mode; the elapsed
+  // stopwatch display in practice/review/arena (CR-52).
   useEffect(() => {
-    if (isPractice || !exam || exam.finishedAtMs !== null) return;
+    if (!exam || exam.finishedAtMs !== null) return;
     const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [exam, isPractice]);
+  }, [exam]);
 
   useEffect(() => {
     if (!isPractice && exam && exam.finishedAtMs === null && remainingSeconds(exam, now) <= 0) {
@@ -154,6 +155,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           points: result.points,
           totalCount: result.totalCount,
           correctCount: result.correctCount,
+          timeUsedSec: result.timeUsedSec,
         }, {
           formId,
           questionIds: exam.questions.map((q) => String(q.id)),
@@ -181,6 +183,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         currentIndex: 0,
         startedAtMs: Date.now(),
         timeLimitSec: 0,
+        untimed: true,
         finishedAtMs: null,
       });
     } else {
@@ -226,7 +229,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // Arena duels keep the seeded bundled bank: both players must see
       // the identical question set, which requires deterministic local
       // generation - documented CR-48 ruling.
-      setExam(createExam(programId, gradeId, seed, Date.now(), count));
+      setExam({ ...createExam(programId, gradeId, seed, Date.now(), count), untimed: isPractice });
     }
     setNow(Date.now());
     setStripOffset(0);
@@ -351,8 +354,13 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           {studentName && <div className="truncate text-xs font-bold text-slate-400">{studentName}</div>}
         </div>
         {isPractice ? (
-          <div data-testid="exam-progress" className="shrink-0 rounded-lg bg-[#0a1520] px-3 py-1 text-lg font-extrabold text-amber-300">
-            Câu {exam.currentIndex + 1}/{exam.questions.length}
+          <div className="flex shrink-0 items-center gap-2">
+            <div data-testid="exam-progress" className="rounded-lg bg-[#0a1520] px-3 py-1 text-lg font-extrabold text-amber-300">
+              Câu {exam.currentIndex + 1}/{exam.questions.length}
+            </div>
+            <div data-testid="exam-elapsed" className="rounded-lg bg-[#0a1520] px-3 py-1 font-mono text-lg font-extrabold tabular-nums text-sky-300">
+              ⏱ {Math.floor(Math.max(0, now - exam.startedAtMs) / 60000)}:{String(Math.floor(Math.max(0, now - exam.startedAtMs) / 1000) % 60).padStart(2, '0')}
+            </div>
           </div>
         ) : (
           <div

@@ -12,6 +12,7 @@ import {
   jumpTo,
   remainingSeconds,
   submitExam,
+  type ExamState,
 } from './examSession';
 
 const NOW = 1_700_000_000_000;
@@ -125,6 +126,15 @@ describe('exam flow', () => {
     const result = computeExamResult(exam);
     expect(result.timeUsedSec).toBe(EXAM_TIME_LIMIT_SEC);
     expect(result.answeredCount).toBe(1);
+  });
+
+  it('CR-52: untimed (practice) sessions report real elapsed time past the exam limit', () => {
+    let exam: ExamState = { ...createExam('english', 'grade-4', 's', NOW), untimed: true };
+    exam = submitExam(exam, NOW + EXAM_TIME_LIMIT_SEC * 1000 + 90_000);
+    const result = computeExamResult(exam);
+    // Timed exams clamp at the limit; practice sessions must not - the
+    // student took 31.5 minutes and the result should say so.
+    expect(result.timeUsedSec).toBe(EXAM_TIME_LIMIT_SEC + 90);
   });
 });
 

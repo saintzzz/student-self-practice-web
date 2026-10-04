@@ -13,6 +13,8 @@ export interface PracticeResultRow {
   correct_count: number;
   total_questions: number;
   rounds_completed: number;
+  /** CR-52: giay lam bai - null cho cac row truoc CR-52. */
+  time_used_sec: number | null;
   created_at: string;
 }
 
@@ -29,6 +31,7 @@ export async function savePracticeResult(gradeId: string, result: BatchResult): 
       correct_count: result.totalCorrect,
       total_questions: result.totalQuestions,
       rounds_completed: result.rounds.length,
+      time_used_sec: result.timeUsedSec,
       program: 'batch',
     });
   } catch {
@@ -40,7 +43,7 @@ export async function savePracticeResult(gradeId: string, result: BatchResult): 
 export async function saveExamResult(
   gradeId: string,
   programId: ExamProgramId,
-  result: { points: number; totalCount: number; correctCount: number },
+  result: { points: number; totalCount: number; correctCount: number; timeUsedSec: number },
   /** CR-49: V6 form snapshot - replay/re-grade dung bo cau da thi. */
   snapshot?: { formId?: string; questionIds?: string[] },
 ): Promise<void> {
@@ -55,6 +58,7 @@ export async function saveExamResult(
       correct_count: result.correctCount,
       total_questions: result.totalCount,
       rounds_completed: 1,
+      time_used_sec: result.timeUsedSec,
       program: programId,
       form_id: snapshot?.formId ?? null,
       question_snapshot: snapshot?.questionIds?.length
