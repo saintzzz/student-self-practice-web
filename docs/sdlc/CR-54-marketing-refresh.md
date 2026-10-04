@@ -45,6 +45,16 @@ khách hàng (`proposal-vieschool-khach-hang.docx/.pptx` + `04-one-pager.md`)
 
 ## 5. Verify
 
-- Landing: deploy lên vieschool-landing Vercel project, kiểm tra render.
+- Landing: render verify bằng Playwright local (stats + card EA đúng số liệu).
 - Deck/docx: regen, mở kiểm tra số liệu khớp bảng trên.
 - Không đụng code app -> không cần test suite.
+
+## 6. Trạng thái deploy landing (2026-10-04)
+
+- `vieschool-landing` giờ là git repo `saintzzz/vieschool-landing` (private,
+  trước đây chỉ là file lẻ không version).
+- Deploy lên project Vercel `vieschool-landing` bị chặn: MCP token không có
+  quyền `create_deployment`/`create_git_project` (403). Cần founder:
+  vào Vercel dashboard -> project `vieschool-landing` -> Settings -> Git ->
+  Connect `saintzzz/vieschool-landing`, hoặc `vercel --prod` trong thư mục
+  local. Sau khi link, push `main` sẽ auto-deploy.
