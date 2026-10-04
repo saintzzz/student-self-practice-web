@@ -108,7 +108,13 @@ const isTransOnly = (s) =>
   && /^[^.!?]*(tiếng Anh là|nghĩa là)[^.!?]*\.?\s*$/i.test(s.trim());
 const isStillLazy = isTransOnly;
 
-async function fetchLazyRows(visualOnly = false) {
+// CR-51 F6: explanations that are bare English restatements ("4 + 6 = 10.",
+// "Peter goes to the library.") - no Vietnamese at all, or under 20 chars.
+const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵĂÂĐÊÔƠƯÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ]/;
+const isThin = (s) =>
+  typeof s !== 'string' || !VN_MARK.test(s) || s.trim().length < 20;
+
+async function fetchLazyRows(visualOnly = false, thinOnly = false) {
   const out = [];
   const PAGE = 1000;
   for (let off = 0; ; off += PAGE) {
@@ -120,9 +126,11 @@ async function fetchLazyRows(visualOnly = false) {
     const page = await res.json();
     out.push(
       ...page.filter((r) =>
-        visualOnly
-          ? VISUAL_TYPES.includes(r.question_type) && isTransOnly(r.explanation_vi)
-          : isLazy(r.explanation_vi)),
+        thinOnly
+          ? isThin(r.explanation_vi)
+          : visualOnly
+            ? VISUAL_TYPES.includes(r.question_type) && isTransOnly(r.explanation_vi)
+            : isLazy(r.explanation_vi)),
     );
     if (page.length < PAGE) break;
   }
@@ -186,6 +194,7 @@ Yêu cầu:
 - Với câu đọc hiểu/nghe: trích bằng chứng cụ thể trong passage/transcript.
 - Với câu sắp xếp từ: giải thích cấu trúc câu đúng.
 - Với câu khoa học: nêu kiến thức khoa học đúng, đơn giản.
+- Với câu toán: giải thích CÁCH TÍNH hoặc khái niệm (ví dụ "4 cộng 6 bằng 10", "số liền sau lớn hơn 1 đơn vị"), không chỉ ghi lại kết quả.
 - KHÔNG lặp lại nguyên văn "đáp án đúng là X". KHÔNG dùng gạch dài. Không markdown.
 - Giọng thân thiện, khuyến khích. Tối đa ~40 từ.
 
@@ -220,10 +229,10 @@ async function callGemini(prompt) {
   return JSON.parse(text);
 }
 
-async function rewriteExplanations({ dry, limit, visual = false }) {
+async function rewriteExplanations({ dry, limit, visual = false, thin = false }) {
   const promptFn = visual ? geminiPromptVisual : geminiPrompt;
-  let rows = await fetchLazyRows(visual);
-  console.log(`${visual ? 'visual trans-only' : 'lazy'} explanations: ${rows.length}`);
+  let rows = await fetchLazyRows(visual, thin);
+  console.log(`${thin ? 'thin' : visual ? 'visual trans-only' : 'lazy'} explanations: ${rows.length}`);
   if (limit) rows = rows.slice(0, limit);
 
   const BATCH = 15;
@@ -234,7 +243,7 @@ async function rewriteExplanations({ dry, limit, visual = false }) {
       const map = await callGemini(promptFn(batch));
       for (const q of batch) {
         const text = map[q.id]?.trim();
-        const stillBad = visual ? isTransOnly(text) : isLazy(text);
+        const stillBad = thin ? isThin(text) : visual ? isTransOnly(text) : isLazy(text);
         if (!text || text.length < 15 || stillBad) {
           failed++;
           console.error(`bad/empty explanation for ${q.id}: ${JSON.stringify(text)}`);
@@ -251,10 +260,11 @@ async function rewriteExplanations({ dry, limit, visual = false }) {
     } catch (e) {
       failed += batch.length;
       console.error(`batch ${i / BATCH} failed: ${String(e).slice(0, 300)}`);
-      await new Promise((r) => setTimeout(r, 5000));
+      // 429/503 = rate limit - wait a full window instead of marching on.
+      await new Promise((r) => setTimeout(r, /429|503|quota/i.test(String(e)) ? 30000 : 5000));
     }
     process.stdout.write(`\r${Math.min(i + BATCH, rows.length)}/${rows.length} processed`);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, Number(process.env.BATCH_DELAY_MS) || 1200));
   }
   console.log(`\nexplain ${dry ? '(dry) ' : ''}updated=${updated} failed=${failed}`);
 }
@@ -296,8 +306,8 @@ const limitIdx = flags.indexOf('--limit');
 const limit = limitIdx >= 0 ? Number(flags[limitIdx + 1]) : 0;
 
 if (cmd === 'passage') await backfillPassage();
-else if (cmd === 'explain' || cmd === 'explain-visual') {
-  await rewriteExplanations({ dry, limit, visual: cmd === 'explain-visual' });
+else if (cmd === 'explain' || cmd === 'explain-visual' || cmd === 'explain-thin') {
+  await rewriteExplanations({ dry, limit, visual: cmd === 'explain-visual', thin: cmd === 'explain-thin' });
 } else if (cmd === 'transcript') {
   const p = flags[0] ?? '/tmp/transcript_map.json';
   await backfillTranscripts(p);

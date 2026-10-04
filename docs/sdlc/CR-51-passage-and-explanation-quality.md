@@ -94,6 +94,34 @@ answer or give no reason:
 - Verified: 0 accented names left in served prompts/choices;
   service_role grant revoked.
 
+### F6 - repeatable content audit + proactive sweep (user escalation)
+- Root process gap: fixes were reactive per-screenshot, verified only
+  inside the agent session. Added `scripts/qb-content-audit.mjs` -
+  17 contract checks over all 11,406 rows, emits
+  `docs/qa/content-audit.md`, `--strict` exits non-zero on P0 for CI.
+- First-run findings and fixes:
+  - `option-placeholder` P0: 32 rows had literal "option-4" choice
+    (distractor never generated) - dropped fake choice + re-indexed
+    answer (3-option MCQs).
+  - `choices-too-few` P0: 5 listen items had only 2 sentences (coin-flip
+    guessing) - appended plausible 3rd distractor per unit theme.
+  - `explanation-not-vietnamese`/`too-short` P1: 5,687 rows were bare
+    English restatements ("4 + 6 = 10.") - LLM rewrite pass
+    (`explain-thin` in v6-content-fix.mjs) to kid-VN explanations
+    covering method, not just result.
+  - `dup-prompt-same-grade` P2: 910 rows in 307 identical groups lacked
+    `variant_group_id` - same question could appear twice in one exam.
+    Assigned shared `dupgrp-*` ids so fetch_questions dedups them.
+  - `ambiguous-country-name` P2: flag assets verified visually -
+    Congo image is Republic of the Congo (diagonal), Korea is South
+    Korea, Guinea is Guinea-Conakry (correct as-is). Renamed
+    Bosnia -> Bosnia and Herzegovina, Congo -> the Republic of the
+    Congo, Korea -> South Korea, America -> the USA (38 rows incl.
+    word-image prompts + phonics/spell items, still valid).
+- Audit false positives fixed in-script: numeric choices decoded to '',
+  speaking-prompt matched listen regex, explanation quoting wrong
+  answers intentionally is valid pedagogy.
+
 ## Out of scope
 - speaking-prompt / constructed-response are not auto-served; their
   explanations still get rewritten for the review queue.
