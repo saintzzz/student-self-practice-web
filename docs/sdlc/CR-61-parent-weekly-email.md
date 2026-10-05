@@ -82,3 +82,23 @@ Domain vieschool.com status=failed trong Resend - cần thêm 4 records
 Sau khi DNS propagate: Resend dashboard -> Domains -> vieschool.com
 -> Verify, rồi set vault secret resend_from = 'VieSchool <reports@vieschool.com>'
 để chuyển sender sang đúng brand (không cần migration).
+
+## 6. Fallback provider (migration 0025)
+
+Resend free key dùng chung 3 sản phẩm (AAL Fast Track, Sổ Chủ Nhiệm,
+English Arena) -> chạm daily quota (verified: response 429
+daily_quota_exceeded trên send thật).
+
+- `send_weekly_reports` v3: đọc `email_provider` + `email_api_key` +
+  `email_from` từ vault. Hỗ trợ resend (default), brevo, sendgrid,
+  mailersend - đổi provider = đổi secret, không deploy.
+- Reconcile verify trên lỗi thật: 429 -> ghi resend_error + clear
+  last_sent_at (retry tuần sau).
+- Interim: cron dời 19:00 -> 07:15 VN Chủ nhật (ngay sau quota reset
+  00:00 UTC). Vẫn là vá - fix gốc là key/provider riêng.
+- Cloudflare KHÔNG phải option: outbound email qua Workers không còn
+  free (MailChannels dừng 08/2024); Email Routing chỉ nhận mail.
+
+Khuyến nghị cho user: tạo Brevo account (300/ngày free) hoặc Resend
+account riêng cho VieSchool, set email_provider + email_api_key trong
+vault.
