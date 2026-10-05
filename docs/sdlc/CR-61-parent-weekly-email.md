@@ -102,3 +102,17 @@ daily_quota_exceeded trên send thật).
 Khuyến nghị cho user: tạo Brevo account (300/ngày free) hoặc Resend
 account riêng cho VieSchool, set email_provider + email_api_key trong
 vault.
+
+## 7. Brevo đã active (05/10/2026)
+
+- Vault: email_provider=brevo, email_api_key=<key Brevo user cung cap>.
+- Test send that: response 201 + messageId tu smtp-relay.mailin.fr -
+  quota VieSchool doc lap khoi Resend (300/ngay).
+- Key da lo trong chat -> user nen rotate tren Brevo dashboard.
+
+## 8. Nguyen nhan can quota (da fix o repo SCN)
+
+Cron parent-digest cua So Chu Nhiem ban ~364 email toi dia chi demo
+@demo.scn moi thu 2 (369 parents co email, 364 la demo). Da fix tai
+repo so-chu-nhiem commit 7c927f3: sendEmail loc @demo.scn trung tam +
+query loai tru dia chi demo. Volume that con ~1 email/tuan.
