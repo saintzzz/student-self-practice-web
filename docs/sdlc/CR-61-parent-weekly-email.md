@@ -116,3 +116,15 @@ Cron parent-digest cua So Chu Nhiem ban ~364 email toi dia chi demo
 @demo.scn moi thu 2 (369 parents co email, 364 la demo). Da fix tai
 repo so-chu-nhiem commit 7c927f3: sendEmail loc @demo.scn trung tam +
 query loai tru dia chi demo. Volume that con ~1 email/tuan.
+
+## 9. vieschool.com verified + sender branded (05/10/2026)
+
+- DNS records added via Cloudflare dashboard (Playwright, logged-in
+  session): 2x DKIM CNAME brevo1/brevo2._domainkey, TXT @ brevo-code,
+  TXT _dmarc. dig verify ok ngay lap tuc.
+- Brevo authenticate API: authenticated=true, verified=true.
+- vault email_from = 'VieSchool <no-reply@vieschool.com>'.
+- E2E: send_weekly_reports -> Brevo 201, log xac nhan
+  from=no-reply@vieschool.com.
+- SCN doc chung config qua public.get_email_config() (service_role) -
+  vault la single source of truth, khong can Vercel env.
