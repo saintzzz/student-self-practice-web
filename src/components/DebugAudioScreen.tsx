@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import {
+  isAudioRecordingSupported,
+  isIOSOrIPadOS,
+  pickAudioMimeType,
+  startAudioRecording,
+} from '../lib/audioRecording';
+import { transcribePronunciationAudio } from '../lib/pronunciationTranscription';
 
 interface LogLine {
   time: string;
@@ -72,6 +79,30 @@ export default function DebugAudioScreen() {
     }
   };
 
+  const testRecord = async () => {
+    if (!isAudioRecordingSupported()) {
+      log('MediaRecorder/getUserMedia: KHONG CO - trinh duyet qua cu hoac context khong secure', 'err');
+      return;
+    }
+    try {
+      log(`MediaRecorder mime: ${pickAudioMimeType() || '(browser tu chon)'}`);
+      const controller = await startAudioRecording(4000);
+      log('dang ghi 4s - doc to chu "apple"...', 'info');
+      const blob = await controller.stop();
+      log(`ghi xong: ${blob.size} bytes, type ${blob.type || '?'}`, 'ok');
+      const transcript = await transcribePronunciationAudio(blob, 'apple');
+      log(
+        transcript === null
+          ? 'transcribe LOI - edge function chua deploy hoac chua co AI key'
+          : `transcript: "${transcript}"`,
+        transcript === null ? 'err' : 'ok',
+      );
+    } catch (err) {
+      const e = err as DOMException;
+      log(`ghi am loi: ${e.name} - ${e.message}`, 'err');
+    }
+  };
+
   const testPlainAudio = () => {
     const a = new Audio(
       'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=',
@@ -117,6 +148,15 @@ export default function DebugAudioScreen() {
           <b className={recog ? 'text-emerald-400' : 'text-red-400'}>{recog ? 'co' : 'KHONG CO'}</b>
         </div>
         <div>
+          MediaRecorder:{' '}
+          <b className={isAudioRecordingSupported() ? 'text-emerald-400' : 'text-red-400'}>
+            {isAudioRecordingSupported() ? `co (${pickAudioMimeType() || 'auto'})` : 'KHONG CO'}
+          </b>
+        </div>
+        <div>
+          iOS/iPadOS: <b>{String(isIOSOrIPadOS())}</b>
+        </div>
+        <div>
           secureContext:{' '}
           <b className={window.isSecureContext ? 'text-emerald-400' : 'text-red-400'}>
             {String(window.isSecureContext)}
@@ -142,6 +182,12 @@ export default function DebugAudioScreen() {
           className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-slate-900"
         >
           3. Test mic
+        </button>
+        <button
+          onClick={testRecord}
+          className="rounded-xl bg-rose-400 px-4 py-3 text-sm font-bold text-slate-900"
+        >
+          4. Test ghi am + cham diem
         </button>
         <button
           onClick={() => setLines([])}

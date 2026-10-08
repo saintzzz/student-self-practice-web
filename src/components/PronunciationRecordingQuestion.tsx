@@ -26,6 +26,8 @@ function errorBodyFor(reason: string | null): string {
       return 'Dịch vụ nhận diện giọng nói cần mạng ổn định - mạng đang chập chờn nên chưa nghe được. Em kiểm tra mạng rồi thử lại nhé.';
     case 'audio-capture':
       return 'Micro đang gặp trục trặc - em kiểm tra micro (hoặc tai nghe) đang bật rồi thử lại nhé.';
+    case 'transcription':
+      return 'Đã ghi âm xong nhưng chưa nghe rõ được - mạng đang chập chờn. Em thử lại nhé.';
     default:
       return 'Micro chưa nhận được tiếng đọc của em - có thể do mạng chập chờn hoặc em chưa kịp đọc. Em thử lại hoặc bỏ qua câu này nhé.';
   }
@@ -46,7 +48,10 @@ export default function PronunciationRecordingQuestion({
   isCorrect,
   onSubmit,
 }: PronunciationRecordingQuestionProps) {
-  const { phase, errorReason, startRecording, stopRecording, retry, skip } = usePronunciationRecording(onSubmit);
+  const { phase, errorReason, startRecording, stopRecording, retry, skip } = usePronunciationRecording(
+    onSubmit,
+    question.word,
+  );
 
   return (
     <div>
@@ -91,6 +96,19 @@ export default function PronunciationRecordingQuestion({
               onRetry={retry}
               onSkip={skip}
             />
+          )}
+
+          {phase === 'processing' && (
+            <div>
+              <button
+                type="button"
+                disabled
+                data-testid="processing-button"
+                className="inline-flex min-h-[76px] cursor-wait items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-8 py-3 font-display text-2xl font-bold text-white opacity-90 shadow-[inset_0_-4px_0_rgba(0,0,0,0.18)]"
+              >
+                ⏳ Đang chấm giọng em...
+              </button>
+            </div>
           )}
 
           {(phase === 'idle' || phase === 'recording') && (
