@@ -29,8 +29,61 @@ function json(body: unknown, status = 200) {
   });
 }
 
-// Gemini transcribes audio sent as inline_data; OpenAI uses the
-// whisper transcription endpoint (multipart upload).
+// Gemini transcribes audio sent as inline_data; OpenRouter uses
+// chat/completions with input_audio (OpenAI-compatible); OpenAI uses
+// the whisper transcription endpoint (multipart upload).
+async function transcribeOpenRouter(
+  key: string,
+  model: string,
+  baseUrl: string,
+  audioB64: string,
+  mimeType: string,
+  targetWord: string,
+): Promise<string | null> {
+  const format = mimeType.includes('mp4') || mimeType.includes('aac') || mimeType.includes('m4a')
+    ? 'mp4'
+    : mimeType.includes('wav')
+      ? 'wav'
+      : 'webm';
+  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(25000),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text:
+                'A Vietnamese primary-school child is practicing English pronunciation. ' +
+                `The target word or sentence is "${targetWord}". ` +
+                'Transcribe exactly what the child said in English. ' +
+                'Reply with only the transcript - no quotes, no explanation. ' +
+                'If the audio is silent or unintelligible, reply with an empty string.',
+            },
+            {
+              type: 'input_audio',
+              input_audio: { data: audioB64, format },
+            },
+          ],
+        },
+      ],
+      max_tokens: 64,
+      temperature: 0,
+    }),
+  });
+  if (!res.ok) return `__ERR_${res.status}:${(await res.text()).slice(0, 200)}`;
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  return data.choices?.[0]?.message?.content?.trim() ?? null;
+}
 async function transcribeGemini(
   key: string,
   model: string,
@@ -150,7 +203,16 @@ Deno.serve(async (req: Request) => {
       const transcript =
         provider === 'openai'
           ? await transcribeOpenAI(ai.api_key, model, audioB64, mimeType, targetWord)
-          : await transcribeGemini(ai.api_key, model, audioB64, mimeType, targetWord);
+          : provider === 'openrouter'
+            ? await transcribeOpenRouter(
+                ai.api_key,
+                model,
+                ai.base_url ?? 'https://openrouter.ai/api/v1',
+                audioB64,
+                mimeType,
+                targetWord,
+              )
+            : await transcribeGemini(ai.api_key, model, audioB64, mimeType, targetWord);
       if (transcript !== null && !transcript.startsWith('__ERR_')) {
         return json({ transcript });
       }
