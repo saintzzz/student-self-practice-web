@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gradeNumber, toExamQuestion, type QbRow } from './bank';
+import { gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
 import { isExamAnswerCorrect } from '../exam/examSession';
 
 function row(partial: Partial<QbRow>): QbRow {
@@ -178,5 +178,28 @@ describe('toExamQuestion', () => {
   it('returns null for unmappable types', () => {
     expect(toExamQuestion(row({ question_type: 'constructed-response' }))).toBeNull();
     expect(toExamQuestion(row({ question_type: 'speaking-prompt' }))).toBeNull();
+  });
+});
+
+describe('pickUnseenFirst (CR-63)', () => {
+  const mk = (id: string) => ({ id }) as never;
+
+  it('prefers unseen questions and keeps order', () => {
+    const pool = [mk('a'), mk('b'), mk('c'), mk('d')] as unknown as import('../../types/exam').ExamQuestion[];
+    const picked = pickUnseenFirst(pool, 2, ['a', 'b']);
+    expect(picked.map((q) => q.id)).toEqual(['c', 'd']);
+  });
+
+  it('falls back to seen questions when the fresh pool is too small', () => {
+    const pool = [mk('a'), mk('b'), mk('c')] as unknown as import('../../types/exam').ExamQuestion[];
+    const picked = pickUnseenFirst(pool, 3, ['a', 'b']);
+    expect(picked.map((q) => q.id)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('never returns duplicates or more than target', () => {
+    const pool = [mk('a'), mk('b')] as unknown as import('../../types/exam').ExamQuestion[];
+    const picked = pickUnseenFirst(pool, 5, ['a', 'b']);
+    expect(picked).toHaveLength(2);
+    expect(new Set(picked.map((q) => q.id)).size).toBe(2);
   });
 });

@@ -62,7 +62,7 @@ for (const [subject, items] of Object.entries(SUBJECTS)) {
     }
 
     const id = `g${it.g}-${subject}-adv-${createHash('sha1')
-      .update(`${it.g}|${subject}|${it.q ?? it.statement}`)
+      .update(`${it.g}|${subject}|${it.q ?? it.statement ?? it.text}`)
       .digest('hex').slice(0, 12)}`;
     const contentHash = createHash('sha1')
       .update(JSON.stringify([it.q ?? it.statement, choices, answer, passage]))

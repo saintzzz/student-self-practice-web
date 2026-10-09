@@ -260,12 +260,49 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
   }
 }
 
+/** CR-63 - so cau toi da nho la "da gap gan day" moi tang luyen. */
+const SEEN_CAP = 80;
+
+/**
+ * CR-63 - recency exclusion phia client: pool nang cao (d>=4) nho hon
+ * drillCount nen random thuan lap ~80% moi buoi. Nho id da gap trong
+ * localStorage va uu tien cau chua gap; chi dung lai khi pool can.
+ */
+function loadSeen(key: string): string[] {
+  try {
+    const raw = globalThis.localStorage?.getItem(key);
+    const arr = raw ? (JSON.parse(raw) as unknown) : null;
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function markSeen(key: string, ids: string[]): void {
+  try {
+    const merged = [...ids, ...loadSeen(key).filter((x) => !ids.includes(x))].slice(0, SEEN_CAP);
+    globalThis.localStorage?.setItem(key, JSON.stringify(merged));
+  } catch {
+    /* storage bi chan / day - bo qua */
+  }
+}
+
+/**
+ * CR-63 - uu tien cau chua gap gan day; chi lap lai khi pool can.
+ * Thu tu trong tung nhom giu nguyen thu tu random cua RPC.
+ */
+export function pickUnseenFirst(mapped: ExamQuestion[], target: number, seen: string[]): ExamQuestion[] {
+  const fresh = mapped.filter((q) => !seen.includes(q.id));
+  return [...fresh, ...mapped.filter((q) => !fresh.includes(q))].slice(0, target);
+}
+
 /**
  * CR-48 - formal exam / drill lay truc tiep tu V6 bank qua RPC.
- * Fetch du ~30% de bu cac row khong map duoc; thieu tiep tuc fallback
- * sang fetch them khong (RPC da random + loai rubric-type). Tra null
- * khi khong co mang/khong lay duoc cau nao - caller quyet dinh
- * fallback.
+ * Fetch du ~30% de bu cac row khong map duoc (x4 khi drill theo do kho -
+ * pool nang cao nho nen muon nhin gan het pool de loai cau da gap);
+ * thieu tiep tuc fallback sang fetch them khong (RPC da random + loai
+ * rubric-type). Tra null khi khong co mang/khong lay duoc cau nao -
+ * caller quyet dinh fallback.
  */
 export async function createExamFromBank(
   programId: ExamProgramId,
@@ -276,14 +313,22 @@ export async function createExamFromBank(
   if (!isSupabaseConfigured()) return null;
   const config = examConfigForGrade(gradeId);
   const target = opts.count ?? config.examCount;
+  const focused = !!opts.focus?.minDifficulty;
+  const seenKey = `ea-seen:${programId}:${gradeId}:${opts.focus?.minDifficulty ?? 'all'}`;
+  const seen = focused ? loadSeen(seenKey) : [];
   const rows = opts.formId
     ? await fetchBankForm(opts.formId)
-    : await fetchBankQuestions(programId, gradeId, Math.ceil(target * 1.3), opts.mode ?? 'practice', opts.focus);
-  const questions = rows
-    .map(toExamQuestion)
-    .filter((q): q is ExamQuestion => q !== null)
-    .slice(0, target);
+    : await fetchBankQuestions(
+        programId,
+        gradeId,
+        Math.ceil(target * (focused ? 4 : 1.3)),
+        opts.mode ?? 'practice',
+        opts.focus,
+      );
+  const mapped = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
+  const questions = focused ? pickUnseenFirst(mapped, target, seen) : mapped.slice(0, target);
   if (questions.length === 0) return null;
+  if (focused && !opts.formId) markSeen(seenKey, questions.map((q) => q.id));
   return {
     programId,
     gradeId,
