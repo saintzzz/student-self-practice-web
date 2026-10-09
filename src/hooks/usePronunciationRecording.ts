@@ -114,18 +114,41 @@ export function usePronunciationRecording(
     [onAttempt],
   );
 
+  const launchRecorder = useCallback(async () => {
+    // Optimistic 'recording': getUserMedia may surface a permission
+    // dialog while we await - showing idle mid-flight invites a double
+    // tap. If it rejects, the proper error phase replaces this below.
+    setPhase('recording');
+    try {
+      const controller = await startAudioRecording();
+      if (settledRef.current) {
+        controller.cancel();
+        return;
+      }
+      recorderRef.current = controller;
+    } catch (err) {
+      const name = (err as DOMException)?.name ?? '';
+      if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'NotFoundError') {
+        setPhase('permission-denied');
+      } else {
+        setErrorReason('audio-capture');
+        setPhase('error');
+      }
+    }
+  }, []);
+
   // SR gave up (permission denial or retries exhausted). If the device
-  // can still record real audio, switch to the recorder engine and hand
-  // the child a working record button instead of a dead-end error - the
-  // next tap uses MediaRecorder + server transcription. Without
+  // can still record real audio, switch to the recorder engine AND
+  // launch it in place - the child already tapped once, a dead button
+  // that needs a second tap reads as "không dùng được". Without
   // MediaRecorder the original failure state stands.
   const fallBackToRecorder = useCallback((): boolean => {
     if (!isAudioRecordingSupported()) return false;
     modeRef.current = 'recorder';
     setErrorReason(null);
-    setPhase('idle');
+    void launchRecorder();
     return true;
-  }, []);
+  }, [launchRecorder]);
 
   const launch = useCallback(() => {
 
@@ -141,7 +164,7 @@ export function usePronunciationRecording(
       onPermissionError: () => {
         // SR denial is about the speech *service*, not necessarily the
         // mic (iOS: 'service-not-allowed' while getUserMedia is fine) -
-        // try the recorder before showing the dead-end message.
+        // recorder takes over in-place when available.
         if (!fallBackToRecorder()) {
           setPhase('permission-denied');
         }
@@ -177,26 +200,6 @@ export function usePronunciationRecording(
     setPhase('recording');
   }, [finish, fallBackToRecorder]);
   launchRef.current = launch;
-
-  const launchRecorder = useCallback(async () => {
-    try {
-      const controller = await startAudioRecording();
-      if (settledRef.current) {
-        controller.cancel();
-        return;
-      }
-      recorderRef.current = controller;
-      setPhase('recording');
-    } catch (err) {
-      const name = (err as DOMException)?.name ?? '';
-      if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'NotFoundError') {
-        setPhase('permission-denied');
-      } else {
-        setErrorReason('audio-capture');
-        setPhase('error');
-      }
-    }
-  }, []);
 
   const stopRecorder = useCallback(async () => {
     const controller = recorderRef.current;

@@ -61,7 +61,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     expect(mocks.startAudioRecording).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to recorder when SR reports permission denial', async () => {
+  it('auto-launches the recorder when SR reports permission denial - no second tap needed', async () => {
     class DenyingRecognition {
       lang = '';
       continuous = false;
@@ -79,21 +79,24 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     const original = { ...testWindow() };
     testWindow().SpeechRecognition = DenyingRecognition;
     testWindow().webkitSpeechRecognition = undefined;
-
-    const { result } = renderHook(() => usePronunciationRecording(vi.fn(), 'cat'));
-    act(() => {
-      result.current.startRecording();
-    });
-
-    // Not a dead-end permission screen - back to idle on recorder mode.
-    await waitFor(() => expect(result.current.phase).toBe('idle'));
-
     mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
+    transcribeMock.mockResolvedValue('cat');
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'cat'));
     act(() => {
       result.current.startRecording();
     });
-    await waitFor(() => expect(result.current.phase).toBe('recording'));
-    expect(mocks.startAudioRecording).toHaveBeenCalledTimes(1);
+
+    // One tap: SR denied -> recorder took over and is already recording.
+    await waitFor(() => expect(mocks.startAudioRecording).toHaveBeenCalledTimes(1));
+    expect(result.current.phase).toBe('recording');
+    expect(result.current.phase).not.toBe('permission-denied');
+
+    await act(async () => {
+      result.current.stopRecording();
+    });
+    expect(onAttempt).toHaveBeenCalledWith('cat');
 
     testWindow().SpeechRecognition = original.SpeechRecognition;
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
