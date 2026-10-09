@@ -105,3 +105,8 @@ Fix (migration 0029 + edge fn v6):
 Verify: poison `gemini_api_key` + `gemini_api_key_2` thanh key rac ->
 request roi vao key 3, van tra `{"transcript":"apple"}` HTTP 200.
 Restore xong test lai 200 voi key 1.
+
+Them 3 key (migration 0030): RPC gio quet dong moi secret match
+`gemini_api_key(_N)?` - them key = tao vault secret, khong can migration.
+Thu tu thu theo so suffix (key < _2 < ... < _10), khong phai thu tu chuoi.
+Hien co 6 key gemini trong vault, E2E 200 sau khi nang so key.
