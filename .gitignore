@@ -18,3 +18,4 @@ image-staging/
 audio-out/
 audio-texts.tsv
 exports/
+scripts/gen-bulk-out/
