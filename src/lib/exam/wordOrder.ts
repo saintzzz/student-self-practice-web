@@ -63,8 +63,15 @@ export function generateWordOrderQuestions(words: readonly VocabWord[]): WordOrd
   return questions;
 }
 
+/** CR-65 - so sanh bo qua dau cau cuoi va hoa/thuong: mot so row V6
+ * co cau dich "I love father." nhung bank tu vung khong kem dau cham,
+ * nen cau khong the nao dung. */
+function normalizeForCompare(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.!?,;:'"’]+$/u, '');
+}
+
 export function isWordOrderCorrect(sentence: string, pickedTokens: readonly string[]): boolean {
-  return pickedTokens.join(' ') === sentence;
+  return normalizeForCompare(pickedTokens.join(' ')) === normalizeForCompare(sentence);
 }
 
 /**

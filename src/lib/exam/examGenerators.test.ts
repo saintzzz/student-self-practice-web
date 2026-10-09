@@ -37,6 +37,14 @@ describe('word-order', () => {
       expect(isWordOrderCorrect(q.sentence, swapped)).toBe(false);
     }
   });
+
+  it('isWordOrderCorrect ignores missing trailing punctuation and case (CR-65)', () => {
+    // Bank rows like "I love father." whose tiles lack the period must
+    // still score correct when the words are ordered right.
+    expect(isWordOrderCorrect('I love father.', ['I', 'love', 'father'])).toBe(true);
+    expect(isWordOrderCorrect('What are you doing?', ['what', 'are', 'you', 'doing'])).toBe(true);
+    expect(isWordOrderCorrect('I love father.', ['love', 'I', 'father'])).toBe(false);
+  });
 });
 
 describe('odd-pronunciation', () => {
