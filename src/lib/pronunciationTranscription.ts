@@ -31,7 +31,7 @@ export async function transcribePronunciationAudio(
     const audio = await blobToBase64(blob);
     const res = await fetch(`${base}/functions/v1/practice-transcribe`, {
       method: 'POST',
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000),
       headers: {
         'Content-Type': 'application/json',
         apikey: apiKey,

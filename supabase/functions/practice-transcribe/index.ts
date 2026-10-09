@@ -22,6 +22,13 @@ const CORS = {
 // ~10s of compressed audio; hard cap regardless of mime type.
 const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 
+// Each provider/key gets a short shot; the whole chain must answer well
+// inside the client's ~60s patience, so per-attempt is tight and the loop
+// stops once the overall budget is spent rather than grinding through all
+// credentials while the caller has already given up.
+const ATTEMPT_TIMEOUT_MS = 12000;
+const OVERALL_BUDGET_MS = 45000;
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -47,7 +54,7 @@ async function transcribeOpenRouter(
       : 'webm';
   const res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
-    signal: AbortSignal.timeout(25000),
+    signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${key}`,
@@ -96,7 +103,7 @@ async function transcribeGemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
     {
       method: 'POST',
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [
@@ -158,7 +165,7 @@ async function transcribeOpenAI(
   form.append('prompt', 'A child speaking English.');
   const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
-    signal: AbortSignal.timeout(25000),
+    signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     headers: { Authorization: `Bearer ${key}` },
     body: form,
   });
@@ -200,7 +207,12 @@ Deno.serve(async (req: Request) => {
     // per credential (gemini_api_key, gemini_api_key_2, ...), so a 4xx/5xx,
     // timeout, or empty transcript falls through to the next key/provider.
     const details: string[] = [];
+    const deadline = Date.now() + OVERALL_BUDGET_MS;
     for (const ai of ais) {
+      if (Date.now() >= deadline) {
+        details.push('timeout:budget');
+        break;
+      }
       const provider = String(ai.provider ?? 'gemini').toLowerCase();
       const model =
         ai.model ?? (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash');
