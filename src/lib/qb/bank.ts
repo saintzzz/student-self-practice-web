@@ -313,22 +313,31 @@ export async function createExamFromBank(
   if (!isSupabaseConfigured()) return null;
   const config = examConfigForGrade(gradeId);
   const target = opts.count ?? config.examCount;
-  const focused = !!opts.focus?.minDifficulty;
-  const seenKey = `ea-seen:${programId}:${gradeId}:${opts.focus?.minDifficulty ?? 'all'}`;
-  const seen = focused ? loadSeen(seenKey) : [];
-  const rows = opts.formId
-    ? await fetchBankForm(opts.formId)
+  // CR-63/66: moi buoi luyen (khong phai form co dinh) deu uu tien cau
+  // chua gap gan day - nho rieng theo mode + tier de drill/thi thu/
+  // nang cao khong can tro lan nhau.
+  const fixedForm = !!opts.formId;
+  const mode = opts.mode ?? 'practice';
+  const seenKey = `ea-seen:${programId}:${gradeId}:${mode}:${opts.focus?.minDifficulty ?? 'all'}`;
+  const seen = fixedForm ? [] : loadSeen(seenKey);
+  const rows = fixedForm
+    ? await fetchBankForm(opts.formId!)
     : await fetchBankQuestions(
         programId,
         gradeId,
-        Math.ceil(target * (focused ? 4 : 1.3)),
-        opts.mode ?? 'practice',
+        // CR-66: tier nang cao fetch gan het pool (hien tai <= ~200) de
+        // thay moi cau chua gap - tranh lap qua 20% du pool lon hon
+        // sample random. Drill thuong van fetch the, khong can het pool.
+        opts.focus?.minDifficulty ? 250 : Math.ceil(target * 1.6),
+        mode,
         opts.focus,
       );
   const mapped = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
-  const questions = focused ? pickUnseenFirst(mapped, target, seen) : mapped.slice(0, target);
+  const questions = fixedForm
+    ? mapped.slice(0, target)
+    : pickUnseenFirst(mapped, target, seen);
   if (questions.length === 0) return null;
-  if (focused && !opts.formId) markSeen(seenKey, questions.map((q) => q.id));
+  if (!fixedForm) markSeen(seenKey, questions.map((q) => q.id));
   return {
     programId,
     gradeId,

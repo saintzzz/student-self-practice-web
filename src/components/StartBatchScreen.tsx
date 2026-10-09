@@ -199,7 +199,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                 <button
                   type="button"
                   data-testid={`advanced-${program.id}`}
-                  onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 4, label: 'Nâng cao' })}
+                  onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
                   className="w-full rounded-lg bg-rose-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-rose-500 active:scale-95"
                 >
                   🔥 Nâng cao - {examConfig.drillCount} câu
