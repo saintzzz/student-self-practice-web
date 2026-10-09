@@ -38,7 +38,7 @@ async function transcribeOpenRouter(
   baseUrl: string,
   audioB64: string,
   mimeType: string,
-  targetWord: string,
+  _targetWord: string,
 ): Promise<string | null> {
   const format = mimeType.includes('mp4') || mimeType.includes('aac') || mimeType.includes('m4a')
     ? 'mp4'
@@ -62,8 +62,9 @@ async function transcribeOpenRouter(
               type: 'text',
               text:
                 'A Vietnamese primary-school child is practicing English pronunciation. ' +
-                `The target word or sentence is "${targetWord}". ` +
-                'Transcribe exactly what the child said in English. ' +
+                'Transcribe exactly what the child actually said in English - ' +
+                'the closest English words you hear, even if the pronunciation ' +
+                'is wrong or different from any expected answer. ' +
                 'Reply with only the transcript - no quotes, no explanation. ' +
                 'If the audio is silent or unintelligible, reply with an empty string.',
             },
@@ -89,7 +90,7 @@ async function transcribeGemini(
   model: string,
   audioB64: string,
   mimeType: string,
-  targetWord: string,
+  _targetWord: string,
 ): Promise<string | null> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
@@ -105,8 +106,9 @@ async function transcribeGemini(
               {
                 text:
                   'A Vietnamese primary-school child is practicing English pronunciation. ' +
-                  `The target word or sentence is "${targetWord}". ` +
-                  'Transcribe exactly what the child said in English. ' +
+                  'Transcribe exactly what the child actually said in English - ' +
+                  'the closest English words you hear, even if the pronunciation ' +
+                  'is wrong or different from any expected answer. ' +
                   'Reply with only the transcript - no quotes, no explanation. ' +
                   'If the audio is silent or unintelligible, reply with an empty string.',
               },
@@ -140,7 +142,7 @@ async function transcribeOpenAI(
   model: string,
   audioB64: string,
   mimeType: string,
-  targetWord: string,
+  _targetWord: string,
 ): Promise<string | null> {
   const bytes = Uint8Array.from(atob(audioB64), (c) => c.charCodeAt(0));
   const ext = mimeType.includes('mp4') || mimeType.includes('aac')
@@ -151,8 +153,9 @@ async function transcribeOpenAI(
   const form = new FormData();
   form.append('file', new Blob([bytes], { type: mimeType }), `audio.${ext}`);
   form.append('model', model);
-  // Whisper's prompt parameter biases toward the target word.
-  form.append('prompt', `The child is trying to say: ${targetWord}`);
+  // CR-64: khong dua targetWord vao prompt - Whisper bias manh theo no
+  // nen se "nghe" ra dap an mong doi du em noi sai.
+  form.append('prompt', 'A child speaking English.');
   const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
     signal: AbortSignal.timeout(25000),
