@@ -162,7 +162,7 @@ async function transcribeOpenAI(
     headers: { Authorization: `Bearer ${key}` },
     body: form,
   });
-  if (!res.ok) return null;
+  if (!res.ok) return `__ERR_${res.status}:${(await res.text()).slice(0, 200)}`;
   const data = (await res.json()) as { text?: string };
   return data.text?.trim() ?? null;
 }
@@ -196,33 +196,40 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'transcription not configured' }, 503);
     }
 
-    // Try each configured provider in vault order - a quota/error on one
-    // falls through to the next (the shared free Gemini key 429s often).
-    let lastDetail = '';
+    // Try each configured row in vault order - get_ai_configs emits one row
+    // per credential (gemini_api_key, gemini_api_key_2, ...), so a 4xx/5xx,
+    // timeout, or empty transcript falls through to the next key/provider.
+    const details: string[] = [];
     for (const ai of ais) {
       const provider = String(ai.provider ?? 'gemini').toLowerCase();
       const model =
         ai.model ?? (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash');
-      const transcript =
-        provider === 'openai'
-          ? await transcribeOpenAI(ai.api_key, model, audioB64, mimeType, targetWord)
-          : provider === 'openrouter'
-            ? await transcribeOpenRouter(
-                ai.api_key,
-                model,
-                ai.base_url ?? 'https://openrouter.ai/api/v1',
-                audioB64,
-                mimeType,
-                targetWord,
-              )
-            : await transcribeGemini(ai.api_key, model, audioB64, mimeType, targetWord);
-      if (transcript !== null && !transcript.startsWith('__ERR_')) {
+      let transcript: string | null;
+      try {
+        transcript =
+          provider === 'openai'
+            ? await transcribeOpenAI(ai.api_key, model, audioB64, mimeType, targetWord)
+            : provider === 'openrouter'
+              ? await transcribeOpenRouter(
+                  ai.api_key,
+                  model,
+                  ai.base_url ?? 'https://openrouter.ai/api/v1',
+                  audioB64,
+                  mimeType,
+                  targetWord,
+                )
+              : await transcribeGemini(ai.api_key, model, audioB64, mimeType, targetWord);
+      } catch {
+        transcript = null;
+      }
+      if (transcript !== null && !transcript.startsWith('__ERR_') && transcript !== '') {
         return json({ transcript });
       }
-      lastDetail = transcript ?? `${provider}:null`;
+      details.push(transcript ?? `${provider}:null`);
+      if (details.length > 8) break;
     }
     return json(
-      { error: 'transcription failed', detail: lastDetail.slice(0, 200) },
+      { error: 'all providers failed', detail: details.map((d) => d.slice(0, 160)) },
       502,
     );
   } catch (err) {

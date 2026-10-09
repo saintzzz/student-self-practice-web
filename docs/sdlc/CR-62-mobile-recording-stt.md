@@ -81,3 +81,27 @@ Ngoài:
   toàn pipeline.
 - iPhone/iPad thật: chờ user verify trên thiết bị (MediaRecorder trên
   iOS Safari 14.3+ là đường đã chuẩn, qua HTTPs ea.vieschool.com).
+
+## 4. Addendum - multi-key STT fallback (sau khi het credit toan bo provider)
+
+Su co: ca 3 provider deu can cung luc (OpenRouter audio yeu cau balance
+>= $0.50, Gemini project prepaid het credit, OpenAI Whisper het credit)
+-> edge fn tra 502 -> app bao "chua nghe duoc giong em".
+
+Fix (migration 0029 + edge fn v6):
+
+- `get_ai_configs` emit 1 row per credential: `gemini_api_key`,
+  `gemini_api_key_2`, `gemini_api_key_3` (them key moi = them secret,
+  khong can doi code). Thu tu key theo ten secret, thu tu provider theo
+  `ai_provider` (dang `gemini,openrouter,openai`).
+- Edge fn thu tung row den khi co transcript; 4xx/5xx/timeout/transcript
+  rong deu roi xuong key/provider tiep theo. Error detail gio la array
+  moi provider 1 entry (cat 160 char, khong chua key).
+- `openrouter_model` sua ve `google/gemini-2.5-flash` (truoc do tro
+  `thinkingmachines/inkling:free` - model khong nhan audio, luon 403).
+- `openai` gio cung tra `__ERR_<status>` thay vi null de detail hien
+  dung loi.
+
+Verify: poison `gemini_api_key` + `gemini_api_key_2` thanh key rac ->
+request roi vao key 3, van tra `{"transcript":"apple"}` HTTP 200.
+Restore xong test lai 200 voi key 1.
