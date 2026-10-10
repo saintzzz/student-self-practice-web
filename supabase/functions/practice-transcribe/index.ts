@@ -203,41 +203,70 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'transcription not configured' }, 503);
     }
 
-    // Try each configured row in vault order - get_ai_configs emits one row
-    // per credential (gemini_api_key, gemini_api_key_2, ...), so a 4xx/5xx,
-    // timeout, or empty transcript falls through to the next key/provider.
+    // Try each configured row - get_ai_configs emits one row per credential
+    // (gemini_api_key, gemini_api_key_2, ...), so a 4xx/5xx, timeout, or
+    // empty transcript falls through to the next key/provider. The first
+    // two rows race in parallel: whichever answers first wins, so a slow
+    // or 503-ing head key never serializes the whole chain.
     const details: string[] = [];
     const deadline = Date.now() + OVERALL_BUDGET_MS;
-    for (const ai of ais) {
-      if (Date.now() >= deadline) {
-        details.push('timeout:budget');
-        break;
-      }
+
+    const attempt = async (ai: Record<string, unknown>): Promise<string | null> => {
       const provider = String(ai.provider ?? 'gemini').toLowerCase();
       const model =
-        ai.model ?? (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash');
-      let transcript: string | null;
+        (ai.model as string) ??
+        (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash');
       try {
-        transcript =
+        const t =
           provider === 'openai'
-            ? await transcribeOpenAI(ai.api_key, model, audioB64, mimeType, targetWord)
+            ? await transcribeOpenAI(String(ai.api_key), model, audioB64, mimeType, targetWord)
             : provider === 'openrouter'
               ? await transcribeOpenRouter(
-                  ai.api_key,
+                  String(ai.api_key),
                   model,
-                  ai.base_url ?? 'https://openrouter.ai/api/v1',
+                  String(ai.base_url ?? 'https://openrouter.ai/api/v1'),
                   audioB64,
                   mimeType,
                   targetWord,
                 )
-              : await transcribeGemini(ai.api_key, model, audioB64, mimeType, targetWord);
+              : await transcribeGemini(String(ai.api_key), model, audioB64, mimeType, targetWord);
+        return t;
       } catch {
-        transcript = null;
+        return null;
       }
-      if (transcript !== null && !transcript.startsWith('__ERR_') && transcript !== '') {
-        return json({ transcript });
+    };
+    const ok = (t: string | null) =>
+      t !== null && !t.startsWith('__ERR_') && t !== '';
+    const errOf = (t: string | null, ai: Record<string, unknown>) =>
+      t ?? `${String(ai.provider ?? 'gemini')}:null`;
+
+    // Head race: fire the first two rows together.
+    const head = ais.slice(0, 2);
+    const tail = ais.slice(2);
+    if (head.length) {
+      const winner = await new Promise<string | null>((resolve) => {
+        let remaining = head.length;
+        for (const ai of head) {
+          attempt(ai).then((t) => {
+            if (ok(t)) return resolve(t);
+            details.push(errOf(t, ai));
+            if (--remaining === 0) resolve(null);
+          });
+        }
+      });
+      if (winner) return json({ transcript: winner });
+    }
+
+    for (const ai of tail) {
+      if (Date.now() >= deadline) {
+        details.push('timeout:budget');
+        break;
       }
-      details.push(transcript ?? `${provider}:null`);
+      const transcript = await attempt(ai);
+      if (ok(transcript)) {
+        return json({ transcript: transcript as string });
+      }
+      details.push(errOf(transcript, ai));
       if (details.length > 8) break;
     }
     return json(
