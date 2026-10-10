@@ -97,6 +97,9 @@ export function usePronunciationRecording(
   // inside its own error callback - launch() intentionally skips the
   // 'already recording' guard that startRecording() enforces.
   const launchRef = useRef<(() => void) | null>(null);
+  // Same trick for the recorder: VAD auto-stop resolves controller.done
+  // and needs to invoke the stop+transcribe path from launchRecorder.
+  const stopRecorderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     return () => {
@@ -126,6 +129,11 @@ export function usePronunciationRecording(
         return;
       }
       recorderRef.current = controller;
+      // VAD auto-stop (or the 10s cap) resolves done without a tap - run
+      // the same stop path so transcription starts by itself.
+      void controller.done.then(() => {
+        if (recorderRef.current === controller) void stopRecorderRef.current?.();
+      });
     } catch (err) {
       const name = (err as DOMException)?.name ?? '';
       if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'NotFoundError') {
@@ -227,6 +235,7 @@ export function usePronunciationRecording(
       setPhase('error');
     }
   }, [finish, targetWord]);
+  stopRecorderRef.current = () => void stopRecorder();
 
   const startRecording = useCallback(() => {
     if (settledRef.current || phase === 'recording' || phase === 'processing') return;

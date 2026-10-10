@@ -119,11 +119,11 @@ export default function PronunciationRecordingQuestion({
                 onClick={phase === 'recording' ? stopRecording : startRecording}
                 className="inline-flex min-h-[76px] items-center justify-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 px-8 py-3 font-display text-2xl font-bold text-white shadow-[inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(244,63,94,0.45)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-rose-400"
               >
-                {phase === 'recording' ? '⏹️ Đang ghi âm, nhấn để dừng' : '🎙️ Nhấn để ghi âm'}
+                {phase === 'recording' ? '⏹️ Nhấn để dừng sớm' : '🎙️ Nhấn rồi đọc to lên'}
               </button>
               {phase === 'recording' && (
                 <p data-testid="recording-indicator" className="mt-4 text-lg font-semibold text-rose-300">
-                  🔴 Đang lắng nghe em đọc...
+                  🔴 Đang lắng nghe - em đọc xong sẽ tự chấm luôn
                 </p>
               )}
             </div>

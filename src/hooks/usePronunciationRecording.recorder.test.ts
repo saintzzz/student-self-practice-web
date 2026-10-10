@@ -32,8 +32,18 @@ function testWindow(): TestWindow {
 }
 
 function makeController(blob: Blob) {
+  // `done` resolves only when stop() is called - mirrors the real
+  // controller where done settles on manual stop, VAD, or the cap.
+  let resolveDone!: (b: Blob) => void;
+  const done = new Promise<Blob>((r) => {
+    resolveDone = r;
+  });
   return {
-    stop: vi.fn().mockResolvedValue(blob),
+    done,
+    stop: vi.fn().mockImplementation(() => {
+      resolveDone(blob);
+      return done;
+    }),
     cancel: vi.fn(),
   };
 }

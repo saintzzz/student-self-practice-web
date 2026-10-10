@@ -52,22 +52,42 @@ export function pickAudioMimeType(): string {
 }
 
 export interface AudioRecordingController {
-  /** Idempotent - resolves with the recorded blob on the first call. */
+  /** Idempotent - resolves with the recorded blob on the first call.
+      Also resolves when VAD auto-stops the take, so callers can observe
+      endpointing without a button tap. */
   stop: () => Promise<Blob>;
+  /** Resolves with the take however it ended (manual stop, VAD, cap).
+      Never resolves after cancel(). */
+  done: Promise<Blob>;
   /** Abort without producing audio (unmount cleanup). */
   cancel: () => void;
 }
 
-/**
- * Starts a capture. Auto-stops after `maxDurationMs` - pronunciation
- * prompts are a single word/sentence, so anything longer is a child who
- * wandered off; the resolved blob is still usable. The mic stream is
- * released on stop/cancel - nothing is uploaded or stored client-side
- * beyond the in-memory blob the caller hands to transcription.
- */
+export interface RecordingOptions {
+  /** Hard cap - a wandering child still produces a usable blob. */
+  maxDurationMs?: number;
+  /** Auto-stop after this much quiet once speech has been heard -
+      endpointing like dictation apps, no stop-tap needed. */
+  silenceMs?: number;
+  /** No speech at all within this window -> auto-stop (empty take). */
+  initialSilenceMs?: number;
+  /** RMS energy (0..1 float PCM) that counts as "speech". */
+  rmsThreshold?: number;
+}
+
+/** Seconds of consecutive loud frames before we trust it as speech -
+    filters mic bumps/key clicks that spike a single frame. */
+const SPEECH_ONSET_MS = 150;
+
 export async function startAudioRecording(
-  maxDurationMs = 10000,
+  options: RecordingOptions = {},
 ): Promise<AudioRecordingController> {
+  const {
+    maxDurationMs = 10000,
+    silenceMs = 1200,
+    initialSilenceMs = 6000,
+    rmsThreshold = 0.015,
+  } = options;
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const mimeType = pickAudioMimeType();
   const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -75,6 +95,66 @@ export async function startAudioRecording(
   recorder.ondataavailable = (event) => {
     if (event.data.size > 0) chunks.push(event.data);
   };
+
+  // Voice-activity endpointing: an AnalyserNode taps the live mic stream
+  // and auto-stops the recorder once speech is followed by `silenceMs` of
+  // quiet (or `initialSilenceMs` of silence with no speech at all). Any
+  // failure here is non-fatal - the max-duration timer below still caps
+  // the take, so a broken AudioContext can never strand the recording.
+  const startAt = Date.now();
+  let speechSince = 0;
+  let quietSince = startAt;
+  let speechSeen = false;
+  let vadStop = () => {};
+  try {
+    const ctx = new AudioContext();
+    // iOS Safari spawns the context suspended; resume() runs inside the
+    // same user-gesture chain as the record tap, so it is allowed here.
+    if (ctx.state === 'suspended') void ctx.resume();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    src.connect(analyser);
+    const buf = new Float32Array(analyser.fftSize);
+    let rafId = 0;
+    let stopped = false;
+    const stop = () => {
+      if (stopped || recorder.state === 'inactive') return;
+      stopped = true;
+      try {
+        recorder.stop();
+      } catch {
+        // already stopping
+      }
+    };
+    const tick = () => {
+      if (stopped) return;
+      analyser.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      const rms = Math.sqrt(sum / buf.length);
+      const now = Date.now();
+      if (rms > rmsThreshold) {
+        quietSince = 0;
+        if (!speechSince) speechSince = now;
+        if (!speechSeen && now - speechSince >= SPEECH_ONSET_MS) speechSeen = true;
+      } else {
+        speechSince = 0;
+        if (!quietSince) quietSince = now;
+        if (speechSeen && now - quietSince >= silenceMs) return stop();
+        if (!speechSeen && now - startAt >= initialSilenceMs) return stop();
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    vadStop = () => {
+      stopped = true;
+      cancelAnimationFrame(rafId);
+      void ctx.close();
+    };
+  } catch {
+    // No AudioContext - caller still gets the max-duration cap.
+  }
 
   let resolveDone!: (blob: Blob) => void;
   let rejectDone!: (err: unknown) => void;
@@ -86,6 +166,7 @@ export async function startAudioRecording(
   done.catch(() => {});
 
   const release = () => {
+    vadStop();
     stream.getTracks().forEach((track) => track.stop());
   };
 
@@ -114,6 +195,7 @@ export async function startAudioRecording(
   recorder.start();
 
   return {
+    done,
     stop: () => {
       if (recorder.state !== 'inactive') {
         try {

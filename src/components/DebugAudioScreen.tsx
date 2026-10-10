@@ -86,7 +86,7 @@ export default function DebugAudioScreen() {
     }
     try {
       log(`MediaRecorder mime: ${pickAudioMimeType() || '(browser tu chon)'}`);
-      const controller = await startAudioRecording(4000);
+      const controller = await startAudioRecording({ maxDurationMs: 4000 });
       log('dang ghi 4s - doc to chu "apple"...', 'info');
       const blob = await controller.stop();
       log(`ghi xong: ${blob.size} bytes, type ${blob.type || '?'}`, 'ok');
