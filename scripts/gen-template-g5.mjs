@@ -36,6 +36,7 @@ const pickN = (arr, n, exclude) => {
   return out;
 };
 const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const mcq = (q, correct, wrongs, o) => {
   const c = shuffle([correct, ...wrongs]);
   push({ q, c, a: c.indexOf(correct), ...o });
@@ -170,13 +171,15 @@ const ADJ = [
   ['interesting', 'more interesting', 'the most interesting'], ['difficult', 'more difficult', 'the most difficult'],
   ['good', 'better', 'the best'], ['bad', 'worse', 'the worst'],
 ];
-for (const [base, comp, sup] of ADJ) for (const o of PLACES.slice(0, 12)) {
+const PLACE_ADJ = ADJ.filter((a) => ['big', 'famous', 'popular', 'beautiful', 'interesting'].includes(a[0]));
+for (const [base, comp, sup] of PLACE_ADJ) for (const o of PLACES.slice(0, 12)) {
   mcq(`${o} is ___ place in the area.`, sup, [comp, base, `most ${base}`], {
     d: 4, ex: `So sánh nhất của "${base}" là "${sup}".`, lo: `So sánh nhất: ${base} -> ${sup}.`, top: 'comparatives', skill: 'grammar-use-of-english',
   });
 }
 for (const [base, comp] of ADJ) for (const o of PLACES.slice(0, 10)) {
-  mcq(`${o} is ___ than our town.`, comp, [base, ADJ.find((a) => a[0] === base)[2], `more ${base}`].filter((v, i, arr) => arr.indexOf(v) === i && v !== comp).slice(0, 3), {
+  const supOf = ADJ.find((a) => a[0] === base)[2];
+  mcq(`${o} is ___ than our town.`, comp, [base, supOf, `more ${base}`].filter((v, i, arr) => arr.indexOf(v) === i && v !== comp && v !== undefined).slice(0, 3), {
     d: 4, ex: `So sánh hơn của "${base}" là "${comp}" + than.`, lo: `So sánh hơn: ${base} -> ${comp}.`, top: 'comparatives', skill: 'grammar-use-of-english',
   });
 }
@@ -340,8 +343,9 @@ for (const s of SUBJ.slice(0, 8)) for (const adv of ADVS) {
 
 // ---------- 16. a/an ----------
 const AN_WORDS = [['apple', 'an'], ['engineer', 'an'], ['umbrella', 'an'], ['actor', 'an'], ['book', 'a'], ['pilot', 'a'], ['teacher', 'a'], ['mooncake', 'a']];
+const SUBJ_SG = SUBJ.filter((s) => ['He', 'She', 'Nam', 'Lan', 'It'].includes(s) || /^My |^The /.test(s));
 for (const [w, ans] of AN_WORDS) {
-  for (const s of SUBJ.slice(0, 3)) {
+  for (const s of SUBJ_SG.slice(0, 3)) {
     const c = shuffle([ans, ans === 'a' ? 'an' : 'a', 'the', 'some']);
     push({
       q: `${s} wants ___ ${w}.`, c, a: c.indexOf(ans), d: 2,
@@ -499,6 +503,155 @@ const RO_SENT3 = [
 for (const s of RO_SENT3) {
   const tokens = s.replace(/[.?]/g, (m) => ' ' + m).split(/\s+/).filter(Boolean);
   push({ ro: true, text: s, tokens, d: 4, ex: `Câu đúng: "${s}"`, lo: 'Sắp xếp câu đúng trật tự.', top: 'sentence-order', skill: 'writing' });
+}
+
+// ---------- 27. comparatives / superlatives ----------
+const ADJ2 = [
+  ['tall', 'taller', 'tallest', 'cao'], ['big', 'bigger', 'biggest', 'to'], ['small', 'smaller', 'smallest', 'nhỏ'],
+  ['fast', 'faster', 'fastest', 'nhanh'], ['slow', 'slower', 'slowest', 'chậm'], ['long', 'longer', 'longest', 'dài'],
+  ['hot', 'hotter', 'hottest', 'nóng'], ['cold', 'colder', 'coldest', 'lạnh'], ['good', 'better', 'best', 'tốt'],
+  ['bad', 'worse', 'worst', 'xấu'], ['happy', 'happier', 'happiest', 'vui'], ['beautiful', 'more beautiful', 'most beautiful', 'đẹp'],
+];
+const CMP2 = [
+  ['An elephant', 'a mouse'], ['A car', 'a bicycle'], ['Summer', 'winter'], ['A river', 'a pond'],
+  ['A mountain', 'a hill'], ['My father', 'me'], ['A lion', 'a cat'], ['The Mekong', 'a stream'],
+];
+for (const [a1, a2] of CMP2) {
+  const [adj, er, est] = pick(ADJ2.filter((x) => x[1].endsWith('er') || x[1] === 'better' || x[1] === 'worse'));
+  mcq(`${a1} is ___ than ${a2}.`, er, [adj, est, `more ${adj}`].filter((x) => x !== er), {
+    d: 3, ex: `So sánh hơn của "${adj}" là "${er}".`, lo: `So sánh hơn: ${adj}.`, top: 'comparatives', skill: 'grammar-use-of-english',
+  });
+}
+for (const [adj, er, est, vn] of ADJ2) {
+  const sup = est.startsWith('the') ? est : `the ${est}`;
+  const scope = pick(['in my class', 'in the world', 'in our family', 'in Vietnam']);
+  mcq(`Lan is ___ student ${scope}.`, sup, [adj, er, `most ${adj}`].filter((x) => x !== sup), {
+    d: 4, ex: `So sánh nhất của "${adj}" (${vn}) là "${sup}".`, lo: `So sánh nhất: ${adj} -> ${sup}.`, top: 'superlatives', skill: 'grammar-use-of-english',
+  });
+}
+
+// ---------- 28. past simple ----------
+const PAST2 = [
+  ['go', 'went', 'đi'], ['eat', 'ate', 'ăn'], ['see', 'saw', 'thấy'], ['buy', 'bought', 'mua'],
+  ['take', 'took', 'mang'], ['make', 'made', 'làm'], ['come', 'came', 'đến'], ['give', 'gave', 'cho'],
+  ['write', 'wrote', 'viết'], ['read', 'read', 'đọc'], ['swim', 'swam', 'bơi'], ['run', 'ran', 'chạy'],
+];
+const PAST_SUBJ2 = ['I', 'She', 'He', 'Nam', 'Lan', 'They', 'We', 'My mother'];
+const PAST_OBJ2 = ['to school', 'a book', 'dinner', 'to the market', 'a gift', 'in the river', 'a letter', 'home'];
+for (const [v, past, vn] of PAST2) {
+  for (const s of pickN(PAST_SUBJ2, 3)) {
+    const obj = pick(PAST_OBJ2);
+    const c = shuffle([past, v, `${v}ed`, `${v}s`].filter((x, i, a2) => a2.indexOf(x) === i));
+    push({
+      q: `Yesterday, ${s} ___ ${obj}.`, c, a: c.indexOf(past), d: 3,
+      ex: `"Yesterday" báo quá khứ - "${v}" (${vn}) chia thành "${past}".`, lo: `Quá khứ bất quy tắc: ${v} -> ${past}.`, top: 'past-simple', skill: 'grammar-use-of-english',
+    });
+  }
+}
+
+// ---------- 29. future "will" + "be going to" ----------
+const FUT2 = [
+  ['Tomorrow, we ___ visit Uncle Ho\'s Mausoleum.', 'will', 'ngày mai -> tương lai'],
+  ['I think it ___ rain tonight.', 'will', 'dự đoán dùng will'],
+  ['Look at the clouds! It ___ rain.', 'is going to', 'có dấu hiệu -> be going to'],
+  ['She ___ be a doctor. She studies hard.', 'is going to', 'kế hoạch -> be going to'],
+  ['Next summer, they ___ travel to Hue.', 'will', 'next summer -> tương lai'],
+  ['We ___ have a test next Monday.', 'are going to', 'đã có lịch -> be going to'],
+];
+for (const [q, ans, vn] of FUT2) {
+  const c = shuffle([ans, ans === 'will' ? 'is going to' : 'will', 'must', 'can']);
+  push({ q, c, a: c.indexOf(ans), d: 4, ex: `${vn} nên dùng "${ans}".`, lo: `Tương lai: ${ans}.`, top: 'future', skill: 'grammar-use-of-english' });
+}
+
+// ---------- 30. much/many/a lot of ----------
+const COUNT2 = [
+  ['How ___ water do you drink?', 'much', 'nước không đếm được -> much'],
+  ['How ___ students are in your class?', 'many', 'học sinh đếm được -> many'],
+  ['There is too ___ sugar in this tea.', 'much', 'đường không đếm được -> much'],
+  ['We don\'t have ___ time left.', 'much', 'thời gian không đếm -> much'],
+  ['How ___ books did you read?', 'many', 'sách đếm được -> many'],
+  ['She has ___ friends at school.', 'a lot of', 'friends đếm được, câu khẳng định -> a lot of'],
+];
+for (const [q, ans, vn] of COUNT2) {
+  const c = shuffle([ans, ...pickN(['much', 'many', 'a lot of', 'a little'], 3, ans)]);
+  push({ q, c, a: c.indexOf(ans), d: 3, ex: `${vn}.`, lo: `Lượng từ: ${ans}.`, top: 'quantifiers', skill: 'grammar-use-of-english' });
+}
+
+// ---------- 31. conjunctions ----------
+const CONJ2 = [
+  ['I was tired, ___ I went to bed early.', 'so', 'kết quả -> so'],
+  ['She likes Math ___ she likes English too.', 'and', 'thêm ý -> and'],
+  ['He is small ___ he is strong.', 'but', 'tương phản -> but'],
+  ['___ it rained, we still played outside.', 'Although', 'nhượng bộ -> although'],
+  ['You can have tea ___ coffee, not both.', 'or', 'lựa chọn -> or'],
+  ['I stayed home ___ I was sick.', 'because', 'lý do -> because'],
+  ['We went inside ___ it started to rain.', 'because', 'lý do -> because'],
+  ['Hoa is clever ___ hard-working.', 'and', 'thêm ý -> and'],
+];
+for (const [q, ans, vn] of CONJ2) {
+  const c = shuffle([ans, ...pickN(['and', 'but', 'so', 'or', 'because', 'although'], 3, ans)]);
+  push({ q, c, a: c.indexOf(ans), d: 3, ex: `${vn}.`, lo: `Liên từ: ${ans}.`, top: 'conjunctions', skill: 'grammar-use-of-english' });
+}
+
+// ---------- 32. tag-style "really" / question forms ----------
+const QT2 = [
+  ['___ do you go to school? - By bike.', 'How', 'hỏi phương tiện -> How'],
+  ['___ is your birthday? - In March.', 'When', 'hỏi thời gian -> When'],
+  ['___ is that woman? - My aunt.', 'Who', 'hỏi người -> Who'],
+  ['___ do you like Tet? - Because there are fireworks.', 'Why', 'hỏi lý do -> Why'],
+  ['___ books are on the desk? - Ten.', 'How many', 'hỏi số lượng đếm được -> How many'],
+  ['___ does she want to be? - A nurse.', 'What', 'hỏi nghề/vật -> What'],
+  ['___ is your school? - Near the park.', 'Where', 'hỏi nơi chốn -> Where'],
+  ['___ often do you visit grandma? - Every week.', 'How', 'hỏi tần suất -> How often (How chấp nhận trong lựa chọn)'],
+];
+for (const [q, ans, vn] of QT2) {
+  const c = shuffle([ans, ...pickN(['How', 'When', 'Who', 'Why', 'What', 'Where', 'How many'], 3, ans)]);
+  push({ q, c, a: c.indexOf(ans), d: 2, ex: `${vn}.`, lo: `Từ hỏi: ${ans}.`, top: 'wh-questions', skill: 'grammar-use-of-english' });
+}
+
+// ---------- 33. more passages (g5 harder) ----------
+const PASS4 = [
+  ['Vietnamese students learn many subjects at school. English is important because it helps them talk to people from other countries. Many students practice English every day.',
+   ['English helps students talk to foreigners.', true], ['Students never practice English.', false]],
+  ['The Saola is a rare animal in Vietnam. It lives in the forests near Laos. It was only discovered in 1992.',
+   ['The Saola was discovered in 1992.', true], ['The Saola lives in cities.', false]],
+  ['Water turns to ice at 0 degrees Celsius. When ice is heated, it melts back into water. This is a reversible change.',
+   ['Ice melting is a reversible change.', true], ['Water turns to ice at 100 degrees.', false]],
+  ['In a food chain, plants are producers. Rabbits eat plants, so they are herbivores. Tigers eat other animals, so they are carnivores.',
+   ['A rabbit is a carnivore.', false], ['Tigers eat other animals.', true]],
+  ['The human heart pumps blood around the body. Exercise makes the heart stronger. Eating too much fat is bad for the heart.',
+   ['Exercise helps the heart.', true], ['Fatty food is good for the heart.', false]],
+];
+for (const [p, s1, s2] of PASS4) {
+  for (const [s, b] of [s1, s2]) {
+    push({ tf: true, passage: p, statement: s, bool: b, d: 4, ex: b ? `Bài đọc nói đúng: "${s}"` : `Bài đọc không nói điều này: "${s}"`, lo: 'Đọc hiểu đoạn văn.', top: 'reading', skill: 'reading' });
+  }
+}
+
+// ---------- 34. word formation / spelling (missing letters IOE-style) ----------
+const MISS2 = [
+  ['sch_ol', 'o', 'school - trường học'], ['te_cher', 'a', 'teacher - giáo viên'], ['h_spital', 'o', 'hospital - bệnh viện'],
+  ['br_thday', 'ir', 'birthday - sinh nhật'], ['fr_end', 'i', 'friend - bạn'], ['b_cause', 'e', 'because - bởi vì'],
+  ['fam_ly', 'i', 'family - gia đình'], ['b_autiful', 'e', 'beautiful - đẹp'], ['env_ronment', 'i', 'environment - môi trường'],
+  ['d_ct_or', 'o', 'doctor - bác sĩ'], ['w_int_r', 'e', 'winter - mùa đông'], ['sci_nce', 'e', 'science - khoa học'],
+];
+for (const [gap, letters, vn] of MISS2) {
+  const wrong = pickN(['a', 'e', 'i', 'o', 'u', 'n', 'r', 's'], 3, letters);
+  const c = shuffle([letters, ...wrong.filter((x) => x !== letters)]);
+  push({ q: `Fill in the missing letters: ${gap}`, c, a: c.indexOf(letters), d: 2, ex: `${vn}.`, lo: `Chính tả: ${gap.replace(/_+/g, letters)}.`, top: 'spelling', skill: 'vocabulary-recognition' });
+}
+
+// ---------- 35. rearrange letters into a word (IOE scramble) ----------
+const SCR2 = [
+  ['o, s, c, o, h, l', 'school'], ['e, a, c, h, r, t, e', 'teacher'], ['r, u, s, e, j, m, m', 'summer'],
+  ['t, r, a, w, e', 'water'], ['t, f, a, h, e, r', 'father'], ['e, t, t, l, e', 'little'],
+  ['a, n, o, m, d, y', 'monday'], ['e, g, t, o, e, h, r, t', 'together'], ['e, f, e, t, s, v, i, l, a', 'festival'],
+  ['c, i, e, e, n, s, c', 'science'],
+];
+for (const [letters, word] of SCR2) {
+  const wrong = pickN(['school', 'teacher', 'summer', 'water', 'father', 'little', 'monday', 'together', 'festival', 'science'], 3, word);
+  const c = shuffle([word, ...wrong]);
+  push({ q: `Rearrange the letters to make a word: ${letters}`, c, a: c.indexOf(word), d: 3, ex: `Các chữ cái xếp lại thành "${word}".`, lo: `Xếp chữ thành từ: ${word}.`, top: 'spelling', skill: 'vocabulary-recognition' });
 }
 
 console.log(`template items: ${items.length}`);

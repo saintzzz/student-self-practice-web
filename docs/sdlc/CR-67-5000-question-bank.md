@@ -61,3 +61,37 @@ Chưa có pipeline video asset. Đánh dấu defer - audio transcript đã hỗ 
 - Credits exhausted mid-run (OpenRouter $10 spent) -> G5 topped up via
   template generator + resumed AI grind; provider chain = OpenRouter ->
   Gemini fallback baked into the script for future runs.
+
+## Follow-up (2025-06): math + science gap fill via template generator
+
+`scripts/gen-template-math-sci.mjs` - deterministic combinatorial generator:
+
+- **Math**: seeded PRNG per grade; frames = arithmetic (add/sub/mul/div trong
+  phạm vi theo lớp), missing-addend, so sánh, dãy số cách đều, place value,
+  chẵn/lẻ, làm tròn, word problems (16 tên x 12 vật), chu vi/diện tích, giờ,
+  tiền, decimals/percent (g4+), LCM/GCF (g5), emoji counting (g1-2), bù số,
+  ordinal.
+- **Science**: concept matrices - 44 loài động vật x nhóm/bộ lông/sinh sản,
+  28 habitats, 20 movement, 18 diet (herbivore/carnivore/omnivore), 5 giác quan,
+  5 bộ phận cây, 8 vật liệu, thời tiết/mùa, cơ quan cơ thể, thể chất +
+  chuyển thể, lực (g3+), chuỗi thức ăn + điện (g4+), vòng tuần hoàn nước,
+  nguồn sáng, Trái Đất, năng lượng (g5), nhóm thực phẩm, môi trường, vệ sinh,
+  TF passages + facts, apply-scenario combinatorial.
+- Dedupe: same prompt + same choice SET (order-insensitive) = duplicate.
+- Seeded RNG -> rerun = same ids, upsert idempotent.
+
+**Fixes trong lần này:**
+- Xóa 18.597 exact-duplicate rows toàn bank (cùng prompt+choices+answer) do
+  các generator cũ tạo trùng. Lưu ý: dedupe XUYÊN grade đã xóa nhầm các câu
+  hợp lệ dùng lại ở lớp cao hơn -> đã re-push khôi phục (dedupe giờ chỉ nên
+  áp trong cùng grade).
+- `gen-template-g5.mjs`: fix "Ben Thanh Market is the tallest" (place x
+  adjective không hợp -> lọc PLACE_ADJ) + "We wants" (a/an chỉ dùng chủ ngữ
+  số ít). Xóa 306 rows lỗi, regenerate.
+- Bổ sung g5 english: comparatives bằng cặp vật, quá khứ bất quy tắc,
+  will/be-going-to, much/many, liên từ, wh-questions, spelling missing-letter,
+  scramble, +5 passages.
+
+**Counts sau fill (per grade, đã dedupe):**
+english 6492/5531/6350/5973/6153 (29.x k); math 5313/17770/8825/9772/8891
+(50.5k); science ~4981-5072/lớp (25.1k). Tổng ~106k rows.
