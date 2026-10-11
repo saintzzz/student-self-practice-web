@@ -3,7 +3,7 @@
 ## Request
 1. Bug: on mobile, the EA login PIN field does not accept input properly.
    Root cause: `type="password"` + `inputMode="numeric"` - PIN is actually
-   alphanumeric (demo PIN "demo2026" contains letters), so the numeric
+   alphanumeric (demo PIN "demo2***" contains letters), so the numeric
    keypad either can't produce letters or breaks input on some browsers.
 2. Feature: students (EA) and teachers/admins (TVC360, SCN) must be able
    to change their own password/PIN instead of relying on admin-issued
@@ -37,12 +37,12 @@
 
 ## Result
 - AuthScreen: dropped `inputMode="numeric"` (PIN is alphanumeric -
-  demo PIN "demo2026" has letters; numeric keypad broke input).
+  demo PIN "demo2***" has letters; numeric keypad broke input).
   Verified on mobile viewport: inputmode attribute gone, field accepts
-  "demo2026".
+  "demo2***".
 - EA: ChangePinDialog (new PIN + confirm, >=6 chars, VN copy) on
   GradeSelect next to "Dang xuat"; verified end-to-end against real
-  Supabase - changed demo_hs PIN demo2026 -> demo2027 -> demo2026.
+  Supabase - changed demo_hs PIN demo2*** -> demo2027 -> demo2***.
 - TVC360: ChangePasswordButton in teacher sidebar + moderation header
   (inline form, Supabase auth.updateUser).
 - SCN: shared ChangePasswordButton - icon in Topbar (staff) + labeled

@@ -8,7 +8,7 @@
 
 - Kiểm tra khách thuộc ICP nào (00-gtm-strategy.md mục 3).
 - Ghi vào CRM: tên, vai trò, đơn vị, số HS tiểu học, chương trình đang dạy (Global Success/Cambridge/khác), có ôn IOE/Violympic không, kênh liên hệ ưa thích.
-- Mở sẵn: ea.vieschool.com (cửa sổ ẩn danh cho guest), tài khoản `demo_hs` / `demo2026`, one-pager (04-one-pager.md).
+- Mở sẵn: ea.vieschool.com (cửa sổ ẩn danh cho guest), tài khoản `demo_hs` / `vault ops`, one-pager (04-one-pager.md).
 - Câu hỏi đủ điều kiện (qualify) nhanh:
   1. Học sinh của anh/chị có thi IOE hoặc Violympic không?
   2. Hiện các em luyện ở nhà bằng gì?
@@ -89,7 +89,7 @@
 
 **Chuẩn bị (trước demo 15 phút):**
 - Laptop/máy tính bảng sạc đầy, bật loa (có câu nghe), mạng ổn định.
-- Mở 2 cửa sổ: (A) ẩn danh để làm guest, (B) đăng nhập sẵn `demo_hs` / `demo2026` ở tab dự phòng.
+- Mở 2 cửa sổ: (A) ẩn danh để làm guest, (B) đăng nhập sẵn `demo_hs` / `vault ops` ở tab dự phòng.
 - Chạy thử 1 vòng trước để chắc chắn audio hoạt động.
 - Lưu ý: `demo_hs` là tài khoản dùng chung, lịch sử từ các buổi demo trước sẽ hiện trong báo cáo. Nói trước với khách đây là dữ liệu demo.
 
@@ -97,7 +97,7 @@
 |---|---|---|---|---|
 | 0:00-1:00 | Mở đầu | Mở vieschool.com | "VieSchool có 3 sản phẩm trên 1 nền tảng. Hôm nay em demo English Arena, phần học sinh tự luyện." | Hỏi lại 1 câu: "Học sinh của anh/chị đang luyện ở nhà bằng gì?" |
 | 1:00-3:00 | Guest trial | Cửa sổ ẩn danh, ea.vieschool.com, chọn lớp, làm vài câu của vòng miễn phí | "Phụ huynh không cần tạo tài khoản vẫn cho con thử được 1 vòng mỗi lớp. Một vòng có nhiều dạng câu khác nhau: nghe, chọn hình, điền từ..." | Cho khách tự bấm 1-2 câu nếu demo trực tiếp. Chỉ vòng 2 bị khóa với guest |
-| 3:00-4:00 | Đăng nhập | Đăng nhập `demo_hs` / `demo2026` | "Học sinh đăng nhập bằng tên đăng nhập + mã PIN. Không cần email, không cần SĐT của trẻ. Bên em tạo sẵn cho cả lớp." | An toàn trẻ em |
+| 3:00-4:00 | Đăng nhập | Đăng nhập `demo_hs` / `vault ops` | "Học sinh đăng nhập bằng tên đăng nhập + mã PIN. Không cần email, không cần SĐT của trẻ. Bên em tạo sẵn cho cả lớp." | An toàn trẻ em |
 | 4:00-5:30 | Grade map | Màn hình bản đồ hành trình theo lớp; chỉ sao, streak, pet, huy hiệu, daily quests | "Con tự mở app mỗi ngày vì có streak, pet lớn dần, nhiệm vụ hằng ngày. Tiến độ đồng bộ, làm ở nhà hay ở trung tâm đều giữ nguyên." | Nhắc Ôn lại câu sai và Đấu trường 1v1 có sẵn trong app |
 | 5:30-8:00 | Thi thử IOE | Vào Thi thử, làm vài câu, chỉ đồng hồ, cấu trúc đề | "Thi thử theo format đề IOE: 200 câu, 30 phút. Các em quen áp lực thời gian trước kỳ thi thật. Câu sai sẽ được đưa vào chế độ Ôn lại câu sai." | Không nói "đề chính thức của IOE"; nói "theo format đề IOE" |
 | 8:00-9:30 | Báo cáo phụ huynh | Mở báo cáo phụ huynh | "Phụ huynh thấy con mạnh, yếu ở 4 kỹ năng: nghe, ngữ pháp, chính tả, đọc. Trung tâm có thể dùng báo cáo này trong buổi họp phụ huynh." | Với trường/trung tâm: nhắc admin quản lý lớp/học sinh |

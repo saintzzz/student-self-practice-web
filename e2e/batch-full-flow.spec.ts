@@ -37,6 +37,11 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
       delete window.SpeechRecognition;
       // @ts-expect-error see above
       delete window.webkitSpeechRecognition;
+      // MediaRecorder is the recorder fallback - delete it too or
+      // Chromium silently routes to recorder mode instead of the
+      // 'unsupported' state under test (external-review r4).
+      // @ts-expect-error deliberately removing a browser API for this test
+      delete window.MediaRecorder;
     });
 
     try {

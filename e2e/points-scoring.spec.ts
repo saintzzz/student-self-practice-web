@@ -99,6 +99,11 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
       delete window.SpeechRecognition;
       // @ts-expect-error deliberately removing a browser API for this test
       delete window.webkitSpeechRecognition;
+      // MediaRecorder is the recorder fallback - delete it too or
+      // Chromium silently routes to recorder mode instead of the
+      // 'unsupported' state under test (external-review r4).
+      // @ts-expect-error deliberately removing a browser API for this test
+      delete window.MediaRecorder;
     });
 
     await fastForwardThroughRounds1And2(page);
@@ -145,6 +150,11 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
       delete window.SpeechRecognition;
       // @ts-expect-error deliberately removing a browser API for this test
       delete window.webkitSpeechRecognition;
+      // MediaRecorder is the recorder fallback - delete it too or
+      // Chromium silently routes to recorder mode instead of the
+      // 'unsupported' state under test (external-review r4).
+      // @ts-expect-error deliberately removing a browser API for this test
+      delete window.MediaRecorder;
     });
 
     await fastForwardThroughRounds1And2(page);

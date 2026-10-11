@@ -10,7 +10,7 @@ const ins = page.locator('input');
 console.log('tvc inputs:', await ins.count());
 if (await ins.count() >= 2) {
   await ins.nth(0).fill('gv@demo.tvc');
-  await ins.nth(1).fill('demo1234');
+  await ins.nth(1).fill(process.env.DEMO_PW);
   await page.locator('button[type=submit], button:has-text("Đăng nhập")').first().click();
   await page.waitForTimeout(6000);
   console.log('after login:', page.url());
@@ -23,7 +23,7 @@ await page.waitForTimeout(5000);
 const ins2 = page.locator('input');
 if (await ins2.count() >= 2) {
   await ins2.nth(0).fill('gvcn@demo.scn');
-  await ins2.nth(1).fill('demo1234');
+  await ins2.nth(1).fill(process.env.DEMO_PW);
   await page.locator('button[type=submit], button:has-text("Đăng nhập")').first().click();
   await page.waitForTimeout(6000);
   console.log('scn after login:', page.url());

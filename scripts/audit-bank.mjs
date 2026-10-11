@@ -100,10 +100,22 @@ for (const q of sq) {
 }
 check('"smaller" answers are actually the smaller number', badCmp !== 0, `${badCmp}/${sq.length} wrong`);
 
+// paginate every filtered fetch - a bare limit=1000 silently truncates
+// (external-review r4) and can miss the bad rows entirely.
+async function fetchAll(filter, select = 'id,prompt_text,answer') {
+  const all = [];
+  for (let off = 0; ; off += 1000) {
+    const page = await fetchJson(
+      `${SUPA}/rest/v1/qb_questions?select=${select}&${filter}&order=id&offset=${off}&limit=1000`,
+    );
+    all.push(...page);
+    if (page.length < 1000) break;
+  }
+  return all;
+}
+
 // r3: scramble prompts must contain exactly the letters of the answer.
-const scr = await fetchJson(
-  `${SUPA}/rest/v1/qb_questions?select=id,prompt_text,answer&prompt_text=like.*Rearrange*letters*&limit=1000`,
-);
+const scr = await fetchAll('prompt_text=like.*Rearrange*letters*');
 const srt = (s) => String(s).toLowerCase().replace(/[^a-z]/g, '').split('').sort().join('');
 let badScr = 0;
 for (const q of scr) {
@@ -113,25 +125,25 @@ for (const q of scr) {
 }
 check('scramble prompts match the answer letter multiset', badScr !== 0, `${badScr}/${scr.length} wrong`);
 
-// r3: missing-letter gaps must reconstruct the target word.
-const mis = await fetchJson(
-  `${SUPA}/rest/v1/qb_questions?select=id,prompt_text,answer&prompt_text=like.*missing*letters*&limit=1000`,
-);
+// r3: missing-letter gaps must reconstruct the target word. The answer
+// letters must fit the blanks exactly - "br_thday" + "ir" used to pass
+// because it produced "brirthday" with no leftover underscore.
+const mis = await fetchAll('prompt_text=like.*missing*letters*');
 let badMis = 0;
 for (const q of mis) {
   const gap = /letters: (\S+)/.exec(q.prompt_text ?? '')?.[1];
   const letters = String(q.answer?.text ?? '');
-  const whole = gap?.replace(/_+/g, letters);
-  if (gap && whole && whole.includes('_')) badMis++;
+  if (!gap) continue;
+  const blanks = (gap.match(/_/g) ?? []).length;
+  const whole = gap.replace(/_+/g, letters);
+  if (blanks !== letters.length || whole.includes('_')) badMis++;
 }
 check('missing-letter gaps fully reconstruct a word', badMis !== 0, `${badMis}/${mis.length} wrong`);
 
 // r3: non-human nouns must only take sensible superlatives (generator
 // whitelist): river=long/big/beautiful, road=long/big, day=hot/cold/happy/
 // beautiful, animal=big/fast/beautiful.
-const seenRows = await fetchJson(
-  `${SUPA}/rest/v1/qb_questions?select=id,prompt_text,answer&prompt_text=like.*I*have*ever*seen*&limit=1000`,
-);
+const seenRows = await fetchAll('prompt_text=like.*I*have*ever*seen*');
 const NOUN_OK = {
   river: ['the longest', 'the biggest', 'the most beautiful'],
   road: ['the longest', 'the biggest'],

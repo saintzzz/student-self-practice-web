@@ -202,8 +202,8 @@ tb(s, Inches(0.6), Inches(1.85), Inches(12), Inches(1.3),
    13, WHITE)
 table(s, [
     ("Vai trò", "Username", "PIN", "Phạm vi"),
-    ("Quản trị viên", "demo_admin", "demo2026", "Console quản trị: tạo tài khoản, gán lớp, báo cáo"),
-    ("Học sinh", "demo_hs", "demo2026", "Đủ 5 khối lớp 1-5, đủ 4 vòng, lưu tiến độ"),
+    ("Quản trị viên", "demo_admin", "(vault ops)", "Console quản trị: tạo tài khoản, gán lớp, báo cáo"),
+    ("Học sinh", "demo_hs", "(vault ops)", "Đủ 5 khối lớp 1-5, đủ 4 vòng, lưu tiến độ"),
     ("Khách", "-", "-", "1 vòng miễn phí mỗi lớp"),
 ], Inches(0.6), Inches(3.4), Inches(12.1), Inches(2.6),
     col_widths=[Inches(2.6), Inches(2.2), Inches(1.8), Inches(5.5)],
@@ -219,9 +219,9 @@ tb(s, Inches(0.6), Inches(1.85), Inches(12), Inches(1.3),
    13, WHITE)
 table(s, [
     ("Vai trò", "Email", "Mật khẩu"),
-    ("Quản trị viên", "admin@demo.tvc", "demo1234"),
-    ("Giáo viên", "gv@demo.tvc", "demo1234"),
-    ("Kiểm định viên", "kd@demo.tvc", "demo1234"),
+    ("Quản trị viên", "admin@demo.tvc", "(vault ops)"),
+    ("Giáo viên", "gv@demo.tvc", "(vault ops)"),
+    ("Kiểm định viên", "kd@demo.tvc", "(vault ops)"),
 ], Inches(0.6), Inches(3.4), Inches(12.1), Inches(2.4),
     col_widths=[Inches(3.0), Inches(4.5), Inches(4.6)],
     font_size=12)
@@ -242,7 +242,7 @@ table(s, rows, Inches(0.6), Inches(2.1), Inches(12.1), Inches(3.4),
       col_widths=[Inches(2.4), Inches(3.6), Inches(2.4), Inches(3.7)],
       font_size=12)
 tb(s, Inches(0.6), Inches(5.7), Inches(12), Inches(0.5),
-   "Mật khẩu chung tất cả tài khoản demo: demo1234  |  "
+   "Mật khẩu chung tất cả tài khoản demo: mật khẩu trong vault ops  |  "
    "Kịch bản 10 phút: vieschool.com → chơi thử English Arena → login TVC360 → login Sổ CN theo vai trò.",
    12, MUT)
 

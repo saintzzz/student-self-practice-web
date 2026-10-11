@@ -138,7 +138,9 @@ for (const id of [...assetIds].sort()) {
 
 console.log(`${qRows.length} questions, ${linkRows.length} asset links`);
 if (!DRY) {
-  for (let c = 0; c < qRows.length; c += 300) await post('qb_questions', qRows.slice(c, c + 300));
-  for (let c = 0; c < linkRows.length; c += 300) await post('qb_question_assets', linkRows.slice(c, c + 300));
-  console.log('pushed');
+  let ok = true;
+  for (let c = 0; c < qRows.length; c += 300) ok = (await post('qb_questions', qRows.slice(c, c + 300))) && ok;
+  for (let c = 0; c < linkRows.length; c += 300) ok = (await post('qb_question_assets', linkRows.slice(c, c + 300))) && ok;
+  console.log(ok ? 'pushed' : 'PUSH FAILED');
+  if (!ok) process.exit(1);
 }

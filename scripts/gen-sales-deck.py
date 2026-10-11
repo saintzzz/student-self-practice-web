@@ -166,9 +166,9 @@ guides = [
     ('Bước 3: Làm bài - 4 vòng', 'deck-question.png',
      'Mỗi câu có emoji minh họa + giải thích tiếng Việt.\nTile chữ cái luôn 1 hàng - bé đọc được cả từ.'),
     ('Giáo viên: TVC360', 'deck-tvc-login.png',
-     'congcuso.vieschool.com - demo: gv@demo.tvc / demo1234.\nSoạn đề, ngân hàng câu hỏi, xuất DOCX/PDF.'),
+     'congcuso.vieschool.com - demo: gv@demo.tvc / (vault ops).\nSoạn đề, ngân hàng câu hỏi, xuất DOCX/PDF.'),
     ('Nhà trường: Sổ Chủ Nhiệm Số', 'deck-scn-login.png',
-     'sochunhiem.vieschool.com - demo theo role: gvcn@demo.scn,\nbgh@demo.scn, phuhuynh@demo.scn / demo1234.'),
+     'sochunhiem.vieschool.com - demo theo role: gvcn@demo.scn,\nbgh@demo.scn, phuhuynh@demo.scn / (vault ops).'),
 ]
 for t, img, cap in guides:
     s = slide(); kicker(s, 'HƯỚNG DẪN SỬ DỤNG'); title(s, t)

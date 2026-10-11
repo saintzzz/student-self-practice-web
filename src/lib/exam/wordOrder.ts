@@ -67,7 +67,10 @@ export function generateWordOrderQuestions(words: readonly VocabWord[]): WordOrd
  * co cau dich "I love father." nhung bank tu vung khong kem dau cham,
  * nen cau khong the nao dung. */
 function normalizeForCompare(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.!?,;:'"’]+$/u, '');
+  // Strip trailing punctuation AND whitespace - tiles like ["home", "."]
+  // join to "home ." and the space left after dropping "." must not fail
+  // the comparison (external-review r4).
+  return s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[\s.!?,;:'"’]+$/u, '');
 }
 
 export function isWordOrderCorrect(sentence: string, pickedTokens: readonly string[]): boolean {

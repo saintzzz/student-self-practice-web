@@ -74,20 +74,21 @@ export async function fetchBankQuestions(
     p_count: count,
     p_skills: focus?.skills?.length ? focus.skills : null,
     p_min_difficulty: focus?.minDifficulty ?? null,
+    p_mode: mode,
   };
   const session = await getSession();
   if (!session) {
+    // Guests only reach the public RPC, but it enforces the same mode
+    // gates (mock/exam require mockEligible + cleared approval flags).
     const pub = await supabase.rpc('fetch_questions_public', params);
     if (pub.error) throw new Error(pub.error.message);
     return (pub.data ?? []) as QbRow[];
   }
-  const { data, error } = await supabase.rpc('fetch_questions', {
-    ...params,
-    p_mode: mode,
-  });
+  const { data, error } = await supabase.rpc('fetch_questions', params);
   if (!error) return (data ?? []) as QbRow[];
-  // Guests (no session) cannot call the authenticated RPC - fall back
-  // to the public practice-only path so they still get real V6 content.
+  // Authenticated RPC failed - fall back to the public surface WITH the
+  // same mode so a mock request can never be silently downgraded to
+  // practice-eligible content.
   const pub = await supabase.rpc('fetch_questions_public', params);
   if (pub.error) throw new Error(pub.error.message);
   return (pub.data ?? []) as QbRow[];
@@ -220,12 +221,11 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
       };
     }
     case 'text-answer': {
-      const accept = row.answer.text !== undefined
-        ? [str(row.answer.text)]
-        : Array.isArray(row.answer.accepted)
-          ? row.answer.accepted.map(str).filter(Boolean)
-          : null;
-      if (!accept || accept.length === 0) return null;
+      const accept = [
+        ...(row.answer.text !== undefined ? [str(row.answer.text)] : []),
+        ...(Array.isArray(row.answer.accepted) ? row.answer.accepted.map(str).filter(Boolean) : []),
+      ].filter(Boolean);
+      if (accept.length === 0) return null;
       return {
         id: row.id,
         topicId,

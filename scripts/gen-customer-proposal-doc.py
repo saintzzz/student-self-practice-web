@@ -160,8 +160,8 @@ bullets([
 ])
 table([
     ("Vai trò", "Username", "PIN", "Phạm vi"),
-    ("Quản trị viên", "demo_admin", "demo2026", "Console quản trị: tạo tài khoản, gán lớp, báo cáo"),
-    ("Học sinh", "demo_hs", "demo2026", "Đủ 5 khối lớp 1-5, lưu tiến độ"),
+    ("Quản trị viên", "demo_admin", "(vault ops)", "Console quản trị: tạo tài khoản, gán lớp, báo cáo"),
+    ("Học sinh", "demo_hs", "(vault ops)", "Đủ 5 khối lớp 1-5, lưu tiến độ"),
     ("Khách (không cần tài khoản)", "-", "-", "1 vòng miễn phí mỗi lớp"),
 ])
 h("3.2 Công cụ số Giáo viên - congcuso.vieschool.com", 2)
@@ -172,13 +172,13 @@ bullets([
 ])
 table([
     ("Vai trò", "Email", "Mật khẩu"),
-    ("Quản trị viên", "admin@demo.tvc", "demo1234"),
-    ("Giáo viên", "gv@demo.tvc", "demo1234"),
-    ("Kiểm định viên", "kd@demo.tvc", "demo1234"),
+    ("Quản trị viên", "admin@demo.tvc", "(vault ops)"),
+    ("Giáo viên", "gv@demo.tvc", "(vault ops)"),
+    ("Kiểm định viên", "kd@demo.tvc", "(vault ops)"),
 ])
 h("3.3 Sổ Chủ Nhiệm Số - sochunhiem.vieschool.com", 2)
 para("Đăng nhập email + mật khẩu - hệ thống tự đưa về đúng màn hình theo vai trò. "
-     "Mật khẩu chung tài khoản demo: demo1234.")
+     "Mật khẩu chung tài khoản demo: mật khẩu trong vault ops.")
 table([
     ("Vai trò", "Email", "Vai trò", "Email"),
     ("Ban giám hiệu", "bgh@demo.scn", "Tổ trưởng CM", "totruong@demo.scn"),

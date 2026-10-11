@@ -19,8 +19,13 @@ const env = Object.fromEntries(
 );
 
 const EMAIL_DOMAIN = 'students.ioe-practice.example';
-const ADMIN = { username: 'demo_admin', pin: 'demo2026' };
-const STUDENT_PIN = 'demo2026';
+// Demo PINs live in the ops vault, never in the repo (external-review r4).
+const ADMIN = { username: 'demo_admin', pin: process.env.DEMO_ADMIN_PIN };
+const STUDENT_PIN = process.env.DEMO_STUDENT_PIN;
+if (!ADMIN.pin || !STUDENT_PIN) {
+  console.error('DEMO_ADMIN_PIN and DEMO_STUDENT_PIN env vars are required (see ops vault).');
+  process.exit(1);
+}
 
 /** Vietnamese-kid names that read as a real class roll. */
 const STUDENTS = [

@@ -46,6 +46,9 @@ async function reachRound4(page: Page): Promise<void> {
     delete window.SpeechRecognition;
     // @ts-expect-error deliberately removing a browser API for this test
     delete window.webkitSpeechRecognition;
+    // MediaRecorder is the recorder fallback - delete it too (external-review r4).
+    // @ts-expect-error deliberately removing a browser API for this test
+    delete window.MediaRecorder;
   });
 
   await fastForwardThroughRounds1And2(page);

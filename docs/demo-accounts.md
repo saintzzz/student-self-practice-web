@@ -7,15 +7,19 @@ dữ liệu thật. Không commit file này ra nơi public.
 
 | Role | Username | PIN | Scope |
 |---|---|---|---|
-| Quản trị (admin console, tạo acc, gán scope) | `demo_admin` | `demo2026` | full admin |
-| Học sinh | `demo_hs` | `demo2026` | Lớp Demo VieSchool - đủ 5 khối (grade-1..5) |
+| Quản trị (admin console, tạo acc, gán scope) | `demo_admin` | vault ops | full admin |
+| Học sinh | `demo_hs` | vault ops | Lớp Demo VieSchool - đủ 5 khối (grade-1..5) |
 | Guest (không cần acc) | - | - | 1 vòng miễn phí mỗi lớp, vòng 2+ khóa |
+
+PIN demo_admin / demo_hs đã rotate (external-review r4) và chỉ nằm trong
+vault nội bộ (`~/.config/devin/secrets/ea_demo_creds.json`, chmod 600).
+Không bao giờ ghi PIN thật vào repo - file này đã từng lộ PIN thật.
 
 ## Lớp demo cho leaderboard (CR-46)
 
 36 tài khoản học sinh demo (tên Việt Nam thật, ~7-8 em/khối) để bảng xếp
 hạng tuần trông như lớp thật khi demo bán hàng. Tất cả username dạng
-`hs_<ten><khoi>` (vd `hs_minhanh1`, `hs_thaovy4`), PIN `demo2026`, enroll
+`hs_<ten><khoi>` (vd `hs_minhanh1`, `hs_thaovy4`), PIN trong vault ops, enroll
 vào "Lớp Demo VieSchool". Results đã seed cho tuần hiện tại - hết tuần
 leaderboard lại rỗng, chạy lại seed trước buổi demo nếu cần
 (`scripts/seed-demo-class.mjs` tạo account; results insert qua SQL service
@@ -25,11 +29,11 @@ theo mẫu trong `docs/sdlc/CR-46-per-grade-exam-config.md`).
 
 | Role | Email | Password |
 |---|---|---|
-| Quản trị | `admin@demo.tvc` | `demo1234` |
-| Giáo viên | `gv@demo.tvc` | `demo1234` |
-| Kiểm định | `kd@demo.tvc` | `demo1234` |
+| Quản trị | `admin@demo.tvc` | vault ops |
+| Giáo viên | `gv@demo.tvc` | vault ops |
+| Kiểm định | `kd@demo.tvc` | vault ops |
 
-## Sổ Chủ Nhiệm Số - sochunhiem.vieschool.com (email + password, `demo1234`)
+## Sổ Chủ Nhiệm Số - sochunhiem.vieschool.com (email + password, vault ops)
 
 | Role | Email |
 |---|---|
@@ -59,7 +63,8 @@ theo mẫu trong `docs/sdlc/CR-46-per-grade-exam-config.md`).
 
 ## Lưu ý
 
-- Mật khẩu demo nằm trong repo private - không paste vào tài liệu public.
+- Mật khẩu demo KHÔNG nằm trong repo - chỉ trong vault ops nội bộ.
+  (Đã rotate sau khi external review phát hiện PIN thật commit công khai.)
 - Nếu demo acc bị lộ/dùng sai: EA → admin reset-pin qua console;
   TVC360/SCN → đổi password trong Supabase Auth.
 - SSO chung (1 tài khoản xuyên 3 app) chưa có - đang là roadmap.

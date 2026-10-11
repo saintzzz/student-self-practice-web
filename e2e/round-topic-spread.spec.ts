@@ -50,6 +50,11 @@ test.describe('Batch/Round: content variety across a Round (AC23 indirect proxy)
       delete window.SpeechRecognition;
       // @ts-expect-error deliberately removing a browser API -- see this file's doc comment
       delete window.webkitSpeechRecognition;
+      // MediaRecorder is the recorder fallback - delete it too or
+      // Chromium silently routes to recorder mode instead of the
+      // 'unsupported' state under test (external-review r4).
+      // @ts-expect-error deliberately removing a browser API for this test
+      delete window.MediaRecorder;
     });
 
     await fastForwardThroughRounds1And2(page);

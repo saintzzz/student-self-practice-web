@@ -69,11 +69,15 @@ const QB_MATH_SKILLS = new Set([
   'mathematical-reasoning', 'number-operations', 'problem-solving',
   'measurement', 'number-sense', 'math-language', 'data', 'geometry',
   'fractions',
+  // template generator (gen-template-math-sci) skills
+  'arithmetic', 'word-problem',
 ]);
 const QB_SCIENCE_SKILLS = new Set([
   'science-application', 'science-reading', 'scientific-observation',
   'science-reasoning', 'science-concept', 'science-vocabulary',
   'scientific-enquiry',
+  // template generator skills
+  'concept', 'classification', 'application', 'living-things',
 ]);
 
 export function programForSkill(skillKey: string): 'english' | 'math' | 'science' {

@@ -57,7 +57,7 @@ claims + cross-subdomain session handoff - tracked as future CR.
   "tiểu học") since ecosystem target is 1-12.
 - R2: "1 tài khoản" removed from landing kicker until SSO ships - honest
   marketing over aspirational claims.
-- R3: Demo PIN convention `demo2026` for EA; TVC360/SCN keep `demo1234`
+- R3: Demo PIN convention `demo2***` for EA; TVC360/SCN keep `demo1***`
   convention (pre-existing, documented).
 
 ## Wave 2 - shared brand signature (2026-10-01)

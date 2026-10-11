@@ -53,8 +53,13 @@ const pickN = (arr, n, exclude) => {
 const shuffle = (a) => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = rnd(i + 1); [r[i], r[j]] = [r[j], r[i]]; } return r; };
 const pick = (a) => a[rnd(a.length)];
 const mcq = (q, correct, wrongs, o) => {
-  const c = shuffle([correct, ...wrongs]);
-  push({ q, c, a: c.indexOf(correct), ...o });
+  const c = [...new Set([correct, ...wrongs])];
+  if (c.length < 4 || !c.includes(correct)) {
+    console.error(`MCQ under-specified (${c.length} choices): ${q.slice(0, 60)}`);
+    return;
+  }
+  const sh = shuffle(c);
+  push({ q, c: sh, a: sh.indexOf(correct), ...o });
 };
 
 // ---------- VOCAB ----------
@@ -229,7 +234,7 @@ for (const s of SUBJ.slice(0, 8)) for (const r of ROOMS) {
     { d: 2, ex: `"${r}" ${plural ? 'số nhiều nên dùng "are"' : 'số ít nên dùng "is"'}.`, lo: 'Cấu trúc there is/are.', top: 'grammar', skill: 'grammar-use-of-english' });
 }
 const PAST = [
-  ['visited', 'visit'], ['played', 'play'], ['watched', 'watch'], ['helped', 'help'], ['cooked', 'cook'], ['cleaned', 'clean'],
+  ['visited', 'visit'], ['played', 'play'], ['watched', 'watch'], ['helped', 'help'],
 ];
 for (const s of SUBJ) for (const [v, base] of PAST) {
   mcq(`Yesterday, ${s.toLowerCase().replace(/^my|^the/, 'my')} ___ our friends at the park.`, v, [base, 'visits', 'visiting'].slice(0, 3), {
@@ -290,13 +295,24 @@ for (const [w, vn] of FEST_WORDS) {
     d: 1, ex: `"${w}" có nghĩa là "${vn}".`, lo: `Từ vựng lễ hội: ${w}.`, top: 'festivals', skill: 'vocabulary-recognition',
   });
 }
+const FOREIGN_PLACES = [
+  'the Eiffel Tower', 'Big Ben', 'the Statue of Liberty', 'the Great Wall', 'Mount Fuji', 'Sydney Opera House',
+];
 for (const p of PLACES) {
-  mcq(`___ is a famous place in Vietnam.`, p, pickN(PLACES, 3, p), {
+  mcq(`___ is a famous place in Vietnam.`, p, pickN(FOREIGN_PLACES, 3), {
     d: 2, ex: `"${p}" là địa danh nổi tiếng ở Việt Nam.`, lo: `Địa danh Việt Nam: ${p}.`, top: 'places-vietnam', skill: 'vocabulary-in-context',
   });
 }
 
 // ---------- 12. subject-verb agreement (3rd person -s) ----------
+// Verb -> object that actually collocates ("studies English", never
+// "goes English").
+const VERB_OBJ_S = {
+  go: 'to school every day', play: 'football at break time', study: 'English very well',
+  watch: 'TV every evening', like: 'English very much', want: 'to be a doctor',
+  work: 'very hard at school', live: 'in Ha Noi', help: 'friends at school',
+  read: 'books every night',
+};
 const VERBS_S = [
   ['go', 'goes', 'đi'], ['play', 'plays', 'chơi'], ['study', 'studies', 'học'], ['watch', 'watches', 'xem'],
   ['like', 'likes', 'thích'], ['want', 'wants', 'muốn'], ['work', 'works', 'làm việc'], ['live', 'lives', 'sống'],
@@ -305,13 +321,14 @@ const VERBS_S = [
 const SING = ['He', 'She', 'Nam', 'Lan', 'My father', 'My mother', 'The teacher'];
 const PLUR = ['We', 'They', 'The students', 'My friends', 'I', 'You'];
 for (const [base, s3, vn] of VERBS_S) {
+  const obj = VERB_OBJ_S[base];
   for (const s of SING) {
-    mcq(`${s} ___ English very well.`, s3, [base, `is ${base}ing`, `to ${base}`].slice(0, 3), {
+    mcq(`${s} ___ ${obj}.`, s3, [base, `is ${base}ing`, `to ${base}`].slice(0, 3), {
       d: 3, ex: `Chủ ngữ số ít ("${s}") thì động từ thêm -s/-es: "${s3}".`, lo: `Chia động từ số ít: ${base} -> ${s3}.`, top: 'present-simple', skill: 'grammar-use-of-english',
     });
   }
   for (const s of PLUR) {
-    mcq(`${s} ___ English very well.`, base, [s3, `is ${base}ing`, `to ${base}`].slice(0, 3), {
+    mcq(`${s} ___ ${obj}.`, base, [s3, `is ${base}ing`, `to ${base}`].slice(0, 3), {
       d: 3, ex: `Chủ ngữ số nhiều/I/You ("${s}") thì động từ giữ nguyên: "${base}".`, lo: `Chia động từ số nhiều: ${base}.`, top: 'present-simple', skill: 'grammar-use-of-english',
     });
   }
@@ -753,15 +770,26 @@ console.log(`unique ids: ${uniq.size} / ${rows.length}`);
 if (uniq.size !== rows.length) process.exit(1);
 
 if (!DRY) {
+  let failed = 0;
+  let inserted = 0;
   for (let c = 0; c < rows.length; c += 300) {
     const res = await fetch(`${SUPA}/rest/v1/qb_questions`, {
       method: 'POST',
-      headers: { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' },
+      headers: { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' },
       body: JSON.stringify(rows.slice(c, c + 300)),
     });
-    if (!res.ok) console.error('push fail', res.status, (await res.text()).slice(0, 200));
+    if (!res.ok) {
+      failed += rows.slice(c, c + 300).length;
+      console.error('push fail', res.status, (await res.text()).slice(0, 200));
+      continue;
+    }
+    // content-range "*/N" reports rows actually inserted (ignore-duplicates
+    // skips the rest) - report truth, not the attempted count.
+    const range = res.headers.get('content-range') ?? '';
+    inserted += Number(range.split('/')[1]) || rows.slice(c, c + 300).length;
   }
-  console.log('pushed', rows.length);
+  console.log(`inserted ${inserted} / ${rows.length} attempted${failed ? `, ${failed} FAILED` : ''}`);
+  if (failed > 0) process.exit(1);
 }
 mkdirSync(join(HERE, 'gen-bulk-out'), { recursive: true });
 writeFileSync(join(HERE, 'gen-bulk-out', 'template-g5-preview.json'), JSON.stringify(rows.slice(0, 10), null, 1));

@@ -25,6 +25,9 @@ interface QuestionRow {
   answer: Record<string, unknown>;
   explanation_vi: string | null;
   review_status: string | null;
+  passage: string | null;
+  statement: string | null;
+  tokens: string[] | null;
 }
 
 interface ItemStat {
@@ -38,7 +41,7 @@ const PRIORITY_ORDER = ['P0', 'P1', 'P2', 'P3'];
 const PAGE = 20;
 
 export default function ReviewQueueCard() {
-  const [rows, setRows] = useState<(QueueRow & { q?: QuestionRow; stats?: ItemStat })[] | null>(null);
+  const [rows, setRows] = useState<(QueueRow & { q?: QuestionRow; stats?: ItemStat; assets?: string[] })[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'flagged'>('pending');
   const [offset, setOffset] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -63,7 +66,7 @@ export default function ReviewQueueCard() {
     const qs = ids.length
       ? await supa
           .from('qb_questions')
-          .select('id, grade, subject, question_type, prompt_text, choices, answer, explanation_vi, review_status')
+          .select('id, grade, subject, question_type, prompt_text, choices, answer, explanation_vi, review_status, passage, statement, tokens')
           .in('id', ids)
       : { data: [] };
     const qmap = new Map(((qs.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
@@ -75,7 +78,23 @@ export default function ReviewQueueCard() {
           .in('question_id', ids)
       : { data: [] };
     const smap = new Map(((stats.data ?? []) as ItemStat[]).map((s) => [s.question_id, s]));
-    setRows(items.map((i) => ({ ...i, q: qmap.get(i.question_id), stats: smap.get(i.question_id) })));
+    // Reviewers must see the same visuals the student sees - fetch linked
+    // asset paths so image-based questions can be verified against the
+    // prompt before approval (external-review r4).
+    const links = ids.length
+      ? await supa
+          .from('qb_question_assets')
+          .select('question_id, sort_order, qb_assets(file_path)')
+          .in('question_id', ids)
+      : { data: [] };
+    const amap = new Map<string, string[]>();
+    for (const l of (links.data ?? []) as unknown as { question_id: string; qb_assets: { file_path: string } | { file_path: string }[] | null }[]) {
+      const arr = amap.get(l.question_id) ?? [];
+      const asset = Array.isArray(l.qb_assets) ? l.qb_assets[0] : l.qb_assets;
+      if (asset?.file_path) arr.push(asset.file_path);
+      amap.set(l.question_id, arr);
+    }
+    setRows(items.map((i) => ({ ...i, q: qmap.get(i.question_id), stats: smap.get(i.question_id), assets: amap.get(i.question_id) })));
   }, [statusFilter, offset]);
 
   useEffect(() => { setRows(null); void load(); }, [load]);
@@ -126,6 +145,38 @@ export default function ReviewQueueCard() {
               <span className="ml-auto font-mono text-[10px] text-slate-400">{r.question_id}</span>
             </div>
             <p className="text-sm font-semibold text-slate-800">{r.q?.prompt_text ?? '(không tải được câu hỏi)'}</p>
+            {r.q?.passage && (
+              <p className="mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-slate-700 whitespace-pre-wrap">{r.q.passage}</p>
+            )}
+            {r.q?.statement && (
+              <p className="mt-1 text-xs font-semibold text-indigo-700">Nhận định: {r.q.statement}</p>
+            )}
+            {r.q?.tokens && r.q.tokens.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {r.q.tokens.map((t, i) => (
+                  <span key={i} className="rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-bold text-sky-800 ring-1 ring-sky-100">{t}</span>
+                ))}
+              </div>
+            )}
+            {r.assets && r.assets.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {r.assets.map((p) => (
+                  <img key={p} src={p} alt="minh họa câu hỏi" className="h-16 w-16 rounded-lg object-cover ring-1 ring-slate-200" />
+                ))}
+              </div>
+            )}
+            {typeof r.q?.answer?.text === 'string' && (
+              <p className="mt-1 text-xs font-extrabold text-emerald-700">Đáp án: {r.q.answer.text}</p>
+            )}
+            {Array.isArray(r.q?.answer?.accepted) && (r.q.answer.accepted as unknown[]).length > 0 && (
+              <p className="mt-0.5 text-[11px] text-emerald-600">Chấp nhận thêm: {(r.q.answer.accepted as string[]).join(', ')}</p>
+            )}
+            {typeof r.q?.answer?.bool === 'boolean' && (
+              <p className="mt-1 text-xs font-extrabold text-emerald-700">Đáp án: {r.q.answer.bool ? 'Đúng (True)' : 'Sai (False)'}</p>
+            )}
+            {typeof r.q?.answer?.order === 'object' && r.q.answer.order !== null && (
+              <p className="mt-1 text-xs font-extrabold text-emerald-700">Thứ tự đúng: {String(r.q.answer.order)}</p>
+            )}
             {r.q?.choices && (
               <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
                 {r.q.choices.map((c, i) => (

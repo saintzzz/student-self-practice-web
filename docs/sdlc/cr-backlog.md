@@ -462,7 +462,7 @@
 ## CR-17 (2026-09-30): Mobile PIN fix + self-service password change - DONE
 
 - **Bug:** PIN input had `inputMode="numeric"` while PIN is alphanumeric
-  (demo PIN "demo2026") - broke typing on mobile. Removed; verified on
+  (demo PIN "demo2***") - broke typing on mobile. Removed; verified on
   mobile viewport.
 - **Feature:** students (EA) and all signed-in roles (TVC360 teacher +
   moderation, SCN staff + portal) can change their own PIN/password via

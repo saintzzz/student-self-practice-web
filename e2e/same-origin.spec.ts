@@ -35,6 +35,11 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
       delete window.SpeechRecognition;
       // @ts-expect-error deliberately removing a browser API for this test
       delete window.webkitSpeechRecognition;
+      // MediaRecorder is the recorder fallback - delete it too or
+      // Chromium silently routes to recorder mode instead of the
+      // 'unsupported' state under test (external-review r4).
+      // @ts-expect-error deliberately removing a browser API for this test
+      delete window.MediaRecorder;
     });
     const seen: string[] = [];
     page.on('request', (req) => seen.push(req.url()));

@@ -8,8 +8,13 @@ import path from 'node:path';
 const BASE = process.env.EA_BASE_URL ?? 'https://ea.vieschool.com';
 const OUT = path.resolve(import.meta.dirname, '../../tokvideo/public/images/english-arena');
 const USER = process.env.EA_USER ?? 'demo_hs';
-const PIN = process.env.EA_PIN ?? 'demo2026';
+const PIN = process.env.EA_PIN;
 const ADMIN = process.env.EA_ADMIN_USER ?? 'demo_admin';
+const ADMIN_PIN = process.env.EA_ADMIN_PIN;
+if (!PIN || !ADMIN_PIN) {
+  console.error('EA_PIN and EA_ADMIN_PIN env vars are required (ops vault).');
+  process.exit(1);
+}
 
 await mkdir(OUT, { recursive: true });
 
@@ -165,7 +170,7 @@ await page.evaluate(() => {
 });
 await gotoRetry();
 await page.fill('[data-testid="login-username"]', ADMIN);
-await page.fill('[data-testid="login-pin"]', PIN);
+await page.fill('[data-testid="login-pin"]', ADMIN_PIN);
 await tryClick('[data-testid="login-submit"]');
 try {
   await page.locator('[data-testid="admin-tab-accounts"]').waitFor({ state: 'visible', timeout: 60000 });

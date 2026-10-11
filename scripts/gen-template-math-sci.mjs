@@ -923,7 +923,7 @@ function scienceGrade(g) {
   for (const [p, s1, s2] of PASSAGES.slice(0, pCount)) {
     for (const [s, b] of [s1, s2]) {
       tf(p, s, b, {
-        d: 3, ex: b ? `Bài đọc nói đúng: "${s}"` : `Bài đọc không nói điều này: "${s}"`, lo: 'Đọc hiểu khoa học.', top: 'reading-science', skill: 'reading',
+        d: 3, ex: b ? `Bài đọc nói đúng: "${s}"` : `Bài đọc không nói điều này: "${s}"`, lo: 'Đọc hiểu khoa học.', top: 'reading-science', skill: 'science-reading',
       });
     }
   }
@@ -931,19 +931,26 @@ function scienceGrade(g) {
   // 14. apply-to-scenario frames - combinatorial unique pool
   const STUDENTS = ['Mai', 'Nam', 'Lan', 'Huy', 'Linh', 'Minh'];
   const PLACES = ['the zoo', 'the park', 'a farm', 'the beach', 'the forest', 'a garden', 'the market'];
+  // feature -> true only for this animal's group; group-deduction frames
+  // are skipped when the feature is shared across groups ("lays eggs"
+  // could be bird/reptile/fish -> ambiguous).
   for (let i = 0; i < 900; i++) {
     const [an, grp, feat, babies, vn] = pick(ANIMALS);
     const st = pick(STUDENTS), pl = pick(PLACES);
+    const noFeat = ANIMALS.filter((a) => a[2] !== feat && a[0] !== an).map((a) => a[0]);
+    const noBabies = ANIMALS.filter((a) => a[3] !== babies).map((a) => a[3]);
+    const featSharedAcrossGroups = ANIMALS.some((a) => a[2] === feat && a[1] !== grp);
     const frames = [
-      [`${st} sees an animal with ${feat} at ${pl}. Which animal could it be?`, an, pickN(ANIMALS.map((a) => a[0]), 3, an),
+      [`${st} sees an animal with ${feat} at ${pl}. Which animal could it be?`, an, pickN(noFeat, 3),
         `Con vật có ${feat} - ${an} (${vn}) có ${feat}.`],
       [`Which animal is a ${grp}?`, an, pickN(ANIMALS.filter((a) => a[1] !== grp).map((a) => a[0]), 3, an),
         `${an} (${vn}) là ${grp}.`],
-      [`${st} finds a ${an} at ${pl}. It has ${feat}. What group is it?`, `a ${grp}`, pickN(groups.map((x) => `a ${x}`), 3, `a ${grp}`),
-        `${an} (${vn}) có ${feat} nên là ${grp}.`],
+      ...(featSharedAcrossGroups ? [] : [[
+        `${st} finds a ${an} at ${pl}. It has ${feat}. What group is it?`, `a ${grp}`, pickN(groups.map((x) => `a ${x}`), 3, `a ${grp}`),
+        `${an} (${vn}) có ${feat} nên là ${grp}.`]]),
       [`Why does a ${an} live well in its home?`, `because its body fits that place`, ['because it has wheels', 'because it reads books', 'because it wears clothes'],
         `Cơ thể ${an} thích nghi với môi trường sống của nó.`],
-      [`At ${pl}, ${st} finds a baby ${an}. It came from ___.`, babies, pickN(ANIMALS.map((a) => a[3]), 3, babies),
+      [`At ${pl}, ${st} finds a baby ${an}. It came from ___.`, babies, pickN(noBabies, 3),
         `${an} sinh ra ${babies}.`],
     ];
     for (const [q, c, w, ex] of frames) {
@@ -1041,11 +1048,20 @@ const uniqHash = new Set(rows.map((r) => r.content_hash));
 console.log(`unique ids: ${uniqId.size}, unique content_hash: ${uniqHash.size} / ${rows.length}`);
 
 if (!DRY && rows.length) {
+  let failed = 0;
+  let inserted = 0;
   for (let c = 0; c < rows.length; c += 300) {
-    const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: H, body: JSON.stringify(rows.slice(c, c + 300)) });
-    if (!res.ok) console.error('push fail', res.status, (await res.text()).slice(0, 200));
+    const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' }, body: JSON.stringify(rows.slice(c, c + 300)) });
+    if (!res.ok) {
+      failed += rows.slice(c, c + 300).length;
+      console.error('push fail', res.status, (await res.text()).slice(0, 200));
+      continue;
+    }
+    const range = res.headers.get('content-range') ?? '';
+    inserted += Number(range.split('/')[1]) || rows.slice(c, c + 300).length;
   }
-  console.log('pushed', rows.length);
+  console.log(`inserted ${inserted} / ${rows.length} attempted${failed ? `, ${failed} FAILED` : ''}`);
+  if (failed > 0) process.exit(1);
 }
 mkdirSync(join(HERE, 'gen-bulk-out'), { recursive: true });
 writeFileSync(join(HERE, 'gen-bulk-out', `tpl-${SUBJECT}-g${GRADE}-preview.json`), JSON.stringify(rows.slice(0, 8), null, 1));

@@ -244,7 +244,10 @@ async function runGrade(grade) {
     if (fresh.length) {
       if (!DRY) {
         for (let c = 0; c < fresh.length; c += 500) {
-          await push(fresh.slice(c, c + 500));
+          if (!(await push(fresh.slice(c, c + 500)))) {
+            console.error(`G${grade}: push batch failed - aborting run`);
+            process.exit(1);
+          }
         }
       }
       gradeRows += fresh.length; totalPushed += fresh.length;
