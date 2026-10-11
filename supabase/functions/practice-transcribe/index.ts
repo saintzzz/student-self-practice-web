@@ -44,6 +44,26 @@ const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 const ATTEMPT_TIMEOUT_MS = 12000;
 const OVERALL_BUDGET_MS = 45000;
 
+// External-review r2: verify_jwt=false means guests can call us - an
+// unauthenticated POST burns real AI quota per attempt. Cheap per-isolate
+// sliding-window limiter keyed on client IP. Isolates are ephemeral so a
+// determined attacker can still multiply across warm instances, but casual
+// quota drain is capped; Cloudflare/Supabase WAF rate rules cover the rest.
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_PER_IP = 10;
+const rateBuckets = new Map<string, number[]>();
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const hits = (rateBuckets.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (hits.length >= RATE_MAX_PER_IP) {
+    rateBuckets.set(ip, hits);
+    return true;
+  }
+  hits.push(now);
+  rateBuckets.set(ip, hits);
+  return false;
+}
+
 function json(body: unknown, status = 200, req?: Request) {
   return new Response(JSON.stringify(body), {
     status,
@@ -192,6 +212,12 @@ async function transcribeOpenAI(
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...CORS, ...corsFor(req) } });
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, req);
+
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    req.headers.get('cf-connecting-ip') ??
+    'unknown';
+  if (rateLimited(ip)) return json({ error: 'rate limited' }, 429, req);
 
   try {
     const body = await req.json().catch(() => ({}));

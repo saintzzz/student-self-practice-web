@@ -146,8 +146,9 @@ function mathGrade(g) {
     mcq(`Compare: ${a} ___ ${b}`, a > b ? '>' : '<', [a > b ? '<' : '>', '='], {
       d: 1, ex: `${a} ${a > b ? 'lớn hơn' : 'nhỏ hơn'} ${b} nên dùng dấu "${a > b ? '>' : '<'}".`, lo: 'So sánh hai số.', top: 'comparison', skill: 'number-sense',
     });
-    mcq(`Which number is ${a > b ? 'bigger' : 'smaller'}: ${a} or ${b}?`, String(a > b ? a : b), [String(a > b ? b : a), String(a + b), String(Math.abs(a - b))], {
-      d: 1, ex: `${a > b ? a : b} là số ${a > b ? 'lớn hơn' : 'nhỏ hơn'}.`, lo: 'So sánh hai số.', top: 'comparison', skill: 'number-sense',
+    // a > b -> asks "bigger", answer a. a < b -> asks "smaller", answer a.
+    mcq(`Which number is ${a > b ? 'bigger' : 'smaller'}: ${a} or ${b}?`, String(a), [String(b), String(a + b), String(Math.abs(a - b))], {
+      d: 1, ex: `${a} là số ${a > b ? 'lớn hơn' : 'nhỏ hơn'} trong hai số ${a} và ${b}.`, lo: 'So sánh hai số.', top: 'comparison', skill: 'number-sense',
     });
   }
 

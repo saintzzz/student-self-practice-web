@@ -20,10 +20,23 @@ const SUPA = keys.url;
 const SVC = keys.keys.service_role;
 const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'practice' };
 
+// Deterministic PRNG seeded per asset id - reruns must mint identical rows.
+const seedOf = (s) => {
+  let h = 2166136261;
+  for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+};
+const mulberry = (seed) => () => {
+  seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
 // Simple words -> G1-2, medium -> G3, hard -> G4-5
-function gradeFor(word) {
+function gradeFor(word, rnd) {
   const len = word.replace(/[^a-z]/g, '').length;
-  if (len <= 5 && !word.includes(' ')) return Math.random() < 0.5 ? 1 : 2;
+  if (len <= 5 && !word.includes(' ')) return rnd() < 0.5 ? 1 : 2;
   if (len <= 8 && !word.includes(' ')) return 3;
   if (len <= 12) return 4;
   return 5;
@@ -77,28 +90,32 @@ function base(id, grade, type, diff, prompt, choices, answer, topic, lo, ex) {
   };
 }
 
-function distractors(correctId, n, pool = assetIds) {
+function distractors(correctId, n, rnd, pool = assetIds) {
   const wantLen = labels.get(correctId).length;
   const near = pool.filter((id) => id !== correctId && Math.abs(labels.get(id).length - wantLen) <= 3);
   const pick = new Set();
   let guard = 0;
   while (pick.size < n && guard++ < 500) {
     const src = near.length >= n ? near : pool;
-    pick.add(src[Math.floor(Math.random() * src.length)]);
+    pick.add(src[Math.floor(rnd() * src.length)]);
   }
   return [...pick];
 }
 
+// Deterministic shuffle seeded per question.
+const detSort = (arr, rnd) => arr.map((v) => [rnd(), v]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+
 let seq = 0;
-for (const id of assetIds) {
+for (const id of [...assetIds].sort()) {
   const word = labels.get(id);
-  const grade = gradeFor(word);
+  const rnd = mulberry(seedOf(id));
+  const grade = gradeFor(word, rnd);
   const topic = 'visual-vocabulary';
   const hash = id.slice(-6);
 
   // image-to-word-mcq: 1 image, 4 word choices
-  const wDistr = distractors(id, 3).map((d) => labels.get(d));
-  const wChoices = [word, ...wDistr].sort(() => Math.random() - 0.5);
+  const wDistr = distractors(id, 3, rnd).map((d) => labels.get(d));
+  const wChoices = detSort([word, ...wDistr], rnd);
   const wIdx = wChoices.indexOf(word);
   const qid1 = `g${grade}-cr67-i2w-${String(seq++).padStart(4, '0')}-${hash}`;
   qRows.push(base(qid1, grade, 'image-to-word-mcq', grade <= 2 ? 1 : 2,
@@ -108,8 +125,8 @@ for (const id of assetIds) {
   linkRows.push({ question_id: qid1, sort_order: 0, asset_id: id });
 
   // word-to-image-mcq: 1 word, 4 image choices (correct + 3 distractors)
-  const iDistr = distractors(id, 3);
-  const iIds = [id, ...iDistr].sort(() => Math.random() - 0.5);
+  const iDistr = distractors(id, 3, rnd);
+  const iIds = detSort([id, ...iDistr], rnd);
   const iIdx = iIds.indexOf(id);
   const qid2 = `g${grade}-cr67-w2i-${String(seq++).padStart(4, '0')}-${hash}`;
   qRows.push(base(qid2, grade, 'word-to-image-mcq', grade <= 2 ? 1 : 2,

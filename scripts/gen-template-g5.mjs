@@ -527,20 +527,37 @@ const ADJ2 = [
   ['hot', 'hotter', 'hottest', 'nóng'], ['cold', 'colder', 'coldest', 'lạnh'], ['good', 'better', 'best', 'tốt'],
   ['bad', 'worse', 'worst', 'xấu'], ['happy', 'happier', 'happiest', 'vui'], ['beautiful', 'more beautiful', 'most beautiful', 'đẹp'],
 ];
+// Pair -> semantically sensible adjectives (avoids "Summer is bigger than winter").
 const CMP2 = [
-  ['An elephant', 'a mouse'], ['A car', 'a bicycle'], ['Summer', 'winter'], ['A river', 'a pond'],
-  ['A mountain', 'a hill'], ['My father', 'me'], ['A lion', 'a cat'], ['The Mekong', 'a stream'],
+  ['An elephant', 'a mouse', ['big', 'slow']],
+  ['A car', 'a bicycle', ['fast', 'big']],
+  ['Summer', 'winter', ['hot', 'long']],
+  ['A river', 'a pond', ['long', 'big']],
+  ['A mountain', 'a hill', ['tall', 'big']],
+  ['My father', 'me', ['tall']],
+  ['A lion', 'a cat', ['big', 'fast']],
+  ['The Mekong', 'a stream', ['long', 'big']],
 ];
-for (const [a1, a2] of CMP2) {
-  const [adj, er, est] = pick(ADJ2.filter((x) => x[1].endsWith('er') || x[1] === 'better' || x[1] === 'worse'));
+for (const [a1, a2, adjs] of CMP2) {
+  const [adj, er, est] = pick(ADJ2.filter((x) => adjs.includes(x[0])));
   mcq(`${a1} is ___ than ${a2}.`, er, [adj, est, `more ${adj}`].filter((x) => x !== er), {
     d: 3, ex: `So sánh hơn của "${adj}" là "${er}".`, lo: `So sánh hơn: ${adj}.`, top: 'comparatives', skill: 'grammar-use-of-english',
   });
 }
-for (const [adj, er, est, vn] of ADJ2) {
+// Student-appropriate superlatives only - "the hottest student" etc. is wrong.
+const ADJ_STUDENT = ['good', 'tall', 'happy', 'beautiful'].map((a) => ADJ2.find((x) => x[0] === a));
+for (const [adj, er, est, vn] of ADJ_STUDENT) {
   const sup = est.startsWith('the') ? est : `the ${est}`;
   const scope = pick(['in my class', 'in the world', 'in our family', 'in Vietnam']);
   mcq(`Lan is ___ student ${scope}.`, sup, [adj, er, `most ${adj}`].filter((x) => x !== sup), {
+    d: 4, ex: `So sánh nhất của "${adj}" (${vn}) là "${sup}".`, lo: `So sánh nhất: ${adj} -> ${sup}.`, top: 'superlatives', skill: 'grammar-use-of-english',
+  });
+}
+// Non-human nouns get the full adjective set.
+for (const [adj, er, est, vn] of ADJ2) {
+  const sup = est.startsWith('the') ? est : `the ${est}`;
+  const noun = pick(['river', 'road', 'day', 'animal']);
+  mcq(`This is ___ ${noun} I have ever seen.`, sup, [adj, er, `most ${adj}`].filter((x) => x !== sup), {
     d: 4, ex: `So sánh nhất của "${adj}" (${vn}) là "${sup}".`, lo: `So sánh nhất: ${adj} -> ${sup}.`, top: 'superlatives', skill: 'grammar-use-of-english',
   });
 }
