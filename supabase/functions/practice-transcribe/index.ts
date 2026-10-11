@@ -13,8 +13,23 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
+const ALLOWED_ORIGINS = new Set([
+  'https://ea.vieschool.com',
+  'https://ioe-leduyminh.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]);
+const corsFor = (req: Request) => {
+  const origin = req.headers.get('Origin') ?? '';
+  const extra = (Deno.env.get('ALLOWED_ORIGIN') ?? '').split(',').map((o) => o.trim()).filter(Boolean);
+  const allowed = ALLOWED_ORIGINS.has(origin) || extra.includes(origin);
+  return {
+    'Access-Control-Allow-Origin': allowed ? origin : 'https://ea.vieschool.com',
+    Vary: 'Origin',
+  };
+};
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://ea.vieschool.com',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
 };
@@ -29,10 +44,10 @@ const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 const ATTEMPT_TIMEOUT_MS = 12000;
 const OVERALL_BUDGET_MS = 45000;
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, req?: Request) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
+    headers: { ...CORS, ...(req ? corsFor(req) : {}), 'Content-Type': 'application/json' },
   });
 }
 
@@ -175,8 +190,8 @@ async function transcribeOpenAI(
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-  if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...CORS, ...corsFor(req) } });
+  if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, req);
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -185,11 +200,11 @@ Deno.serve(async (req: Request) => {
     const targetWord = String(body?.targetWord ?? '').slice(0, 200);
 
     if (!audioB64 || !targetWord) {
-      return json({ error: 'missing audio or targetWord' }, 400);
+      return json({ error: 'missing audio or targetWord' }, 400, req);
     }
     // base64 inflates ~4/3 - compare decoded size.
     if (audioB64.length > MAX_AUDIO_BYTES * 1.4) {
-      return json({ error: 'audio too large' }, 413);
+      return json({ error: 'audio too large' }, 413, req);
     }
 
     const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -200,7 +215,7 @@ Deno.serve(async (req: Request) => {
       (c) => c?.api_key,
     );
     if (cfgErr || ais.length === 0) {
-      return json({ error: 'transcription not configured' }, 503);
+      return json({ error: 'transcription not configured' }, 503, req);
     }
 
     // Try each configured row - get_ai_configs emits one row per credential
@@ -254,7 +269,7 @@ Deno.serve(async (req: Request) => {
           });
         }
       });
-      if (winner) return json({ transcript: winner });
+      if (winner) return json({ transcript: winner }, 200, req);
     }
 
     for (const ai of tail) {
@@ -264,7 +279,7 @@ Deno.serve(async (req: Request) => {
       }
       const transcript = await attempt(ai);
       if (ok(transcript)) {
-        return json({ transcript: transcript as string });
+        return json({ transcript: transcript as string }, 200, req);
       }
       details.push(errOf(transcript, ai));
       if (details.length > 8) break;
@@ -272,9 +287,10 @@ Deno.serve(async (req: Request) => {
     return json(
       { error: 'all providers failed', detail: details.map((d) => d.slice(0, 160)) },
       502,
+      req,
     );
   } catch (err) {
     console.error('practice-transcribe error', err);
-    return json({ error: 'internal error' }, 500);
+    return json({ error: 'internal error' }, 500, req);
   }
 });

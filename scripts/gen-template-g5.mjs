@@ -17,9 +17,24 @@ const SUPA = keys.url, SVC = keys.keys.service_role;
 const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'practice' };
 
 const items = [];
+// Seeded PRNG (mulberry32) - deterministic reruns produce identical ids,
+// so re-push is a no-op instead of creating order-shuffled duplicates.
+let rngState = 0x9e5a17d3;
+const rng = () => {
+  rngState = (rngState + 0x6d2b79f5) >>> 0;
+  let t = rngState;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const rnd = (n) => Math.floor(rng() * n);
+const norm = (s) => String(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const seen = new Set();
 function push(it) {
-  const key = (it.q ?? it.statement ?? it.text ?? '') + '|' + JSON.stringify(it.c ?? it.bool ?? '');
+  const qKey = norm(it.q ?? it.statement ?? it.text ?? '');
+  // dup = same prompt + same choice SET (order-insensitive) or same bool
+  const cKey = it.c ? JSON.stringify(it.c.map(norm).sort()) : JSON.stringify(it.bool ?? '');
+  const key = qKey + '|' + cKey;
   if (seen.has(key)) return;
   seen.add(key);
   items.push(it);
@@ -30,13 +45,13 @@ const pickN = (arr, n, exclude) => {
   const used = new Set();
   let guard = 0;
   while (out.length < n && guard++ < 500) {
-    const c = pool[Math.floor(Math.random() * pool.length)];
+    const c = pool[rnd(pool.length)];
     if (!used.has(c)) { used.add(c); out.push(c); }
   }
   return out;
 };
-const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
-const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const shuffle = (a) => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = rnd(i + 1); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+const pick = (a) => a[rnd(a.length)];
 const mcq = (q, correct, wrongs, o) => {
   const c = shuffle([correct, ...wrongs]);
   push({ q, c, a: c.indexOf(correct), ...o });
@@ -675,7 +690,7 @@ function toRow(it) {
     tags: null, canonical: true, variant_group_id: null,
     rights_status: 'owned-original-generated',
     review_status: 'machine-editorial-reviewed-human-academic-signoff-required',
-    publication_policy: { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: false },
+    publication_policy: { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: true },
     content_hash: contentHash,
     source: { kind: 'generated-v6', method: 'cr67-template', provenance: 'Deterministic template generation; original, not copied.' },
     schema_version: '6.0', passage: it.passage ?? null, statement: it.statement ?? null, tokens: it.ro ? it.tokens : null,

@@ -57,15 +57,15 @@ for (const id of assetIds) {
 
 const qRows = [];
 const linkRows = [];
-const pub = { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: false };
+const pub = { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: true };
 
-function base(id, grade, type, diff, prompt, choices, answer, topic, lo) {
+function base(id, grade, type, diff, prompt, choices, answer, topic, lo, ex) {
   const contentHash = createHash('sha1').update(JSON.stringify([prompt, choices, answer])).digest('hex').slice(0, 16);
   return {
     id, grade, subject: 'english', domain: 'vocabulary', skill: 'vocabulary-recognition',
     question_type: type, difficulty: diff, topic_key: topic,
     prompt_text: prompt, transcript: null, choices, answer,
-    explanation_vi: 'Nhìn hình, nhớ từ vựng đã học rồi chọn đáp án đúng.',
+    explanation_vi: ex ?? 'Nhìn hình, nhớ từ vựng đã học rồi chọn đáp án đúng.',
     learning_objective: lo,
     curriculum_alignment: { grade, coreTopic: topic, moetSubject: 'English', alignmentLevel: 'topic-skill', curriculumRole: 'core', primaryFramework: 'MOET-2018' },
     tags: null, canonical: true, variant_group_id: null,
@@ -104,7 +104,7 @@ for (const id of assetIds) {
   qRows.push(base(qid1, grade, 'image-to-word-mcq', grade <= 2 ? 1 : 2,
     'Look at the picture. Choose the correct English word.',
     wChoices, { text: word, index: wIdx }, topic,
-    `Nhận diện từ vựng "${word}" qua hình ảnh.`));
+    `Nhận diện từ vựng "${word}" qua hình ảnh.`, `Hình này minh họa từ "${word}". Đáp án đúng là "${word}".`));
   linkRows.push({ question_id: qid1, sort_order: 0, asset_id: id });
 
   // word-to-image-mcq: 1 word, 4 image choices (correct + 3 distractors)
@@ -115,7 +115,7 @@ for (const id of assetIds) {
   qRows.push(base(qid2, grade, 'word-to-image-mcq', grade <= 2 ? 1 : 2,
     `Which picture shows "${word}"?`,
     iIds.map((a) => ({ assetId: a })), { index: iIdx }, topic,
-    `Chọn hình đúng cho từ "${word}".`));
+    `Chọn hình đúng cho từ "${word}".`, `Từ "${word}" tương ứng với hình ảnh đúng. Các hình còn lại minh họa từ khác.`));
   iIds.forEach((a, i) => linkRows.push({ question_id: qid2, sort_order: i, asset_id: a }));
 }
 

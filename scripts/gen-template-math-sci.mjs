@@ -1027,7 +1027,7 @@ function toRow(it) {
     tags: null, canonical: true, variant_group_id: null,
     rights_status: 'owned-original-generated',
     review_status: 'machine-editorial-reviewed-human-academic-signoff-required',
-    publication_policy: { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: false },
+    publication_policy: { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: true },
     content_hash: contentHash,
     source: { kind: 'generated-v6', method: 'cr67-template', provenance: 'Deterministic template generation; original, not copied.' },
     schema_version: '6.0', passage: it.passage ?? null, statement: it.statement ?? null, tokens: null,

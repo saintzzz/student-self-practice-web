@@ -67,6 +67,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
               data-testid="login-pin"
               className={INPUT_DARK}
               type="password"
+              inputMode="numeric"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               autoComplete="current-password"

@@ -85,7 +85,7 @@ for (const [subject, items] of Object.entries(SUBJECTS)) {
       publication_policy: {
         examEligible: false, mockEligible: true, practiceEligible: true,
         commercialReleaseEligible: true, requiresHumanApprovalForExam: true,
-        requiresHumanApprovalForCommercialRelease: false,
+        requiresHumanApprovalForCommercialRelease: true,
       },
       content_hash: contentHash,
       source: { kind: 'generated-v6', method: 'cr59-authored-advanced', provenance: 'Hand-authored advanced item; original, not copied from a textbook or competition bank.' },
