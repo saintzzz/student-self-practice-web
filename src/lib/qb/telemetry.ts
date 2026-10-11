@@ -61,14 +61,19 @@ export function createExamTelemetry(opts: {
     if (!enabled || buffer.length === 0) return;
     const session = await getSession();
     if (!session) { buffer.length = 0; return; }
-    const events = buffer.splice(0, buffer.length);
-    try {
-      const { error } = await (await getSupabase()).rpc('record_attempt_events', {
-        p_events: events as unknown as Record<string, unknown>[],
-      });
-      if (error) buffer.unshift(...events); // retry later - idempotent
-    } catch {
-      buffer.unshift(...events);
+    // Server caps at 200 events per call - a retry buffer can grow past
+    // that, so send in chunks.
+    while (buffer.length > 0) {
+      const events = buffer.splice(0, 200);
+      try {
+        const { error } = await (await getSupabase()).rpc('record_attempt_events', {
+          p_events: events as unknown as Record<string, unknown>[],
+        });
+        if (error) { buffer.unshift(...events); return; } // retry later - idempotent
+      } catch {
+        buffer.unshift(...events);
+        return;
+      }
     }
   }
 

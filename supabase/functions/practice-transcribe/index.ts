@@ -44,24 +44,25 @@ const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 const ATTEMPT_TIMEOUT_MS = 12000;
 const OVERALL_BUDGET_MS = 45000;
 
-// External-review r2: verify_jwt=false means guests can call us - an
-// unauthenticated POST burns real AI quota per attempt. Cheap per-isolate
-// sliding-window limiter keyed on client IP. Isolates are ephemeral so a
-// determined attacker can still multiply across warm instances, but casual
-// quota drain is capped; Cloudflare/Supabase WAF rate rules cover the rest.
-const RATE_WINDOW_MS = 60_000;
+// External-review r3: verify_jwt=false means guests can call us - an
+// unauthenticated POST burns real AI quota per attempt. The limiter is a
+// shared atomic DB counter (practice.check_rate_limit) so isolates and
+// restarts cannot multiply the allowance; Cloudflare/Supabase WAF rules
+// cover the rest.
+const RATE_WINDOW_S = 60;
 const RATE_MAX_PER_IP = 10;
-const rateBuckets = new Map<string, number[]>();
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const hits = (rateBuckets.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (hits.length >= RATE_MAX_PER_IP) {
-    rateBuckets.set(ip, hits);
-    return true;
-  }
-  hits.push(now);
-  rateBuckets.set(ip, hits);
-  return false;
+async function rateLimited(
+  svc: ReturnType<typeof createClient>,
+  ip: string,
+): Promise<boolean> {
+  const { data, error } = await svc.rpc('check_rate_limit', {
+    p_bucket: `stt:${ip}`,
+    p_max: RATE_MAX_PER_IP,
+    p_window_seconds: RATE_WINDOW_S,
+  });
+  // Fail closed: a broken limiter means no quota guard at all.
+  if (error) return true;
+  return (data as number) < 0;
 }
 
 function json(body: unknown, status = 200, req?: Request) {
@@ -214,10 +215,15 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, req);
 
   const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     req.headers.get('cf-connecting-ip') ??
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     'unknown';
-  if (rateLimited(ip)) return json({ error: 'rate limited' }, 429, req);
+  const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    db: { schema: 'practice' },
+  });
+  if (await rateLimited(svc, ip)) {
+    return json({ error: 'rate limited' }, 429, req);
+  }
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -233,9 +239,6 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'audio too large' }, 413, req);
     }
 
-    const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      db: { schema: 'practice' },
-    });
     const { data: cfg, error: cfgErr } = await svc.rpc('get_ai_configs');
     const ais = (Array.isArray(cfg) ? cfg : cfg ? [cfg] : []).filter(
       (c) => c?.api_key,

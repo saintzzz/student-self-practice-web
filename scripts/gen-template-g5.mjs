@@ -553,13 +553,22 @@ for (const [adj, er, est, vn] of ADJ_STUDENT) {
     d: 4, ex: `So sánh nhất của "${adj}" (${vn}) là "${sup}".`, lo: `So sánh nhất: ${adj} -> ${sup}.`, top: 'superlatives', skill: 'grammar-use-of-english',
   });
 }
-// Non-human nouns get the full adjective set.
-for (const [adj, er, est, vn] of ADJ2) {
-  const sup = est.startsWith('the') ? est : `the ${est}`;
-  const noun = pick(['river', 'road', 'day', 'animal']);
-  mcq(`This is ___ ${noun} I have ever seen.`, sup, [adj, er, `most ${adj}`].filter((x) => x !== sup), {
-    d: 4, ex: `So sánh nhất của "${adj}" (${vn}) là "${sup}".`, lo: `So sánh nhất: ${adj} -> ${sup}.`, top: 'superlatives', skill: 'grammar-use-of-english',
-  });
+// Non-human nouns: noun -> sensible adjectives ("the longest river", not
+// "the tallest river" / "the happiest river").
+const NOUN_ADJ = {
+  river: ['long', 'big', 'beautiful'],
+  road: ['long', 'big'],
+  day: ['hot', 'cold', 'happy', 'beautiful'],
+  animal: ['big', 'fast', 'beautiful'],
+};
+for (const [noun, adjs] of Object.entries(NOUN_ADJ)) {
+  for (const a of adjs) {
+    const [adj, er, est, vn] = ADJ2.find((x) => x[0] === a);
+    const sup = est.startsWith('the') ? est : `the ${est}`;
+    mcq(`This is ___ ${noun} I have ever seen.`, sup, [adj, er, `most ${adj}`].filter((x) => x !== sup), {
+      d: 4, ex: `So sánh nhất của "${adj}" (${vn}) là "${sup}".`, lo: `So sánh nhất: ${adj} -> ${sup}.`, top: 'superlatives', skill: 'grammar-use-of-english',
+    });
+  }
 }
 
 // ---------- 28. past simple ----------
@@ -569,10 +578,24 @@ const PAST2 = [
   ['write', 'wrote', 'viết'], ['read', 'read', 'đọc'], ['swim', 'swam', 'bơi'], ['run', 'ran', 'chạy'],
 ];
 const PAST_SUBJ2 = ['I', 'She', 'He', 'Nam', 'Lan', 'They', 'We', 'My mother'];
-const PAST_OBJ2 = ['to school', 'a book', 'dinner', 'to the market', 'a gift', 'in the river', 'a letter', 'home'];
+// verb -> complements that make grammatical sense ("went home", not "went dinner").
+const PAST_OBJ2 = {
+  go: ['to school', 'to the market', 'home'],
+  eat: ['dinner', 'lunch', 'breakfast'],
+  see: ['a film', 'a doctor', 'my friend'],
+  buy: ['a gift', 'a book', 'some fruit'],
+  take: ['a bus', 'a photo', 'an umbrella'],
+  make: ['a cake', 'a card', 'breakfast'],
+  come: ['home', 'to school', 'to the party'],
+  give: ['a gift', 'a book', 'some flowers'],
+  write: ['a letter', 'a story', 'an email'],
+  read: ['a book', 'a letter', 'a story'],
+  swim: ['in the river', 'in the pool', 'in the sea'],
+  run: ['in the park', 'to school', 'very fast'],
+};
 for (const [v, past, vn] of PAST2) {
   for (const s of pickN(PAST_SUBJ2, 3)) {
-    const obj = pick(PAST_OBJ2);
+    const obj = pick(PAST_OBJ2[v]);
     const c = shuffle([past, v, `${v}ed`, `${v}s`].filter((x, i, a2) => a2.indexOf(x) === i));
     push({
       q: `Yesterday, ${s} ___ ${obj}.`, c, a: c.indexOf(past), d: 3,
@@ -663,11 +686,16 @@ for (const [p, s1, s2] of PASS4) {
 // ---------- 34. word formation / spelling (missing letters IOE-style) ----------
 const MISS2 = [
   ['sch_ol', 'o', 'school - trường học'], ['te_cher', 'a', 'teacher - giáo viên'], ['h_spital', 'o', 'hospital - bệnh viện'],
-  ['br_thday', 'ir', 'birthday - sinh nhật'], ['fr_end', 'i', 'friend - bạn'], ['b_cause', 'e', 'because - bởi vì'],
+  ['b_rthday', 'i', 'birthday - sinh nhật'], ['fr_end', 'i', 'friend - bạn'], ['b_cause', 'e', 'because - bởi vì'],
   ['fam_ly', 'i', 'family - gia đình'], ['b_autiful', 'e', 'beautiful - đẹp'], ['env_ronment', 'i', 'environment - môi trường'],
-  ['d_ct_or', 'o', 'doctor - bác sĩ'], ['w_int_r', 'e', 'winter - mùa đông'], ['sci_nce', 'e', 'science - khoa học'],
+  ['doct_r', 'o', 'doctor - bác sĩ'], ['wint_r', 'e', 'winter - mùa đông'], ['sci_nce', 'e', 'science - khoa học'],
 ];
 for (const [gap, letters, vn] of MISS2) {
+  const whole = gap.replace(/_/g, letters);
+  if (!vn.toLowerCase().includes(whole)) {
+    console.error(`MISS gap broken: ${gap} + ${letters} = ${whole}`);
+    continue;
+  }
   const wrong = pickN(['a', 'e', 'i', 'o', 'u', 'n', 'r', 's'], 3, letters);
   const c = shuffle([letters, ...wrong.filter((x) => x !== letters)]);
   push({ q: `Fill in the missing letters: ${gap}`, c, a: c.indexOf(letters), d: 2, ex: `${vn}.`, lo: `Chính tả: ${gap.replace(/_+/g, letters)}.`, top: 'spelling', skill: 'vocabulary-recognition' });
@@ -675,12 +703,17 @@ for (const [gap, letters, vn] of MISS2) {
 
 // ---------- 35. rearrange letters into a word (IOE scramble) ----------
 const SCR2 = [
-  ['o, s, c, o, h, l', 'school'], ['e, a, c, h, r, t, e', 'teacher'], ['r, u, s, e, j, m, m', 'summer'],
-  ['t, r, a, w, e', 'water'], ['t, f, a, h, e, r', 'father'], ['e, t, t, l, e', 'little'],
-  ['a, n, o, m, d, y', 'monday'], ['e, g, t, o, e, h, r, t', 'together'], ['e, f, e, t, s, v, i, l, a', 'festival'],
+  ['o, s, c, o, h, l', 'school'], ['e, a, c, h, r, t, e', 'teacher'], ['m, u, s, e, r, m', 'summer'],
+  ['t, r, a, w, e', 'water'], ['t, f, a, h, e, r', 'father'], ['t, l, i, t, e, l', 'little'],
+  ['a, n, o, m, d, y', 'monday'], ['e, g, t, o, e, h, r, t', 'together'], ['f, s, t, i, v, a, l, e', 'festival'],
   ['c, i, e, e, n, s, c', 'science'],
 ];
+const sortedChars = (s) => s.replace(/[^a-z]/g, '').split('').sort().join('');
 for (const [letters, word] of SCR2) {
+  if (sortedChars(letters) !== sortedChars(word)) {
+    console.error(`SCR scramble broken: ${letters} != ${word}`);
+    continue;
+  }
   const wrong = pickN(['school', 'teacher', 'summer', 'water', 'father', 'little', 'monday', 'together', 'festival', 'science'], 3, word);
   const c = shuffle([word, ...wrong]);
   push({ q: `Rearrange the letters to make a word: ${letters}`, c, a: c.indexOf(word), d: 3, ex: `Các chữ cái xếp lại thành "${word}".`, lo: `Xếp chữ thành từ: ${word}.`, top: 'spelling', skill: 'vocabulary-recognition' });
