@@ -135,6 +135,47 @@ describe('ReviewQueueCard - r10 load lifecycle', () => {
     expect(screen.queryByTestId('review-item-q-p1')).toBeNull();
   });
 
+  it('A->B->A filter switch still invalidates the mutation (epoch, not values)', async () => {
+    queueResolvers.length = 0;
+    rpcResolvers.length = 0;
+    render(<ReviewQueueCard />);
+    await act(flush);
+    await act(async () => {
+      queueResolvers.find((r) => r.status === 'pending')!.resolve({
+        data: [{ question_id: 'q-p1', priority: 'P0', issues: [] }],
+        count: 1,
+        error: null,
+      });
+      await flush();
+    });
+    fireEvent.click(screen.getByTestId('review-approve-q-p1'));
+    await act(flush);
+
+    // A -> B -> A: leave pending, come back to identical filter values.
+    fireEvent.click(screen.getByTestId('review-filter-approved'));
+    await act(flush);
+    fireEvent.click(screen.getByTestId('review-filter-pending'));
+    await act(flush);
+    await act(async () => {
+      queueResolvers.filter((r) => r.status === 'pending').pop()!.resolve({
+        data: [{ question_id: 'q-p1', priority: 'P0', issues: [] }],
+        count: 1,
+        error: null,
+      });
+      await flush();
+    });
+    expect(screen.getByTestId('review-item-q-p1')).toBeTruthy();
+
+    // The RPC resolves: value comparison would pass (same filter), but
+    // the epoch changed - the correct path reloads instead of mutating.
+    await act(async () => {
+      rpcResolvers[0]!.resolve({ data: { ok: true }, error: null });
+      await flush();
+    });
+    expect(screen.getByText(/Đang tải/)).toBeTruthy();
+    expect(screen.getByText(/Duyệt câu hỏi \(1\)/)).toBeTruthy();
+  });
+
   it('unmount invalidates an in-flight load (no state write, no crash)', async () => {
     queueResolvers.length = 0;
     const { unmount } = render(<ReviewQueueCard />);

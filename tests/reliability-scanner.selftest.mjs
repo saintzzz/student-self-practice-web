@@ -12,11 +12,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // r11: capture the exit code too - a scanner that prints expected output
 // but exits nonzero must not pass assertions silently.
-function runScanner() {
+function runScanner(src = "tests/fixtures/reliability") {
   try {
     const out = execFileSync("node", ["scripts/check-reliability.mjs"], {
       cwd: ROOT,
-      env: { ...process.env, SCAN_SRC: "tests/fixtures/reliability" },
+      env: { ...process.env, SCAN_SRC: src },
       encoding: "utf8",
     });
     return { out, code: 0 };
@@ -47,7 +47,10 @@ test("reliability scanner flags every known-bad fixture pattern", () => {
 });
 
 test("reliability scanner produces zero hits on safe fixture", () => {
-  const { out } = runScanner();
+  // r12: scan a good-only dir so a passing run has a meaningful exit
+  // code - the shared bad+good dir always exits nonzero by design.
+  const { out, code } = runScanner("tests/fixtures/reliability-good");
+  assert.equal(code, 0, `scanner phai exit 0 tren good-only fixture:\n${out}`);
   assert.equal(
     /good\.ts:\d+/.test(out),
     false,

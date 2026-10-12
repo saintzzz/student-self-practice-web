@@ -634,6 +634,13 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
         !/return\s*\(\)\s*=>[\s\S]{0,120}?(loadGenRef\.current\+\+|\+\+loadGenRef|\.abort\(\))/.test(src))
       hit("async-response-staleness", rel(rqc),
         "generation never bumped on effect cleanup - unmount leaves stale writes alive");
+    // r12 tightening: a successful mutation must also bump the epoch so
+    // an in-flight load cannot restore a pre-mutation snapshot. Requires
+    // a SECOND bump site besides the effect cleanup.
+    const bumps = [...src.matchAll(/loadGenRef\.current\s*\+\+|\+\+\s*loadGenRef\.current/g)];
+    if (/loadGenRef/.test(src) && bumps.length < 2)
+      hit("async-response-staleness", rel(rqc),
+        "successful mutation does not invalidate pending loads - stale snapshot can restore the row");
   }
 }
 
@@ -687,10 +694,13 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
   const rqc = join(BASE, "src/components/ReviewQueueCard.tsx");
   if (existsSync(rqc)) {
     const src = readFileSync(rqc, "utf8");
+    // r12 tightening: comparing captured VALUES is ABA-unsafe (view can
+    // leave and return to the same filter) - the guard must be a
+    // monotonic epoch captured before the RPC.
     if (/rpc\(\s*['"]review_question['"]/.test(src) && /setTotal/.test(src) &&
-        !/viewAtStart|viewRef\.current/.test(src))
+        !/genAtStart|viewEpoch|epochAtStart/.test(src))
       hit("mutation-view-context-race", rel(rqc),
-        "mutation success path mutates list/count with no view-context check");
+        "mutation success path lacks an epoch guard - ABA view switches are undetected");
   }
 }
 
@@ -717,9 +727,13 @@ for (const st of ["tests/ea-classes-scanner.selftest.mjs", "tests/reliability-sc
     if (/execFileSync/.test(src) && !/(e\.status|status\s*\?\?|code,)/.test(src))
       hit("scanner-selftest-exit-status", rel(f),
         "scan() swallows the scanner exit code - nonzero exits are not asserted");
-    if (/execFileSync/.test(src) && !/assert\.(notEqual|equal)\(code/.test(src))
+    // r12 tightening: BOTH polarities must be asserted - a single
+    // nonzero assert leaves the passing path (good fixture/repo)
+    // uncovered.
+    if (/execFileSync/.test(src) &&
+        (!/assert\.notEqual\(code,\s*0/.test(src) || !/assert\.equal\(code,\s*0/.test(src)))
       hit("scanner-selftest-exit-status", rel(f),
-        "no assertion on the scanner exit code");
+        "exit-code assertions must cover both the failing and passing scan paths");
   }
 }
 

@@ -75,6 +75,8 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 56 | `audit-runtime-portability` (r11) | audit-bank read secrets only from `~/.config/devin` - un-runnable in CI or other machines | `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` env first, file as optional fallback, fail with a clear message | check-ea-classes #46 |
 | 57 | `scanner-selftest-exit-status` (r11) | selftest swallowed the scanner exit code - nonzero exits could pass silently | `scan()` returns `{out, code}`; both selftests assert the code | check-ea-classes #47 |
 | 58 | `audit-network-timeout` (r11) | `fetchRetry` bounded attempts but not per-request time - a hung request blocked the audit | `AbortSignal.timeout(15000)` per attempt; timeouts classified transient | check-ea-classes #48 |
+| 59 | `mutation-view-context-race` residual (r12) | A->B->A filter switch restored identical values - the value compare let a stale mutation mutate the new view | epoch guard (`genAtStart !== loadGenRef.current`) + successful mutations bump the epoch so pending loads cannot restore pre-mutation rows | check-ea-classes #45 + #41 (tightened) + ABA regression test |
+| 60 | `scanner-selftest-exit-status` residual (r12) | safe-fixture scan ran on the shared bad+good dir - its exit code was meaningless | dedicated `reliability-good/` fixture dir; both polarity asserts (`equal(code,0)` + `notEqual(code,0)`) required per selftest | check-ea-classes #47 (tightened) |
 
 ## Deferred
 

@@ -50,12 +50,10 @@ export default function ReviewQueueCard() {
   const [error, setError] = useState<string | null>(null);
   // r10: a superseded request must never write state - an out-of-order
   // response would display the old filter's rows under the new one.
+  // r12: mutations compare a captured GENERATION, not the view values -
+  // an A->B->A switch restores identical values, so only a monotonic
+  // epoch can detect that the view was replaced meanwhile.
   const loadGenRef = useRef(0);
-  // r11: mutations (approve/reject/flag) that resolve after the reviewer
-  // switched view must not mutate the new view's list or count - capture
-  // the view at action start and reload when it no longer matches.
-  const viewRef = useRef({ statusFilter, offset });
-  viewRef.current = { statusFilter, offset };
 
   const load = useCallback(async () => {
     const gen = ++loadGenRef.current;
@@ -126,7 +124,7 @@ export default function ReviewQueueCard() {
   }, [load]);
 
   async function act(questionId: string, action: 'approve' | 'reject' | 'flag', actReason = '') {
-    const viewAtStart = viewRef.current;
+    const genAtStart = loadGenRef.current;
     setBusyId(questionId);
     setError(null);
     const { data, error: err } = await (await getSupabase()).rpc('review_question', {
@@ -135,7 +133,7 @@ export default function ReviewQueueCard() {
       p_reason: actReason,
     });
     setBusyId(null);
-    if (viewAtStart.statusFilter !== viewRef.current.statusFilter || viewAtStart.offset !== viewRef.current.offset) {
+    if (genAtStart !== loadGenRef.current) {
       setRows(null);
       void loadRef.current();
       return;
@@ -158,6 +156,9 @@ export default function ReviewQueueCard() {
       setError('Không xác nhận được kết quả duyệt. Vui lòng tải lại.');
       return;
     }
+    // r12: a successful mutation invalidates every load still in flight -
+    // a snapshot captured before the approval must not restore the row.
+    loadGenRef.current++;
     setConfirming(null);
     setReason('');
     setRows((prev) => prev?.filter((r) => r.question_id !== questionId) ?? null);
