@@ -23,7 +23,7 @@ export async function savePracticeResult(gradeId: string, result: BatchResult): 
   try {
     const session = await getSession();
     if (!session) return;
-    await (await getSupabase()).from('results').insert({
+    const { error: rErr } = await (await getSupabase()).from('results').insert({
       account_id: session.user.id,
       grade_id: gradeId,
       points: result.points,
@@ -34,6 +34,9 @@ export async function savePracticeResult(gradeId: string, result: BatchResult): 
       time_used_sec: result.timeUsedSec,
       program: 'batch',
     });
+    // Supabase insert resolve {error} chu khong throw - phai bind de khoi
+    // im lang mat ket qua; van best-effort (warn, khong break flow).
+    if (rErr) console.warn('[practice] save result:', rErr.message);
   } catch {
     // Luu ket qua la nen - khong bao gio lam gian doan flow choi.
   }
@@ -50,7 +53,7 @@ export async function saveExamResult(
   try {
     const session = await getSession();
     if (!session) return;
-    await (await getSupabase()).from('results').insert({
+    const { error: rErr } = await (await getSupabase()).from('results').insert({
       account_id: session.user.id,
       grade_id: gradeId,
       points: result.points,
@@ -65,6 +68,7 @@ export async function saveExamResult(
         ? { questionIds: snapshot.questionIds }
         : null,
     });
+    if (rErr) console.warn('[practice] save exam result:', rErr.message);
   } catch {
     // Best-effort - never break the exam flow over a stats insert.
   }
@@ -85,8 +89,9 @@ export async function savePlacementResult(
     const session = await getSession();
     if (!session) return;
     const supa = await getSupabase();
-    await supa.rpc('set_my_placement', { g: gradeId });
-    await supa.from('results').insert({
+    const { error: plErr } = await supa.rpc('set_my_placement', { g: gradeId });
+    if (plErr) console.warn('[practice] set placement:', plErr.message);
+    const { error: rErr } = await supa.from('results').insert({
       account_id: session.user.id,
       grade_id: gradeId,
       points: 0,
@@ -95,6 +100,7 @@ export async function savePlacementResult(
       total_questions: totalQuestions,
       rounds_completed: 1,
     });
+    if (rErr) console.warn('[practice] placement result:', rErr.message);
   } catch {
     // Placement save la nen - khong lam gian doan flow.
   }

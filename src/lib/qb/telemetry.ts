@@ -110,7 +110,7 @@ export function createExamTelemetry(opts: {
       void (async () => {
         try {
           if (!(await getSession())) return;
-          await (await getSupabase()).rpc('log_adaptive_decision', {
+          const { error: tErr } = await (await getSupabase()).rpc('log_adaptive_decision', {
             p_session_id: sessionId,
             p_program_id: opts.programId,
             p_grade: opts.grade,
@@ -118,6 +118,7 @@ export function createExamTelemetry(opts: {
             p_recommended_difficulty: recommended,
             p_rationale: rationale,
           });
+          if (tErr) console.warn('[telemetry] log decision:', tErr.message);
         } catch { /* telemetry never breaks the exam */ }
       })();
       void question; // question reserved for future difficulty-aware logs

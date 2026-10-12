@@ -61,17 +61,22 @@ export async function onAuthChange(callback: (session: Session | null) => void):
 export async function fetchMyAccount(): Promise<PracticeAccount | null> {
   const { data: { user } } = await (await getSupabase()).auth.getUser();
   if (!user) return null;
-  const { data } = await (await getSupabase())
+  const { data, error } = await (await getSupabase())
     .from('accounts')
     .select('id, username, display_name, role, placement_grade')
     .eq('id', user.id)
     .maybeSingle();
+  // maybeSingle phan biet "khong co row" voi "query loi" - loi phai log ra
+  // chu khong tra null nhu khong co account (im lang sai quyen hien thi).
+  if (error) console.warn('[auth] fetch my account:', error.message);
   return (data as PracticeAccount | null) ?? null;
 }
 
 /** Union of class_grade_scopes across the student's enrollments. */
 export async function fetchMyAllowedGrades(): Promise<string[]> {
-  const { data } = await (await getSupabase()).from('class_grade_scopes').select('grade_id');
+  const { data, error } = await (await getSupabase()).from('class_grade_scopes').select('grade_id');
+  // query loi khong duoc render nhu "khong co quyen truy cap" - log de biet.
+  if (error) console.warn('[auth] fetch allowed grades:', error.message);
   const ids = new Set((data ?? []).map((r: { grade_id: string }) => r.grade_id));
   return [...ids].sort();
 }

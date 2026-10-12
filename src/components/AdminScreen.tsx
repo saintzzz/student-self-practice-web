@@ -155,28 +155,27 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
 
   async function handleDeleteClass(cls: PracticeClass): Promise<void> {
     if (!window.confirm(`Xóa lớp ${cls.name}?`)) return;
-    await (await getSupabase()).from('classes').delete().eq('id', cls.id);
+    const { error: delErr } = await (await getSupabase()).from('classes').delete().eq('id', cls.id);
+    if (delErr) return setError('Không xóa được lớp - vui lòng thử lại.');
     say(`Đã xóa lớp ${cls.name}`);
     void refresh();
   }
 
   async function toggleEnroll(classId: string, studentId: string, isIn: boolean): Promise<void> {
     const supa = await getSupabase();
-    if (isIn) {
-      await supa.from('enrollments').delete().eq('class_id', classId).eq('student_id', studentId);
-    } else {
-      await supa.from('enrollments').insert({ class_id: classId, student_id: studentId });
-    }
+    const { error: eErr } = isIn
+      ? await supa.from('enrollments').delete().eq('class_id', classId).eq('student_id', studentId)
+      : await supa.from('enrollments').insert({ class_id: classId, student_id: studentId });
+    if (eErr) return setError('Không cập nhật được danh sách lớp - vui lòng thử lại.');
     void refresh();
   }
 
   async function toggleScope(classId: string, gradeId: string, isOn: boolean): Promise<void> {
     const supa = await getSupabase();
-    if (isOn) {
-      await supa.from('class_grade_scopes').delete().eq('class_id', classId).eq('grade_id', gradeId);
-    } else {
-      await supa.from('class_grade_scopes').insert({ class_id: classId, grade_id: gradeId });
-    }
+    const { error: sErr } = isOn
+      ? await supa.from('class_grade_scopes').delete().eq('class_id', classId).eq('grade_id', gradeId)
+      : await supa.from('class_grade_scopes').insert({ class_id: classId, grade_id: gradeId });
+    if (sErr) return setError('Không cập nhật được phạm vi lớp - vui lòng thử lại.');
     void refresh();
   }
 
