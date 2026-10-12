@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDueReviewItems, getReportSnapshot, getState, STICKERS } from '../lib/engagement/store';
 import { skillLabel } from '../lib/engagement/skills';
-import { fetchParentContact, isValidParentEmail, saveParentContact } from '../lib/parentContact';
+import { fetchParentContact, isValidParentEmail, requestParentVerify, saveParentContact } from '../lib/parentContact';
 import { CARD, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import type { Grade } from '../types';
 
@@ -35,6 +35,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
   const [parentEmail, setParentEmail] = useState('');
   const [emailOptIn, setEmailOptIn] = useState(true);
   const [emailSaved, setEmailSaved] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -43,6 +44,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
       if (!cancelled && contact) {
         setParentEmail(contact.email);
         setEmailOptIn(contact.opted_in);
+        setEmailVerified(contact.verified);
       }
     });
     return () => {
@@ -56,7 +58,18 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
       return;
     }
     const ok = await saveParentContact(parentEmail, emailOptIn);
+    if (ok) {
+      // r6: the weekly report only goes to click-confirmed addresses - ask
+      // the server to send the verify link right away.
+      const verify = await requestParentVerify();
+      setEmailVerified(verify === 'already');
+    }
     setEmailSaved(ok ? 'saved' : 'error');
+  }
+
+  async function handleResendVerify(): Promise<void> {
+    const result = await requestParentVerify();
+    if (result === 'already') setEmailVerified(true);
   }
   const totalAnswered = report.days.reduce((sum, d) => sum + d.total, 0);
   const maxDay = Math.max(1, ...report.days.map((d) => d.total));
@@ -229,6 +242,23 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                 Đã lưu! Ba mẹ sẽ nhận báo cáo vào Chủ nhật.
               </p>
             )}
+            {emailVerified ? (
+              <p data-testid="parent-email-verified" className="mt-2 text-sm font-bold text-emerald-400">
+                Email đã xác nhận.
+              </p>
+            ) : parentEmail && isValidParentEmail(parentEmail) ? (
+              <div data-testid="parent-email-pending" className="mt-2 flex items-center gap-2 text-sm font-bold text-amber-400">
+                <span>Chưa xác nhận - ba mẹ bấm link trong email để bắt đầu nhận báo cáo.</span>
+                <button
+                  type="button"
+                  data-testid="parent-email-resend"
+                  onClick={() => void handleResendVerify()}
+                  className="shrink-0 rounded-lg bg-amber-600/30 px-2 py-1 text-xs font-extrabold text-amber-300 transition hover:bg-amber-600/50"
+                >
+                  Gửi lại email
+                </button>
+              </div>
+            ) : null}
             {emailSaved === 'error' && (
               <p data-testid="parent-email-error" className="mt-2 text-sm font-bold text-rose-400">
                 Email chưa đúng định dạng - ba mẹ kiểm tra lại nhé.

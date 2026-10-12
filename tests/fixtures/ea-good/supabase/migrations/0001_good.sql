@@ -79,3 +79,34 @@ begin
   return old;
 end $$;
 create trigger t before delete on practice.accounts for each row execute function practice.guard_last_admin();
+
+-- r6 good: verified recipients + escaped interpolation
+create table if not exists practice.parent_contacts (
+  account_id uuid, email text, opted_in boolean,
+  verified boolean not null default false,
+  verify_token uuid, verify_token_sent_at timestamptz
+);
+revoke insert (verified, verify_token, verify_token_sent_at)
+  on practice.parent_contacts from authenticated;
+revoke update (verified, verify_token, verify_token_sent_at)
+  on practice.parent_contacts from authenticated;
+create or replace function practice.email_esc(p text)
+returns text language sql as $$ select p $$;
+create or replace function practice.confirm_parent_email(p_token uuid)
+returns jsonb language plpgsql as $$ begin return '{}'::jsonb; end $$;
+create or replace function practice.send_weekly_reports()
+returns int language plpgsql as $$
+declare v_row record; v_name text;
+begin
+  for v_row in
+    select pc.email, a.display_name
+    from practice.parent_contacts pc
+    join practice.accounts a on a.id = pc.account_id
+    where pc.opted_in and pc.verified
+  loop
+    v_name := practice.email_esc(v_row.display_name);
+    raise notice '%', 'Report ' || v_name;
+  end loop;
+  return 0;
+end;
+$$;

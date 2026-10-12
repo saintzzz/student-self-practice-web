@@ -214,9 +214,14 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...CORS, ...corsFor(req) } });
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, req);
 
+  // Rate-limit bucket identity must come from the LAST x-forwarded-for entry -
+  // the ingress proxy appends the real peer there. The first entries and
+  // cf-connecting-ip are caller-supplied headers a client can rotate to
+  // escape the bucket (external review r6).
+  const xff = req.headers.get('x-forwarded-for');
   const ip =
-    req.headers.get('cf-connecting-ip') ??
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    xff?.split(',').pop()?.trim() ||
+    req.headers.get('cf-connecting-ip') ||
     'unknown';
   const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     db: { schema: 'practice' },

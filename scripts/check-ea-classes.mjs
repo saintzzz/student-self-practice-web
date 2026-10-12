@@ -30,6 +30,9 @@
 //  25. session-shrink              - mapped-shortfall silently shortens session (r5 M)
 //  26. skill-label-raw             - raw taxonomy keys rendered to parents (r5 L)
 //  27. e2e-origin-vacuum           - same-origin gate blind to the backend origin (r5 L)
+//  28. unverified-recipient        - child progress mailed to an unconfirmed address (r6 M)
+//  29. email-html-injection        - user-controlled text raw into outbound email HTML (r6 M)
+//  30. xff-spoofable               - rate-limit bucket keyed on caller-settable header entry (r6 M)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -197,6 +200,41 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
       if (!new RegExp(`practice\\.${t}[\\s\\S]{0,500}?on delete (cascade|set null)`, "i").test(mig))
         hit("fk-auth-delete", "supabase/migrations",
           `${t} -> auth.users FK lacks ON DELETE semantics`);
+    // 28. unverified-recipient: weekly child-progress mail must only go to
+    //     click-confirmed addresses; a confirm RPC + server-owned verified
+    //     column must exist, and the send loop must filter on it.
+    const reportDefs = [...mig.matchAll(
+      /create or replace function\s+practice\.send_weekly_reports[\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
+    )];
+    const report = reportDefs.at(-1)?.[1] ?? "";
+    if (reportDefs.length && !/pc\.verified/.test(report))
+      hit("unverified-recipient", "supabase/migrations",
+        "send_weekly_reports does not filter on verified recipients");
+    if (/parent_contacts/.test(mig)) {
+      if (!/create or replace function\s+practice\.confirm_parent_email/i.test(mig))
+        hit("unverified-recipient", "supabase/migrations",
+          "no confirm_parent_email RPC - recipients cannot prove ownership");
+      if (!/verified\s+boolean/.test(mig))
+        hit("unverified-recipient", "supabase/migrations",
+          "parent_contacts lacks a verified flag");
+      if (!/revoke (insert|update) \(verified/.test(mig))
+        hit("unverified-recipient", "supabase/migrations",
+          "verified column is client-writable - self-verification possible");
+    }
+    // 29. email-html-injection: user-controlled text concatenated straight
+    //     into an outbound mail body/subject must pass through email_esc()
+    //     (read into a local first, then interpolate the escaped value).
+    const mailDefs = new Map();
+    for (const d of mig.matchAll(
+      /create or replace function\s+practice\.(send_weekly_reports|request_parent_verify|reconcile_parent_reports)[\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
+    ))
+      mailDefs.set(d[1].toLowerCase(), d[0]); // latest definition wins
+    for (const [name, body] of mailDefs) {
+      for (const m of body.matchAll(/\|\|\s*\w+\.(display_name|full_name|student_name)/g)) {
+        hit("email-html-injection", "supabase/migrations",
+          `${name}: ${m[0].trim()} concatenated into email without email_esc()`);
+      }
+    }
   }
 }
 
@@ -363,6 +401,22 @@ for (const f of walk(join(BASE, "scripts"), /^gen-.*\.mjs$/)) {
       if (!src.includes(`'${k}':`))
         hit("skill-label-raw", rel(skills), `no Vietnamese label for skill '${k}'`);
   }
+}
+
+// ---------- 30. xff-spoofable ----------
+// Rate-limit buckets keyed on the FIRST x-forwarded-for entry (or a
+// caller-set cf-connecting-ip preferred over it) can be rotated by the
+// client. The ingress-appended LAST entry is the trustworthy one (r6).
+for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
+  const src = readFileSync(f, "utf8");
+  if (!/x-forwarded-for/.test(src)) continue;
+  if (/split\(['"],['"]\)\s*\[\s*0\s*\]|split\(['"],['"]\)\.shift\(\)/.test(src))
+    hit("xff-spoofable", rel(f),
+      "first x-forwarded-for entry used - caller can prepend fake hops");
+  if (/cf-connecting-ip.*\?\?|cf-connecting-ip.*\|\|/.test(src) &&
+      !/xff|x-forwarded|\.pop\(\)|at\(-1\)/.test(src))
+    hit("xff-spoofable", rel(f),
+      "cf-connecting-ip preferred with no last-hop fallback");
 }
 
 // ---------- 27. e2e-origin-vacuum ----------

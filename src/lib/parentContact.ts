@@ -4,6 +4,7 @@ import { getSession } from './auth/practiceAuth';
 export interface ParentContact {
   email: string;
   opted_in: boolean;
+  verified: boolean;
 }
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -19,11 +20,13 @@ export async function fetchParentContact(): Promise<ParentContact | null> {
     if (!session) return null;
     const { data, error } = await (await getSupabase())
       .from('parent_contacts')
-      .select('email, opted_in')
+      .select('email, opted_in, verified')
       .eq('account_id', session.user.id)
       .maybeSingle();
     if (error) return null;
-    return data ? { email: String(data.email), opted_in: Boolean(data.opted_in) } : null;
+    return data
+      ? { email: String(data.email), opted_in: Boolean(data.opted_in), verified: Boolean(data.verified) }
+      : null;
   } catch {
     return null;
   }
@@ -46,6 +49,37 @@ export async function saveParentContact(email: string, optedIn: boolean): Promis
         { onConflict: 'account_id' },
       );
     return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * r6: ask the server to email a signed confirm link to the saved address.
+ * The weekly report only goes to verified recipients, so this is the step
+ * that proves the mailbox actually belongs to the parent.
+ */
+export async function requestParentVerify(): Promise<'sent' | 'already' | 'throttled' | 'failed'> {
+  try {
+    const session = await getSession();
+    if (!session) return 'failed';
+    const { data, error } = await (await getSupabase()).rpc('request_parent_verify');
+    if (error || !data?.ok) return 'failed';
+    if (data.already_verified) return 'already';
+    if (data.throttled) return 'throttled';
+    return 'sent';
+  } catch {
+    return 'failed';
+  }
+}
+
+/** r6: confirm link target - the token in the URL is the capability. */
+export async function confirmParentEmail(token: string): Promise<boolean> {
+  try {
+    const { data, error } = await (await getSupabase()).rpc('confirm_parent_email', {
+      p_token: token,
+    });
+    return !error && data?.ok === true;
   } catch {
     return false;
   }

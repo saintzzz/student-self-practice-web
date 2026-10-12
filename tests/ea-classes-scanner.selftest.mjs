@@ -49,6 +49,10 @@ const CLASSES = [
   "session-shrink",
   "skill-label-raw",
   "e2e-origin-vacuum",
+  // r6 classes
+  "unverified-recipient",
+  "email-html-injection",
+  "xff-spoofable",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

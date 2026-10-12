@@ -23,3 +23,21 @@ alter table practice.qb_attempt_events
   add constraint qb_attempt_events_learner_id_fkey
   foreign key (learner_id) references auth.users(id);
 alter table practice.phantom_table enable row level security;
+
+-- r6 bad classes: unverified recipients + raw display_name in outbound mail
+create table if not exists practice.parent_contacts (account_id uuid, email text, opted_in boolean);
+create or replace function practice.send_weekly_reports()
+returns int language plpgsql as $$
+declare v_row record;
+begin
+  for v_row in
+    select pc.email, a.display_name
+    from practice.parent_contacts pc
+    join practice.accounts a on a.id = pc.account_id
+    where pc.opted_in
+  loop
+    raise notice '%', 'Report for ' || v_row.display_name;
+  end loop;
+  return 0;
+end;
+$$;

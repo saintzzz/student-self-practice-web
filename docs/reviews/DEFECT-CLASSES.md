@@ -9,7 +9,7 @@ Gates (run `npm run code:reliability` - wired into CI):
 | Gate | File | Coverage |
 |------|------|----------|
 | Reliability scanner | `scripts/check-reliability.mjs` | unchecked-read, unbounded-read, action-result-loss, cas-transition |
-| EA class scanner | `scripts/check-ea-classes.mjs` | 27 project classes below |
+| EA class scanner | `scripts/check-ea-classes.mjs` | 30 project classes below |
 | DB semantics audit | `scripts/audit-bank.mjs` | answer correctness, dupes, flag drift, collocation patterns (live DB) |
 | Scanner self-tests | `tests/*.selftest.mjs` + `tests/fixtures/` | bad/good fixture cases per rule |
 
@@ -49,6 +49,9 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 30 | `session-shrink` (r5) | malformed rows silently shortened fixed-form sessions | `droppedCount`/`poolShort` + top-up + UI banner | check-ea-classes #25 |
 | 31 | `skill-label-raw` (r5) | raw taxonomy keys rendered to parents | `skillLabel()` + full Vietnamese coverage | check-ea-classes #26 |
 | 32 | `e2e-origin-vacuum` (r5) | same-origin gate treated the backend origin as third-party | `VITE_SUPABASE_URL` allowlist | check-ea-classes #27 |
+| 33 | `unverified-recipient` (r6) | student could store any email; weekly job mailed child progress to an unconfirmed address | `verified`/`verify_token` columns + confirm RPC + send gated on `pc.verified` + email-change reset trigger + column-write revoke (0036) | check-ea-classes #28 |
+| 34 | `email-html-injection` (r6) | `display_name` concatenated raw into outbound email subject/HTML | `practice.email_esc()` on all interpolated text (0036) | check-ea-classes #29 |
+| 35 | `xff-spoofable` (r6) | rate-limit bucket keyed on caller-settable first `x-forwarded-for` entry | last XFF entry (ingress-appended) keys the bucket; transcribe v12 | check-ea-classes #30 |
 
 ## Deferred
 

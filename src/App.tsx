@@ -20,6 +20,7 @@ import {
 } from './lib/auth/practiceAuth';
 import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagement/sync';
 import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/engagement/store';
+import { confirmParentEmail } from './lib/parentContact';
 import { GRADES } from './data/vocabulary';
 import type { ExamProgramId } from './types/exam';
 import {
@@ -61,6 +62,21 @@ export default function App() {
   const [examFocus, setExamFocus] = useState<{ skills?: string[]; minDifficulty?: number; label?: string } | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
+  /** r6: parent-email confirm-link outcome, rendered as its own screen. */
+  const [verifyNotice, setVerifyNotice] = useState<'ok' | 'fail' | null>(null);
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('verify_email');
+    if (!token) return;
+    let cancelled = false;
+    void confirmParentEmail(token).then((ok) => {
+      window.history.replaceState(null, '', window.location.pathname);
+      if (!cancelled) setVerifyNotice(ok ? 'ok' : 'fail');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!configured) return;
@@ -269,6 +285,28 @@ export default function App() {
   const shell = (node: ReactNode, _gradeId?: string | null) => (
     <LandShell land="brand">{node}</LandShell>
   );
+
+  if (verifyNotice) {
+    return shell(
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="max-w-md rounded-2xl bg-white/90 p-6 text-center ring-1 ring-sky-200">
+          <p className="text-lg font-extrabold text-sky-900">
+            {verifyNotice === 'ok'
+              ? 'Đã xác nhận email! Ba mẹ sẽ nhận báo cáo hàng tuần.'
+              : 'Link xác nhận đã hết hạn hoặc đã dùng - vào app gửi lại email xác nhận.'}
+          </p>
+          <button
+            type="button"
+            data-testid="verify-email-continue"
+            onClick={() => setVerifyNotice(null)}
+            className="mt-4 rounded-xl bg-sky-600 px-5 py-2 font-extrabold text-white transition hover:bg-sky-500"
+          >
+            Tiếp tục
+          </button>
+        </div>
+      </div>,
+    );
+  }
 
   if (authMode === 'loading') {
     return shell(
