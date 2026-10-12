@@ -68,24 +68,36 @@ export function createExamTelemetry(opts: {
     return (session?.user?.id ?? null) === (await ownerPromise);
   }
 
+  // record() auto-flushes once the buffer hits 5; without an in-flight
+  // guard every later record() spawns a concurrent flush loop that
+  // interleaves chunks with the first one.
+  let flushing = false;
+
   async function flush(): Promise<void> {
-    if (!enabled || buffer.length === 0) return;
-    const session = await getSession();
-    if (!session) { buffer.length = 0; return; }
-    if ((session.user?.id ?? null) !== (await ownerPromise)) { buffer.length = 0; return; }
-    // Server caps at 200 events per call - a retry buffer can grow past
-    // that, so send in chunks.
-    while (buffer.length > 0) {
-      const events = buffer.splice(0, 200);
-      try {
-        const { error } = await (await getSupabase()).rpc('record_attempt_events', {
-          p_events: events as unknown as Record<string, unknown>[],
-        });
-        if (error) { buffer.unshift(...events); return; } // retry later - idempotent
-      } catch {
-        buffer.unshift(...events);
-        return;
+    if (!enabled || buffer.length === 0 || flushing) return;
+    flushing = true;
+    try {
+      const session = await getSession();
+      if (!session) { buffer.length = 0; return; }
+      if ((session.user?.id ?? null) !== (await ownerPromise)) { buffer.length = 0; return; }
+      // Server caps at 200 events per call - a retry buffer can grow past
+      // that, so send in chunks. r15: re-check the owner before EVERY
+      // chunk - an account switch mid-flush must stop the remaining sends.
+      while (buffer.length > 0) {
+        if (!(await ownerStillActive())) { buffer.length = 0; return; }
+        const events = buffer.splice(0, 200);
+        try {
+          const { error } = await (await getSupabase()).rpc('record_attempt_events', {
+            p_events: events as unknown as Record<string, unknown>[],
+          });
+          if (error) { buffer.unshift(...events); return; } // retry later - idempotent
+        } catch {
+          buffer.unshift(...events);
+          return;
+        }
       }
+    } finally {
+      flushing = false;
     }
   }
 

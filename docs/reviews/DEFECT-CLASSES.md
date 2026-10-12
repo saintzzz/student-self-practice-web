@@ -83,6 +83,10 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 64 | `variant-dedupe` residual (r14) | server dedupes within one draw only - the client top-up draw could re-serve the same variant_group_id under a new row id | extras filtered by `variant_group_id ?? id` against the first draw before mapping | check-ea-classes #23b (tightened) + bank test |
 | 65 | `pre-start-time-accounting` (r14) | `createExamFromBank` took a caller `Date.now()` captured before the fetches - question loading consumed exam time | `nowMs` param removed; `startedAtMs` set inside at return, post-assembly | check-ea-classes #52 + bank test |
 | 66 | `orphaned-tool-imports` (r14) | `export-entry.ts` imported the deleted `ioeRealBank`/`vioMathBank` - the export tool crashed on run | dead imports/usages removed; every relative import in scripts/ must resolve | check-ea-classes #53 + export smoke run |
+| 67 | `telemetry-owner-binding` residual (r15) | owner check ran once before the chunk loop - a 200+ event buffer could leak later chunks to a switched session | `ownerStillActive()` inside the loop before every splice + `flushing` guard stopping concurrent record()-triggered flushes | check-ea-classes #51 (tightened) + mid-flush test |
+| 68 | `generator-answer-consistency` (r15) | adv reorder tiles had a stray `my` - no permutation could form the answer; row live + approved + eligible | source tile list fixed, live row patched, generator multiset validation + audit-bank permutation check | check-ea-classes #54 + audit-bank reorder check |
+| 69 | `updater-side-effect` (r15) | `onAnswer()` ran inside `setPicked()` updater - StrictMode replays updaters -> double telemetry | submit computed from closure state, fired outside the updater | check-ea-classes #55 + 3 StrictMode tests |
+| 70 | `async-response-staleness` residual (r15) | `AdminScreen.refresh()` wrote all state unconditionally - a slow earlier refresh overwrote the mutation-triggered one | `refreshGenRef` epoch guard on every post-await write + unmount invalidation | check-ea-classes #41 (extended) + deferred-promise test |
 
 ## Deferred
 

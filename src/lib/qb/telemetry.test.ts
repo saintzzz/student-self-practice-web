@@ -82,6 +82,29 @@ describe('createExamTelemetry', () => {
     expect(rpc.mock.calls.filter((c) => c[0] === 'record_attempt_events')).toHaveLength(0);
   });
 
+  it('stops mid-flush when the owner changes between chunks (r15)', async () => {
+    // r15: the owner check lives INSIDE the chunk loop - a single
+    // pre-loop check would let a 200+ record buffer leak chunk 2+ to
+    // the new account. Deterministic: a deferred RPC pauses chunk 1's
+    // send while the session switches.
+    let session: { user: { id: string } } | null = { user: { id: 'u1' } };
+    getSessionMock.mockImplementation(() => Promise.resolve(session));
+    let resolveRpc: (v: { data: number; error: null }) => void = () => {};
+    rpc.mockImplementation(
+      () => new Promise<{ data: number; error: null }>((r) => { resolveRpc = r; }),
+    );
+    const t = createExamTelemetry({ programId: 'english', grade: 4, mode: 'practice' });
+    for (let i = 0; i < 201; i++) t.record(Q, RIGHT, 10);
+    // Let the auto-flush reach chunk 1's deferred RPC (200 events).
+    await new Promise((r) => setTimeout(r, 0));
+    session = { user: { id: 'u2' } };
+    resolveRpc({ data: 1, error: null });
+    await new Promise((r) => setTimeout(r, 0));
+    const calls = rpc.mock.calls.filter((c) => c[0] === 'record_attempt_events');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]![1].p_events).toHaveLength(200);
+  });
+
   it('guest telemetry stays dropped after a mid-exam login (r14)', async () => {
     getSessionMock.mockResolvedValue(null);
     const t = createExamTelemetry({ programId: 'english', grade: 4, mode: 'practice' });

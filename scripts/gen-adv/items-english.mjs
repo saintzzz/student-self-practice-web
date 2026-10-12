@@ -622,7 +622,7 @@ export const ITEMS = [
     ex: "'Water' không đếm được → How much. 'How many' dành cho danh từ đếm được.",
     lo: 'Chọn how much cho danh từ không đếm được.' },
   { g: 3, skill: 'writing', dom: 'writing', top: 'word-order', d: 5, ro: true,
-    tokens: ['sometimes', 'My', 'walks', 'dog', 'my', 'to', 'park', 'the', '.'],
+    tokens: ['sometimes', 'My', 'walks', 'dog', 'to', 'park', 'the', '.'],
     text: 'My dog sometimes walks to the park.',
     ex: "Trạng từ tần suất đứng trước động từ chính: 'My dog sometimes walks to the park.' - 9 từ khó.",
     lo: 'Đặt trạng từ tần suất đúng vị trí.' },

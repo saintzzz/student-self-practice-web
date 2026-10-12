@@ -27,3 +27,14 @@ for (let off = 0; ; off += 1000) {
   const rows = await page.json();
   if (!rows.length) break;
 }
+// r15 good: reorder tile banks must be a word-multiset permutation of
+// the answer under scorer normalization.
+const ro = await fetchRetry(`${SUPA}/rest/v1/qb_questions?question_type=eq.reorder&select=id,tokens,answer`);
+const roNorm = (s) => String(s).toLowerCase().replace(/[.,!?;:'"]+/gu, '');
+let badRo = 0;
+for (const q of await ro.json()) {
+  if (!Array.isArray(q.tokens)) continue;
+  const tiles = q.tokens.join(' ').split(/\s+/).map(roNorm).filter(Boolean).sort().join('|');
+  const want = String(q.answer?.text ?? '').split(/\s+/).map(roNorm).filter(Boolean).sort().join('|');
+  if (tiles !== want) badRo++;
+}

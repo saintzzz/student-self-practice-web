@@ -85,6 +85,9 @@ const CLASSES = [
   "telemetry-owner-binding",
   "pre-start-time-accounting",
   "orphaned-tool-imports",
+  // r15 classes
+  "generator-answer-consistency",
+  "updater-side-effect",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

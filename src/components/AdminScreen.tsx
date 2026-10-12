@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
 import { fetchAllRows } from '../lib/supabase/fetch-all';
 import type { PracticeAccount } from '../lib/auth/practiceAuth';
@@ -58,9 +58,17 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<ResultWithStudent[] | null>(null);
 
+  // r15: every post-await state write carries a generation - a refresh
+  // issued before a mutation-triggered one must never overwrite it.
+  const refreshGenRef = useRef(0);
+
   useEffect(() => {
     if (tab !== 'progress' || results !== null) return;
-    void fetchRecentResults().then(setResults);
+    const gen = ++refreshGenRef.current;
+    void fetchRecentResults().then((r) => {
+      if (gen === refreshGenRef.current) setResults(r);
+    });
+    return () => { refreshGenRef.current++; };
   }, [tab, results]);
 
   const say = useCallback((msg: string) => {
@@ -69,6 +77,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   }, []);
 
   const refresh = useCallback(async () => {
+    const gen = ++refreshGenRef.current;
     const supa = await getSupabase();
     // r5: ca 4 bang deu vuot duoc cap ~1000 rows o quy mo multi-school -
     // phai paginate va fail-closed (loi -> hien thong bao, khong render
@@ -81,6 +90,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
     ]);
     const loadErr = a.error ?? c.error ?? e.error ?? s.error;
     const truncated = a.truncated || c.truncated || e.truncated || s.truncated;
+    if (gen !== refreshGenRef.current) return; // a newer refresh owns the view
     if (loadErr || truncated) {
       say(`Không tải hết dữ liệu quản trị - vui lòng thử lại.`);
       if (loadErr) console.error('[admin] refresh:', loadErr.message);
@@ -102,6 +112,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
 
   useEffect(() => {
     void refresh();
+    return () => { refreshGenRef.current++; }; // unmount invalidates in-flight
   }, [refresh]);
 
   async function invokeAdmin(payload: Record<string, unknown>): Promise<string | null> {

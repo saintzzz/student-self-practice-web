@@ -804,19 +804,19 @@ function TextInputView({ prompt, hint, ipa, imageUrl, onSubmit }: { prompt: stri
   );
 }
 
-function WordOrderView({ question, onAnswer }: { question: Extract<ExamQuestion, { kind: 'word-order' }>; onAnswer: (a: ExamAnswer) => void }) {
+export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQuestion, { kind: 'word-order' }>; onAnswer: (a: ExamAnswer) => void }) {
   const [picked, setPicked] = useState<number[]>([]);
   const remaining = question.tiles.map((_, i) => i).filter((i) => !picked.includes(i));
 
   function pick(i: number) {
-    setPicked((prev) => {
-      if (prev.includes(i)) return prev;
-      const next = [...prev, i];
-      if (next.length === question.tiles.length) {
-        onAnswer({ type: 'order', indices: next });
-      }
-      return next;
-    });
+    // r15: never side-effect inside a state updater - StrictMode replays
+    // updaters, which would double-fire the telemetry in onAnswer.
+    if (picked.includes(i)) return;
+    const next = [...picked, i];
+    setPicked(next);
+    if (next.length === question.tiles.length) {
+      onAnswer({ type: 'order', indices: next });
+    }
   }
 
   return (

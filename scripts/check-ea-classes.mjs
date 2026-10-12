@@ -56,6 +56,8 @@
 //  51. telemetry-owner-binding     - buffered events flushed under a switched identity (r14 M)
 //  52. pre-start-time-accounting   - exam clock started before question assembly (r14 M)
 //  53. orphaned-tool-imports       - script importing a module that no longer exists (r14 L)
+//  54. generator-answer-consistency - reorder tiles not a permutation of the answer (r15 M)
+//  55. updater-side-effect         - side effects inside React state updaters (r15 M)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -655,6 +657,25 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
       hit("async-response-staleness", rel(rqc),
         "successful mutation does not invalidate pending loads - stale snapshot can restore the row");
   }
+  // r15 extension: AdminScreen.refresh() has the same shape - mutation
+  // handlers fire refresh() and a slower earlier refresh must not
+  // overwrite the post-mutation state.
+  const adm = join(BASE, "src/components/AdminScreen.tsx");
+  if (existsSync(adm)) {
+    const src = readFileSync(adm, "utf8");
+    if (/Promise\.all\(/.test(src) &&
+        !/refreshGenRef|GenRef|requestGen|epoch/i.test(src))
+      hit("async-response-staleness", rel(adm),
+        "multi-source admin refresh writes state with no request-generation guard");
+    if (/refreshGenRef/.test(src)) {
+      if (!/gen\s*!==\s*refreshGenRef\.current/.test(src))
+        hit("async-response-staleness", rel(adm),
+          "generation captured but never compared before applying the response");
+      if (!/return\s*\(\)\s*=>[\s\S]{0,120}?refreshGenRef\.current\+\+/.test(src))
+        hit("async-response-staleness", rel(adm),
+          "unmount does not invalidate an in-flight admin refresh");
+    }
+  }
 }
 
 // ---------- 42. priority-pagination-inversion ----------
@@ -815,6 +836,14 @@ for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
         !/session\??\.user\?\.id|session\.user\.id/.test(src))
       hit("telemetry-owner-binding", rel(tel),
         "flush() does not compare the live session user to a stored owner");
+    // r15 tightening: a single pre-loop owner check is not enough - a
+    // 200+ event buffer flushes in chunks and an account switch between
+    // chunks still leaks. The check must run inside the loop before
+    // every splice.
+    if (/while\s*\(\s*buffer\.length\s*>\s*0\s*\)/.test(src) &&
+        !/while\s*\(\s*buffer\.length\s*>\s*0\s*\)\s*\{[\s\S]{0,250}?ownerStillActive[\s\S]{0,250}?splice/.test(src))
+      hit("telemetry-owner-binding", rel(tel),
+        "owner check not inside the chunk loop - mid-flush account switch leaks buffered events");
   }
 }
 
@@ -864,6 +893,43 @@ for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
           hit("orphaned-tool-imports", rel(f), `import '${m[1]}' does not resolve`);
       }
     }
+  }
+}
+
+// ---------- 54. generator-answer-consistency ----------
+// A generator emitting reorder items must prove the tile multiset can
+// form the declared answer under scorer normalization - an extra or
+// missing tile makes the item unsolvable. The live audit must re-check
+// published rows the same way.
+{
+  for (const f of walk(join(BASE, "scripts"), /gen.*\.mjs$/)) {
+    const src = readFileSync(f, "utf8");
+    // Two accepted proofs: sorted-multiset compare or a normalized
+    // sequence compare (norm(tokens.join) === norm(text)) - both prove
+    // the tile bank can produce the declared answer.
+    if (/['"]reorder['"]/.test(src) &&
+        !/\.sort\(\)\.join|multiset|permutation|norm\w*\([\s\S]{0,60}tokens[\s\S]{0,60}\)\s*[!=]==?\s*norm/.test(src))
+      hit("generator-answer-consistency", rel(f),
+        "reorder items emitted without tile-vs-answer multiset validation");
+  }
+  const audit = join(BASE, "scripts/audit-bank.mjs");
+  if (existsSync(audit)) {
+    const src = readFileSync(audit, "utf8");
+    if (!/reorder/.test(src) || !/\.sort\(\)\.join|multiset|permutation/.test(src))
+      hit("generator-answer-consistency", rel(audit),
+        "audit never verifies reorder tiles are a permutation of the answer");
+  }
+}
+
+// ---------- 55. updater-side-effect ----------
+// React state updaters must be pure - StrictMode replays them, so an
+// answer submit or network call inside an updater double-fires.
+for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
+  const src = readFileSync(f, "utf8");
+  for (const m of src.matchAll(/set[A-Z]\w*\(\s*\([^)]*\)\s*=>\s*\{([\s\S]{0,600}?)\}\s*\)/g)) {
+    if (/\bonAnswer\(|\.rpc\(|void\s+\w+\(|fetch\(|\blogAdaptive\(|telemetry\.|saveExamResult\(/.test(m[1]))
+      hit("updater-side-effect", rel(f),
+        "side effect inside a state updater - StrictMode replays updaters");
   }
 }
 

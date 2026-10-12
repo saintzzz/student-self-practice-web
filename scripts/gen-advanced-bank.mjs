@@ -46,6 +46,14 @@ for (const [subject, items] of Object.entries(SUBJECTS)) {
       questionType = 'reorder';
       if (!Array.isArray(it.tokens) || it.tokens.length < 2 || !it.text) {
         errors.push(`${tag}: ro needs tokens[]>=2 + text`);
+      } else {
+        // r15: the tile bank must be a permutation of the answer -
+        // an extra or missing tile makes the item unsolvable. Normalize
+        // like the scorer: lowercase + punctuation stripped per token.
+        const norm = (s) => s.toLowerCase().replace(/[.,!?;:'"’]+/gu, '');
+        const tiles = it.tokens.join(' ').split(/\s+/).map(norm).filter(Boolean).sort().join('|');
+        const want = it.text.split(/\s+/).map(norm).filter(Boolean).sort().join('|');
+        if (tiles !== want) errors.push(`${tag}: ro tile multiset != answer tokens (unsolvable)`);
       }
       tokens = it.tokens; answer = { text: it.text };
     } else if (it.ta) {

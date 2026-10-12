@@ -169,6 +169,20 @@ for (const q of mis) {
 }
 check('missing-letter gaps fully reconstruct a word', badMis !== 0, `${badMis}/${mis.length} wrong`);
 
+// r15: reorder tile banks must be a word-multiset permutation of the
+// answer - an extra or missing tile makes the item unsolvable (scorer
+// normalization: lowercase + punctuation stripped; multiword tiles ok).
+const ro = await fetchAll('question_type=eq.reorder', 'id,tokens,answer');
+const roNorm = (s) => String(s).toLowerCase().replace(/[.,!?;:'"’]+/gu, '');
+let badRo = 0;
+for (const q of ro) {
+  if (!Array.isArray(q.tokens)) continue; // tiles derive from the answer
+  const tiles = q.tokens.join(' ').split(/\s+/).map(roNorm).filter(Boolean).sort().join('|');
+  const want = String(q.answer?.text ?? '').split(/\s+/).map(roNorm).filter(Boolean).sort().join('|');
+  if (tiles !== want) badRo++;
+}
+check('reorder tile banks are word permutations of the answer', badRo !== 0, `${badRo}/${ro.length} wrong`);
+
 // r3: non-human nouns must only take sensible superlatives (generator
 // whitelist): river=long/big/beautiful, road=long/big, day=hot/cold/happy/
 // beautiful, animal=big/fast/beautiful.
