@@ -9,12 +9,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GrammarMcqQuestion } from '../../types/exam';
 
 const rpc = vi.fn();
+const { getSessionMock } = vi.hoisted(() => ({ getSessionMock: vi.fn() }));
 vi.mock('../supabase/client', () => ({
   getSupabase: async () => ({ rpc }),
   isSupabaseConfigured: () => true,
 }));
 vi.mock('../auth/practiceAuth', () => ({
-  getSession: async () => ({ user: { id: 'u1' } }),
+  getSession: getSessionMock,
 }));
 
 import { createExamTelemetry } from './telemetry';
@@ -31,7 +32,10 @@ const Q: GrammarMcqQuestion = {
 const RIGHT = { type: 'option', index: 1 } as const;
 const WRONG = { type: 'option', index: 0 } as const;
 
-beforeEach(() => rpc.mockReset().mockResolvedValue({ data: 1, error: null }));
+beforeEach(() => {
+  rpc.mockReset().mockResolvedValue({ data: 1, error: null });
+  getSessionMock.mockReset().mockResolvedValue({ user: { id: 'u1' } });
+});
 
 describe('createExamTelemetry', () => {
   it('records attempt events with idempotent client_event_ids and flushes', async () => {
@@ -68,6 +72,27 @@ describe('createExamTelemetry', () => {
     expect(calls[0][1].p_events[0].client_event_id).toBe(calls[1][1].p_events[0].client_event_id);
   });
 
+  it('drops buffered events when the signed-in owner changes (r14)', async () => {
+    const t = createExamTelemetry({ programId: 'english', grade: 4, mode: 'practice' });
+    t.record(Q, RIGHT, 500);
+    // Account switch between record and flush (e.g. second-tab login)
+    // must never re-attribute u1's attempts to u2.
+    getSessionMock.mockResolvedValue({ user: { id: 'u2' } });
+    await t.flush();
+    expect(rpc.mock.calls.filter((c) => c[0] === 'record_attempt_events')).toHaveLength(0);
+  });
+
+  it('guest telemetry stays dropped after a mid-exam login (r14)', async () => {
+    getSessionMock.mockResolvedValue(null);
+    const t = createExamTelemetry({ programId: 'english', grade: 4, mode: 'practice' });
+    t.record(Q, RIGHT, 500);
+    // Guest signs in mid-exam - buffered guest events must not be
+    // attributed to the new account.
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    await t.flush();
+    expect(rpc.mock.calls.filter((c) => c[0] === 'record_attempt_events')).toHaveLength(0);
+  });
+
   it('adaptive shadow: low accuracy recommends easier, high recommends harder', async () => {
     const t = createExamTelemetry({ programId: 'english', grade: 3, mode: 'practice' });
     // 4 wrong out of 5 -> rolling 0.2 -> difficulty 1.
@@ -75,6 +100,8 @@ describe('createExamTelemetry', () => {
     t.record(Q, RIGHT, 100);
     t.logAdaptive(Q, true);
     await t.flush();
+    // logAdaptive is fire-and-forget - let its async chain settle.
+    await new Promise((r) => setTimeout(r, 0));
     const calls = rpc.mock.calls.filter((c) => c[0] === 'log_adaptive_decision');
     const last = calls[calls.length - 1]![1];
     expect(last.p_rolling_accuracy).toBe(0.2);
@@ -83,6 +110,7 @@ describe('createExamTelemetry', () => {
     const t2 = createExamTelemetry({ programId: 'english', grade: 3, mode: 'practice' });
     for (let i = 0; i < 5; i++) { t2.record(Q, RIGHT, 100); t2.logAdaptive(Q, true); }
     await t2.flush();
+    await new Promise((r) => setTimeout(r, 0));
     const last2 = rpc.mock.calls.filter((c) => c[0] === 'log_adaptive_decision')[rpc.mock.calls.filter((c) => c[0] === 'log_adaptive_decision').length - 1]![1];
     expect(last2.p_rolling_accuracy).toBe(1);
     expect(last2.p_recommended_difficulty).toBe(3);

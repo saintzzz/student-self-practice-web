@@ -79,6 +79,10 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 60 | `scanner-selftest-exit-status` residual (r12) | safe-fixture scan ran on the shared bad+good dir - its exit code was meaningless | dedicated `reliability-good/` fixture dir; both polarity asserts (`equal(code,0)` + `notEqual(code,0)`) required per selftest | check-ea-classes #47 (tightened) |
 | 61 | `auth-signout-error-loss` (r13) | `logout()` awaited `signOut()` but discarded `{error}` - caller treated a failed sign-out as success and cleared local state while the session survived | destructure the result and throw on `error`; caller keeps `finally` local cleanup and logs the failure | check-ea-classes #49 + auth test |
 | 62 | `pagination-offset-after-mutation` (r13) | removing the last row of a later page left `offset` out of range - empty page rendered while earlier rows remained | after a successful mutation reconcile the offset to the last valid page; the offset change re-triggers `load()` | check-ea-classes #50 + regression test |
+| 63 | `telemetry-owner-binding` (r14) | buffered attempt events carried no owner - a flush after an account switch re-attributed them to the new user | owner uid captured at creation; flush and adaptive logs drop when the live session differs | check-ea-classes #51 + 2 telemetry tests |
+| 64 | `variant-dedupe` residual (r14) | server dedupes within one draw only - the client top-up draw could re-serve the same variant_group_id under a new row id | extras filtered by `variant_group_id ?? id` against the first draw before mapping | check-ea-classes #23b (tightened) + bank test |
+| 65 | `pre-start-time-accounting` (r14) | `createExamFromBank` took a caller `Date.now()` captured before the fetches - question loading consumed exam time | `nowMs` param removed; `startedAtMs` set inside at return, post-assembly | check-ea-classes #52 + bank test |
+| 66 | `orphaned-tool-imports` (r14) | `export-entry.ts` imported the deleted `ioeRealBank`/`vioMathBank` - the export tool crashed on run | dead imports/usages removed; every relative import in scripts/ must resolve | check-ea-classes #53 + export smoke run |
 
 ## Deferred
 

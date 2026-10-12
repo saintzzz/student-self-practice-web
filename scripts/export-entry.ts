@@ -1,10 +1,8 @@
 /** Entry point bundled by scripts/export-question-bank.mjs. */
-import { IOE_BANK } from '../src/data/ioeRealBank';
 import { ioeBanksForGrade } from '../src/data/ioeBanks';
 import { GRAMMAR_G12, GRAMMAR_G3, GRAMMAR_G45 } from '../src/data/grammarBank';
 import { readingBankForGrade } from '../src/data/readingBank';
 import { reorderBankForGrade } from '../src/data/reorderBank';
-import { VIO_MATH_BANK } from '../src/data/vioMathBank';
 import { scienceBankForGrade, scienceClassesForGrade } from '../src/data/scienceBank';
 import { getTopicsByGrade, getWordsByGrade } from '../src/data/vocabulary/index';
 import { generateMathQuestions } from '../src/lib/exam/mathEnglish';
@@ -16,19 +14,18 @@ export function exportAll() {
   const grades: Record<string, unknown> = {};
   for (const g of GRADE_IDS) {
     grades[g] = {
-      ioe: IOE_BANK[g],
+      ioe: null,
       ioeBanks: ioeBanksForGrade(g),
       grammar: g === 'grade-1' || g === 'grade-2' ? GRAMMAR_G12 : g === 'grade-3' ? GRAMMAR_G3 : GRAMMAR_G45,
       reading: readingBankForGrade(g),
-      reorderAuthored: reorderBankForGrade(g).filter((s) => !(IOE_BANK[g]?.reorder ?? []).includes(s)),
+      reorderAuthored: reorderBankForGrade(g),
       vocabulary: {
         topics: getTopicsByGrade(g).map((t) => ({ id: t.id, name: t.name })),
         words: getWordsByGrade(g),
       },
-      // Full materialized pool (seeded, deterministic): real harvested
-      // items (id prefix `vio-`) + generated families.
+      // Full materialized pool (seeded, deterministic) - generated
+      // families only; the retired harvested banks are no longer shipped.
       mathPool: generateMathQuestions(g),
-      mathRealBankOnly: g === 'grade-2' ? VIO_MATH_BANK : [],
       sciencePool: generateScienceQuestions(g),
       scienceFacts: scienceBankForGrade(g),
       scienceClasses: scienceClassesForGrade(g),

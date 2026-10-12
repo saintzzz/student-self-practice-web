@@ -56,11 +56,23 @@ export function createExamTelemetry(opts: {
   // Guests have no auth session - buffer still fills so record()
   // stays cheap; flush() drops it when getSession() returns null.
   const enabled = isSupabaseConfigured();
+  // r14: every event belongs to the identity that was signed in when
+  // this telemetry was created. A mid-session account switch (second
+  // tab login) must never re-attribute buffered events to the new user.
+  const ownerPromise: Promise<string | null> = getSession()
+    .then((s) => s?.user?.id ?? null)
+    .catch(() => null);
+
+  async function ownerStillActive(): Promise<boolean> {
+    const session = await getSession();
+    return (session?.user?.id ?? null) === (await ownerPromise);
+  }
 
   async function flush(): Promise<void> {
     if (!enabled || buffer.length === 0) return;
     const session = await getSession();
     if (!session) { buffer.length = 0; return; }
+    if ((session.user?.id ?? null) !== (await ownerPromise)) { buffer.length = 0; return; }
     // Server caps at 200 events per call - a retry buffer can grow past
     // that, so send in chunks.
     while (buffer.length > 0) {
@@ -110,6 +122,7 @@ export function createExamTelemetry(opts: {
       void (async () => {
         try {
           if (!(await getSession())) return;
+          if (!(await ownerStillActive())) return;
           const { error: tErr } = await (await getSupabase()).rpc('log_adaptive_decision', {
             p_session_id: sessionId,
             p_program_id: opts.programId,

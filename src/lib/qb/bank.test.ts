@@ -1,6 +1,16 @@
-import { describe, expect, it } from 'vitest';
-import { gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createExamFromBank, gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
 import { isExamAnswerCorrect } from '../exam/examSession';
+
+const { rpcMock, getSessionMock } = vi.hoisted(() => ({
+  rpcMock: vi.fn(),
+  getSessionMock: vi.fn(),
+}));
+vi.mock('../supabase/client', () => ({
+  getSupabase: async () => ({ rpc: rpcMock }),
+  isSupabaseConfigured: () => true,
+}));
+vi.mock('../auth/practiceAuth', () => ({ getSession: getSessionMock }));
 
 function row(partial: Partial<QbRow>): QbRow {
   return {
@@ -201,5 +211,49 @@ describe('pickUnseenFirst (CR-63)', () => {
     const picked = pickUnseenFirst(pool, 5, ['a', 'b']);
     expect(picked).toHaveLength(2);
     expect(new Set(picked.map((q) => q.id)).size).toBe(2);
+  });
+});
+
+describe('createExamFromBank - r14', () => {
+  const mcq = (id: string, group: string | null) => row({
+    id,
+    variant_group_id: group,
+    choices: ['a', 'b', 'c', 'd'],
+    answer: { index: 0 },
+  });
+
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset().mockResolvedValue({ user: { id: 'u1' } });
+    localStorage.clear();
+  });
+
+  it('top-up dedupes variant groups across separate draws', async () => {
+    // First draw under-samples (1 of target 2); top-up serves another
+    // row of the same variant group plus a fresh group.
+    rpcMock
+      .mockResolvedValueOnce({ data: [mcq('a', 'G')], error: null })
+      .mockResolvedValueOnce({ data: [mcq('b', 'G'), mcq('c', 'H')], error: null });
+    const st = await createExamFromBank('english', 'grade-3', { count: 2, mode: 'practice' });
+    const ids = st!.questions.map((q) => String(q.id));
+    expect(ids).toContain('a');
+    expect(ids).toContain('c');
+    expect(ids).not.toContain('b');
+    expect(st!.questions).toHaveLength(2);
+  });
+
+  it('starts the clock after assembly, not before (r14)', async () => {
+    vi.useFakeTimers();
+    try {
+      const t0 = Date.now();
+      rpcMock.mockImplementationOnce(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+        return { data: [mcq('a', null)], error: null };
+      });
+      const st = await createExamFromBank('english', 'grade-3', { count: 1, mode: 'mock' });
+      expect(st!.startedAtMs - t0).toBeGreaterThanOrEqual(30_000);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

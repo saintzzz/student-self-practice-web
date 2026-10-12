@@ -307,7 +307,6 @@ export function pickUnseenFirst(mapped: ExamQuestion[], target: number, seen: st
 export async function createExamFromBank(
   programId: ExamProgramId,
   gradeId: string,
-  nowMs: number,
   opts: { count?: number; mode?: BankMode; formId?: string; focus?: BankFetchFocus },
 ): Promise<ExamState | null> {
   if (!isSupabaseConfigured()) return null;
@@ -343,7 +342,13 @@ export async function createExamFromBank(
   // top up once with a larger draw before declaring the pool thin.
   if (!fixedForm && questions.length < target) {
     const extra = await fetchBankQuestions(programId, gradeId, Math.max(target, 300), mode, opts.focus);
+    // r14: the server dedupes variant groups within ONE draw only - a
+    // top-up can re-serve the same variant_group_id under a different
+    // row id. Exclude extras whose variant key already appeared in the
+    // first draw before mapping drops the key.
+    const seenVariant = new Set(rows.map((r) => r.variant_group_id ?? r.id));
     const extraMapped = extra
+      .filter((r) => !seenVariant.has(r.variant_group_id ?? r.id))
       .map(toExamQuestion)
       .filter((q): q is ExamQuestion => q !== null && !questions.some((x) => x.id === q.id));
     questions = pickUnseenFirst([...questions, ...extraMapped], target, seen);
@@ -357,7 +362,9 @@ export async function createExamFromBank(
     questions,
     answers: questions.map(() => null),
     currentIndex: 0,
-    startedAtMs: nowMs,
+    // r14: the clock starts when the exam is playable, not when the
+    // caller asked for it - question loading must not consume exam time.
+    startedAtMs: Date.now(),
     timeLimitSec: config.examTimeSec,
     // CR-52: practice sittings are stopwatched, not countdown-bounded.
     untimed: opts.mode !== 'mock',

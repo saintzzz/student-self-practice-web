@@ -208,7 +208,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           formId,
         });
         try {
-          const bankExam = await createExamFromBank(programId, gradeId, Date.now(), {
+          const bankExam = await createExamFromBank(programId, gradeId, {
             count,
             mode: isPractice ? 'practice' : 'mock',
             formId,

@@ -43,6 +43,19 @@
 //  38. privilege-mutation-compat   - mutation payload wider than column grants -> RPC-bound writes (r8 M)
 //  39. rpc-result-enum             - business result payload ignored as success (r8 M)
 //  40. fetch-mode-parity           - public vs authenticated mode eligibility diverged (r8 M)
+//  41. async-response-staleness    - superseded load responses overwriting newer state (r10 M)
+//  42. priority-pagination-inversion - client priority sort after DB range slice (r10 M)
+//  43. gate-orchestration-omission - preflight skipping the EA class gates (r10 M)
+//  44. retry-nontransient-errors   - retrying permanent HTTP errors / sleeping after last try (r10 L)
+//  45. mutation-view-context-race  - mutation applying to a view it did not start in (r11 M)
+//  46. audit-runtime-portability   - audit secrets only from a local user path (r11 M)
+//  47. scanner-selftest-exit-status - selftest swallowing the scanner exit code (r11 L)
+//  48. audit-network-timeout       - audit fetch without a per-request timeout (r11 L)
+//  49. auth-signout-error-loss     - signOut() {error} discarded as success (r13 M)
+//  50. pagination-offset-after-mutation - last-page delete leaving an out-of-range offset (r13 L)
+//  51. telemetry-owner-binding     - buffered events flushed under a switched identity (r14 M)
+//  52. pre-start-time-accounting   - exam clock started before question assembly (r14 M)
+//  53. orphaned-tool-imports       - script importing a module that no longer exists (r14 L)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -772,6 +785,85 @@ for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
         !/setTotal[\s\S]{0,300}?setOffset\(/.test(src))
       hit("pagination-offset-after-mutation", rel(rqc),
         "row removal never reconciles offset - last-page delete shows an empty queue");
+  }
+}
+
+// ---------- 23b. variant-dedupe (client top-up) ----------
+// The server dedupes variant groups within ONE draw only. A client
+// top-up draw can re-serve the same variant_group_id under a different
+// row id, so the client must exclude extras by the variant key before
+// mapping drops it.
+{
+  const bank = join(BASE, "src/lib/qb/bank.ts");
+  if (existsSync(bank)) {
+    const src = readFileSync(bank, "utf8");
+    if (/\bextra\b[\s\S]{0,400}?pickUnseenFirst/.test(src) &&
+        !/variant_group_id\s*\?\?\s*\w+\.id/.test(src))
+      hit("variant-dedupe", rel(bank),
+        "top-up excludes only row ids - a second draw can repeat a variant group");
+  }
+}
+
+// ---------- 51. telemetry-owner-binding ----------
+// Buffered attempt events must be bound to the identity captured at
+// creation; flushing under a changed session re-attributes them.
+{
+  const tel = join(BASE, "src/lib/qb/telemetry.ts");
+  if (existsSync(tel)) {
+    const src = readFileSync(tel, "utf8");
+    if (!/owner(Promise|Id|Key)/.test(src) ||
+        !/session\??\.user\?\.id|session\.user\.id/.test(src))
+      hit("telemetry-owner-binding", rel(tel),
+        "flush() does not compare the live session user to a stored owner");
+  }
+}
+
+// ---------- 52. pre-start-time-accounting ----------
+// The exam clock must start after assembly. A caller timestamp captured
+// before the fetches lets question loading consume exam time.
+{
+  const bank = join(BASE, "src/lib/qb/bank.ts");
+  if (existsSync(bank)) {
+    const src = readFileSync(bank, "utf8");
+    if (/createExamFromBank[\s\S]{0,300}?\bnowMs\b/.test(src) ||
+        /startedAtMs:\s*nowMs/.test(src))
+      hit("pre-start-time-accounting", rel(bank),
+        "startedAtMs comes from a pre-fetch caller timestamp");
+  }
+  for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
+    const src = readFileSync(f, "utf8");
+    if (/createExamFromBank\([^)]*Date\.now\(\)/.test(src))
+      hit("pre-start-time-accounting", rel(f),
+        "Date.now() passed before the await - loading eats exam time");
+  }
+}
+
+// ---------- 53. orphaned-tool-imports ----------
+// Every relative import in a bundled/CLI script must resolve - a
+// deleted module leaves the tool crashing on run.
+{
+  const dir = join(BASE, "scripts");
+  const exts = [".ts", ".tsx", ".js", ".mjs", ".json"];
+  const resolves = (spec, fromFile) => {
+    const p = join(dirname(fromFile), spec);
+    if (existsSync(p) && !p.endsWith("/")) return true;
+    for (const e of exts) if (existsSync(p + e)) return true;
+    for (const e of exts) if (existsSync(join(p, "index" + e))) return true;
+    return false;
+  };
+  if (existsSync(dir)) {
+    for (const f of walk(dir, /\.(ts|mjs)$/)) {
+      // Strip comments + template literals first - codegen strings
+      // inside them are not real imports of THIS file.
+      const src = readFileSync(f, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/[^\n]*/g, "")
+        .replace(/`(?:[^`\\]|\\[\s\S])*`/g, "``");
+      for (const m of src.matchAll(/(?:from|import)\s+['"](\.[^'"]+)['"]/g)) {
+        if (!resolves(m[1], f))
+          hit("orphaned-tool-imports", rel(f), `import '${m[1]}' does not resolve`);
+      }
+    }
   }
 }
 

@@ -94,7 +94,7 @@ function englishMd(g, d) {
   const b = d.ioe;
   const extra = d.ioeBanks;
   L.push(`# ${GRADE_VI[g]} - TIENG ANH (English)\n`);
-  L.push(`> Cau hoi lay tu: ngan hang IOE harvest that + bank tac gia + tu vung (nguon sinh cau luyen tap).\n`);
+  L.push(`> Cau hoi lay tu: bank tac gia + tu vung (nguon sinh cau luyen tap).\n`);
 
   let sec = 1;
   // vocabulary
@@ -172,7 +172,7 @@ function englishMd(g, d) {
 
 const md = [`# NGAN HANG CAU HOI - English Arena`];
 md.push(`Export: ${new Date().toISOString().slice(0, 10)} | Nguon: src/data + generators (deterministic)\n`);
-md.push(`## Quy uoc doc\n\n- **✅** = dap an dung trong trac nghiem; moi cau kem **Dap an** + **Giai thich** (tieng Viet).\n- **🔊 VOICE** = cau co audio. App SINH audio bang TTS luc chay tu transcript - KHONG co file audio. Transcript in ra la dung noi dung be nghe.\n- **Anh** = duoc copy vao \`images/\` va link tuong doi \`images/vio/*.png\` - mo duoc ngay.\n- Cau id \`vio-*\` = item that harvest tu Violympic (co anh kem).\n- Tieu chi trong ngoac \`[ ]\` = dang cau (kind) khi khong ro rang tu ngu canh.\n`);
+md.push(`## Quy uoc doc\n\n- **✅** = dap an dung trong trac nghiem; moi cau kem **Dap an** + **Giai thich** (tieng Viet).\n- **🔊 VOICE** = cau co audio. App SINH audio bang TTS luc chay tu transcript - KHONG co file audio. Transcript in ra la dung noi dung be nghe.\n- **Anh** = duoc copy vao \`images/\` va link tuong doi - mo duoc ngay.\n- Tieu chi trong ngoac \`[ ]\` = dang cau (kind) khi khong ro rang tu ngu canh.\n`);
 md.push(`## So lieu tong quan\n\n| Khoi | Tu vung | Nghe 🔊 | MCQ IOE | Dien chu | Ghep tu | Sap xep | Doc D/S | Ngu phap | Toan TA | KH TA |\n|---|---|---|---|---|---|---|---|---|---|---|`);
 
 const body = [];
@@ -186,7 +186,7 @@ for (const g of GRADE_IDS) {
   body.push(`\n## TIENG ANH (English)\n`);
   body.push(englishMd(g, d).replace(/^# .*\n/, '').replace(/^## /gm, '### '));
   body.push(`\n## TOAN TIENG ANH (Math in English)\n`);
-  body.push(`> Pool day du: ngan hang Violympic that (lop 2) + cau generator deterministic.\n`);
+  body.push(`> Pool day du: cau generator deterministic.\n`);
   d.mathPool.forEach((q, i) => body.push(examQ(q, i)));
   body.push(`\n## KHOA HOC TIENG ANH (Science in English)\n`);
   body.push(`> Moi fact -> MCQ + Dung/Sai + dien tu; + cau phan loai "Which one is a ...?".\n`);

@@ -81,6 +81,10 @@ const CLASSES = [
   // r13 classes
   "auth-signout-error-loss",
   "pagination-offset-after-mutation",
+  // r14 classes
+  "telemetry-owner-binding",
+  "pre-start-time-accounting",
+  "orphaned-tool-imports",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {
