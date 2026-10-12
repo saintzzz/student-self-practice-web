@@ -74,7 +74,23 @@ export async function fetchMyAccount(): Promise<PracticeAccount | null> {
 
 /** Union of class_grade_scopes across the student's enrollments. */
 export async function fetchMyAllowedGrades(): Promise<string[]> {
-  const { data, error } = await (await getSupabase()).from('class_grade_scopes').select('grade_id');
+  const supa = await getSupabase();
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return [];
+  // Chi lay scopes cua cac lop account nay da enroll - doc ca bang tra
+  // moi truong lop tren he thong cho moi hoc sinh (unbounded + sai scope).
+  const { data: enr, error: enrErr } = await supa
+    .from('enrollments')
+    .select('class_id')
+    .eq('student_id', user.id);
+  if (enrErr) console.warn('[auth] fetch enrollments:', enrErr.message);
+  const classIds = (enr ?? []).map((r: { class_id: string }) => r.class_id);
+  if (!classIds.length) return [];
+  // bounded-ok: classIds la enrollments cua 1 hoc sinh - it lop.
+  const { data, error } = await supa
+    .from('class_grade_scopes')
+    .select('grade_id')
+    .in('class_id', classIds);
   // query loi khong duoc render nhu "khong co quyen truy cap" - log de biet.
   if (error) console.warn('[auth] fetch allowed grades:', error.message);
   const ids = new Set((data ?? []).map((r: { grade_id: string }) => r.grade_id));

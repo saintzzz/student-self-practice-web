@@ -40,7 +40,11 @@ const files = [];
 const hits = { unchecked: [], unbounded: [], action: [], cas: [] };
 // .from()/.rpc() voi MOI dang tham so - ke ca ten bang dong
 // (.from(e.table)) nhur r25 phat hien. Ngoai tru Array.from(...).
+// EA adaptation: calls go through `supa` var or `(await getSupabase()).from`.
+// .from()/.rpc() voi MOI dang tham so - ke ca ten bang dong
+// (.from(e.table)) nhur r25 phat hien. Ngoai tru Array.from(...).
 const QRE = /(?<!Array)\.from\s*\(|\.rpc\s*\(/g;
+const RECEIVER_RE = /supabase|supa\b|getSupabase/i;
 // fetchAllRows KHONG phai safe-wrap cho Class A: ket qua {rows,error,truncated}
 // van phai di qua mustRows hoac bind error - bo sot r25 (dept/reports).
 const SAFE_WRAP = /^\s*(must|mustRows)\s*[<(]/;
@@ -90,16 +94,17 @@ function allQueriesWrapped(text) {
 
 // B: tables that exceed the ~1000-row PostgREST cap at pilot scale.
 const BIG_TABLES =
-  /^(students|grades|attendance_records|period_absences|conduct_evaluations|daily_conduct|notifications|messages|audit_log|audit_logs|student_record_history|activities|announcements|activity_announcements|timetable_entries|period_logs|daily_reports|early_warnings|incidents|digest_outbox|digest_deliveries|ai_jobs|tvc_questions|tvc_materials|activity_attendance|signoffs|lock_records|support_plans|teacher_assessments|counseling_cases|competency_assessments|competency_evidence|emulation_scores|tasks|profiles|teacher_subjects|student_groups|tvc_curriculum_standards|lesson_plans|assessment_items|student_assessments|parents|parent_students|appointments)$/;
+  /^(qb_questions|qb_attempt_events|qb_item_stats|qb_review_queue|qb_assets|qb_question_assets|qb_audio_assets|qb_question_audio|qb_exam_forms|qb_exam_blueprints|results|enrollments|accounts|classes|class_grade_scopes|parent_contacts|audit_log|students|parents|notifications|messages|weekly_leaderboard)$/;
 // Cot scope cardinality cao KHONG gioi han so rows (r25: .in("school_id")
 // tren profiles cua mot So co the >1000 rows). Chi cac khoa tro toi mot
 // thuc the don le moi tinh la bounded.
+// Cột ma mot gia tri anh xa toi NHIEU rows -> .eq() khong bound.
+// (*_id truong khoa ngoai don le van bound: .eq("student_id", uid) tra it rows.)
 const HIGH_CARD_COLS =
-  /^(school_id|academic_year_id|campus_id|org_unit_id|subject_id|term_id|year_id|term|semester|grade|role|status|date|weekday|month|year)$/;
-// Bang moi truong luon < 1000 rows -> .eq("school_id") du de bound.
-// (.in("school_id") = pham vi So -> KHONG bao gio bound.)
-const SCHOOL_SCOPED =
-  /^(profiles|classes|subjects|campuses|departments|school_kpis|feature_grants|digest_configs|literature|schools|academic_years)$/;
+  /^(school_id|grade|subject|skill|topic_key|mode|status|review_status|difficulty|date|weekday|month|year|role|exam_form|created_at|week_start|issue|priority)$/;
+// Bang lop-hoc luon < 1000 rows -> .eq("school_id") du de bound.
+// (.in("school_id") = pham vi rong -> KHONG bao gio bound.)
+const SCHOOL_SCOPED = /^(classes|schools|school_years)$/;
 function colBounds(col, tbl, method) {
   const c = col.split(".").pop();
   // r26 M: .in(*_id) KHONG bao gio bound - kich thuoc list khong kiem
@@ -282,7 +287,7 @@ for (const f of files) {
       ts.isCallExpression(n) &&
       ts.isPropertyAccessExpression(n.expression) &&
       n.expression.name.text === "from" &&
-      /supabase/.test(n.expression.expression.getText(sf))
+      RECEIVER_RE.test(n.expression.expression.getText(sf))
     ) {
       const tbl = n.arguments[0]?.getText(sf).replace(/['"]/g, "") || "";
       if (BIG_TABLES.test(tbl)) {

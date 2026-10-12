@@ -63,6 +63,7 @@ export default function ReviewQueueCard() {
     setTotal(count ?? items.length);
     items.sort((a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority));
     const ids = items.map((i) => i.question_id);
+    // bounded-ok: ids <= PAGE(20) tu trang queue ben tren.
     const qs = ids.length
       ? await supa
           .from('qb_questions')
@@ -71,6 +72,7 @@ export default function ReviewQueueCard() {
       : { data: [] };
     const qmap = new Map(((qs.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
     // CR-49: item statistics from real attempt events (admin RLS).
+    // bounded-ok: .in(question_id, ids<=20).
     const stats = ids.length
       ? await supa
           .from('qb_item_stats')
@@ -81,6 +83,7 @@ export default function ReviewQueueCard() {
     // Reviewers must see the same visuals the student sees - fetch linked
     // asset paths so image-based questions can be verified against the
     // prompt before approval (external-review r4).
+    // bounded-ok: .in(question_id, ids<=20).
     const links = ids.length
       ? await supa
           .from('qb_question_assets')

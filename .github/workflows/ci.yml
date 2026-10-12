@@ -29,6 +29,9 @@ jobs:
       - name: Attribution legal gate
         run: npm run audit:attribution
 
+      - name: Reliability + defect-class gate
+        run: npm run code:reliability
+
       - name: Unit tests
         run: npm test
 

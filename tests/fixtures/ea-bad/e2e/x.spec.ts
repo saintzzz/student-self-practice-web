@@ -1,0 +1,3 @@
+beforeEach(() => {
+  delete window.SpeechRecognition;
+});

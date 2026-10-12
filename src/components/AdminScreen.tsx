@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
+import { fetchAllRows } from '../lib/supabase/fetch-all';
 import type { PracticeAccount } from '../lib/auth/practiceAuth';
 import { fetchRecentResults, type ResultWithStudent } from '../lib/practiceResults';
 import ReviewQueueCard from './ReviewQueueCard';
@@ -69,27 +70,35 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
 
   const refresh = useCallback(async () => {
     const supa = await getSupabase();
-    const [a, c] = await Promise.all([
-      supa.from('accounts').select('id, username, display_name, role, placement_grade').order('username'),
-      supa.from('classes').select('id, name, grade_id, school_year, join_code').order('name'),
+    // r5: ca 4 bang deu vuot duoc cap ~1000 rows o quy mo multi-school -
+    // phai paginate va fail-closed (loi -> hien thong bao, khong render
+    // du lieu truncated nhu the la day du).
+    const [a, c, e, s] = await Promise.all([
+      fetchAllRows<PracticeAccount>((f, t) => supa.from('accounts').select('id, username, display_name, role, placement_grade').order('username').range(f, t)),
+      fetchAllRows<PracticeClass>((f, t) => supa.from('classes').select('id, name, grade_id, school_year, join_code').order('name').range(f, t)),
+      fetchAllRows<{ class_id: string; student_id: string }>((f, t) => supa.from('enrollments').select('class_id, student_id').order('class_id').order('student_id').range(f, t)),
+      fetchAllRows<{ class_id: string; grade_id: string }>((f, t) => supa.from('class_grade_scopes').select('class_id, grade_id').order('class_id').order('grade_id').range(f, t)),
     ]);
-    setAccounts((a.data as PracticeAccount[]) ?? []);
-    setClasses((c.data as PracticeClass[]) ?? []);
-    const [e, s] = await Promise.all([
-      supa.from('enrollments').select('class_id, student_id'),
-      supa.from('class_grade_scopes').select('class_id, grade_id'),
-    ]);
+    const loadErr = a.error ?? c.error ?? e.error ?? s.error;
+    const truncated = a.truncated || c.truncated || e.truncated || s.truncated;
+    if (loadErr || truncated) {
+      say(`Không tải hết dữ liệu quản trị - vui lòng thử lại.`);
+      if (loadErr) console.error('[admin] refresh:', loadErr.message);
+      else console.error('[admin] refresh truncated');
+    }
+    setAccounts(a.rows);
+    setClasses(c.rows);
     const emap: Record<string, string[]> = {};
-    for (const r of e.data ?? []) {
+    for (const r of e.rows) {
       (emap[r.class_id] ??= []).push(r.student_id);
     }
     setEnrolled(emap);
     const smap: Record<string, string[]> = {};
-    for (const r of s.data ?? []) {
+    for (const r of s.rows) {
       (smap[r.class_id] ??= []).push(r.grade_id);
     }
     setScopes(smap);
-  }, []);
+  }, [say]);
 
   useEffect(() => {
     void refresh();
