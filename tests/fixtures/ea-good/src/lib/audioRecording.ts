@@ -7,5 +7,12 @@ export async function startAudioRecording() {
     stream.getTracks().forEach((track) => track.stop());
     throw err;
   }
+  const release = () => stream.getTracks().forEach((track) => track.stop());
+  try {
+    recorder.start();
+  } catch (err) {
+    release();
+    throw err;
+  }
   return recorder;
 }

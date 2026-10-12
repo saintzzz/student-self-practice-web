@@ -26,17 +26,28 @@ const H = {
   Prefer: 'count=exact',
 };
 
+// PostgREST occasionally returns a transient 500 (schema-cache reload,
+// statement timeout on a LIKE page) - retry before failing the audit.
+async function fetchRetry(url) {
+  let last;
+  for (let i = 0; i < 4; i++) {
+    const r = await fetch(url, { headers: H });
+    if (r.ok) return r;
+    last = r.status;
+    await new Promise((res) => setTimeout(res, 3000));
+  }
+  throw new Error(`HTTP ${last} from ${url}`);
+}
+
 async function fetchJson(url) {
-  const r = await fetch(url, { headers: H });
-  if (!r.ok) throw new Error(`HTTP ${r.status} from ${url}`);
+  const r = await fetchRetry(url);
   const body = await r.json();
   if (!Array.isArray(body)) throw new Error(`non-array response from ${url}`);
   return body;
 }
 
 async function countRows(filter) {
-  const r = await fetch(`${SUPA}/rest/v1/qb_questions?select=id&${filter}&limit=0`, { headers: H });
-  if (!r.ok) throw new Error(`HTTP ${r.status} for countRows(${filter})`);
+  const r = await fetchRetry(`${SUPA}/rest/v1/qb_questions?select=id&${filter}&limit=0`);
   const cr = r.headers.get('content-range') ?? '';
   const n = Number(cr.split('/')[1] ?? -1);
   if (n < 0) throw new Error(`no content-range for countRows(${filter})`);

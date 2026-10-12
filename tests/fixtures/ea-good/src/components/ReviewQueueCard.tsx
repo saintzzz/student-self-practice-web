@@ -3,6 +3,6 @@ export async function act(supabase: any, id: string) {
   const { data, error: err } = await supabase.rpc('review_question', { p_question_id: id, p_action: 'approve' });
   if (err) return err;
   if (data?.stale) return reload();
-  if (data && data.ok === false) return 'denied';
+  if (data?.ok !== true) return 'denied';
   return 'removed';
 }

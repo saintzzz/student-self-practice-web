@@ -63,6 +63,8 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 44 | `rpc-result-enum` (r8) | `{ok:false, stale:true}` / verify `throttled`/`failed` results ignored - denied actions reported as success | ReviewQueueCard surfaces stale + reloads; ParentReportScreen renders sent/throttled/failed | check-ea-classes #39 |
 | 45 | `fetch-mode-parity` (r8) | public fetch mapped `exam` to `mockEligible` while auth used `examEligible` - same mode, different rows | same per-mode `case` in both RPCs (0038) | check-ea-classes #40 |
 | 46 | `mic-lifecycle` residual (r8) | StrictMode never re-armed the guard; fallback/SR callbacks could launch post-unmount; ctor-fail leaked the stream | re-arm in setup + guard every launch path + `track.stop()` on ctor failure | check-ea-classes #33 (tightened) |
+| 47 | `mic-lifecycle` residual (r9) | `recorder.start()` could throw after construction - caller never got a controller, tracks+VAD+timer leaked | `start()` wrapped in try/catch releasing tracks, VAD, and the cap timer | check-ea-classes #33 (tightened) + 2 lib tests |
+| 48 | `rpc-result-enum` residual (r9) | null/malformed `review_question` payload passed the `ok === false` guard - ambiguous result treated as success | UI requires explicit `data?.ok === true` before the success transition | check-ea-classes #39 (tightened) |
 
 ## Deferred
 

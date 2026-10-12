@@ -123,8 +123,10 @@ export default function ReviewQueueCard() {
       void load();
       return;
     }
-    if (data && data.ok === false) {
-      setError('RPC từ chối thao tác - thử lại sau.');
+    // r9: only an explicit {ok:true} may transition the UI to success -
+    // a null/malformed payload with no transport error is not a success.
+    if (data?.ok !== true) {
+      setError('Không xác nhận được kết quả duyệt. Vui lòng tải lại.');
       return;
     }
     setConfirming(null);

@@ -201,7 +201,15 @@ export async function startAudioRecording(
     rejectDone(event);
   };
 
-  recorder.start();
+  try {
+    recorder.start();
+  } catch (err) {
+    // r9: start() can throw after construction succeeds - no controller
+    // was returned, so release tracks/VAD/timer here or the mic leaks.
+    clearTimeout(timer);
+    release();
+    throw err;
+  }
 
   return {
     done,

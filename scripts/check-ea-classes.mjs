@@ -460,6 +460,12 @@ for (const f of walk(join(BASE, "src", "hooks"), /\.tsx?$/)) {
         !/new MediaRecorder[\s\S]{0,600}?catch[\s\S]{0,400}?track\.stop\(\)/.test(src))
       hit("mic-lifecycle", rel(ar),
         "MediaRecorder constructor failure leaks the mic stream - no track.stop() in a catch");
+    // r9 tightening: start() can also throw after construction succeeds -
+    // the caller never receives a controller, so the catch must release.
+    if (/recorder\.start\(\)/.test(src) &&
+        !/try\s*{[^}]*recorder\.start\(\)[\s\S]{0,600}?catch[\s\S]{0,300}?(release\(\)|track\.stop\(\))/.test(src))
+      hit("mic-lifecycle", rel(ar),
+        "MediaRecorder.start() failure leaks the mic stream - no release() in a catch");
   }
 }
 
@@ -490,6 +496,11 @@ for (const f of walk(join(BASE, "src", "hooks"), /\.tsx?$/)) {
     if (/rpc\(\s*['"]review_question['"]/.test(src) && !/stale/.test(src))
       hit("rpc-result-enum", rel(rqc),
         "review_question {stale} result unchecked - denied CAS writes look like successes");
+    // r9 tightening: a null/malformed payload over HTTP-200 must not pass
+    // as success - require an explicit ok===true/ok!==true assertion.
+    if (/rpc\(\s*['"]review_question['"]/.test(src) && !/ok\s*(!==|===)\s*true/.test(src))
+      hit("rpc-result-enum", rel(rqc),
+        "review_question payload without explicit ok===true gate - ambiguous result treated as success");
   }
   const prs = join(BASE, "src/components/ParentReportScreen.tsx");
   if (existsSync(prs)) {
