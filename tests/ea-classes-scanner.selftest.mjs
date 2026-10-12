@@ -88,6 +88,9 @@ const CLASSES = [
   // r15 classes
   "generator-answer-consistency",
   "updater-side-effect",
+  // r16 classes
+  "result-owner-binding",
+  "one-shot-effect-replay",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

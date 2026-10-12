@@ -26,7 +26,7 @@ import {
   getDueReviewItems,
 } from '../lib/engagement/store';
 import { bankSkillOf, skillKeyFor } from '../lib/engagement/skills';
-import { saveExamResult } from '../lib/practiceResults';
+import { saveExamResult, bindActivityOwner } from '../lib/practiceResults';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
@@ -105,6 +105,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const telemetryRef = useRef<ExamTelemetry | null>(null);
   /** When the current question first rendered - latency basis. */
   const questionShownAtRef = useRef<number>(0);
+
+  // r16: bind the result owner to the identity at activity start - a
+  // mid-exam account switch must not attribute the run to the new user.
+  useEffect(() => { void bindActivityOwner(); }, []);
 
   // 1s heartbeat - countdown + auto-submit in exam mode; the elapsed
   // stopwatch display in practice/review/arena (CR-52).

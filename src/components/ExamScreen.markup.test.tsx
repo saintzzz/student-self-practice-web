@@ -8,7 +8,7 @@ import type { GrammarMcqQuestion } from '../types/exam';
 // literal tags - otherwise "the underlined part" is invisible and the
 // pronunciation question is unanswerable.
 
-vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn() }));
+vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn(), bindActivityOwner: vi.fn() }));
 
 const Q: GrammarMcqQuestion = {
   id: 'u1',

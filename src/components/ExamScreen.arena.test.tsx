@@ -9,7 +9,7 @@ import type { GrammarMcqQuestion } from '../types/exam';
 // CR-34 review: an arena duel is NOT practice - it must not feed quests,
 // skill stats, the review queue, or the weekly leaderboard.
 
-vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn() }));
+vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn(), bindActivityOwner: vi.fn() }));
 
 vi.mock('../lib/arena', async () => {
   const actual = await vi.importActual('../lib/arena');

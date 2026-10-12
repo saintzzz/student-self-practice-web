@@ -38,7 +38,7 @@ async function fetchTable(table, cols, order = 'id') {
   for (let off = 0; ; off += PAGE) {
     const res = await fetch(
       `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=${PAGE}`,
-      { headers: HEADERS },
+      { headers: HEADERS, signal: AbortSignal.timeout(15000) },
     );
     if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
     const page = await res.json();

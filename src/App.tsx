@@ -21,6 +21,7 @@ import {
 import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagement/sync';
 import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/engagement/store';
 import { confirmParentEmail } from './lib/parentContact';
+import { bindActivityOwner } from './lib/practiceResults';
 import { GRADES } from './data/vocabulary';
 import type { ExamProgramId } from './types/exam';
 import {
@@ -41,6 +42,12 @@ import {
 } from './lib/practiceSession';
 
 type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report';
+
+// r16: StrictMode replays the mount effect - the confirm RPC consumes
+// the token on first success, so a naive second call would see
+// "expired". Share the in-flight promise per token instead: one
+// network call, and the surviving effect displays its result.
+const emailVerifyCache = new Map<string, Promise<boolean>>();
 /** 'off' = Supabase not configured (pre-CR-08 guest-only behavior). */
 type AuthMode = 'off' | 'loading' | 'login' | 'guest' | 'student' | 'admin';
 
@@ -68,8 +75,14 @@ export default function App() {
   useEffect(() => {
     const token = new URLSearchParams(window.location.search).get('verify_email');
     if (!token) return;
+    let p = emailVerifyCache.get(token);
+    if (!p) {
+      p = confirmParentEmail(token);
+      emailVerifyCache.set(token, p);
+      void p.finally(() => emailVerifyCache.delete(token));
+    }
     let cancelled = false;
-    void confirmParentEmail(token).then((ok) => {
+    void p.then((ok) => {
       window.history.replaceState(null, '', window.location.pathname);
       if (!cancelled) setVerifyNotice(ok ? 'ok' : 'fail');
     });
@@ -184,6 +197,8 @@ export default function App() {
   }
 
   function handleStartBatch(): void {
+    // r16: the finished batch's result row belongs to whoever started it.
+    void bindActivityOwner();
     setBatch(createBatch(undefined, selectedGradeId ?? 'grade-2'));
     setScreen('batch');
   }

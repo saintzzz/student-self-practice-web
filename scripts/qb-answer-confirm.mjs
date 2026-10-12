@@ -39,7 +39,7 @@ console.log(`flagged items to confirm: ${flagged.size}`);
 async function fetchQ(ids) {
   const out = [];
   for (let i = 0; i < ids.length; i += 200) {
-    const res = await fetch(`${SUPA_URL}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,transcript,passage,choices,answer,explanation_vi,publication_policy&id=in.(${ids.slice(i, i + 200).join(',')})`, { headers: H });
+    const res = await fetch(`${SUPA_URL}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,transcript,passage,choices,answer,explanation_vi,publication_policy&id=in.(${ids.slice(i, i + 200).join(',')})`, { headers: H, signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(await res.text());
     out.push(...await res.json());
   }
@@ -69,6 +69,7 @@ async function callGemini(items) {
       contents: [{ parts: [{ text: CONFIRM_PROMPT(items) }] }],
       generationConfig: { responseMimeType: 'application/json', temperature: 0 },
     }),
+    signal: AbortSignal.timeout(120000),
   });
   if (res.status === 429 || res.status === 503) throw new QuotaError(`gemini ${res.status}`);
   if (!res.ok) throw new Error(`gemini ${res.status}`);
@@ -88,6 +89,7 @@ async function callAnthropic(items) {
       max_tokens: 8192, temperature: 0,
       messages: [{ role: 'user', content: CONFIRM_PROMPT(items) }],
     }),
+    signal: AbortSignal.timeout(120000),
   });
   if (res.status === 429 || res.status === 529) throw new QuotaError(`anthropic ${res.status}`);
   if (!res.ok) throw new Error(`anthropic ${res.status}`);
@@ -106,6 +108,7 @@ async function callOpenAI(items) {
         { role: 'user', content: CONFIRM_PROMPT(items) },
       ],
     }),
+    signal: AbortSignal.timeout(120000),
   });
   if (res.status === 429 || res.status === 503) throw new QuotaError(`openai ${res.status}`);
   if (!res.ok) throw new Error(`openai ${res.status}`);
@@ -205,6 +208,7 @@ if (APPLY) {
     const res = await fetch(`${SUPA_URL}/rest/v1/qb_questions?id=eq.${v.id}`, {
       method: 'PATCH', headers: { ...H, 'Content-Type': 'application/json' },
       body: JSON.stringify({ publication_policy: policy, review_status: 'flagged' }),
+      signal: AbortSignal.timeout(15000),
     });
     console.log(`flag ${v.id}: ${res.status}`);
   }

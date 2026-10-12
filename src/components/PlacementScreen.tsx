@@ -6,7 +6,7 @@ import {
   computePlacement,
   QUESTIONS_PER_GRADE,
 } from '../lib/placement';
-import { savePlacementResult } from '../lib/practiceResults';
+import { savePlacementResult, bindActivityOwner } from '../lib/practiceResults';
 import {
   advanceToNextQuestion,
   isSessionComplete,
@@ -39,6 +39,8 @@ export default function PlacementScreen({ isLoggedIn, onStartGrade, onBack }: Pl
   const done = isSessionComplete(state.session);
   const placement = done ? computePlacement(state.session, state.questionGradeIds) : null;
   const savedRef = useRef(false);
+  // r16: the placement result belongs to whoever started the placement.
+  useEffect(() => { void bindActivityOwner(); }, []);
   useEffect(() => {
     if (done && placement && isLoggedIn && !savedRef.current) {
       savedRef.current = true;

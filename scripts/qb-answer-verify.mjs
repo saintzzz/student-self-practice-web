@@ -64,7 +64,7 @@ async function fetchAll(table, cols) {
   for (let off = 0; ; off += 1000) {
     const res = await fetch(
       `${SUPA_URL}/rest/v1/${table}?select=${cols}&offset=${off}&limit=1000`,
-      { headers: DB_HEADERS });
+      { headers: DB_HEADERS, signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`${table}: ${res.status}`);
     const page = await res.json();
     out.push(...page);
@@ -120,6 +120,7 @@ async function callGemini(items) {
         contents: [{ parts: [{ text: VERIFY_PROMPT(items) }] }],
         generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
       }),
+      signal: AbortSignal.timeout(120000),
     });
   if (res.status === 429 || res.status === 503) throw new QuotaError(`gemini ${res.status}`);
   if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 160)}`);
@@ -141,6 +142,7 @@ async function callAnthropic(items) {
       temperature: 0.1,
       messages: [{ role: 'user', content: VERIFY_PROMPT(items) }],
     }),
+    signal: AbortSignal.timeout(120000),
   });
   if (res.status === 429 || res.status === 529) throw new QuotaError(`anthropic ${res.status}`);
   if (!res.ok) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 160)}`);
@@ -164,6 +166,7 @@ async function callOpenAI(items) {
         { role: 'user', content: VERIFY_PROMPT(items) },
       ],
     }),
+    signal: AbortSignal.timeout(120000),
   });
   if (res.status === 429 || res.status === 503) throw new QuotaError(`openai ${res.status}`);
   if (!res.ok) throw new Error(`openai ${res.status}: ${(await res.text()).slice(0, 160)}`);
@@ -307,6 +310,7 @@ if (APPLY && bad.length) {
     const res = await fetch(`${SUPA_URL}/rest/v1/qb_questions?id=eq.${v.id}`, {
       method: 'PATCH', headers: { ...DB_HEADERS, 'Content-Type': 'application/json' },
       body: JSON.stringify({ publication_policy: policy, review_status: 'flagged' }),
+      signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) console.log(`flag ${v.id}: ${res.status}`);
   }

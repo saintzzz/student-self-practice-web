@@ -4,6 +4,27 @@ import type { BatchResult } from './batch/batchSession';
 import type { ExamProgramId } from '../types/exam';
 import { EXAM_POINTS_PER_QUESTION } from './exam/examSession';
 
+// r16 result-owner-binding: a completed run belongs to the identity
+// that STARTED the activity. A mid-activity identity change (second-tab
+// login, account switch, or a login during a guest run) must never
+// attribute the result to a different account. Callers bind the owner
+// once at activity start (exam mount, batch create, placement mount).
+// undefined = no bind happened (legacy call site) -> save-time session
+// decides, as before.
+let activityOwner: string | null | undefined;
+
+export async function bindActivityOwner(): Promise<void> {
+  activityOwner = (await getSession().catch(() => null))?.user?.id ?? null;
+}
+
+export function clearActivityOwner(): void {
+  activityOwner = undefined;
+}
+
+function ownerMismatch(session: { user?: { id?: string } | null } | null): boolean {
+  return activityOwner !== undefined && (session?.user?.id ?? null) !== activityOwner;
+}
+
 export interface PracticeResultRow {
   id: string;
   account_id: string;
@@ -22,7 +43,7 @@ export interface PracticeResultRow {
 export async function savePracticeResult(gradeId: string, result: BatchResult): Promise<void> {
   try {
     const session = await getSession();
-    if (!session) return;
+    if (!session || ownerMismatch(session)) return;
     const { error: rErr } = await (await getSupabase()).from('results').insert({
       account_id: session.user.id,
       grade_id: gradeId,
@@ -52,7 +73,7 @@ export async function saveExamResult(
 ): Promise<void> {
   try {
     const session = await getSession();
-    if (!session) return;
+    if (!session || ownerMismatch(session)) return;
     const { error: rErr } = await (await getSupabase()).from('results').insert({
       account_id: session.user.id,
       grade_id: gradeId,
@@ -87,7 +108,7 @@ export async function savePlacementResult(
 ): Promise<void> {
   try {
     const session = await getSession();
-    if (!session) return;
+    if (!session || ownerMismatch(session)) return;
     const supa = await getSupabase();
     const { error: plErr } = await supa.rpc('set_my_placement', { g: gradeId });
     if (plErr) console.warn('[practice] set placement:', plErr.message);

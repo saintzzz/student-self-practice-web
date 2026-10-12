@@ -58,6 +58,8 @@
 //  53. orphaned-tool-imports       - script importing a module that no longer exists (r14 L)
 //  54. generator-answer-consistency - reorder tiles not a permutation of the answer (r15 M)
 //  55. updater-side-effect         - side effects inside React state updaters (r15 M)
+//  56. result-owner-binding        - result saved under live session, not the start owner (r16 M)
+//  57. one-shot-effect-replay      - single-use token consumed inside a replayable effect (r16 L)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -774,14 +776,14 @@ for (const st of ["tests/ea-classes-scanner.selftest.mjs", "tests/reliability-sc
 // ---------- 48. audit-network-timeout ----------
 // A retry loop without a per-request deadline blocks the audit forever
 // on a hung connection - AbortSignal.timeout bounds each attempt.
-{
-  const ab = join(BASE, "scripts", "audit-bank.mjs");
-  if (existsSync(ab)) {
-    const src = readFileSync(ab, "utf8");
-    if (/fetchRetry|await fetch\(/.test(src) && !/AbortSignal|signal\s*:/.test(src))
-      hit("audit-network-timeout", rel(ab),
-        "fetch has no per-request timeout - a hung request blocks the audit");
-  }
+// r16 tightening: the audit family is every audit-/qb- tool, not just
+// audit-bank - verify/confirm/content-audit issue the same live reads
+// and writes.
+for (const f of walk(join(BASE, "scripts"), /^(.+-audit|audit-|qb-).*\.mjs$/)) {
+  const src = readFileSync(f, "utf8");
+  if (/await fetch\(/.test(src) && !/AbortSignal|signal\s*:/.test(src))
+    hit("audit-network-timeout", rel(f),
+      "fetch has no per-request timeout - a hung request blocks the audit");
 }
 
 // ---------- 49. auth-signout-error-loss ----------
@@ -931,6 +933,33 @@ for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
       hit("updater-side-effect", rel(f),
         "side effect inside a state updater - StrictMode replays updaters");
   }
+}
+
+// ---------- 56. result-owner-binding ----------
+// A result row belongs to the identity at activity START. Saving with
+// the live session alone attributes a run to whoever logged in mid-
+// activity - bind the owner at start and re-check it before insert.
+{
+  const pr = join(BASE, "src", "lib", "practiceResults.ts");
+  if (existsSync(pr)) {
+    const src = readFileSync(pr, "utf8");
+    if (/from\(\s*['"]results['"]\)\s*\.insert/.test(src) &&
+        !/bindActivityOwner[\s\S]{0,400}?activityOwner|ownerMismatch/.test(src))
+      hit("result-owner-binding", rel(pr),
+        "result insert uses only the save-time session - no start-owner binding");
+  }
+}
+
+// ---------- 57. one-shot-effect-replay ----------
+// Single-use operations (email-confirm tokens) fired from a mount effect
+// double-run under StrictMode: the replayed call sees the token already
+// consumed. The in-flight promise must be cached/shared per token.
+for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
+  const src = readFileSync(f, "utf8");
+  if (/verify_email/.test(src) && /confirmParentEmail\(/.test(src) &&
+      !/VerifyCache|new Map\(/.test(src))
+    hit("one-shot-effect-replay", rel(f),
+      "single-use token consumed inside a replayable effect - cache the request per token");
 }
 
 // ---------- report ----------
