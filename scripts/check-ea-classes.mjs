@@ -33,6 +33,11 @@
 //  28. unverified-recipient        - child progress mailed to an unconfirmed address (r6 M)
 //  29. email-html-injection        - user-controlled text raw into outbound email HTML (r6 M)
 //  30. xff-spoofable               - rate-limit bucket keyed on caller-settable header entry (r6 M)
+//  31. grant-shadow-column-revoke  - column-level revoke while the table-level grant stands (r7 H)
+//  32. sql-cas-transition          - RPC status write without expected-status predicate (r7 M)
+//  33. mic-lifecycle               - async mic capture/timer firing after unmount (r7 M)
+//  34. provider-config-regression  - mailer bypassing the shared provider-aware sender (r7 M)
+//  35. function-return-type-replay - create-or-replace changing return type without drop (r7 H)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -234,6 +239,70 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
         hit("email-html-injection", "supabase/migrations",
           `${name}: ${m[0].trim()} concatenated into email without email_esc()`);
       }
+      // 34. provider-config-regression: outbound mail must route through the
+      //     shared provider-aware sender. A mailer that posts to a provider
+      //     API or reads vault keys directly has dropped the provider matrix.
+      if (/create or replace function\s+practice\.send_email\(/i.test(mig) &&
+          /net\.http_post|decrypted_secrets/.test(body))
+        hit("provider-config-regression", "supabase/migrations",
+          `${name} posts mail directly - provider matrix bypassed, use practice.send_email`);
+    }
+    // 31. grant-shadow-column-revoke: `revoke update (col) on T from R` does
+    //     NOT narrow a table-level `grant update on T to R` - privileges are
+    //     unioned in Postgres. Every column revoke needs the same-privilege
+    //     table-level revoke somewhere in the corpus.
+    const tableRevokes = new Set();
+    for (const m of mig.matchAll(
+      /revoke\s+([a-z, \t]+?)[ \t]+on\s+(practice\.\w+)\s+from\s+(\w+)/gi,
+    )) {
+      if (m[1].includes("(")) continue;
+      for (const priv of m[1].split(",").map((s) => s.trim().toLowerCase())) {
+        if (priv === "all" || priv === "all privileges") {
+          for (const p of ["select", "insert", "update", "delete"])
+            tableRevokes.add(`${p}|${m[2]}|${m[3].toLowerCase()}`);
+        } else {
+          tableRevokes.add(`${priv}|${m[2]}|${m[3].toLowerCase()}`);
+        }
+      }
+    }
+    for (const m of mig.matchAll(
+      /revoke\s+(insert|update|select|delete)\s*\([^)]+\)\s+on\s+(practice\.\w+)\s+from\s+(\w+)/gi,
+    )) {
+      if (!tableRevokes.has(`${m[1].toLowerCase()}|${m[2]}|${m[3].toLowerCase()}`))
+        hit("grant-shadow-column-revoke", "supabase/migrations",
+          `column revoke ${m[1]} on ${m[2]} without a table-level revoke - the table grant still applies`);
+    }
+    // 32. sql-cas-transition: a status machine write must predicate on the
+    //     expected prior status, or a stale transition resurrects terminal
+    //     rows. review_question is the queue's transition RPC.
+    const reviewDefs = [...mig.matchAll(
+      /create or replace function\s+practice\.review_question[\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
+    )];
+    const review = reviewDefs.at(-1)?.[1] ?? "";
+    if (reviewDefs.length && !/review_status\s+in\s*\(/i.test(review))
+      hit("sql-cas-transition", "supabase/migrations",
+        "review_question transitions without an expected-status predicate - stale writes can resurrect terminal states");
+    // 35. function-return-type-replay: `create or replace` cannot change a
+    //     function's return type - Postgres errors on fresh replay. When a
+    //     later migration redefines a function with a different `returns`,
+    //     it must drop the function first.
+    const sigSeen = new Map();
+    const migFiles = [...walk(migDir, /\.sql$/)].sort();
+    for (const f of migFiles) {
+      const src = readFileSync(f, "utf8");
+      for (const m of src.matchAll(
+        /create or replace function\s+(?:practice\.)?(\w+)\s*\([^)]*\)[\s\S]*?returns\s+(setof\s+\w+|table\s*\([^)]*\)|[a-z_][\w]*(?:\[\])?)/gi,
+      )) {
+        const key = m[1].toLowerCase();
+        const ret = m[2].toLowerCase().replace(/\s+/g, "");
+        const droppedBefore = new RegExp(
+          `drop\\s+function\\s+(?:if\\s+exists\\s+)?(?:practice\\.)?${key}\\b`, "i",
+        ).test(src.slice(0, m.index));
+        if (sigSeen.has(key) && sigSeen.get(key) !== ret && !droppedBefore)
+          hit("function-return-type-replay", `${rel(f)}:${lineOf(src, m.index)}`,
+            `${key} redefined returns ${sigSeen.get(key)} -> ${ret} without drop function - fresh replay fails`);
+        sigSeen.set(key, ret);
+      }
     }
   }
 }
@@ -330,6 +399,18 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
       hit("answer-shape-bool", rel(f),
         "reads answer.bool only - generated rows use answer.boolean");
   }
+}
+
+// ---------- 33. mic-lifecycle ----------
+// A hook that awaits mic permission or schedules a retry timer must guard
+// every post-await post-timer step against unmount - otherwise capture
+// attaches, retries relaunch, or onAttempt fires after the child left.
+for (const f of walk(join(BASE, "src", "hooks"), /\.tsx?$/)) {
+  const src = readFileSync(f, "utf8");
+  if (/await\s+startAudioRecording\(|await\s+startSpeechRecognition\(/.test(src) &&
+      !/unmountedRef|isMountedRef|cancelledRef/.test(src))
+    hit("mic-lifecycle", rel(f),
+      "mic capture promise resolves with no unmount guard - capture can attach after unmount");
 }
 
 // ---------- 23. guest-state-leak ----------

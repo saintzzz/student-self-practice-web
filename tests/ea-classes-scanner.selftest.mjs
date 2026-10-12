@@ -53,6 +53,12 @@ const CLASSES = [
   "unverified-recipient",
   "email-html-injection",
   "xff-spoofable",
+  // r7 classes
+  "grant-shadow-column-revoke",
+  "sql-cas-transition",
+  "mic-lifecycle",
+  "provider-config-regression",
+  "function-return-type-replay",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

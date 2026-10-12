@@ -110,3 +110,42 @@ begin
   return 0;
 end;
 $$;
+
+-- r7 good: table-level revoke precedes column narrowing
+revoke insert, update, select on practice.parent_contacts from authenticated;
+grant select (account_id, email, opted_in, verified, updated_at, last_sent_at)
+  on practice.parent_contacts to authenticated;
+grant update (email, opted_in, updated_at)
+  on practice.parent_contacts to authenticated;
+
+-- r7 good: CAS transition - only non-terminal rows move
+create or replace function practice.review_question(p_question_id text)
+returns jsonb language plpgsql as $$
+begin
+  update practice.qb_review_queue
+    set review_status = 'approved'
+    where question_id = p_question_id
+      and review_status in ('pending', 'flagged');
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+-- r7 good: mailers route through the provider-aware sender
+create or replace function practice.send_email(p_to text, p_subject text, p_html text)
+returns bigint language plpgsql as $$
+begin
+  return 1;
+end;
+$$;
+create or replace function practice.request_parent_verify()
+returns jsonb language plpgsql as $$
+begin
+  perform practice.send_email('a@b.c', 's', 'h');
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+-- r7 good: return-type change drops first
+create or replace function practice.get_ai_configs() returns int language sql as $$ select 1 $$;
+drop function if exists practice.get_ai_configs();
+create or replace function practice.get_ai_configs() returns jsonb language sql as $$ select '{}'::jsonb $$;

@@ -52,6 +52,11 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 33 | `unverified-recipient` (r6) | student could store any email; weekly job mailed child progress to an unconfirmed address | `verified`/`verify_token` columns + confirm RPC + send gated on `pc.verified` + email-change reset trigger + column-write revoke (0036) | check-ea-classes #28 |
 | 34 | `email-html-injection` (r6) | `display_name` concatenated raw into outbound email subject/HTML | `practice.email_esc()` on all interpolated text (0036) | check-ea-classes #29 |
 | 35 | `xff-spoofable` (r6) | rate-limit bucket keyed on caller-settable first `x-forwarded-for` entry | last XFF entry (ingress-appended) keys the bucket; transcribe v12 | check-ea-classes #30 |
+| 36 | `grant-shadow-column-revoke` (r7) | 0036 column revokes could not narrow 0005 table-level grant - `verified` stayed client-writable and `verify_token` client-readable | table-level revoke + column re-grant of the exact writable/readable set (0037) | check-ea-classes #31 |
+| 37 | `sql-cas-transition` (r7) | `review_question` overwrote terminal queue statuses - stale approve resurrected a rejection | expected-status predicate `in ('pending','flagged')` + `{stale}` result (0037) | check-ea-classes #32 |
+| 38 | `mic-lifecycle` (r7) | `startAudioRecording` await and retry `setTimeout` could fire after unmount - capture attached, stale `onAttempt` submitted | `unmountedRef` + tracked retry timer cleared on unmount + guard in `finish`/`done` (hook + 2 regression tests) | check-ea-classes #33 |
+| 39 | `provider-config-regression` (r7) | 0036 mailers read only `resend_*` keys, dropping 0025's `email_provider`/`email_api_key`/`email_from` matrix | shared `practice.send_email()` provider dispatch; both mailers route through it (0037) | check-ea-classes #34 |
+| 40 | `function-return-type-replay` (r7) | `create or replace` cannot change return type - 0029 redefined `get_ai_configs` int->jsonb, fresh replay dies | `drop function` first in 0029 + scanner tracks returns across files | check-ea-classes #35 |
 
 ## Deferred
 

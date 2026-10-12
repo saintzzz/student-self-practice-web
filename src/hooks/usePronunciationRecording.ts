@@ -100,9 +100,20 @@ export function usePronunciationRecording(
   // Same trick for the recorder: VAD auto-stop resolves controller.done
   // and needs to invoke the stop+transcribe path from launchRecorder.
   const stopRecorderRef = useRef<(() => void) | null>(null);
+  // r7: pending async work must never attach or callback after unmount -
+  // a getUserMedia promise resolving late, the silent-retry timer, or an
+  // in-flight transcription would otherwise submit to a question the
+  // child already left.
+  const unmountedRef = useRef(false);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
+      unmountedRef.current = true;
+      if (retryTimerRef.current !== null) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
       controllerRef.current?.stop();
       recorderRef.current?.cancel();
     };
@@ -110,7 +121,7 @@ export function usePronunciationRecording(
 
   const finish = useCallback(
     (finalTranscript: string) => {
-      if (settledRef.current) return;
+      if (settledRef.current || unmountedRef.current) return;
       settledRef.current = true;
       onAttempt(finalTranscript);
     },
@@ -124,7 +135,7 @@ export function usePronunciationRecording(
     setPhase('recording');
     try {
       const controller = await startAudioRecording();
-      if (settledRef.current) {
+      if (settledRef.current || unmountedRef.current) {
         controller.cancel();
         return;
       }
@@ -132,6 +143,7 @@ export function usePronunciationRecording(
       // VAD auto-stop (or the 10s cap) resolves done without a tap - run
       // the same stop path so transcription starts by itself.
       void controller.done.then(() => {
+        if (unmountedRef.current) return;
         if (recorderRef.current === controller) void stopRecorderRef.current?.();
       });
     } catch (err) {
@@ -185,8 +197,12 @@ export function usePronunciationRecording(
         if (RETRYABLE_CODES.has(code) && attemptsRef.current < 2) {
           attemptsRef.current += 1;
           controllerRef.current = null;
-          // Small beat so the recognizer can tear down cleanly.
-          setTimeout(() => launchRef.current?.(), 150);
+          // Small beat so the recognizer can tear down cleanly; the timer
+          // is tracked so unmount can cancel a pending restart.
+          retryTimerRef.current = setTimeout(() => {
+            retryTimerRef.current = null;
+            if (!unmountedRef.current) launchRef.current?.();
+          }, 150);
           return;
         }
         if (!fallBackToRecorder()) {
@@ -216,6 +232,7 @@ export function usePronunciationRecording(
     setPhase('processing');
     try {
       const blob = await controller.stop();
+      if (unmountedRef.current) return;
       const transcript = await transcribePronunciationAudio(blob, targetWord);
       if (transcript === null) {
         setErrorReason('transcription');

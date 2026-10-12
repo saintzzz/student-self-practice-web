@@ -41,3 +41,33 @@ begin
   return 0;
 end;
 $$;
+
+-- r7 bad classes
+-- 31: column-level revoke while the table grant stands
+revoke update (verified) on practice.parent_contacts from authenticated;
+-- 32: status write with no expected-status predicate
+create or replace function practice.review_question(p_question_id text)
+returns jsonb language plpgsql as $$
+begin
+  update practice.qb_review_queue
+    set review_status = 'approved'
+    where question_id = p_question_id;
+  return jsonb_build_object('ok', true);
+end;
+$$;
+-- 34: mailer posts to a provider directly
+create or replace function practice.send_email(p_to text)
+returns bigint language plpgsql as $$
+begin
+  return 1;
+end;
+$$;
+create or replace function practice.request_parent_verify()
+returns jsonb language plpgsql as $$
+begin
+  perform net.http_post(url := 'https://api.resend.com/emails');
+  return jsonb_build_object('ok', true);
+end;
+$$;
+-- 35: return type changed without drop (defined twice, second different)
+create or replace function practice.get_ai_configs() returns int language sql as $$ select 1 $$;

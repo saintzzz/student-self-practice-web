@@ -3,6 +3,9 @@
 -- openrouter/openai. Extra keys are optional - the RPC picks up
 -- gemini_api_key_2/_3 only when those vault secrets exist.
 
+-- CREATE OR REPLACE cannot change a function's return type (0026 declared
+-- 3 columns, this declares 4) - drop first or fresh replay dies here.
+drop function if exists practice.get_ai_configs();
 create or replace function practice.get_ai_configs()
 returns table(provider text, api_key text, model text, base_url text)
 language plpgsql
