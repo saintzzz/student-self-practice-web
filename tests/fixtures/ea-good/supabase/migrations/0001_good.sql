@@ -149,3 +149,81 @@ $$;
 create or replace function practice.get_ai_configs() returns int language sql as $$ select 1 $$;
 drop function if exists practice.get_ai_configs();
 create or replace function practice.get_ai_configs() returns jsonb language sql as $$ select '{}'::jsonb $$;
+
+-- r8 good: row-independent verify quota + locked read->send->stamp
+create table if not exists practice.verify_send_log (
+  account_id uuid not null, sent_at timestamptz not null default now()
+);
+alter table practice.verify_send_log enable row level security;
+
+create or replace function practice.request_parent_verify()
+returns jsonb language plpgsql security definer as $$
+declare v_uid uuid := auth.uid(); v_recent int;
+begin
+  perform 1 from practice.parent_contacts where account_id = v_uid for update;
+  select count(*) into v_recent from practice.verify_send_log l
+    where l.account_id = v_uid and l.sent_at > now() - interval '10 minutes';
+  if v_recent >= 1 then return jsonb_build_object('ok', true, 'throttled', true); end if;
+  perform practice.send_email('a@b.c', 's', 'h');
+  insert into practice.verify_send_log (account_id) values (v_uid);
+  return jsonb_build_object('ok', true);
+end;
+$$;
+
+-- r8 good: public fetch uses the same per-mode eligibility as auth fetch
+create or replace function practice.fetch_questions_public(
+  p_grade smallint, p_subject text, p_count int default 20,
+  p_skills text[] default null, p_min_difficulty smallint default null,
+  p_mode text default 'practice'
+)
+returns setof jsonb language plpgsql stable security definer as $$
+declare got int := 0; rec record; seen text[] := '{}';
+begin
+  for rec in
+    select * from practice.qb_questions q
+    where random() < 0.35
+      and (q.publication_policy->>'commercialReleaseEligible')::boolean
+      and (q.publication_policy->>'requiresHumanApprovalForCommercialRelease')::boolean is not true
+      and case when p_mode = 'exam'
+            then (q.publication_policy->>'examEligible')::boolean
+               and (q.publication_policy->>'requiresHumanApprovalForExam')::boolean is not true
+            when p_mode = 'mock'
+            then (q.publication_policy->>'mockEligible')::boolean
+               and (q.publication_policy->>'requiresHumanApprovalForExam')::boolean is not true
+            else (q.publication_policy->>'practiceEligible')::boolean
+          end
+    limit 10
+  loop
+    got := got + 1;
+    seen := seen || coalesce(rec.variant_group_id, rec.id);
+    return next to_jsonb(rec);
+  end loop;
+  if got < 10 then
+    for rec in
+      select * from practice.qb_questions q
+      where (q.publication_policy->>'commercialReleaseEligible')::boolean
+        and (q.publication_policy->>'requiresHumanApprovalForCommercialRelease')::boolean is not true
+        and case when p_mode = 'exam'
+              then (q.publication_policy->>'examEligible')::boolean
+                 and (q.publication_policy->>'requiresHumanApprovalForExam')::boolean is not true
+              when p_mode = 'mock'
+              then (q.publication_policy->>'mockEligible')::boolean
+                 and (q.publication_policy->>'requiresHumanApprovalForExam')::boolean is not true
+              else (q.publication_policy->>'practiceEligible')::boolean
+            end
+        and not (coalesce(q.variant_group_id, q.id) = any(seen))
+      limit 10 - got
+    loop
+      return next to_jsonb(rec);
+    end loop;
+  end if;
+end;
+$$;
+
+-- r8 good: saves go through an ownership-bound RPC
+create or replace function practice.save_parent_contact(p_email text, p_opted_in boolean)
+returns jsonb language plpgsql security definer as $$
+begin
+  return jsonb_build_object('ok', true);
+end;
+$$;

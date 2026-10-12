@@ -36,6 +36,9 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
   const [emailOptIn, setEmailOptIn] = useState(true);
   const [emailSaved, setEmailSaved] = useState<'idle' | 'saved' | 'error'>('idle');
   const [emailVerified, setEmailVerified] = useState(false);
+  // r8: the verify enqueue result is its own state - 'saved' only means
+  // the contact wrote; a failed/throttled mail must be visible.
+  const [verifyState, setVerifyState] = useState<'sent' | 'already' | 'throttled' | 'failed' | 'idle'>('idle');
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -60,9 +63,11 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
     const ok = await saveParentContact(parentEmail, emailOptIn);
     if (ok) {
       // r6: the weekly report only goes to click-confirmed addresses - ask
-      // the server to send the verify link right away.
+      // the server to send the verify link right away. r8: surface every
+      // outcome - a failed/throttled enqueue is not "saved".
       const verify = await requestParentVerify();
       setEmailVerified(verify === 'already');
+      setVerifyState(verify);
     }
     setEmailSaved(ok ? 'saved' : 'error');
   }
@@ -70,6 +75,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
   async function handleResendVerify(): Promise<void> {
     const result = await requestParentVerify();
     if (result === 'already') setEmailVerified(true);
+    setVerifyState(result);
   }
   const totalAnswered = report.days.reduce((sum, d) => sum + d.total, 0);
   const maxDay = Math.max(1, ...report.days.map((d) => d.total));
@@ -240,6 +246,21 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
             {emailSaved === 'saved' && (
               <p data-testid="parent-email-saved" className="mt-2 text-sm font-bold text-emerald-400">
                 Đã lưu! Ba mẹ sẽ nhận báo cáo vào Chủ nhật.
+              </p>
+            )}
+            {verifyState === 'sent' && (
+              <p data-testid="parent-verify-sent" className="mt-2 text-sm font-bold text-sky-300">
+                Đã gửi email xác nhận - ba mẹ bấm link trong hộp thư.
+              </p>
+            )}
+            {verifyState === 'throttled' && (
+              <p data-testid="parent-verify-throttled" className="mt-2 text-sm font-bold text-sky-300">
+                Email xác nhận đã được gửi gần đây - ba mẹ kiểm tra hộp thư (hoặc thử lại sau ít phút).
+              </p>
+            )}
+            {verifyState === 'failed' && (
+              <p data-testid="parent-verify-failed" className="mt-2 text-sm font-bold text-rose-400">
+                Không gửi được email xác nhận - con thử lại sau nhé.
               </p>
             )}
             {emailVerified ? (

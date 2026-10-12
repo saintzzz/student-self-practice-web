@@ -57,6 +57,12 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 38 | `mic-lifecycle` (r7) | `startAudioRecording` await and retry `setTimeout` could fire after unmount - capture attached, stale `onAttempt` submitted | `unmountedRef` + tracked retry timer cleared on unmount + guard in `finish`/`done` (hook + 2 regression tests) | check-ea-classes #33 |
 | 39 | `provider-config-regression` (r7) | 0036 mailers read only `resend_*` keys, dropping 0025's `email_provider`/`email_api_key`/`email_from` matrix | shared `practice.send_email()` provider dispatch; both mailers route through it (0037) | check-ea-classes #34 |
 | 40 | `function-return-type-replay` (r7) | `create or replace` cannot change return type - 0029 redefined `get_ai_configs` int->jsonb, fresh replay dies | `drop function` first in 0029 + scanner tracks returns across files | check-ea-classes #35 |
+| 41 | `verify-token-binding` (r8) | verify token stamped `where account_id` while an interleaved email change let it bind to a different address | `FOR UPDATE` row lock across read->send->stamp (0038) | check-ea-classes #36 |
+| 42 | `verification-mail-quota` (r8) | resend throttle on the contact row resettable via email change or delete+reinsert - unlimited mails to arbitrary mailbox | `verify_send_log` quota table keyed on account, consumed atomically under the row lock (0038) | check-ea-classes #37 |
+| 43 | `privilege-mutation-compat` (r8) | PostgREST upsert needs UPDATE on every payload column incl `account_id` - saves 403'd under tightened grants | `save_parent_contact` RPC binds ownership, writes only mutable cols; direct insert/update revoked (0038) | check-ea-classes #38 |
+| 44 | `rpc-result-enum` (r8) | `{ok:false, stale:true}` / verify `throttled`/`failed` results ignored - denied actions reported as success | ReviewQueueCard surfaces stale + reloads; ParentReportScreen renders sent/throttled/failed | check-ea-classes #39 |
+| 45 | `fetch-mode-parity` (r8) | public fetch mapped `exam` to `mockEligible` while auth used `examEligible` - same mode, different rows | same per-mode `case` in both RPCs (0038) | check-ea-classes #40 |
+| 46 | `mic-lifecycle` residual (r8) | StrictMode never re-armed the guard; fallback/SR callbacks could launch post-unmount; ctor-fail leaked the stream | re-arm in setup + guard every launch path + `track.stop()` on ctor failure | check-ea-classes #33 (tightened) |
 
 ## Deferred
 

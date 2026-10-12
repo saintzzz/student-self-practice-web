@@ -38,6 +38,11 @@
 //  33. mic-lifecycle               - async mic capture/timer firing after unmount (r7 M)
 //  34. provider-config-regression  - mailer bypassing the shared provider-aware sender (r7 M)
 //  35. function-return-type-replay - create-or-replace changing return type without drop (r7 H)
+//  36. verify-token-binding        - token stamped on a row whose email may have changed (r8 H)
+//  37. verification-mail-quota     - resend throttle resettable via contact row edits (r8 M)
+//  38. privilege-mutation-compat   - mutation payload wider than column grants -> RPC-bound writes (r8 M)
+//  39. rpc-result-enum             - business result payload ignored as success (r8 M)
+//  40. fetch-mode-parity           - public vs authenticated mode eligibility diverged (r8 M)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -272,6 +277,34 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
         hit("grant-shadow-column-revoke", "supabase/migrations",
           `column revoke ${m[1]} on ${m[2]} without a table-level revoke - the table grant still applies`);
     }
+    // 36+37. verify-token-binding / verification-mail-quota: the verify
+    //     mail flow must lock the contact row across read->send->stamp (an
+    //     interleaved email change can otherwise bind the token to a
+    //     different address), and the resend quota must live on a
+    //     row-independent table or contact edits reset it.
+    const verifyDefs = [...mig.matchAll(
+      /create or replace function\s+practice\.request_parent_verify[\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
+    )];
+    const verifyBody = verifyDefs.at(-1)?.[1] ?? "";
+    if (verifyDefs.length && !/for update/i.test(verifyBody))
+      hit("verify-token-binding", "supabase/migrations",
+        "request_parent_verify reads+stamps the token without a row lock - token can bind to a changed email");
+    if (verifyDefs.length && !/verify_send_log/.test(verifyBody))
+      hit("verification-mail-quota", "supabase/migrations",
+        "resend quota reads the contact row only - email change or delete+reinsert resets the throttle");
+    if (/verify_send_log/.test(mig) && !/create table[^;]*practice\.verify_send_log/i.test(mig))
+      hit("verification-mail-quota", "supabase/migrations",
+        "verify_send_log referenced but never created");
+    // 40. fetch-mode-parity: public and authenticated fetches must apply
+    //     the SAME per-mode eligibility predicate; public mapping exam ->
+    //     mockEligible while auth uses examEligible diverges row sets.
+    const pubDefs = [...mig.matchAll(
+      /create or replace function\s+practice\.fetch_questions_public[\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
+    )];
+    const pubBody = pubDefs.at(-1)?.[1] ?? "";
+    if (pubDefs.length && !/p_mode\s*=\s*'exam'[\s\S]{0,400}?examEligible/i.test(pubBody))
+      hit("fetch-mode-parity", "supabase/migrations",
+        "public fetch exam arm does not use examEligible - diverges from the authenticated fetch");
     // 32. sql-cas-transition: a status machine write must predicate on the
     //     expected prior status, or a stale transition resurrects terminal
     //     rows. review_question is the queue's transition RPC.
@@ -411,6 +444,60 @@ for (const f of walk(join(BASE, "src", "hooks"), /\.tsx?$/)) {
       !/unmountedRef|isMountedRef|cancelledRef/.test(src))
     hit("mic-lifecycle", rel(f),
       "mic capture promise resolves with no unmount guard - capture can attach after unmount");
+  // r8 tightening: the flag must be re-armed in setup (StrictMode replays
+  // mount->cleanup->mount) and every launch/fallback path must check it.
+  if (/unmountedRef/.test(src) && !/unmountedRef\.current\s*=\s*false/.test(src))
+    hit("mic-lifecycle", rel(f),
+      "unmountedRef never re-armed in setup - StrictMode replay kills the second mount");
+}
+{
+  // A captured stream must be released if any init step after
+  // getUserMedia throws - the caller never gets a controller to cancel.
+  const ar = join(BASE, "src/lib/audioRecording.ts");
+  if (existsSync(ar)) {
+    const src = readFileSync(ar, "utf8");
+    if (/new MediaRecorder/.test(src) &&
+        !/new MediaRecorder[\s\S]{0,600}?catch[\s\S]{0,400}?track\.stop\(\)/.test(src))
+      hit("mic-lifecycle", rel(ar),
+        "MediaRecorder constructor failure leaks the mic stream - no track.stop() in a catch");
+  }
+}
+
+// ---------- 38. privilege-mutation-compat ----------
+// A PostgREST upsert/insert/update payload must fit inside the column
+// grants; ON CONFLICT DO UPDATE checks UPDATE on EVERY payload column,
+// so payloads wider than the granted set 403 even though the row would
+// be RLS-legal. Ownership-bound writes route through the RPC.
+{
+  const pc = join(BASE, "src/lib/parentContact.ts");
+  if (existsSync(pc)) {
+    const src = readFileSync(pc, "utf8");
+    if (/\.from\(\s*['"]parent_contacts['"]\s*\)\s*\.(upsert|insert|update)/.test(src) ||
+        !/rpc\(\s*['"]save_parent_contact['"]/.test(src))
+      hit("privilege-mutation-compat", rel(pc),
+        "direct parent_contacts write whose payload exceeds column grants - saves must use save_parent_contact RPC");
+  }
+}
+
+// ---------- 39. rpc-result-enum ----------
+// A security-definer RPC returning a business payload ({ok, stale,...})
+// over HTTP-200 is not a transport error - callers that only read
+// `error` report denied actions as successes.
+{
+  const rqc = join(BASE, "src/components/ReviewQueueCard.tsx");
+  if (existsSync(rqc)) {
+    const src = readFileSync(rqc, "utf8");
+    if (/rpc\(\s*['"]review_question['"]/.test(src) && !/stale/.test(src))
+      hit("rpc-result-enum", rel(rqc),
+        "review_question {stale} result unchecked - denied CAS writes look like successes");
+  }
+  const prs = join(BASE, "src/components/ParentReportScreen.tsx");
+  if (existsSync(prs)) {
+    const src = readFileSync(prs, "utf8");
+    if (/requestParentVerify/.test(src) && !/throttled/.test(src))
+      hit("rpc-result-enum", rel(prs),
+        "verify-mail result states (sent/throttled/failed) never surfaced - a failed enqueue looks saved");
+  }
 }
 
 // ---------- 23. guest-state-leak ----------

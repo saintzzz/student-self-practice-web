@@ -105,13 +105,28 @@ export default function ReviewQueueCard() {
   async function act(questionId: string, action: 'approve' | 'reject' | 'flag', actReason = '') {
     setBusyId(questionId);
     setError(null);
-    const { error: err } = await (await getSupabase()).rpc('review_question', {
+    const { data, error: err } = await (await getSupabase()).rpc('review_question', {
       p_question_id: questionId,
       p_action: action,
       p_reason: actReason,
     });
     setBusyId(null);
     if (err) { setError(err.message); return; }
+    // r8: SQL CAS returns {ok:false, stale:true, current} when another
+    // reviewer already moved the row - that is NOT a success. Surface the
+    // current state and reload instead of silently dropping the row.
+    if (data?.stale) {
+      setError(`Câu hỏi đã được xử lý bởi người khác - trạng thái hiện tại: ${data.current ?? 'không rõ'}. Danh sách đã tải lại.`);
+      setConfirming(null);
+      setReason('');
+      setRows(null);
+      void load();
+      return;
+    }
+    if (data && data.ok === false) {
+      setError('RPC từ chối thao tác - thử lại sau.');
+      return;
+    }
     setConfirming(null);
     setReason('');
     setRows((prev) => prev?.filter((r) => r.question_id !== questionId) ?? null);

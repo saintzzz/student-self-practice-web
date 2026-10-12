@@ -37,18 +37,15 @@ export async function saveParentContact(email: string, optedIn: boolean): Promis
   try {
     const session = await getSession();
     if (!session) return false;
-    const { error } = await (await getSupabase())
-      .from('parent_contacts')
-      .upsert(
-        {
-          account_id: session.user.id,
-          email: email.trim().toLowerCase(),
-          opted_in: optedIn,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'account_id' },
-      );
-    return !error;
+    // r8: direct table upsert needed UPDATE on account_id (PostgREST
+    // ON CONFLICT DO UPDATE checks every payload column) which r7 rightly
+    // never granted - the RPC binds account_id itself and writes only the
+    // mutable columns.
+    const { data, error } = await (await getSupabase()).rpc('save_parent_contact', {
+      p_email: email.trim(),
+      p_opted_in: optedIn,
+    });
+    return !error && data?.ok === true;
   } catch {
     return false;
   }

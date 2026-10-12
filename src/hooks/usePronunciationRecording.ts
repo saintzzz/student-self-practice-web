@@ -108,6 +108,10 @@ export function usePronunciationRecording(
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // r8: React StrictMode replays mount->cleanup->mount; the cleanup sets
+    // unmountedRef=true, so setup must re-arm it or the second mount is
+    // permanently dead.
+    unmountedRef.current = false;
     return () => {
       unmountedRef.current = true;
       if (retryTimerRef.current !== null) {
@@ -129,6 +133,8 @@ export function usePronunciationRecording(
   );
 
   const launchRecorder = useCallback(async () => {
+    // r8: never even request the mic after unmount.
+    if (unmountedRef.current) return;
     // Optimistic 'recording': getUserMedia may surface a permission
     // dialog while we await - showing idle mid-flight invites a double
     // tap. If it rejects, the proper error phase replaces this below.
@@ -163,6 +169,10 @@ export function usePronunciationRecording(
   // that needs a second tap reads as "không dùng được". Without
   // MediaRecorder the original failure state stands.
   const fallBackToRecorder = useCallback((): boolean => {
+    // r8: an SR error callback can fire after unmount - never launch a
+    // fresh mic capture for a page the child already left. Returning true
+    // keeps the caller from also setting a dead error phase.
+    if (unmountedRef.current) return true;
     if (!isAudioRecordingSupported()) return false;
     modeRef.current = 'recorder';
     setErrorReason(null);
@@ -171,6 +181,7 @@ export function usePronunciationRecording(
   }, [launchRecorder]);
 
   const launch = useCallback(() => {
+    if (unmountedRef.current) return;
 
     // Goes straight to SpeechRecognition.start() instead of pre-flighting a
     // separate getUserMedia() call - requesting the microphone twice in a

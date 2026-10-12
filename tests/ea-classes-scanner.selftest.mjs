@@ -59,6 +59,12 @@ const CLASSES = [
   "mic-lifecycle",
   "provider-config-regression",
   "function-return-type-replay",
+  // r8 classes
+  "verify-token-binding",
+  "verification-mail-quota",
+  "privilege-mutation-compat",
+  "rpc-result-enum",
+  "fetch-mode-parity",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

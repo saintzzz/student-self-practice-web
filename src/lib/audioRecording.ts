@@ -90,7 +90,16 @@ export async function startAudioRecording(
   } = options;
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const mimeType = pickAudioMimeType();
-  const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+  let recorder: MediaRecorder;
+  try {
+    recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+  } catch (err) {
+    // r8: getUserMedia succeeded but recorder construction failed - the
+    // caller never receives a controller, so nothing else would ever
+    // release the tracks. Stop them here or the mic stays captured.
+    stream.getTracks().forEach((track) => track.stop());
+    throw err;
+  }
   const chunks: Blob[] = [];
   recorder.ondataavailable = (event) => {
     if (event.data.size > 0) chunks.push(event.data);
