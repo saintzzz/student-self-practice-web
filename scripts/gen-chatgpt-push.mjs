@@ -87,12 +87,18 @@ async function push(rows) {
       apikey: SVC, Authorization: `Bearer ${SVC}`,
       'Accept-Profile': 'practice', 'Content-Profile': 'practice',
       'Content-Type': 'application/json',
-      Prefer: 'resolution=ignore-duplicates,return=minimal',
+      Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact',
     },
     body: JSON.stringify(rows),
   });
-  if (!res.ok) console.error('push fail', res.status, (await res.text()).slice(0, 200));
-  return res.ok;
+  if (!res.ok) { console.error('push fail', res.status, (await res.text()).slice(0, 200)); return -1; }
+  const range = res.headers.get('content-range') ?? '';
+  const n = Number(range.split('/')[1]);
+  if (!Number.isFinite(n)) {
+    console.error(`push fail: missing content-range count (got "${range}")`);
+    return -1;
+  }
+  return n;
 }
 
 const seen = new Set();
@@ -107,8 +113,12 @@ for (const it of items) {
 }
 console.log(`${SUBJECT} G${GRADE}: in=${items.length} valid=${rows.length} bad=${bad} dup=${dup}`);
 if (!DRY && rows.length) {
-  let ok = true;
-  for (let c = 0; c < rows.length; c += 500) ok = (await push(rows.slice(c, c + 500))) && ok;
-  console.log(ok ? `pushed ${rows.length}` : `PUSH FAILED ${rows.length}`);
+  let ok = true, inserted = 0;
+  for (let c = 0; c < rows.length; c += 500) {
+    const n = await push(rows.slice(c, c + 500));
+    if (n < 0) { ok = false; break; }
+    inserted += n;
+  }
+  console.log(ok ? `inserted ${inserted} / ${rows.length} attempted` : `PUSH FAILED after ${inserted} inserts`);
   if (!ok) process.exit(2);
 }

@@ -19,7 +19,7 @@ import {
   type PracticeAccount,
 } from './lib/auth/practiceAuth';
 import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagement/sync';
-import { clearEngagementLocal, getOwnerAccountId } from './lib/engagement/store';
+import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/engagement/store';
 import { GRADES } from './data/vocabulary';
 import type { ExamProgramId } from './types/exam';
 import {
@@ -135,6 +135,10 @@ export default function App() {
   }
 
   function handleGuest(): void {
+    // r5: an account-owned blob (kept after a failed logout sync) must
+    // not be what the guest sees. Park it under its owner id - the
+    // owner's next login restores it via bindEngagement.
+    parkOwnerBlob();
     setAuthMode('guest');
     setScreen('grade-select');
   }

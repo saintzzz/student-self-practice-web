@@ -333,10 +333,23 @@ export async function createExamFromBank(
         opts.focus,
       );
   const mapped = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
-  const questions = fixedForm
+  // r5: malformed bank rows must not silently shorten a session - count
+  // them so the UI can surface a fixed-form defect or a thin pool.
+  const droppedCount = rows.length - mapped.length;
+  let questions = fixedForm
     ? mapped.slice(0, target)
     : pickUnseenFirst(mapped, target, seen);
+  // A shortfall after filtering means the fetch window under-sampled;
+  // top up once with a larger draw before declaring the pool thin.
+  if (!fixedForm && questions.length < target) {
+    const extra = await fetchBankQuestions(programId, gradeId, Math.max(target, 300), mode, opts.focus);
+    const extraMapped = extra
+      .map(toExamQuestion)
+      .filter((q): q is ExamQuestion => q !== null && !questions.some((x) => x.id === q.id));
+    questions = pickUnseenFirst([...questions, ...extraMapped], target, seen);
+  }
   if (questions.length === 0) return null;
+  const poolShort = questions.length < target;
   if (!fixedForm) markSeen(seenKey, questions.map((q) => q.id));
   return {
     programId,
@@ -349,5 +362,7 @@ export async function createExamFromBank(
     // CR-52: practice sittings are stopwatched, not countdown-bounded.
     untimed: opts.mode !== 'mock',
     finishedAtMs: null,
+    droppedCount,
+    poolShort,
   };
 }

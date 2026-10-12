@@ -285,6 +285,24 @@ grant execute on function practice.record_attempt_events(jsonb) to authenticated
 
 -- verification pipeline tables are service_role-only; RLS ON with no
 -- policies denies anon/authenticated while service_role bypasses RLS.
+-- These tables predate the migration series (created manually) - define
+-- them here so a fresh replay succeeds (external-review r5 H1).
+create table if not exists practice.qb_verify_todo (
+  id text primary key,
+  claimed_at timestamptz
+);
+create table if not exists practice.qb_verify_verdicts (
+  id text primary key,
+  answer_ok boolean not null,
+  expl_ok boolean not null,
+  note text,
+  engine text,
+  created_at timestamptz
+);
+create table if not exists practice.qa_tokens (
+  token text not null,
+  created_at timestamptz
+);
 alter table practice.qb_verify_todo enable row level security;
 alter table practice.qb_verify_verdicts enable row level security;
 alter table practice.qa_tokens enable row level security;

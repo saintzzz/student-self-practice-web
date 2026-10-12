@@ -47,11 +47,20 @@ const label = (assetId) => assetId.replace(/^concept-/, '').replace(/-[0-9a-f]{6
 async function post(table, rows) {
   const res = await fetch(`${SUPA}/rest/v1/${table}`, {
     method: 'POST',
-    headers: { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' },
+    headers: { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' },
     body: JSON.stringify(rows),
   });
-  if (!res.ok) console.error(`push ${table} fail`, res.status, (await res.text()).slice(0, 200));
-  return res.ok;
+  if (!res.ok) { console.error(`push ${table} fail`, res.status, (await res.text()).slice(0, 200)); return false; }
+  // report the true inserted count - a missing content-range is a failure
+  // and "0" is a legitimate count (r5).
+  const range = res.headers.get('content-range') ?? '';
+  const n = Number(range.split('/')[1]);
+  if (!Number.isFinite(n)) {
+    console.error(`push ${table} fail: missing content-range count (got "${range}")`);
+    return false;
+  }
+  console.log(`push ${table}: inserted ${n} / ${rows.length} attempted`);
+  return true;
 }
 
 // Asset ids come from the file names in public/images/concepts/

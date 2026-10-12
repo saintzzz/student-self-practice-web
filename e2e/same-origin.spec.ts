@@ -25,6 +25,21 @@ import { gotoApp } from './utils/auth-flow';
 
 const EMOJI_VISUAL = '[data-emoji-visual]';
 
+/** Origins that are not "third-party" for C4: the app itself and the
+ *  configured Supabase backend (auth REST, Storage audio/images).
+ *  Supabase is the app's own backend - the gate hunts CDN leakage of
+ *  media assets (emoji, lottie, photos), not the data plane. Without
+ *  VITE_SUPABASE_URL the app runs guest-only and no extra origin is
+ *  allowed, so the gate is never vacuous (external-review r5). */
+function allowedOrigins(pageOrigin: string): string[] {
+  const origins = [pageOrigin];
+  const supa = process.env.VITE_SUPABASE_URL;
+  if (supa) origins.push(new URL(supa).origin);
+  return origins;
+}
+const isExternal = (u: string, allowed: string[]) =>
+  u.startsWith('http') && !allowed.some((o) => u.startsWith(o));
+
 test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
   test('every request across a full Grade->Credits->Batch journey is same-origin', async ({ page }) => {
     // Round 3 must run through its deterministic fallback path: remove
@@ -77,8 +92,8 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
     // moment to resolve so the recorder is complete.
     await page.waitForTimeout(500);
 
-    const origin = new URL(page.url()).origin;
-    const thirdParty = seen.filter((u) => u.startsWith('http') && !u.startsWith(origin));
+    const allowed = allowedOrigins(new URL(page.url()).origin);
+    const thirdParty = seen.filter((u) => isExternal(u, allowed));
     expect(
       thirdParty,
       `C4 violation - third-party requests seen during full journey: ${thirdParty.join(', ')}`,
@@ -111,8 +126,8 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
     // Round summary celebratory accent is the last animated mount; give it
     // a beat, then audit everything the round pulled.
     await expect(page.locator(EMOJI_VISUAL).first()).toBeVisible();
-    const origin = new URL(page.url()).origin;
-    const thirdParty = seen.filter((u) => u.startsWith('http') && !u.startsWith(origin));
+    const allowed = allowedOrigins(new URL(page.url()).origin);
+    const thirdParty = seen.filter((u) => isExternal(u, allowed));
     expect(thirdParty, `C4 violation in Round 1 journey: ${thirdParty.join(', ')}`).toEqual([]);
   });
 });

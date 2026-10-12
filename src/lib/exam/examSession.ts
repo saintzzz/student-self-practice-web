@@ -72,6 +72,15 @@ export interface ExamState {
   untimed?: boolean;
   /** Set when the student pressed SUBMIT or time ran out. */
   finishedAtMs: number | null;
+  /**
+   * external-review r5: count of bank rows the mapper rejected as
+   * malformed (wrong answer shape, <4 choices...). Nonzero on a
+   * fixed-form mock means the form shipped unplayable content - the UI
+   * must surface it instead of silently shortening the session.
+   */
+  droppedCount?: number;
+  /** Pool was too small to reach the requested question count. */
+  poolShort?: boolean;
 }
 
 export interface ExamReviewItem {

@@ -386,6 +386,17 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         </button>
       </header>
 
+      {/* r5: surface an under-filled session instead of silently running
+          short - a fixed form missing rows is a content defect, not a
+          smaller exam. */}
+      {(exam.poolShort || (exam.droppedCount ?? 0) > 0) && (
+        <div data-testid="exam-pool-warning" className="border-b border-amber-700/60 bg-amber-950/70 px-3 py-1.5 text-center text-xs font-bold text-amber-200">
+          {exam.poolShort
+            ? 'Ngân hàng câu hỏi chưa đủ cho bài này - số câu ít hơn dự kiến. Báo cô giáo/bố mẹ kiểm tra nhé.'
+            : 'Một số câu hỏi bị lỗi dữ liệu nên bị bỏ qua. Báo cô giáo/bố mẹ kiểm tra nhé.'}
+        </div>
+      )}
+
       {/* Question number strip - exam only; practice is sequential. */}
       {!isPractice && (
         <div className="flex items-center gap-1 overflow-x-auto bg-[#132433] px-2 py-1.5">

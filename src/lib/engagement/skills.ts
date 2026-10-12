@@ -134,6 +134,14 @@ export const QB_SKILL_LABELS: Record<string, string> = {
   'science-reading': 'Đọc hiểu khoa học',
   'scientific-observation': 'Quan sát khoa học',
   'scientific-enquiry': 'Khám phá khoa học',
+  // template-generator skills (r5: parent report rendered raw keys).
+  'arithmetic': 'Phép tính',
+  'word-problem': 'Giải toán có lời văn',
+  'concept': 'Khái niệm khoa học',
+  'classification': 'Phân loại khoa học',
+  'application': 'Vận dụng khoa học',
+  'living-things': 'Sinh vật sống',
+  'writing': 'Viết',
 };
 
 export function skillLabel(skillKey: string): string {

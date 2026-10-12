@@ -31,10 +31,29 @@ const verdicts = [...body.matchAll(/VERDICT:\s*(NOT-CLEAN|CLEAN)/g)].map(
 );
 const lastVerdict = verdicts[verdicts.length - 1] ?? null;
 
-// Finding markers in the actual report (severity lines, file:line refs).
-const FINDING_RE =
-  /(?:^|\n)\s*(?:[-*\d.]*\s*)?(HIGH|MEDIUM|LOW)\s*[-:]/g;
-const findings = [...body.matchAll(FINDING_RE)].map((m) => m[1]);
+// Finding markers in the actual report. Codex formats vary per round:
+// newline-anchored "- HIGH: ...", inline "**High** ...", "Severity: High",
+// parenthetical "(High)" and bracketed "[HIGH]". Match all shapes, then
+// dedupe by position so one finding is not counted twice (r5 report used
+// inline markers the newline pattern missed entirely).
+const FINDING_RES = [
+  { re: /(?:^|\n)\s*(?:[-*\d.]*\s*)?(HIGH|MEDIUM|LOW)\s*[-:]/g, grp: 1 },
+  { re: /\bSeverity[:=\s]+\**\s*(HIGH|MEDIUM|LOW)\b/gi, grp: 1 },
+  { re: /\((high|medium|low)(?:\s+severity)?\)/gi, grp: 1 },
+  { re: /\*\*\s*(HIGH|MEDIUM|LOW)\s*\*\*/g, grp: 1 },
+  { re: /\[(HIGH|MEDIUM|LOW)\]/g, grp: 1 },
+];
+const hitMap = new Map(); // position bucket -> severity
+for (const { re, grp } of FINDING_RES) {
+  for (const m of body.matchAll(re)) {
+    const sev = m[grp].toUpperCase();
+    const idx = m.index ?? 0;
+    // collapse hits within 40 chars - same finding, different pattern.
+    const bucket = Math.floor(idx / 40);
+    if (!hitMap.has(bucket)) hitMap.set(bucket, sev);
+  }
+}
+const findings = [...hitMap.values()];
 const counts = findings.reduce(
   (a, s) => ((a[s] = (a[s] ?? 0) + 1), a),
   { HIGH: 0, MEDIUM: 0, LOW: 0 },

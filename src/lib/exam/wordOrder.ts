@@ -70,7 +70,10 @@ function normalizeForCompare(s: string): string {
   // Strip trailing punctuation AND whitespace - tiles like ["home", "."]
   // join to "home ." and the space left after dropping "." must not fail
   // the comparison (external-review r4).
-  return s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[\s.!?,;:'"’]+$/u, '');
+  // Compare on letters+spacing only. Internal punctuation tiles (","
+  // standing alone) join as "Yesterday , I" while the sentence reads
+  // "Yesterday, I" - both must normalize identically (r5).
+  return s.trim().toLowerCase().replace(/[.,!?;:'"’]+/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 export function isWordOrderCorrect(sentence: string, pickedTokens: readonly string[]): boolean {

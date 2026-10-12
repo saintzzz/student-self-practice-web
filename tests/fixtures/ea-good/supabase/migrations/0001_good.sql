@@ -1,15 +1,42 @@
 grant usage on schema practice to anon;
-grant select on practice.qb_item_stats to authenticated;
+create table if not exists practice.qb_attempt_events (learner_id uuid);
+create table if not exists practice.qb_adaptive_decisions (learner_id uuid);
+create table if not exists practice.audit_log (actor_id uuid);
+create table if not exists practice.qb_review_events (actor_id uuid);
+create table if not exists practice.accounts (id uuid, role text);
+create table if not exists practice.qb_verify_todo (id text primary key, claimed_at timestamptz);
+create table if not exists practice.qb_verify_verdicts (id text primary key, answer_ok boolean not null, expl_ok boolean not null);
+create table if not exists practice.qa_tokens (token text not null);
+alter table practice.qb_verify_todo enable row level security;
+alter table practice.qb_verify_verdicts enable row level security;
+alter table practice.qa_tokens enable row level security;
+
 create or replace function practice.fetch_questions_public(p_grade smallint)
 returns setof jsonb language plpgsql as $$
 declare
-  got int := 0; rec record;
+  got int := 0; rec record; seen text[] := '{}';
 begin
-  for rec in select * from practice.qb_questions where random() < 0.35 limit 10 loop
-    got := got + 1; return next to_jsonb(rec);
+  for rec in
+    select * from practice.qb_questions q
+    where random() < 0.35
+      and (q.publication_policy->>'commercialReleaseEligible')::boolean
+      and (q.publication_policy->>'requiresHumanApprovalForExam')::boolean is not true
+      and (q.publication_policy->>'requiresHumanApprovalForCommercialRelease')::boolean is not true
+    limit 10
+  loop
+    got := got + 1;
+    seen := seen || coalesce(rec.variant_group_id, rec.id);
+    return next to_jsonb(rec);
   end loop;
   if got < 10 then
-    for rec in select * from practice.qb_questions limit 10 - got loop
+    for rec in
+      select * from practice.qb_questions q
+      where (q.publication_policy->>'commercialReleaseEligible')::boolean
+        and (q.publication_policy->>'requiresHumanApprovalForExam')::boolean is not true
+        and (q.publication_policy->>'requiresHumanApprovalForCommercialRelease')::boolean is not true
+        and not (coalesce(q.variant_group_id, q.id) = any(seen))
+      limit 10 - got
+    loop
       return next to_jsonb(rec);
     end loop;
   end if;
@@ -28,6 +55,27 @@ begin
   end loop;
 end;
 $$;
-alter table practice.qb_verify_todo enable row level security;
-alter table practice.qb_verify_verdicts enable row level security;
-alter table practice.qa_tokens enable row level security;
+create or replace function practice.qb_item_stats_for(p_ids text[])
+returns table(question_id text) language plpgsql security definer as $$
+begin
+  if not practice.is_admin() then raise exception 'admin only'; end if;
+  return query select s.question_id from practice.qb_item_stats s where s.question_id = any(p_ids);
+end;
+$$;
+revoke select on practice.qb_item_stats from authenticated;
+
+alter table practice.qb_attempt_events
+  add constraint fk1 foreign key (learner_id) references auth.users(id) on delete cascade;
+alter table practice.qb_adaptive_decisions
+  add constraint fk2 foreign key (learner_id) references auth.users(id) on delete cascade;
+alter table practice.audit_log
+  add constraint fk3 foreign key (actor_id) references auth.users(id) on delete set null;
+alter table practice.qb_review_events
+  add constraint fk4 foreign key (actor_id) references auth.users(id) on delete set null;
+
+create or replace function practice.guard_last_admin() returns trigger language plpgsql as $$
+begin
+  perform pg_advisory_xact_lock(hashtext('g'));
+  return old;
+end $$;
+create trigger t before delete on practice.accounts for each row execute function practice.guard_last_admin();

@@ -30,7 +30,7 @@ if (!GRADE || !['math', 'science'].includes(SUBJECT)) {
 
 const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supabase_new_keys.json'), 'utf8'));
 const SUPA = keys.url, SVC = keys.keys.service_role;
-const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Content-Type': 'application/json', 'Accept-Profile': 'practice', 'Content-Profile': 'practice', Prefer: 'resolution=ignore-duplicates,return=minimal' };
+const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Content-Type': 'application/json', 'Accept-Profile': 'practice', 'Content-Profile': 'practice', Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' };
 
 // ---------- seeded PRNG (mulberry32) - deterministic per subject+grade ----------
 const seedNum = Number(createHash('sha1').update(`${SUBJECT}:${GRADE}:tpl-v1`).digest('hex').slice(0, 8), 16);
@@ -387,9 +387,15 @@ function mathGrade(g) {
     }
     for (let i = 0; i < 200; i++) {
       const pct = pick([10, 20, 25, 50]);
-      const base = rr(2, 40) * (100 / pct >= 2 ? 1 : 1);
-      const val = Math.round(base * pct / 100);
-      mcq(`What is ${pct}% of ${base}?`, String(val), [String(val + 1), String(Math.round(base * pct / 50)), String(val * 2)].filter((x) => x !== String(val)), {
+      // base must be a multiple of 100/gcd(pct,100) so the product is
+      // exact - "25% of 22 = 6" was a generated wrong answer (r5).
+      let ga = pct, gb = 100; while (gb) { [ga, gb] = [gb, ga % gb]; }
+      const div = 100 / ga;
+      const base = rr(1, Math.floor(40 / div)) * div;
+      const val = (base * pct) / 100;
+      const wrongs = [val + 1, val + 2, val * 2, val - 1 > 0 ? val - 1 : val + 4, val + 5]
+        .map(String).filter((x, idx, arr) => x !== String(val) && arr.indexOf(x) === idx).slice(0, 3);
+      mcq(`What is ${pct}% of ${base}?`, String(val), wrongs, {
         d: 4, ex: `${pct}% của ${base} = ${base} × ${pct}/100 = ${val}.`, lo: 'Tính phần trăm.', top: 'percent', skill: 'arithmetic',
       });
     }
@@ -449,11 +455,13 @@ function mathGrade(g) {
   const PRICE = [5, 10, 15, 20, 25, 50];
   for (let i = 0; i < 100; i++) {
     const [thing, vn] = pick(THINGS);
-    const p1 = pick(PRICE), p2 = pick(PRICE.filter((x) => x !== p1));
-    mcq(`One ${thing.slice(0, -1)} costs ${p1} thousand dong. ${pick(NAMES)} buys ${p2 / 5 > 0 ? rr(2, 4) : 2} of them and pays with 100 thousand. How much change?`, (() => {
-      const n = rr(2, 4); return String(100 - p1 * n);
-    })(), ['50', String(100 - p1), String(p1 * 2)], {
-      d: 4, ex: `Tiền ${vn}: tính tổng rồi lấy 100 trừ.`, lo: 'Bài toán tiền tệ.', top: 'money', skill: 'word-problem',
+    // r5: quantity must be drawn once and shared by prompt + answer, and
+    // the purchase must be payable with the 100-thousand note.
+    const n = rr(2, 4);
+    const p1 = pick(PRICE.filter((x) => x * n < 100));
+    const change = 100 - p1 * n;
+    mcq(`One ${thing.slice(0, -1)} costs ${p1} thousand dong. ${pick(NAMES)} buys ${n} of them and pays with 100 thousand. How much change?`, String(change), ['50', String(100 - p1), String(p1 * 2)].filter((x, idx, arr) => x !== String(change) && arr.indexOf(x) === idx), {
+      d: 4, ex: `${n} ${vn} = ${n} × ${p1} = ${p1 * n} nghìn; 100 - ${p1 * n} = ${change} nghìn đồng.`, lo: 'Bài toán tiền tệ.', top: 'money', skill: 'word-problem',
     });
   }
 }
@@ -1057,8 +1065,16 @@ if (!DRY && rows.length) {
       console.error('push fail', res.status, (await res.text()).slice(0, 200));
       continue;
     }
+    // "*/N" = rows actually inserted; missing count is a push failure and
+    // 0 is a valid count - never substitute the attempted batch size (r5).
     const range = res.headers.get('content-range') ?? '';
-    inserted += Number(range.split('/')[1]) || rows.slice(c, c + 300).length;
+    const n = Number(range.split('/')[1]);
+    if (!Number.isFinite(n)) {
+      failed += rows.slice(c, c + 300).length;
+      console.error(`push fail: missing content-range count (got "${range}")`);
+      continue;
+    }
+    inserted += n;
   }
   console.log(`inserted ${inserted} / ${rows.length} attempted${failed ? `, ${failed} FAILED` : ''}`);
   if (failed > 0) process.exit(1);

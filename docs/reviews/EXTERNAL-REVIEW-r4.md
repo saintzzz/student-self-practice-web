@@ -6,7 +6,7 @@ Codex Cloud review of commit `bd0ae3a` (public repo clone). Verdict: NOT CLEAN -
 ## High
 
 ### H1. Published demo admin credentials - FIXED
-- `demo_admin`/`demo2026` (full admin) was committed in `docs/demo-accounts.md`
+- `demo_admin` + literal PIN (full admin) was committed in `docs/demo-accounts.md`
   and generated proposal scripts.
 - Rotated `demo_admin` + `demo_hs` PINs via Supabase Auth admin API; new PINs
   live only in ops vault (`~/.config/devin/secrets/ea_demo_creds.json`, 0600).

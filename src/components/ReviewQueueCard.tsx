@@ -70,15 +70,14 @@ export default function ReviewQueueCard() {
           .select('id, grade, subject, question_type, prompt_text, choices, answer, explanation_vi, review_status, passage, statement, tokens')
           .in('id', ids)
       : { data: [] };
+    if ('error' in qs && qs.error) { setError(qs.error.message); return; }
     const qmap = new Map(((qs.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
-    // CR-49: item statistics from real attempt events (admin RLS).
-    // bounded-ok: .in(question_id, ids<=20).
+    // CR-49: item statistics from real attempt events - admin-checked RPC
+    // (external-review r5: the invoker view needed underlying table grants).
     const stats = ids.length
-      ? await supa
-          .from('qb_item_stats')
-          .select('question_id, attempts, learners, facility')
-          .in('question_id', ids)
-      : { data: [] };
+      ? await supa.rpc('qb_item_stats_for', { p_ids: ids })
+      : { data: [], error: null };
+    if (stats.error) { setError(stats.error.message); return; }
     const smap = new Map(((stats.data ?? []) as ItemStat[]).map((s) => [s.question_id, s]));
     // Reviewers must see the same visuals the student sees - fetch linked
     // asset paths so image-based questions can be verified against the
@@ -90,6 +89,7 @@ export default function ReviewQueueCard() {
           .select('question_id, sort_order, qb_assets(file_path)')
           .in('question_id', ids)
       : { data: [] };
+    if ('error' in links && links.error) { setError(links.error.message); return; }
     const amap = new Map<string, string[]>();
     for (const l of (links.data ?? []) as unknown as { question_id: string; qb_assets: { file_path: string } | { file_path: string }[] | null }[]) {
       const arr = amap.get(l.question_id) ?? [];
@@ -174,8 +174,8 @@ export default function ReviewQueueCard() {
             {Array.isArray(r.q?.answer?.accepted) && (r.q.answer.accepted as unknown[]).length > 0 && (
               <p className="mt-0.5 text-[11px] text-emerald-600">Chấp nhận thêm: {(r.q.answer.accepted as string[]).join(', ')}</p>
             )}
-            {typeof r.q?.answer?.bool === 'boolean' && (
-              <p className="mt-1 text-xs font-extrabold text-emerald-700">Đáp án: {r.q.answer.bool ? 'Đúng (True)' : 'Sai (False)'}</p>
+            {typeof (r.q?.answer?.bool ?? r.q?.answer?.boolean) === 'boolean' && (
+              <p className="mt-1 text-xs font-extrabold text-emerald-700">Đáp án: {(r.q!.answer!.bool ?? r.q!.answer!.boolean) ? 'Đúng (True)' : 'Sai (False)'}</p>
             )}
             {typeof r.q?.answer?.order === 'object' && r.q.answer.order !== null && (
               <p className="mt-1 text-xs font-extrabold text-emerald-700">Thứ tự đúng: {String(r.q.answer.order)}</p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getDueReviewItems, getReportSnapshot, getState, STICKERS } from '../lib/engagement/store';
-import { SKILL_LABELS } from '../lib/engagement/skills';
+import { skillLabel } from '../lib/engagement/skills';
 import { fetchParentContact, isValidParentEmail, saveParentContact } from '../lib/parentContact';
 import { CARD, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import type { Grade } from '../types';
@@ -160,7 +160,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                     {skills.map((skill) => (
                       <li key={skill.key} className="flex items-center gap-2">
                         <span className="w-28 shrink-0 truncate text-xs font-bold text-slate-300">
-                          {SKILL_LABELS[skill.key] ?? skill.key}
+                          {skillLabel(skill.key)}
                         </span>
                         <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
                           <div

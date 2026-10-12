@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   checkStreakStickers,
+  getOwnerAccountId,
   getState,
+  markOwnerAccountId,
+  parkOwnerBlob,
   recordBatchResult,
   recordRoundResult,
   resetForTests,
+  restoreParkedBlob,
   starsForScore,
   STICKERS,
   todayISO,
@@ -121,5 +125,39 @@ describe('store resilience', () => {
       'pet-baby',
       'pet-adult',
     ]);
+  });
+});
+
+describe('park/restore owner blob (external-review r5 guest-leak)', () => {
+  it('guest entry hides an account-owned blob without destroying it', () => {
+    recordRoundResult('grade-2', 1, 100, 100);
+    markOwnerAccountId('student-1');
+    expect(getState().totalStars).toBe(3);
+
+    parkOwnerBlob();
+    // guest sees a clean state, owner marker cleared
+    expect(getState().totalStars).toBe(0);
+    expect(getOwnerAccountId()).toBeNull();
+    expect(localStorage.getItem('beheo-engagement-v1')).toBeNull();
+    // the blob survived under the account-scoped key
+    expect(localStorage.getItem('beheo-engagement-parked-student-1')).not.toBeNull();
+  });
+
+  it('the owning account gets its parked blob back', () => {
+    recordRoundResult('grade-2', 1, 100, 100);
+    markOwnerAccountId('student-1');
+    parkOwnerBlob();
+    recordRoundResult('grade-1', 1, 50, 100); // guest plays
+
+    restoreParkedBlob('student-1');
+    // owner's blob restored over the guest scratch state
+    expect(getOwnerAccountId()).toBe('student-1');
+    expect(localStorage.getItem('beheo-engagement-parked-student-1')).toBeNull();
+  });
+
+  it('parking is a no-op for guest blobs (nothing to protect)', () => {
+    recordRoundResult('grade-1', 1, 50, 100); // guest, no owner marker
+    parkOwnerBlob();
+    expect(getState().totalStars).toBe(1); // guest state untouched
   });
 });

@@ -21,6 +21,14 @@ describe('isWordOrderCorrect', () => {
     expect(isWordOrderCorrect('we eat mooncakes.', ['We', 'eat', 'mooncakes.'])).toBe(true);
   });
 
+  it('accepts correct order with an internal comma tile (r5)', () => {
+    expect(isWordOrderCorrect('Yesterday, I played.', ['Yesterday', ',', 'I', 'played', '.'])).toBe(true);
+  });
+
+  it('accepts correct order when the comma is glued to its word', () => {
+    expect(isWordOrderCorrect('Yesterday, I played.', ['Yesterday,', 'I', 'played.'])).toBe(true);
+  });
+
   it('rejects wrong order', () => {
     expect(isWordOrderCorrect('I go home.', ['go', 'I', 'home.'])).toBe(false);
   });

@@ -166,6 +166,51 @@ export function markOwnerAccountId(accountId: string | null): void {
   }
 }
 
+/** external-review r5: a failed sign-out keeps the account-owned blob
+ *  (unsynced progress must not be destroyed). That blob must NOT be what
+ *  guest mode renders. park() moves it to an account-scoped backup key;
+ *  restoreParked() brings it back on the next login of that account so
+ *  bindEngagement can still merge it. */
+const parkedKey = (id: string) => `beheo-engagement-parked-${id}`;
+
+export function parkOwnerBlob(): void {
+  const s = storage();
+  if (!s) return;
+  const owner = getOwnerAccountId();
+  if (!owner) return; // blob already belongs to guest - nothing to park
+  try {
+    const raw = s.getItem(STORAGE_KEY);
+    if (raw) s.setItem(parkedKey(owner), raw);
+    s.removeItem(STORAGE_KEY);
+    s.removeItem(OWNER_KEY);
+    memory = structuredClone(EMPTY_STATE);
+    for (const cb of listeners) {
+      try {
+        queueMicrotask(cb);
+      } catch {
+        cb();
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function restoreParkedBlob(accountId: string): void {
+  const s = storage();
+  if (!s) return;
+  try {
+    const raw = s.getItem(parkedKey(accountId));
+    if (!raw) return;
+    s.setItem(STORAGE_KEY, raw);
+    s.setItem(OWNER_KEY, accountId);
+    s.removeItem(parkedKey(accountId));
+    memory = null; // force reload on next load()
+  } catch {
+    // ignore
+  }
+}
+
 let memory: EngagementState | null = null;
 
 function storage(): Storage | null {
@@ -851,6 +896,11 @@ export function resetForTests(): void {
     try {
       s.removeItem(STORAGE_KEY);
       s.removeItem(OWNER_KEY);
+      // parked owner blobs (r5) must not leak between tests either.
+      for (let i = s.length - 1; i >= 0; i--) {
+        const k = s.key(i);
+        if (k?.startsWith('beheo-engagement-parked-')) s.removeItem(k);
+      }
     } catch {
       // ignore
     }

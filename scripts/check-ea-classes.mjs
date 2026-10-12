@@ -17,7 +17,19 @@
 //  12. review-card-completeness    - review queue missing fields (r4 M)
 //  13. service-role-in-client      - service key names inside src/ bundle (r3 H)
 //  14. in-memory-rate-limit        - process-local Map rate limiting in edge fns (r3 H)
-//  15. migration-grants            - anon usage / item_stats grants absent (r4 M)
+//  15. migration-grants            - anon usage / item_stats access path (r4 M)
+//  16. migration-replay            - alter table on a relation no migration creates (r5 H)
+//  17. fetch-gate-parity           - authenticated fetch missing exam/commercial gates (r5 M)
+//  18. variant-dedupe              - two-pass fetch excluding ids not variant groups (r5 M)
+//  19. stats-access-path           - item stats reachable without admin check (r5 M)
+//  20. answer-shape-bool           - review card reading answer.bool only (r5 M)
+//  21. last-admin-race             - admin count-then-delete without DB trigger (r5 M)
+//  22. fk-auth-delete              - auth.users FK without ON DELETE semantics (r5 M)
+//  23. guest-state-leak            - guest entry without parked owner blob (r5 M)
+//  24. push-count-honesty          - attempted rows reported as inserted (r5 L)
+//  25. session-shrink              - mapped-shortfall silently shortens session (r5 M)
+//  26. skill-label-raw             - raw taxonomy keys rendered to parents (r5 L)
+//  27. e2e-origin-vacuum           - same-origin gate blind to the backend origin (r5 L)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -136,8 +148,55 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
     // 15. grants
     if (!/grant usage on schema practice to anon/i.test(mig))
       hit("migration-grants", "supabase/migrations", "anon missing schema usage grant");
-    if (!/grant select on\s+(?:table\s+)?practice\.qb_item_stats\s+to authenticated/i.test(mig))
-      hit("migration-grants", "supabase/migrations", "authenticated missing qb_item_stats select");
+    // 16. migration-replay: every bare `alter table practice.X` must have a
+    //     `create table practice.X` in the corpus - otherwise a fresh
+    //     replay dies on a relation that only exists on the deployed DB.
+    const created = new Set(
+      [...mig.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?practice\.(\w+)/gi)]
+        .map((m) => m[1].toLowerCase()),
+    );
+    for (const m of mig.matchAll(/alter\s+table\s+(?!if\s+exists)practice\.(\w+)/gi)) {
+      if (!created.has(m[1].toLowerCase()))
+        hit("migration-replay", `supabase/migrations:${lineOf(mig, m.index)}`,
+          `alter table practice.${m[1]} without any create table - replay fails`);
+    }
+    // 17. fetch-gate-parity: every fetch_questions* definition must apply
+    //     the full commercial+exam approval gates, not a subset.
+    for (const [name, body] of fetchDefs) {
+      for (const gate of ["commercialReleaseEligible", "requiresHumanApprovalForExam", "requiresHumanApprovalForCommercialRelease"])
+        if (!body.includes(gate))
+          hit("fetch-gate-parity", "supabase/migrations", `${name} missing gate ${gate}`);
+      // 18. variant-dedupe: pass-2 exclusion must exclude the variant
+      //     GROUP key, not just the already-returned row id.
+      if (/= any\(seen\)/.test(body) && !/not \(coalesce\(q\.variant_group_id,\s*q\.id\)\s*=\s*any\(seen\)\)/.test(body))
+        hit("variant-dedupe", "supabase/migrations",
+          `${name} second pass excludes row ids only - same variant group can repeat`);
+      if (!/seen\s*:=\s*seen\s*\|\|\s*coalesce\(/.test(body))
+        hit("variant-dedupe", "supabase/migrations",
+          `${name} tracks row ids in seen, not variant-group keys`);
+    }
+    // 19. stats-access-path: item stats must go through the admin-checked
+    //     RPC; the invoker view must not be directly selectable by
+    //     authenticated users.
+    if (!/create or replace function\s+practice\.qb_item_stats_for/i.test(mig) ||
+        !/qb_item_stats_for[\s\S]{0,600}?is_admin\(\)/i.test(mig))
+      hit("stats-access-path", "supabase/migrations",
+        "qb_item_stats_for admin-checked RPC missing");
+    if (!/revoke\s+select\s+on\s+practice\.qb_item_stats\s+from\s+authenticated/i.test(mig))
+      hit("stats-access-path", "supabase/migrations",
+        "authenticated direct select on qb_item_stats not revoked");
+    // 21. last-admin-race: the invariant must live in the DB - a trigger
+    //     serialized by an advisory lock, not the edge fn's count-then-delete.
+    if (!/practice\.guard_last_admin[\s\S]{0,800}?pg_advisory_xact_lock/i.test(mig) ||
+        !/before\s+delete\s+on\s+practice\.accounts/i.test(mig))
+      hit("last-admin-race", "supabase/migrations",
+        "no DB-serialized last-admin delete guard");
+    // 22. fk-auth-delete: telemetry/audit FKs to auth.users must declare
+    //     deletion semantics or account deletion deadlocks.
+    for (const t of ["qb_attempt_events", "qb_adaptive_decisions", "audit_log", "qb_review_events"])
+      if (!new RegExp(`practice\\.${t}[\\s\\S]{0,500}?on delete (cascade|set null)`, "i").test(mig))
+        hit("fk-auth-delete", "supabase/migrations",
+          `${t} -> auth.users FK lacks ON DELETE semantics`);
   }
 }
 
@@ -220,6 +279,101 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
   if (/rate.?limit/i.test(src) && /new Map\s*\(/.test(src) && !/check_rate_limit|pg_catalog/i.test(src))
     hit("in-memory-rate-limit", rel(f),
       "process-local Map rate limiting - shared state lost across isolates");
+}
+
+// ---------- 20. answer-shape-bool ----------
+// Generated T/F rows store answer.boolean; a card reading answer.bool
+// only renders nothing for them (r5).
+{
+  const f = join(BASE, "src/components/ReviewQueueCard.tsx");
+  if (existsSync(f)) {
+    const src = readFileSync(f, "utf8");
+    if (/answer\?*\.bool\b/.test(src) && !/answer\?*\.boolean\b/.test(src))
+      hit("answer-shape-bool", rel(f),
+        "reads answer.bool only - generated rows use answer.boolean");
+  }
+}
+
+// ---------- 23. guest-state-leak ----------
+{
+  const app = join(BASE, "src/App.tsx");
+  const sync = join(BASE, "src/lib/engagement/sync.ts");
+  if (existsSync(app)) {
+    const src = readFileSync(app, "utf8");
+    if (/function\s+handleGuest|handleGuest\s*=\s*(?:async\s*)?\(/.test(src) &&
+        !/parkOwnerBlob/.test(src))
+      hit("guest-state-leak", rel(app),
+        "guest entry does not park an account-owned blob");
+  }
+  if (existsSync(sync)) {
+    const src = readFileSync(sync, "utf8");
+    if (/bindEngagement/.test(src) && !/restoreParkedBlob/.test(src))
+      hit("guest-state-leak", rel(sync),
+        "bindEngagement never restores a parked owner blob - recovery lost");
+  }
+}
+
+// ---------- 24. push-count-honesty ----------
+// A zero insert count must stay zero; an unparsable content-range must
+// fail, never silently become the attempted batch size.
+for (const f of walk(join(BASE, "scripts"), /^gen-.*\.mjs$/)) {
+  const src = readFileSync(f, "utf8");
+  if (!/rest\/v1/.test(src)) continue;
+  if (/split\(['"]\/['"]\)\[1\]\)\s*\|\|/.test(src))
+    hit("push-count-honesty", `${rel(f)}:${lineOf(src, src.indexOf("||"))}`,
+      "content-range count OR-ed with attempted size - 0 becomes batch length");
+  for (const m of src.matchAll(/Prefer:\s*['"]([^'"]*)['"]/g)) {
+    if (/resolution=ignore-duplicates/.test(m[1]) && !/count=exact/.test(m[1]))
+      hit("push-count-honesty", `${rel(f)}:${lineOf(src, m.index)}`,
+        "insert without count=exact - inserted count is guesswork");
+  }
+}
+
+// ---------- 25. session-shrink ----------
+{
+  const f = join(BASE, "src/lib/qb/bank.ts");
+  if (existsSync(f)) {
+    const src = readFileSync(f, "utf8");
+    if (!/poolShort|droppedCount/.test(src))
+      hit("session-shrink", rel(f),
+        "no shortfall surfacing - malformed rows silently shrink sessions");
+  }
+  const ui = join(BASE, "src/components/ExamScreen.tsx");
+  if (existsSync(ui)) {
+    const src = readFileSync(ui, "utf8");
+    if (!/poolShort|droppedCount/.test(src))
+      hit("session-shrink", rel(ui),
+        "session shortfall flags never rendered");
+  }
+}
+
+// ---------- 26. skill-label-raw ----------
+{
+  const f = join(BASE, "src/components/ParentReportScreen.tsx");
+  if (existsSync(f)) {
+    const src = readFileSync(f, "utf8");
+    if (/SKILL_LABELS\[/.test(src) && !/skillLabel\(/.test(src))
+      hit("skill-label-raw", rel(f),
+        "indexes SKILL_LABELS directly - qb taxonomy keys leak raw");
+  }
+  const skills = join(BASE, "src/lib/engagement/skills.ts");
+  if (existsSync(skills)) {
+    const src = readFileSync(skills, "utf8");
+    for (const k of ["arithmetic", "word-problem", "concept", "classification", "application", "writing"])
+      if (!src.includes(`'${k}':`))
+        hit("skill-label-raw", rel(skills), `no Vietnamese label for skill '${k}'`);
+  }
+}
+
+// ---------- 27. e2e-origin-vacuum ----------
+{
+  const f = join(BASE, "e2e", "same-origin.spec.ts");
+  if (existsSync(f)) {
+    const src = readFileSync(f, "utf8");
+    if (!/VITE_SUPABASE_URL/.test(src))
+      hit("e2e-origin-vacuum", rel(f),
+        "same-origin gate ignores the configured backend origin");
+  }
 }
 
 // ---------- report ----------

@@ -8,6 +8,7 @@ import {
   getOwnerAccountId,
   getState,
   markOwnerAccountId,
+  restoreParkedBlob,
   subscribe,
   writeState,
   type EngagementState,
@@ -509,6 +510,10 @@ export async function bindEngagement(accountId: string): Promise<void> {
   pushFailed = false;
   lastPushedJson = null;
   ensureSubscribed();
+  /* r5: guest mode may have parked this account's blob (unsynced
+     progress kept for recovery). Bring it back before the owner check
+     so the merge below sees it again. */
+  restoreParkedBlob(accountId);
   /* B1: discard a foreign owner's blob BEFORE any network call - a
      failed pull must still leave nothing of the previous student's
      data in memory for this account to pick up. */

@@ -36,6 +36,19 @@ const CLASSES = [
   "service-role-in-client",
   "in-memory-rate-limit",
   "migration-grants",
+  // r5 classes
+  "migration-replay",
+  "fetch-gate-parity",
+  "variant-dedupe",
+  "stats-access-path",
+  "answer-shape-bool",
+  "last-admin-race",
+  "fk-auth-delete",
+  "guest-state-leak",
+  "push-count-honesty",
+  "session-shrink",
+  "skill-label-raw",
+  "e2e-origin-vacuum",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

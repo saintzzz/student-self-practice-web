@@ -31,6 +31,12 @@ const rnd = (n) => Math.floor(rng() * n);
 const norm = (s) => String(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const seen = new Set();
 function push(it) {
+  // central MCQ invariant - every path (mcq() or direct push) must pass
+  // this, so a dedupe that leaves 3 distinct choices is rejected (r5).
+  if (it.c && new Set(it.c.map(norm)).size < 4) {
+    console.error(`MCQ under-specified (<4 choices): ${norm(it.q ?? '').slice(0, 60)}`);
+    return;
+  }
   const qKey = norm(it.q ?? it.statement ?? it.text ?? '');
   // dup = same prompt + same choice SET (order-insensitive) or same bool
   const cKey = it.c ? JSON.stringify(it.c.map(norm).sort()) : JSON.stringify(it.bool ?? '');
@@ -234,10 +240,13 @@ for (const s of SUBJ.slice(0, 8)) for (const r of ROOMS) {
     { d: 2, ex: `"${r}" ${plural ? 'số nhiều nên dùng "are"' : 'số ít nên dùng "is"'}.`, lo: 'Cấu trúc there is/are.', top: 'grammar', skill: 'grammar-use-of-english' });
 }
 const PAST = [
-  ['visited', 'visit'], ['played', 'play'], ['watched', 'watch'], ['helped', 'help'],
+  ['visited', 'visit', 'our friends at the park'],
+  ['played', 'play', 'with our friends at the park'],
+  ['watched', 'watch', 'TV with our friends'],
+  ['helped', 'help', 'our friends with homework'],
 ];
-for (const s of SUBJ) for (const [v, base] of PAST) {
-  mcq(`Yesterday, ${s.toLowerCase().replace(/^my|^the/, 'my')} ___ our friends at the park.`, v, [base, 'visits', 'visiting'].slice(0, 3), {
+for (const s of SUBJ) for (const [v, base, obj] of PAST) {
+  mcq(`Yesterday, ${s === 'I' ? 'I' : s.toLowerCase()} ___ ${obj}.`, v, [base, `${base}s`, `${base}ing`], {
     d: 3, ex: `"Yesterday" báo quá khứ nên động từ chia thì quá khứ: "${v}".`, lo: `Thì quá khứ đơn: ${base} -> ${v}.`, top: 'past-simple', skill: 'grammar-use-of-english',
   });
 }
@@ -613,7 +622,9 @@ const PAST_OBJ2 = {
 for (const [v, past, vn] of PAST2) {
   for (const s of pickN(PAST_SUBJ2, 3)) {
     const obj = pick(PAST_OBJ2[v]);
-    const c = shuffle([past, v, `${v}ed`, `${v}s`].filter((x, i, a2) => a2.indexOf(x) === i));
+    // "did + base" keeps 4 distinct choices even for invariant verbs
+    // like read/read (r5: dedupe left only 3 choices here).
+    const c = shuffle([past, v, `${v}ed`, `${v}s`, `did ${v}`].filter((x, i, a2) => a2.indexOf(x) === i));
     push({
       q: `Yesterday, ${s} ___ ${obj}.`, c, a: c.indexOf(past), d: 3,
       ex: `"Yesterday" báo quá khứ - "${v}" (${vn}) chia thành "${past}".`, lo: `Quá khứ bất quy tắc: ${v} -> ${past}.`, top: 'past-simple', skill: 'grammar-use-of-english',
@@ -784,9 +795,17 @@ if (!DRY) {
       continue;
     }
     // content-range "*/N" reports rows actually inserted (ignore-duplicates
-    // skips the rest) - report truth, not the attempted count.
+    // skips the rest) - report truth, not the attempted count. A missing or
+    // unparsable count is a push failure, and "0" is a valid count - never
+    // fall back to the attempted batch size (r5).
     const range = res.headers.get('content-range') ?? '';
-    inserted += Number(range.split('/')[1]) || rows.slice(c, c + 300).length;
+    const n = Number(range.split('/')[1]);
+    if (!Number.isFinite(n)) {
+      failed += rows.slice(c, c + 300).length;
+      console.error(`push fail: missing content-range count (got "${range}")`);
+      continue;
+    }
+    inserted += n;
   }
   console.log(`inserted ${inserted} / ${rows.length} attempted${failed ? `, ${failed} FAILED` : ''}`);
   if (failed > 0) process.exit(1);

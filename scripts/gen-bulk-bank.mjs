@@ -193,12 +193,20 @@ async function push(rows) {
       apikey: SVC, Authorization: `Bearer ${SVC}`,
       'Accept-Profile': 'practice', 'Content-Profile': 'practice',
       'Content-Type': 'application/json',
-      Prefer: 'resolution=ignore-duplicates,return=minimal',
+      Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact',
     },
     body: JSON.stringify(rows),
   });
-  if (!res.ok) console.error('  push fail', res.status, (await res.text()).slice(0, 200));
-  return res.ok;
+  if (!res.ok) { console.error('  push fail', res.status, (await res.text()).slice(0, 200)); return -1; }
+  // count rows actually inserted, not attempted - "0" is a valid count
+  // and a missing content-range is a failure (external-review r5).
+  const range = res.headers.get('content-range') ?? '';
+  const n = Number(range.split('/')[1]);
+  if (!Number.isFinite(n)) {
+    console.error(`  push fail: missing content-range count (got "${range}")`);
+    return -1;
+  }
+  return n;
 }
 
 // ---------- existing count ----------
@@ -242,17 +250,21 @@ async function runGrade(grade) {
       }
     }
     if (fresh.length) {
+      let inserted = fresh.length;
       if (!DRY) {
+        inserted = 0;
         for (let c = 0; c < fresh.length; c += 500) {
-          if (!(await push(fresh.slice(c, c + 500)))) {
+          const n = await push(fresh.slice(c, c + 500));
+          if (n < 0) {
             console.error(`G${grade}: push batch failed - aborting run`);
             process.exit(1);
           }
+          inserted += n;
         }
       }
-      gradeRows += fresh.length; totalPushed += fresh.length;
-      console.log(`G${grade}: +${fresh.length} (total new ${gradeRows}/${need})`);
-      log.push({ grade, at: new Date().toISOString(), added: fresh.length });
+      gradeRows += inserted; totalPushed += inserted;
+      console.log(`G${grade}: +${inserted} inserted / ${fresh.length} attempted (total new ${gradeRows}/${need})`);
+      log.push({ grade, at: new Date().toISOString(), added: inserted });
       mkdirSync(join(HERE, 'gen-bulk-out'), { recursive: true });
       writeFileSync(join(HERE, 'gen-bulk-out', `progress-${SUBJECT}.json`), JSON.stringify(log, null, 1));
     }
