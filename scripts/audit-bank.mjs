@@ -17,11 +17,22 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supabase_new_keys.json'), 'utf8'));
-const SUPA = keys.url;
+// r11: env config first so the audit runs in CI/clean checkouts - the
+// ~/.config/devin file is only a local fallback, never committed.
+let SUPA = process.env.SUPABASE_URL;
+let SVC = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPA || !SVC) {
+  try {
+    const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supabase_new_keys.json'), 'utf8'));
+    SUPA ||= keys.url;
+    SVC ||= keys.keys.service_role;
+  } catch { /* fall through to the check below */ }
+}
+if (!SUPA || !SVC)
+  throw new Error('audit-bank: set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or provision ~/.config/devin/secrets/supabase_new_keys.json)');
 const H = {
-  apikey: keys.keys.service_role,
-  Authorization: `Bearer ${keys.keys.service_role}`,
+  apikey: SVC,
+  Authorization: `Bearer ${SVC}`,
   'Accept-Profile': 'practice',
   Prefer: 'count=exact',
 };
@@ -31,11 +42,16 @@ const H = {
 async function fetchRetry(url) {
   let last;
   for (let i = 0; i < 4; i++) {
-    const r = await fetch(url, { headers: H });
-    if (r.ok) return r;
-    last = r.status;
-    // Retry only transient failures - 4xx will never succeed by retrying.
-    if (last < 500 && last !== 408 && last !== 429) break;
+    try {
+      // r11: per-request deadline - a hung request is transient too.
+      const r = await fetch(url, { headers: H, signal: AbortSignal.timeout(15000) });
+      if (r.ok) return r;
+      last = r.status;
+      // Retry only transient failures - 4xx will never succeed by retrying.
+      if (last < 500 && last !== 408 && last !== 429) break;
+    } catch {
+      last = 'timeout/network';
+    }
     if (i < 3) await new Promise((res) => setTimeout(res, 3000));
   }
   throw new Error(`HTTP ${last} from ${url}`);

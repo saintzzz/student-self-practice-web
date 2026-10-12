@@ -628,6 +628,12 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
         !/loadGenRef|alive\(\)|AbortController|requestId|generation/.test(src))
       hit("async-response-staleness", rel(rqc),
         "multi-await loader writes state with no request-generation guard");
+    // r11 tightening: a generation counter is only half the fix - the
+    // effect must also invalidate in-flight requests on cleanup/unmount.
+    if (/loadGenRef/.test(src) &&
+        !/return\s*\(\)\s*=>[\s\S]{0,120}?(loadGenRef\.current\+\+|\+\+loadGenRef|\.abort\(\))/.test(src))
+      hit("async-response-staleness", rel(rqc),
+        "generation never bumped on effect cleanup - unmount leaves stale writes alive");
   }
 }
 
@@ -670,6 +676,63 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
         !(/408/.test(src) && /429/.test(src) && /[<>]=?\s*500/.test(src)))
       hit("retry-nontransient-errors", rel(ab),
         "retry loop has no transient-status guard - 4xx responses are retried");
+  }
+}
+
+// ---------- 45. mutation-view-context-race ----------
+// An async mutation resolving after the reviewer switched filter/page
+// must not mutate the new view's list or count - capture the view at
+// action start and reload when it no longer matches.
+{
+  const rqc = join(BASE, "src/components/ReviewQueueCard.tsx");
+  if (existsSync(rqc)) {
+    const src = readFileSync(rqc, "utf8");
+    if (/rpc\(\s*['"]review_question['"]/.test(src) && /setTotal/.test(src) &&
+        !/viewAtStart|viewRef\.current/.test(src))
+      hit("mutation-view-context-race", rel(rqc),
+        "mutation success path mutates list/count with no view-context check");
+  }
+}
+
+// ---------- 46. audit-runtime-portability ----------
+// A gate script hard-coding a developer-home secret path cannot run in
+// CI or on another machine - env config must come first, file optional.
+{
+  const ab = join(BASE, "scripts", "audit-bank.mjs");
+  if (existsSync(ab)) {
+    const src = readFileSync(ab, "utf8");
+    if (/homedir\(\)[\s\S]{0,200}?secrets/.test(src) && !/process\.env\.[A-Z_]*(URL|KEY)/.test(src))
+      hit("audit-runtime-portability", rel(ab),
+        "audit reads secrets only from a dev-home path - no env configuration path");
+  }
+}
+
+// ---------- 47. scanner-selftest-exit-status ----------
+// A selftest that swallows the scanner exit code can pass a scanner that
+// prints the success marker yet exits nonzero - assert the code too.
+for (const st of ["tests/ea-classes-scanner.selftest.mjs", "tests/reliability-scanner.selftest.mjs"]) {
+  const f = join(BASE, st);
+  if (existsSync(f)) {
+    const src = readFileSync(f, "utf8");
+    if (/execFileSync/.test(src) && !/(e\.status|status\s*\?\?|code,)/.test(src))
+      hit("scanner-selftest-exit-status", rel(f),
+        "scan() swallows the scanner exit code - nonzero exits are not asserted");
+    if (/execFileSync/.test(src) && !/assert\.(notEqual|equal)\(code/.test(src))
+      hit("scanner-selftest-exit-status", rel(f),
+        "no assertion on the scanner exit code");
+  }
+}
+
+// ---------- 48. audit-network-timeout ----------
+// A retry loop without a per-request deadline blocks the audit forever
+// on a hung connection - AbortSignal.timeout bounds each attempt.
+{
+  const ab = join(BASE, "scripts", "audit-bank.mjs");
+  if (existsSync(ab)) {
+    const src = readFileSync(ab, "utf8");
+    if (/fetchRetry|await fetch\(/.test(src) && !/AbortSignal|signal\s*:/.test(src))
+      hit("audit-network-timeout", rel(ab),
+        "fetch has no per-request timeout - a hung request blocks the audit");
   }
 }
 

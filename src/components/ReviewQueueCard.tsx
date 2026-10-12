@@ -51,6 +51,11 @@ export default function ReviewQueueCard() {
   // r10: a superseded request must never write state - an out-of-order
   // response would display the old filter's rows under the new one.
   const loadGenRef = useRef(0);
+  // r11: mutations (approve/reject/flag) that resolve after the reviewer
+  // switched view must not mutate the new view's list or count - capture
+  // the view at action start and reload when it no longer matches.
+  const viewRef = useRef({ statusFilter, offset });
+  viewRef.current = { statusFilter, offset };
 
   const load = useCallback(async () => {
     const gen = ++loadGenRef.current;
@@ -110,9 +115,18 @@ export default function ReviewQueueCard() {
     setRows(items.map((i) => ({ ...i, q: qmap.get(i.question_id), stats: smap.get(i.question_id), assets: amap.get(i.question_id) })));
   }, [statusFilter, offset]);
 
-  useEffect(() => { setRows(null); void load(); }, [load]);
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  // r11: bumping the generation in cleanup invalidates any request still
+  // in flight when this view is unmounted or replaced.
+  useEffect(() => {
+    setRows(null);
+    void load();
+    return () => { loadGenRef.current++; };
+  }, [load]);
 
   async function act(questionId: string, action: 'approve' | 'reject' | 'flag', actReason = '') {
+    const viewAtStart = viewRef.current;
     setBusyId(questionId);
     setError(null);
     const { data, error: err } = await (await getSupabase()).rpc('review_question', {
@@ -121,6 +135,11 @@ export default function ReviewQueueCard() {
       p_reason: actReason,
     });
     setBusyId(null);
+    if (viewAtStart.statusFilter !== viewRef.current.statusFilter || viewAtStart.offset !== viewRef.current.offset) {
+      setRows(null);
+      void loadRef.current();
+      return;
+    }
     if (err) { setError(err.message); return; }
     // r8: SQL CAS returns {ok:false, stale:true, current} when another
     // reviewer already moved the row - that is NOT a success. Surface the

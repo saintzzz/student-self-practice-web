@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supabase_new_keys.json'), 'utf8'));
 async function fetchRetry(url) {
   let last;
   for (let i = 0; i < 4; i++) {
@@ -8,3 +11,4 @@ async function fetchRetry(url) {
   }
   throw new Error(`HTTP ${last}`);
 }
+const r = await fetch(`${keys.url}/rest/v1/qb_questions?select=id&limit=1000`);

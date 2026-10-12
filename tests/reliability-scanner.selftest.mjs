@@ -10,6 +10,8 @@ import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+// r11: capture the exit code too - a scanner that prints expected output
+// but exits nonzero must not pass assertions silently.
 function runScanner() {
   try {
     const out = execFileSync("node", ["scripts/check-reliability.mjs"], {
@@ -17,14 +19,14 @@ function runScanner() {
       env: { ...process.env, SCAN_SRC: "tests/fixtures/reliability" },
       encoding: "utf8",
     });
-    return out;
+    return { out, code: 0 };
   } catch (e) {
-    return (e.stdout ?? "") + (e.stderr ?? "");
+    return { out: (e.stdout ?? "") + (e.stderr ?? ""), code: e.status ?? 1 };
   }
 }
 
 test("reliability scanner flags every known-bad fixture pattern", () => {
-  const out = runScanner();
+  const { out, code } = runScanner();
   const expectations = [
     /NO-ERR-BIND/, // dynamic .from(e.table), fetchAllRows khong error-bind
     /DISCARDED-QUERY/, // awaited query bo ket qua
@@ -41,10 +43,11 @@ test("reliability scanner flags every known-bad fixture pattern", () => {
   ];
   for (const re of expectations)
     assert.match(out, re, `scanner phai flag pattern ${re}`);
+  assert.notEqual(code, 0, "scanner phai exit nonzero tren bad fixture");
 });
 
 test("reliability scanner produces zero hits on safe fixture", () => {
-  const out = runScanner();
+  const { out } = runScanner();
   assert.equal(
     /good\.ts:\d+/.test(out),
     false,

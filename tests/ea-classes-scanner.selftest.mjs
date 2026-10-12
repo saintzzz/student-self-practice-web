@@ -9,15 +9,18 @@ import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+// r11: capture the exit code too - a scanner that prints the success
+// marker but exits nonzero must not pass the good/repo assertions.
 function scan(root) {
   try {
-    return execFileSync("node", ["scripts/check-ea-classes.mjs"], {
+    const out = execFileSync("node", ["scripts/check-ea-classes.mjs"], {
       cwd: ROOT,
       env: { ...process.env, EA_SCAN_ROOT: root },
       encoding: "utf8",
     });
+    return { out, code: 0 };
   } catch (e) {
-    return (e.stdout ?? "") + (e.stderr ?? "");
+    return { out: (e.stdout ?? "") + (e.stderr ?? ""), code: e.status ?? 1 };
   }
 }
 
@@ -70,20 +73,28 @@ const CLASSES = [
   "priority-pagination-inversion",
   "gate-orchestration-omission",
   "retry-nontransient-errors",
+  // r11 classes
+  "mutation-view-context-race",
+  "audit-runtime-portability",
+  "scanner-selftest-exit-status",
+  "audit-network-timeout",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {
-  const out = scan("tests/fixtures/ea-bad");
+  const { out, code } = scan("tests/fixtures/ea-bad");
   for (const cls of CLASSES)
     assert.match(out, new RegExp(`ea:${cls}`), `scanner phai flag ${cls}`);
+  assert.notEqual(code, 0, "scanner phai exit nonzero tren bad fixture");
 });
 
 test("ea-classes scanner produces zero hits on good fixture", () => {
-  const out = scan("tests/fixtures/ea-good");
+  const { out, code } = scan("tests/fixtures/ea-good");
+  assert.equal(code, 0, `scanner exit ${code} tren good fixture: ${out.slice(-400)}`);
   assert.match(out, /All EA defect-class checks passed/, out);
 });
 
 test("ea-classes gate passes on real repo", () => {
-  const out = scan("");
+  const { out, code } = scan("");
+  assert.equal(code, 0, `scanner exit ${code} tren real repo: ${out.slice(-400)}`);
   assert.match(out, /All EA defect-class checks passed/, out);
 });

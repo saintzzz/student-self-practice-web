@@ -7,6 +7,7 @@ const queueResolvers: Array<{
   calls: string[];
   resolve: (v: { data: unknown[]; count: number; error: null }) => void;
 }> = [];
+const rpcResolvers: Array<{ resolve: (v: { data: unknown; error: null }) => void }> = [];
 
 vi.mock('../lib/supabase/client', () => {
   const builder = () => {
@@ -32,7 +33,11 @@ vi.mock('../lib/supabase/client', () => {
   return {
     getSupabase: async () => ({
       from: () => builder(),
-      rpc: vi.fn(async () => ({ data: [], error: null })),
+      rpc: vi.fn((name: string) => {
+        if (name === 'review_question')
+          return new Promise((resolve) => rpcResolvers.push({ resolve }));
+        return Promise.resolve({ data: [], error: null });
+      }),
     }),
     isSupabaseConfigured: () => true,
   };
@@ -84,5 +89,60 @@ describe('ReviewQueueCard - r10 load lifecycle', () => {
     });
     expect(screen.queryByTestId('review-item-q-stale')).toBeNull();
     expect(screen.getByTestId('review-item-q-approved')).toBeTruthy();
+  });
+
+  it('a review mutation completing after a filter switch does not mutate the new view', async () => {
+    queueResolvers.length = 0;
+    rpcResolvers.length = 0;
+    render(<ReviewQueueCard />);
+    await act(flush);
+    const pendingReq = queueResolvers.find((r) => r.status === 'pending');
+    await act(async () => {
+      pendingReq!.resolve({
+        data: [{ question_id: 'q-p1', priority: 'P0', issues: [] }],
+        count: 1,
+        error: null,
+      });
+      await flush();
+    });
+    expect(screen.getByTestId('review-approve-q-p1')).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId('review-approve-q-p1'));
+    await act(flush);
+    expect(rpcResolvers).toHaveLength(1);
+
+    // Reviewer switches to the approved view while the RPC is in flight.
+    fireEvent.click(screen.getByTestId('review-filter-approved'));
+    await act(flush);
+    const approvedReq = queueResolvers.filter((r) => r.status === 'approved').pop();
+    await act(async () => {
+      approvedReq!.resolve({
+        data: [{ question_id: 'q-appr', priority: 'P1', issues: [] }],
+        count: 7,
+        error: null,
+      });
+      await flush();
+    });
+    expect(screen.getByText(/Duyệt câu hỏi \(7\)/)).toBeTruthy();
+
+    // The mutation resolves late - it must not decrement the approved
+    // count or touch the approved rows.
+    await act(async () => {
+      rpcResolvers[0]!.resolve({ data: { ok: true }, error: null });
+      await flush();
+    });
+    expect(screen.getByText(/Duyệt câu hỏi \(7\)/)).toBeTruthy();
+    expect(screen.queryByTestId('review-item-q-p1')).toBeNull();
+  });
+
+  it('unmount invalidates an in-flight load (no state write, no crash)', async () => {
+    queueResolvers.length = 0;
+    const { unmount } = render(<ReviewQueueCard />);
+    await act(flush);
+    unmount();
+    await act(async () => {
+      queueResolvers[0]!.resolve({ data: [{ question_id: 'q-x', priority: 'P0', issues: [] }], count: 1, error: null });
+      await flush();
+    });
   });
 });

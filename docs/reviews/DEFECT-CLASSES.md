@@ -70,6 +70,11 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 51 | `gate-orchestration-omission` (r10) | standalone `preflight.sh` ran only the reliability scanner - EA class gates were unenforced on that path | preflight invokes `npm run code:reliability` (single entry for all scanners + selftests) | check-ea-classes #43 |
 | 52 | `retry-nontransient-errors` (r10) | `fetchRetry` retried every non-2xx incl. permanent 4xx, and slept after the final attempt | retry only 408/429/5xx, break on permanent failures, skip the trailing sleep | check-ea-classes #44 |
 | 53 | `mic-lifecycle` residual (r10) | VAD init throwing after `new AudioContext()` but before `vadStop` wired left a context release() could not reach | hoisted `vadCtx`; catch closes a partially-initialized context; `close()` guarded by state | check-ea-classes #33 (tightened) + lib test |
+| 54 | `mutation-view-context-race` (r11) | `act()` RPC resolving after a filter switch still mutated the new view's rows and count | capture view at action start; on mismatch invalidate + reload via `loadRef` instead of mutating | check-ea-classes #45 + regression test |
+| 55 | `async-response-staleness` residual (r11) | generation guard did not cover unmount - an in-flight load could still write after the component left | `loadGenRef.current++` in the effect cleanup | check-ea-classes #41 (tightened) |
+| 56 | `audit-runtime-portability` (r11) | audit-bank read secrets only from `~/.config/devin` - un-runnable in CI or other machines | `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` env first, file as optional fallback, fail with a clear message | check-ea-classes #46 |
+| 57 | `scanner-selftest-exit-status` (r11) | selftest swallowed the scanner exit code - nonzero exits could pass silently | `scan()` returns `{out, code}`; both selftests assert the code | check-ea-classes #47 |
+| 58 | `audit-network-timeout` (r11) | `fetchRetry` bounded attempts but not per-request time - a hung request blocked the audit | `AbortSignal.timeout(15000)` per attempt; timeouts classified transient | check-ea-classes #48 |
 
 ## Deferred
 
