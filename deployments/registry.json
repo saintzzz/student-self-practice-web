@@ -7,6 +7,7 @@
       "repo": "saintzzz/student-self-practice-web",
       "branch": "main",
       "autoDeployOnPush": true,
+      "deployHook": "stored at ~/.config/devin/secrets/vercel_deploy_hook_ea (r16: POST to trigger a main deploy when the GitHub-app webhook misses a push - Vercel incident fallback)",
       "productionUrl": "https://ea.vieschool.com",
       "legacyUrls": [
         "https://ioe-leduyminh.vercel.app"
