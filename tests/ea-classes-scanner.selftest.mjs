@@ -78,6 +78,9 @@ const CLASSES = [
   "audit-runtime-portability",
   "scanner-selftest-exit-status",
   "audit-network-timeout",
+  // r13 classes
+  "auth-signout-error-loss",
+  "pagination-offset-after-mutation",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

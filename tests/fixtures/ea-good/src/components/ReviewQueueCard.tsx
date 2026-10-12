@@ -9,6 +9,7 @@ export async function act(supabase: any, id: string) {
   if (data?.ok !== true) return 'denied';
   loadGenRef.current++;
   setTotal((t) => Math.max(0, t - 1));
+  if ((rows?.length ?? 0) <= 1 && offset > 0) setOffset(Math.max(0, offset - 20));
   return 'removed';
 }
 const loadGenRef = useRef(0);

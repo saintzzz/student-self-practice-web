@@ -32,7 +32,10 @@ export async function login(username: string, pin: string): Promise<string | nul
 }
 
 export async function logout(): Promise<void> {
-  await (await getSupabase()).auth.signOut();
+  // r13: signOut() reports failure through its error channel, not a
+  // throw - silently discarding it makes a failed logout look done.
+  const { error } = await (await getSupabase()).auth.signOut();
+  if (error) throw error;
 }
 
 /** CR-17: student self-service PIN change (Supabase password update on the

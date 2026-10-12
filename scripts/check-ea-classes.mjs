@@ -750,6 +750,31 @@ for (const st of ["tests/ea-classes-scanner.selftest.mjs", "tests/reliability-sc
   }
 }
 
+// ---------- 49. auth-signout-error-loss ----------
+// supabase signOut() reports failure through { error }, not a throw -
+// discarding it makes a failed logout look like a successful one.
+for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
+  const src = readFileSync(f, "utf8");
+  if (!/signOut\s*\(\s*\)/.test(src)) continue;
+  if (!/signOut[\s\S]{0,200}?\berror\b|error[\s\S]{0,100}?signOut/.test(src))
+    hit("auth-signout-error-loss", rel(f),
+      "signOut() result unchecked - failed logout resolves like success");
+}
+
+// ---------- 50. pagination-offset-after-mutation ----------
+// Removing the last row of a later page leaves the offset out of range -
+// the mutation path must reconcile the offset before the next load.
+{
+  const rqc = join(BASE, "src/components/ReviewQueueCard.tsx");
+  if (existsSync(rqc)) {
+    const src = readFileSync(rqc, "utf8");
+    if (/setRows\(\(prev\)\s*=>/.test(src) && /setTotal/.test(src) &&
+        !/setTotal[\s\S]{0,300}?setOffset\(/.test(src))
+      hit("pagination-offset-after-mutation", rel(rqc),
+        "row removal never reconciles offset - last-page delete shows an empty queue");
+  }
+}
+
 // ---------- report ----------
 const failures = [];
 const byCls = new Map();

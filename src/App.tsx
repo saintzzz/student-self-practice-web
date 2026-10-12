@@ -139,7 +139,9 @@ export default function App() {
     unbindEngagement();
     if (synced && getOwnerAccountId()) clearEngagementLocal();
     try {
-      await logout();
+      // r13: remote revocation failures are surfaced, not silently
+      // dropped - local cleanup below still runs either way.
+      await logout().catch((e) => console.warn('signOut failed:', e));
     } finally {
       setMyAccount(null);
       setAllowedGrades(null);

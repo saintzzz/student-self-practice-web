@@ -161,8 +161,12 @@ export default function ReviewQueueCard() {
     loadGenRef.current++;
     setConfirming(null);
     setReason('');
+    // r13: removing the last row of a later page leaves the offset
+    // out of range - step back a page so the effect reloads real rows.
+    const lastOnLaterPage = (rows?.length ?? 0) <= 1 && offset > 0;
     setRows((prev) => prev?.filter((r) => r.question_id !== questionId) ?? null);
     setTotal((t) => Math.max(0, t - 1));
+    if (lastOnLaterPage) setOffset(Math.max(0, offset - PAGE));
   }
 
   return (

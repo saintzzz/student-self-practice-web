@@ -77,6 +77,8 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 58 | `audit-network-timeout` (r11) | `fetchRetry` bounded attempts but not per-request time - a hung request blocked the audit | `AbortSignal.timeout(15000)` per attempt; timeouts classified transient | check-ea-classes #48 |
 | 59 | `mutation-view-context-race` residual (r12) | A->B->A filter switch restored identical values - the value compare let a stale mutation mutate the new view | epoch guard (`genAtStart !== loadGenRef.current`) + successful mutations bump the epoch so pending loads cannot restore pre-mutation rows | check-ea-classes #45 + #41 (tightened) + ABA regression test |
 | 60 | `scanner-selftest-exit-status` residual (r12) | safe-fixture scan ran on the shared bad+good dir - its exit code was meaningless | dedicated `reliability-good/` fixture dir; both polarity asserts (`equal(code,0)` + `notEqual(code,0)`) required per selftest | check-ea-classes #47 (tightened) |
+| 61 | `auth-signout-error-loss` (r13) | `logout()` awaited `signOut()` but discarded `{error}` - caller treated a failed sign-out as success and cleared local state while the session survived | destructure the result and throw on `error`; caller keeps `finally` local cleanup and logs the failure | check-ea-classes #49 + auth test |
+| 62 | `pagination-offset-after-mutation` (r13) | removing the last row of a later page left `offset` out of range - empty page rendered while earlier rows remained | after a successful mutation reconcile the offset to the last valid page; the offset change re-triggers `load()` | check-ea-classes #50 + regression test |
 
 ## Deferred
 

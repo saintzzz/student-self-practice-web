@@ -176,6 +176,46 @@ describe('ReviewQueueCard - r10 load lifecycle', () => {
     expect(screen.getByText(/Duyệt câu hỏi \(1\)/)).toBeTruthy();
   });
 
+  it('removing the last row of a later page steps the offset back', async () => {
+    queueResolvers.length = 0;
+    rpcResolvers.length = 0;
+    render(<ReviewQueueCard />);
+    await act(flush);
+    await act(async () => {
+      queueResolvers.find((r) => r.status === 'pending')!.resolve({
+        data: [{ question_id: 'q-1', priority: 'P1', issues: [] }],
+        count: 21,
+        error: null,
+      });
+      await flush();
+    });
+    // Go to page 2 (offset 20) which holds the single remaining row.
+    fireEvent.click(screen.getByText('Sau →'));
+    await act(flush);
+    await act(async () => {
+      queueResolvers.filter((r) => r.status === 'pending').pop()!.resolve({
+        data: [{ question_id: 'q-last', priority: 'P1', issues: [] }],
+        count: 21,
+        error: null,
+      });
+      await flush();
+    });
+    expect(screen.getByTestId('review-item-q-last')).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId('review-approve-q-last'));
+    await act(flush);
+    const pendingBefore = queueResolvers.filter((r) => r.status === 'pending').length;
+    await act(async () => {
+      rpcResolvers[0]!.resolve({ data: { ok: true }, error: null });
+      await flush();
+    });
+
+    // The offset stepped back to a valid page - the effect observed it
+    // and issued a fresh load for the first page.
+    const pendingAfter = queueResolvers.filter((r) => r.status === 'pending').length;
+    expect(pendingAfter).toBeGreaterThan(pendingBefore);
+  });
+
   it('unmount invalidates an in-flight load (no state write, no crash)', async () => {
     queueResolvers.length = 0;
     const { unmount } = render(<ReviewQueueCard />);
