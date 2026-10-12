@@ -5,7 +5,7 @@
  * reject (pulls from all pools) or flag for follow-up - all through the
  * review_question RPC which enforces admin role server-side.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
 import { optionLabel } from '../lib/qb/bank';
 import { H2 } from '../lib/ui/tokens';
@@ -37,7 +37,6 @@ interface ItemStat {
   facility: number | null;
 }
 
-const PRIORITY_ORDER = ['P0', 'P1', 'P2', 'P3'];
 const PAGE = 20;
 
 export default function ReviewQueueCard() {
@@ -49,19 +48,27 @@ export default function ReviewQueueCard() {
   const [reason, setReason] = useState('');
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // r10: a superseded request must never write state - an out-of-order
+  // response would display the old filter's rows under the new one.
+  const loadGenRef = useRef(0);
 
   const load = useCallback(async () => {
+    const gen = ++loadGenRef.current;
+    const alive = () => gen === loadGenRef.current;
     const supa = await getSupabase();
+    // r10: order by priority in the DB before paginating - sorting the
+    // page afterwards leaves P0 items buried on later pages.
     const { data, count, error: err } = await supa
       .from('qb_review_queue')
       .select('question_id, priority, issues', { count: 'exact' })
       .eq('review_status', statusFilter)
+      .order('priority')
       .order('question_id')
       .range(offset, offset + PAGE - 1);
+    if (!alive()) return;
     if (err) { setError(err.message); return; }
     const items = (data ?? []) as QueueRow[];
     setTotal(count ?? items.length);
-    items.sort((a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority));
     const ids = items.map((i) => i.question_id);
     // bounded-ok: ids <= PAGE(20) tu trang queue ben tren.
     const qs = ids.length
@@ -70,6 +77,7 @@ export default function ReviewQueueCard() {
           .select('id, grade, subject, question_type, prompt_text, choices, answer, explanation_vi, review_status, passage, statement, tokens')
           .in('id', ids)
       : { data: [] };
+    if (!alive()) return;
     if ('error' in qs && qs.error) { setError(qs.error.message); return; }
     const qmap = new Map(((qs.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
     // CR-49: item statistics from real attempt events - admin-checked RPC
@@ -77,6 +85,7 @@ export default function ReviewQueueCard() {
     const stats = ids.length
       ? await supa.rpc('qb_item_stats_for', { p_ids: ids })
       : { data: [], error: null };
+    if (!alive()) return;
     if (stats.error) { setError(stats.error.message); return; }
     const smap = new Map(((stats.data ?? []) as ItemStat[]).map((s) => [s.question_id, s]));
     // Reviewers must see the same visuals the student sees - fetch linked
@@ -89,6 +98,7 @@ export default function ReviewQueueCard() {
           .select('question_id, sort_order, qb_assets(file_path)')
           .in('question_id', ids)
       : { data: [] };
+    if (!alive()) return;
     if ('error' in links && links.error) { setError(links.error.message); return; }
     const amap = new Map<string, string[]>();
     for (const l of (links.data ?? []) as unknown as { question_id: string; qb_assets: { file_path: string } | { file_path: string }[] | null }[]) {

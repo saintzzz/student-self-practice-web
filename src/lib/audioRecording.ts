@@ -115,8 +115,10 @@ export async function startAudioRecording(
   let quietSince = startAt;
   let speechSeen = false;
   let vadStop = () => {};
+  let vadCtx: AudioContext | undefined;
   try {
     const ctx = new AudioContext();
+    vadCtx = ctx;
     // iOS Safari spawns the context suspended; resume() runs inside the
     // same user-gesture chain as the record tap, so it is allowed here.
     if (ctx.state === 'suspended') void ctx.resume();
@@ -159,10 +161,13 @@ export async function startAudioRecording(
     vadStop = () => {
       stopped = true;
       cancelAnimationFrame(rafId);
-      void ctx.close();
+      if (ctx.state !== 'closed') void ctx.close().catch(() => {});
     };
   } catch {
-    // No AudioContext - caller still gets the max-duration cap.
+    // No AudioContext - caller still gets the max-duration cap. If init
+    // threw after the context was created (r10), close it here because
+    // vadStop was never wired and release() cannot reach it.
+    if (vadCtx && vadCtx.state !== 'closed') void vadCtx.close().catch(() => {});
   }
 
   let resolveDone!: (blob: Blob) => void;

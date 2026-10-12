@@ -43,6 +43,32 @@ describe('startAudioRecording - r9 init failure cleanup', () => {
     expect(track.stop).toHaveBeenCalledTimes(1);
   });
 
+  it('VAD init throwing after AudioContext creation closes the context', async () => {
+    const { stream } = fakeStream();
+    vi.stubGlobal('navigator', {
+      mediaDevices: { getUserMedia: vi.fn(async () => stream) },
+    });
+    const close = vi.fn(async () => undefined);
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'running';
+        createMediaStreamSource() {
+          return { connect() {} };
+        }
+        createAnalyser() {
+          throw new Error('no analyser');
+        }
+        close = close;
+      },
+    );
+    mockRecorder();
+
+    const ctl = await startAudioRecording();
+    expect(close).toHaveBeenCalledTimes(1);
+    ctl.cancel();
+  });
+
   it('MediaRecorder constructor throwing stops every captured track', async () => {
     const { track, stream } = fakeStream();
     vi.stubGlobal('navigator', {

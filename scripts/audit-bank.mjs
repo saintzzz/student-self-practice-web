@@ -34,7 +34,9 @@ async function fetchRetry(url) {
     const r = await fetch(url, { headers: H });
     if (r.ok) return r;
     last = r.status;
-    await new Promise((res) => setTimeout(res, 3000));
+    // Retry only transient failures - 4xx will never succeed by retrying.
+    if (last < 500 && last !== 408 && last !== 429) break;
+    if (i < 3) await new Promise((res) => setTimeout(res, 3000));
   }
   throw new Error(`HTTP ${last} from ${url}`);
 }

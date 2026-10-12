@@ -65,6 +65,11 @@ const CLASSES = [
   "privilege-mutation-compat",
   "rpc-result-enum",
   "fetch-mode-parity",
+  // r10 classes
+  "async-response-staleness",
+  "priority-pagination-inversion",
+  "gate-orchestration-omission",
+  "retry-nontransient-errors",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {

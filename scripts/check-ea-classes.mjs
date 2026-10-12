@@ -466,6 +466,13 @@ for (const f of walk(join(BASE, "src", "hooks"), /\.tsx?$/)) {
         !/try\s*{[^}]*recorder\.start\(\)[\s\S]{0,600}?catch[\s\S]{0,300}?(release\(\)|track\.stop\(\))/.test(src))
       hit("mic-lifecycle", rel(ar),
         "MediaRecorder.start() failure leaks the mic stream - no release() in a catch");
+    // r10 tightening: if VAD init throws after new AudioContext() but
+    // before vadStop is wired, release() cannot reach the context - the
+    // catch must close a partially-initialized context itself.
+    if (/new AudioContext/.test(src) &&
+        !/new AudioContext[\s\S]{0,3000}?catch\s*{[\s\S]{0,500}?close\(/.test(src))
+      hit("mic-lifecycle", rel(ar),
+        "partial VAD init leaks the AudioContext - catch never closes it");
   }
 }
 
@@ -606,6 +613,63 @@ for (const f of walk(join(BASE, "supabase", "functions"), /\.ts$/)) {
     if (!/VITE_SUPABASE_URL/.test(src))
       hit("e2e-origin-vacuum", rel(f),
         "same-origin gate ignores the configured backend origin");
+  }
+}
+
+// ---------- 41. async-response-staleness ----------
+// A filter/pagination-driven loader must invalidate superseded requests -
+// an out-of-order response writing state displays the old filter's rows
+// under the new one.
+{
+  const rqc = join(BASE, "src/components/ReviewQueueCard.tsx");
+  if (existsSync(rqc)) {
+    const src = readFileSync(rqc, "utf8");
+    if (/useCallback\(async/.test(src) && /\.range\(/.test(src) &&
+        !/loadGenRef|alive\(\)|AbortController|requestId|generation/.test(src))
+      hit("async-response-staleness", rel(rqc),
+        "multi-await loader writes state with no request-generation guard");
+  }
+}
+
+// ---------- 42. priority-pagination-inversion ----------
+// Sorting the page AFTER .range() is not global ordering - priority must
+// be part of the DB ORDER BY so high-priority rows surface on page 1.
+{
+  const rqc = join(BASE, "src/components/ReviewQueueCard.tsx");
+  if (existsSync(rqc)) {
+    const src = readFileSync(rqc, "utf8");
+    if (/from\(\s*['"]qb_review_queue['"]/.test(src) &&
+        !/\.order\(\s*['"]priority['"][^)]*\)[\s\S]{0,200}?\.range\(/.test(src))
+      hit("priority-pagination-inversion", rel(rqc),
+        "page sliced before priority sort - queue is not globally priority-ordered");
+  }
+}
+
+// ---------- 43. gate-orchestration-omission ----------
+// Every deterministic scanner must run through every gate entry point -
+// a preflight that only covers one scanner leaves the others unenforced.
+{
+  const pf = join(BASE, "scripts", "preflight.sh");
+  const ea = join(BASE, "scripts", "check-ea-classes.mjs");
+  if (existsSync(pf) && existsSync(ea)) {
+    const src = readFileSync(pf, "utf8");
+    if (!/code:reliability|check-ea-classes/.test(src))
+      hit("gate-orchestration-omission", rel(pf),
+        "preflight omits the EA class gates - standalone path enforces only one scanner");
+  }
+}
+
+// ---------- 44. retry-nontransient-errors ----------
+// A fetch retry loop must retry transient statuses only (408/429/5xx) -
+// retrying a permanent 4xx wastes attempts and masks the real failure.
+{
+  const ab = join(BASE, "scripts", "audit-bank.mjs");
+  if (existsSync(ab)) {
+    const src = readFileSync(ab, "utf8");
+    if (/fetchRetry|for\s*\(let i\s*=\s*0;\s*i\s*<\s*4/.test(src) &&
+        !(/408/.test(src) && /429/.test(src) && /[<>]=?\s*500/.test(src)))
+      hit("retry-nontransient-errors", rel(ab),
+        "retry loop has no transient-status guard - 4xx responses are retried");
   }
 }
 

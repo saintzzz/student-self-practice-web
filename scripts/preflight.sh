@@ -65,14 +65,23 @@ if [ -f go.mod ]; then
 fi
 
 # --- reliability gate (reliability classes: unchecked-read, unbounded-read,
-# action-loss, cas-transition). Neu project co scripts/check-reliability.mjs
-# thi day la check bat buoc - khong duoc skip.
-if [ -f scripts/check-reliability.mjs ]; then
+# action-loss, cas-transition + project EA classes). Neu project co scanner
+# thi day la check bat buoc - khong duoc skip. r10: prefer the single
+# code:reliability entry point so every scanner + selftest stays in sync.
+if has_script code:reliability; then
+  run npm run code:reliability --silent
+elif [ -f scripts/check-reliability.mjs ]; then
   run node scripts/check-reliability.mjs
   # scanner self-test (fixtures): .selftest.mjs so vitest/jest do not
   # auto-pick it - node --test runs it by explicit path only.
   if [ -f tests/reliability-scanner.selftest.mjs ]; then
     run node --test tests/reliability-scanner.selftest.mjs
+  fi
+  if [ -f scripts/check-ea-classes.mjs ]; then
+    run node scripts/check-ea-classes.mjs
+    if [ -f tests/ea-classes-scanner.selftest.mjs ]; then
+      run node --test tests/ea-classes-scanner.selftest.mjs
+    fi
   fi
 fi
 

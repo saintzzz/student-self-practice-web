@@ -4,3 +4,12 @@ export async function act(supabase: any, id: string) {
   if (err) return err;
   return 'removed';
 }
+export const load = useCallback(async () => {
+  const { data } = await supabase
+    .from('qb_review_queue')
+    .select('question_id, priority')
+    .eq('review_status', statusFilter)
+    .order('question_id')
+    .range(offset, offset + 19);
+  setRows(data);
+}, [statusFilter, offset]);

@@ -65,6 +65,11 @@ Gates (run `npm run code:reliability` - wired into CI):
 | 46 | `mic-lifecycle` residual (r8) | StrictMode never re-armed the guard; fallback/SR callbacks could launch post-unmount; ctor-fail leaked the stream | re-arm in setup + guard every launch path + `track.stop()` on ctor failure | check-ea-classes #33 (tightened) |
 | 47 | `mic-lifecycle` residual (r9) | `recorder.start()` could throw after construction - caller never got a controller, tracks+VAD+timer leaked | `start()` wrapped in try/catch releasing tracks, VAD, and the cap timer | check-ea-classes #33 (tightened) + 2 lib tests |
 | 48 | `rpc-result-enum` residual (r9) | null/malformed `review_question` payload passed the `ok === false` guard - ambiguous result treated as success | UI requires explicit `data?.ok === true` before the success transition | check-ea-classes #39 (tightened) |
+| 49 | `async-response-staleness` (r10) | filter-driven `load()` never invalidated superseded requests - out-of-order responses overwrote the new filter's rows | request-generation counter + `alive()` guard on every post-await state write; regression test | check-ea-classes #41 |
+| 50 | `priority-pagination-inversion` (r10) | `.range()` sliced the page by `question_id` before client-side priority sort - P0 items buried on later pages | `order('priority').order('question_id')` in the DB query before `.range()` | check-ea-classes #42 |
+| 51 | `gate-orchestration-omission` (r10) | standalone `preflight.sh` ran only the reliability scanner - EA class gates were unenforced on that path | preflight invokes `npm run code:reliability` (single entry for all scanners + selftests) | check-ea-classes #43 |
+| 52 | `retry-nontransient-errors` (r10) | `fetchRetry` retried every non-2xx incl. permanent 4xx, and slept after the final attempt | retry only 408/429/5xx, break on permanent failures, skip the trailing sleep | check-ea-classes #44 |
+| 53 | `mic-lifecycle` residual (r10) | VAD init throwing after `new AudioContext()` but before `vadStop` wired left a context release() could not reach | hoisted `vadCtx`; catch closes a partially-initialized context; `close()` guarded by state | check-ea-classes #33 (tightened) + lib test |
 
 ## Deferred
 

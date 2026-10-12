@@ -6,3 +6,17 @@ export async function act(supabase: any, id: string) {
   if (data?.ok !== true) return 'denied';
   return 'removed';
 }
+const loadGenRef = useRef(0);
+export const load = useCallback(async () => {
+  const gen = ++loadGenRef.current;
+  const alive = () => gen === loadGenRef.current;
+  const { data } = await supabase
+    .from('qb_review_queue')
+    .select('question_id, priority')
+    .eq('review_status', statusFilter)
+    .order('priority')
+    .order('question_id')
+    .range(offset, offset + 19);
+  if (!alive()) return;
+  setRows(data);
+}, [statusFilter, offset]);
