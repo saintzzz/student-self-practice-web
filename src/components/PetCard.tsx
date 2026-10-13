@@ -55,7 +55,7 @@ export default function PetCard() {
             type="button"
             data-testid="pet-evolved-ok"
             onClick={dismissCongrats}
-            className={`shrink-0 ${BTN_REWARD_EARNED} !min-h-[40px] px-3 py-1.5 text-sm`}
+            className={`shrink-0 ${BTN_REWARD_EARNED} px-3 py-1.5 text-sm`}
           >
             Tuyệt!
           </button>

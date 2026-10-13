@@ -59,7 +59,7 @@ export default function CoachCard({ gradeId, onDrill }: CoachCardProps) {
               type="button"
               data-testid={`coach-drill-${w.skillKey}`}
               onClick={() => onDrill(w.program, { skills: w.drillSkills })}
-              className={`shrink-0 ${BTN_SECONDARY_NAVY} !min-h-[44px] px-4 py-2 text-sm`}
+              className={`shrink-0 ${BTN_SECONDARY_NAVY} px-4 py-2 text-sm`}
             >
               Ôn ngay
             </button>
