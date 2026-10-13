@@ -29,6 +29,17 @@ vi.mock('../lib/serverReport', async (importOriginal) => {
   };
 });
 
+/* External-review r1 #1: email writes now re-check the live parent pass.
+   Tests simulate a valid pass via this mock; the re-gate test flips it. */
+const verifiedMock = vi.fn<() => boolean>();
+vi.mock('./ParentGate', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./ParentGate')>();
+  return {
+    ...original,
+    isParentVerified: () => verifiedMock(),
+  };
+});
+
 const GRADES = [
   { id: 'grade-3', name: 'Lớp 3' },
   { id: 'grade-4', name: 'Lớp 4' },
@@ -40,6 +51,7 @@ beforeEach(() => {
   saveParentContactMock.mockReset().mockResolvedValue(true);
   weekMinutesMock.mockReset().mockResolvedValue({ status: 'ok', days: [], truncated: false });
   mockTrendMock.mockReset().mockResolvedValue({ status: 'ok', points: [] });
+  verifiedMock.mockReset().mockReturnValue(true);
 });
 
 describe('ParentReportScreen', () => {
@@ -101,6 +113,37 @@ describe('ParentReportScreen', () => {
       expect(screen.getByTestId<HTMLInputElement>('parent-email-input').value).toBe('me@example.com'),
     );
     expect(screen.getByTestId<HTMLInputElement>('parent-email-optin').checked).toBe(false);
+  });
+
+  it('external-review r1 #1: an expired pass re-gates instead of saving the contact', async () => {
+    render(<ParentReportScreen grades={GRADES} onBack={vi.fn()} isLoggedIn />);
+    await userEvent.type(screen.getByTestId('parent-email-input'), 'ba.me@example.com');
+
+    // The 5-minute token lapses between opening the report and tapping save.
+    verifiedMock.mockReturnValue(false);
+    await userEvent.click(screen.getByTestId('parent-email-save'));
+
+    expect(saveParentContactMock).not.toHaveBeenCalled();
+    // The gate re-opens inside the report instead of silently writing.
+    expect(await screen.findByTestId('parent-gate')).toBeInTheDocument();
+  });
+
+  it('external-review r1 #5: "lần trước" is the previous sitting, not the oldest fetched row', async () => {
+    // [40, 80, 60]: latest=60, previous sitting=80 (a drop), oldest=40.
+    mockTrendMock.mockResolvedValue({
+      status: 'ok',
+      points: [
+        { scorePct: 40 },
+        { scorePct: 80 },
+        { scorePct: 60 },
+      ],
+    });
+    render(<ParentReportScreen grades={GRADES} onBack={vi.fn()} isLoggedIn />);
+    await waitFor(() =>
+      expect(screen.getByTestId('report-trend-grade-3')).toHaveTextContent(
+        'Thi thử gần nhất: 60% (lần trước 80%)',
+      ),
+    );
   });
 
   it('test-lead gap #4: a failed server fetch shows an error row, not "no data", and retry re-queries', async () => {

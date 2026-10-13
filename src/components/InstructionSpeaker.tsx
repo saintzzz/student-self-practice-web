@@ -72,9 +72,9 @@ export function InstructionSpeaker({
     );
   }, []);
 
-  const speak = useCallback(() => {
+  const speak = useCallback((auto = false) => {
     cancelSpeak();
-    cancelRef.current = speakInstruction(text, { lang, onStatus });
+    cancelRef.current = speakInstruction(text, { lang, onStatus, autoplay: auto });
   }, [text, lang, onStatus, cancelSpeak]);
 
   /* Unmount / text change / key change: kill the owned utterance. */
@@ -93,7 +93,8 @@ export function InstructionSpeaker({
     let fired = false;
     const timer = window.setTimeout(() => {
       fired = true;
-      speak();
+      // External-review r1 #2: autoplay defers to in-flight content audio.
+      speak(true);
     }, AUTOPLAY_DELAY_MS);
     return () => {
       window.clearTimeout(timer);
@@ -113,7 +114,7 @@ export function InstructionSpeaker({
       data-testid="instruction-speaker"
       aria-label="Nghe hướng dẫn"
       title={status === 'error' || status === 'blocked' ? TAP_HINT : undefined}
-      onClick={speak}
+      onClick={() => speak()}
       className={className ? `${token} ${className}` : token}
     >
       <span aria-hidden="true">

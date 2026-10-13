@@ -12,6 +12,7 @@ import CoachCard from './CoachCard';
 import LeaderboardCard from './LeaderboardCard';
 import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
+import HomeShelf from './HomeShelf';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import ExploreSheet from './ExploreSheet';
 import {
@@ -307,7 +308,14 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           />
         </SheetTile>
         <SheetTile icon="🏡" tileClass={tileClass}>
-          <PetCard />
+          {/* External-review r1 #4: the pet home is where gift-box
+              decorations live - the shelf shows what the child earned.
+              The wrapper keeps the shelf's own mt-4 (SheetTile strips
+              direct-child top margins). */}
+          <div>
+            <PetCard />
+            <HomeShelf />
+          </div>
         </SheetTile>
         <SheetTile icon="🏅" tileClass={tileClass}>
           <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />

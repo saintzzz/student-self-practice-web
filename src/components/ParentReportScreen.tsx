@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getDueReviewItems, getReportSnapshot, getState, STICKERS } from '../lib/engagement/store';
 import { skillLabel } from '../lib/engagement/skills';
 import { fetchParentContact, isValidParentEmail, requestParentVerify, saveParentContact } from '../lib/parentContact';
+import { isParentVerified, ParentGate } from './ParentGate';
 import {
   fetchMockTrend,
   fetchWeekMinutes,
@@ -66,6 +67,10 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
   const [weekResult, setWeekResult] = useState<WeekMinutesResult | null>(null);
   const [mockTrends, setMockTrends] = useState<Record<string, MockTrendResult>>({});
   const [retryTick, setRetryTick] = useState(0);
+  /* External-review r1 #1: the 5-minute parent pass can expire while the
+     report stays open - contact writes must re-check the live token and
+     re-gate instead of silently sending verification mail. */
+  const [reGateOpen, setReGateOpen] = useState(false);
 
   useEffect(() => {
     trackFunnel('report_view', 'parent-report');
@@ -100,7 +105,16 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, retryTick]);
 
+  /* Live-token re-check before any protected write - an expired pass
+     re-opens the gate rather than mutating the parent contact. */
+  function requireLivePass(): boolean {
+    if (isParentVerified()) return true;
+    setReGateOpen(true);
+    return false;
+  }
+
   async function handleSaveEmail(): Promise<void> {
+    if (!requireLivePass()) return;
     if (!isValidParentEmail(parentEmail)) {
       setEmailSaved('error');
       return;
@@ -118,6 +132,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
   }
 
   async function handleResendVerify(): Promise<void> {
+    if (!requireLivePass()) return;
     const result = await requestParentVerify();
     if (result === 'already') setEmailVerified(true);
     setVerifyState(result);
@@ -288,14 +303,16 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                     📚 {due} câu đang chờ ôn lại
                   </p>
                 )}
-                {/* kids-UX AC-5.2: mock-exam trend, only when rows exist. */}
+                {/* kids-UX AC-5.2: mock-exam trend, only when rows exist.
+                    External-review r1 #5: "lần trước" = the previous sitting
+                    (trend[len-2]), not the oldest row in the window. */}
                 {trend.length > 0 && (
                   <p data-testid={`report-trend-${grade.id}`} className="mt-2 text-xs font-bold text-slate-600">
                     📈 Thi thử gần nhất:{' '}
-                    <span className={trend.length > 1 && trend[trend.length - 1]!.scorePct > trend[0]!.scorePct ? PAPER_TREND_UP : 'text-slate-700'}>
+                    <span className={trend.length > 1 && trend[trend.length - 1]!.scorePct > trend[trend.length - 2]!.scorePct ? PAPER_TREND_UP : 'text-slate-700'}>
                       {trend[trend.length - 1]!.scorePct}%
                     </span>
-                    {trend.length > 1 && ` (lần trước ${trend[0]!.scorePct}%)`}
+                    {trend.length > 1 && ` (lần trước ${trend[trend.length - 2]!.scorePct}%)`}
                   </p>
                 )}
                 {skills.length > 0 && (
@@ -433,6 +450,15 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
         </div>
         </div>
       </div>
+
+      {/* External-review r1 #1: expired pass re-gates inside the report
+          (the token TTL can lapse while the parent reads). */}
+      {reGateOpen && (
+        <ParentGate
+          onPass={() => setReGateOpen(false)}
+          onCancel={() => setReGateOpen(false)}
+        />
+      )}
     </div>
   );
 }

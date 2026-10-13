@@ -27,6 +27,7 @@ import { bindActivityOwner } from './lib/practiceResults';
 import { GRADES } from './data/vocabulary';
 import { ViewerProvider } from './lib/viewer/ViewerContext';
 import { clearParentVerification } from './components/ParentGate';
+import { __resetInstructionAutoplay } from './components/InstructionSpeaker';
 import type { ExamProgramId } from './types/exam';
 import {
   advanceRoundQuestion,
@@ -159,6 +160,10 @@ export default function App() {
     if (!account) return;
     setMyAccount(account);
     boundUidRef.current = account.id;
+    /* External-review r1 #3: the instruction-autoplay ledger is per
+       viewer session - a new account must hear the voice-first intro
+       again. */
+    __resetInstructionAutoplay();
     if (account.role === 'admin') {
       setAuthMode('admin');
       setScreen('admin');
@@ -201,6 +206,8 @@ export default function App() {
          authorization - sign-out/account change must revoke it so the
          next user on the device never inherits it. */
       clearParentVerification();
+      // External-review r1 #3: same for the autoplay ledger.
+      __resetInstructionAutoplay();
     }
   }
 
@@ -212,6 +219,8 @@ export default function App() {
     // Dev-review #2: switching to guest = leaving the account context -
     // revoke the parent pass too.
     clearParentVerification();
+    // External-review r1 #3: a guest session gets its own autoplay ledger.
+    __resetInstructionAutoplay();
     setAuthMode('guest');
     setScreen('grade-select');
   }

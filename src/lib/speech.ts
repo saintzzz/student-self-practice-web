@@ -94,6 +94,16 @@ export type SpeechPlaybackStatus = 'unsupported' | 'error' | 'started';
  * Speech API so the feature still works.
  */
 let activeAudio: HTMLAudioElement | null = null;
+/* External-review r2 #1 + r3 #1/#2: activeAudio only exists after the
+   'playing' event - a still-loading mp3 is invisible to priority checks.
+   Track every in-flight PLAY REQUEST (per invocation, not per element -
+   cached elements are reused, so a permanent mark would poison replays
+   and a single var would lose overlapping requests). */
+interface PendingAudioRequest {
+  audio: HTMLAudioElement;
+  preempted: boolean;
+}
+const pendingAudioRequests = new Set<PendingAudioRequest>();
 
 /* CR-69: the storage bucket serves `Cache-Control: no-cache`, so a fresh
  * Audio() per tap revalidates over the network on every "Nghe lại".
@@ -180,10 +190,12 @@ function tryPlayAudioFile(
     return new Promise<boolean>((resolve) => {
       const audio = cachedAudio(text, url);
       audio.playbackRate = speed === 'slow' ? NORMAL_FILE_RATE * SLOW_FACTOR : NORMAL_FILE_RATE;
+      const request: PendingAudioRequest = { audio, preempted: false };
       let settled = false;
       const cleanup = () => {
         audio.removeEventListener('playing', onPlaying);
         audio.removeEventListener('error', onError);
+        pendingAudioRequests.delete(request);
       };
       const settle = (ok: boolean) => {
         if (settled) return;
@@ -192,11 +204,25 @@ function tryPlayAudioFile(
         resolve(ok);
       };
       const onPlaying = () => {
+        /* A preempted request can still emit 'playing' on engines that
+           resolve play() before honoring pause() - keep it silent and
+           report handled so the caller does NOT fall back to TTS. */
+        if (request.preempted) {
+          try { audio.pause(); } catch { /* best-effort */ }
+          settle(true);
+          return;
+        }
         activeAudio = audio;
         onStatus?.('started');
         settle(true);
       };
       const onError = () => {
+        /* Paused by a deliberate instruction tap while loading - report
+           handled so the caller does NOT fall back to English TTS. */
+        if (request.preempted) {
+          settle(true);
+          return;
+        }
         // A dead element must not poison replays - evict so the next tap
         // rebuilds it, but only if this element is still the cached one
         // (a stale error must not evict its replacement).
@@ -207,6 +233,7 @@ function tryPlayAudioFile(
       audio.addEventListener('playing', onPlaying);
       audio.addEventListener('error', onError);
       audio.currentTime = 0;
+      pendingAudioRequests.add(request);
       audio.play().catch(onError);
     });
   });
@@ -427,11 +454,50 @@ export function speakInstruction(
   opts?: {
     lang?: 'vi-VN' | 'en-US';
     onStatus?: (status: InstructionStatus) => void;
+    /**
+     * External-review r1 #2: autoplay must NEVER interrupt content audio
+     * (KUX-1 content-audio priority). When true and English content is
+     * playing/queued - an mp3 or a TTS utterance - the instruction is
+     * dropped quietly (status 'ended'); a deliberate tap (autoplay=false)
+     * still preempts it.
+     */
+    autoplay?: boolean;
   },
 ): () => void {
   const lang = opts?.lang ?? 'vi-VN';
   const onStatus = opts?.onStatus;
   const noop = () => {};
+
+  const contentAudioBusy = (): boolean => {
+    if (pendingAudioRequests.size > 0) return true; // mp3 requested, 'playing' not yet fired
+    if (activeAudio && !activeAudio.paused && !activeAudio.ended) return true;
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
+    if (!synth) return false;
+    // An instruction already running doesn't count - replace it freely.
+    return (synth.speaking || synth.pending || synth.paused) && !activeUtteranceIsInstruction();
+  };
+  /* An active instruction utterance is replaceable; content audio is not. */
+  const activeUtteranceIsInstruction = (): boolean =>
+    activeUtterance !== null && activeUtterance.lang === 'vi-VN';
+  /* A deliberate tap preempts content audio - mark every in-flight
+     request so a still-loading mp3 can neither start under the
+     instruction nor fall back to English TTS. */
+  const stopContentAudio = (): void => {
+    for (const req of pendingAudioRequests) {
+      req.preempted = true;
+      try { req.audio.pause(); } catch { /* best-effort */ }
+    }
+    if (activeAudio) {
+      try { activeAudio.pause(); } catch { /* best-effort */ }
+      activeAudio = null;
+    }
+  };
+
+  if (opts?.autoplay && contentAudioBusy()) {
+    onStatus?.('ended');
+    return noop;
+  }
+  if (!opts?.autoplay) stopContentAudio();
 
   if (lang === 'en-US') {
     let terminal = false;

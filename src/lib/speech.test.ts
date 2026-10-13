@@ -171,6 +171,51 @@ describe('speakInstruction - vi-VN status contract', () => {
     expect(onStatus).not.toHaveBeenCalledWith('playing');
   });
 
+  it('external-review r1 #2: autoplay yields to in-flight content audio (no cancel of English TTS)', async () => {
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const speakSpy = vi
+      .spyOn(window.speechSynthesis, 'speak')
+      .mockImplementation(() => {});
+    const cancelSpy = vi.spyOn(window.speechSynthesis, 'cancel').mockImplementation(() => {});
+
+    // English content TTS is mid-flight when the instruction autoplay lands.
+    speakWord('rabbit');
+    await flush();
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    Object.defineProperty(window.speechSynthesis, 'speaking', {
+      value: true,
+      configurable: true,
+    });
+
+    const onStatus = vi.fn();
+    speakInstruction('Bấm nút Chơi nhé', { onStatus, autoplay: true });
+
+    // Dropped quietly - never cancels the English utterance, never speaks.
+    expect(onStatus).toHaveBeenCalledWith('ended');
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    expect(cancelSpy).not.toHaveBeenCalled();
+  });
+
+  it('external-review r1 #2: a deliberate tap still preempts content audio', async () => {
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const speakSpy = vi
+      .spyOn(window.speechSynthesis, 'speak')
+      .mockImplementation(() => {});
+    speakWord('rabbit');
+    await flush();
+    Object.defineProperty(window.speechSynthesis, 'speaking', {
+      value: true,
+      configurable: true,
+    });
+
+    const onStatus = vi.fn();
+    speakInstruction('Bấm nút Chơi nhé', { onStatus }); // autoplay omitted = tap
+    // speaking -> cancel + 60ms deferred speak
+    await new Promise((r) => setTimeout(r, 120));
+    expect(speakSpy).toHaveBeenCalledTimes(2);
+    expect(onStatus).not.toHaveBeenCalledWith('ended');
+  });
+
   it('the returned cancel handle silences the utterance - no late status after cancel', () => {
     vi.useFakeTimers();
     vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
