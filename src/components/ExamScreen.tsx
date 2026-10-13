@@ -471,7 +471,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
                     isCurrent ? EXAM_SELECTED : answered ? EXAM_NAV_ANSWERED : ''
                   }`}
                 >
-                  {answered && !isCurrent && (
+                  {answered && (
                     <IconCheck size={12} aria-hidden="true" className="mr-0.5" />
                   )}
                   {answered && <span className="sr-only">đã trả lời</span>}

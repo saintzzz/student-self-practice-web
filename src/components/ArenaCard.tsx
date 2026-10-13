@@ -128,7 +128,7 @@ export default function ArenaCard({
                       type="button"
                       data-testid={`arena-accept-${c.id}`}
                       onClick={() => onAccept(c)}
-                      className={`shrink-0 ${BTN_SECONDARY_NAVY} !min-h-[44px] px-3 py-2 text-sm`}
+                      className={`shrink-0 ${BTN_SECONDARY_NAVY} px-3 py-2 text-sm`}
                     >
                       Nhận kèo
                     </button>

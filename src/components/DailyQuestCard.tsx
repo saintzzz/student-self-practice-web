@@ -6,7 +6,7 @@ import {
   DAILY_QUEST_BONUS,
   type DailyQuestId,
 } from '../lib/engagement/store';
-import { CARD } from '../lib/ui/tokens';
+import { CARD, BTN_REWARD_EARNED } from '../lib/ui/tokens';
 import { IconCheckCircle, IconFlame, IconPencil, IconTarget, IconTrophy, type IconProps } from './icons';
 
 const QUEST_META: Record<DailyQuestId, { icon: ComponentType<IconProps>; label: string }> = {
@@ -94,7 +94,7 @@ export default function DailyQuestCard() {
           type="button"
           data-testid="claim-daily-bonus"
           onClick={claim}
-          className="mt-3 w-full rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-3 font-display text-lg font-extrabold text-amber-950 shadow-[inset_0_-3px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
+          className={`mt-3 w-full font-display text-lg ${BTN_REWARD_EARNED}`}
         >
           Nhận thưởng +{DAILY_QUEST_BONUS} sao
         </button>

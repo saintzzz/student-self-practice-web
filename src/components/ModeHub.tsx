@@ -1,6 +1,7 @@
 import { useState, type ComponentType, type ReactNode } from 'react';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import { IconChevronDown, IconChevronUp, type IconProps } from './icons';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, HUB_PANEL } from '../lib/ui/tokens';
 
 /**
@@ -19,6 +20,12 @@ import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, HUB_PANEL } from '../li
  *    with a per-section autoplayKey - same once-per-key guard).
  */
 
+export interface HubSectionDef {
+  /** Suffix for the persistent `hub-{panel|section}-{id}` wrapper. */
+  id: string;
+  content: ReactNode;
+}
+
 export interface HubTileDef {
   /** `learn` -> testid `hub-tile-learn`, region `hub-panel-learn`.
    *  For subtiles the same id maps to `hub-subtile-X`/`hub-section-X`. */
@@ -28,24 +35,29 @@ export interface HubTileDef {
   sub?: string;
   /** Optional one-shot voice hint spoken when this tile expands. */
   voiceHint?: string;
-  /** Content rendered inside the expanded region. */
-  content: ReactNode;
+  /** Single-section form: content renders inside the auto region
+   *  (`hub-{panel|section}-{tile.id}`). */
+  content?: ReactNode;
+  /** Multi-section form (spec §5.1): each section gets its own
+   *  persistent empty wrapper so every `aria-controls` target stays
+   *  mounted while collapsed. Conditional sections are simply omitted
+   *  from the list. Overrides `content`. */
+  sections?: HubSectionDef[];
 }
 
 export function HubGroup({
   tiles,
-  isG12,
   subtile = false,
   voiceKeyPrefix,
 }: {
   tiles: HubTileDef[];
-  isG12: boolean;
   /** G1-2 `more` internals render `hub-subtile-*`/`hub-section-*` ids. */
   subtile?: boolean;
   voiceKeyPrefix: string;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const tileClass = isG12 ? TRAIL_TILE : TRAIL_TILE_SM;
+  const { density } = useViewer();
+  const tileClass = density.tileMinH >= 96 ? TRAIL_TILE : TRAIL_TILE_SM;
   const testPrefix = subtile ? 'hub-subtile' : 'hub-tile';
   const regionPrefix = subtile ? 'hub-section' : 'hub-panel';
 
@@ -53,14 +65,16 @@ export function HubGroup({
     <div className="space-y-3">
       {tiles.map((tile) => {
         const open = openId === tile.id;
-        const regionId = `${regionPrefix}-${tile.id}`;
+        const regionIds = tile.sections
+          ? tile.sections.map((s) => `${regionPrefix}-${s.id}`)
+          : [`${regionPrefix}-${tile.id}`];
         return (
           <div key={tile.id}>
             <button
               type="button"
               data-testid={`${testPrefix}-${tile.id}`}
               aria-expanded={open}
-              aria-controls={regionId}
+              aria-controls={regionIds.join(' ')}
               onClick={() => setOpenId(open ? null : tile.id)}
               className={`${tileClass}${open ? ` ${TRAIL_TILE_EXPANDED}` : ''}`}
             >
@@ -75,11 +89,16 @@ export function HubGroup({
                 {open ? <IconChevronUp size={22} /> : <IconChevronDown size={22} />}
               </span>
             </button>
-            {/* The region div keeps the id mounted while collapsed so
-                aria-controls never points at nothing (spec m5 fix). */}
-            <div id={regionId} data-testid={regionId}>
-              {open ? <div className="mt-2 space-y-3 pb-1">{tile.content}</div> : null}
-            </div>
+            {/* Every aria-controls target stays mounted while collapsed -
+                only children unmount (spec m5 container rule). */}
+            {(tile.sections ?? [{ id: tile.id, content: tile.content }]).map((s) => {
+              const id = `${regionPrefix}-${s.id}`;
+              return (
+                <div key={id} id={id} data-testid={id}>
+                  {open ? <div className="mt-2 space-y-3 pb-1">{s.content}</div> : null}
+                </div>
+              );
+            })}
             {open && tile.voiceHint && (
               <InstructionSpeaker
                 text={tile.voiceHint}
@@ -96,16 +115,14 @@ export function HubGroup({
 
 export default function ModeHub({
   tiles,
-  isG12,
   voiceKeyPrefix,
 }: {
   tiles: HubTileDef[];
-  isG12: boolean;
   voiceKeyPrefix: string;
 }) {
   return (
     <div className={HUB_PANEL} data-testid="mode-hub">
-      <HubGroup tiles={tiles} isG12={isG12} voiceKeyPrefix={voiceKeyPrefix} />
+      <HubGroup tiles={tiles} voiceKeyPrefix={voiceKeyPrefix} />
     </div>
   );
 }

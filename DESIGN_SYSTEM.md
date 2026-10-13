@@ -153,6 +153,10 @@ exception surface (paper reports). No theme switch.
 - **Touch targets (CR-73 band floors):** 76px G1-2 standalone; 64px G3-5
   standalone (drill/exam/secondary rows); 48px kid non-standalone controls;
   44px admin/adult minimum; 36px chips in a row.
+- **Density API (CR-73):** `useViewer().density` carries the band floors -
+  `tileMinH` (96/76), `primaryMinH` (76/64), `maxDecisions` (4/6).
+  Components consume density, not local `isG12` sizing forks; band-sensitive
+  tests wrap `ViewerProvider` (unwrapped default = G345).
 - **Breakpoints:** 375 mobile / 768 tablet / 1280 desktop; cards 1→2 cols at `sm`.
 
 ## 6. Component system
@@ -183,8 +187,16 @@ exception surface (paper reports). No theme switch.
 - **ModeHub (CR-73):** inline accordion - `hub-tile-*` top tiles control
   `hub-panel-*`; `hub-subtile-*` nested tiles control `hub-section-*`.
   `aria-expanded` + `aria-controls` + Enter/Space + per-expansion headless
-  `InstructionSpeaker` prompts. Arena challenge lists are capped with
-  "Xem thêm" inline expansion (explicit tap-budget exception).
+  `InstructionSpeaker` prompts. Multi-section tiles use `sections:` so each
+  `aria-controls` target keeps a persistent empty wrapper while collapsed;
+  conditional sections (arena w/o handlers, review/coach w/o items) are
+  omitted from both the list and the DOM. Arena challenge lists are capped
+  with "Xem thêm" inline expansion (explicit tap-budget exception).
+- **QuestionFrame feedback zone (CR-73):** FeedbackPanel is bottom-anchored
+  (`sticky bottom-2`), bounded `max-h-[min(40vh,320px)]` +
+  `overflow-y-auto` + `overscroll-contain` + `env(safe-area-inset-bottom)`
+  pad; at ≤420px heights it becomes a fixed bottom-sheet overlay so it can
+  never push the answer zone.
 - **End-session control (CR-55):** every in-progress play surface carries a
   `bg-sky-600` uppercase action in the top chrome - `KẾT THÚC` (drill,
   batch) / `NỘP BÀI` (exam). Solid sky (not a translucent chip) so it reads

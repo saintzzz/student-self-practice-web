@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StartBatchScreen from './StartBatchScreen';
+import { ViewerProvider } from '../lib/viewer/ViewerContext';
+import type { ComponentProps, ReactElement } from 'react';
 
 vi.mock('../lib/qb/bank', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../lib/qb/bank')>();
@@ -20,16 +22,25 @@ vi.mock('../lib/supabase/client', async (importOriginal) => {
 const GRADE = { id: 'grade-2', name: 'Lớp 2' };
 const GRADE_4 = { id: 'grade-4', name: 'Lớp 4' };
 
+/** CR-73 spec s4.4: band-sensitive tests render inside ViewerProvider so
+ *  density (tileMinH/primaryMinH) and band come from the real context. */
+function renderSBS(ui: ReactElement, gradeId: string) {
+  return render(<ViewerProvider gradeId={gradeId}>{ui}</ViewerProvider>);
+}
+const SBS = (props: Partial<ComponentProps<typeof StartBatchScreen>> = {}) => (
+  <StartBatchScreen onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} {...props} grade={props.grade ?? GRADE} />
+);
+
 describe('StartBatchScreen', () => {
   it('shows the grade name and the start-batch-button', () => {
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS(), GRADE.id);
 
     expect(screen.getByText(/Lớp 2/)).toBeVisible();
     expect(screen.getByTestId('start-batch-button')).toBeVisible();
   });
 
   it('shows the app-wide pig mascot in greeting mood (plan.md v10, AC38)', () => {
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS(), GRADE.id);
 
     expect(screen.getByTestId('mascot')).toHaveAttribute('data-mascot-mood', 'greeting');
   });
@@ -37,7 +48,7 @@ describe('StartBatchScreen', () => {
   it('calls onStartBatch when start-batch-button is clicked', async () => {
     const onStartBatch = vi.fn();
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE} onStartBatch={onStartBatch} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS({ onStartBatch }), GRADE.id);
 
     await user.click(screen.getByTestId('start-batch-button'));
 
@@ -47,7 +58,7 @@ describe('StartBatchScreen', () => {
   it('calls onBack when back-to-grades is clicked', async () => {
     const onBack = vi.fn();
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={onBack} />);
+    renderSBS(SBS({ onBack }), GRADE.id);
 
     await user.click(screen.getByTestId('back-to-grades'));
 
@@ -55,7 +66,7 @@ describe('StartBatchScreen', () => {
   });
 
   it('CR-73: G1-2 first paint shows 4 launchpad elements (back, Chơi, Luyện thêm, Phần thưởng)', () => {
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS(), GRADE.id);
 
     // Hub content stays inside collapsed sections (unmounted children).
     expect(screen.queryByTestId('daily-quest-card')).not.toBeInTheDocument();
@@ -71,7 +82,7 @@ describe('StartBatchScreen', () => {
   });
 
   it('kids-UX: the primary CTA is the single gold action labelled Chơi', () => {
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS(), GRADE.id);
 
     const cta = screen.getByTestId('start-batch-button');
     expect(cta).toHaveTextContent('Chơi');
@@ -80,7 +91,7 @@ describe('StartBatchScreen', () => {
 
   it('CR-73: G1-2 hub tiles expand inline - reward holds quest/pet/shelf, more holds subtiles', async () => {
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS(), GRADE.id);
 
     await user.click(screen.getByTestId('hub-tile-reward'));
     expect(screen.getByTestId('daily-quest-card')).toBeInTheDocument();
@@ -93,10 +104,39 @@ describe('StartBatchScreen', () => {
     expect(screen.getByTestId('hub-subtile-arena')).toBeInTheDocument();
   });
 
+  it('CR-73: G1-2 arena subtile controls arena+rank sections (conditional on handlers)', async () => {
+    const user = userEvent.setup();
+    // No arena handlers -> only hub-section-rank exists/is controlled.
+    const first = renderSBS(SBS(), GRADE.id);
+    await user.click(screen.getByTestId('hub-tile-more'));
+    const noHandlers = screen.getByTestId('hub-subtile-arena');
+    expect(noHandlers).toHaveAttribute('aria-controls', 'hub-section-rank');
+    expect(document.getElementById('hub-section-arena')).not.toBeInTheDocument();
+    expect(document.getElementById('hub-section-rank')).toBeInTheDocument();
+    await user.click(noHandlers);
+    expect(screen.queryByTestId('arena-card')).not.toBeInTheDocument();
+    first.unmount();
+
+    // With handlers -> both sections controlled, both wrappers mounted.
+    renderSBS(
+      SBS({ onArenaCreate: vi.fn(), onArenaAccept: vi.fn(), onArenaBot: vi.fn() }),
+      GRADE.id,
+    );
+    await user.click(screen.getByTestId('hub-tile-more'));
+    expect(screen.getByTestId('hub-subtile-arena')).toHaveAttribute(
+      'aria-controls',
+      'hub-section-arena hub-section-rank',
+    );
+    expect(document.getElementById('hub-section-arena')).toBeInTheDocument();
+    expect(document.getElementById('hub-section-rank')).toBeInTheDocument();
+    await user.click(screen.getByTestId('hub-subtile-arena'));
+    expect(screen.getByTestId('arena-card')).toBeInTheDocument();
+  });
+
   it('CR-73: G1-2 drill path = more -> program subtile -> drill button', async () => {
     const onStartExam = vi.fn();
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={onStartExam} onBack={vi.fn()} />);
+    renderSBS(SBS({ onStartExam }), GRADE.id);
 
     await user.click(screen.getByTestId('hub-tile-more'));
     await user.click(screen.getByTestId('hub-subtile-math'));
@@ -106,7 +146,7 @@ describe('StartBatchScreen', () => {
   });
 
   it('CR-73: G3-5 keeps DailyQuest on-screen and shows 3 section tiles collapsed', () => {
-    render(<StartBatchScreen grade={GRADE_4} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS({ grade: GRADE_4 }), GRADE_4.id);
 
     expect(screen.getByTestId('daily-quest-card')).toBeInTheDocument();
     expect(screen.getByTestId('hub-tile-learn')).toBeVisible();
@@ -120,7 +160,7 @@ describe('StartBatchScreen', () => {
   it('CR-73: G3-5 learn tile reveals all programs and drill still launches', async () => {
     const onStartExam = vi.fn();
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE_4} onStartBatch={vi.fn()} onStartExam={onStartExam} onBack={vi.fn()} />);
+    renderSBS(SBS({ grade: GRADE_4, onStartExam }), GRADE_4.id);
 
     await user.click(screen.getByTestId('hub-tile-learn'));
     expect(screen.getByTestId('drill-english')).toBeInTheDocument();
@@ -133,7 +173,7 @@ describe('StartBatchScreen', () => {
 
   it('CR-50: assessment forms picker is hidden from students and guests', async () => {
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} />);
+    renderSBS(SBS(), GRADE.id);
 
     await user.click(screen.getByTestId('hub-tile-more'));
     await user.click(screen.getByTestId('hub-subtile-english'));
@@ -144,7 +184,7 @@ describe('StartBatchScreen', () => {
 
   it('CR-50: admin (teacher preview) sees the forms picker', async () => {
     const user = userEvent.setup();
-    render(<StartBatchScreen grade={GRADE} onStartBatch={vi.fn()} onStartExam={vi.fn()} onBack={vi.fn()} isAdmin />);
+    renderSBS(SBS({ isAdmin: true }), GRADE.id);
 
     await user.click(screen.getByTestId('hub-tile-more'));
     await user.click(screen.getByTestId('hub-subtile-english'));

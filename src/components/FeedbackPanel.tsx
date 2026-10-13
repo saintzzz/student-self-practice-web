@@ -58,7 +58,7 @@ const WORD_LINE_BASE_CLASS =
  * correct-word line uses <div> only when a picture prop is present.
  */
 export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture }: FeedbackPanelProps) {
-  const { band } = useViewer();
+  const { density } = useViewer();
   // CR-20: verdict sound on mount - chime for correct. kids-UX (design
   // s3.4): the wrong verdict plays the muted gentle cue, not a penalty
   // tone.
@@ -84,7 +84,11 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
       /* kids-UX s3.4: announce the verdict gently; aria-live lets the
          teach-back reach screen-reader kids without moving focus. */
       aria-live="polite"
-      className={`relative mt-3 max-h-[min(40vh,320px)] overflow-y-auto overscroll-contain rounded-2xl p-4 pl-5 text-left ring-2 shadow-md [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
+      /* CR-73 QuestionFrame s5.2 feedback zone: bottom-anchored
+         (sticky) with a bounded scroll region + safe-area pad; at
+         <=420px heights it leaves the flow entirely and becomes a
+         bottom-sheet overlay so it can never push the answer zone. */
+      className={`sticky bottom-2 z-30 mt-3 max-h-[min(40vh,320px)] overflow-y-auto overscroll-contain rounded-2xl p-4 pl-5 pb-[max(1rem,env(safe-area-inset-bottom))] text-left ring-2 shadow-md [@media(max-height:420px)]:fixed [@media(max-height:420px)]:inset-x-2 [@media(max-height:420px)]:bottom-0 [@media(max-height:420px)]:z-40 [@media(max-height:420px)]:mt-0 [@media(max-height:420px)]:rounded-b-none [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 [@media(max-height:420px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
         isCorrect
           ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 ring-emerald-400/50'
           : 'bg-sky-500/15 ring-sky-400/50'
@@ -135,10 +139,10 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
           type="button"
           data-testid="feedback-listen-model"
           onClick={() => speakWord(correctWord)}
-          /* dev-review r2 #3: a kid-facing control obeys AC-8.2 - 76px on
-             G1-2, 44px floor on G3-5. */
+          /* dev-review r2 #3 + CR-73 density: a kid-facing control obeys
+             the band floor - 76px on G1-2, 64px on G3-5. */
           className={`mt-3 inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-4 font-extrabold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none [@media(max-height:420px)]:mt-2 ${
-            band === 'G12' ? 'min-h-[76px] text-base' : 'min-h-[64px] text-sm'
+            density.primaryMinH >= 76 ? 'min-h-[76px] text-base' : 'min-h-[64px] text-sm'
           }`}
         >
           <IconSpeaker size={18} /> Nghe mẫu

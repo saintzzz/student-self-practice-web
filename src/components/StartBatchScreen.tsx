@@ -154,7 +154,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
  */
 export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   const examConfig = examConfigForGrade(grade.id);
-  const { band } = useViewer();
+  const { band, density } = useViewer();
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
   const land = getLand(grade.id);
   const [hasDueReview] = useState(() => getDueReviewItems(grade.id).length > 0);
@@ -184,7 +184,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             type="button"
             data-testid={`drill-${program.id}`}
             onClick={() => onStartExam(program.id, 'practice')}
-            className={`${BTN_DRILL} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
+            className={`${BTN_DRILL} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
           >
             Luyện đề - {examConfig.drillCount} câu
           </button>
@@ -192,7 +192,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             type="button"
             data-testid={`exam-program-${program.id}`}
             onClick={() => onStartExam(program.id, 'exam')}
-            className={`${BTN_EXAM} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
+            className={`${BTN_EXAM} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
           >
             Thi thử - {examConfig.examCount} câu
           </button>
@@ -200,7 +200,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             type="button"
             data-testid={`advanced-${program.id}`}
             onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
-            className={`${BTN_ADVANCED} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
+            className={`${BTN_ADVANCED} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
           >
             Nâng cao - {examConfig.drillCount} câu
           </button>
@@ -265,7 +265,6 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           voiceHint: 'Chọn môn hoặc mục để luyện thêm nhé!',
           content: (
             <HubGroup
-              isG12={isG12}
               subtile
               voiceKeyPrefix="hub-sub"
               tiles={[
@@ -283,12 +282,13 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   label: 'Đấu trường',
                   sub: 'Thi đua với bạn bè',
                   voiceHint: 'Chọn bạn đấu nhé!',
-                  content: (
-                    <>
-                      {arenaCardEl}
-                      {leaderboardEl}
-                    </>
-                  ),
+                  /* Spec §5.1: `hub-section-arena` exists only when its
+                     handlers do - aria-controls lists just the mounted
+                     section ids. */
+                  sections: [
+                    ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
+                    { id: 'rank', content: leaderboardEl },
+                  ],
                 },
                 ...(hasDueReview || hasCoachHints
                   ? [{
@@ -297,12 +297,12 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                       label: 'Ôn tập',
                       sub: 'Câu sai và điểm yếu của em',
                       voiceHint: 'Ôn lại những câu chưa chắc nhé!',
-                      content: (
-                        <>
-                          {reviewCardEl}
-                          {coachCardEl}
-                        </>
-                      ),
+                      /* Spec §5.1: aria-controls lists only the sections
+                         actually rendered. */
+                      sections: [
+                        ...(hasDueReview ? [{ id: 'review', content: reviewCardEl }] : []),
+                        ...(hasCoachHints ? [{ id: 'coach', content: coachCardEl }] : []),
+                      ],
                     }]
                   : []),
               ]}
@@ -418,7 +418,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         {/* CR-73: the hub lives inside the launchpad card as a light
             paper panel - labeled tiles, inline expansion, no sheet. */}
         <div className="mt-5 text-left">
-          <ModeHub tiles={tiles} isG12={isG12} voiceKeyPrefix={`hub-${grade.id}`} />
+          <ModeHub tiles={tiles} voiceKeyPrefix={`hub-${grade.id}`} />
         </div>
       </div>
     </div>
