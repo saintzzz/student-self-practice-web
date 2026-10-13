@@ -102,3 +102,14 @@ behind a dev-build gate (test files excluded).
 - `tests/ea-classes-scanner.selftest.mjs` 3/3 (bad fixture trips all
   61 classes incl. #58-61, good clean, repo clean)
 - Full suite + build + preflight: see commit message gates
+
+## Landed
+
+- Commit `9a380f0` on `main` - all gates green in the commit-msg hook
+  (preflight: secrets, build, 1016 tests, reliability+EA scanners).
+- Vercel: push webhook auto-deploy **recovered** - production
+  deployment `Gg6FBCHDio9uXjZ8EMjke4YbrXPv` reported `success` on
+  `9a380f0` via GitHub commit status (no manual hook needed).
+- Round 18 dispatched on `9a380f0` - Codex task
+  `01a132b1-7bb1-774d-b0a2-d55a689dc0bf`, env
+  `student-self-practice-web` (published, no secrets).
