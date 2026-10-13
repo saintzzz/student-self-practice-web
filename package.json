@@ -16,6 +16,7 @@
     "audit:qb": "node scripts/qb-content-audit.mjs",
     "audit:perf": "node scripts/perf-check.mjs",
     "audit:attribution": "node scripts/check-attribution.mjs",
+    "review:external": "node scripts/external-review.mjs",
     "code:reliability": "node scripts/check-reliability.mjs && node scripts/check-ea-classes.mjs && node --test tests/reliability-scanner.selftest.mjs && node --test tests/ea-classes-scanner.selftest.mjs"
   },
   "dependencies": {
