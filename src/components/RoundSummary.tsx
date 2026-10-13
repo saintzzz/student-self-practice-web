@@ -89,7 +89,7 @@ export default function RoundSummary({
           {award.newStickers.map((s) => (
             <span
               key={s.id}
-              className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-100 ring-2 ring-amber-300"
+              className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-900 ring-2 ring-amber-300"
             >
               <EmojiVisual emoji={s.emoji} /> Huy hiệu mới: {s.nameVi}
             </span>
@@ -126,7 +126,7 @@ export default function RoundSummary({
               type="button"
               data-testid="guest-lock-exit"
               onClick={onExit}
-              className="mt-3 block w-full text-center text-sm font-bold text-indigo-300 underline-offset-2 hover:underline sm:inline sm:w-auto"
+              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center text-center text-sm font-bold text-indigo-300 underline-offset-2 hover:underline sm:w-auto sm:px-2"
             >
               Chơi thử lớp khác
             </button>

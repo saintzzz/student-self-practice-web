@@ -26,6 +26,7 @@ export default function DescribeAndChooseImageQuestion({
 }: DescribeAndChooseImageQuestionProps) {
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
     speakSentence(question.sentence, onStatus, speed),
+    question.sentence,
   );
   const hasAnswered = selectedIndex !== null;
 

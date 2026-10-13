@@ -26,7 +26,7 @@ export default function PhonicsEndingChoiceQuestion({
   selectedIndex,
   onSelectOption,
 }: PhonicsEndingChoiceQuestionProps) {
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed));
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
   const isFinal = question.kind === 'phonics-final-choice';

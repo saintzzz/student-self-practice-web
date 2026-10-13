@@ -13,6 +13,7 @@ interface ChangePinDialogProps {
 export default function ChangePinDialog({ onClose }: ChangePinDialogProps) {
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -73,7 +74,7 @@ export default function ChangePinDialog({ onClose }: ChangePinDialogProps) {
               <input
                 data-testid="new-pin"
                 className={INPUT_DARK}
-                type="password"
+                type={showPin ? 'text' : 'password'}
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 autoComplete="new-password"
@@ -84,12 +85,23 @@ export default function ChangePinDialog({ onClose }: ChangePinDialogProps) {
               <input
                 data-testid="confirm-pin"
                 className={INPUT_DARK}
-                type="password"
+                type={showPin ? 'text' : 'password'}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 autoComplete="new-password"
               />
             </label>
+            {/* CR-69: same reveal toggle as the login PIN - both fields
+                switch together so the pair stays comparable. */}
+            <button
+              type="button"
+              data-testid="change-pin-visibility-toggle"
+              aria-pressed={showPin}
+              onClick={() => setShowPin((v) => !v)}
+              className="inline-flex min-h-[44px] items-center self-center px-2 text-sm font-bold text-sky-300 underline-offset-2 hover:underline"
+            >
+              {showPin ? 'Ẩn mã PIN 🙈' : 'Hiện mã PIN 👁️'}
+            </button>
             {message && (
               <p data-testid="change-pin-error" className="text-center font-bold text-rose-300">
                 {message}

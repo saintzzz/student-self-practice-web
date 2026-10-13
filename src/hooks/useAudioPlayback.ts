@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import type { SpeechPlaybackStatus, SpeechSpeed } from '../lib/speech';
+import { useCallback, useEffect, useState } from 'react';
+import { preloadAudio, type SpeechPlaybackStatus, type SpeechSpeed } from '../lib/speech';
 
 export interface UseAudioPlaybackResult {
   /** True once the play button has been tapped at least once (drives the "Nghe" -> "Nghe lại" label). */
@@ -26,9 +26,15 @@ export interface UseAudioPlaybackResult {
  */
 export function useAudioPlayback(
   speak: (onStatus: (status: SpeechPlaybackStatus) => void, speed: SpeechSpeed) => void,
+  /** CR-69: spoken text to buffer at mount so the first tap plays instantly. */
+  preloadText?: string,
 ): UseAudioPlaybackResult {
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playbackFailed, setPlaybackFailed] = useState(false);
+
+  useEffect(() => {
+    if (preloadText) preloadAudio(preloadText);
+  }, [preloadText]);
 
   const playAt = useCallback(
     (speed: SpeechSpeed) => {

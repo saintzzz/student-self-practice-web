@@ -23,7 +23,7 @@ export default function PhonicsSoundChoiceQuestion({
   selectedIndex,
   onSelectOption,
 }: PhonicsSoundChoiceQuestionProps) {
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed));
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
   return (

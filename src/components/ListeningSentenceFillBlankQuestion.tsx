@@ -27,6 +27,7 @@ export default function ListeningSentenceFillBlankQuestion({
   const [inputValue, setInputValue] = useState('');
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
     speakSentence(question.sentence, onStatus, speed),
+    question.sentence,
   );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {

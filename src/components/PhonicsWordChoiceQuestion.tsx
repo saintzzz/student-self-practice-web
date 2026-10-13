@@ -28,7 +28,7 @@ export default function PhonicsWordChoiceQuestion({
 }: PhonicsWordChoiceQuestionProps) {
   // speakWord on a bare key ("c") reads the letter name ("see"); the
   // utterance "c, as in cat" carries the actual sound via the example.
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(getSoundUtterance(question.sound), onStatus, speed));
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(getSoundUtterance(question.sound), onStatus, speed), getSoundUtterance(question.sound));
   const hasAnswered = selectedIndex !== null;
 
   const [photoGroupFailed, setPhotoGroupFailed] = useState(false);

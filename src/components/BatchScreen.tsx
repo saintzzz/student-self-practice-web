@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
 import { computeLiveScore } from '../lib/liveScore';
 import { SCREEN_ENTER } from '../lib/ui/tokens';
@@ -9,6 +10,7 @@ import ActiveRoundQuestion from './ActiveRoundQuestion';
 import RoundSummary from './RoundSummary';
 import RoundStub from './RoundStub';
 import BatchSummary from './BatchSummary';
+import ConfirmEndDialog from './ConfirmEndDialog';
 
 interface BatchScreenProps {
   batch: BatchState;
@@ -64,6 +66,7 @@ export default function BatchScreen({
 }: BatchScreenProps) {
   const roundKey = `${batch.seed}:${batch.roundIndex}`;
   const { secondsRemaining } = useRoundTimer(roundKey, batch.phase === 'active', onRoundTimeExpired);
+  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
 
   if (batch.phase === 'batch-summary') {
     return (
@@ -115,16 +118,30 @@ export default function BatchScreen({
           </div>
         )}
         {/* CR-55: same-purpose "KẾT THÚC" as the drill/exam header - ends the
-            whole Batch from any phase and lands on the Batch summary. */}
+            whole Batch from any phase and lands on the Batch summary.
+            CR-69: one mis-tap used to kill the session - confirm first. */}
         <button
           type="button"
           data-testid="batch-end-early"
-          onClick={onEndBatch}
-          className="shrink-0 self-end rounded-full bg-sky-600 px-3 py-1.5 font-display text-xs font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:self-auto"
+          onClick={() => setEndConfirmOpen(true)}
+          className="min-h-[44px] shrink-0 self-end rounded-full bg-sky-600 px-4 font-display text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:self-auto"
         >
           KẾT THÚC
         </button>
       </div>
+
+      {endConfirmOpen && (
+        <ConfirmEndDialog
+          title="Kết thúc bài?"
+          body="Em sẽ xem điểm các câu đã làm luôn nhé."
+          confirmLabel="Kết thúc"
+          onConfirm={() => {
+            setEndConfirmOpen(false);
+            onEndBatch();
+          }}
+          onCancel={() => setEndConfirmOpen(false)}
+        />
+      )}
 
       {batch.phase === 'stub' && <RoundStub titleVi={definition.titleVi} onNextRound={onNextRound} />}
 

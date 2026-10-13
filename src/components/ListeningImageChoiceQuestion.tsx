@@ -27,7 +27,7 @@ export default function ListeningImageChoiceQuestion({
   selectedIndex,
   onSelectOption,
 }: ListeningImageChoiceQuestionProps) {
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed));
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
   // Photos are all-or-nothing across the 4 options (AC-5.2/5.4): only shown

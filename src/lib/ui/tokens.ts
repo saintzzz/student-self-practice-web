@@ -50,6 +50,11 @@ export const BODY = 'text-lg text-slate-300';
 export const NAV_PILL =
   'inline-flex min-h-[76px] items-center justify-center rounded-full bg-white/10 px-6 py-3 text-lg font-bold text-amber-200 shadow-md ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 hover:ring-amber-300/50 focus:outline-none focus:ring-4 focus:ring-amber-300/60 [@media(max-height:420px)]:min-h-0';
 
+/** CR-69: compact NAV_PILL for account/administrative rows - same navy-glass
+ * look, but floored at the 44px touch minimum instead of the primary 76px. */
+export const NAV_PILL_SM =
+  'inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-amber-200 shadow-md ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 hover:ring-amber-300/50 focus:outline-none focus:ring-4 focus:ring-amber-300/60';
+
 /** Header chips for the active-play bar (round / timer / score) - navy glass. */
 const CHIP_BASE =
   'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-base font-bold ring-1 backdrop-blur-sm';

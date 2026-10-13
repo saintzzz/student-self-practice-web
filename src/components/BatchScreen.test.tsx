@@ -130,7 +130,7 @@ describe('BatchScreen', () => {
     expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
   });
 
-  it('CR-55: shows a KẾT THÚC control during the active Round that calls onEndBatch', () => {
+  it('CR-55/CR-69: KẾT THÚC opens a centered confirmation before ending the Batch', () => {
     const handlers = buildNoopHandlers();
     const batch = createBatch('fixed-seed');
 
@@ -139,10 +139,30 @@ describe('BatchScreen', () => {
     const endButton = screen.getByTestId('batch-end-early');
     expect(endButton).toHaveTextContent('KẾT THÚC');
     fireEvent.click(endButton);
+
+    // First tap must NOT end the batch - it opens the dialog.
+    expect(handlers.onEndBatch).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeVisible();
+
+    fireEvent.click(screen.getByTestId('end-confirm-ok'));
     expect(handlers.onEndBatch).toHaveBeenCalledTimes(1);
   });
 
-  it('CR-55: keeps the KẾT THÚC control on the round-summary screen', () => {
+  it('CR-69: cancelling the end confirmation keeps the Batch running', () => {
+    const handlers = buildNoopHandlers();
+    const batch = createBatch('fixed-seed');
+
+    render(<BatchScreen batch={batch} {...handlers} />);
+
+    fireEvent.click(screen.getByTestId('batch-end-early'));
+    fireEvent.click(screen.getByTestId('end-confirm-cancel'));
+
+    expect(handlers.onEndBatch).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('question-card')).toBeVisible();
+  });
+
+  it('CR-55/CR-69: keeps the KẾT THÚC control on the round-summary screen', () => {
     const handlers = buildNoopHandlers();
     let batch = createBatch('fixed-seed');
     batch = completeActiveRound(batch);
@@ -151,6 +171,7 @@ describe('BatchScreen', () => {
 
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     fireEvent.click(screen.getByTestId('batch-end-early'));
+    fireEvent.click(screen.getByTestId('end-confirm-ok'));
     expect(handlers.onEndBatch).toHaveBeenCalledTimes(1);
   });
 
@@ -182,12 +203,14 @@ describe('BatchScreen live score + round timer (plan.md v7, AC26-AC29)', () => {
     vi.useRealTimers();
   });
 
-  it('shows live-score and round-timer from the start of an active Round', () => {
+  it('CR-69: hides live-score until the first answer; round-timer shows from the start', () => {
     const batch = createBatch('fixed-seed');
 
     render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
 
-    expect(screen.getByTestId('live-score')).toHaveTextContent('0/0');
+    // "0 điểm (0/0 đúng)" reads like a broken scoreboard - the chip only
+    // appears once there is a real score to show.
+    expect(screen.queryByTestId('live-score')).not.toBeInTheDocument();
     expect(screen.getByTestId('round-timer')).toHaveTextContent('5:00');
   });
 
@@ -196,7 +219,7 @@ describe('BatchScreen live score + round timer (plan.md v7, AC26-AC29)', () => {
     const answered = answerCurrentQuestion(batch);
 
     const { rerender } = render(<BatchScreen batch={batch} {...buildNoopHandlers()} />);
-    expect(screen.getByTestId('live-score')).toHaveTextContent('0/0');
+    expect(screen.queryByTestId('live-score')).not.toBeInTheDocument();
 
     rerender(<BatchScreen batch={answered} {...buildNoopHandlers()} />);
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BatchSummary from './BatchSummary';
+import { getState } from '../lib/engagement/store';
 import type { BatchResult } from '../lib/batch/batchSession';
 
 const RESULT: BatchResult = {
@@ -107,5 +108,21 @@ describe('BatchSummary (AC21)', () => {
 
     expect(onStartNewBatch).toHaveBeenCalledOnce();
     expect(onChooseGrade).toHaveBeenCalledOnce();
+  });
+
+  it('CR-69: a batch ended with zero answered questions earns nothing and shows the empty state', () => {
+    const empty: BatchResult = { ...RESULT, totalCorrect: 0, totalQuestions: 0, points: 0, maxPoints: 0, timeUsedSec: 12, rounds: [] };
+    const starsBefore = getState().totalStars;
+
+    render(<BatchSummary result={empty} gradeId="grade-2" onStartNewBatch={vi.fn()} onChooseGrade={vi.fn()} />);
+
+    expect(screen.getByTestId('batch-empty-note')).toBeVisible();
+    expect(screen.getByTestId('mascot')).toHaveAttribute('data-mascot-mood', 'encouraging');
+    expect(screen.queryByTestId('batch-score-summary')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('batch-points-summary')).not.toBeInTheDocument();
+    // No chest stars, no streak, no practice-result write for a 0-question run.
+    expect(getState().totalStars).toBe(starsBefore);
+    expect(screen.getByTestId('practice-again-button')).toBeVisible();
+    expect(screen.getByTestId('back-to-grades')).toBeVisible();
   });
 });

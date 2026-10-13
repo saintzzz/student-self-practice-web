@@ -77,7 +77,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
         type="button"
         data-testid={`forms-toggle-${programId}`}
         onClick={() => setOpen((v) => !v)}
-        className="w-full rounded-lg bg-white/5 px-3 py-2 text-xs font-extrabold text-slate-300 transition hover:bg-white/10"
+        className="min-h-[44px] w-full rounded-lg bg-white/5 px-3 py-2 text-xs font-extrabold text-slate-300 transition hover:bg-white/10"
       >
         📋 Đề có sẵn ({forms.length}) {open ? '▲' : '▼'}
       </button>
@@ -89,7 +89,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
               type="button"
               data-testid={`form-${f.id}`}
               onClick={() => onStartExam(programId, 'exam', f.id)}
-              className="flex w-full items-center justify-between gap-2 rounded-lg bg-indigo-600/80 px-3 py-2 text-left text-xs font-bold text-white transition hover:bg-indigo-500 active:scale-[0.98]"
+              className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg bg-indigo-600/80 px-3 py-2 text-left text-xs font-bold text-white transition hover:bg-indigo-500 active:scale-[0.98]"
             >
               <span>{f.kind === 'unit-test' ? f.title : FORM_KIND_LABEL[f.kind] ?? f.kind} - đề {f.id.slice(-2)} · {f.total_questions} câu</span>
               <span className="text-indigo-200">→</span>
@@ -184,7 +184,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   type="button"
                   data-testid={`drill-${program.id}`}
                   onClick={() => onStartExam(program.id, 'practice')}
-                  className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-emerald-500 active:scale-95"
+                  className="min-h-[44px] w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-emerald-500 active:scale-95"
                 >
                   ✏️ Luyện đề - {examConfig.drillCount} câu
                 </button>
@@ -192,7 +192,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   type="button"
                   data-testid={`exam-program-${program.id}`}
                   onClick={() => onStartExam(program.id, 'exam')}
-                  className="w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95"
+                  className="min-h-[44px] w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95"
                 >
                   🏆 Thi thử - {examConfig.examCount} câu
                 </button>
@@ -200,7 +200,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   type="button"
                   data-testid={`advanced-${program.id}`}
                   onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
-                  className="w-full rounded-lg bg-rose-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-rose-500 active:scale-95"
+                  className="min-h-[44px] w-full rounded-lg bg-rose-600 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-rose-500 active:scale-95"
                 >
                   🔥 Nâng cao - {examConfig.drillCount} câu
                 </button>

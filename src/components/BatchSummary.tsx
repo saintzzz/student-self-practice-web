@@ -38,10 +38,14 @@ interface BatchSummaryProps {
  */
 export default function BatchSummary({ result, gradeId, onStartNewBatch, onChooseGrade }: BatchSummaryProps) {
   const status = getScoreStatus(result.points, result.maxPoints);
+  /* CR-69: ending a batch via "KẾT THÚC" before answering anything must
+     not pay rewards or write a 0-question practice result. */
+  const earned = result.totalQuestions > 0;
   const awarded = useRef<{ batch: BatchAwardResult; streakStickers: Sticker[]; totalStars: number } | null>(null);
   const [award, setAward] = useState(awarded.current);
 
   useEffect(() => {
+    if (!earned) return;
     if (!awarded.current) {
       const batch = recordBatchResult(gradeId);
       touchStreak();
@@ -55,15 +59,20 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
       awarded.current = { batch, streakStickers, totalStars: getState().totalStars };
       setAward(awarded.current);
     }
-  }, [gradeId, result]);
+  }, [gradeId, result, earned]);
 
   const newStickers = award ? [...award.batch.newStickers, ...award.streakStickers] : [];
 
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
-      <Mascot mood="celebrating" />
-      <h1 className={`mt-1 ${H1}`}>Hoàn thành bài luyện tập!</h1>
+      <Mascot mood={earned ? 'celebrating' : 'encouraging'} />
+      <h1 className={`mt-1 ${H1}`}>{earned ? 'Hoàn thành bài luyện tập!' : 'Em chưa làm câu nào'}</h1>
+      {!earned && (
+        <p data-testid="batch-empty-note" className="mt-2 text-lg text-slate-300">
+          Quay lại chơi để nhận sao và huy hiệu nhé!
+        </p>
+      )}
       {award && (
         <ChestReveal
           chestStars={award.batch.chestStars}
@@ -71,24 +80,29 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
           newStickers={newStickers}
         />
       )}
-      <p className="mt-6 flex justify-center">
-        <span data-testid="batch-points-summary" className={SCORE_PILL_LG}>
-          {result.points}/{result.maxPoints} điểm
-        </span>
-      </p>
-      <p data-testid="batch-score-summary" className="mt-3 text-xl font-semibold text-amber-200">
-        Tổng điểm: {result.totalCorrect}/{result.totalQuestions} câu đúng.
-      </p>
-      <p data-testid="batch-time-summary" className="mt-1 text-base font-semibold text-sky-300">
-        Thời gian làm bài: {Math.floor(result.timeUsedSec / 60)}:{String(result.timeUsedSec % 60).padStart(2, '0')}
-      </p>
-      <p
-        data-testid="batch-completion-badge"
-        className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-300' : 'text-amber-200'}`}
-      >
-        {status.label}
-      </p>
+      {earned && (
+        <>
+          <p className="mt-6 flex justify-center">
+            <span data-testid="batch-points-summary" className={SCORE_PILL_LG}>
+              {result.points}/{result.maxPoints} điểm
+            </span>
+          </p>
+          <p data-testid="batch-score-summary" className="mt-3 text-xl font-semibold text-amber-200">
+            Tổng điểm: {result.totalCorrect}/{result.totalQuestions} câu đúng.
+          </p>
+          <p data-testid="batch-time-summary" className="mt-1 text-base font-semibold text-sky-300">
+            Thời gian làm bài: {Math.floor(result.timeUsedSec / 60)}:{String(result.timeUsedSec % 60).padStart(2, '0')}
+          </p>
+          <p
+            data-testid="batch-completion-badge"
+            className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-300' : 'text-amber-200'}`}
+          >
+            {status.label}
+          </p>
+        </>
+      )}
 
+      {earned && (
       <div className="mt-8 text-left">
         <h2 className={`mb-4 ${H2}`}>Kết quả từng vòng</h2>
         <ul className="space-y-3">
@@ -108,6 +122,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
           ))}
         </ul>
       </div>
+      )}
 
       <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
         <button

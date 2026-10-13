@@ -26,7 +26,7 @@ import { liveScoreLocator, readLiveScore } from './utils/timer-flow';
  * app's own real per-question outcomes, never assumed.
  */
 test.describe('Batch/Round: live score indicator (AC26)', () => {
-  test('live-score is visible from the start of Round 1, showing 0 answered before any question is answered', async ({
+  test('live-score stays hidden before the first answer, then appears with the real tally (CR-69)', async ({
     page,
   }) => {
     await startBatch(page);
@@ -34,16 +34,29 @@ test.describe('Batch/Round: live score indicator (AC26)', () => {
     // is a valid first question for this live-score check.
     await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
 
+    // CR-69: "0 điểm (0/0 đúng)" before any answer read like a broken
+    // scoreboard - the chip intentionally mounts only on the first answer.
     await expect(
       liveScoreLocator(page),
-      'expected live-score to be visible as soon as an active Round begins (plan.md v7 AC26), before any question is answered',
-    ).toBeVisible();
+      'expected live-score to stay hidden before any question in Round 1 is answered (CR-69)',
+    ).not.toBeVisible();
 
-    const initialScore = await readLiveScore(page);
+    const kind = await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
+    const result =
+      kind === 'extra-letter' ? await answerExtraLetterTile(page, 0) : await answerOptionQuestion(page, 0);
+    if (result.outcome !== 'correct' && result.outcome !== 'incorrect') {
+      throw new Error(`Round 1 first question: unrecognized answer outcome "${result.outcome}"`);
+    }
+
+    await expect(
+      liveScoreLocator(page),
+      'expected live-score to appear immediately after the first answer is recorded',
+    ).toBeVisible();
+    const firstScore = await readLiveScore(page);
     expect(
-      initialScore.total,
-      `expected live-score's answered-count to be 0 before any question in Round 1 is answered, got "${initialScore.total}"`,
-    ).toBe(0);
+      firstScore.total,
+      `expected live-score's answered-count to be 1 after the first answer, got "${firstScore.total}"`,
+    ).toBe(1);
   });
 
   test('live-score updates to the real running correct/answered tally immediately after each answered question', async ({

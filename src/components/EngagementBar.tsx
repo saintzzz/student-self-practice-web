@@ -34,7 +34,7 @@ export default function EngagementBar() {
         data-testid="sticker-album-button"
         onClick={() => setAlbumOpen((v) => !v)}
         aria-expanded={albumOpen}
-        className={`${CHIP_SKY} !min-h-0 cursor-pointer transition hover:bg-sky-500/25 focus:outline-none focus:ring-4 focus:ring-amber-400/60`}
+        className={`${CHIP_SKY} min-h-[44px] cursor-pointer transition hover:bg-sky-500/25 focus:outline-none focus:ring-4 focus:ring-amber-400/60`}
       >
         <span aria-hidden="true" className={iconDisc}>🏅</span> Huy hiệu ({state.stickerIds.length})
       </button>

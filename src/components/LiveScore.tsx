@@ -22,6 +22,10 @@ export default function LiveScore({ session }: LiveScoreProps) {
   const { correct, answered } = computeLiveScore(session);
   const points = correct * POINTS_PER_CORRECT_ANSWER;
 
+  /* CR-69: "0 điểm (0/0 đúng)" before the first answer reads like a
+     broken scoreboard - show the chip only once there is a score. */
+  if (answered === 0) return null;
+
   return (
     <p data-testid="live-score" className={CHIP_EMERALD}>
       <EmojiVisual emoji="⭐" />

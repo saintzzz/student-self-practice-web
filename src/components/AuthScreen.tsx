@@ -15,6 +15,7 @@ interface AuthScreenProps {
 export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -63,15 +64,29 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
           </label>
           <label className="flex flex-col gap-1 text-lg text-slate-300">
             <span className="font-bold text-slate-200">Mã PIN</span>
-            <input
-              data-testid="login-pin"
-              className={INPUT_DARK}
-              type="password"
-              inputMode="numeric"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              autoComplete="current-password"
-            />
+            <span className="relative block">
+              <input
+                data-testid="login-pin"
+                className={`${INPUT_DARK} pr-16`}
+                type={showPin ? 'text' : 'password'}
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                autoComplete="current-password"
+              />
+              {/* CR-69: young students cannot verify a masked PIN - the
+                  eye toggle lets them check what they typed. */}
+              <button
+                type="button"
+                data-testid="pin-visibility-toggle"
+                aria-label={showPin ? 'Ẩn mã PIN' : 'Hiện mã PIN'}
+                aria-pressed={showPin}
+                onClick={() => setShowPin((v) => !v)}
+                className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-xl text-slate-300 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300/60"
+              >
+                {showPin ? '🙈' : '👁️'}
+              </button>
+            </span>
           </label>
           {error && (
             <div

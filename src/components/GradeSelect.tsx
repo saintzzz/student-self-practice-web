@@ -6,7 +6,7 @@ import ChangePinDialog from './ChangePinDialog';
 import { getLand, type LandKey } from '../lib/ui/theme';
 import { getState } from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
-import { NAV_PILL, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
+import { NAV_PILL, NAV_PILL_SM, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface GradeSelectProps {
   grades: readonly Grade[];
@@ -68,7 +68,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid="change-pin-button"
               onClick={() => setChangePinOpen(true)}
-              className={`!min-h-0 px-4 py-2 text-sm ${NAV_PILL}`}
+              className={NAV_PILL_SM}
             >
               Đổi mã PIN
             </button>
@@ -78,7 +78,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid="login-link"
               onClick={onLogin}
-              className={`!min-h-0 px-4 py-2 text-sm ${NAV_PILL}`}
+              className={NAV_PILL_SM}
             >
               Đăng nhập
             </button>
@@ -88,7 +88,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid="signout-button"
               onClick={onSignOut}
-              className={`!min-h-0 px-4 py-2 text-sm ${NAV_PILL}`}
+              className={NAV_PILL_SM}
             >
               Đăng xuất
             </button>

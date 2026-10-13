@@ -34,6 +34,7 @@ import { createExamFromBank, gradeNumber } from '../lib/qb/bank';
 import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
+import ConfirmEndDialog from './ConfirmEndDialog';
 import { WORD_IPA } from '../data/ipaMap';
 
 /**
@@ -105,6 +106,8 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const telemetryRef = useRef<ExamTelemetry | null>(null);
   /** When the current question first rendered - latency basis. */
   const questionShownAtRef = useRef<number>(0);
+  /** CR-69: confirm before the manual NỘP BÀI / KẾT THÚC ends the session. */
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
   // r16: bind the result owner to the identity at activity start - a
   // mid-exam account switch must not attribute the run to the new user.
@@ -171,7 +174,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     }
   }, [exam, result, isPractice, isReview, isArena, gradeId, programId]);
 
+  /* CR-69: if the timer expired while the submit confirmation was open,
+     the flag survives into the next exam's retry - reset it wherever a
+     run finishes or a fresh run begins. */
+  useEffect(() => {
+    if (exam?.finishedAtMs !== null && exam?.finishedAtMs !== undefined) setSubmitConfirmOpen(false);
+  }, [exam]);
+
   async function begin(): Promise<void> {
+    setSubmitConfirmOpen(false);
     // CR-34: arena duels run on the challenge seed so both players get
     // the identical question set - the only fair basis for a comparison.
     const seed = isArena && arena ? arena.seed : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -383,12 +394,25 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         <button
           type="button"
           data-testid="exam-submit"
-          onClick={() => setExam((c) => (c ? submitExam(c, Date.now()) : c))}
-          className="shrink-0 rounded-lg bg-sky-600 px-4 py-2 text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+          onClick={() => setSubmitConfirmOpen(true)}
+          className="min-h-[44px] shrink-0 rounded-lg bg-sky-600 px-4 text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
         >
           {isPractice ? 'KẾT THÚC' : 'NỘP BÀI'}
         </button>
       </header>
+
+      {submitConfirmOpen && (
+        <ConfirmEndDialog
+          title={isPractice ? 'Kết thúc bài?' : 'Nộp bài thi?'}
+          body={isPractice ? 'Em sẽ xem điểm các câu đã làm luôn nhé.' : 'Em sẽ không sửa được câu trả lời nữa.'}
+          confirmLabel={isPractice ? 'Kết thúc' : 'Nộp bài'}
+          onConfirm={() => {
+            setSubmitConfirmOpen(false);
+            setExam((c) => (c ? submitExam(c, Date.now()) : c));
+          }}
+          onCancel={() => setSubmitConfirmOpen(false)}
+        />
+      )}
 
       {/* r5: surface an under-filled session instead of silently running
           short - a fixed form missing rows is a content defect, not a
@@ -409,7 +433,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             aria-label="Trước"
             disabled={stripOffset === 0}
             onClick={() => setStripOffset(Math.max(0, stripOffset - STRIP_PAGE))}
-            className="shrink-0 rounded-md bg-amber-500/90 px-2 py-1 text-sm font-extrabold text-amber-950 disabled:opacity-30"
+            className="min-h-[44px] shrink-0 rounded-md bg-amber-500/90 px-3 text-sm font-extrabold text-amber-950 disabled:opacity-30"
           >
             ◀
           </button>
@@ -424,7 +448,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
                   type="button"
                   data-testid={`exam-nav-${index}`}
                   onClick={() => jump(index)}
-                  className={`h-8 w-8 shrink-0 rounded-md text-sm font-extrabold transition sm:h-9 sm:w-9 ${
+                  className={`h-11 w-11 shrink-0 rounded-md text-sm font-extrabold transition ${
                     isCurrent
                       ? 'bg-orange-500 text-white ring-2 ring-orange-300'
                       : answered
@@ -442,7 +466,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             aria-label="Sau"
             disabled={stripOffset + STRIP_PAGE >= exam.questions.length}
             onClick={() => setStripOffset(stripOffset + STRIP_PAGE)}
-            className="shrink-0 rounded-md bg-amber-500/90 px-2 py-1 text-sm font-extrabold text-amber-950 disabled:opacity-30"
+            className="min-h-[44px] shrink-0 rounded-md bg-amber-500/90 px-3 text-sm font-extrabold text-amber-950 disabled:opacity-30"
           >
             ▶
           </button>

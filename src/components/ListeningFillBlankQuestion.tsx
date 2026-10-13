@@ -18,7 +18,7 @@ export default function ListeningFillBlankQuestion({
   onSubmit,
 }: ListeningFillBlankQuestionProps) {
   const [inputValue, setInputValue] = useState('');
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed));
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();

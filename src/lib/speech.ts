@@ -95,6 +95,42 @@ export type SpeechPlaybackStatus = 'unsupported' | 'error' | 'started';
  */
 let activeAudio: HTMLAudioElement | null = null;
 
+/* CR-69: the storage bucket serves `Cache-Control: no-cache`, so a fresh
+ * Audio() per tap revalidates over the network on every "Nghe lại".
+ * Cache one element per text - replays then reuse the decoded buffer
+ * instantly, and preloadAudio() buffers the file before the first tap.
+ * Bounded Map so a long session cannot grow it without limit. */
+const audioCache = new Map<string, HTMLAudioElement>();
+const AUDIO_CACHE_MAX = 20;
+
+function cachedAudio(text: string, url: string): HTMLAudioElement {
+  let audio = audioCache.get(text);
+  if (!audio) {
+    audio = new Audio(url);
+    audio.preload = 'auto';
+    audio.addEventListener('ended', () => {
+      if (activeAudio === audio) activeAudio = null;
+    });
+    audioCache.set(text, audio);
+    if (audioCache.size > AUDIO_CACHE_MAX) {
+      const oldest = audioCache.keys().next().value;
+      if (oldest !== undefined) audioCache.delete(oldest);
+    }
+  }
+  return audio;
+}
+
+/**
+ * Buffers the pre-recorded mp3 for `text` before the child taps "Nghe" -
+ * the first play then starts near-instant instead of waiting on the
+ * network. Safe no-op in tests and when there is no audio base URL.
+ */
+export function preloadAudio(text: string): void {
+  void audioUrlFor(text).then((url) => {
+    if (url) cachedAudio(text, url);
+  });
+}
+
 function audioUrlFor(text: string): Promise<string | null> {
   try {
     const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
@@ -142,23 +178,36 @@ function tryPlayAudioFile(
   return audioUrlFor(text).then((url) => {
     if (!url) return false;
     return new Promise<boolean>((resolve) => {
-      const audio = new Audio(url);
-      audio.preload = 'auto';
+      const audio = cachedAudio(text, url);
       audio.playbackRate = speed === 'slow' ? NORMAL_FILE_RATE * SLOW_FACTOR : NORMAL_FILE_RATE;
-      const giveUp = () => {
-        if (activeAudio === audio) activeAudio = null;
-        resolve(false);
+      let settled = false;
+      const cleanup = () => {
+        audio.removeEventListener('playing', onPlaying);
+        audio.removeEventListener('error', onError);
       };
-      audio.addEventListener('playing', () => {
+      const settle = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(ok);
+      };
+      const onPlaying = () => {
         activeAudio = audio;
         onStatus?.('started');
-        resolve(true);
-      });
-      audio.addEventListener('ended', () => {
+        settle(true);
+      };
+      const onError = () => {
+        // A dead element must not poison replays - evict so the next tap
+        // rebuilds it, but only if this element is still the cached one
+        // (a stale error must not evict its replacement).
+        if (audioCache.get(text) === audio) audioCache.delete(text);
         if (activeAudio === audio) activeAudio = null;
-      });
-      audio.addEventListener('error', giveUp);
-      audio.play().catch(giveUp);
+        settle(false);
+      };
+      audio.addEventListener('playing', onPlaying);
+      audio.addEventListener('error', onError);
+      audio.currentTime = 0;
+      audio.play().catch(onError);
     });
   });
 }

@@ -29,13 +29,12 @@ const EXTRA_LETTER_QUESTION: ExtraLetterQuestion = {
 const QUESTIONS: Question[] = [IMAGE_QUESTION, EXTRA_LETTER_QUESTION];
 
 describe('LiveScore (plan.md v7 "Live Score Display", AC26; plan.md v10 "Points Scoring", AC35)', () => {
-  it('shows 0/0 and 0 points before any question is answered', () => {
+  it('CR-69: renders nothing before any question is answered - "0 điểm (0/0 đúng)" read like a broken scoreboard', () => {
     const session = createSession(QUESTIONS);
 
     render(<LiveScore session={session} />);
 
-    expect(screen.getByTestId('live-score')).toHaveTextContent('0/0');
-    expect(screen.getByTestId('live-score')).toHaveTextContent('0 điểm');
+    expect(screen.queryByTestId('live-score')).not.toBeInTheDocument();
   });
 
   it('shows the running total against answered-so-far, not the Round total, plus 10 points for the one correct answer', () => {
