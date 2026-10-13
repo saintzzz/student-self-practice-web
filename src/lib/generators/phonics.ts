@@ -13,6 +13,7 @@ function buildSoundChoiceVariant(
   variantSeed: string,
 ): PhonicsSoundChoiceQuestion | null {
   const sound = getInitialSound(word.word);
+  if (!sound) return null; // excluded words (e.g. hourglass /au/)
   // Exclude same-phoneme keys too: a 'c' option under a 'k' answer (or
   // the reverse) is phonetically a second correct answer for a child
   // answering by ear.
@@ -69,7 +70,7 @@ function pickWordDistractors(
 
   const seenEmojis = new Set<string>([word.emoji]);
   const distractors = candidates.filter(
-    (w) => !soundsSharePhoneme(getInitialSound(w.word), targetSound) && !seenEmojis.has(w.emoji) && seenEmojis.add(w.emoji),
+    (w) => getInitialSound(w.word) !== '' && !soundsSharePhoneme(getInitialSound(w.word), targetSound) && !seenEmojis.has(w.emoji) && seenEmojis.add(w.emoji),
   );
   return distractors.slice(0, WORD_DISTRACTOR_COUNT);
 }
@@ -80,6 +81,7 @@ function buildWordChoiceVariant(
   variantSeed: string,
 ): PhonicsWordChoiceQuestion | null {
   const sound = getInitialSound(word.word);
+  if (!sound) return null; // excluded words (e.g. hourglass /au/)
   const distractors = pickWordDistractors(word, words, sound, variantSeed);
   if (distractors.length < WORD_DISTRACTOR_COUNT) {
     return null;
@@ -120,7 +122,7 @@ function buildWordChoiceVariant(
  * generators; Round 4 draws a seeded slice via stratifiedSample.
  */
 export function generatePhonicsSoundChoiceQuestions(words: readonly VocabWord[]): PhonicsSoundChoiceQuestion[] {
-  const soundUniverse = [...new Set(words.map((w) => getInitialSound(w.word)))];
+  const soundUniverse = [...new Set(words.map((w) => getInitialSound(w.word)))].filter(Boolean);
   const questions: PhonicsSoundChoiceQuestion[] = [];
 
   for (const word of words) {

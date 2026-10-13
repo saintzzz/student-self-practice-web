@@ -100,8 +100,30 @@ export interface ExamResult {
   review: ExamReviewItem[];
 }
 
+const NUMBER_WORDS: Record<string, string> = {
+  zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5',
+  six: '6', seven: '7', eight: '8', nine: '9', ten: '10',
+};
+
+/**
+ * Spelling-precision form (listening fill-blank, missing-letter): strips
+ * everything non-alphanumeric so "hotdog" still matches "hot dog" and
+ * "xray" matches "X-ray", but does NOT fold number words - in a spelling
+ * item "4" is not a spelling of "four".
+ */
+function normalizeSpelling(text: string): string {
+  return text.trim().toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+/**
+ * Free-text answer form (text-answer kind): punctuation-insensitive,
+ * number-word folding ("four" == "4"), whitespace collapsed away.
+ * Space-squishing is safe here because `accept` lists are curated fact
+ * answers - no minimal pair like "a way"/"away" is ever a key.
+ */
 function normalize(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, ' ');
+  const base = text.trim().toLowerCase().replace(/[.,!?;:'"’`\-]/gu, ' ').replace(/\s+/g, ' ').trim();
+  return base.split(' ').map((t) => NUMBER_WORDS[t] ?? t).join('');
 }
 
 /** Single source of truth: does this answer mark this question right? */
@@ -128,12 +150,12 @@ export function isExamAnswerCorrect(question: ExamQuestion, answer: ExamAnswer |
     case 'true-false-reading':
       return answer.type === 'bool' && answer.value === question.answer;
     case 'missing-letter':
-      return answer.type === 'text' && normalize(answer.text) === normalize(question.missing);
+      return answer.type === 'text' && normalizeSpelling(answer.text) === normalizeSpelling(question.missing);
     case 'text-answer':
       return answer.type === 'text' && question.accept.some((a) => normalize(a) === normalize(answer.text));
     case 'listening-sentence-fill-blank':
     case 'listening-fill-blank':
-      return answer.type === 'text' && normalize(answer.text) === normalize(question.word);
+      return answer.type === 'text' && normalizeSpelling(answer.text) === normalizeSpelling(question.word);
     case 'extra-letter':
       return answer.type === 'option' && answer.index === question.extraIndex;
     case 'pronunciation-recording':

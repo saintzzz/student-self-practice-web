@@ -35,10 +35,22 @@ describe('getInitialSound', () => {
     expect(getInitialSound('one')).toBe('w');
   });
 
-  it('every word in the real bank resolves to a valid sound key', () => {
+  it('every word in the real bank resolves to a valid sound key or is explicitly excluded', () => {
+    // '' = excluded from phonics (no letter group carries its onset).
+    // The allowlist is explicit so a regression cannot silently mute
+    // another word.
+    const EXCLUDED = new Set(['hourglass']);
     for (const word of ALL_WORDS) {
+      const sound = getInitialSound(word.word);
+      if (sound === '') {
+        expect(
+          EXCLUDED.has(word.word.toLowerCase()),
+          `word "${word.word}" returned an empty sound key`,
+        ).toBe(true);
+        continue;
+      }
       expect(
-        getInitialSound(word.word),
+        sound,
         `word "${word.word}" must resolve to a letter or digraph`,
       ).toMatch(/^(ch|sh|th|[a-z])$/);
     }
@@ -86,6 +98,7 @@ describe('getSoundUtterance', () => {
     // The utterance only makes sense if the example word genuinely
     // belongs to the sound group it illustrates.
     for (const sound of new Set(ALL_WORDS.map((w) => getInitialSound(w.word)))) {
+      if (sound === '') continue; // excluded words never reach a sound prompt
       const utterance = getSoundUtterance(sound);
       const match = utterance.match(/as in (.+)$/);
       expect(match, `no "as in" example for sound "${sound}"`).not.toBeNull();

@@ -12,8 +12,16 @@ const NEGATION_COUNTS = [1, 2, 3, 4];
 
 const VOWEL_LETTERS = new Set(['a', 'e', 'i', 'o', 'u']);
 
+/** Same sound-based rule as listeningSentenceFillBlank.article - 'a' for
+ * /ju:/ onsets and 'one', 'an' for silent-h onsets. */
+const ARTICLE_A_WORDS = new Set(['one', 'once', 'unicorn', 'uniform', 'university', 'user', 'ukelele', 'euro', 'eucalyptus', 'ufo']);
+const ARTICLE_AN_WORDS = new Set(['hour', 'honest', 'honor', 'heir', 'hourglass']);
+
 function article(word: string): 'a' | 'an' {
-  const firstLetter = word.trim().charAt(0).toLowerCase();
+  const token = word.trim().split(/[\s-]/)[0]!.toLowerCase();
+  if (ARTICLE_A_WORDS.has(token)) return 'a';
+  if (ARTICLE_AN_WORDS.has(token)) return 'an';
+  const firstLetter = token.charAt(0);
   return VOWEL_LETTERS.has(firstLetter) ? 'an' : 'a';
 }
 
@@ -83,7 +91,18 @@ function buildNegationInstance(
   countableWords: readonly VocabWord[],
 ): DescribeAndChooseImageQuestion | null {
   const seedBase = `dcci-neg-${word.id}`;
-  const [differentWord] = pickDistinct(countableWords, (w) => w.word, [word.word], 1, `${seedBase}-otherword`);
+  // The correct option must depict a DIFFERENT object - and it must look
+  // different too. A word sharing the target's emoji (e.g. 🚲 for "bike"
+  // and "bicycle") would render identically to the distractors and make
+  // the question unsolvable, same rule as countingImageDistractors.
+  const otherCandidates = pickDistinct(
+    countableWords,
+    (w) => w.word,
+    [word.word],
+    Math.min(countableWords.length - 1, 8),
+    `${seedBase}-otherword`,
+  );
+  const differentWord = otherCandidates.find((w) => w.emoji !== word.emoji);
   if (!differentWord) {
     return null;
   }

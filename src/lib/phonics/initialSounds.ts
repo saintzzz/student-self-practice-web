@@ -20,6 +20,13 @@
  * - circle /serkel/ -> 's' (soft c; the only soft-c word in the bank)
  * - write /rait/ -> 'r' (silent w)
  * - one /wun/ -> 'w' (leading /w/ sound, like 'white')
+ *
+ * Content audit 2026-10 additions (verified against the actual bank):
+ * - christmas /krismes/ -> 'k' (ch- digraph rule would give /ch/)
+ * - thailand /tailand/ -> 't' (th- digraph rule would give /th/)
+ * - giant, geography /j-/ -> 'j' (soft g before i/e)
+ * - cinema, cycle /s-/ -> 's' (soft c before i/y)
+ * - photography, photographer /f-/ -> 'f' (ph- is /f/)
  */
 const INITIAL_SOUND_EXCEPTIONS: Readonly<Record<string, string>> = {
   chef: 'sh',
@@ -27,6 +34,40 @@ const INITIAL_SOUND_EXCEPTIONS: Readonly<Record<string, string>> = {
   circle: 's',
   write: 'r',
   one: 'w',
+  christmas: 'k',
+  thailand: 't',
+  giant: 'j',
+  geography: 'j',
+  cinema: 's',
+  cycle: 's',
+  photography: 'f',
+  photographer: 'f',
+  // Round 2 of the audit (xp bank uses the same table):
+  // soft c: celebrate, cyprus /s-/
+  celebrate: 's',
+  cyprus: 's',
+  // soft g: genie, georgia, germany, gibraltar, ginger /j-/
+  genie: 'j',
+  georgia: 'j',
+  germany: 'j',
+  gibraltar: 'j',
+  ginger: 'j',
+  // ph- = /f/: phone (saxophone resolves on its own first letter 's')
+  phone: 'f',
+  // rh- = /r/: rhinoceros
+  rhinoceros: 'r',
+  // silent w/k: wrestling, knot
+  wrestling: 'r',
+  knot: 'n',
+  // /ju:/ onset sounds like the letter-name 'y': euro, ufo, unicorn
+  euro: 'y',
+  ufo: 'y',
+  unicorn: 'y',
+  // x-ray starts /eks/ - vowel onset keyed 'e' (letter-name 'x' is "ex").
+  'x-ray': 'e',
+  // hourglass starts /au/ - no letter group carries that onset, so it is
+  // excluded from phonics questions entirely via the empty key.
+  hourglass: '',
 };
 
 const DIGRAPHS = ['ch', 'sh', 'th'] as const;
@@ -74,7 +115,8 @@ export function equivalentSounds(sound: string): string[] {
  */
 export function getInitialSound(text: string): string {
   const normalized = text.trim().toLowerCase();
-  const exception = INITIAL_SOUND_EXCEPTIONS[normalized];
+  const firstToken = normalized.split(/\s+/)[0] ?? '';
+  const exception = INITIAL_SOUND_EXCEPTIONS[normalized] ?? INITIAL_SOUND_EXCEPTIONS[firstToken];
   if (exception !== undefined) {
     return exception;
   }

@@ -25,9 +25,12 @@ function makeWords(count: number, soundWordPairs: [string, string][]): VocabWord
 }
 
 describe('generatePhonicsSoundChoiceQuestions', () => {
-  it('generates 2 variants per word over the real bank', () => {
+  it('generates 2 variants per word over the real bank (excluded words produce none)', () => {
     const questions = generatePhonicsSoundChoiceQuestions(ALL_WORDS);
-    expect(questions).toHaveLength(ALL_WORDS.length * 2);
+    // Words with an empty sound key (e.g. hourglass - no letter group
+    // carries /au/) are deliberately excluded from phonics.
+    const eligible = ALL_WORDS.filter((w) => getInitialSound(w.word) !== '');
+    expect(questions).toHaveLength(eligible.length * 2);
   });
 
   it('the target sound is always the correct option, and all 4 options are distinct sounds', () => {

@@ -17,7 +17,7 @@ import type { VocabWord } from '../../types';
 /**
  * Bank-wide invariants for the PRD r3 section 7 vocabulary expansion
  * (AC-6.1..AC-6.9). Baseline JSON produced by
- * scripts/dump-word-baseline.mjs at commit ebd58a5.
+ * scripts/dump-word-baseline.mjs at commit ebd58a5; 9 entries (body parts, cloud, rainbow) amended by the 2026-10 content audit to fix wrong countable flags.
  */
 const baseline = baselineJson as {
   words: Record<string, Omit<VocabWord, 'imageUrl'>>;
@@ -141,6 +141,11 @@ describe('vocabulary bank invariants (PRD r3 section 7, AC-6.1..AC-6.9)', () => 
       '⚽': expect.arrayContaining(['ball', 'football']),
       '🛝': expect.arrayContaining(['slide', 'playground']),
       '🏮': expect.arrayContaining(['lantern', 'Mid-Autumn Festival']),
+      // Content-audit 2026-10 sanctions - same real-world referent as the glyph:
+      // 🏪 is a small shop; 🛵 is a step-through motorbike; 🧙‍♂️ is a male mage.
+      '🏪': expect.arrayContaining(['supermarket', 'convenience store']),
+      '🛵': expect.arrayContaining(['scooter', 'moped']),
+      '🧙‍♂️': expect.arrayContaining(['wizard', 'magician']),
     });
     for (const [, words] of shared) {
       expect(words).toHaveLength(2);

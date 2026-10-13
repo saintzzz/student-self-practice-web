@@ -11,7 +11,7 @@ const t = G5_FUTURE_JOBS_TOPIC.id;
 /** Global Success G5 future-jobs unit - shared professions plus aspirational roles. */
 export const G5_FUTURE_JOBS_WORDS: VocabWord[] = [
   ...pick(OCCUPATIONS_WORDS, 'astronaut', 'scientist', 'artist'),
-  ...pick(G3_JOBS_WORDS, 'nurse', 'singer'),
+  ...pick(G3_JOBS_WORDS, 'singer'),
   ...pick(G4_JOBS_WORDS, 'vet', 'reporter'),
   { id: 'engineer', topicId: t, word: 'engineer', plural: 'engineers', emoji: '⚙️', countable: true, explanation: 'Kỹ sư tiếng Anh là "engineer".' },
   { id: 'programmer', topicId: t, word: 'programmer', plural: 'programmers', emoji: '🧑‍💻', countable: true, explanation: 'Lập trình viên tiếng Anh là "programmer".' },

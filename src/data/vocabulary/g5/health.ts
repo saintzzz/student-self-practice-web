@@ -14,7 +14,7 @@ export const G5_HEALTH_WORDS: VocabWord[] = [
   { id: 'sneeze', topicId: t, word: 'sneeze', plural: 'sneezes', emoji: '🤧', countable: true, explanation: 'Cái hắt hơi tiếng Anh là "sneeze".' },
   { id: 'medicine', topicId: t, word: 'medicine', emoji: '💊', countable: false, explanation: 'Thuốc tiếng Anh là "medicine".' },
   { id: 'thermometer', topicId: t, word: 'thermometer', plural: 'thermometers', emoji: '🌡️', countable: true, explanation: 'Nhiệt kế tiếng Anh là "thermometer".' },
-  { id: 'bandage', topicId: t, word: 'bandage', plural: 'bandages', emoji: '🩹', countable: true, explanation: 'Băng cá nhân tiếng Anh là "bandage".' },
-  ...pick(G3_JOBS_WORDS, 'doctor', 'nurse'),
+  { id: 'bandage', topicId: t, word: 'bandage', plural: 'bandages', emoji: '🩹', countable: true, explanation: 'Băng gạc (băng dán) tiếng Anh là "bandage".' },
+  ...pick(G3_JOBS_WORDS, 'doctor'),
   ...pick(G4_CITY_PLACES_WORDS, 'hospital'),
 ];

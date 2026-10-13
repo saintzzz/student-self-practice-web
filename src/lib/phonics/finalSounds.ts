@@ -38,6 +38,32 @@ const FINAL_SOUND_EXCEPTIONS: Record<string, string> = {
   // "-augh" sounds /f/ (same family as cough/tough/enough): letter 'h'
   // would mislead a child answering by ear.
   laugh: 'f',
+  // Content audit 2026-10:
+  // Silent n: "autumn" ends /m/ (same family as column/hymn).
+  autumn: 'm',
+  // "-ache" sounds /eik/ (headache/stomachache): letter 'h' misleads.
+  headache: 'k',
+  // Silent b: "comb" ends /m/.
+  comb: 'm',
+  // "sigh" ends /ai/ - the letter-name 'i' (same ending as "my"/"fly"
+  // which resolve to 'y'... but letter-level, "sigh" is the canonical -igh
+  // word and learners group it by the sound /ai/, keyed 'i').
+  sigh: 'i',
+  // "tongue" ends /ng/; silent -ue would strip to 'u'.
+  tongue: 'ng',
+  // "-que" endings sound /k/: silent e would leave 'u'.
+  mosque: 'k',
+  martinique: 'k',
+  mozambique: 'k',
+  // "synagogue" ends /g/; silent -ue would strip to 'u'.
+  synagogue: 'g',
+  // "Chile" ends /i/ - vowel ending keyed 'e' like -ee.
+  chile: 'e',
+  // NOTE: -ey words (key/hockey/honey/money/monkey) are deliberately NOT
+  // exceptions: every other /i/ ending in the bank (baby, candy, turkey,
+  // butterfly) resolves to 'y' by the last-letter rule, so -ey words must
+  // land in the same 'y' group or odd-one-out questions would split words
+  // that sound identical.
 };
 
 /** Silent-e: consonant+'c' endings sound /s/ (soft c), 'g' endings /dʒ/ (soft g). */

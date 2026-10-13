@@ -10,6 +10,7 @@ import { getSession } from '../auth/practiceAuth';
 import type { ExamProgramId, ExamQuestion } from '../../types/exam';
 import { examConfigForGrade, type ExamState } from '../exam/examSession';
 import { seededShuffleIndices } from '../prng';
+import { isWordOrderCorrect } from '../exam/wordOrder';
 
 export interface QbRow {
   id: string;
@@ -247,11 +248,18 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
           : sentence.split(/\s+/).filter(Boolean);
       if (tokens.length < 2) return null;
       // Scramble deterministic theo id; lap lai neu trung dung thu tu.
+      // Rotation fallback guarantees a non-correct order (same trick as
+      // wordOrder.ts scramble) so a "shuffled" tile row can never already
+      // be the answer.
       let tiles = tokens.slice();
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 8; attempt++) {
         const order = seededShuffleIndices(tokens.length, `${row.id}-${attempt}`);
         tiles = order.map((i) => tokens[i]!);
-        if (tiles.join(' ') !== tokens.join(' ')) break;
+        // A shuffle that lands on any accepted order is a free point.
+        if (tiles.join(' ') !== tokens.join(' ') && !isWordOrderCorrect(sentence, tiles)) break;
+      }
+      if (isWordOrderCorrect(sentence, tiles)) {
+        tiles = [...tokens.slice(1), tokens[0]!];
       }
       return { id: row.id, topicId, kind: 'word-order', sentence, tiles, explanation, bankSkill: row.skill ?? undefined };
     }

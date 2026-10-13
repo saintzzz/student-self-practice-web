@@ -11,8 +11,21 @@ const ACTIONS_TOPIC_ID = 'g2-actions';
 
 const VOWEL_LETTERS = new Set(['a', 'e', 'i', 'o', 'u']);
 
+/**
+ * Content audit 2026-10: article must follow the SOUND, not the letter.
+ * 'u'/'eu' words with a /ju:/ onset ("unicorn", "euro") and 'one'/'once'
+ * take "a"; silent-h words ("hour", "honest") take "an". Bank words that
+ * would misfire are additionally routed away via WORD_ID_OVERRIDES - this
+ * table protects any future word that lands in an article-bearing class.
+ */
+const ARTICLE_A_WORDS = new Set(['one', 'once', 'unicorn', 'uniform', 'university', 'user', 'ukelele', 'euro', 'eucalyptus', 'ufo']);
+const ARTICLE_AN_WORDS = new Set(['hour', 'honest', 'honor', 'heir', 'hourglass']);
+
 function article(word: string): 'a' | 'an' {
-  const firstLetter = word.trim().charAt(0).toLowerCase();
+  const token = word.trim().split(/[\s-]/)[0]!.toLowerCase();
+  if (ARTICLE_A_WORDS.has(token)) return 'a';
+  if (ARTICLE_AN_WORDS.has(token)) return 'an';
+  const firstLetter = token.charAt(0);
   return VOWEL_LETTERS.has(firstLetter) ? 'an' : 'a';
 }
 
@@ -42,7 +55,9 @@ type SentenceClass =
   | 'season'
   | 'substance'
   | 'she-noun'
-  | 'place';
+  | 'place'
+  | 'place-bare'
+  | 'routine-action';
 
 /** "I have a cat.", "I can see an elephant.", "This is a red." (see templatesForWord for gating). */
 const COUNTABLE_TEMPLATES: readonly SentenceTemplate[] = [
@@ -145,6 +160,22 @@ const PLACE_TEMPLATES: readonly SentenceTemplate[] = [
   (word) => `I can see the ${word}.`,
 ];
 
+/** Content audit 2026-10: institutional nouns drop "the" in British
+    English - "I go to school/church/hospital", never "to the school". */
+const PLACE_BARE_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `I go to ${word}.`,
+  (word) => `I am in ${word}.`,
+];
+
+/** Content audit 2026-10: routine phrases like "brush teeth" are natural
+    only as routine labels ("It's time to brush teeth") - imperative and
+    subject-first frames ("Don't forget to brush teeth", "Let's brush
+    teeth") still need a possessive, so they are deliberately absent. */
+const ROUTINE_ACTION_TEMPLATES: readonly SentenceTemplate[] = [
+  (word) => `It's time to ${word}.`,
+  (word) => `Time to ${word}.`,
+];
+
 const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[]>> = {
   countable: COUNTABLE_TEMPLATES,
   mass: UNCOUNTABLE_TEMPLATES,
@@ -163,6 +194,8 @@ const CLASS_TEMPLATES: Readonly<Record<SentenceClass, readonly SentenceTemplate[
   substance: SUBSTANCE_TEMPLATES,
   'she-noun': SHE_NOUN_TEMPLATES,
   place: PLACE_TEMPLATES,
+  'place-bare': PLACE_BARE_TEMPLATES,
+  'routine-action': ROUTINE_ACTION_TEMPLATES,
 };
 
 /**
@@ -240,7 +273,11 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   recorder: 'countable',
   cycle: 'action',
   'wake-up': 'action',
-  'brush-teeth': 'action',
+  // "I can brush teeth" is wrong; routine-label frames keep it natural.
+  'brush-teeth': 'routine-action',
+  // Event noun inside an activity topic - "I like school festival" is
+  // unnatural; the definite-article frames fix it.
+  'school-festival': 'the-noun',
   breakfast: 'mass',
   lunch: 'mass',
   dinner: 'mass',
@@ -337,11 +374,15 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   bakery: 'place',
   bookshop: 'place',
   station: 'place',
+  // Institutional nouns take the bare form in BrE: "go to school/church/
+  // hospital", "be at school" - never "go to the school".
+  school: 'place-bare',
+  hospital: 'place-bare',
   // g3-xp-places members where "go to" beats "like the".
   factory: 'place',
   'convenience-store': 'place',
   hotel: 'place',
-  church: 'place',
+  church: 'place-bare',
   mosque: 'place',
   synagogue: 'place',
   'petrol-station': 'place',

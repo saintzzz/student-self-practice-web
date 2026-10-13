@@ -506,8 +506,9 @@
       "topicId": "g2-weather",
       "word": "cloud",
       "emoji": "☁️",
-      "countable": false,
-      "explanation": "Mây tiếng Anh là \"cloud\"."
+      "countable": true,
+      "explanation": "Mây tiếng Anh là \"cloud\".",
+      "plural": "clouds"
     },
     "computer": {
       "id": "computer",
@@ -749,8 +750,9 @@
       "topicId": "g2-body-parts",
       "word": "ear",
       "emoji": "👂",
-      "countable": false,
-      "explanation": "Cái tai tiếng Anh là \"ear\"."
+      "countable": true,
+      "explanation": "Cái tai tiếng Anh là \"ear\".",
+      "plural": "ears"
     },
     "egg": {
       "id": "egg",
@@ -792,8 +794,9 @@
       "topicId": "g2-body-parts",
       "word": "eye",
       "emoji": "👁️",
-      "countable": false,
-      "explanation": "Con mắt tiếng Anh là \"eye\"."
+      "countable": true,
+      "explanation": "Con mắt tiếng Anh là \"eye\".",
+      "plural": "eyes"
     },
     "farmer": {
       "id": "farmer",
@@ -868,8 +871,9 @@
       "topicId": "g2-body-parts",
       "word": "foot",
       "emoji": "🦶",
-      "countable": false,
-      "explanation": "Bàn chân tiếng Anh là \"foot\"."
+      "countable": true,
+      "explanation": "Bàn chân tiếng Anh là \"foot\".",
+      "plural": "feet"
     },
     "four": {
       "id": "four",
@@ -1022,8 +1026,9 @@
       "topicId": "g2-body-parts",
       "word": "hand",
       "emoji": "✋",
-      "countable": false,
-      "explanation": "Bàn tay tiếng Anh là \"hand\"."
+      "countable": true,
+      "explanation": "Bàn tay tiếng Anh là \"hand\".",
+      "plural": "hands"
     },
     "handbag": {
       "id": "handbag",
@@ -1222,8 +1227,9 @@
       "topicId": "g2-body-parts",
       "word": "leg",
       "emoji": "🦵",
-      "countable": false,
-      "explanation": "Chân tiếng Anh là \"leg\"."
+      "countable": true,
+      "explanation": "Chân tiếng Anh là \"leg\".",
+      "plural": "legs"
     },
     "lemon": {
       "id": "lemon",
@@ -1360,8 +1366,9 @@
       "topicId": "g2-body-parts",
       "word": "mouth",
       "emoji": "👄",
-      "countable": false,
-      "explanation": "Cái miệng tiếng Anh là \"mouth\"."
+      "countable": true,
+      "explanation": "Cái miệng tiếng Anh là \"mouth\".",
+      "plural": "mouths"
     },
     "mushroom": {
       "id": "mushroom",
@@ -1393,8 +1400,9 @@
       "topicId": "g2-body-parts",
       "word": "nose",
       "emoji": "👃",
-      "countable": false,
-      "explanation": "Cái mũi tiếng Anh là \"nose\"."
+      "countable": true,
+      "explanation": "Cái mũi tiếng Anh là \"nose\".",
+      "plural": "noses"
     },
     "notebook": {
       "id": "notebook",
@@ -1707,8 +1715,9 @@
       "topicId": "g2-weather",
       "word": "rainbow",
       "emoji": "🌈",
-      "countable": false,
-      "explanation": "Cầu vồng tiếng Anh là \"rainbow\"."
+      "countable": true,
+      "explanation": "Cầu vồng tiếng Anh là \"rainbow\".",
+      "plural": "rainbows"
     },
     "read": {
       "id": "read",

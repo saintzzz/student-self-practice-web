@@ -72,7 +72,7 @@ describe('usePronunciationRecording', () => {
     // finish() calls setMicRecording(false) before invoking onAttempt,
     // so the release is guaranteed to be in the mock log by now.
     const calls = setMicRecordingMock.mock.calls;
-    expect(calls.at(-1)?.[0]).toBe(false);
+    expect(calls[calls.length - 1]?.[0]).toBe(false);
     expect(calls.filter((c) => c[0] === true).length).toBe(1);
   });
 

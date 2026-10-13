@@ -11,18 +11,18 @@ import type { GrammarBankItem } from './grammarBank';
 /** "Điền cụm chữ còn thiếu" - IOE masks the middle of the word with
  * stars and offers chunk options ("G***bye" -> ood). */
 export const SPELLING_G12: readonly GrammarBankItem[] = [
-  { prompt: 'c_ _s', options: ['aa', 'at', 'ut', 'ot'], answer: 1, explanationVi: 'cats = những con mèo.' },
+  { prompt: 'c_ _s', options: ['aa', 'at', 'ip', 'ix'], answer: 1, explanationVi: 'cats = những con mèo.' },
   { prompt: 'd_ _s', options: ['oo', 'og', 'oa', 'ou'], answer: 1, explanationVi: 'dogs = những con chó.' },
   { prompt: 'b_ _k', options: ['oa', 'oo', 'ou', 'oi'], answer: 1, explanationVi: 'book = sách.' },
   { prompt: 'p_ _cil', options: ['en', 'an', 'in', 'on'], answer: 0, explanationVi: 'pencil = bút chì.' },
   { prompt: 'sch_ _l', options: ['oa', 'oo', 'ou', 'oe'], answer: 1, explanationVi: 'school = trường học.' },
-  { prompt: 'r_ _d', options: ['ea', 'ee', 'ae', 'ai'], answer: 0, explanationVi: 'read = đọc.' },
+  { prompt: 'r_ _d', options: ['ea', 'ou', 'ae', 'iy'], answer: 0, explanationVi: 'read = đọc.' },
 ];
 
 export const SPELLING_G3: readonly GrammarBankItem[] = [
   { prompt: 'st_ _ents', options: ['ud', 'du', 'ad', 'ed'], answer: 0, explanationVi: 'students = học sinh.' },
   { prompt: 'cl_ _sroom', options: ['ar', 'as', 'er', 'or'], answer: 1, explanationVi: 'classroom = lớp học.' },
-  { prompt: 'w_ _ter', options: ['ea', 'in', 'ai', 'on'], answer: 1, explanationVi: 'winter = mùa đông.' },
+  { prompt: 'w_ _ter', options: ['ea', 'in', 'oa', 'on'], answer: 1, explanationVi: 'winter = mùa đông.' },
   { prompt: 'sw_ _mming', options: ['im', 'in', 'em', 'om'], answer: 0, explanationVi: 'swimming = bơi lội.' },
   { prompt: 'birth_ _y', options: ['td', 'da', 'ad', 'ed'], answer: 1, explanationVi: 'birthday = sinh nhật.' },
   { prompt: 'favou_ _te', options: ['ri', 'ir', 're', 'er'], answer: 0, explanationVi: 'favourite = yêu thích.' },
@@ -57,7 +57,7 @@ export const PRONUNCIATION_G45: readonly GrammarBankItem[] = [
   { prompt: 'Which word has the underlined part pronounced differently from the letter I in NIGHT?', options: ['kite', 'English', 'bike', 'five'], answer: 1, explanationVi: '"English" đọc /ɪ/, khác /aɪ/ trong NIGHT.' },
   { prompt: 'Which word has the underlined part pronounced like the letter S in ADDRESS?', options: ['days', 'weeks', 'plays', 'bags'], answer: 1, explanationVi: 'S trong "weeks" đọc /s/ giống ADDRESS; days/plays/bags đọc /z/.' },
   { prompt: 'Which word has the underlined part pronounced like the letter O in TODAY?', options: ['open', 'collect', 'go', 'home'], answer: 1, explanationVi: 'O trong "collect" đọc /ə/ giống TODAY; open/go/home đọc /oʊ/.' },
-  { prompt: 'Which word has the underlined part pronounced differently from the letter T in TRAIN?', options: ['kitchen', 'dictation', 'table', 'ten'], answer: 0, explanationVi: '"kitchen" đọc /tʃ/, khác /t/ trong TRAIN.' },
+  { prompt: 'Which word has the underlined part pronounced differently from the letter T in TRAIN?', options: ['kitchen', 'team', 'table', 'ten'], answer: 0, explanationVi: '"kitchen" đọc /tʃ/, khác /t/ trong TRAIN.' },
   { prompt: 'Which word has the underlined part pronounced like the letter O in MONDAY?', options: ['Morning', 'Monkey', 'Mouth', 'Mango'], answer: 1, explanationVi: 'O trong "Monkey" đọc /ʌ/ giống MONDAY.' },
   { prompt: 'Which word has the underlined part pronounced differently from the letters OO in SCHOOL?', options: ['food', 'moon', 'book', 'zoo'], answer: 2, explanationVi: '"book" đọc /ʊ/, khác /uː/ trong SCHOOL.' },
   { prompt: 'Which word has the underlined part pronounced like the letters OO in BOOK?', options: ['food', 'good', 'moon', 'school'], answer: 1, explanationVi: '"good" đọc /ʊ/ giống BOOK.' },

@@ -25,10 +25,84 @@ result = subprocess.run(
 )
 words = json.loads(result.stdout)
 
+# Content audit 2026-10: hand-curated corrections for entries where
+# CMUdict/eng_to_ipa emits a wrong transcription (homographs, stress marks
+# landing mid-cluster, doubled primary stress, country names it does not
+# know). Applied AFTER the dictionary lookup - last write wins.
+OVERRIDES = {
+    # wrong base transcription
+    "read": "rid",                      # present tense (past 'red' is rɛd)
+    "kangaroo": "ˌkæŋgəˈru",
+    "spring": "sprɪŋ",
+    "museum": "mjuˈziəm",
+    "myanmar": "mjænˈmɑr",
+    "sri lanka": "ˌsri ˈlɑŋkə",         # dict emitted gibberish
+    "mauritius": "məˈrɪʃəs",
+    "lesotho": "ləˈsutu",
+    "burundi": "bəˈrʊndi",
+    "palau": "pəˈlaʊ",
+    "kiribati": "ˈkɪrɪbæs",             # pronounced "Kiribas", first-syllable stress
+    "the dr congo": "ðə ˌdi ˌɑr ˈkɑŋgoʊ",  # DR = Democratic Republic, not doctor
+    "english": "ˈɪŋglɪʃ",
+    "tomato": "təˈmeɪˌtoʊ",             # American map - not BrE təˈmɑː
+    "vase": "veɪs",                     # American - not BrE vɑːz
+    # stress mark landing mid-cluster
+    "swimming": "ˈswɪmɪŋ",
+    "swimsuit": "ˈswɪmˌsut",
+    "snowboard": "ˈsnoʊˌbɔrd",
+    "snowman": "ˈsnoʊˌmæn",
+    "switzerland": "ˈswɪtsərlənd",
+    "sweden": "ˈswidən",
+    "smiling cat": "ˈsmaɪlɪŋ kæt",
+    "music": "ˈmjuzɪk",
+    "confused": "kənˈfjuzd",
+    "furious": "ˈfjʊriəs",
+    "slovakia": "sloʊˈvɑkiə",
+    "slovenia": "sloʊˈviniə",
+    "guatemala": "ˌgwɑtəˈmɑlə",
+    "guadeloupe": "ˌgwɑdəˈlup",
+    "bedroom": "ˈbɛdˌrum",
+    "statue": "ˈstæʧu",
+    "potato": "pəˈteɪtoʊ",
+    # doubled primary stress
+    "baseball": "ˈbeɪsˌbɔl",
+    "sightseeing": "ˈsaɪtˌsiɪŋ",
+    "engineer": "ˌɛnʤəˈnɪr",
+    "atm": "ˌeɪtiˈɛm",
+    "cd": "ˌsiˈdi",
+    "videotape": "ˈvɪdioʊˌteɪp",
+    "dna": "ˌdiɛˈneɪ",
+    "ok sign": "ˌoʊˈkeɪ saɪn",
+    "ok badge": "ˌoʊˈkeɪ bæʤ",
+    "taiwan": "ˌtaɪˈwɑn",
+    # coverage gaps (not in CMUdict under these spellings)
+    "nauru": "nɑˈuru",
+    "niue": "niˈueɪ",
+    "tokelau": "ˈtoʊkəlaʊ",
+    "czechia": "ˈʧɛkiə",
+    "tuk-tuk": "ˈtʊk ˌtʊk",
+    "pufferfish": "ˈpəfərˌfɪʃ",
+    "mooncake": "ˈmunˌkeɪk",
+    "tempura": "tɛmˈpʊrə",
+    "mahjong": "mɑˈʒɑŋ",
+    "pickaxe": "ˈpɪkˌæks",
+    "sparkler": "ˈspɑrklər",
+    "notepad": "ˈnoʊtˌpæd",
+    "piñata": "pɪnˈjɑtə",
+    "hina dolls": "ˈhinə dɑlz",
+    "the faroe islands": "ðə ˈfɛroʊ ˈaɪləndz",
+    "åland": "ˈɑlənd",
+    "hibiscus": "hɪˈbɪskəs",
+    "jersey": "ˈʤərzi",
+}
+
 mapping = {}
 missing = []
 for word in words:
     text = word.strip().lower()
+    if text in OVERRIDES:
+        mapping[text] = OVERRIDES[text]
+        continue
     conv = ipa.convert(text)
     # eng_to_ipa echoes unknown tokens with '*' - fall back to per-word.
     if "*" in conv:

@@ -35,9 +35,14 @@ export function hasAnsweredCurrent(state: PracticeSessionState): boolean {
   return state.currentAnswer !== null;
 }
 
-/** Trims and lowercases so listening answers match case-insensitively. */
+/**
+ * Case/punctuation-insensitive, space-insensitive: kids typing "hotdog"
+ * for "hot dog" or "xray" for "X-ray" still match. No number folding -
+ * "4" is not a spelling of "four" (same rule as examSession's
+ * normalizeSpelling).
+ */
 export function normalizeAnswer(text: string): string {
-  return text.trim().toLowerCase();
+  return text.trim().toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 }
 
 /** The correct answer text for a question, regardless of kind. */

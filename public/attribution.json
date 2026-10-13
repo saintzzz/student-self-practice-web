@@ -1,93 +1,93 @@
 {
- "images": [],
- "collections": [
-  {
-   "id": "twemoji",
-   "title": "Twemoji",
-   "author": "Twitter, Inc and other contributors",
-   "license": "CC-BY-4.0",
-   "licenseLabel": "CC BY 4.0",
-   "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-   "sourceUrl": "https://github.com/jdecked/twemoji",
-   "version": "15.1.0",
-   "paths": [
-    "/emoji/svg/"
-   ],
-   "modified": false
-  },
-  {
-   "id": "noto-animated-emoji",
-   "title": "Noto Emoji Animation",
-   "author": "Google",
-   "license": "CC-BY-4.0",
-   "licenseLabel": "CC BY 4.0",
-   "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-   "sourceUrl": "https://googlefonts.github.io/noto-emoji-animation/",
-   "version": "2026-09-30",
-   "paths": [
-    "/emoji/lottie/"
-   ],
-   "modified": false
-  },
-  {
-   "id": "baloo-2",
-   "title": "Baloo 2",
-   "author": "Ek Type",
-   "license": "OFL-1.1",
-   "licenseLabel": "SIL Open Font License 1.1",
-   "licenseUrl": "https://openfontlicense.org",
-   "sourceUrl": "https://fonts.google.com/specimen/Baloo+2",
-   "version": "5.3.0 (@fontsource/baloo-2)",
-   "paths": [
-    "/fonts/baloo-2/"
-   ],
-   "modified": false
-  },
-  {
-   "id": "bevietnam-pro",
-   "title": "Be Vietnam Pro",
-   "author": "Bao Anh Bui, Ngan Bui and beVietnam contributors",
-   "license": "OFL-1.1",
-   "licenseLabel": "SIL Open Font License 1.1",
-   "licenseUrl": "https://openfontlicense.org",
-   "sourceUrl": "https://fonts.google.com/specimen/Be+Vietnam+Pro",
-   "version": "@fontsource/be-vietnam-pro",
-   "paths": [
-    "/fonts/bevietnam-pro/"
-   ],
-   "modified": false
-  },
-  {
-   "id": "noto-symbol-renders",
-   "title": "Concept illustrations - rendered from Noto Color Emoji glyphs",
-   "author": "Google (Noto Color Emoji) - rendered and composed by VieSchool",
-   "license": "Apache-2.0",
-   "licenseLabel": "Apache License 2.0",
-   "licenseUrl": "https://www.apache.org/licenses/LICENSE-2.0",
-   "sourceUrl": "https://fonts.google.com/noto/specimen/Noto+Color+Emoji",
-   "version": "2026-10-04",
-   "paths": [
-    "/images/concepts/",
-    "/images/counting/",
-    "/images/v3/"
-   ],
-   "modified": true
-  },
-  {
-   "id": "vieschool-original-assets",
-   "title": "VieSchool original diagrams and sound effects",
-   "author": "VieSchool",
-   "license": "proprietary",
-   "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
-   "licenseUrl": "",
-   "sourceUrl": "",
-   "version": "2026-10-04",
-   "paths": [
-    "/images/v6/",
-    "/sfx/"
-   ],
-   "modified": false
-  }
- ],
- "version": 1
+  "images": [],
+  "collections": [
+    {
+      "id": "twemoji",
+      "title": "Twemoji",
+      "author": "Twitter, Inc and other contributors",
+      "license": "CC-BY-4.0",
+      "licenseLabel": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://github.com/jdecked/twemoji",
+      "version": "15.1.0",
+      "paths": [
+        "/emoji/svg/"
+      ],
+      "modified": false
+    },
+    {
+      "id": "noto-animated-emoji",
+      "title": "Noto Emoji Animation",
+      "author": "Google",
+      "license": "CC-BY-4.0",
+      "licenseLabel": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "https://googlefonts.github.io/noto-emoji-animation/",
+      "version": "2026-10-13",
+      "paths": [
+        "/emoji/lottie/"
+      ],
+      "modified": false
+    },
+    {
+      "id": "baloo-2",
+      "title": "Baloo 2",
+      "author": "Ek Type",
+      "license": "OFL-1.1",
+      "licenseLabel": "SIL Open Font License 1.1",
+      "licenseUrl": "https://openfontlicense.org",
+      "sourceUrl": "https://fonts.google.com/specimen/Baloo+2",
+      "version": "5.3.0 (@fontsource/baloo-2)",
+      "paths": [
+        "/fonts/baloo-2/"
+      ],
+      "modified": false
+    },
+    {
+      "id": "bevietnam-pro",
+      "title": "Be Vietnam Pro",
+      "author": "Bao Anh Bui, Ngan Bui and beVietnam contributors",
+      "license": "OFL-1.1",
+      "licenseLabel": "SIL Open Font License 1.1",
+      "licenseUrl": "https://openfontlicense.org",
+      "sourceUrl": "https://fonts.google.com/specimen/Be+Vietnam+Pro",
+      "version": "@fontsource/be-vietnam-pro",
+      "paths": [
+        "/fonts/bevietnam-pro/"
+      ],
+      "modified": false
+    },
+    {
+      "id": "noto-symbol-renders",
+      "title": "Concept illustrations - rendered from Noto Color Emoji glyphs",
+      "author": "Google (Noto Color Emoji) - rendered and composed by VieSchool",
+      "license": "Apache-2.0",
+      "licenseLabel": "Apache License 2.0",
+      "licenseUrl": "https://www.apache.org/licenses/LICENSE-2.0",
+      "sourceUrl": "https://fonts.google.com/noto/specimen/Noto+Color+Emoji",
+      "version": "2026-10-04",
+      "paths": [
+        "/images/concepts/",
+        "/images/counting/",
+        "/images/v3/"
+      ],
+      "modified": true
+    },
+    {
+      "id": "vieschool-original-assets",
+      "title": "VieSchool original diagrams and sound effects",
+      "author": "VieSchool",
+      "license": "proprietary",
+      "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "version": "2026-10-04",
+      "paths": [
+        "/images/v6/",
+        "/sfx/"
+      ],
+      "modified": false
+    }
+  ],
+  "version": 1
 }

@@ -14,5 +14,5 @@ export const G4_SHOPPING_WORDS: VocabWord[] = [
   { id: 'cash', topicId: t, word: 'cash', emoji: '💰', countable: false, explanation: 'Tiền mặt tiếng Anh là "cash".' },
   { id: 'bakery', topicId: t, word: 'bakery', plural: 'bakeries', emoji: '🥐', countable: true, explanation: 'Tiệm bánh tiếng Anh là "bakery".' },
   { id: 'bookshop', topicId: t, word: 'bookshop', plural: 'bookshops', emoji: '📕', countable: true, explanation: 'Hiệu sách tiếng Anh là "bookshop".' },
-  { id: 'sale', topicId: t, word: 'sale', plural: 'sales', emoji: '🈹', countable: true, explanation: 'Đợt giảm giá tiếng Anh là "sale".' },
+  { id: 'sale', topicId: t, word: 'sale', plural: 'sales', emoji: '💸', countable: true, explanation: 'Đợt giảm giá tiếng Anh là "sale".' },
 ];

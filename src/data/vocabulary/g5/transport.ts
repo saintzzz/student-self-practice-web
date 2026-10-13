@@ -13,7 +13,8 @@ export const G5_TRANSPORT_WORDS: VocabWord[] = [
   ...pick(CAMPING_WORDS, 'canoe'),
   { id: 'subway', topicId: t, word: 'subway', plural: 'subways', emoji: '🚇', countable: true, explanation: 'Tàu điện ngầm tiếng Anh là "subway".' },
   { id: 'tram', topicId: t, word: 'tram', plural: 'trams', emoji: '🚊', countable: true, explanation: 'Tàu điện mặt đất tiếng Anh là "tram".' },
-  { id: 'scooter', topicId: t, word: 'scooter', plural: 'scooters', emoji: '🛴', countable: true, explanation: 'Xe scooter tiếng Anh là "scooter".' },
+  // 🛵 is shared with g3-xp 'moped' - same real-world object, sanctioned pair.
+  { id: 'scooter', topicId: t, word: 'scooter', plural: 'scooters', emoji: '🛵', countable: true, explanation: 'Xe tay ga tiếng Anh là "scooter".' },
   { id: 'cable-car', topicId: t, word: 'cable car', plural: 'cable cars', emoji: '🚡', countable: true, explanation: 'Cáp treo tiếng Anh là "cable car".' },
   { id: 'ferry', topicId: t, word: 'ferry', plural: 'ferries', emoji: '⛴️', countable: true, explanation: 'Phà tiếng Anh là "ferry".' },
 ];

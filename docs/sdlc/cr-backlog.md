@@ -485,3 +485,16 @@
      self-service.
   5. Real payment gateway (MoMo/ZaloPay) - OM-1C deferred.
 - **Status:** queued; scope estimate at intake of the next pipeline run.
+
+## CR-72 (proposed): Visual craft pass - BACKLOG
+
+- **Origin:** user feedback 2026-10-13 - "design UI UX vẫn quá tệ, icon
+  trông quá xấu" especially on mobile.
+- **Scope sketch:**
+  1. Real SVG icon set for UI chrome (star/streak/badge/speaker/mic/home/
+     parent/back) - currently raw emoji render per-platform inconsistent.
+  2. Mascot expressions (happy/encourage/celebrate poses).
+  3. Mobile density pass: EngagementBar -> compact single row, remove
+     dead space, re-check each screen at 360-390px.
+  4. Content emoji (vocab pictures) stays emoji - that is the pedagogy.
+- **Status:** proposed, not approved; needs Designer phase intake.

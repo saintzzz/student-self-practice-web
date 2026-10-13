@@ -2,7 +2,7 @@ import type { Topic, VocabWord } from '../../../types';
 import { pick } from '../shared';
 import { FURNITURE_WORDS } from '../furniture';
 
-export const G3_ROOMS_TOPIC: Topic = { id: 'g3-rooms', gradeId: 'grade-3', name: 'Các phòng' };
+export const G3_ROOMS_TOPIC: Topic = { id: 'g3-rooms', gradeId: 'grade-3', name: 'Phòng và đồ vật trong nhà' };
 
 const t = G3_ROOMS_TOPIC.id;
 

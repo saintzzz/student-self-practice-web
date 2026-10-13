@@ -13,7 +13,8 @@ export const G5_STORIES_WORDS: VocabWord[] = [
   { id: 'princess', topicId: t, word: 'princess', plural: 'princesses', emoji: '👸', countable: true, explanation: 'Công chúa tiếng Anh là "princess".' },
   { id: 'queen', topicId: t, word: 'queen', plural: 'queens', emoji: '🫅', countable: true, explanation: 'Nữ hoàng tiếng Anh là "queen".' },
   { id: 'witch', topicId: t, word: 'witch', plural: 'witches', emoji: '🧙‍♀️', countable: true, explanation: 'Mụ phù thủy tiếng Anh là "witch".' },
-  { id: 'wizard', topicId: t, word: 'wizard', plural: 'wizards', emoji: '🧙', countable: true, explanation: 'Pháp sư tiếng Anh là "wizard".' },
+  // 🧙‍♂️ is shared with g3-xp 'magician' - same real-world figure, sanctioned pair.
+  { id: 'wizard', topicId: t, word: 'wizard', plural: 'wizards', emoji: '🧙‍♂️', countable: true, explanation: 'Pháp sư tiếng Anh là "wizard".' },
   { id: 'dragon', topicId: t, word: 'dragon', plural: 'dragons', emoji: '🐉', countable: true, explanation: 'Con rồng tiếng Anh là "dragon".' },
   { id: 'giant', topicId: t, word: 'giant', plural: 'giants', emoji: '🧌', countable: true, explanation: 'Người khổng lồ tiếng Anh là "giant".' },
   { id: 'fairy', topicId: t, word: 'fairy', plural: 'fairies', emoji: '🧚', countable: true, explanation: 'Nàng tiên tiếng Anh là "fairy".' },

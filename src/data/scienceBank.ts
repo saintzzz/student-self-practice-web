@@ -56,7 +56,7 @@ export const SCIENCE_G45: readonly ScienceFact[] = [
   { question: 'What is the full moon?', answer: 'a round bright moon', distractors: ['a half moon', 'a new moon', 'no moon'], trueStatement: 'A full moon is round and bright.', falseStatement: 'A full moon looks like a half circle.', explanationVi: 'Trăng rằm tròn và sáng.' },
   { question: 'How long does the Earth take to go around the Sun?', answer: 'one year', distractors: ['one day', 'one week', 'one month'], trueStatement: 'The Earth takes one year to go around the Sun.', falseStatement: 'The Earth takes one day to go around the Sun.', explanationVi: 'Trái Đất quay quanh Mặt trời mất 1 năm (365 ngày).' },
   { question: 'What causes day and night?', answer: 'the Earth spins', distractors: ['the Sun moves', 'the Moon blocks the Sun', 'clouds cover the sky'], trueStatement: 'Day and night happen because the Earth spins.', falseStatement: 'Day and night happen because the Sun spins.', explanationVi: 'Ngày và đêm do Trái Đất tự quay.' },
-  { question: 'Which gas do plants take in?', answer: 'carbon dioxide', distractors: ['oxygen', 'helium', 'hydrogen'], trueStatement: 'Plants take in carbon dioxide.', falseStatement: 'Plants take in oxygen to make food.', explanationVi: 'Cây hấp thụ CO2 để quang hợp, nhả ra oxy.' },
+  { question: 'Which gas do plants take in?', answer: 'carbon dioxide', distractors: ['nitrogen', 'helium', 'hydrogen'], trueStatement: 'Plants take in carbon dioxide.', falseStatement: 'Plants take in oxygen to make food.', explanationVi: 'Cây hấp thụ CO2 để quang hợp, nhả ra oxy.' },
   { question: 'Which organ pumps blood around the body?', answer: 'heart', distractors: ['brain', 'stomach', 'lung'], trueStatement: 'The heart pumps blood.', falseStatement: 'The brain pumps blood.', explanationVi: 'Tim bơm máu đi khắp cơ thể.' },
   { question: 'What do we use to think?', answer: 'brain', distractors: ['heart', 'stomach', 'hand'], trueStatement: 'We use the brain to think.', falseStatement: 'We use the stomach to think.', explanationVi: 'Não dùng để suy nghĩ.' },
   { question: 'Which animals have a backbone?', answer: 'vertebrates', distractors: ['insects', 'worms', 'jellyfish'], trueStatement: 'Vertebrates have a backbone.', falseStatement: 'Insects have a backbone.', explanationVi: 'Động vật có xương sống gọi là vertebrates; côn trùng không có.' },
@@ -103,7 +103,7 @@ const CLASSES_G3: readonly ScienceClass[] = [
   { label: 'planet', labelVi: 'hành tinh', members: ['Earth', 'Mars', 'Venus', 'Jupiter', 'Saturn'], nonMembers: ['the Moon', 'the Sun', 'a comet', 'a star', 'Pluto'] },
   { label: 'plant part', labelVi: 'bộ phận của cây', members: ['root', 'leaf', 'flower', 'stem', 'fruit'], nonMembers: ['rock', 'wing', 'fin', 'shell', 'tail'] },
   { label: 'thing made of water', labelVi: 'dạng của nước', members: ['ice', 'snow', 'rain', 'steam', 'cloud'], nonMembers: ['sand', 'rock', 'fire', 'wind', 'soil'] },
-  { label: 'job that helps people', labelVi: 'nghề giúp người', members: ['doctor', 'teacher', 'farmer', 'firefighter', 'nurse'], nonMembers: ['clown', 'pirate', 'robot', 'ghost', 'giant'] },
+  { label: 'job that helps people', labelVi: 'nghề giúp người', members: ['doctor', 'teacher', 'farmer', 'firefighter', 'nurse'], nonMembers: ['mermaid', 'dragon', 'robot', 'ghost', 'giant'] },
   { label: 'part of your body', labelVi: 'bộ phận cơ thể', members: ['arm', 'leg', 'head', 'hand', 'foot'], nonMembers: ['wing', 'fin', 'leaf', 'rock', 'cloud'] },
 ];
 
@@ -112,7 +112,7 @@ const CLASSES_G45: readonly ScienceClass[] = [
   { label: 'reptile', labelVi: 'bò sát', members: ['snake', 'lizard', 'crocodile', 'turtle', 'gecko'], nonMembers: ['frog', 'eagle', 'spider', 'whale', 'clam'] },
   { label: 'solid', labelVi: 'chất rắn', members: ['rock', 'ice', 'wood', 'metal', 'glass'], nonMembers: ['water', 'air', 'steam', 'milk', 'oil'] },
   { label: 'liquid', labelVi: 'chất lỏng', members: ['water', 'milk', 'juice', 'oil', 'rain'], nonMembers: ['ice', 'rock', 'steam', 'air', 'sand'] },
-  { label: 'gas', labelVi: 'chất khí', members: ['air', 'steam', 'oxygen', 'smoke', 'carbon dioxide'], nonMembers: ['water', 'ice', 'rock', 'oil', 'soil'] },
+  { label: 'gas', labelVi: 'chất khí', members: ['air', 'steam', 'oxygen', 'hydrogen', 'carbon dioxide'], nonMembers: ['water', 'ice', 'rock', 'oil', 'soil'] },
   { label: 'planet', labelVi: 'hành tinh trong hệ Mặt Trời', members: ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Neptune'], nonMembers: ['the Moon', 'the Sun', 'a comet', 'an asteroid', 'a star'] },
   { label: 'herbivore', labelVi: 'động vật ăn cỏ', members: ['cow', 'elephant', 'rabbit', 'deer', 'giraffe'], nonMembers: ['lion', 'eagle', 'shark', 'wolf', 'frog'] },
   { label: 'sense organ', labelVi: 'cơ quan giác quan', members: ['eye', 'ear', 'nose', 'tongue', 'skin'], nonMembers: ['heart', 'lung', 'bone', 'muscle', 'brain'] },

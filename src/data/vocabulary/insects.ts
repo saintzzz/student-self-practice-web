@@ -15,5 +15,7 @@ export const INSECTS_WORDS: VocabWord[] = [
   { id: 'caterpillar', topicId: t, word: 'caterpillar', plural: 'caterpillars', emoji: '🐛', countable: true, explanation: 'Con sâu bướm tiếng Anh là "caterpillar".' },
   { id: 'worm', topicId: t, word: 'worm', plural: 'worms', emoji: '🪱', countable: true, explanation: 'Con giun tiếng Anh là "worm".' },
   { id: 'snail', topicId: t, word: 'snail', plural: 'snails', emoji: '🐌', countable: true, explanation: 'Con ốc sên tiếng Anh là "snail".' },
+  // 🦗 (U+1F997) is officially the cricket emoji but is the nearest glyph for a
+  // grasshopper; the standalone word 'cricket' already exists in g3-xp (the sport).
   { id: 'grasshopper', topicId: t, word: 'grasshopper', plural: 'grasshoppers', emoji: '🦗', countable: true, explanation: 'Con châu chấu tiếng Anh là "grasshopper".' },
 ];
