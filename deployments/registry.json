@@ -14,13 +14,14 @@
       ],
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh-hpf9cz749-linhld7s-projects.vercel.app",
-      "commit": "233853d",
+      "commit": "41957df",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-14T20:05:00+07:00",
+      "lastHealthCheck": "2026-10-14T00:30:00+07:00",
       "healthDetails": {
         "GET https://ea.vieschool.com": 200,
-        "kids-ux": "deployed - G1-2 launchpad (one gold CTA + Kham pha sheet + mascot speaker) verified on prod 390x844, 0 console errors; supabase migration 0039_kids_ux_weekly_digest applied (is_mock_result/skill_label_vi/weekly_report_html smoke-tested)"
+        "canary": "theme-color meta present in served HTML (confirms 41957df live)",
+        "kids-ux": "CR-72 deployed - headless InstructionSpeaker autoplay all grades, SVG icon chrome + mascot moods, compact EngagementBar; web-interface-guidelines sweep (overscroll/safe-area/touch-action/motion-reduce); verified on prod 390x844, 0 console errors"
       },
       "customDomain": {
         "registrar": "Porkbun",
