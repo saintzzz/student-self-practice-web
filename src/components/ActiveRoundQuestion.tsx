@@ -9,6 +9,11 @@ interface ActiveRoundQuestionProps {
   onSubmitPronunciation: (transcript: string) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
   onNextQuestion: () => void;
+  /**
+   * kids-UX (design s3.2): round-scoped key so the instruction speaker
+   * autoplays once per ROUND on G1-2, not once per question.
+   */
+  speakerKey?: string;
 }
 
 /** Thin adapter between a Round's question-loop session and the shared QuestionCard shell. */
@@ -20,6 +25,7 @@ export default function ActiveRoundQuestion({
   onSubmitPronunciation,
   onSubmitPairMatching,
   onNextQuestion,
+  speakerKey,
 }: ActiveRoundQuestionProps) {
   const question = getCurrentQuestion(session);
   if (!question) {
@@ -38,6 +44,7 @@ export default function ActiveRoundQuestion({
       onSubmitPronunciation={onSubmitPronunciation}
       onSubmitPairMatching={onSubmitPairMatching}
       onNext={onNextQuestion}
+      speakerKey={speakerKey}
     />
   );
 }

@@ -368,3 +368,202 @@ export function speakSentence(
 ): void {
   speak(sentence, onStatus, speed);
 }
+
+// ---- kids-UX: instruction speech (UI language, not content) ---------------
+
+/**
+ * Preferred vi-VN voices ranked best-first (substring match on voice.name).
+ * Vietnamese neural voices exist on Chrome/Edge/Android and modern iOS;
+ * devices without any vi voice report 'unavailable' so the UI falls back
+ * to the visual-only path instead of mispronouncing with an en voice.
+ */
+const PREFERRED_VI_VOICE_NAMES: readonly string[] = [
+  'Google tiếng Việt',            // Android/Chrome neural
+  'Microsoft HoaiMy Online',      // Edge neural (female)
+  'Microsoft NamMinh Online',     // Edge neural (male)
+  'Linh',                         // iOS/macOS vi-VN
+];
+
+function pickVoiceForLang(langPrefix: string): SpeechSynthesisVoice | null {
+  if (cachedVoices.length === 0) refreshVoiceCache();
+  const list = cachedVoices.filter((v) => v.lang?.toLowerCase().startsWith(langPrefix));
+  if (langPrefix === 'vi') {
+    for (const name of PREFERRED_VI_VOICE_NAMES) {
+      const hit = list.find((v) => v.name?.includes(name));
+      if (hit) return hit;
+    }
+  }
+  const exact = list.find((v) => v.lang?.toLowerCase() === langPrefix);
+  return exact ?? list[0] ?? null;
+}
+
+/** True when the device has any vi-* TTS voice installed. */
+export function hasVietnameseVoice(): boolean {
+  return pickVoiceForLang('vi') !== null;
+}
+
+export type InstructionStatus =
+  | 'playing'     // TTS started
+  | 'ended'       // finished (or user-cancelled) - stop pulsing
+  | 'blocked'     // autoplay rejected / never started within 1500ms
+  | 'unavailable' // no speechSynthesis or no voice for the language
+  | 'error';
+
+/**
+ * kids-UX R1 (ADR KUX-1): speaks a Vietnamese UI instruction. Deliberately
+ * skips the pre-recorded mp3 lookup - the ea-audio bucket only holds
+ * English content audio; vi-VN would 404 first. 'en-US' callers reuse the
+ * content path so their mp3 quality is preserved. Never throws; terminal
+ * status is emitted at most once.
+ */
+/**
+ * Dev-review fix: returns a cancel handle. The caller (InstructionSpeaker)
+ * invokes it on unmount/replay so a queued utterance or pending timer can
+ * never fire a dead component's setStatus - and navigation away truly
+ * silences the instruction (AC-1.x / async-safety rule).
+ */
+export function speakInstruction(
+  text: string,
+  opts?: {
+    lang?: 'vi-VN' | 'en-US';
+    onStatus?: (status: InstructionStatus) => void;
+  },
+): () => void {
+  const lang = opts?.lang ?? 'vi-VN';
+  const onStatus = opts?.onStatus;
+  const noop = () => {};
+
+  if (lang === 'en-US') {
+    let terminal = false;
+    let cancelled = false;
+    speak(text, (s) => {
+      if (terminal || cancelled) return;
+      if (s === 'started') onStatus?.('playing');
+      else {
+        terminal = true;
+        onStatus?.(s === 'unsupported' ? 'unavailable' : 'error');
+      }
+    });
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio = null;
+      }
+    };
+  }
+
+  if (typeof window === 'undefined' || !window.speechSynthesis) {
+    onStatus?.('unavailable');
+    return noop;
+  }
+  const voice = pickVoiceForLang('vi');
+  if (!voice) {
+    onStatus?.('unavailable');
+    return noop;
+  }
+
+  let cancelled = false;
+  const timers: number[] = [];
+  let utterance: SpeechSynthesisUtterance | null = null;
+  const cancel = () => {
+    cancelled = true;
+    for (const t of timers) window.clearTimeout(t);
+    if (utterance) {
+      utterance.onstart = null;
+      utterance.onend = null;
+      utterance.onerror = null;
+      if (activeUtterance === utterance) activeUtterance = null;
+    }
+    try {
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
+    } catch {
+      // never let cleanup throw
+    }
+  };
+
+  try {
+    const synth = window.speechSynthesis;
+    utterance = new window.SpeechSynthesisUtterance(text);
+    const self = utterance;
+    self.lang = 'vi-VN';
+    self.voice = voice;
+    self.rate = 0.9;
+    self.pitch = 1.05;
+    activeUtterance = self;
+
+    let started = false;
+    let done = false;
+    const finish = (status: InstructionStatus) => {
+      if (done || cancelled) return;
+      done = true;
+      if (activeUtterance === self) activeUtterance = null;
+      onStatus?.(status);
+    };
+    self.onstart = () => {
+      /* dev-review r2: a late onstart (after the deadline already fired
+         'blocked') must not flip the speaker to 'playing' - done and
+         cancelled are both terminal. */
+      if (cancelled || done) return;
+      started = true;
+      onStatus?.('playing');
+    };
+    self.onend = () => finish('ended');
+    self.onerror = (event) => {
+      const reason = event?.error;
+      if (reason === 'canceled' || reason === 'interrupted') finish('ended');
+      else if (reason === 'not-allowed') finish('blocked');
+      else finish('error');
+    };
+    /* Autoplay-blocked detection (KUX-1): if onstart never fires by the
+       deadline the utterance is stuck - whatever the engine claims
+       (pending/speaking included, some engines wedge the queue). Cancel
+       our utterance so it cannot start late, detach its handlers so a
+       late event can never revive it, then flip to the tap cue. */
+    timers.push(
+      window.setTimeout(() => {
+        if (!started && !done && !cancelled && activeUtterance === self) {
+          try {
+            synth.cancel();
+          } catch {
+            // cancel is best-effort
+          }
+          self.onstart = null;
+          self.onend = null;
+          self.onerror = null;
+          finish('blocked');
+        }
+      }, 1500),
+    );
+
+    synth.resume();
+    if (synth.speaking || synth.pending || synth.paused) {
+      synth.cancel();
+      synth.resume();
+      timers.push(
+        window.setTimeout(() => {
+          if (cancelled) return;
+          try {
+            synth.speak(self);
+          } catch {
+            finish('error');
+          }
+        }, 60),
+      );
+    } else {
+      try {
+        synth.speak(self);
+      } catch {
+        finish('error');
+      }
+    }
+  } catch {
+    onStatus?.('error');
+  }
+  return cancel;
+}

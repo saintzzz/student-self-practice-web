@@ -1,11 +1,15 @@
 import type { CountingImageOption, CountingImageQuestion as CountingImageQuestionType } from '../types';
 import { EmojiVisual } from './EmojiVisual';
-import { getOptionButtonClassName } from './optionButtonStyle';
+import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
 
 interface CountingImageQuestionProps {
   question: CountingImageQuestionType;
   selectedIndex: number | null;
   onSelectOption: (index: number) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 function countLabel(option: CountingImageOption): string {
@@ -16,15 +20,19 @@ export default function CountingImageQuestion({
   question,
   selectedIndex,
   onSelectOption,
+  speakerKey,
 }: CountingImageQuestionProps) {
+  const { band } = useViewer();
   const hasAnswered = selectedIndex !== null;
   const isCountToImage = question.direction === 'count-to-image';
+  const instruction = isCountToImage ? 'Chọn hình có đúng số lượng nhé!' : 'Đếm số lượng rồi chọn đáp án đúng!';
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">
-        {isCountToImage ? 'Chọn hình có đúng số lượng nhé!' : 'Đếm số lượng rồi chọn đáp án đúng!'}
-      </p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{instruction}</p>
+        <InstructionSpeaker text={instruction} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
 
       {isCountToImage ? (
         <p className="mb-3 text-4xl font-extrabold text-white">{countLabel(question.prompt)}</p>
@@ -43,7 +51,9 @@ export default function CountingImageQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
           >
+            {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
             {isCountToImage ? (
               <span aria-hidden="true">
                 <EmojiVisual emoji={option.emoji} count={option.count} />

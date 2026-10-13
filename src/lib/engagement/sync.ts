@@ -1,5 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from '../supabase/client';
 import type { ExamQuestion } from '../../types/exam';
+import { HOME_ITEM_IDS } from '../../data/homeItems';
 import {
   DAY_STATS_CAP,
   REVIEW_CAP,
@@ -185,6 +186,32 @@ export function mergeEngagement(
     pet,
     badgeStats,
     reviewMastered: masteredEntries.length ? Object.fromEntries(masteredEntries) : undefined,
+    /* kids-UX R0: union the collectible + idempotency maps so neither
+       device loses grants. Timestamps keep the newer side per key. */
+    homeItems: [
+      ...(local.homeItems ?? []),
+      ...(remote.homeItems ?? []).filter((id) => !(local.homeItems ?? []).includes(id)),
+    ].slice(-64).length
+      ? [
+          ...(local.homeItems ?? []),
+          ...(remote.homeItems ?? []).filter((id) => !(local.homeItems ?? []).includes(id)),
+        ].slice(-64)
+      : undefined,
+    giftGrants:
+      local.giftGrants || remote.giftGrants
+        ? { ...remote.giftGrants, ...local.giftGrants }
+        : undefined,
+    grantedObjectives:
+      local.grantedObjectives || remote.grantedObjectives
+        ? (() => {
+            const merged: Record<string, string> = { ...remote.grantedObjectives };
+            for (const [k, v] of Object.entries(local.grantedObjectives ?? {})) {
+              if (!merged[k] || v > merged[k]) merged[k] = v;
+            }
+            return merged;
+          })()
+        : undefined,
+    schemaVersion: Math.max(local.schemaVersion ?? 0, remote.schemaVersion ?? 0) || undefined,
   };
 }
 
@@ -484,6 +511,32 @@ function sanitizeRemote(raw: unknown): EngagementState {
       if (typeof ts === 'string') mastered[id] = ts;
     }
     if (Object.keys(mastered).length) out.reviewMastered = mastered;
+  }
+  /* kids-UX R0 forward-compat: preserve the collectible-home and reward-
+     idempotency fields so a rollback to this build does not wipe them
+     from engagement_state on the next sync push. */
+  if (Array.isArray(raw.homeItems)) {
+    const items = raw.homeItems.filter((x): x is string => typeof x === 'string' && HOME_ITEM_IDS.has(x));
+    if (items.length) out.homeItems = items.slice(-64);
+  }
+  if (isObj(raw.giftGrants)) {
+    const grants: Record<string, string> = {};
+    for (const [k, v] of Object.entries(raw.giftGrants)) {
+      if (typeof v === 'string' && HOME_ITEM_IDS.has(v) && /^[A-Za-z0-9_-]{1,80}$/.test(k)) grants[k] = v;
+    }
+    if (Object.keys(grants).length) out.giftGrants = grants;
+  }
+  if (isObj(raw.grantedObjectives)) {
+    const objs: Record<string, string> = {};
+    for (const [k, v] of Object.entries(raw.grantedObjectives)) {
+      /* No cap: eviction would let a replayed objective double-grant
+         (AC-4.4). Keyspace is bounded by replayable content. */
+      if (typeof v === 'string' && /^(round|batch|gift):[A-Za-z0-9:_-]{1,80}$/.test(k)) objs[k] = v;
+    }
+    if (Object.keys(objs).length) out.grantedObjectives = objs;
+  }
+  if (typeof raw.schemaVersion === 'number' && Number.isFinite(raw.schemaVersion)) {
+    out.schemaVersion = raw.schemaVersion;
   }
   return out;
 }

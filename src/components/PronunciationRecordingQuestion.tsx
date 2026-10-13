@@ -2,6 +2,10 @@ import type { PronunciationRecordingQuestion as PronunciationRecordingQuestionTy
 import { usePronunciationRecording } from '../hooks/usePronunciationRecording';
 import PronunciationFeedbackPanel from './PronunciationFeedbackPanel';
 import PronunciationStatusMessage from './PronunciationStatusMessage';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Đọc to từ này lên nhé:';
 
 interface PronunciationRecordingQuestionProps {
   question: PronunciationRecordingQuestionType;
@@ -10,6 +14,8 @@ interface PronunciationRecordingQuestionProps {
   score: number | null;
   isCorrect: boolean | null;
   onSubmit: (transcript: string) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 const DISCLOSURE_TEXT =
@@ -47,7 +53,9 @@ export default function PronunciationRecordingQuestion({
   score,
   isCorrect,
   onSubmit,
+  speakerKey,
 }: PronunciationRecordingQuestionProps) {
+  const { band } = useViewer();
   const { phase, errorReason, startRecording, stopRecording, retry, skip } = usePronunciationRecording(
     onSubmit,
     question.word,
@@ -55,7 +63,10 @@ export default function PronunciationRecordingQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">Đọc to từ này lên nhé:</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <p className="mb-3 text-4xl font-extrabold text-white">{question.word}</p>
 
       {hasAnswered ? (

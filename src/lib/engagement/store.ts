@@ -1,4 +1,5 @@
 import type { ExamQuestion } from '../../types/exam';
+import { HOME_ITEMS } from '../../data/homeItems';
 
 /**
  * CR-10 engagement layer (PRD s19 R-T3/R-T4). LocalStorage-backed
@@ -55,6 +56,19 @@ export interface EngagementState {
    *  mastery (newer updatedAtISO) is not swallowed by its own
    *  tombstone on the next merge. */
   reviewMastered?: Record<string, string>;
+  /** kids-UX: collectible home - item ids the pet/scene home owns. */
+  homeItems?: string[];
+  /** kids-UX (AC-4.4): stickerId -> granted home-item id. Persisted so a
+   *  replayed gift returns the SAME item - recompute cannot recover it
+   *  because the granted item already left the not-owned pool. */
+  giftGrants?: Record<string, string>;
+  /** kids-UX (AC-4.4): objectiveId -> ISO grant time. NO cap - the keyspace
+   *  is bounded by replayable content objectives; eviction would let a
+   *  replayed objective double-grant. */
+  grantedObjectives?: Record<string, string>;
+  /** kids-UX: forward-compat marker - future clients detect and preserve
+   *  fields they do not know. Does not protect pre-R0 clients. */
+  schemaVersion?: number;
 }
 
 /** CR-37: counters the extended badge rules read. */
@@ -343,16 +357,40 @@ function awardSticker(state: EngagementState, id: string, newly: Set<string>): v
 export interface RoundAwardResult {
   stars: number;
   newStickers: Sticker[];
+  /** kids-UX AC-4.4: true when the caller passed an objectiveId that was
+   *  already granted - nothing mutated, summary shows "Đã nhận thưởng rồi". */
+  alreadyGranted?: boolean;
 }
 
-/** Records a finished round; replays only add the star DELTA if improved. */
+/** kids-UX objective id grammar: `round:<seed>:<n>` | `batch:<seed>` |
+ *  `gift:<stickerId>` (ruling OBJ-1: keyed by the run's seed). */
+const OBJECTIVE_RE = /^(round|batch|gift):[A-Za-z0-9:_-]{1,80}$/;
+
+/** kids-UX: true when this objective already granted its rewards. */
+export function isObjectiveGranted(objectiveId: string): boolean {
+  return !!load().grantedObjectives?.[objectiveId];
+}
+
+function grantObjective(state: EngagementState, objectiveId: string): void {
+  if (!OBJECTIVE_RE.test(objectiveId)) return;
+  (state.grantedObjectives ??= {})[objectiveId] = new Date().toISOString();
+}
+
+/** Records a finished round; replays only add the star DELTA if improved.
+ *  kids-UX AC-4.4: passing an objectiveId makes the grant idempotent - a
+ *  repeated completion of the same run returns alreadyGranted and mutates
+ *  nothing. */
 export function recordRoundResult(
   gradeId: string,
   _roundIndex: number,
   points: number,
   maxPoints: number,
+  objectiveId?: string,
 ): RoundAwardResult {
   const state = load();
+  if (objectiveId && state.grantedObjectives?.[objectiveId]) {
+    return { stars: 0, newStickers: [], alreadyGranted: true };
+  }
   const stars = starsForScore(points, maxPoints);
   const gp = state.grades[gradeId] ?? { stars: 0, roundsCompleted: 0, batchesCompleted: 0 };
   gp.stars = Math.min(gp.stars + stars, STARS_PER_ROUND_CAP * 40);
@@ -363,6 +401,7 @@ export function recordRoundResult(
   const newly = new Set<string>();
   if (stars === 3) awardSticker(state, 'perfect-round', newly);
   if (state.totalStars >= 50) awardSticker(state, 'star-hoard', newly);
+  if (objectiveId) grantObjective(state, objectiveId);
   persist(state);
   return { stars, newStickers: [...newly].map((id) => STICKERS.find((s) => s.id === id)!) };
 }
@@ -370,11 +409,16 @@ export function recordRoundResult(
 export interface BatchAwardResult {
   chestStars: number;
   newStickers: Sticker[];
+  alreadyGranted?: boolean;
 }
 
-/** Records a finished batch: chest bonus + first-batch/explorer stickers. */
-export function recordBatchResult(gradeId: string): BatchAwardResult {
+/** Records a finished batch: chest bonus + first-batch/explorer stickers.
+ *  kids-UX AC-4.4: passing `batch:<seed>` makes the grant idempotent. */
+export function recordBatchResult(gradeId: string, objectiveId?: string): BatchAwardResult {
   const state = load();
+  if (objectiveId && state.grantedObjectives?.[objectiveId]) {
+    return { chestStars: 0, newStickers: [], alreadyGranted: true };
+  }
   const gp = state.grades[gradeId] ?? { stars: 0, roundsCompleted: 0, batchesCompleted: 0 };
   gp.batchesCompleted += 1;
   state.grades[gradeId] = gp;
@@ -386,8 +430,68 @@ export function recordBatchResult(gradeId: string): BatchAwardResult {
   awardSticker(state, 'first-batch', newly);
   if (state.gradesPlayed.length >= 5) awardSticker(state, 'explorer', newly);
   if (state.totalStars >= 50) awardSticker(state, 'star-hoard', newly);
+  if (objectiveId) grantObjective(state, objectiveId);
   persist(state);
   return { chestStars: BATCH_CHEST_STARS, newStickers: [...newly].map((id) => STICKERS.find((s) => s.id === id)!) };
+}
+
+// ---- kids-UX: collectible home + gift grants ------------------------------
+
+/** kids-UX s3.5.b: sticker moments that open a gift box (one gift per
+ *  summary even when several unlock). Lives here because pending-claim
+ *  state is derived from persisted state, not the transient summary. */
+export const GIFT_STICKER_IDS = ['first-batch', 'star-hoard'] as const;
+
+const HOME_ITEMS_CAP = 64;
+
+function hashSeed(text: string): number {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+/** kids-UX (AC-4.2/R-04): gift-box grant. First call picks deterministically
+ *  from the not-owned pool and persists the mapping; every later call for
+ *  the same stickerId returns the stored item - replays never re-open.
+ *  Returns null when the pool is exhausted or ids are malformed. */
+export function grantHomeItem(stickerId: string, boxIndex: number): HomeItemResult | null {
+  if (!/^gift:[A-Za-z0-9_-]{1,80}$/.test(`gift:${stickerId}`)) return null;
+  const state = load();
+  const existing = state.giftGrants?.[stickerId];
+  if (existing) {
+    const item = HOME_ITEMS.find((i) => i.id === existing);
+    return item ? { item, alreadyGranted: true } : null;
+  }
+  const owned = new Set(state.homeItems ?? []);
+  const pool = HOME_ITEMS.filter((i) => !owned.has(i.id));
+  if (!pool.length) return null;
+  const item = pool[hashSeed(`${stickerId}:${boxIndex}`) % pool.length];
+  (state.homeItems ??= []).push(item.id);
+  state.homeItems = state.homeItems.slice(-HOME_ITEMS_CAP);
+  (state.giftGrants ??= {})[stickerId] = item.id;
+  grantObjective(state, `gift:${stickerId}`);
+  persist(state);
+  return { item, alreadyGranted: false };
+}
+
+export interface HomeItemResult {
+  item: (typeof HOME_ITEMS)[number];
+  alreadyGranted: boolean;
+}
+
+export function ownedHomeItems(): (typeof HOME_ITEMS)[number][] {
+  const ids = new Set(load().homeItems ?? []);
+  return HOME_ITEMS.filter((i) => ids.has(i.id));
+}
+
+/** kids-UX AC-4.3 (dev-review #6): gift-eligible stickers the child owns
+ *  but never opened - eligibility is derived from persisted state, so a
+ *  summary closed before picking can offer the box again on the next
+ *  surface instead of losing the gift forever. */
+export function pendingGiftStickerIds(): string[] {
+  const state = load();
+  const granted = state.giftGrants ?? {};
+  return GIFT_STICKER_IDS.filter((id) => state.stickerIds.includes(id) && !granted[id]);
 }
 
 /** Streak sticker check - call after touchStreak. */

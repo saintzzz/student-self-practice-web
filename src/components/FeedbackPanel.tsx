@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import type { QuestionKind } from '../types';
-import { playSfx } from '../lib/sfx';
+import { playGentleWrong, playSfx } from '../lib/sfx';
+import { speakWord } from '../lib/speech';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import { WORD_IPA } from '../data/ipaMap';
 import { EmojiVisual } from './EmojiVisual';
 import Mascot from './Mascot';
@@ -55,9 +57,13 @@ const WORD_LINE_BASE_CLASS =
  * correct-word line uses <div> only when a picture prop is present.
  */
 export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture }: FeedbackPanelProps) {
-  // CR-20: verdict sound on mount - chime for correct, soft two-tone for wrong.
+  const { band } = useViewer();
+  // CR-20: verdict sound on mount - chime for correct. kids-UX (design
+  // s3.4): the wrong verdict plays the muted gentle cue, not a penalty
+  // tone.
   useEffect(() => {
-    playSfx(isCorrect ? 'correct' : 'wrong');
+    if (isCorrect) playSfx('correct');
+    else playGentleWrong();
   }, [isCorrect]);
 
   // CR-24: IPA transcription next to the correct word (user request:
@@ -70,27 +76,38 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
   return (
     <div
       data-testid={KINDS_WITH_ANSWER_FEEDBACK_TESTID.includes(kind) ? 'answer-feedback' : undefined}
+      /* kids-UX s3.4: color never carries the verdict alone (slate/sky
+         replaced rose) - data-correct is the machine-readable outcome hook
+         the e2e outcome reader checks before any class heuristic. */
+      data-correct={isCorrect}
+      /* kids-UX s3.4: announce the verdict gently; aria-live lets the
+         teach-back reach screen-reader kids without moving focus. */
+      aria-live="polite"
       className={`relative mt-3 overflow-hidden rounded-2xl p-4 pl-5 text-left ring-2 shadow-md [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
         isCorrect
           ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 ring-emerald-400/50'
-          : 'bg-gradient-to-r from-rose-500/20 to-rose-600/10 ring-rose-400/50'
+          : 'bg-sky-500/15 ring-sky-400/50'
       }`}
     >
-      {/* CR-12 DS-X2: accent edge bar. */}
+      {/* CR-12 DS-X2: accent edge bar. kids-UX s3.4: the wrong state uses
+          the sky "let's learn" tint - rose is reserved for the picked-tile
+          marker only (Ruling R-20), never a whole red panel. */}
       <span
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 w-1.5 ${isCorrect ? 'bg-emerald-400' : 'bg-rose-400'}`}
+        className={`absolute inset-y-0 left-0 w-1.5 ${isCorrect ? 'bg-emerald-400' : 'bg-sky-400'}`}
       />
       {isCorrect && <Confetti />}
       <HeadlineTag
-        className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}
+        className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-300' : 'text-white'}`}
       >
         <Mascot mood={isCorrect ? 'happy' : 'encouraging'} size="inline" />
         {isCorrect ? 'Chính xác! Giỏi quá!' : 'Chưa đúng rồi, cố lên nhé!'}
       </HeadlineTag>
       {!isCorrect && pickedAnswer && (
-        <p className="mt-2 text-lg font-semibold text-rose-300 [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-sm">
-          Em chọn: <span className="line-through opacity-80">{pickedAnswer}</span>
+        /* kids-UX s3.4: no strikethrough - striking the child's pick reads
+           as punitive and hurts readability (Ruling R-20). */
+        <p className="mt-2 text-lg font-semibold text-slate-300 [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-sm">
+          Em chọn: <span className="opacity-80">{pickedAnswer}</span>
         </p>
       )}
       <WordLineTag
@@ -108,6 +125,24 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
         </p>
       )}
       <p className="mt-1 text-lg text-slate-300 [@media(max-height:420px)]:text-sm">{explanation}</p>
+      {/* kids-UX dev-review #8 (AC-3.4): a wrong answer offers "Nghe
+          mẫu" - replays the CORRECT word through the cached speech path.
+          It never re-dispatches scoring: the committed answer and its
+          recorded result are untouched. */}
+      {!isCorrect && correctWord && (
+        <button
+          type="button"
+          data-testid="feedback-listen-model"
+          onClick={() => speakWord(correctWord)}
+          /* dev-review r2 #3: a kid-facing control obeys AC-8.2 - 76px on
+             G1-2, 44px floor on G3-5. */
+          className={`mt-3 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-4 font-extrabold text-indigo-700 ring-2 ring-indigo-300 transition hover:bg-indigo-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none [@media(max-height:420px)]:mt-2 ${
+            band === 'G12' ? 'min-h-[76px] text-base' : 'min-h-[44px] text-sm'
+          }`}
+        >
+          🔊 Nghe mẫu
+        </button>
+      )}
     </div>
   );
 }

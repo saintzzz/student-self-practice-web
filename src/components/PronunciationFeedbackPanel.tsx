@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { playSfx } from '../lib/sfx';
+import { playGentleWrong, playSfx } from '../lib/sfx';
 
 interface PronunciationFeedbackPanelProps {
   targetWord: string;
@@ -26,8 +26,10 @@ export default function PronunciationFeedbackPanel({
   const hasTranscript = transcript.trim().length > 0;
 
   // CR-20: same verdict chime/two-tone as the shared feedback panel.
+  // kids-UX: wrong verdict uses the muted gentle cue (design s3.4).
   useEffect(() => {
-    playSfx(isCorrect ? 'correct' : 'wrong');
+    if (isCorrect) playSfx('correct');
+    else playGentleWrong();
   }, [isCorrect]);
 
   return (

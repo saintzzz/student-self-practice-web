@@ -3,8 +3,10 @@ import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
-import { getOptionButtonClassName } from './optionButtonStyle';
+import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
 
 type EndingChoiceQuestion = PhonicsFinalChoiceQuestion | PhonicsBlendChoiceQuestion;
 
@@ -12,6 +14,8 @@ interface PhonicsEndingChoiceQuestionProps {
   question: EndingChoiceQuestion;
   selectedIndex: number | null;
   onSelectOption: (index: number) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 /**
@@ -25,7 +29,9 @@ export default function PhonicsEndingChoiceQuestion({
   question,
   selectedIndex,
   onSelectOption,
+  speakerKey,
 }: PhonicsEndingChoiceQuestionProps) {
+  const { band } = useViewer();
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
@@ -35,7 +41,10 @@ export default function PhonicsEndingChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">{promptText}</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{promptText}</p>
+        <InstructionSpeaker text={promptText} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <div className="mb-3 flex items-center justify-center gap-3">
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
           <EmojiVisual emoji={question.emoji} animated variant="block" />
@@ -73,9 +82,13 @@ export default function PhonicsEndingChoiceQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
-            aria-label={optionLabel(option)}
+            {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
+            aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + optionLabel(option)}
           >
-            <span className="text-3xl font-extrabold">{option}</span>
+            <span className="text-3xl font-extrabold">
+              {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
+              {option}
+            </span>
           </button>
         ))}
       </div>

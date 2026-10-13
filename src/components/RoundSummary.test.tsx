@@ -64,6 +64,27 @@ describe('RoundSummary', () => {
   });
 });
 
+describe('dev-review #5: replay idempotency', () => {
+  it('a remount with the same objectiveId mutates nothing (stars, quest, skills)', async () => {
+    const { resetForTests, getDailyQuests, getState } = await import('../lib/engagement/store');
+    resetForTests();
+    const props = { outcome: OUTCOME, gradeId: 'grade-2', onNextRound: vi.fn(), objectiveId: 'round:test-seed:1' };
+
+    const first = render(<RoundSummary {...props} />);
+    first.unmount();
+    const starsAfterFirst = getState().totalStars;
+    const questAfterFirst = getDailyQuests().quests.find((q) => q.id === 'correct')!.progress;
+    const gradeAfterFirst = getState().grades['grade-2']!.roundsCompleted;
+
+    render(<RoundSummary {...props} />);
+    expect(screen.getByText('Đã nhận thưởng rồi')).toBeInTheDocument();
+    expect(getState().totalStars).toBe(starsAfterFirst);
+    expect(getDailyQuests().quests.find((q) => q.id === 'correct')!.progress).toBe(questAfterFirst);
+    expect(getState().grades['grade-2']!.roundsCompleted).toBe(gradeAfterFirst);
+    resetForTests();
+  });
+});
+
 describe('CR-13 guest trial lock', () => {
   it('locked=true hides next-round-button and shows the upsell panel', () => {
     render(

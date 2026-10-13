@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 import { CARD_DARK } from '../lib/ui/tokens';
 
 interface ConfirmEndDialogProps {
@@ -16,8 +17,10 @@ interface ConfirmEndDialogProps {
  * CR-69: centered confirmation for the destructive KẾT THÚC / NỘP BÀI
  * buttons - they used to end the whole session on a single mis-tap.
  * Backdrop tap, Escape, and the "Chơi tiếp" button all cancel.
- * aria-modal="true" is paired with real keyboard modality: initial focus
- * on the safe action, Tab trapped inside, focus restored on close.
+ * aria-modal="true" is paired with real keyboard modality via
+ * useModalBehavior: initial focus on the safe action (the cancel button
+ * is the first focusable element), Tab trapped inside, focus restored
+ * on close.
  */
 export default function ConfirmEndDialog({
   title,
@@ -27,40 +30,7 @@ export default function ConfirmEndDialog({
   onCancel,
 }: ConfirmEndDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    cancelRef.current?.focus();
-
-    function onKeyDown(e: KeyboardEvent): void {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onCancel();
-        return;
-      }
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>('button, [href], input, [tabindex]:not([tabindex="-1"])'),
-      ).filter((el) => !el.hasAttribute('disabled'));
-      if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [onCancel]);
+  useModalBehavior(dialogRef, onCancel);
 
   return (
     <div
@@ -76,7 +46,6 @@ export default function ConfirmEndDialog({
         <div className="mt-5 flex gap-3">
           <button
             type="button"
-            ref={cancelRef}
             data-testid="end-confirm-cancel"
             onClick={onCancel}
             className="min-h-[52px] flex-1 rounded-3xl border-2 border-slate-500/50 font-display text-lg font-extrabold text-slate-300 transition hover:border-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-400/60"

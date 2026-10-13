@@ -36,19 +36,23 @@ import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
 import ConfirmEndDialog from './ConfirmEndDialog';
 import { WORD_IPA } from '../data/ipaMap';
+import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
+import Mascot from './Mascot';
+import { EXAM_HEADER_BRAND } from '../lib/ui/tokens';
 
 /**
  * CR-24 - IOE-style Thi thử player. Visual language follows the real
  * ioe.vn exam: dark chalkboard in a wooden frame, numbered question
  * strip (10/page), top countdown, SUBMIT button, no per-question
  * verdict (exam conditions). 200 questions / 30 minutes by default.
+ *
+ * kids-UX step 9 (design s3.9, OM-3=C): the ONLY brand injection inside
+ * the exam hall is the small EXAM_HEADER_BRAND badge in the header -
+ * question cards, nav strip, timer and interior chrome stay IOE-faithful.
+ * The results view lives in ExamResult.tsx (full brand celebration there).
  */
 
-export const PROGRAM_LABEL: Record<ExamProgramId, string> = {
-  english: 'Tiếng Anh',
-  math: 'Toán tiếng Anh',
-  science: 'Khoa học',
-};
+export { PROGRAM_LABEL };
 
 const STRIP_PAGE = 10;
 /** CR-34: arena duels are 10 questions - long enough to matter, short
@@ -351,7 +355,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // CR-28: after a review session the queue may be fully rescheduled -
     // a retry with zero due items would have nothing to render.
     const canRetry = !isReview || getDueReviewItems(gradeId).length > 0;
-    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} onExit={onExit} onRetry={canRetry ? begin : undefined} />;
+    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} onExit={onExit} onRetry={canRetry ? begin : undefined} />;
   }
 
   const question = exam.questions[exam.currentIndex]!;
@@ -366,11 +370,20 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     <div data-testid="exam-screen" className="flex min-h-screen flex-col bg-[#0d1b26] p-2 text-white sm:p-4">
       {/* IOE header bar: title + clock + student + submit */}
       <header className="flex items-center justify-between gap-2 border-b-4 border-amber-800/80 bg-[#132433] px-3 py-2 sm:px-5">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          {/* kids-UX R7: the single brand element inside the exam hall -
+              a small badge + greeting mascot. Everything else keeps the
+              IOE mono look. */}
+          <span data-testid="exam-brand" className={`${EXAM_HEADER_BRAND} shrink-0`}>
+            <Mascot mood="greeting" size="inline" />
+            English Arena
+          </span>
+          <div className="min-w-0">
           <div className="truncate text-sm font-extrabold tracking-wide text-sky-200 sm:text-lg">
             {isReview ? 'Ôn lại câu sai' : isPractice ? 'Luyện đề' : 'Thi thử'} - {isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}
           </div>
           {studentName && <div className="truncate text-xs font-bold text-slate-400">{studentName}</div>}
+          </div>
         </div>
         {isPractice ? (
           <div className="flex shrink-0 items-center gap-2">
@@ -736,26 +749,6 @@ function PromptLine({ text, imageUrl }: { text: string; imageUrl?: string }) {
   );
 }
 
-/**
- * CR-40: IOE bank strings carry literal `<u>underline</u>` markup for the
- * "underlined part" pronunciation questions. Render it as real underlines
- * instead of leaking raw tags.
- */
-function MarkupText({ text }: { text: string }) {
-  const parts = text.split(/(<u>.*?<\/u>)/g);
-  return (
-    <>
-      {parts.map((p, i) =>
-        p.startsWith('<u>') && p.endsWith('</u>') ? (
-          <u key={i}>{p.slice(3, -4)}</u>
-        ) : (
-          <span key={i}>{p}</span>
-        ),
-      )}
-    </>
-  );
-}
-
 function OptionButtons({
   options,
   selected,
@@ -901,161 +894,6 @@ function ListenButton({ text }: { text: string }) {
       </button>
     </div>
   );
-}
-
-function ExamResult({
-  result,
-  programId,
-  gradeLabel,
-  isPractice,
-  onExit,
-  onRetry,
-}: {
-  result: ReturnType<typeof computeExamResult>;
-  programId: ExamProgramId;
-  gradeLabel: string;
-  isPractice: boolean;
-  onExit: () => void;
-  /** CR-28: hidden when the review queue is drained (nothing to retry). */
-  onRetry?: () => void;
-}) {
-  const mm = Math.floor(result.timeUsedSec / 60);
-  const ss = result.timeUsedSec % 60;
-  const wrong = result.review.filter((r) => !r.isCorrect);
-  const [showReview, setShowReview] = useState(false);
-
-  return (
-    <div data-testid="exam-result" className="min-h-screen bg-[#0d1b26] p-4 text-white">
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center sm:p-10">
-          <div className="text-5xl">{result.correctCount / Math.max(1, result.answeredCount) >= 0.8 ? '🏆' : '💪'}</div>
-          <h1 className="mt-2 font-display text-2xl font-extrabold text-amber-300">{isPractice ? 'Kết quả luyện đề' : 'Kết quả thi thử'}</h1>
-          <p className="mt-1 text-sm font-bold text-slate-400">
-            {PROGRAM_LABEL[programId]} - {gradeLabel}
-          </p>
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <div className="rounded-xl bg-white/5 p-3">
-              <div data-testid="exam-score" className="text-3xl font-extrabold text-amber-300">{result.points}</div>
-              <div className="text-xs font-bold text-slate-400">điểm</div>
-            </div>
-            <div className="rounded-xl bg-white/5 p-3">
-              <div className="text-3xl font-extrabold text-emerald-400">
-                {result.correctCount}/{result.totalCount}
-              </div>
-              <div className="text-xs font-bold text-slate-400">câu đúng</div>
-            </div>
-            <div className="rounded-xl bg-white/5 p-3">
-              <div className="text-3xl font-extrabold text-sky-300">
-                {mm}:{String(ss).padStart(2, '0')}
-              </div>
-              <div className="text-xs font-bold text-slate-400">thời gian</div>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              data-testid="exam-review-toggle"
-              onClick={() => setShowReview(!showReview)}
-              className="flex-1 rounded-xl bg-sky-600 px-4 py-3 font-extrabold text-white transition hover:bg-sky-500"
-            >
-              Xem đáp án ({wrong.length} câu sai)
-            </button>
-            {onRetry && (
-              <button
-                type="button"
-                data-testid="exam-retry"
-                onClick={onRetry}
-                className="flex-1 rounded-xl bg-amber-400 px-4 py-3 font-extrabold text-amber-950 transition hover:bg-amber-300"
-              >
-                {isPractice ? 'Luyện lại' : 'Thi lại'}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onExit}
-              className="flex-1 rounded-xl border border-slate-500/60 px-4 py-3 font-bold text-slate-300 transition hover:bg-white/5"
-            >
-              Thoát
-            </button>
-          </div>
-        </div>
-
-        {showReview && (
-          <div data-testid="exam-review" className="mt-4 space-y-3 pb-10">
-            {result.review.map((item) => (
-              <div
-                key={item.index}
-                className={`rounded-xl border-l-4 p-4 text-left ${
-                  item.isCorrect ? 'border-emerald-500 bg-emerald-500/10' : 'border-rose-500 bg-rose-500/10'
-                }`}
-              >
-                <div className="text-xs font-bold text-slate-400">Câu {item.index + 1}</div>
-                <div className="mt-1 font-mono text-sm text-slate-100"><MarkupText text={reviewPrompt(item.question)} /></div>
-                <div className="mt-2 text-sm">
-                  <span className="font-bold text-slate-300">Đáp án đúng: </span>
-                  <span className="font-extrabold text-emerald-300"><MarkupText text={examCorrectAnswerText(item.question)} /></span>
-                </div>
-                {!item.isCorrect && (
-                  <div className="mt-1 text-sm">
-                    <span className="font-bold text-slate-300">Em chọn: </span>
-                    <span className="text-rose-300"><MarkupText text={answerText(item.answer, item.question)} /></span>
-                  </div>
-                )}
-                {item.question.explanation && (
-                  <div className="mt-1 text-xs text-slate-400"><MarkupText text={item.question.explanation} /></div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function reviewPrompt(q: ExamQuestion): string {
-  switch (q.kind) {
-    case 'word-order':
-      return `Sắp xếp: ${q.tiles.join(' / ')}`;
-    case 'true-false-reading':
-      return `${q.passage} - "${q.statement}"`;
-    case 'grammar-mcq':
-    case 'odd-pronunciation':
-      return q.kind === 'grammar-mcq' ? q.prompt : `Phát âm khác: ${q.options.join(' / ')}`;
-    case 'missing-letter':
-      return q.displaySentence;
-    case 'text-answer':
-      return q.displaySentence;
-    case 'image-choice':
-      return `${q.emoji} - chọn từ đúng`;
-    case 'listening-sentence-fill-blank':
-      return q.displaySentence;
-    case 'listening-fill-blank':
-      return 'Nghe và viết lại từ';
-    case 'extra-letter':
-      return `Tìm chữ thừa trong: ${q.displayLetters.join('')}`;
-    default:
-      return '';
-  }
-}
-
-function answerText(answer: ExamAnswer | null, q: ExamQuestion): string {
-  if (!answer) return '(bỏ qua)';
-  switch (answer.type) {
-    case 'option': {
-      if (q.kind === 'extra-letter') return String(q.displayLetters[answer.index] ?? '?');
-      const qo = q as { options?: readonly string[] };
-      return qo.options?.[answer.index] ?? `lựa chọn ${answer.index}`;
-    }
-    case 'text':
-      return answer.text || '(trống)';
-    case 'bool':
-      return answer.value ? 'True' : 'False';
-    case 'order': {
-      if (q.kind === 'word-order') return answer.indices.map((i) => q.tiles[i]).join(' ');
-      return '';
-    }
-  }
 }
 
 /** CR-34: arena duel result. Settles the challenge exactly once per

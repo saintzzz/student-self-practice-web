@@ -16,6 +16,19 @@ vi.mock('../lib/parentContact', async (importOriginal) => {
   };
 });
 
+const weekMinutesMock =
+  vi.fn<() => Promise<{ status: 'ok' | 'error'; days: unknown[]; truncated: boolean }>>();
+const mockTrendMock = vi.fn<() => Promise<{ status: 'ok' | 'error'; points: unknown[] }>>();
+
+vi.mock('../lib/serverReport', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../lib/serverReport')>();
+  return {
+    ...original,
+    fetchWeekMinutes: () => weekMinutesMock(),
+    fetchMockTrend: () => mockTrendMock(),
+  };
+});
+
 const GRADES = [
   { id: 'grade-3', name: 'Lớp 3' },
   { id: 'grade-4', name: 'Lớp 4' },
@@ -25,6 +38,8 @@ beforeEach(() => {
   resetForTests();
   fetchParentContactMock.mockReset().mockResolvedValue(null);
   saveParentContactMock.mockReset().mockResolvedValue(true);
+  weekMinutesMock.mockReset().mockResolvedValue({ status: 'ok', days: [], truncated: false });
+  mockTrendMock.mockReset().mockResolvedValue({ status: 'ok', points: [] });
 });
 
 describe('ParentReportScreen', () => {
@@ -86,5 +101,20 @@ describe('ParentReportScreen', () => {
       expect(screen.getByTestId<HTMLInputElement>('parent-email-input').value).toBe('me@example.com'),
     );
     expect(screen.getByTestId<HTMLInputElement>('parent-email-optin').checked).toBe(false);
+  });
+
+  it('test-lead gap #4: a failed server fetch shows an error row, not "no data", and retry re-queries', async () => {
+    weekMinutesMock.mockResolvedValue({ status: 'error', days: [], truncated: false });
+    render(<ParentReportScreen grades={GRADES} onBack={vi.fn()} isLoggedIn />);
+
+    // Error state, not the misleading empty copy.
+    await waitFor(() => expect(screen.getByTestId('report-retry')).toBeInTheDocument());
+    expect(screen.getByTestId('report-server-error')).toHaveTextContent('Không tải được');
+
+    // Retry re-runs the fetch; success clears the error row.
+    weekMinutesMock.mockResolvedValue({ status: 'ok', days: [], truncated: false });
+    await userEvent.click(screen.getByTestId('report-retry'));
+    await waitFor(() => expect(weekMinutesMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByTestId('report-server-error')).not.toBeInTheDocument());
   });
 });

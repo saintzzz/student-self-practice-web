@@ -1,10 +1,18 @@
 import type { ExtraLetterQuestion as ExtraLetterQuestionType } from '../types';
 import { EmojiVisual } from './EmojiVisual';
+import { OPTION_PICKED_WRONG, OPTION_REVEAL_CORRECT } from '../lib/ui/tokens';
+import { getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Từ này có 1 chữ cái thừa! Bấm vào chữ cái em nghĩ là thừa nhé.';
 
 interface ExtraLetterQuestionProps {
   question: ExtraLetterQuestionType;
   selectedLetterIndex: number | null;
   onSelectLetter: (index: number) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 function getTileClassName(index: number, selectedLetterIndex: number | null, extraIndex: number): string {
@@ -27,14 +35,20 @@ function getTileClassName(index: number, selectedLetterIndex: number | null, ext
       'hover:border-amber-400/70 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.08),0_8px_18px_-6px_rgba(56,189,248,0.5)]';
   }
 
+  const missed = selectedLetterIndex !== extraIndex;
+
   if (index === extraIndex) {
+    /* kids-UX (design s3.4): on a missed pick the extra letter is the only
+       emerald surface - flat token, no celebratory gradient. */
+    if (missed) return `${base} ${OPTION_REVEAL_CORRECT}`;
     return `${base} border-emerald-400 bg-gradient-to-b from-emerald-500/25 to-emerald-600/15 text-emerald-100 ` +
       'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(5,150,105,0.25),0_6px_14px_-6px_rgba(5,150,105,0.45)]';
   }
 
   if (index === selectedLetterIndex) {
-    return `${base} tile-shake border-rose-400 bg-gradient-to-b from-rose-500/25 to-rose-600/15 text-rose-100 ` +
-      'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(225,29,72,0.25),0_6px_14px_-6px_rgba(225,29,72,0.45)]';
+    /* kids-UX: desaturated slate (not rose) marks "the tile em chọn" -
+       keeps the tile-shake hint but drops the red shame treatment. */
+    return `${base} tile-shake ${OPTION_PICKED_WRONG} opacity-80`;
   }
 
   return `${base} border-[#2a3a5e] bg-gradient-to-b from-[#1d3465] to-[#162C55] text-white opacity-50`;
@@ -44,7 +58,9 @@ export default function ExtraLetterQuestion({
   question,
   selectedLetterIndex,
   onSelectLetter,
+  speakerKey,
 }: ExtraLetterQuestionProps) {
+  const { band } = useViewer();
   const hasAnswered = selectedLetterIndex !== null;
   const wasCorrect = hasAnswered && selectedLetterIndex === question.extraIndex;
 
@@ -52,9 +68,12 @@ export default function ExtraLetterQuestion({
     <div>
       {/* CR-12: smaller prompt on <=600px heights so long words (3 tile
           rows) keep the next-button near the fold on short phones. */}
-      <p className="mb-2 text-xl font-semibold text-amber-200 [@media(max-height:600px)]:text-base">
-        Từ này có 1 chữ cái thừa! Bấm vào chữ cái em nghĩ là thừa nhé.
-      </p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200 [@media(max-height:600px)]:text-base">
+          {INSTRUCTION}
+        </p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <div className="mb-2 flex justify-center gap-1.5 sm:gap-3">
         {question.displayLetters.map((letter, index) => (
           <button
@@ -64,6 +83,16 @@ export default function ExtraLetterQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectLetter(index)}
             className={getTileClassName(index, selectedLetterIndex, question.extraIndex)}
+            /* kids-UX s3.4: here "correct" means the extra letter - the
+               tile to remove. */
+            {...getOptionStateAttrs(index, selectedLetterIndex, question.extraIndex)}
+            /* kids-UX s3.4: 76px key-cap tiles cannot hold a text prefix,
+               so the "Em chọn / Đáp án" label rides the accessible name. */
+            aria-label={
+              getOptionLabelPrefix(index, selectedLetterIndex, question.extraIndex)
+                ? getOptionLabelPrefix(index, selectedLetterIndex, question.extraIndex) + letter
+                : undefined
+            }
           >
             {letter}
             {wasCorrect && index === question.extraIndex && (

@@ -5,13 +5,19 @@ import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
-import { getOptionButtonClassName } from './optionButtonStyle';
+import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import ListenButtons from './ListenButtons';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Nghe từ rồi chọn đúng hình nhé!';
 
 interface ListeningImageChoiceQuestionProps {
   question: ListeningImageChoiceQuestionType;
   selectedIndex: number | null;
   onSelectOption: (index: number) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 /**
@@ -26,7 +32,9 @@ export default function ListeningImageChoiceQuestion({
   question,
   selectedIndex,
   onSelectOption,
+  speakerKey,
 }: ListeningImageChoiceQuestionProps) {
+  const { band } = useViewer();
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
@@ -42,7 +50,10 @@ export default function ListeningImageChoiceQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">Nghe từ rồi chọn đúng hình nhé!</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
 
@@ -55,11 +66,15 @@ export default function ListeningImageChoiceQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
             // CR-02: announce the picture content (the emoji char) so screen
             // readers get the same information sighted users see - the
             // matching task stays identical, the word itself is never leaked.
-            aria-label={emoji}
+            // kids-UX: after judging, the label also says which tile was
+            // picked vs the answer.
+            aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + emoji}
           >
+            <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
             <span aria-hidden="true" className="text-6xl">
               <EmojiVisual
                 // Keyed on the group state so flipping to the fallback

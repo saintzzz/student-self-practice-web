@@ -19,3 +19,6 @@ audio-out/
 audio-texts.tsv
 exports/
 scripts/gen-bulk-out/
+
+# review screenshots + temp capture scripts
+.review-shots/

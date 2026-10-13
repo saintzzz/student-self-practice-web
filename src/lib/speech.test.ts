@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { speakSentence, speakWord } from './speech';
+import { speakInstruction, speakSentence, speakWord } from './speech';
 
 /** speak() now resolves the audio-file lookup on the microtask queue
  * before falling back to speechSynthesis (MODE==='test' skips file
@@ -96,6 +96,98 @@ describe('speakWord', () => {
 
     expect(onStatus).toHaveBeenCalledWith('unsupported');
     window.speechSynthesis = original;
+  });
+});
+
+/* kids-UX dev-review #7: vi-VN instruction path contract - 'not-allowed'
+   maps to 'blocked', a never-starting utterance hits the 1500ms deadline,
+   and the returned cancel handle silences late callbacks. */
+describe('speakInstruction - vi-VN status contract', () => {
+  const viVoice = { lang: 'vi-VN', name: 'Google tiếng Việt' } as SpeechSynthesisVoice;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    // engine-state props injected by the wedged-engine test
+    delete (window.speechSynthesis as unknown as Record<string, unknown>).pending;
+    delete (window.speechSynthesis as unknown as Record<string, unknown>).speaking;
+  });
+
+  it('reports "unavailable" when no vi-* voice is installed', () => {
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([]);
+    const onStatus = vi.fn();
+    const cancel = speakInstruction('Chào em', { onStatus });
+    expect(onStatus).toHaveBeenCalledWith('unavailable');
+    cancel();
+  });
+
+  it('maps utterance onerror "not-allowed" to blocked (not error)', () => {
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const speakSpy = vi
+      .spyOn(window.speechSynthesis, 'speak')
+      .mockImplementation((u: SpeechSynthesisUtterance) => {
+        u.onerror?.({ error: 'not-allowed' } as SpeechSynthesisErrorEvent);
+      });
+    const onStatus = vi.fn();
+    speakInstruction('Bấm nút Chơi nhé', { onStatus });
+    expect(speakSpy).toHaveBeenCalled();
+    expect(onStatus).toHaveBeenCalledWith('blocked');
+    expect(onStatus).not.toHaveBeenCalledWith('error');
+  });
+
+  it('emits "blocked" at the deadline when onstart never fires (wedged engine included)', () => {
+    vi.useFakeTimers();
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const cancelSpy = vi.spyOn(window.speechSynthesis, 'cancel').mockImplementation(() => {});
+    // Engine wedges: claims it is pending/speaking yet never starts ours.
+    Object.defineProperty(window.speechSynthesis, 'pending', { value: true, configurable: true });
+    Object.defineProperty(window.speechSynthesis, 'speaking', { value: true, configurable: true });
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {}); // never fires events
+
+    const onStatus = vi.fn();
+    speakInstruction('Nghe này', { onStatus });
+    // the deferred speak attempt (cancel+60ms reschedule path)
+    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(1600);
+    expect(onStatus).toHaveBeenCalledWith('blocked');
+    expect(cancelSpy).toHaveBeenCalled();
+  });
+
+  it('dev-review r2 #2: a late onstart after the blocked deadline can never flip to playing', () => {
+    vi.useFakeTimers();
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const utterances: SpeechSynthesisUtterance[] = [];
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((u: SpeechSynthesisUtterance) => {
+      utterances.push(u);
+    });
+    const onStatus = vi.fn();
+    speakInstruction('Nghe này', { onStatus });
+    vi.advanceTimersByTime(1600); // deadline fires -> 'blocked'
+    expect(onStatus).toHaveBeenCalledWith('blocked');
+    // The engine wakes up late - handlers were detached at the deadline.
+    const u = utterances[0]!;
+    expect(u.onstart).toBeNull();
+    u.onstart?.({} as unknown as SpeechSynthesisEvent);
+    expect(onStatus).not.toHaveBeenCalledWith('playing');
+  });
+
+  it('the returned cancel handle silences the utterance - no late status after cancel', () => {
+    vi.useFakeTimers();
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const utterances: SpeechSynthesisUtterance[] = [];
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((u: SpeechSynthesisUtterance) => {
+      utterances.push(u);
+    });
+
+    const onStatus = vi.fn();
+    const cancel = speakInstruction('Nghe này', { onStatus });
+    expect(utterances.length).toBe(1);
+    cancel();
+    // handlers detached - a late engine event cannot flip the status
+    expect(utterances[0]!.onstart).toBeNull();
+    expect(utterances[0]!.onerror).toBeNull();
+    vi.advanceTimersByTime(3000);
+    expect(onStatus).not.toHaveBeenCalled();
   });
 });
 

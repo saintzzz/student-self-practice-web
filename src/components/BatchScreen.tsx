@@ -68,6 +68,12 @@ export default function BatchScreen({
   const { secondsRemaining } = useRoundTimer(roundKey, batch.phase === 'active', onRoundTimeExpired);
   const [endConfirmOpen, setEndConfirmOpen] = useState(false);
 
+  /* kids-UX: run-seeded keys - `round:<seed>:<n>` / `batch:<seed>` keep
+     reward grants idempotent (AC-4.4), and the round-scoped speaker key
+     makes G1-2 instruction autoplay fire once per round (design s3.2). */
+  const roundObjectiveId = `round:${batch.seed}:${batch.roundIndex}`;
+  const roundSpeakerKey = `round-${batch.gradeId}-${batch.roundIndex}-${batch.seed}`;
+
   if (batch.phase === 'batch-summary') {
     return (
       <BatchSummary
@@ -75,6 +81,8 @@ export default function BatchScreen({
         gradeId={batch.gradeId}
         onStartNewBatch={onStartNewBatch}
         onChooseGrade={onChooseGrade}
+        objectiveId={`batch:${batch.seed}`}
+        speakerKey={`batch-${batch.gradeId}-${batch.seed}`}
       />
     );
   }
@@ -87,6 +95,8 @@ export default function BatchScreen({
         gradeId={batch.gradeId}
         onStartNewBatch={onStartNewBatch}
         onChooseGrade={onChooseGrade}
+        objectiveId={`batch:${batch.seed}`}
+        speakerKey={`batch-${batch.gradeId}-${batch.seed}`}
       />
     );
   }
@@ -148,6 +158,7 @@ export default function BatchScreen({
       {batch.phase === 'active' && batch.roundSession && (
         <ActiveRoundQuestion
           session={batch.roundSession}
+          speakerKey={roundSpeakerKey}
           onSubmitOption={onSubmitOption}
           onSubmitListening={onSubmitListening}
           onSubmitExtraLetter={onSubmitExtraLetter}
@@ -165,6 +176,9 @@ export default function BatchScreen({
           locked={guestLocked}
           onRequestLogin={onRequestLogin}
           onExit={onChooseGrade}
+          onEndBatch={onEndBatch}
+          objectiveId={roundObjectiveId}
+          speakerKey={roundSpeakerKey}
         />
       )}
     </div>

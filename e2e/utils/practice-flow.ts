@@ -157,13 +157,19 @@ export async function readElementOutcome(element: Locator): Promise<AnswerOutcom
 }
 
 /**
- * Extracts the vocabulary word revealed in answer-feedback copy. Per AC10,
- * English is confined to question content while all instructional/
- * explanation copy is Vietnamese, so the longest plain-ASCII alphabetic
- * token in the feedback text identifies the target word without ever
- * hardcoding a vocabulary list.
+ * Extracts the vocabulary word revealed in answer-feedback copy. The
+ * authoritative source is the "Từ đúng là: {word}" reveal line - the
+ * longest-ASCII-token fallback below used to misfire when a short English
+ * target (e.g. "pin") sat next to a longer Vietnamese ASCII run in the
+ * explanation (e.g. "ghim").
  */
 export function extractRevealedWord(feedbackText: string): string {
+  const reveal = feedbackText.match(/Từ đúng là:\s*([A-Za-z][A-Za-z' -]*[A-Za-z])/);
+  if (reveal) return reveal[1].trim();
+
+  // Fallback: per AC10 English is confined to question content while all
+  // instructional/explanation copy is Vietnamese, so the longest
+  // plain-ASCII alphabetic token identifies the target word.
   const matches = feedbackText.match(/[A-Za-z]{2,}/g) ?? [];
   if (matches.length === 0) {
     throw new Error(

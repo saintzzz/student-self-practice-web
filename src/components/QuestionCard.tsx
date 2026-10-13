@@ -29,6 +29,12 @@ interface QuestionCardProps {
   onSubmitPronunciation: (transcript: string) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
   onNext: () => void;
+  /**
+   * kids-UX (design s3.2): round-scoped speaker key - forwarded to every
+   * question body so its instruction speaker autoplays once per round on
+   * G1-2 and stays tap-only on G3-5.
+   */
+  speakerKey?: string;
 }
 
 function renderQuestionBody(
@@ -39,6 +45,7 @@ function renderQuestionBody(
   onSubmitExtraLetter: (letterIndex: number) => void,
   onSubmitPronunciation: (transcript: string) => void,
   onSubmitPairMatching: (isCorrect: boolean) => void,
+  speakerKey?: string,
 ) {
   switch (question.kind) {
     case 'image-choice':
@@ -48,6 +55,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'counting-image':
@@ -57,6 +65,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'listening-fill-blank':
@@ -66,6 +75,7 @@ function renderQuestionBody(
           question={question}
           hasAnswered={currentAnswer !== null}
           onSubmit={onSubmitListening}
+          speakerKey={speakerKey}
         />
       );
     case 'listening-sentence-fill-blank':
@@ -75,6 +85,7 @@ function renderQuestionBody(
           question={question}
           hasAnswered={currentAnswer !== null}
           onSubmit={onSubmitListening}
+          speakerKey={speakerKey}
         />
       );
     case 'extra-letter':
@@ -84,6 +95,7 @@ function renderQuestionBody(
           question={question}
           selectedLetterIndex={currentAnswer?.selectedLetterIndex ?? null}
           onSelectLetter={onSubmitExtraLetter}
+          speakerKey={speakerKey}
         />
       );
     case 'pronunciation-recording':
@@ -96,6 +108,7 @@ function renderQuestionBody(
           score={currentAnswer?.pronunciationScore ?? null}
           isCorrect={currentAnswer?.isCorrect ?? null}
           onSubmit={onSubmitPronunciation}
+          speakerKey={speakerKey}
         />
       );
     case 'describe-and-choose-image':
@@ -105,6 +118,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'listening-image-choice':
@@ -114,6 +128,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'picture-pair-matching':
@@ -123,6 +138,7 @@ function renderQuestionBody(
           question={question}
           hasAnswered={currentAnswer !== null}
           onSubmit={onSubmitPairMatching}
+          speakerKey={speakerKey}
         />
       );
     case 'phonics-sound-choice':
@@ -132,6 +148,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'phonics-word-choice':
@@ -141,6 +158,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'phonics-final-choice':
@@ -151,6 +169,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
     case 'phonics-rhyme-choice':
@@ -160,6 +179,7 @@ function renderQuestionBody(
           question={question}
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
+          speakerKey={speakerKey}
         />
       );
   }
@@ -237,6 +257,7 @@ export default function QuestionCard({
   onSubmitPronunciation,
   onSubmitPairMatching,
   onNext,
+  speakerKey,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
   const pictureWordId = feedbackPictureWordId(question);
@@ -270,7 +291,8 @@ export default function QuestionCard({
         onSubmitExtraLetter,
         onSubmitPronunciation,
         onSubmitPairMatching,
-      )}
+      speakerKey,
+    )}
 
       {/* pronunciation-recording renders its own complete feedback panel
           (transcript + score + explanation) - see PronunciationRecordingQuestion. */}

@@ -80,3 +80,80 @@ export const PROGRESS_FILL =
 
 /** Screen enter animation - fade + 8px rise, transform/opacity only. */
 export const SCREEN_ENTER = 'animate-screen-enter motion-reduce:animate-none';
+
+/* ------------------------------------------------------------------ */
+/* kids-UX redesign (design-spec-kids-ux s4.1 / ADR KUX-2)               */
+/* Gold semantic discipline: gold = "the next step" OR "treasure just    */
+/* earned". A screen may contain at most ONE gold action button.         */
+/* ------------------------------------------------------------------ */
+
+/** The one gold primary-path button on a kid screen ("Chơi", "Nhận quà").
+ *  76px tall, wide, unmistakable. Never render two of these per screen. */
+export const CTA_GOLD_XL =
+  'inline-flex min-h-[76px] min-w-[240px] items-center justify-center rounded-3xl border-b-4 border-amber-600 bg-amber-400 px-8 text-2xl font-extrabold text-amber-950 shadow-lg shadow-amber-400/30 transition hover:bg-amber-300 active:translate-y-0.5 active:border-b-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
+
+/** Secondary exploration entry - quiet, never competes with CTA_GOLD_XL. */
+export const DISCLOSURE_BTN =
+  'inline-flex min-h-[44px] items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-sm font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300';
+
+/** Bottom sheet that hosts secondary choices ("Khám phá"). */
+export const SHEET =
+  'fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-[2rem] bg-white shadow-2xl ring-1 ring-sky-200';
+
+/** One option row inside the sheet. 96px for G1-2 hands; G3-5 may drop
+ *  to 76px via TRAIL_TILE_SM. */
+export const TRAIL_TILE =
+  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
+export const TRAIL_TILE_SM =
+  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
+
+/** Drill / exam / advanced secondary actions (inside sheet or G3-5 home). */
+export const BTN_DRILL =
+  'min-h-[64px] rounded-2xl border-2 border-indigo-300 bg-white px-4 font-bold text-indigo-900 transition hover:bg-indigo-50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 motion-reduce:transition-none';
+export const BTN_EXAM =
+  'min-h-[64px] rounded-2xl border-b-4 border-indigo-900 bg-indigo-700 px-4 font-bold text-white transition hover:bg-indigo-600 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 motion-reduce:transition-none';
+export const BTN_ADVANCED =
+  'min-h-[64px] rounded-2xl border-2 border-sky-300 bg-white/70 px-4 font-bold text-sky-800 transition hover:bg-sky-50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none';
+
+/** Gift-box reward pick: three identical boxes, child taps one. */
+export const GIFT_BOX =
+  'flex min-h-[96px] min-w-[96px] items-center justify-center rounded-3xl border-4 border-amber-300 bg-amber-50 text-6xl shadow-md transition hover:scale-105 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 motion-reduce:transition-none motion-reduce:hover:scale-100';
+
+/** Post-answer option states (AC-3.2): the picked-but-wrong tile is
+ *  desaturated slate - NOT rose/red shaming; the reveal tile is the only
+ *  emerald surface. Labels carry the meaning, color only reinforces. */
+export const OPTION_PICKED_WRONG = 'bg-slate-200 text-slate-700 border-slate-400';
+export const OPTION_REVEAL_CORRECT =
+  'bg-emerald-100 text-emerald-900 border-emerald-500 ring-2 ring-emerald-300';
+
+/** Speaker affordance - indigo means "Bé Heo is talking" (never gold,
+ *  never emerald). `SPEAKER_BTN` is the idle tappable state. */
+export const SPEAKER_BTN =
+  'inline-flex min-h-[76px] min-w-[76px] items-center justify-center rounded-full bg-indigo-100 text-indigo-700 ring-2 ring-indigo-300 transition hover:bg-indigo-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none';
+export const SPEAKER_BTN_PLAYING =
+  'inline-flex min-h-[76px] min-w-[76px] items-center justify-center rounded-full bg-indigo-600 text-white ring-2 ring-indigo-400 animate-pulse motion-reduce:animate-none';
+export const SPEAKER_BTN_BLOCKED =
+  'inline-flex min-h-[76px] min-w-[76px] items-center justify-center rounded-full bg-indigo-100 text-indigo-700 ring-4 ring-indigo-400 ring-offset-2 ring-offset-white animate-bounce motion-reduce:animate-none';
+
+/** Parent-facing "paper" surfaces - light, calm, print-friendly (R5).
+ *  Separated from the navy play chrome so a parent instantly reads
+ *  "this part is for me". */
+export const PAPER_PANEL = 'rounded-2xl bg-white p-5 text-slate-800 ring-1 ring-sky-200';
+export const PAPER_ACCENT = 'text-sky-700';
+export const PAPER_TREND_UP = 'text-emerald-600';
+export const PAPER_PROGRESS_TRACK = 'h-2 overflow-hidden rounded-full bg-sky-200';
+export const PAPER_PROGRESS_FILL = 'h-full rounded-full bg-sky-500';
+export const PAPER_CHART = 'stroke-slate-600';
+
+/** Parent gate keypad key - 64px squares, light paper surface. */
+export const GATE_KEY =
+  'min-h-[64px] min-w-[64px] rounded-2xl border-b-4 border-sky-300 bg-white text-2xl font-bold text-slate-800 transition hover:bg-sky-50 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
+export const BTN_PAPER_SECONDARY =
+  'min-h-[64px] rounded-xl bg-sky-100 px-4 font-bold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none';
+export const COPY_BTN =
+  'inline-flex min-h-[48px] items-center justify-center gap-1 rounded-xl bg-slate-100 px-4 font-semibold text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300';
+
+/** Exam hybrid brand (R7): exam interior keeps its IOE mono look; the
+ *  only brand injection is this small badge in the exam header. */
+export const EXAM_HEADER_BRAND =
+  'inline-flex items-center gap-1 rounded-full bg-[#0b1224] px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-300/40';

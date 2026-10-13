@@ -471,3 +471,17 @@
 - **Verified:** E2E on real Supabase - demo_hs PIN changed and restored.
 - **Gates:** EA 718/718 unit, builds green on all 3 repos.
 - **Doc:** docs/sdlc/CR-17-account-security.md
+
+## CR-70 (2026-02-16): Kids-UX deferred surfaces - BACKLOG
+
+- **Origin:** kids-UX redesign pipeline (PRD r2, `docs/sdlc/prd-kids-ux.md`).
+- **Deferred items:**
+  1. Public marketing landing route (pre-login): hero/proof/pricing/FAQ - needs
+     content + legal review; values only from `docs/sales/01-pricing.md`.
+  2. Parent magic-link remote read-only view (OM-2C) - needs parent-token authz.
+  3. Guest-session parent email capture (AC-6.2) - new anonymous-contact
+     mechanism storing child-linked data.
+  4. Auth/onboarding redesign: parent-vs-kid split, signup entry, PIN recovery
+     self-service.
+  5. Real payment gateway (MoMo/ZaloPay) - OM-1C deferred.
+- **Status:** queued; scope estimate at intake of the next pipeline run.

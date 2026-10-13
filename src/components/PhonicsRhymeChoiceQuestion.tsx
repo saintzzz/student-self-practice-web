@@ -3,13 +3,19 @@ import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
-import { getOptionButtonClassName } from './optionButtonStyle';
+import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Từ nào có vần giống từ này?';
 
 interface PhonicsRhymeChoiceQuestionProps {
   question: PhonicsRhymeChoiceQuestionType;
   selectedIndex: number | null;
   onSelectOption: (index: number) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 /**
@@ -25,13 +31,18 @@ export default function PhonicsRhymeChoiceQuestion({
   question,
   selectedIndex,
   onSelectOption,
+  speakerKey,
 }: PhonicsRhymeChoiceQuestionProps) {
+  const { band } = useViewer();
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">Từ nào có vần giống từ này?</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <div className="mb-3 flex items-center justify-center gap-3">
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
           <EmojiVisual emoji={question.emoji} animated variant="block" />
@@ -69,8 +80,12 @@ export default function PhonicsRhymeChoiceQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
           >
-            <span className="text-2xl font-extrabold [@media(max-height:420px)]:text-xl">{option}</span>
+            <span className="text-2xl font-extrabold [@media(max-height:420px)]:text-xl">
+              {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
+              {option}
+            </span>
           </button>
         ))}
       </div>

@@ -9,10 +9,17 @@ import {
   isPairMatchingTileMatched,
 } from '../lib/rounds/pairMatchingBoard';
 
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Ghép mỗi từ tiếng Anh với đúng hình của nó nhé!';
+
 interface PicturePairMatchingQuestionProps {
   question: PicturePairMatchingQuestionType;
   hasAnswered: boolean;
   onSubmit: (isCorrect: boolean) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boolean): string {
@@ -56,7 +63,9 @@ export default function PicturePairMatchingQuestion({
   question,
   hasAnswered,
   onSubmit,
+  speakerKey,
 }: PicturePairMatchingQuestionProps) {
+  const { band } = useViewer();
   const [state, setState] = useState(createPairMatchingBoardState);
   const hasSubmittedRef = useRef(false);
   const outcome = getPairMatchingOutcome(state);
@@ -74,7 +83,10 @@ export default function PicturePairMatchingQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">Ghép mỗi từ tiếng Anh với đúng hình của nó nhé!</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <p data-testid="pair-matching-mistake-count" className="mb-2 text-lg font-bold text-rose-300">
         Sai: {state.mistakeCount}/{MAX_PAIR_MATCHING_MISTAKES}
       </p>

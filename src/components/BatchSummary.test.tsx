@@ -110,6 +110,31 @@ describe('BatchSummary (AC21)', () => {
     expect(onChooseGrade).toHaveBeenCalledOnce();
   });
 
+  it('dev-review #5: a remount with the same batch objectiveId mutates nothing (no double streak/quest/write)', async () => {
+    const { resetForTests, getDailyQuests, getState } = await import('../lib/engagement/store');
+    const practiceResults = await import('../lib/practiceResults');
+    const saveSpy = vi.spyOn(practiceResults, 'savePracticeResult');
+    resetForTests();
+
+    const props = { result: RESULT, gradeId: 'grade-2', onStartNewBatch: vi.fn(), onChooseGrade: vi.fn(), objectiveId: 'batch:test-seed-9' };
+    const first = render(<BatchSummary {...props} />);
+    first.unmount();
+    const starsAfter = getState().totalStars;
+    const batchesAfter = getState().batchesCompleted;
+    const bigQuestAfter = getDailyQuests().quests.find((q) => q.id === 'big')!.progress;
+    const savesAfter = saveSpy.mock.calls.length;
+
+    render(<BatchSummary {...props} />);
+    expect(screen.getByText('Đã nhận thưởng rồi')).toBeInTheDocument();
+    expect(getState().totalStars).toBe(starsAfter);
+    expect(getState().batchesCompleted).toBe(batchesAfter);
+    expect(getDailyQuests().quests.find((q) => q.id === 'big')!.progress).toBe(bigQuestAfter);
+    expect(saveSpy.mock.calls.length).toBe(savesAfter);
+
+    saveSpy.mockRestore();
+    resetForTests();
+  });
+
   it('CR-69: a batch ended with zero answered questions earns nothing and shows the empty state', () => {
     const empty: BatchResult = { ...RESULT, totalCorrect: 0, totalQuestions: 0, points: 0, maxPoints: 0, timeUsedSec: 12, rounds: [] };
     const starsBefore = getState().totalStars;

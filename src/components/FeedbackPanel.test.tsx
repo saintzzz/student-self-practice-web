@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import FeedbackPanel from './FeedbackPanel';
+import { speakWord } from '../lib/speech';
+
+vi.mock('../lib/speech', () => ({
+  speakWord: vi.fn(),
+}));
 
 describe('FeedbackPanel', () => {
   it('shows the correct-word testid for listening-fill-blank regardless of correctness (AC5)', () => {
@@ -101,6 +106,46 @@ describe('FeedbackPanel', () => {
 
     expect(screen.getByTestId('mascot')).toHaveAttribute('data-mascot-mood', 'encouraging');
     expect(screen.getByTestId('answer-feedback')).toHaveTextContent('Chưa đúng rồi, cố lên nhé!');
+  });
+
+  describe('dev-review #8: "Nghe mẫu" demo on wrong answers', () => {
+    it('wrong answers offer "Nghe mẫu" which plays the CORRECT word (ungraded)', () => {
+      render(
+        <FeedbackPanel
+          kind="listening-fill-blank"
+          isCorrect={false}
+          correctWord="rabbit"
+          explanation='Con thỏ tiếng Anh là "rabbit".'
+        />,
+      );
+      const btn = screen.getByTestId('feedback-listen-model');
+      fireEvent.click(btn);
+      expect(vi.mocked(speakWord)).toHaveBeenCalledWith('rabbit');
+    });
+
+    it('correct answers never show the demo button', () => {
+      render(
+        <FeedbackPanel kind="image-choice" isCorrect={true} correctWord="cat" explanation="x" />,
+      );
+      expect(screen.queryByTestId('feedback-listen-model')).toBeNull();
+    });
+
+    it('dev-review r2 #3: the demo button is 76px on G1-2, 44px on G3-5', async () => {
+      const { ViewerProvider } = await import('../lib/viewer/ViewerContext');
+      const small = render(
+        <ViewerProvider gradeId="grade-4">
+          <FeedbackPanel kind="extra-letter" isCorrect={false} correctWord="bird" explanation="x" />
+        </ViewerProvider>,
+      );
+      expect(screen.getByTestId('feedback-listen-model').className).toContain('min-h-[44px]');
+      small.unmount();
+      render(
+        <ViewerProvider gradeId="grade-1">
+          <FeedbackPanel kind="extra-letter" isCorrect={false} correctWord="bird" explanation="x" />
+        </ViewerProvider>,
+      );
+      expect(screen.getByTestId('feedback-listen-model').className).toContain('min-h-[76px]');
+    });
   });
 
   describe('DOM contract (AC-10.6 / amendment A-13)', () => {

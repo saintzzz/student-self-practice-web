@@ -122,3 +122,12 @@ export function getLand(gradeId?: string | null): Land {
   const key = gradeId ? GRADE_TO_LAND[gradeId] : undefined;
   return LANDS[key ?? 'sky'];
 }
+
+/** kids-UX (AC-8.x): age band derived from the selected grade. G1-2 =
+ *  voice-first UI (76px targets everywhere, autoplay instructions);
+ *  G3-5 = denser text UI (44px floor on administrative controls). */
+export type KidBand = 'G12' | 'G345';
+
+export function bandForGrade(gradeId?: string | null): KidBand {
+  return gradeId === 'grade-1' || gradeId === 'grade-2' ? 'G12' : 'G345';
+}

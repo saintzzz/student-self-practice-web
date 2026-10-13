@@ -5,11 +5,17 @@ import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
 import ListenButtons from './ListenButtons';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Nghe câu và điền từ còn thiếu nhé!';
 
 interface ListeningSentenceFillBlankQuestionProps {
   question: ListeningSentenceFillBlankQuestionType;
   hasAnswered: boolean;
   onSubmit: (typedAnswer: string) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 /**
@@ -23,7 +29,9 @@ export default function ListeningSentenceFillBlankQuestion({
   question,
   hasAnswered,
   onSubmit,
+  speakerKey,
 }: ListeningSentenceFillBlankQuestionProps) {
+  const { band } = useViewer();
   const [inputValue, setInputValue] = useState('');
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
     speakSentence(question.sentence, onStatus, speed),
@@ -38,7 +46,10 @@ export default function ListeningSentenceFillBlankQuestion({
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">Nghe câu và điền từ còn thiếu nhé!</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <p className="mb-3 text-3xl font-extrabold text-white">{question.displaySentence}</p>
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}

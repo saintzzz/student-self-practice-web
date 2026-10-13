@@ -16,7 +16,7 @@ interface MoodConfig {
 }
 
 /**
- * Mood-to-visual mapping (plan.md v10 "App-Wide Mascot"). Same 🐷 glyph in
+ * Mood-to-visual mapping (plan.md v10 "App-Wide Mascot"). Same � glyph in
  * every mood for character consistency - mood is conveyed only via the
  * paired accent emoji and animation, never by swapping the character.
  */

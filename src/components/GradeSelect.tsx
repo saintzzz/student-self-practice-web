@@ -6,6 +6,8 @@ import ChangePinDialog from './ChangePinDialog';
 import { getLand, type LandKey } from '../lib/ui/theme';
 import { getState } from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
+import { ParentGate, isParentVerified } from './ParentGate';
+import { GatedLink } from './GatedLink';
 import { NAV_PILL, NAV_PILL_SM, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface GradeSelectProps {
@@ -43,6 +45,10 @@ interface GradeSelectProps {
 export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focusCreditsLink, allowedGrades, onSignOut, onLogin, guestTrial, onPlacement, onReport, studentName, joinClassSlot }: GradeSelectProps) {
   const creditsRef = useRef<HTMLButtonElement>(null);
   const [changePinOpen, setChangePinOpen] = useState(false);
+  // kids-UX step 10 (AC-5.1): the parent report sits behind the arithmetic
+  // ParentGate. A passed gate holds a 5-minute in-memory token
+  // (isParentVerified), so a parent mid-session is not re-challenged.
+  const [reportGateOpen, setReportGateOpen] = useState(false);
 
   useEffect(() => {
     if (focusCreditsLink) {
@@ -127,11 +133,21 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         <button
           type="button"
           data-testid="open-parent-report"
-          onClick={onReport}
-          className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-extrabold text-sky-200 ring-1 ring-sky-300/40 transition hover:bg-white/20 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-300/60"
+          onClick={() => (isParentVerified() ? onReport() : setReportGateOpen(true))}
+          className={`mb-6 ${NAV_PILL_SM}`}
         >
-          📊 Báo cáo cho ba mẹ
+          👨‍👩‍👧 Góc ba mẹ
         </button>
+      )}
+      {reportGateOpen && (
+        <ParentGate
+          title="Dành cho ba mẹ"
+          onPass={() => {
+            setReportGateOpen(false);
+            onReport?.();
+          }}
+          onCancel={() => setReportGateOpen(false)}
+        />
       )}
       {visibleGrades.length === 0 ? (
         <div data-testid="no-scope-message" className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-8 text-lg font-bold text-slate-300 shadow-lg ring-1 ring-white/15">
@@ -196,12 +212,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
             Nguồn hình ảnh
           </button>
         )}
-        <a
-          href="https://vieschool.com"
-          className="text-xs font-bold text-slate-400 underline-offset-2 transition hover:text-slate-300 hover:underline"
-        >
-          English Arena - sản phẩm của VieSchool
-        </a>
+        <GatedLink href="https://vieschool.com" className="text-xs font-bold text-slate-400 underline-offset-2 transition hover:text-slate-300 hover:underline">          English Arena - sản phẩm của VieSchool</GatedLink>
       </footer>
       {changePinOpen && <ChangePinDialog onClose={() => setChangePinOpen(false)} />}
     </div>

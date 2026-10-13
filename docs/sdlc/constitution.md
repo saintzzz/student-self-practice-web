@@ -4,14 +4,16 @@ Ghi một lần tại intake; mọi phase gate check lại. Vi phạm = block ga
 
 ## Non-negotiables
 
-1. **Đối tượng**: học sinh lớp 2 Việt Nam (~7-8 tuổi), tự luyện từ vựng tiếng Anh.
+1. **Đối tượng**: học sinh lớp 1-5 Việt Nam (~6-11 tuổi), tự luyện từ vựng
+   tiếng Anh (amended 2026-02-16, kids-UX design gate: trước đây chỉ lớp 2).
    Mọi quyết định UI/nội dung phải phù hợp lứa tuổi (an toàn nội dung, chữ lớn,
    hình rõ nghĩa, không quảng cáo/link ra ngoài không kiểm soát).
 2. **Không phá DOM-text contract hiện có** mà không cập nhật test: emoji char
    đang là phần của DOM (`getByText('🐱')`, `toHaveTextContent('🐱🐱🐱')`).
    Lớp visual mới phải giữ text layer ẩn hoặc test được cập nhật có chủ đích.
 3. **License sạch**: mọi asset mới phải có license cho phép redistribute trong
-   app (CC0 / CC-BY / OFL / MIT). Attribution bắt buộc được lưu trong
+   app (CC0 / CC-BY / OFL / MIT / **owned-or-generated** - asset tự vẽ/tự
+   generate cho dự án, ghi rõ provenance). Attribution bắt buộc được lưu trong
    `public/attribution.json` + link Credits trong UI. Cấm: asset license
    "personal use only" (ví dụ Animated Fluent Emoji repo).
 4. **Same-origin assets, zero runtime CDN**: mọi asset visual (svg, lottie json,
@@ -39,7 +41,9 @@ Ghi một lần tại intake; mọi phase gate check lại. Vi phạm = block ga
 | # | Check tại gate Dev/Tester | Pass khi |
 |---|---------------------------|----------|
 | C2 | `grep -r "question.emoji"` components không còn render text trực tiếp; test suite không xóa mà vẫn xanh | EmojiVisual hoặc text layer ẩn giữ char; `npm test` xanh |
-| C3 | Script `scripts/check-attribution.mjs` đối chiếu inventory file trong `public/emoji/svg/`, `public/emoji/lottie/`, `public/images/vocab/` với entries trong `public/attribution.json` (cả 2 chiều: file không có entry, entry trỏ file không tồn tại). Visual asset chỉ được phép ở 3 thư mục trên (cấm `src/assets` - A-07). Chạy được bằng `node scripts/check-attribution.mjs` | Script exit 0; 100% asset file có record |
+| C3 | Script `scripts/check-attribution.mjs` đối chiếu inventory file trong `public/emoji/svg/`, `public/emoji/lottie/`, `public/images/vocab/` với entries trong `public/attribution.json` (cả 2 chiều: file không có entry, entry trỏ file không tồn tại). Visual asset chỉ được phép ở các thư mục trên, **cộng thêm** `public/mascot/`,
+|   | `public/payment/`, `public/fonts/andika/` (amended 2026-02-16, kids-UX
+|   | design gate). Cấm `src/assets` (A-07). Chạy được bằng `node scripts/check-attribution.mjs` | Script exit 0; 100% asset file có record |
 | C4 | **Runtime-level check là gate chính** (URL data trong attribution.json không tính): e2e ghi mọi request trong full flow (GradeSelect -> Credits -> Batch 4 rounds -> summaries); assert mọi request URL same-origin (AC-8.2, AC-2.6). Static support check: `grep -rE "https?://" src/` - mọi hit phải là (a) comment, (b) string literal trong attribution/copy data, hoặc (c) file đã allowlist rõ; không hit nào là src/href/fetch/import trỏ ra ngoài | E2E pass + static grep sạch/allowlist |
 | C5 | `grep animated` các component option/counting render `animated={false}`; Lottie player chỉ import qua lazy boundary | Tối đa 2 player/màn hình (A-09); ≤1 trước khi trả lời; 0 trong option grid/repeated context |
 | C6 | Mọi CSS animation mới có `motion-reduce:` pair; Lottie player nhận reduced-motion -> render static | Unit test hoặc code check per site |

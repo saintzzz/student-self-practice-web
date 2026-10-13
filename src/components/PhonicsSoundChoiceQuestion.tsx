@@ -3,13 +3,19 @@ import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
-import { getOptionButtonClassName } from './optionButtonStyle';
+import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import { useViewer } from '../lib/viewer/ViewerContext';
+
+const INSTRUCTION = 'Từ này bắt đầu bằng âm nào?';
 
 interface PhonicsSoundChoiceQuestionProps {
   question: PhonicsSoundChoiceQuestionType;
   selectedIndex: number | null;
   onSelectOption: (index: number) => void;
+  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  speakerKey?: string;
 }
 
 /**
@@ -22,13 +28,18 @@ export default function PhonicsSoundChoiceQuestion({
   question,
   selectedIndex,
   onSelectOption,
+  speakerKey,
 }: PhonicsSoundChoiceQuestionProps) {
+  const { band } = useViewer();
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
 
   return (
     <div>
-      <p className="mb-2 text-xl font-semibold text-amber-200">Từ này bắt đầu bằng âm nào?</p>
+      <div className="mb-2 flex items-center justify-center gap-2">
+        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+      </div>
       <div className="mb-3 flex items-center justify-center gap-3">
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
           <EmojiVisual emoji={question.emoji} animated variant="block" />
@@ -66,9 +77,13 @@ export default function PhonicsSoundChoiceQuestion({
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
             className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
-            aria-label={`âm ${sound}`}
+            {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
+            aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + `âm ${sound}`}
           >
-            <span className="text-3xl font-extrabold">{sound}</span>
+            <span className="text-3xl font-extrabold">
+              {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
+              {sound}
+            </span>
           </button>
         ))}
       </div>

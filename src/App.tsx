@@ -25,6 +25,8 @@ import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/en
 import { confirmParentEmail } from './lib/parentContact';
 import { bindActivityOwner } from './lib/practiceResults';
 import { GRADES } from './data/vocabulary';
+import { ViewerProvider } from './lib/viewer/ViewerContext';
+import { clearParentVerification } from './components/ParentGate';
 import type { ExamProgramId } from './types/exam';
 import {
   advanceRoundQuestion,
@@ -195,6 +197,10 @@ export default function App() {
       setSelectedGradeId(null);
       setAuthMode('login');
       setScreen('login');
+      /* kids-UX dev-review #2: a parent-gate pass is an in-memory
+         authorization - sign-out/account change must revoke it so the
+         next user on the device never inherits it. */
+      clearParentVerification();
     }
   }
 
@@ -203,16 +209,26 @@ export default function App() {
     // not be what the guest sees. Park it under its owner id - the
     // owner's next login restores it via bindEngagement.
     parkOwnerBlob();
+    // Dev-review #2: switching to guest = leaving the account context -
+    // revoke the parent pass too.
+    clearParentVerification();
     setAuthMode('guest');
     setScreen('grade-select');
   }
 
   function handleSelectGrade(gradeId: string): void {
+    // Dev-review #2: switching grade leaves the parent corner's context -
+    // the gate token is revoked so reports/pricing re-gate.
+    if (gradeId !== selectedGradeId) clearParentVerification();
     setSelectedGradeId(gradeId);
     setScreen('start-batch');
   }
 
   function handleBackToGrades(): void {
+    // Dev-review #2: the only exit from the report corner - revoke the
+    // pass on the way back to kid surfaces (design s3.6: the token is a
+    // UX control, not a persistent credential).
+    clearParentVerification();
     setSelectedGradeId(null);
     setBatch(null);
     setScreen('grade-select');
@@ -336,6 +352,12 @@ export default function App() {
     <LandShell land="brand">{node}</LandShell>
   );
 
+  // kids-UX (ADR KUX-5): every screen renders inside one ViewerProvider so
+  // band-aware components (StartBatchScreen launchpad, Khám phá sheet,
+  // speakers) read the real grade band + login state anywhere in the tree.
+  // The early returns below become renderScreen() results - routing and
+  // screen composition are unchanged.
+  function renderScreen(): ReactNode {
   if (verifyNotice) {
     return shell(
       <div className="flex min-h-screen items-center justify-center px-4">
@@ -514,5 +536,15 @@ export default function App() {
       joinClassSlot={joinClassSlot}
       {...authChipProps}
     />,
+  );
+  }
+
+  return (
+    <ViewerProvider
+      gradeId={selectedGradeId}
+      loggedIn={authMode === 'student' || authMode === 'admin'}
+    >
+      {renderScreen()}
+    </ViewerProvider>
   );
 }

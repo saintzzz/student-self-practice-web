@@ -2,12 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import type { RoundOutcome } from '../lib/batch/batchSession';
 import { getScoreStatus } from '../lib/batch/scoreStatus';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { CARD, SCORE_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
+import { CARD, CHIP_SKY, CTA_GOLD_XL, H2, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
 import Mascot from './Mascot';
 import StarRain from './celebrations/StarRain';
 import { EmojiVisual } from './EmojiVisual';
+import { InstructionSpeaker } from './InstructionSpeaker';
+import GiftBoxPicker from './GiftBoxPicker';
+import { SendResultsCard } from './SendResultsCard';
+import { ShareCard } from './ShareCard';
+import { useViewer } from '../lib/viewer/ViewerContext';
+import { GRADES } from '../data/vocabulary';
 import {
   checkStreakStickers,
+  pendingGiftStickerIds,
   recordCorrectAnswers,
   recordRoundResult,
   recordSkillAnswers,
@@ -25,6 +32,18 @@ interface RoundSummaryProps {
   locked?: boolean;
   onRequestLogin?: () => void;
   onExit?: () => void;
+  /**
+   * kids-UX fork (design s3.10): "Xong rồi" ends the batch now so the child
+   * lands on the BatchSummary with rewards for what was answered.
+   */
+  onEndBatch?: () => void;
+  /** kids-UX AC-4.4: `round:<seed>:<roundIndex>` makes rewards idempotent. */
+  objectiveId?: string;
+  /**
+   * kids-UX (design s3.2): round-scoped autoplay key for the instruction
+   * speakers - `round-<gradeId>-<roundIndex>-<seed>`.
+   */
+  speakerKey?: string;
 }
 
 /**
@@ -39,9 +58,10 @@ interface RoundSummaryProps {
  * (ref guard survives StrictMode's effect double-invoke) and rains
  * them over the points chip.
  *
- * CR-11 DS-P1: single vertical rhythm (mt-3 lines, mt-6 before CTA) -
- * the centered inline-flex CTA finally honors text-center after the
- * Chromium flex-button quirk fix in actionButtonStyle.
+ * kids-UX (design s3.5.a/s3.10, AC-4.1/AC-2.4): sao is THE headline metric -
+ * the points pill is demoted to a secondary sky chip - and the single
+ * continue button becomes the "Xong rồi / Chơi tiếp" fork (Chơi tiếp keeps
+ * the gold emphasis and the next-round-button testid).
  */
 export default function RoundSummary({
   outcome,
@@ -50,43 +70,93 @@ export default function RoundSummary({
   locked = false,
   onRequestLogin,
   onExit,
+  onEndBatch,
+  objectiveId,
+  speakerKey,
 }: RoundSummaryProps) {
   const status = getScoreStatus(outcome.points, outcome.maxPoints);
+  const { band } = useViewer();
   const awarded = useRef<RoundAwardResult | null>(null);
   const [award, setAward] = useState<RoundAwardResult | null>(null);
 
   useEffect(() => {
     if (!awarded.current) {
-      const r = recordRoundResult(gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints);
-      // A finished round is real practice - it counts toward the day streak.
-      touchStreak();
-      // CR-27: round boundary is the right grain for the correct-answer
-      // quest - a student who exits mid-batch still keeps progress.
-      recordCorrectAnswers(outcome.correctCount);
-      // CR-29: same granularity for the parent-report skill stats.
-      recordSkillAnswers(gradeId, skillKeyForRound(outcome.roundType), outcome.correctCount, outcome.totalCount);
-      const streakStickers = checkStreakStickers();
-      awarded.current = { ...r, newStickers: [...r.newStickers, ...streakStickers] };
+      const r = recordRoundResult(gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints, objectiveId);
+      /* Dev-review #5: alreadyGranted means this run was counted before -
+         EVERY completion-derived mutation (streak day, correct-answer
+         quest, skill stats, streak stickers) must skip together, else a
+         remount/replay double-counts stats and pet XP. */
+      if (r.alreadyGranted) {
+        awarded.current = r;
+      } else {
+        // A finished round is real practice - it counts toward the day streak.
+        touchStreak();
+        // CR-27: round boundary is the right grain for the correct-answer
+        // quest - a student who exits mid-batch still keeps progress.
+        recordCorrectAnswers(outcome.correctCount);
+        // CR-29: same granularity for the parent-report skill stats.
+        recordSkillAnswers(gradeId, skillKeyForRound(outcome.roundType), outcome.correctCount, outcome.totalCount);
+        const streakStickers = checkStreakStickers();
+        awarded.current = { ...r, newStickers: [...r.newStickers, ...streakStickers] };
+      }
       setAward(awarded.current);
     }
-  }, [gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints]);
+  }, [gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints, outcome.correctCount, outcome.totalCount, outcome.roundType, objectiveId]);
+
+  const stars = award?.stars ?? 0;
+  const newStickers = award?.newStickers ?? [];
+  /* Dev-review #6: gift eligibility is persisted state (owned sticker,
+     unclaimed box) - not the transient newStickers list - so the offer
+     survives a closed summary / remount. */
+  const giftStickerId = pendingGiftStickerIds()[0] ?? null;
+  const gradeName = GRADES.find((g) => g.id === gradeId)?.name ?? gradeId;
+  /* "Xong rồi" prefers ending the batch (lands on the BatchSummary); when
+     no end-batch handler exists (tests, other hosts) it falls back to the
+     old exit path. */
+  const onDone = onEndBatch ?? onExit;
 
   return (
     <div className={`${CARD} ${SCREEN_ENTER} py-6 text-center [@media(max-height:420px)]:py-3`}>
       <Mascot mood="celebrating" />
-      <StarRain stars={award?.stars ?? 0} />
+      <StarRain stars={stars} />
       <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-white">{outcome.titleVi}</h2>
-      <p data-testid="round-score-summary" className="mt-3 text-2xl font-semibold text-amber-200">
+
+      {/* kids-UX s3.5.a: stars are the headline - "Em được N sao!" with the
+          0-star process-praise variant (never deficit framing). */}
+      <div className="mt-3 flex items-center justify-center gap-2">
+        <p data-testid="round-stars-summary" className="text-2xl font-semibold text-amber-200">
+          {stars > 0
+            ? `Em được ${stars} sao!`
+            : 'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'}
+        </p>
+        <InstructionSpeaker
+          text={
+            stars > 0
+              ? `Em được ${stars} sao! Em đúng ${outcome.correctCount} trên ${outcome.totalCount} câu.`
+              : 'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'
+          }
+          lang="vi-VN"
+          autoplay={band === 'G12'}
+          autoplayKey={speakerKey ? `${speakerKey}-summary` : undefined}
+        />
+      </div>
+
+      <p data-testid="round-score-summary" className="mt-2 text-lg font-semibold text-slate-300">
         Em trả lời đúng {outcome.correctCount}/{outcome.totalCount} câu ở vòng này.
       </p>
-      <p className="mt-3 flex justify-center">
-        <span data-testid="round-points-summary" className={SCORE_PILL}>
+      {/* kids-UX AC-4.1: points are demoted to a secondary sky chip - gold
+          fills are reserved for earned treasure (stars, gifts). */}
+      <p className="mt-2 flex justify-center">
+        <span data-testid="round-points-summary" className={CHIP_SKY}>
           {outcome.points}/{outcome.maxPoints} điểm
         </span>
       </p>
-      {award && award.newStickers.length > 0 && (
+      {award?.alreadyGranted && (
+        <p className="mt-2 text-sm font-semibold text-sky-300">Đã nhận thưởng rồi</p>
+      )}
+      {newStickers.length > 0 && (
         <p data-testid="round-new-stickers" className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          {award.newStickers.map((s) => (
+          {newStickers.map((s) => (
             <span
               key={s.id}
               className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-900 ring-2 ring-amber-300"
@@ -96,6 +166,9 @@ export default function RoundSummary({
           ))}
         </p>
       )}
+      {/* kids-UX s3.5.b: a new sticker moment opens the gift box - the home
+          item is granted through the picker, never silently. */}
+      {giftStickerId && <GiftBoxPicker stickerId={giftStickerId} />}
       <p
         data-testid="round-completion-badge"
         className={`mt-3 text-lg font-semibold ${status.isComplete ? 'text-emerald-300' : 'text-amber-200'}`}
@@ -133,14 +206,52 @@ export default function RoundSummary({
           )}
         </div>
       ) : (
-        <button
-          type="button"
-          data-testid="next-round-button"
-          onClick={onNextRound}
-          className={`mt-6 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}
-        >
-          Vòng tiếp theo →
-        </button>
+        <>
+          {/* kids-UX s3.8.b/s3.8.c: share only rides sticker moments here;
+              the send-results card self-gates to logged-in viewers. */}
+          {newStickers.length > 0 && (
+            <div className="mt-4 flex justify-center">
+              <ShareCard
+                title={outcome.titleVi}
+                lines={[`${stars} sao`, gradeName, `${outcome.correctCount}/${outcome.totalCount} câu đúng`]}
+                label="Chia sẻ thành tích"
+              />
+            </div>
+          )}
+          <SendResultsCard />
+
+          {/* kids-UX s3.10 session fork - equal-size choices, no
+              auto-advance; "Chơi tiếp" keeps the gold next-step emphasis. */}
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <h2 className={H2}>Em muốn làm gì tiếp?</h2>
+            <InstructionSpeaker
+              text="Em muốn nghỉ hay chơi tiếp nào?"
+              lang="vi-VN"
+              autoplay={band === 'G12'}
+              autoplayKey={speakerKey ? `${speakerKey}-fork` : undefined}
+            />
+          </div>
+          <div className="mt-3 flex flex-col justify-center gap-4 sm:flex-row">
+            {onDone && (
+              <button
+                type="button"
+                data-testid="round-done"
+                onClick={onDone}
+                className={`w-full sm:w-auto ${NAV_PILL}`}
+              >
+                🏠 Xong rồi
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="next-round-button"
+              onClick={onNextRound}
+              className={`w-full sm:w-auto ${CTA_GOLD_XL}`}
+            >
+              ▶ Chơi tiếp
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
