@@ -172,9 +172,9 @@ const ADJUNCT_DETERMINERS = new Set([...DETERMINERS].filter((t) => t !== 'her'))
 const BE_FORMS = new Set(['am', 'is', 'are', 'was', 'were']);
 
 /** "verb preposition" bonds where the PP is a COMPLEMENT, not a movable
- * adjunct: "I look at a cat" must not produce "At a cat I look". Built
- * from the verb+prep pairs the bank actually uses, expanded to s/ed/ing
- * forms plus the irregular pasts that show up. External-review r19-01. */
+ * adjunct: "I look at a cat" must not produce "At a cat I look". External
+ * review r19-01 / r20-01 - inflections are enumerated explicitly because
+ * naive `${verb}s`/`${verb}ing` produce "gos"/"siting"/"writeing". */
 const PP_COMPLEMENT_BONDS = (() => {
   const verbPreps: ReadonlyArray<readonly [string, readonly string[]]> = [
     ['look', ['at', 'for', 'after']], ['listen', ['to']], ['play', ['with']],
@@ -192,14 +192,31 @@ const PP_COMPLEMENT_BONDS = (() => {
     ['ask', ['for', 'about']], ['search', ['for']], ['shout', ['at']],
     ['cry', ['for', 'about']], ['worry', ['about']],
   ];
-  const irregularPast: Record<string, string[]> = {
-    go: ['went'], come: ['came'], sit: ['sat'], stand: ['stood'],
-    run: ['ran'], write: ['wrote'], speak: ['spoke'], read: [],
-    fly: ['flew'], ride: ['rode'], think: ['thought'], dream: ['dreamt'],
+  /** Full form lists (3rd-singular / past / -ing) for every verb that does
+   * not inflect with a plain suffix. The base form is added separately. */
+  const NONREGULAR: Record<string, readonly string[]> = {
+    go: ['goes', 'went', 'going'],
+    come: ['comes', 'came', 'coming'],
+    sit: ['sits', 'sat', 'sitting'],
+    stand: ['stands', 'stood', 'standing'],
+    run: ['runs', 'ran', 'running'],
+    swim: ['swims', 'swam', 'swimming'],
+    write: ['writes', 'wrote', 'writing'],
+    speak: ['speaks', 'spoke', 'speaking'],
+    fly: ['flies', 'flew', 'flying'],
+    ride: ['rides', 'rode', 'riding'],
+    think: ['thinks', 'thought', 'thinking'],
+    read: ['reads', 'reading'],
+    dream: ['dreams', 'dreamed', 'dreamt', 'dreaming'],
+    study: ['studies', 'studied', 'studying'],
+    cry: ['cries', 'cried', 'crying'],
+    worry: ['worries', 'worried', 'worrying'],
+    live: ['lives', 'lived', 'living'],
+    arrive: ['arrives', 'arrived', 'arriving'],
   };
   const bonds = new Set<string>();
   for (const [verb, preps] of verbPreps) {
-    const forms = [verb, `${verb}s`, `${verb}ed`, `${verb}ing`, ...(irregularPast[verb] ?? [])];
+    const forms = [verb, ...(NONREGULAR[verb] ?? [`${verb}s`, `${verb}ed`, `${verb}ing`])];
     for (const form of forms) {
       for (const prep of preps) bonds.add(`${form} ${prep}`);
     }

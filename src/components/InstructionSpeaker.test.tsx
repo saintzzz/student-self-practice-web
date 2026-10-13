@@ -193,6 +193,28 @@ describe('InstructionSpeaker - autoplay once per key (all grades)', () => {
     expect(mockSpeak).toHaveBeenCalledTimes(2);
   });
 
+  // r20-02: keyboard / assistive-tech users trigger retry via keydown,
+  // and failures other than 'blocked' arm the gesture retry too.
+  it('retries on keydown after a non-blocked failure', () => {
+    vi.useFakeTimers();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    act(() => {
+      statusCb?.('error');
+    });
+    act(() => {
+      window.dispatchEvent(new Event('keydown'));
+    });
+    expect(mockSpeak).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps the key consumed when playback actually played', () => {
     vi.useFakeTimers();
     let statusCb: ((s: string) => void) | undefined;

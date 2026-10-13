@@ -240,6 +240,17 @@ describe('isWordOrderCorrect', () => {
     expect(
       isWordOrderCorrect('She goes to school.', ['To', 'school', 'she', 'goes.']),
     ).toBe(false);
+    // r20-01: the bond list must match real inflections, not naive
+    // `${verb}s`/`${verb}ing` output ("gos", "siting", "writeing").
+    expect(
+      isWordOrderCorrect('She is listening to music.', ['To', 'music', 'she', 'is', 'listening.']),
+    ).toBe(false);
+    expect(
+      isWordOrderCorrect('He is sitting on the floor.', ['On', 'the', 'floor', 'he', 'is', 'sitting.']),
+    ).toBe(false);
+    expect(
+      isWordOrderCorrect('The bird flies to the tree.', ['To', 'the', 'tree', 'the', 'bird', 'flies.']),
+    ).toBe(false);
   });
 
   it('still accepts a genuine adjunct fronted off a non-bound verb', () => {
