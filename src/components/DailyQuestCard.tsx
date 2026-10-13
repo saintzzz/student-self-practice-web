@@ -7,6 +7,7 @@ import {
   type DailyQuestId,
 } from '../lib/engagement/store';
 import { CARD, BTN_REWARD_EARNED } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import { IconCheckCircle, IconFlame, IconPencil, IconTarget, IconTrophy, type IconProps } from './icons';
 
 const QUEST_META: Record<DailyQuestId, { icon: ComponentType<IconProps>; label: string }> = {
@@ -22,6 +23,7 @@ const QUEST_META: Record<DailyQuestId, { icon: ComponentType<IconProps>; label: 
 export default function DailyQuestCard() {
   const [snapshot, setSnapshot] = useState(() => getDailyQuests());
   const streak = getState().streak.count;
+  const { density } = useViewer();
 
   // Refresh when the local date rolls over while the page stays open -
   // yesterday's progress/claimed state must not linger overnight.
@@ -95,6 +97,7 @@ export default function DailyQuestCard() {
           data-testid="claim-daily-bonus"
           onClick={claim}
           className={`mt-3 w-full font-display text-lg ${BTN_REWARD_EARNED}`}
+          style={{ minHeight: density.primaryMinH }}
         >
           Nhận thưởng +{DAILY_QUEST_BONUS} sao
         </button>

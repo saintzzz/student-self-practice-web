@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchLeaderboard, type LeaderboardEntry } from '../lib/leaderboard';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import { IconLock, IconMedal, IconTrophy } from './icons';
 
 interface LeaderboardCardProps {
@@ -22,6 +23,7 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
   const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null);
   const [loaded, setLoaded] = useState(false);
   const configured = isSupabaseConfigured();
+  const { density } = useViewer();
 
   useEffect(() => {
     if (isGuest || !configured) return;
@@ -51,6 +53,7 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
               data-testid="leaderboard-login"
               onClick={onLogin}
               className={`mt-3 ${BTN_SECONDARY_NAVY}`}
+              style={{ minHeight: density.primaryMinH }}
             >
               Đăng nhập
             </button>

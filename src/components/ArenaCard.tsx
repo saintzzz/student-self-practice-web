@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { arenaOpen, arenaRecent, type ArenaOpenChallenge, type ArenaRecentRow } from '../lib/arena';
 import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import { IconClock, IconHandshake, IconSwords, IconTrophy, IconX } from './icons';
 
 /** CR-34: Đấu trường card on the grade home screen.
@@ -27,6 +28,7 @@ export default function ArenaCard({
      "Xem thêm" expansion - keeps hub expansions inside the ≤4-new-controls
      rule on the G1-2 path. */
   const [showAllAccepts, setShowAllAccepts] = useState(false);
+  const { density } = useViewer();
 
   // CR-56: my own open challenges wait for an accepter - they are not
   // accept-able and must not hide behind the "nothing here" empty state.
@@ -59,6 +61,7 @@ export default function ArenaCard({
           data-testid="arena-create"
           onClick={isGuest ? onBot : onCreate}
           className={`flex-1 ${BTN_SECONDARY_NAVY}`}
+          style={{ minHeight: density.primaryMinH }}
         >
           <span className="inline-flex items-center gap-2"><IconSwords size={18} /> {isGuest ? "Đấu với máy" : "Tạo thử thách"}</span>
         </button>
@@ -67,6 +70,7 @@ export default function ArenaCard({
             type="button"
             onClick={onLogin}
             className={`flex-1 ${BTN_SECONDARY_NAVY}`}
+            style={{ minHeight: density.primaryMinH }}
           >
             Đăng nhập để đấu với bạn thật
           </button>
@@ -141,6 +145,7 @@ export default function ArenaCard({
                   data-testid="arena-accept-more"
                   onClick={() => setShowAllAccepts(true)}
                   className={`mt-2 w-full ${BTN_SECONDARY_NAVY}`}
+                  style={{ minHeight: density.primaryMinH }}
                 >
                   Xem thêm {theirs.length - 2} thử thách
                 </button>

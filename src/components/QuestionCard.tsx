@@ -261,6 +261,12 @@ export default function QuestionCard({
   speakerKey,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
+  /* r22: the feedback zone renders as a bottom sheet at EVERY viewport
+     height (not only <=420px) so mounting it can never push the answer
+     zone off-screen. The card reserves matching bottom space so content
+     behind the sheet stays reachable. pronunciation-recording renders
+     its own in-flow panel - no sheet, no reserve. */
+  const showFeedbackZone = hasAnswered && question.kind !== 'pronunciation-recording';
   const pictureWordId = feedbackPictureWordId(question);
   const pictureVisual = pictureWordId ? getWordVisual(pictureWordId) : undefined;
 
@@ -282,7 +288,9 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6"
+      className={`rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6 ${
+        showFeedbackZone ? 'pb-[calc(min(40vh,320px)+5.5rem)]' : ''
+      }`}
     >
       {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
           wrapper already provides that exact centering/padding, and this
@@ -309,12 +317,13 @@ export default function QuestionCard({
 
       {/* pronunciation-recording renders its own complete feedback panel
           (transcript + score + explanation) - see PronunciationRecordingQuestion. */}
-      {currentAnswer && question.kind !== 'pronunciation-recording' ? (
-        /* CR-73 QuestionFrame s5.2 + s6: the feedback ZONE is the panel
-           plus the Next control as one bottom-anchored unit. At <=420px
-           heights it detaches into a fixed bottom sheet so it can never
-           push the answer zone off-screen. */
-        <div className="sticky bottom-2 z-30 [@media(max-height:420px)]:fixed [@media(max-height:420px)]:inset-x-2 [@media(max-height:420px)]:bottom-0 [@media(max-height:420px)]:z-40 [@media(max-height:420px)]:rounded-t-2xl [@media(max-height:420px)]:bg-[#0d1b26] [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      {showFeedbackZone ? (
+        /* CR-73 QuestionFrame s5.2 + s6 (r22 amendment): the feedback
+           ZONE is the panel plus the Next control as one bottom-anchored
+           unit. It is a fixed bottom sheet at every height - never in
+           flow - so mounting it cannot push answers off-screen. Width
+           matches the BatchScreen mx-auto max-w-2xl column. */
+        <div className="fixed inset-x-2 bottom-0 z-40 mx-auto max-w-[40rem] rounded-t-2xl bg-[#0d1b26] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <FeedbackPanel
             kind={question.kind}
             isCorrect={currentAnswer.isCorrect}

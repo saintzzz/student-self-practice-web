@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getDueReviewItems } from '../lib/engagement/store';
 import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import { IconBook } from './icons';
 
 interface ReviewCardProps {
@@ -15,6 +16,7 @@ interface ReviewCardProps {
  */
 export default function ReviewCard({ gradeId, onStartReview }: ReviewCardProps) {
   const [dueCount] = useState(() => getDueReviewItems(gradeId).length);
+  const { density } = useViewer();
   if (dueCount === 0) return null;
 
   return (
@@ -32,6 +34,7 @@ export default function ReviewCard({ gradeId, onStartReview }: ReviewCardProps) 
           data-testid="start-review"
           onClick={onStartReview}
           className={`shrink-0 ${BTN_SECONDARY_NAVY} px-5 py-3 text-lg`}
+          style={{ minHeight: density.primaryMinH }}
         >
           Ôn ngay
         </button>

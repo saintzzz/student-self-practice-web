@@ -93,7 +93,7 @@ export const SCREEN_ENTER = 'animate-screen-enter motion-reduce:animate-none';
 /** The one gold primary-path button on a kid screen ("Chơi", "Nhận quà").
  *  76px tall, wide, unmistakable. Never render two of these per screen. */
 export const CTA_GOLD_XL =
-  'inline-flex min-h-[76px] min-w-[240px] items-center justify-center rounded-3xl border-b-4 border-amber-600 bg-amber-400 px-8 text-2xl font-extrabold text-amber-950 shadow-lg shadow-amber-400/30 transition hover:bg-amber-300 active:translate-y-0.5 active:border-b-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
+  'inline-flex min-h-[76px] min-w-[240px] items-center justify-center rounded-3xl border-b-4 border-amber-600 bg-amber-400 px-8 text-2xl font-extrabold text-amber-950 shadow-lg shadow-amber-400/30 transition hover:bg-amber-300 active:translate-y-0.5 motion-reduce:active:translate-y-0 active:border-b-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
 
 /** Secondary exploration entry - quiet, never competes with CTA_GOLD_XL. */
 export const DISCLOSURE_BTN =
@@ -104,9 +104,9 @@ export const DISCLOSURE_BTN =
  *  hands; G3-5 drops to 76px via TRAIL_TILE_SM. Focus ring sky-600
  *  (4.1:1 non-text on paper - sky-400 was 2.14:1, below the 3:1 floor). */
 export const TRAIL_TILE =
-  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const TRAIL_TILE_SM =
-  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 /** Expanded tile visual (contract "S" state): chevron rotates via
  *  markup swap; the tile keeps the selected wash + ring. */
 export const TRAIL_TILE_EXPANDED = 'bg-sky-100 ring-1 ring-sky-400';
@@ -121,16 +121,16 @@ export const HUB_PANEL =
  *  indigo is `action.audio` only - exam entries now read in the navy
  *  exam register, drill/advanced as paper secondary). */
 export const BTN_DRILL =
-  'min-h-[64px] rounded-2xl bg-sky-100 px-4 font-bold text-sky-800 transition hover:bg-sky-200 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+  'min-h-[64px] rounded-2xl bg-sky-100 px-4 font-bold text-sky-800 transition hover:bg-sky-200 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const BTN_EXAM =
-  'min-h-[64px] rounded-2xl border-b-4 border-[#0b1224] bg-[#162C55] px-4 font-bold text-white transition hover:bg-[#1d3a6b] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+  'min-h-[64px] rounded-2xl border-b-4 border-[#0b1224] bg-[#162C55] px-4 font-bold text-white transition hover:bg-[#1d3a6b] active:translate-y-0.5 motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const BTN_ADVANCED =
-  'min-h-[64px] rounded-2xl border-2 border-sky-300 bg-white/70 px-4 font-bold text-sky-800 transition hover:bg-sky-50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+  'min-h-[64px] rounded-2xl border-2 border-sky-300 bg-white/70 px-4 font-bold text-sky-800 transition hover:bg-sky-50 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 
 /** Strong action row on paper (sky-700 + white = 5.93:1) - FormPicker
  *  "start this form" rows. */
 export const BTN_PAPER_ACTION =
-  'min-h-[44px] rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 active:scale-[0.98] motion-reduce:transition-none';
+  'min-h-[44px] rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none';
 
 /** Gift-box reward pick: three identical boxes, child taps one. */
 export const GIFT_BOX =
@@ -155,7 +155,7 @@ export const PAPER_CHART = 'stroke-slate-600';
 
 /** Parent gate keypad key - 64px squares, light paper surface. */
 export const GATE_KEY =
-  'min-h-[64px] min-w-[64px] rounded-2xl border-b-4 border-sky-300 bg-white text-2xl font-bold text-slate-800 transition hover:bg-sky-50 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
+  'min-h-[64px] min-w-[64px] rounded-2xl border-b-4 border-sky-300 bg-white text-2xl font-bold text-slate-800 transition hover:bg-sky-50 active:translate-y-0.5 motion-reduce:active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
 export const BTN_PAPER_SECONDARY =
   'min-h-[64px] rounded-xl bg-sky-100 px-4 font-bold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none';
 export const COPY_BTN =
@@ -176,7 +176,7 @@ export const EXAM_HEADER_BRAND =
 /** exam.option + exam aux keys (T/F, extra-letter, `exam-tile-*`
  *  word-order tiles): non-gold exam.card fill, focus ring, 64px floor. */
 export const EXAM_OPTION =
-  'min-h-[64px] rounded-xl bg-[#16232e] px-4 py-3 font-bold text-white ring-1 ring-[#22303d] transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:translate-y-0.5 motion-reduce:transition-none';
+  'min-h-[64px] rounded-xl bg-[#16232e] px-4 py-3 font-bold text-white ring-1 ring-[#22303d] transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:translate-y-0.5 motion-reduce:active:translate-y-0 motion-reduce:transition-none';
 /** exam.selected state - apply alongside EXAM_OPTION when picked. */
 export const EXAM_SELECTED = 'ring-2 ring-orange-500 text-orange-200';
 /** exam.navStrip cell (question strip `exam-nav-*`): 48px floor. */
@@ -189,16 +189,16 @@ export const EXAM_NAV_ANSWERED = 'bg-emerald-500/15 text-emerald-300 ring-emeral
 /** action.audio (navy variant) - indigo = audio, interactive only.
  *  `exam-listen` and every Nghe-mẫu control maps here. */
 export const BTN_AUDIO =
-  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-indigo-500/20 px-4 py-2 font-bold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 active:scale-[0.98] motion-reduce:transition-none';
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-indigo-500/20 px-4 py-2 font-bold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none';
 
 /** action.secondary on navy surfaces (white/10 + sky-200 = 9.19:1).
  *  Used for all reclassified card buttons inside navy CARDs. */
 export const BTN_SECONDARY_NAVY =
-  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-[0.98] motion-reduce:transition-none';
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none';
 
 /** action.secondary on paper surfaces (sky-100 + sky-800 = 6.59:1). */
 export const BTN_SECONDARY_PAPER =
-  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-sky-100 px-4 py-2.5 font-bold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 active:scale-[0.98] motion-reduce:transition-none';
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-sky-100 px-4 py-2.5 font-bold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none';
 
 /** reward.earned - the only gold gradient allowed off `action.primary`
  *  paths (pet evolve congrats, quest claim). Reward, not navigation. */

@@ -1065,7 +1065,7 @@ function ArenaResult({
             type="button"
             data-testid="arena-exit"
             onClick={onExit}
-            className={`mt-6 w-full ${BTN_SECONDARY_NAVY}`}
+            className={`mt-6 w-full min-h-[64px] ${BTN_SECONDARY_NAVY}`}
           >
             Quay lại
           </button>
