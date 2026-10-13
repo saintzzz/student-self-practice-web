@@ -17,6 +17,7 @@ vi.mock('./supabase/client', () => ({
 }));
 
 import {
+  activityOwnerMatches,
   bindActivityOwner,
   clearActivityOwner,
   saveExamResult,
@@ -111,5 +112,30 @@ describe('savePlacementResult owner binding', () => {
     await savePlacementResult('grade-4', 12, 20);
     expect(insertSpy).not.toHaveBeenCalled();
     expect(rpcSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('activityOwnerMatches (r17 - arena submit guard)', () => {
+  it('is true while the bound owner still holds the session', async () => {
+    await bindActivityOwner();
+    expect(await activityOwnerMatches()).toBe(true);
+  });
+
+  it('is false after a mid-activity account switch', async () => {
+    await bindActivityOwner();
+    sessionRef.current = { user: { id: 'user-b' } };
+    expect(await activityOwnerMatches()).toBe(false);
+  });
+
+  it('is false when a guest-bound activity finds a later login', async () => {
+    sessionRef.current = null;
+    await bindActivityOwner();
+    sessionRef.current = { user: { id: 'user-b' } };
+    expect(await activityOwnerMatches()).toBe(false);
+  });
+
+  it('is true for unbound callers (legacy paths unaffected)', async () => {
+    sessionRef.current = { user: { id: 'user-b' } };
+    expect(await activityOwnerMatches()).toBe(true);
   });
 });

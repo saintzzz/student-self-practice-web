@@ -76,6 +76,13 @@ export interface StatsSlice {
    *  - lets the coach reason over the trailing week, not all time.
    *  Optional: blobs stored before CR-58 lack it; writers fill lazily. */
   skillDays?: Record<string, Record<string, Record<string, { correct: number; total: number }>>>;
+  /** r17: per-device attribution. Each bucket records only the work one
+   *  browser produced, so a sync merge can SUM devices instead of
+   *  max-ing shared aggregates (max silently dropped the smaller
+   *  side's independent progress). Blobs predating attribution are
+   *  folded into a shared 'legacy' bucket - max-merging that bucket
+   *  dedupes history both devices already synced. */
+  devices?: Record<string, StatsSlice>;
 }
 
 /** CR-28: one wrong question waiting to be re-asked. */
@@ -602,6 +609,46 @@ export function recordReviewOutcome(
 
 export const DAY_STATS_CAP = 30;
 
+/** r17: stable per-browser id used to attribute stat increments so
+ *  two devices' independent progress can sum instead of collide. */
+const DEVICE_ID_KEY = 'beheo-device-id';
+let cachedDeviceId: string | null = null;
+
+export function getDeviceId(): string {
+  if (cachedDeviceId) return cachedDeviceId;
+  const s = storage();
+  let id = s?.getItem(DEVICE_ID_KEY) ?? '';
+  if (!id) {
+    id =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `dev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    try {
+      s?.setItem(DEVICE_ID_KEY, id);
+    } catch {
+      // storage blocked - the id still pins this in-memory session
+    }
+  }
+  cachedDeviceId = id;
+  return id;
+}
+
+/** Mirror the three aggregate bumps into this device's own bucket. */
+function bumpDeviceStats(
+  stats: StatsSlice,
+  today: string,
+  gradeId: string,
+  skillKey: string,
+  correct: number,
+  total: number,
+): void {
+  const devices = stats.devices ?? (stats.devices = {});
+  const dev = devices[getDeviceId()] ?? (devices[getDeviceId()] = { days: {}, skills: {}, skillDays: {} });
+  bumpDay(dev, today, correct, total);
+  bumpSkill(dev, gradeId, skillKey, correct, total);
+  bumpSkillDay(dev, today, gradeId, skillKey, correct, total);
+}
+
 function statsSliceFor(state: EngagementState): StatsSlice {
   if (!state.stats) state.stats = { days: {}, skills: {}, skillDays: {} };
   if (!state.stats.skillDays) state.stats.skillDays = {};
@@ -662,6 +709,7 @@ export function recordSkillAnswer(
   bumpDay(stats, todayISO(now), correct ? 1 : 0, 1);
   bumpSkill(stats, gradeId, skillKey, correct ? 1 : 0, 1);
   bumpSkillDay(stats, todayISO(now), gradeId, skillKey, correct ? 1 : 0, 1);
+  bumpDeviceStats(stats, todayISO(now), gradeId, skillKey, correct ? 1 : 0, 1);
   evaluateBadges(state, new Set<string>());
   persist(state);
 }
@@ -680,6 +728,7 @@ export function recordSkillAnswers(
   bumpDay(stats, todayISO(now), correct, total);
   bumpSkill(stats, gradeId, skillKey, correct, total);
   bumpSkillDay(stats, todayISO(now), gradeId, skillKey, correct, total);
+  bumpDeviceStats(stats, todayISO(now), gradeId, skillKey, correct, total);
   evaluateBadges(state, new Set<string>());
   persist(state);
 }

@@ -13,6 +13,18 @@ type Client = SupabaseClient<any, any, any, any, any>;
 
 let clientPromise: Promise<Client> | null = null;
 
+/** r17: the e2e force-guest flag, gated to dev builds (see
+ *  isSupabaseConfigured). Exported pure so the prod-off behavior is
+ *  unit-testable without rebuilding. */
+export function forceGuestEnabled(devMode: boolean): boolean {
+  if (!devMode) return false;
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('beheo-force-guest') === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function isSupabaseConfigured(): boolean {
   // AC-A6: vitest loads .env.local too - force the env-absent guest path
   // under test so unit tests never reach the network.
@@ -22,13 +34,11 @@ export function isSupabaseConfigured(): boolean {
   // load made getSession stall past every sane timeout). RBAC is
   // enforced server-side, so the flag can only ever REDUCE a client to
   // the free guest experience - it cannot grant anything.
-  try {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('beheo-force-guest') === '1') {
-      return false;
-    }
-  } catch {
-    // storage blocked -> fall through to the env check
-  }
+  // r17: dev builds only. The flag also bypasses the guest trial lock
+  // (authMode 'off' is not 'guest'), so honoring it in production would
+  // hand any visitor unrestricted bundled practice. E2E runs `npm run
+  // dev`, where import.meta.env.DEV is true.
+  if (forceGuestEnabled(import.meta.env.DEV)) return false;
   return Boolean(
     import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   );

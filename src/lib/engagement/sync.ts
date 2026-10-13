@@ -14,6 +14,7 @@ import {
   type EngagementState,
   type PetSpecies,
   type ReviewItem,
+  type StatsSlice,
 } from './store';
 
 /**
@@ -129,60 +130,16 @@ export function mergeEngagement(
     .sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0))
     .slice(-REVIEW_MASTERED_CAP);
 
-  const days: Record<string, { correct: number; total: number }> = {};
-  for (const [d, c] of Object.entries(remote.stats?.days ?? {})) days[d] = { ...c };
-  for (const [d, c] of Object.entries(local.stats?.days ?? {})) {
-    const r = days[d];
-    days[d] = r
-      ? { correct: Math.max(c.correct, r.correct), total: Math.max(c.total, r.total) }
-      : { ...c };
-  }
-  /* m1: re-apply the day cap - two 30-day maps can union to 60. */
-  const dayKeys = Object.keys(days).sort();
-  for (const k of dayKeys.slice(0, Math.max(0, dayKeys.length - DAY_STATS_CAP))) delete days[k];
-
-  const skills: NonNullable<NonNullable<EngagementState['stats']>['skills']> = {};
-  for (const [gid, perSkill] of Object.entries(remote.stats?.skills ?? {})) {
-    skills[gid] = { ...perSkill };
-  }
-  for (const [gid, perSkill] of Object.entries(local.stats?.skills ?? {})) {
-    const mergedSkill: Record<string, { correct: number; total: number }> = {
-      ...(skills[gid] ?? {}),
-    };
-    for (const [sk, c] of Object.entries(perSkill)) {
-      const r = mergedSkill[sk];
-      mergedSkill[sk] = r
-        ? { correct: Math.max(c.correct, r.correct), total: Math.max(c.total, r.total) }
-        : c;
-    }
-    skills[gid] = mergedSkill;
-  }
-
-  // CR-58: skillDays = date -> grade -> skill -> counters. Remote first,
-  // then local - max per counter (same rule as skills), 30-day cap.
-  const skillDays: NonNullable<NonNullable<EngagementState['stats']>['skillDays']> = {};
-  for (const [dk, dayEntry] of Object.entries(remote.stats?.skillDays ?? {})) {
-    skillDays[dk] = { ...dayEntry };
-    for (const [gid, perSkill] of Object.entries(dayEntry)) {
-      skillDays[dk]![gid] = { ...perSkill };
-    }
-  }
-  for (const [dk, dayEntry] of Object.entries(local.stats?.skillDays ?? {})) {
-    const mergedDay = skillDays[dk] ?? {};
-    for (const [gid, perSkill] of Object.entries(dayEntry)) {
-      const mergedSkill = mergedDay[gid] ?? {};
-      for (const [sk, c] of Object.entries(perSkill)) {
-        const r = mergedSkill[sk];
-        mergedSkill[sk] = r
-          ? { correct: Math.max(c.correct, r.correct), total: Math.max(c.total, r.total) }
-          : c;
-      }
-      mergedDay[gid] = mergedSkill;
-    }
-    skillDays[dk] = mergedDay;
-  }
-  const skillDayKeys = Object.keys(skillDays).sort();
-  for (const k of skillDayKeys.slice(0, Math.max(0, skillDayKeys.length - DAY_STATS_CAP))) delete skillDays[k];
+  /* r17 sync-merge-lossy: stat counters merge PER DEVICE, then sum.
+     The old aggregate max-merge lost independent progress - two
+     devices at 100 answers adding 10 and 20 merged to 120, not 130.
+     Each stats.devices[id] bucket holds only what that browser
+     recorded, so the merge is: per-bucket max (monotonic, idempotent)
+     -> sum across buckets. States without attribution (pre-r17 blobs)
+     claim their whole aggregate as the shared 'legacy' bucket; max-
+     merging that bucket dedupes history both sides already synced. */
+  const mergedDevices = mergeDeviceBuckets(local.stats, remote.stats);
+  const { days, skills, skillDays } = sumDeviceBuckets(mergedDevices);
 
   const localXp = local.pet?.xp ?? 0;
   const remoteXp = remote.pet?.xp ?? 0;
@@ -218,12 +175,145 @@ export function mergeEngagement(
     review: Object.keys(review).length ? review : undefined,
     stats:
       Object.keys(days).length || Object.keys(skills).length || Object.keys(skillDays).length
-        ? { days, skills, skillDays }
+        ? {
+            days,
+            skills,
+            skillDays,
+            devices: Object.keys(mergedDevices).length ? mergedDevices : undefined,
+          }
         : undefined,
     pet,
     badgeStats,
     reviewMastered: masteredEntries.length ? Object.fromEntries(masteredEntries) : undefined,
   };
+}
+
+// ---- r17 per-device counter merge ----------------------------------------
+
+const LEGACY_DEVICE = 'legacy';
+/** Bounds the devices map - a browser that churns device ids (cleared
+ *  storage) cannot grow the synced blob forever. Excess buckets fold
+ *  into 'legacy' via the same monotonic max, so nothing is lost. */
+const MAX_DEVICE_BUCKETS = 10;
+
+type Counter = { correct: number; total: number };
+
+const hasCounters = (s: StatsSlice): boolean =>
+  Object.keys(s.days ?? {}).length > 0 ||
+  Object.keys(s.skills ?? {}).length > 0 ||
+  Object.keys(s.skillDays ?? {}).length > 0;
+
+const mergeCounter = (a?: Counter, b?: Counter): Counter => ({
+  correct: Math.max(a?.correct ?? 0, b?.correct ?? 0),
+  total: Math.max(a?.total ?? 0, b?.total ?? 0),
+});
+
+/** Max-merge one device bucket - its counters are monotonic (a device
+ *  only ever adds), so element-wise max is idempotent and loses
+ *  nothing the bucket ever saw. */
+function mergeDeviceSlice(a?: StatsSlice, b?: StatsSlice): StatsSlice {
+  const out: StatsSlice = { days: {}, skills: {}, skillDays: {} };
+  for (const src of [a, b]) {
+    for (const [d, c] of Object.entries(src?.days ?? {})) {
+      out.days[d] = mergeCounter(out.days[d], c);
+    }
+    for (const [gid, perSkill] of Object.entries(src?.skills ?? {})) {
+      const grade = out.skills[gid] ?? (out.skills[gid] = {});
+      for (const [sk, c] of Object.entries(perSkill)) {
+        grade[sk] = mergeCounter(grade[sk], c);
+      }
+    }
+    for (const [dk, dayEntry] of Object.entries(src?.skillDays ?? {})) {
+      const day = out.skillDays![dk] ?? (out.skillDays![dk] = {});
+      for (const [gid, perSkill] of Object.entries(dayEntry)) {
+        const grade = day[gid] ?? (day[gid] = {});
+        for (const [sk, c] of Object.entries(perSkill)) {
+          grade[sk] = mergeCounter(grade[sk], c);
+        }
+      }
+    }
+  }
+  /* Per-bucket day caps keep a device's oldest days from resurrecting
+     through the summed aggregate after the aggregate cap drops them. */
+  for (const [map, keys] of [
+    [out.days, Object.keys(out.days).sort()],
+    [out.skillDays!, Object.keys(out.skillDays!).sort()],
+  ] as const) {
+    for (const k of keys.slice(0, Math.max(0, keys.length - DAY_STATS_CAP))) {
+      delete (map as Record<string, unknown>)[k];
+    }
+  }
+  return out;
+}
+
+/** Attribute a snapshot's counters to device buckets. Blobs written
+ *  before attribution own a synthetic 'legacy' bucket built from their
+ *  aggregate - every such device claims the same bucket id, so shared
+ *  history max-dedupes instead of double counting. */
+function deviceBucketsOf(stats: EngagementState['stats'] | undefined): Record<string, StatsSlice> {
+  if (!stats) return {};
+  if (stats.devices && Object.keys(stats.devices).length) return stats.devices;
+  const { devices: _dropped, ...rest } = stats;
+  return hasCounters(rest) ? { [LEGACY_DEVICE]: rest } : {};
+}
+
+function mergeDeviceBuckets(
+  localStats: EngagementState['stats'] | undefined,
+  remoteStats: EngagementState['stats'] | undefined,
+): Record<string, StatsSlice> {
+  const local = deviceBucketsOf(localStats);
+  const remote = deviceBucketsOf(remoteStats);
+  const merged: Record<string, StatsSlice> = {};
+  for (const id of new Set([...Object.keys(local), ...Object.keys(remote)])) {
+    merged[id] = mergeDeviceSlice(local[id], remote[id]);
+  }
+  const ids = Object.keys(merged).filter((id) => id !== LEGACY_DEVICE).sort();
+  for (const id of ids.slice(0, Math.max(0, ids.length - (MAX_DEVICE_BUCKETS - 1)))) {
+    merged[LEGACY_DEVICE] = mergeDeviceSlice(merged[LEGACY_DEVICE], merged[id]);
+    delete merged[id];
+  }
+  return merged;
+}
+
+/** Rebuild the aggregate counters: sum across device buckets, then
+ *  re-apply the 30-day caps on the combined maps. */
+function sumDeviceBuckets(devices: Record<string, StatsSlice>): {
+  days: Record<string, Counter>;
+  skills: Record<string, Record<string, Counter>>;
+  skillDays: NonNullable<StatsSlice['skillDays']>;
+} {
+  const days: Record<string, Counter> = {};
+  const skills: Record<string, Record<string, Counter>> = {};
+  const skillDays: NonNullable<StatsSlice['skillDays']> = {};
+  for (const slice of Object.values(devices)) {
+    for (const [d, c] of Object.entries(slice.days ?? {})) {
+      const r = days[d];
+      days[d] = { correct: (r?.correct ?? 0) + c.correct, total: (r?.total ?? 0) + c.total };
+    }
+    for (const [gid, perSkill] of Object.entries(slice.skills ?? {})) {
+      const grade = skills[gid] ?? (skills[gid] = {});
+      for (const [sk, c] of Object.entries(perSkill)) {
+        const r = grade[sk];
+        grade[sk] = { correct: (r?.correct ?? 0) + c.correct, total: (r?.total ?? 0) + c.total };
+      }
+    }
+    for (const [dk, dayEntry] of Object.entries(slice.skillDays ?? {})) {
+      const day = skillDays[dk] ?? (skillDays[dk] = {});
+      for (const [gid, perSkill] of Object.entries(dayEntry)) {
+        const grade = day[gid] ?? (day[gid] = {});
+        for (const [sk, c] of Object.entries(perSkill)) {
+          const r = grade[sk];
+          grade[sk] = { correct: (r?.correct ?? 0) + c.correct, total: (r?.total ?? 0) + c.total };
+        }
+      }
+    }
+  }
+  for (const k of Object.keys(days).sort().slice(0, Math.max(0, Object.keys(days).length - DAY_STATS_CAP))) {
+    delete days[k];
+  }
+  const sdKeys = Object.keys(skillDays).sort();
+  for (const k of sdKeys.slice(0, Math.max(0, sdKeys.length - DAY_STATS_CAP))) delete skillDays[k];
+  return { days, skills, skillDays };
 }
 
 /** Same-date daily quests merge field-wise; different dates keep the
@@ -254,6 +344,48 @@ const strArr = (v: unknown): string[] =>
 const counter = (v: unknown): { correct: number; total: number } | null =>
   isObj(v) ? { correct: num(v.correct), total: num(v.total) } : null;
 const PET_SPECIES: readonly string[] = ['cat', 'dragon', 'bunny'];
+
+/** Coerce an unknown stats object into a safe StatsSlice - shared by
+ *  the aggregate and each r17 device bucket. */
+function sanitizeStatsSlice(raw: Record<string, unknown>): StatsSlice | null {
+  const days: Record<string, { correct: number; total: number }> = {};
+  if (isObj(raw.days)) {
+    for (const [d, c] of Object.entries(raw.days)) {
+      const cc = counter(c);
+      if (cc) days[d] = cc;
+    }
+  }
+  const skills: Record<string, Record<string, { correct: number; total: number }>> = {};
+  if (isObj(raw.skills)) {
+    for (const [gid, perSkill] of Object.entries(raw.skills)) {
+      if (!isObj(perSkill)) continue;
+      const inner: Record<string, { correct: number; total: number }> = {};
+      for (const [sk, c] of Object.entries(perSkill)) {
+        const cc = counter(c);
+        if (cc) inner[sk] = cc;
+      }
+      if (Object.keys(inner).length) skills[gid] = inner;
+    }
+  }
+  const skillDays: NonNullable<StatsSlice['skillDays']> = {};
+  if (isObj(raw.skillDays)) {
+    for (const [dk, dayEntry] of Object.entries(raw.skillDays)) {
+      if (!isObj(dayEntry)) continue;
+      const inner: Record<string, Record<string, { correct: number; total: number }>> = {};
+      for (const [gid, perSkill] of Object.entries(dayEntry)) {
+        if (!isObj(perSkill)) continue;
+        const skills2: Record<string, { correct: number; total: number }> = {};
+        for (const [sk, c] of Object.entries(perSkill)) {
+          const cc = counter(c);
+          if (cc) skills2[sk] = cc;
+        }
+        if (Object.keys(skills2).length) inner[gid] = skills2;
+      }
+      if (Object.keys(inner).length) skillDays[dk] = inner;
+    }
+  }
+  return { days, skills, skillDays };
+}
 
 /** Coerce an unknown remote payload into a safe EngagementState - every
  *  field is type-checked so a corrupt row can never crash the merge or
@@ -313,44 +445,20 @@ function sanitizeRemote(raw: unknown): EngagementState {
     if (Object.keys(review).length) out.review = review;
   }
   if (isObj(raw.stats)) {
-    const days: Record<string, { correct: number; total: number }> = {};
-    if (isObj(raw.stats.days)) {
-      for (const [d, c] of Object.entries(raw.stats.days)) {
-        const cc = counter(c);
-        if (cc) days[d] = cc;
-      }
-    }
-    const skills: Record<string, Record<string, { correct: number; total: number }>> = {};
-    if (isObj(raw.stats.skills)) {
-      for (const [gid, perSkill] of Object.entries(raw.stats.skills)) {
-        if (!isObj(perSkill)) continue;
-        const inner: Record<string, { correct: number; total: number }> = {};
-        for (const [sk, c] of Object.entries(perSkill)) {
-          const cc = counter(c);
-          if (cc) inner[sk] = cc;
+    const slice = sanitizeStatsSlice(raw.stats);
+    if (slice && hasCounters(slice)) {
+      /* r17: sanitize per-device buckets too - an unsanitized bucket
+         could poison the merged aggregate. */
+      const devices: Record<string, StatsSlice> = {};
+      if (isObj(raw.stats.devices)) {
+        for (const [id, dev] of Object.entries(raw.stats.devices)) {
+          if (!isObj(dev)) continue;
+          const ds = sanitizeStatsSlice(dev);
+          if (ds && hasCounters(ds)) devices[id] = ds;
         }
-        if (Object.keys(inner).length) skills[gid] = inner;
       }
-    }
-    const skillDays: NonNullable<NonNullable<EngagementState['stats']>['skillDays']> = {};
-    if (isObj(raw.stats.skillDays)) {
-      for (const [dk, dayEntry] of Object.entries(raw.stats.skillDays)) {
-        if (!isObj(dayEntry)) continue;
-        const inner: Record<string, Record<string, { correct: number; total: number }>> = {};
-        for (const [gid, perSkill] of Object.entries(dayEntry)) {
-          if (!isObj(perSkill)) continue;
-          const skills2: Record<string, { correct: number; total: number }> = {};
-          for (const [sk, c] of Object.entries(perSkill)) {
-            const cc = counter(c);
-            if (cc) skills2[sk] = cc;
-          }
-          if (Object.keys(skills2).length) inner[gid] = skills2;
-        }
-        if (Object.keys(inner).length) skillDays[dk] = inner;
-      }
-    }
-    if (Object.keys(days).length || Object.keys(skills).length || Object.keys(skillDays).length) {
-      out.stats = { days, skills, skillDays };
+      out.stats = { ...slice };
+      if (Object.keys(devices).length) out.stats.devices = devices;
     }
   }
   if (isObj(raw.pet)) {
@@ -382,28 +490,59 @@ function sanitizeRemote(raw: unknown): EngagementState {
 
 // ---- network -------------------------------------------------------------
 
-async function fetchRemote(accountId: string): Promise<EngagementState | null | typeof FETCH_FAILED> {
+interface RemoteRow {
+  state: EngagementState | null;
+  /** Row version token for the r17 compare-and-swap push - the trigger
+   *  stamps it on every write, so an unchanged value means nobody else
+   *  wrote since our pull. */
+  updatedAt: string | null;
+}
+
+async function fetchRemoteRow(accountId: string): Promise<RemoteRow | typeof FETCH_FAILED> {
   try {
     const { data, error } = await (await getSupabase())
       .from(TABLE)
-      .select('state')
+      .select('state, updated_at')
       .eq('account_id', accountId)
       .maybeSingle();
     if (error) throw error;
-    return data?.state ? sanitizeRemote(data.state) : null;
+    return {
+      state: data?.state ? sanitizeRemote(data.state) : null,
+      updatedAt: (data?.updated_at as string | undefined) ?? null,
+    };
   } catch {
     return FETCH_FAILED;
   }
 }
 
-async function upsertState(accountId: string, state: EngagementState): Promise<boolean> {
+/** r17 atomic-merge: write only if nobody wrote since our pull
+ *  (expectedUpdatedAt matches the row's trigger-stamped updated_at).
+ *  Insert path races a parallel insert -> unique violation = conflict.
+ *  'conflict' means the caller must re-pull + re-merge, not retry the
+ *  same payload. */
+async function upsertStateCAS(
+  accountId: string,
+  state: EngagementState,
+  expectedUpdatedAt: string | null,
+): Promise<'ok' | 'conflict' | 'failed'> {
   try {
-    const { error } = await (await getSupabase())
+    const client = await getSupabase();
+    if (expectedUpdatedAt === null) {
+      const { error } = await client.from(TABLE).insert({ account_id: accountId, state });
+      if (!error) return 'ok';
+      return error.code === '23505' ? 'conflict' : 'failed';
+    }
+    // cas-ok: version-token CAS - the .eq('updated_at') predicate IS the transition guard (see fn doc).
+    const { data, error } = await client
       .from(TABLE)
-      .upsert({ account_id: accountId, state });
-    return !error;
+      .update({ state })
+      .eq('account_id', accountId)
+      .eq('updated_at', expectedUpdatedAt)
+      .select('account_id');
+    if (error) return 'failed';
+    return data && data.length > 0 ? 'ok' : 'conflict';
   } catch {
-    return false;
+    return 'failed';
   }
 }
 
@@ -425,6 +564,13 @@ function writeStateSilently(state: EngagementState): void {
 /** One pull -> merge -> push cycle. Reentrant-safe: a second caller
  *  while a cycle is in flight shares the current run. Never rejects -
  *  failures set pushFailed so the next mutation retries. */
+/** r17: CAS rounds per cycle. A second device pushing between our
+ *  pull and push flips updated_at; the conditional write then returns
+ *  'conflict' and we re-pull + re-merge instead of clobbering the
+ *  other device's write. Bounded - a device losing every race waits
+ *  for the next mutation rather than live-locking. */
+const MAX_CAS_ATTEMPTS = 3;
+
 function runCycle(): Promise<void> {
   if (cyclePromise) return cyclePromise;
   cyclePromise = (async () => {
@@ -432,33 +578,44 @@ function runCycle(): Promise<void> {
       const accountId = boundAccountId;
       if (!accountId) return;
       dirty = false;
-      const remote = await fetchRemote(accountId);
-      /* M3: the account may have changed or unbound during the await -
-         never write a stale account's data into the new binding. */
-      if (boundAccountId !== accountId) return;
-      if (remote === FETCH_FAILED) {
-        /* Never blind-overwrite a row we couldn't read (B2). Wait for
-           the next mutation instead of polling on a timer. */
-        pullState = 'failed';
-        pushFailed = true;
-        return;
-      }
-      if (remote) {
-        const merged = mergeEngagement(getState(), remote);
-        if (JSON.stringify(merged) !== JSON.stringify(getState())) {
-          writeStateSilently(merged);
-        }
-      }
-      if (boundAccountId !== accountId) return;
-      const mergedJson = JSON.stringify(getState());
-      if (mergedJson !== lastPushedJson) {
-        const ok = await upsertState(accountId, getState());
+      let settled = false;
+      for (let attempt = 0; attempt < MAX_CAS_ATTEMPTS && !settled; attempt++) {
+        const row = await fetchRemoteRow(accountId);
+        /* M3: the account may have changed or unbound during the await -
+           never write a stale account's data into the new binding. */
         if (boundAccountId !== accountId) return;
-        if (!ok) {
+        if (row === FETCH_FAILED) {
+          /* Never blind-overwrite a row we couldn't read (B2). Wait for
+             the next mutation instead of polling on a timer. */
+          pullState = 'failed';
+          pushFailed = true;
+          return;
+        }
+        if (row.state) {
+          const merged = mergeEngagement(getState(), row.state);
+          if (JSON.stringify(merged) !== JSON.stringify(getState())) {
+            writeStateSilently(merged);
+          }
+        }
+        if (boundAccountId !== accountId) return;
+        const mergedJson = JSON.stringify(getState());
+        if (mergedJson === lastPushedJson) {
+          settled = true;
+          break;
+        }
+        const res = await upsertStateCAS(accountId, getState(), row.updatedAt);
+        if (boundAccountId !== accountId) return;
+        if (res === 'conflict') continue;
+        if (res === 'failed') {
           pushFailed = true;
           return;
         }
         lastPushedJson = mergedJson;
+        settled = true;
+      }
+      if (!settled) {
+        pushFailed = true;
+        return;
       }
       pushFailed = false;
       pullState = 'done';
@@ -527,13 +684,14 @@ export async function bindEngagement(accountId: string): Promise<void> {
     return;
   }
   try {
-    const remote = await fetchRemote(accountId);
+    const row = await fetchRemoteRow(accountId);
     if (boundAccountId !== accountId) return; // M3
-    if (remote === FETCH_FAILED) {
+    if (row === FETCH_FAILED) {
       pullState = 'failed';
       pushFailed = true;
       return;
     }
+    const remote = row.state;
     if (remote) {
       const merged = mergeEngagement(getState(), remote);
       if (JSON.stringify(merged) !== JSON.stringify(getState())) {
@@ -542,12 +700,14 @@ export async function bindEngagement(accountId: string): Promise<void> {
     }
     pullState = 'done';
     /* Push merged state back so the server reflects the union even when
-       nothing local changed (remote JSON order differs from merged). */
+       nothing local changed (remote JSON order differs from merged).
+       r17: conditional on the version we pulled - a parallel push from
+       another device means conflict, and the next mutation re-merges. */
     const mergedJson = JSON.stringify(getState());
     if (remote === null || mergedJson !== JSON.stringify(remote)) {
-      const ok = await upsertState(accountId, getState());
+      const res = await upsertStateCAS(accountId, getState(), row.updatedAt);
       if (boundAccountId !== accountId) return;
-      if (!ok) {
+      if (res !== 'ok') {
         pushFailed = true;
         return;
       }

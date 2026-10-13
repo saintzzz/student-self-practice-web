@@ -13,3 +13,11 @@ function WordOrderView({ question, onAnswer }) {
   }
   return picked;
 }
+
+// r17 good: the duel belongs to the activity-start owner - a mid-run
+// account switch must not post the challenge under the new identity.
+async function settle(arena) {
+  if (!(await activityOwnerMatches())) return null;
+  const id = await arenaCreate(arena.seed, 'grade-4', 'english', 10, 1000);
+  return id;
+}

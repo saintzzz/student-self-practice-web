@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   checkStreakStickers,
+  getDeviceId,
   getOwnerAccountId,
   getState,
   markOwnerAccountId,
   parkOwnerBlob,
   recordBatchResult,
   recordRoundResult,
+  recordSkillAnswer,
   resetForTests,
   restoreParkedBlob,
   starsForScore,
@@ -159,5 +161,27 @@ describe('park/restore owner blob (external-review r5 guest-leak)', () => {
     recordRoundResult('grade-1', 1, 50, 100); // guest, no owner marker
     parkOwnerBlob();
     expect(getState().totalStars).toBe(1); // guest state untouched
+  });
+});
+
+describe('r17 per-device stat attribution', () => {
+  it('recordSkillAnswer mirrors counters into this device bucket', () => {
+    recordSkillAnswer('grade-3', 'vocab', true);
+    const devices = getState().stats?.devices ?? {};
+    const mine = devices[getDeviceId()];
+    expect(mine).toBeDefined();
+    const total = Object.values(mine!.days).reduce((n, d) => n + d.total, 0);
+    expect(total).toBe(1);
+    expect(mine!.skills['grade-3'].vocab).toEqual({ correct: 1, total: 1 });
+  });
+
+  it('the device bucket only holds this device\'s own work', () => {
+    recordSkillAnswer('grade-3', 'vocab', true);
+    recordSkillAnswer('grade-3', 'vocab', false);
+    const devices = getState().stats?.devices ?? {};
+    // Exactly one bucket, ours - nobody else's counters leak in.
+    expect(Object.keys(devices)).toEqual([getDeviceId()]);
+    const mine = devices[getDeviceId()]!;
+    expect(mine.skills['grade-3'].vocab).toEqual({ correct: 1, total: 2 });
   });
 });

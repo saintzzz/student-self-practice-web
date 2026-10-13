@@ -2,14 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import ExamScreen from './ExamScreen';
 import { getDailyQuests, getDueReviewItems, getReportSnapshot, resetForTests } from '../lib/engagement/store';
-import { saveExamResult } from '../lib/practiceResults';
-import { botGhost } from '../lib/arena';
+import { saveExamResult, activityOwnerMatches } from '../lib/practiceResults';
+import { arenaAccept, arenaCreate, botGhost } from '../lib/arena';
+import { waitFor } from '@testing-library/react';
 import type { GrammarMcqQuestion } from '../types/exam';
 
 // CR-34 review: an arena duel is NOT practice - it must not feed quests,
 // skill stats, the review queue, or the weekly leaderboard.
 
-vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn(), bindActivityOwner: vi.fn() }));
+vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn(), bindActivityOwner: vi.fn(), activityOwnerMatches: vi.fn(async () => true) }));
 
 vi.mock('../lib/arena', async () => {
   const actual = await vi.importActual('../lib/arena');
@@ -57,6 +58,9 @@ beforeEach(() => {
   vi.mocked(saveExamResult).mockReset();
   vi.mocked(botGhost).mockReset();
   vi.mocked(botGhost).mockReturnValue({ name: 'Test Bot', score: 999, timeMs: 1 });
+  vi.mocked(arenaCreate).mockReset();
+  vi.mocked(arenaAccept).mockReset();
+  vi.mocked(activityOwnerMatches).mockResolvedValue(true);
 });
 
 function playBoth(correct: boolean) {
@@ -112,6 +116,30 @@ describe('ExamScreen arena mode - engagement isolation', () => {
     playBoth(true);
     expect(screen.getByTestId('arena-verdict').textContent).toContain('Hòa nhau');
     vi.restoreAllMocks();
+  });
+
+  it('r17: an account switch during the run never posts the challenge', async () => {
+    /* activityOwnerMatches is the r16 owner binding surfaced to arena
+       paths - a switch between exam start and settle must not create
+       or accept the duel under the new identity. */
+    vi.mocked(activityOwnerMatches).mockResolvedValue(false);
+    render(
+      <ExamScreen
+        programId="english"
+        gradeId="grade-4"
+        gradeLabel="Lớp 4"
+        mode="arena"
+        arena={{ kind: 'create', seed: 'arena-switch' }}
+        onExit={vi.fn()}
+      />,
+    );
+    playBoth(false);
+
+    await waitFor(() =>
+      expect(screen.getByText(/Chưa lưu được thử thách/)).toBeInTheDocument(),
+    );
+    expect(arenaCreate).not.toHaveBeenCalled();
+    expect(arenaAccept).not.toHaveBeenCalled();
   });
 
   it('a losing duel renders the loss verdict', () => {

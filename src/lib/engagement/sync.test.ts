@@ -31,14 +31,20 @@ const item = (id: string, stage: 0 | 1 | 2 | 3, updatedAtISO: string) => ({
 const lastUpsert = (remote: ReturnType<typeof mockRemote>) =>
   remote.upsertCalls[remote.upsertCalls.length - 1];
 
-/** In-memory remote table shared by every mocked device client. */
+/** In-memory remote table shared by every mocked device client.
+ *  r17: rows carry an updated_at version token; writes go through
+ *  insert (23505 on duplicate) or a conditional update. */
 function mockRemote(rows: Record<string, unknown> = {}) {
-  const store = new Map<string, unknown>(Object.entries(rows));
+  let version = 0;
+  const store = new Map<string, { state: unknown; updated_at: string }>(
+    Object.entries(rows).map(([k, v]) => [k, { state: v, updated_at: `v${version}` }]),
+  );
   const upsertCalls: { account_id: string; state: unknown }[] = [];
   let pullDelayMs = 0;
   let pullFails = false;
   let upsertFails = false;
   let pullCount = 0;
+  let onUpdate: (() => void) | null = null;
   const client = {
     from: () => ({
       select: () => ({
@@ -48,16 +54,32 @@ function mockRemote(rows: Record<string, unknown> = {}) {
             if (pullDelayMs) await new Promise((r) => setTimeout(r, pullDelayMs));
             if (pullFails) return { data: null, error: { message: 'down' } };
             const row = store.get(v);
-            return { data: row ? { state: row } : null, error: null };
+            return { data: row ?? null, error: null };
           },
         }),
       }),
-      upsert: async (row: { account_id: string; state: unknown }) => {
+      insert: async (row: { account_id: string; state: unknown }) => {
         if (upsertFails) return { error: { message: 'down' } };
+        if (store.has(row.account_id)) return { error: { code: '23505', message: 'duplicate' } };
         upsertCalls.push(row);
-        store.set(row.account_id, row.state);
+        store.set(row.account_id, { state: row.state, updated_at: `v${++version}` });
         return { error: null };
       },
+      update: (vals: { state: unknown }) => ({
+        eq: (_k: string, v: string) => ({
+          eq: (_k2: string, expected: string) => ({
+            select: async () => {
+              if (upsertFails) return { data: null, error: { message: 'down' } };
+              onUpdate?.();
+              const row = store.get(v);
+              if (!row || row.updated_at !== expected) return { data: [], error: null };
+              upsertCalls.push({ account_id: v, state: vals.state });
+              store.set(v, { state: vals.state, updated_at: `v${++version}` });
+              return { data: [{ account_id: v }], error: null };
+            },
+          }),
+        }),
+      }),
     }),
   };
   return {
@@ -68,6 +90,9 @@ function mockRemote(rows: Record<string, unknown> = {}) {
     setPullFails: (f: boolean) => (pullFails = f),
     setUpsertFails: (f: boolean) => (upsertFails = f),
     getPullCount: () => pullCount,
+    setOnUpdate: (fn: (() => void) | null) => (onUpdate = fn),
+    writeRow: (accountId: string, state: unknown) =>
+      store.set(accountId, { state, updated_at: `v${++version}` }),
   };
 }
 
@@ -225,7 +250,7 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
       expect(JSON.stringify(call.state)).not.toContain('a-only');
       expect((call.state as EngagementState).totalStars).toBeLessThanOrEqual(5);
     }
-    expect(remote.store.get('acct-b')).toMatchObject({ totalStars: 5 });
+    expect(remote.store.get('acct-b')?.state).toMatchObject({ totalStars: 5 });
   });
 
   it('B1-offline: the foreign blob is discarded even when the pull fails', async () => {
@@ -245,7 +270,7 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
     for (const call of remote.upsertCalls) {
       expect(JSON.stringify(call.state)).not.toContain('a-only');
     }
-    expect((remote.store.get('acct-b') as EngagementState).totalStars).toBeLessThanOrEqual(1);
+    expect((remote.store.get('acct-b')?.state as EngagementState).totalStars).toBeLessThanOrEqual(1);
   });
 
   it('guest-owned state merges upward on first login', async () => {
@@ -257,7 +282,7 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
     await bindEngagement('acct-new');
 
     expect(getState().totalStars).toBe(7);
-    expect(remote.store.get('acct-new')).toMatchObject({ totalStars: 7 });
+    expect(remote.store.get('acct-new')?.state).toMatchObject({ totalStars: 7 });
   });
 
   it('B3: a push pulls first, so a second device merges instead of overwriting', async () => {
@@ -268,13 +293,13 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
     await bindEngagement('acct-1');
 
     /* Device 2 earns stars and pushes while device 1 sits idle. */
-    remote.store.set('acct-1', { ...base, totalStars: 40 });
+    remote.writeRow('acct-1', { ...base, totalStars: 40 });
     /* Device 1 mutates -> cycle pulls, merges to 40, pushes 40. */
     writeState({ ...base, totalStars: 11 });
     await flushEngagement();
 
     expect(getState().totalStars).toBe(40);
-    expect((remote.store.get('acct-1') as EngagementState).totalStars).toBe(40);
+    expect((remote.store.get('acct-1')?.state as EngagementState).totalStars).toBe(40);
   });
 
   it('B2: no push can land before the initial pull resolves', async () => {
@@ -293,7 +318,7 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
     for (const call of remote.upsertCalls) {
       expect((call.state as EngagementState).totalStars).toBe(50);
     }
-    expect(remote.store.get('acct-1')).toMatchObject({ totalStars: 50 });
+    expect(remote.store.get('acct-1')?.state).toMatchObject({ totalStars: 50 });
   });
 
   it('M3: a late pull cannot land after the binding changed', async () => {
@@ -313,7 +338,7 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
 
     /* A's 100 stars must not have merged into the active binding. */
     expect(getState().totalStars).toBeLessThan(100);
-    expect((remote.store.get('acct-b') as EngagementState).totalStars).toBe(5);
+    expect((remote.store.get('acct-b')?.state as EngagementState).totalStars).toBe(5);
   });
 
   it('m3: a corrupt remote row is sanitized instead of crashing sync', async () => {
@@ -368,12 +393,12 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
     remote.setUpsertFails(true);
     writeState({ ...base, totalStars: 20 });
     expect(await flushEngagement()).toBe(false); // reports the failure
-    expect(remote.store.get('acct-1')).toMatchObject({ totalStars: 9 });
+    expect(remote.store.get('acct-1')?.state).toMatchObject({ totalStars: 9 });
 
     remote.setUpsertFails(false);
     writeState({ ...base, totalStars: 21 });
     expect(await flushEngagement()).toBe(true);
-    expect(remote.store.get('acct-1')).toMatchObject({ totalStars: 21 });
+    expect(remote.store.get('acct-1')?.state).toMatchObject({ totalStars: 21 });
   });
 
   it('unbound flush reports not-synced - sign-out must keep the blob', async () => {
@@ -388,5 +413,133 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
 
     expect(await flushEngagement()).toBe(false);
     expect(getState().totalStars).toBe(42); // blob untouched
+  });
+});
+
+describe('r17 device-attributed stat merge', () => {
+  const day = (correct: number, total: number) => ({ '2026-02-01': { correct, total } });
+  const statsWith = (devices: Record<string, unknown>, days: Record<string, { correct: number; total: number }>) => ({
+    days,
+    skills: {},
+    devices,
+  });
+
+  it('sums independent progress across devices instead of max-ing', () => {
+    /* Shared base 100 (already synced -> same 'legacy' bucket), then
+       device A adds 10 and device B adds 20: merged must be 130. The
+       old aggregate max returned 120 and silently dropped A's work. */
+    const local = {
+      ...base,
+      stats: statsWith(
+        { legacy: { days: day(100, 100) }, devA: { days: day(10, 10) } },
+        day(110, 110),
+      ),
+    };
+    const remote = {
+      ...base,
+      stats: statsWith(
+        { legacy: { days: day(100, 100) }, devB: { days: day(20, 20) } },
+        day(120, 120),
+      ),
+    };
+    const m = mergeEngagement(local as never, remote as never);
+    expect(m.stats?.days['2026-02-01']).toEqual({ correct: 130, total: 130 });
+  });
+
+  it('dedupes shared history via the legacy bucket - no double count', () => {
+    const stats = { days: day(100, 100), skills: {} };
+    const local = { ...base, stats };
+    const remote = { ...base, stats };
+    const m = mergeEngagement(local, remote);
+    expect(m.stats?.days['2026-02-01']).toEqual({ correct: 100, total: 100 });
+  });
+
+  it('keeps correct/total consistent per device (no accuracy inflation)', () => {
+    const local = {
+      ...base,
+      stats: statsWith({ devA: { days: day(8, 10) } }, day(8, 10)),
+    };
+    const remote = {
+      ...base,
+      stats: statsWith({ devB: { days: day(15, 20) } }, day(15, 20)),
+    };
+    const m = mergeEngagement(local as never, remote as never);
+    expect(m.stats?.days['2026-02-01']).toEqual({ correct: 23, total: 30 });
+  });
+
+  it('carries the device map forward and stays idempotent', () => {
+    const local = {
+      ...base,
+      stats: statsWith({ devA: { days: day(10, 10) } }, day(10, 10)),
+    };
+    const remote = {
+      ...base,
+      stats: statsWith({ devB: { days: day(20, 20) } }, day(20, 20)),
+    };
+    const once = mergeEngagement(local as never, remote as never);
+    expect(once.stats?.devices?.devA).toBeDefined();
+    expect(once.stats?.devices?.devB).toBeDefined();
+    const twice = mergeEngagement(once, remote as never);
+    expect(twice.stats?.days['2026-02-01']).toEqual({ correct: 30, total: 30 });
+    expect(JSON.stringify(twice.stats)).toBe(JSON.stringify(once.stats));
+  });
+
+  it('still merges skills and skillDays per device', () => {
+    const mk = (dev: string, n: number) => ({
+      days: {},
+      skills: { g: { s: { correct: n, total: n } } },
+      skillDays: { '2026-02-01': { g: { s: { correct: n, total: n } } } },
+      devices: { [dev]: { days: {}, skills: { g: { s: { correct: n, total: n } } }, skillDays: { '2026-02-01': { g: { s: { correct: n, total: n } } } } } },
+    });
+    const m = mergeEngagement(
+      { ...base, stats: mk('devA', 3) },
+      { ...base, stats: mk('devB', 7) },
+    );
+    expect(m.stats?.skills.g.s).toEqual({ correct: 10, total: 10 });
+    expect(m.stats?.skillDays?.['2026-02-01'].g.s).toEqual({ correct: 10, total: 10 });
+  });
+});
+
+describe('r17 CAS push - no blind overwrite', () => {
+  it('a concurrent write between pull and push triggers re-merge, not clobber', async () => {
+    const remote = mockRemote({ 'acct-1': { ...base, totalStars: 10 } });
+    await wired(remote);
+    markOwnerAccountId('acct-1');
+    writeState({ ...base, totalStars: 10 });
+    await bindEngagement('acct-1');
+
+    /* Device 2 writes +5 between our pull and our conditional update. */
+    remote.setOnUpdate(() => {
+      remote.writeRow('acct-1', { ...base, totalStars: 15 });
+      remote.setOnUpdate(null);
+    });
+    writeState({ ...base, totalStars: 11 });
+    await flushEngagement();
+
+    /* Our 11 merged with their 15 -> the remote must hold the union,
+       and the pull count shows the conflict forced a second round. */
+    expect(remote.store.get('acct-1')?.state).toMatchObject({ totalStars: 15 });
+    expect(getState().totalStars).toBe(15);
+    expect(remote.getPullCount()).toBeGreaterThanOrEqual(2);
+  });
+
+  it('bindEngagement conflict marks pushFailed instead of overwriting', async () => {
+    const remote = mockRemote({ 'acct-1': { ...base, totalStars: 5 } });
+    await wired(remote);
+    writeState({ ...base, totalStars: 3 });
+    /* Another device bumps the row version mid-bind: our conditional
+       update sees a stale updated_at -> conflict -> pushFailed, local
+       blob retained for the next mutation to re-merge. */
+    remote.setOnUpdate(() => {
+      remote.writeRow('acct-1', { ...base, totalStars: 9 });
+      remote.setOnUpdate(null);
+    });
+    await bindEngagement('acct-1');
+
+    /* Local state merged the pulled 5 before the failed push. */
+    expect(getState().totalStars).toBe(5);
+    writeState({ ...base, totalStars: 6 });
+    await flushEngagement();
+    expect(remote.store.get('acct-1')?.state).toMatchObject({ totalStars: 9 });
   });
 });

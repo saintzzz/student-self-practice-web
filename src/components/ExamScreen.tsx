@@ -26,7 +26,7 @@ import {
   getDueReviewItems,
 } from '../lib/engagement/store';
 import { bankSkillOf, skillKeyFor } from '../lib/engagement/skills';
-import { saveExamResult, bindActivityOwner } from '../lib/practiceResults';
+import { saveExamResult, bindActivityOwner, activityOwnerMatches } from '../lib/practiceResults';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
@@ -1087,6 +1087,14 @@ function ArenaResult({
       return;
     }
     void (async () => {
+      // r17: the duel belongs to the identity that STARTED the run.
+      // An account switch during the exam must not post the challenge
+      // under the new user - the r16 owner binding only covers the
+      // result-row saves, not the arena RPCs.
+      if (!(await activityOwnerMatches())) {
+        setFailed(true);
+        return;
+      }
       if (arena.kind === 'create') {
         const id = await arenaCreate(arena.seed, gradeId, programId, myScore, myTimeMs);
         if (id) {

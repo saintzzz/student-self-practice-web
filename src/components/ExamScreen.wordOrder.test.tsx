@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { WordOrderView } from './ExamScreen';
 import type { WordOrderQuestion } from '../types/exam';
 
-vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn() }));
+vi.mock('../lib/practiceResults', () => ({ saveExamResult: vi.fn(), activityOwnerMatches: vi.fn(async () => true) }));
 
 const Q: WordOrderQuestion = {
   id: 'w1',

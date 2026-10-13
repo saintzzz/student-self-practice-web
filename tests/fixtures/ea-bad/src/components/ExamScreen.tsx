@@ -14,3 +14,11 @@ function WordOrderView({ question, onAnswer }) {
   }
   return picked;
 }
+
+// r17 bad: the arena challenge resolves the session only at submit -
+// no start-owner gate, so a mid-run account switch posts the
+// duel under the new identity.
+async function settle(arena) {
+  const id = await arenaCreate(arena.seed, 'grade-4', 'english', 10, 1000);
+  return id;
+}

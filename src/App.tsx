@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
 import JoinClassCard from './components/JoinClassCard';
 import ParentReportScreen from './components/ParentReportScreen';
@@ -16,8 +16,10 @@ import {
   fetchMyAllowedGrades,
   getSession,
   logout,
+  onAuthChange,
   type PracticeAccount,
 } from './lib/auth/practiceAuth';
+import { reloadPage } from './lib/reload';
 import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagement/sync';
 import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/engagement/store';
 import { confirmParentEmail } from './lib/parentContact';
@@ -71,6 +73,10 @@ export default function App() {
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
   /** r6: parent-email confirm-link outcome, rendered as its own screen. */
   const [verifyNotice, setVerifyNotice] = useState<'ok' | 'fail' | null>(null);
+  /** r17: the auth uid this tab has loaded state for. Compared against
+   *  session-change events - a second tab switching accounts must not
+   *  leave this tab acting under the old identity. */
+  const boundUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     const token = new URLSearchParams(window.location.search).get('verify_email');
@@ -96,6 +102,7 @@ export default function App() {
     let cancelled = false;
     void (async () => {
       const session = await getSession();
+      boundUidRef.current = session?.user?.id ?? null;
       if (!session || cancelled) {
         if (!cancelled) setAuthMode('login');
         return;
@@ -107,6 +114,7 @@ export default function App() {
         return;
       }
       setMyAccount(account);
+      boundUidRef.current = account.id;
       if (account.role === 'admin') {
         setAuthMode('admin');
         setScreen('admin');
@@ -124,10 +132,31 @@ export default function App() {
     };
   }, [configured]);
 
+  // r17: the mount effect above loads auth ONCE - without this
+  // subscription a second tab's sign-out or account switch leaves this
+  // tab displaying the old student while new requests authenticate as
+  // the new one (stale grades, activity owner, engagement binding).
+  // Once a real uid is bound, any identity change reloads to a clean
+  // slate; unbound states (login screen, guest) stay put.
+  useEffect(() => {
+    if (!configured) return;
+    let sub: { unsubscribe: () => void } | null = null;
+    void onAuthChange((session) => {
+      const next = session?.user?.id ?? null;
+      if (boundUidRef.current && next !== boundUidRef.current) reloadPage();
+    }).then((s) => {
+      sub = s;
+    });
+    return () => {
+      sub?.unsubscribe();
+    };
+  }, [configured]);
+
   async function handleLoggedIn(): Promise<void> {
     const account = await fetchMyAccount();
     if (!account) return;
     setMyAccount(account);
+    boundUidRef.current = account.id;
     if (account.role === 'admin') {
       setAuthMode('admin');
       setScreen('admin');
@@ -156,6 +185,10 @@ export default function App() {
       // dropped - local cleanup below still runs either way.
       await logout().catch((e) => console.warn('signOut failed:', e));
     } finally {
+      // Identity is intentionally unbound here: the auth-change event
+      // from our own sign-out must not trigger the r17 reload - this
+      // tab is already navigating to the login screen.
+      boundUidRef.current = null;
       setMyAccount(null);
       setAllowedGrades(null);
       setBatch(null);

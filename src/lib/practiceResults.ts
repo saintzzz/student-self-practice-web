@@ -25,6 +25,14 @@ function ownerMismatch(session: { user?: { id?: string } | null } | null): boole
   return activityOwner !== undefined && (session?.user?.id ?? null) !== activityOwner;
 }
 
+/** r17: public check for flows that submit outside savePracticeResult
+ *  (arena challenge create/accept). Same contract: unbound callers are
+ *  unaffected, a bound owner that no longer matches means "drop". */
+export async function activityOwnerMatches(): Promise<boolean> {
+  const session = await getSession().catch(() => null);
+  return !ownerMismatch(session);
+}
+
 export interface PracticeResultRow {
   id: string;
   account_id: string;

@@ -60,6 +60,10 @@
 //  55. updater-side-effect         - side effects inside React state updaters (r15 M)
 //  56. result-owner-binding        - result saved under live session, not the start owner (r16 M)
 //  57. one-shot-effect-replay      - single-use token consumed inside a replayable effect (r16 L)
+//  58. cross-tab-stale-session     - auth loaded once, no session-change subscription (r17 M)
+//  59. arena-owner-binding         - arena submit bypassing the start-owner check (r17 M)
+//  60. sync-merge-lossy            - aggregate max-merge dropping independent progress (r17 M)
+//  61. test-flag-in-prod           - localStorage test hatch honored in prod builds (r17 M)
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
@@ -960,6 +964,61 @@ for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
       !/VerifyCache|new Map\(/.test(src))
     hit("one-shot-effect-replay", rel(f),
       "single-use token consumed inside a replayable effect - cache the request per token");
+}
+
+// ---------- 58. cross-tab-stale-session ----------
+// Auth is loaded once at mount. Without an onAuthChange subscription a
+// second tab's sign-out or account switch leaves the old identity
+// displayed while every new request authenticates as the new user.
+{
+  const app = join(BASE, "src", "App.tsx");
+  if (existsSync(app)) {
+    const src = readFileSync(app, "utf8");
+    if (/getSession\(\)/.test(src) && !/onAuthChange|onAuthStateChange/.test(src))
+      hit("cross-tab-stale-session", rel(app),
+        "auth loaded once with no session-change subscription - cross-tab identity changes go stale");
+  }
+}
+
+// ---------- 59. arena-owner-binding (result-owner-binding family) ----------
+// Arena challenge create/accept resolves the session only at submit -
+// the same start-owner check that guards result saves must gate the
+// arena RPCs or a mid-run account switch posts under the new user.
+for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
+  const src = readFileSync(f, "utf8");
+  if (/await\s+arenaCreate\(|await\s+arenaAccept\(/.test(src) && !/activityOwnerMatches/.test(src))
+    hit("arena-owner-binding", rel(f),
+      "arena submit has no activity-owner check - mid-run account switch posts as the new user");
+}
+
+// ---------- 60. sync-merge-lossy ----------
+// Whole-aggregate Math.max merging drops independent multi-device
+// progress (two devices at 100 +10/+20 -> 120, not 130). Stat counters
+// must merge through per-device buckets, and the whole-row write must
+// be version-checked or a concurrent push clobbers the merge.
+{
+  const sync = join(BASE, "src", "lib", "engagement", "sync.ts");
+  if (existsSync(sync)) {
+    const src = readFileSync(sync, "utf8");
+    if (/mergeEngagement/.test(src) && !/[Dd]evice[Bb]uckets|stats\.devices/.test(src))
+      hit("sync-merge-lossy", rel(sync),
+        "stat counters merge without per-device attribution - independent progress collapses to max");
+    if (/\.upsert\(|\.update\(/.test(src) && !/updated_at/.test(src))
+      hit("sync-merge-lossy", rel(sync),
+        "whole-row write without a version check - concurrent devices overwrite each other");
+  }
+}
+
+// ---------- 61. test-flag-in-prod ----------
+// localStorage test hatches must be gated to dev builds - the
+// beheo-force-guest flag also bypasses the guest trial lock, so in a
+// production bundle it is a free unlock for any visitor.
+for (const f of walk(join(BASE, "src"), /\.tsx?$/)) {
+  if (/\.test\.[tj]sx?$/.test(f)) continue;
+  const src = readFileSync(f, "utf8");
+  if (/getItem\(\s*['"]beheo-force-guest/.test(src) && !/import\.meta\.env\.DEV/.test(src))
+    hit("test-flag-in-prod", rel(f),
+      "localStorage test flag honored without a dev-build gate");
 }
 
 // ---------- report ----------

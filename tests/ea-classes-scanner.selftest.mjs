@@ -91,6 +91,11 @@ const CLASSES = [
   // r16 classes
   "result-owner-binding",
   "one-shot-effect-replay",
+  // r17 classes
+  "cross-tab-stale-session",
+  "arena-owner-binding",
+  "sync-merge-lossy",
+  "test-flag-in-prod",
 ];
 
 test("ea-classes scanner flags every known-bad fixture class", () => {
