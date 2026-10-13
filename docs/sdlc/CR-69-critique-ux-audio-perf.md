@@ -1,12 +1,12 @@
 # CR-69 - Critique follow-ups: UX fixes + audio playback perf
 
-**Status: IMPLEMENTED (2026-10-13)** - all AC met locally: tsc green,
-1020/1020 unit tests, reliability gates green, targeted Playwright specs
-green (end-early-confirm + round-live-score + points-scoring +
-responsive phone + engagement, 13/13 passed / 3 auth specs skipped on
-env), real-browser verify at 390x844 confirms the centered dialog, the
-reward-free empty summary, 44px KẾT THÚC and zero console errors
-(shots: `.review-shots/cr69/`). Pending: lead review + deploy.
+**Status: DEPLOYED (2026-10-13)** - live on ea.vieschool.com via
+git auto-deploy (commit e8d99a6). Lead review (reviewer-gpt) found 3
+issues - all fixed pre-merge: audio listener cleanup, real modal focus
+management, stale submitConfirmOpen across retry. Verified on prod:
+live-score hidden pre-answer, KẾT THÚC 44px, centered confirm dialog,
+reward-free empty summary for 0-answer batches, zero console errors.
+Unit 1022/1022, e2e 13/13 relevant specs green, reliability gates clean.
 
 ## Source
 
