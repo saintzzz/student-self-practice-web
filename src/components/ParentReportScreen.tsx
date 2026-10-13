@@ -20,6 +20,7 @@ import {
   PAPER_TREND_UP,
 } from '../lib/ui/tokens';
 import type { Grade } from '../types';
+import { IconBook, IconBulb, IconChart, IconFlame, IconMail, IconStar, IconTrendingUp } from './icons';
 
 interface ParentReportScreenProps {
   grades: readonly Grade[];
@@ -153,7 +154,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         <div className={`${PAPER_PANEL} text-left`}>
         <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl font-extrabold text-sky-800">📊 Góc ba mẹ</h1>
+          <h1 className="font-display text-2xl font-extrabold text-sky-800"><IconChart size={22} className="mr-1.5 inline-block" /> Góc ba mẹ</h1>
           <button type="button" data-testid="report-back" onClick={onBack} className={`${NAV_PILL} !text-sky-800 !bg-sky-100 !ring-sky-300`}>
             ← Quay lại
           </button>
@@ -162,11 +163,11 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
         {/* Tổng quan */}
         <div className="mt-4 grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-orange-50 p-3 text-center ring-1 ring-orange-200">
-            <div className="text-2xl font-extrabold text-orange-600">🔥 {engagement.streak.count}</div>
+            <div className="flex items-center justify-center gap-1.5 text-2xl font-extrabold text-orange-600"><IconFlame size={22} /> {engagement.streak.count}</div>
             <div className="text-xs font-bold text-slate-500">ngày liên tiếp</div>
           </div>
           <div className="rounded-2xl bg-amber-50 p-3 text-center ring-1 ring-amber-200">
-            <div className="text-2xl font-extrabold text-amber-600">⭐ {engagement.totalStars}</div>
+            <div className="flex items-center justify-center gap-1.5 text-2xl font-extrabold text-amber-600"><IconStar size={22} /> {engagement.totalStars}</div>
             <div className="text-xs font-bold text-slate-500">tổng sao</div>
           </div>
           <div className="rounded-2xl bg-sky-50 p-3 text-center ring-1 ring-sky-200">
@@ -294,13 +295,13 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                   <span className="font-extrabold text-slate-800">{grade.name}</span>
                   {gp && (
                     <span className="text-sm font-bold text-amber-600">
-                      ⭐ {gp.stars} - {gp.batchesCompleted} bài luyện
+                      <span className="inline-flex items-center gap-1"><IconStar size={14} /> {gp.stars} - {gp.batchesCompleted} bài luyện</span>
                     </span>
                   )}
                 </div>
                 {due > 0 && (
                   <p className="mt-1 text-xs font-bold text-amber-700">
-                    📚 {due} câu đang chờ ôn lại
+                    <span className="inline-flex items-center gap-1"><IconBook size={13} /> {due} câu đang chờ ôn lại</span>
                   </p>
                 )}
                 {/* kids-UX AC-5.2: mock-exam trend, only when rows exist.
@@ -308,7 +309,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                     (trend[len-2]), not the oldest row in the window. */}
                 {trend.length > 0 && (
                   <p data-testid={`report-trend-${grade.id}`} className="mt-2 text-xs font-bold text-slate-600">
-                    📈 Thi thử gần nhất:{' '}
+                    <IconTrendingUp size={16} className="mr-1 inline-block" /> Thi thử gần nhất:{' '}
                     <span className={trend.length > 1 && trend[trend.length - 1]!.scorePct > trend[trend.length - 2]!.scorePct ? PAPER_TREND_UP : 'text-slate-700'}>
                       {trend[trend.length - 1]!.scorePct}%
                     </span>
@@ -339,7 +340,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                 {/* kids-UX s3.7: one concrete suggestion, not a wall. */}
                 {weakest && (
                   <p data-testid={`report-suggestion-${grade.id}`} className="mt-2 text-xs font-semibold text-sky-700">
-                    💡 Gợi ý: cho bé luyện thêm {skillLabel(weakest.key)} ({Math.round(weakest.accuracy * 100)}%).
+                    <IconBulb size={16} className="mr-1 inline-block" /> Gợi ý: cho bé luyện thêm {skillLabel(weakest.key)} ({Math.round(weakest.accuracy * 100)}%).
                   </p>
                 )}
               </li>
@@ -363,7 +364,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
         {/* CR-31: weekly parent report email - logged-in only. */}
         {isLoggedIn && (
           <div data-testid="parent-email-section" className="mt-5 rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-200">
-            <h2 className="font-display text-lg font-extrabold text-sky-800">✉️ Nhận báo cáo qua email</h2>
+            <h2 className="font-display text-lg font-extrabold text-sky-800"><IconMail size={18} className="mr-1.5 inline-block" /> Nhận báo cáo qua email</h2>
             <p className="mt-1 text-xs font-semibold text-slate-500">
               Mỗi Chủ nhật, ba mẹ nhận email tóm tắt bé luyện gì trong tuần.
             </p>

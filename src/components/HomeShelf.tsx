@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ownedHomeItems } from '../lib/engagement/store';
 import { CARD } from '../lib/ui/tokens';
 import { EmojiVisual } from './EmojiVisual';
+import { IconHome } from './icons';
 
 /**
  * kids-UX AC-4.2 / external-review r1 #4: the gift-box decorations
@@ -14,7 +15,7 @@ export default function HomeShelf() {
 
   return (
     <div data-testid="home-shelf" className={`mt-4 ${CARD} text-left`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300">🏡 Nhà của em</h2>
+      <h2 className="font-display text-xl font-extrabold text-amber-300"><IconHome size={20} className="mr-1.5 inline-block" /> Nhà của em</h2>
       {items.length === 0 ? (
         <p className="mt-2 text-sm font-semibold text-slate-300">
           Chưa có đồ chơi nào - hoàn thành bài luyện để mở hộp quà nhé!

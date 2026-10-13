@@ -25,17 +25,17 @@ import { startBatch } from './batch-flow';
  * differently-shaped) v10 change, not a helper bug.
  */
 
-const PIG_EMOJI = '🐷';
-
+/* CR-72: the mascot is a hand-drawn SVG now (no emoji glyph) - locate it
+   by its mood attribute, which every Mascot render carries. */
 export function mascotLocator(page: Page, within?: Locator): Locator {
   const scope = within ?? page.locator('body');
-  return scope.getByText(PIG_EMOJI).first();
+  return scope.locator('[data-mascot-mood]').first();
 }
 
 export async function expectMascotVisible(page: Page, within: Locator | undefined, context: string): Promise<void> {
   await expect(
     mascotLocator(page, within),
-    `expected a pig-emoji (🐷) mascot element to be visible ${context} (plan.md v10 AC38). This is the expected ` +
+    `expected the pig mascot element to be visible ${context} (plan.md v10 AC38). This is the expected ` +
       'failure signal if the v10 mascot has not landed on this screen yet.',
   ).toBeVisible();
 }

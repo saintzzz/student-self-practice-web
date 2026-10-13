@@ -15,6 +15,7 @@ import {
   NAV_PILL,
   SCREEN_ENTER,
 } from '../lib/ui/tokens';
+import { IconCrown } from './icons';
 
 const INPUT =
   'w-full rounded-2xl border-2 border-sky-200 bg-sky-50 px-4 py-3 text-base font-bold text-sky-900 shadow-inner transition placeholder:font-normal placeholder:text-sky-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-300/70';
@@ -225,7 +226,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
         <span
           className="ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-full bg-gradient-to-b from-amber-100 to-amber-200 px-3 py-1 text-sm font-bold text-amber-900 shadow-md ring-1 ring-amber-300/80"
         >
-          <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-xs">👑</span>
+          <span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-xs"><IconCrown size={18} className="inline-block" /></span>
           {account.display_name}
         </span>
       </div>

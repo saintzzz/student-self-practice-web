@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Mascot from './Mascot';
 import { CARD_DARK, NAV_PILL_DARK, SCREEN_ENTER } from '../lib/ui/tokens';
 import { login, USERNAME_RE } from '../lib/auth/practiceAuth';
+import { IconEye, IconEyeOff } from './icons';
 
 /** CR-14: dark navy + gold (VieSchool landing palette) on the auth surface. */
 const INPUT_DARK =
@@ -84,7 +85,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
                 onClick={() => setShowPin((v) => !v)}
                 className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-xl text-slate-300 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300/60"
               >
-                {showPin ? '🙈' : '👁️'}
+                {showPin ? <IconEyeOff size={18} /> : <IconEye size={18} />}
               </button>
             </span>
           </label>

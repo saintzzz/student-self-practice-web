@@ -1,3 +1,5 @@
+import { IconMic } from './icons';
+
 interface PronunciationStatusMessageProps {
   testId:
     | 'mic-permission-denied-message'
@@ -30,7 +32,7 @@ export default function PronunciationStatusMessage({ testId, heading, body, onSk
             onClick={onRetry}
             className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 px-6 py-3 text-lg font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-3px_0_rgba(0,0,0,0.15),0_4px_10px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-emerald-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            Thử lại 🎙️
+            <span className="inline-flex items-center gap-2"><IconMic size={18} /> Thử lại</span>
           </button>
         )}
         <button

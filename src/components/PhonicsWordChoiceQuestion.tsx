@@ -9,6 +9,7 @@ import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
+import { IconRefresh, IconSpeaker } from './icons';
 
 const INSTRUCTION = 'Nghe âm rồi chọn đúng hình nhé!';
 
@@ -60,7 +61,7 @@ export default function PhonicsWordChoiceQuestion({
           onClick={play}
           className={AUDIO_BUTTON_CLASSNAME}
         >
-          {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
+          {hasPlayed ? <><IconRefresh size={18} /> Nghe lại</> : <><IconSpeaker size={18} /> Nghe</>}
         </button>
         {hasPlayed && (
           <button

@@ -9,6 +9,7 @@ import {
   type PetSpecies,
 } from '../lib/engagement/store';
 import { CARD } from '../lib/ui/tokens';
+import { IconParty, IconPaw } from './icons';
 
 /**
  * CR-36: companion pet on the grade home screen. Every correct answer in
@@ -36,7 +37,7 @@ export default function PetCard() {
   return (
     <div data-testid="pet-card" className={`mt-4 ${CARD} text-left`}>
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-extrabold text-amber-300">🐾 Bạn đồng hành</h2>
+        <h2 className="font-display text-xl font-extrabold text-amber-300"><IconPaw size={20} className="mr-1.5 inline-block" /> Bạn đồng hành</h2>
         <span className="rounded-full bg-violet-500/20 px-3 py-1 text-sm font-extrabold text-violet-300 ring-1 ring-violet-400/40">
           {pet.xp} XP
         </span>
@@ -48,7 +49,7 @@ export default function PetCard() {
           className="mt-3 flex items-center justify-between gap-2 rounded-2xl bg-amber-400/15 p-3 ring-1 ring-amber-400/40"
         >
           <p className="text-sm font-extrabold text-amber-200">
-            🎉 {pet.nameVi} vừa lớn lên thành {pet.stageName}! Giỏi quá!
+            <IconParty size={18} className="mr-1 inline-block text-amber-300" /> {pet.nameVi} vừa lớn lên thành {pet.stageName}! Giỏi quá!
           </p>
           <button
             type="button"

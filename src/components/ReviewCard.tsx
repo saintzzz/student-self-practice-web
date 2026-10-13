@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getDueReviewItems } from '../lib/engagement/store';
 import { CARD } from '../lib/ui/tokens';
+import { IconBook } from './icons';
 
 interface ReviewCardProps {
   gradeId: string;
@@ -20,7 +21,7 @@ export default function ReviewCard({ gradeId, onStartReview }: ReviewCardProps) 
     <div data-testid="review-card" className={`mt-4 ${CARD} text-left`}>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-extrabold text-amber-300">📚 Ôn lại câu sai</h2>
+          <h2 className="font-display flex items-center gap-2 text-xl font-extrabold text-amber-300"><IconBook size={20} aria-hidden="true" /> Ôn lại câu sai</h2>
           <p className="mt-1 text-sm font-semibold text-slate-300">
             Có <span className="font-extrabold text-amber-300">{dueCount} câu</span> em từng làm sai
             đang chờ ôn lại - làm đúng vài lần là nhớ lâu luôn!

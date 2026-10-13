@@ -5,39 +5,47 @@ import Mascot, { type MascotMood } from './Mascot';
 const MOODS: MascotMood[] = ['greeting', 'happy', 'encouraging', 'celebrating'];
 
 /**
- * plan.md v10 "App-Wide Mascot" (AC38-AC39). Reduced-motion support is
- * verified CSS-only (checking that every `animate-*` utility class is
- * always paired with a `motion-reduce:animate-none` override) rather than
- * via `window.matchMedia` mocking - this app's existing test suite has no
+ * plan.md v10 "App-Wide Mascot" (AC38-AC39), CR-72 art pass: Bé Heo is a
+ * hand-drawn SVG with real per-mood expressions (open eyes / happy arcs /
+ * encouraging brows / celebrate grin). Reduced-motion support is verified
+ * CSS-only (every `animate-*` utility is paired with a
+ * `motion-reduce:animate-none` override) - the app's test suite has no
  * precedent for mocking `matchMedia`, and Tailwind's `motion-reduce:`
- * variant is a pure CSS media-query mechanism that jsdom does not evaluate
- * anyway, so asserting the class pairing is the meaningful, honest check.
+ * variant is a pure CSS media-query mechanism jsdom does not evaluate.
  */
-describe('Mascot (plan.md v10, AC38-AC39)', () => {
-  it.each(MOODS)('renders the 🐷 pig for the %s mood', (mood) => {
+describe('Mascot (plan.md v10, AC38-AC39; CR-72)', () => {
+  it.each(MOODS)('renders the Bé Heo SVG character for the %s mood', (mood) => {
     render(<Mascot mood={mood} />);
 
     const mascot = screen.getByTestId('mascot');
-    expect(mascot).toHaveTextContent('🐷');
     expect(mascot).toHaveAttribute('data-mascot-mood', mood);
+    // The illustrated pig head circle is always present.
+    expect(mascot.querySelector('svg circle[cx="48"]')).not.toBeNull();
   });
 
-  it('pairs sparkle accent with the happy mood', () => {
-    render(<Mascot mood="happy" />);
+  it('happy and celebrating moods show closed-happy eyes; greeting and encouraging show open eyes', () => {
+    const { rerender } = render(<Mascot mood="happy" />);
+    expect(screen.getByTestId('mascot').querySelector('circle[r="4"]')).toBeNull();
 
-    expect(screen.getByTestId('mascot')).toHaveTextContent('✨');
+    rerender(<Mascot mood="celebrating" />);
+    expect(screen.getByTestId('mascot').querySelector('circle[r="4"]')).toBeNull();
+
+    rerender(<Mascot mood="greeting" />);
+    expect(screen.getByTestId('mascot').querySelectorAll('circle[r="4"]').length).toBe(2);
+
+    rerender(<Mascot mood="encouraging" />);
+    expect(screen.getByTestId('mascot').querySelectorAll('circle[r="4"]').length).toBe(2);
   });
 
-  it('pairs confetti accent with the celebrating mood', () => {
-    render(<Mascot mood="celebrating" />);
+  it('greeting shows the waving arm, celebrating shows confetti', () => {
+    const { rerender } = render(<Mascot mood="greeting" />);
+    // arm path has the M75 68 start point
+    expect(screen.getByTestId('mascot').innerHTML).toContain('M75 68');
 
-    expect(screen.getByTestId('mascot')).toHaveTextContent('🎉');
-  });
-
-  it('has no accent emoji for greeting or encouraging moods', () => {
-    render(<Mascot mood="greeting" />);
-    expect(screen.getByTestId('mascot')).not.toHaveTextContent('✨');
-    expect(screen.getByTestId('mascot')).not.toHaveTextContent('🎉');
+    rerender(<Mascot mood="celebrating" />);
+    expect(screen.getByTestId('mascot').innerHTML).not.toContain('M75 68');
+    // confetti rects
+    expect(screen.getByTestId('mascot').querySelectorAll('rect').length).toBeGreaterThanOrEqual(3);
   });
 
   it.each([
@@ -64,7 +72,6 @@ describe('Mascot (plan.md v10, AC38-AC39)', () => {
 
     const mascot = screen.getByTestId('mascot');
     expect(mascot).toHaveAttribute('data-mascot-mood', 'happy');
-    expect(mascot.className).toContain('text-2xl');
-    expect(mascot.className).not.toContain('text-5xl');
+    expect(mascot.innerHTML).toContain('h-8 w-8');
   });
 });

@@ -39,6 +39,7 @@ import { WORD_IPA } from '../data/ipaMap';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
 import Mascot from './Mascot';
 import { EXAM_HEADER_BRAND } from '../lib/ui/tokens';
+import { IconBook, IconClock, IconHandshake, IconMail, IconMedal, IconMuscle, IconNote, IconParty, IconPencil, IconSpeaker, IconSwords, IconTrophy } from './icons';
 
 /**
  * CR-24 - IOE-style Thi thử player. Visual language follows the real
@@ -391,7 +392,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               Câu {exam.currentIndex + 1}/{exam.questions.length}
             </div>
             <div data-testid="exam-elapsed" className="rounded-lg bg-[#0a1520] px-3 py-1 font-mono text-lg font-extrabold tabular-nums text-sky-300">
-              ⏱ {Math.floor(Math.max(0, now - exam.startedAtMs) / 60000)}:{String(Math.floor(Math.max(0, now - exam.startedAtMs) / 1000) % 60).padStart(2, '0')}
+              <IconClock size={15} className="mr-1 inline-block" /> {Math.floor(Math.max(0, now - exam.startedAtMs) / 60000)}:{String(Math.floor(Math.max(0, now - exam.startedAtMs) / 1000) % 60).padStart(2, '0')}
             </div>
           </div>
         ) : (
@@ -401,7 +402,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               left <= 60 ? 'animate-pulse bg-rose-600 text-white' : 'bg-[#0a1520] text-amber-300'
             }`}
           >
-            ⏰ {mm}:{ss}
+            <IconClock size={18} className="mr-1 inline-block" /> {mm}:{ss}
           </div>
         )}
         <button
@@ -497,7 +498,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             }`}
           >
             <div className={`text-lg font-extrabold ${verdict.isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
-              {verdict.isCorrect ? 'Chính xác! 🎉' : 'Chưa đúng rồi.'}
+              {verdict.isCorrect ? <span className="inline-flex items-center gap-1.5">Chính xác! <IconParty size={18} /></span> : 'Chưa đúng rồi.'}
             </div>
             <div className="mt-1 text-sm font-bold text-slate-200">
               Đáp án đúng: <span className="font-extrabold text-emerald-300"><MarkupText text={examCorrectAnswerText(question)} /></span>
@@ -525,7 +526,9 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0d1b26] p-4 text-white">
       <div className="w-full max-w-lg rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center shadow-2xl sm:p-10">
-        <div className="mb-2 text-5xl">{isArena ? '⚔️' : isReview ? '📚' : isPractice ? '✏️' : '📝'}</div>
+        <div className="mb-2 flex justify-center text-amber-300">
+          {isArena ? <IconSwords size={44} /> : isReview ? <IconBook size={44} /> : isPractice ? <IconPencil size={44} /> : <IconNote size={44} />}
+        </div>
         <h1 className="font-display text-2xl font-extrabold text-amber-300 sm:text-3xl">
           {title}
         </h1>
@@ -890,7 +893,7 @@ function ListenButton({ text }: { text: string }) {
         onClick={() => speakSentence(text)}
         className="flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-base font-extrabold text-white shadow-lg transition hover:bg-orange-400 active:scale-95"
       >
-        🔊 Nghe lại
+        <IconSpeaker size={18} /> Nghe lại
       </button>
     </div>
   );
@@ -985,7 +988,7 @@ function ArenaResult({
     <div data-testid="arena-result" className="min-h-screen bg-[#0d1b26] p-4 text-white">
       <div className="mx-auto max-w-2xl">
         <div className="rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center sm:p-10">
-          <div className="text-5xl">⚔️</div>
+          <div className="flex justify-center text-amber-300"><IconSwords size={44} /></div>
           <h1 className="mt-2 font-display text-2xl font-extrabold text-amber-300">Đấu trường Arena</h1>
           <p className="mt-1 text-sm font-bold text-slate-400">
             {PROGRAM_LABEL[programId]} - {gradeLabel}
@@ -995,7 +998,7 @@ function ArenaResult({
             <div data-testid="arena-created" className="mt-6 rounded-xl bg-white/5 p-5">
               {created ? (
                 <>
-                  <div className="text-4xl">📨</div>
+                  <div className="flex justify-center text-sky-300"><IconMail size={40} /></div>
                   <p className="mt-2 font-extrabold text-emerald-300">Đã tạo thử thách!</p>
                   <p className="mt-1 text-sm font-bold text-slate-300">
                     Điểm của bạn: <span className="text-amber-300">{myScore}</span> - thời gian{' '}
@@ -1029,7 +1032,7 @@ function ArenaResult({
                           : 'bg-rose-500/20 text-rose-300'
                     }`}
                   >
-                    {duel.is_draw ? '🤝 Hòa nhau!' : duel.i_won ? '🏆 Bạn thắng!' : '💪 Đối thủ thắng - cố lên!'}
+                    <span className="inline-flex items-center gap-2">{duel.is_draw ? <><IconHandshake size={20} /> Hòa nhau!</> : duel.i_won ? <><IconTrophy size={20} /> Bạn thắng!</> : <><IconMuscle size={20} /> Đối thủ thắng - cố lên!</>}</span>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-white/5 p-4">
@@ -1053,7 +1056,7 @@ function ArenaResult({
 
           {newBadges.length > 0 && (
             <div data-testid="arena-new-badges" className="mt-4 rounded-xl bg-amber-400/15 p-3 text-sm font-extrabold text-amber-200 ring-1 ring-amber-400/40">
-              🏅 Huy hiệu mới: {newBadges.map((b) => `${b.emoji} ${b.nameVi}`).join(' - ')}
+              <span className="mr-1 inline-flex items-center"><IconMedal size={16} /></span> Huy hiệu mới: {newBadges.map((b) => `${b.emoji} ${b.nameVi}`).join(' - ')}
             </div>
           )}
 

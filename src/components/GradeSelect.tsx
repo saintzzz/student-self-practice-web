@@ -9,6 +9,7 @@ import { EmojiVisual } from './EmojiVisual';
 import { ParentGate, isParentVerified } from './ParentGate';
 import { GatedLink } from './GatedLink';
 import { NAV_PILL, NAV_PILL_SM, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
+import { IconFamily, IconStar } from './icons';
 
 interface GradeSelectProps {
   grades: readonly Grade[];
@@ -101,13 +102,13 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           )}
         </div>
       )}
-      <div className="mb-1 flex justify-center">
+      <div className="mb-0.5 flex justify-center">
         <Mascot mood="greeting" />
       </div>
-      <h1 className={`mb-2 ${H1}`}>
+      <h1 className={`mb-1.5 ${H1}`}>
         Hành trình của Bé {studentName?.trim().replace(/^bé\s+/i, '') || 'Heo'}
       </h1>
-      <p className={`mb-4 ${PROMPT}`}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
+      <p className={`mb-3 ${PROMPT}`}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
       {onPlacement && (
         <button
           type="button"
@@ -126,19 +127,22 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 4 vòng
         </p>
       )}
-      <div className="mb-8 flex justify-center">
+      {/* CR-72: engagement chips + the parent pill share ONE wrap row -
+          kills the stacked dead space that pushed the map off-screen on
+          phones. */}
+      <div className="mb-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         <EngagementBar />
+        {onReport && (
+          <button
+            type="button"
+            data-testid="open-parent-report"
+            onClick={() => (isParentVerified() ? onReport() : setReportGateOpen(true))}
+            className={`${NAV_PILL_SM} inline-flex items-center gap-1`}
+          >
+            <IconFamily size={14} className="text-slate-300" /> Góc ba mẹ
+          </button>
+        )}
       </div>
-      {onReport && (
-        <button
-          type="button"
-          data-testid="open-parent-report"
-          onClick={() => (isParentVerified() ? onReport() : setReportGateOpen(true))}
-          className={`mb-6 ${NAV_PILL_SM}`}
-        >
-          👨‍👩‍👧 Góc ba mẹ
-        </button>
-      )}
       {reportGateOpen && (
         <ParentGate
           title="Dành cho ba mẹ"
@@ -179,7 +183,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
                 aria-hidden="true"
                 className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full ${land.discBg} font-display text-3xl font-extrabold text-white ring-4 ring-white/80 shadow-[inset_0_2px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_14px_-4px_rgba(15,23,42,0.3)]`}
               >
-                {(grade.name.match(/\d+/) ?? ['📖'])[0]}
+                {(grade.name.match(/\d+/) ?? ['?'])[0]}
               </span>
               <span className="relative z-10 flex min-w-0 flex-col">
                 <span className={`font-display text-2xl font-extrabold leading-tight ${land.accentText}`}>
@@ -189,7 +193,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
                   {land.nameVi} {land.motif && <EmojiVisual emoji={land.motif} className="inline-block text-sm" />}
                 </span>
                 <span data-testid={`grade-stars-${grade.id}`} className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-amber-700">
-                  <EmojiVisual emoji="⭐" className="text-xs" /> {gp?.stars ?? 0} sao
+                  <IconStar size={13} className="text-amber-500" /> {gp?.stars ?? 0} sao
                 </span>
               </span>
             </button>

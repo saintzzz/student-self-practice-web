@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchMyClassName, joinClassByCode } from '../lib/classJoin';
 import { CARD } from '../lib/ui/tokens';
+import { IconSchool } from './icons';
 
 /**
  * CR-47: lets a logged-in student join their teacher's class with a
@@ -56,7 +57,7 @@ export default function JoinClassCard({ isGuest, onJoined }: { isGuest: boolean;
 
   return (
     <div data-testid="join-class-card" className={`mt-4 ${CARD}`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300">🏫 Lớp của em</h2>
+      <h2 className="font-display text-xl font-extrabold text-amber-300"><IconSchool size={20} className="mr-1.5 inline-block" /> Lớp của em</h2>
       {!loaded ? (
         <p className="mt-3 text-sm font-semibold text-slate-400">Đang tải...</p>
       ) : myClass ? (

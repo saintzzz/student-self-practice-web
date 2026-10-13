@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchLeaderboard, type LeaderboardEntry } from '../lib/leaderboard';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { CARD } from '../lib/ui/tokens';
+import { IconMedal, IconTrophy } from './icons';
 
 interface LeaderboardCardProps {
   gradeId: string;
@@ -10,7 +11,7 @@ interface LeaderboardCardProps {
   onLogin?: () => void;
 }
 
-const MEDAL = ['🥇', '🥈', '🥉'];
+const MEDAL_COLORS = ['text-amber-400', 'text-slate-300', 'text-orange-400'];
 
 /**
  * CR-30: weekly leaderboard card on the grade home screen. Aggregate
@@ -38,7 +39,7 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
 
   return (
     <div data-testid="leaderboard-card" className={`mt-4 ${CARD} text-left`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300">🏆 Bảng xếp hạng tuần</h2>
+      <h2 className="font-display text-xl font-extrabold text-amber-300"><IconTrophy size={20} className="mr-1.5 inline-block" /> Bảng xếp hạng tuần</h2>
       {isGuest ? (
         <div className="mt-3 text-center">
           <p className="text-sm font-semibold text-slate-300">
@@ -74,7 +75,9 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
               }`}
             >
               <span className="w-8 shrink-0 text-center font-display text-lg font-extrabold text-white">
-                {MEDAL[entry.rank - 1] ?? `${entry.rank}`}
+                {entry.rank <= 3
+                  ? <><IconMedal size={20} className={`mx-auto ${MEDAL_COLORS[entry.rank - 1]}`} /><span className="sr-only">Hạng {entry.rank}</span></>
+                  : `${entry.rank}`}
               </span>
               <span className={`min-w-0 flex-1 truncate text-sm font-bold ${entry.is_me ? 'text-amber-200' : 'text-white'}`}>
                 {entry.display_name}

@@ -11,6 +11,7 @@ import {
 import { isParentVerified, ParentGate } from './ParentGate';
 import { BTN_PAPER_SECONDARY, CARD_TINT, NAV_PILL, PAPER_PANEL } from '../lib/ui/tokens';
 import { trackFunnel } from '../lib/funnel';
+import { IconLock, IconMail } from './icons';
 
 /**
  * kids-UX step 11 (design-kids-ux s3.8.c, AC-6.1 + AC-5.1): "Gửi kết quả
@@ -147,7 +148,7 @@ export function SendResultsCard(): JSX.Element | null {
 
   return (
     <section data-testid="send-results-card" className={`${CARD_TINT.sky} mt-4 text-left`} aria-label="Gửi kết quả cho ba mẹ">
-      <h3 className="font-display text-lg font-extrabold text-white">✉️ Gửi kết quả cho ba mẹ</h3>
+      <h3 className="font-display text-lg font-extrabold text-white"><IconMail size={18} className="mr-1.5 inline-block" /> Gửi kết quả cho ba mẹ</h3>
       <p className="mt-1 text-sm font-semibold text-slate-300">
         Nhờ ba mẹ nhập email để nhận kết quả mỗi Chủ nhật nhé!
       </p>
@@ -159,7 +160,7 @@ export function SendResultsCard(): JSX.Element | null {
           onClick={() => setGateOpen(true)}
           className={`${NAV_PILL} mt-3`}
         >
-          🔒 Nhờ ba mẹ mở
+          <span className="inline-flex items-center gap-2"><IconLock size={16} /> Nhờ ba mẹ mở</span>
         </button>
       ) : (
         <div className={`${PAPER_PANEL} mt-3`}>

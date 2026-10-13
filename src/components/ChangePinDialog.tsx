@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CARD_DARK } from '../lib/ui/tokens';
 import { changePin } from '../lib/auth/practiceAuth';
+import { IconEye, IconEyeOff } from './icons';
 
 const INPUT_DARK =
   'w-full rounded-2xl border-2 border-[#2a3a5e] bg-[#0b1224]/60 px-4 py-3 text-lg font-bold text-slate-100 shadow-inner transition placeholder:font-normal placeholder:text-slate-500 focus:border-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-300/30';
@@ -100,7 +101,7 @@ export default function ChangePinDialog({ onClose }: ChangePinDialogProps) {
               onClick={() => setShowPin((v) => !v)}
               className="inline-flex min-h-[44px] items-center self-center px-2 text-sm font-bold text-sky-300 underline-offset-2 hover:underline"
             >
-              {showPin ? 'Ẩn mã PIN 🙈' : 'Hiện mã PIN 👁️'}
+              {showPin ? <span className="inline-flex items-center gap-1.5"><IconEyeOff size={16} /> Ẩn mã PIN</span> : <span className="inline-flex items-center gap-1.5"><IconEye size={16} /> Hiện mã PIN</span>}
             </button>
             {message && (
               <p data-testid="change-pin-error" className="text-center font-bold text-rose-300">

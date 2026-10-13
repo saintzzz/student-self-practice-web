@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { arenaOpen, arenaRecent, type ArenaOpenChallenge, type ArenaRecentRow } from '../lib/arena';
 import { CARD } from '../lib/ui/tokens';
+import { IconClock, IconHandshake, IconSwords, IconTrophy, IconX } from './icons';
 
 /** CR-34: Đấu trường card on the grade home screen.
  *  Logged-in students see open challenges (same grade) + their recent
@@ -44,7 +45,7 @@ export default function ArenaCard({
 
   return (
     <div className={`mt-4 ${CARD}`} data-testid="arena-card">
-      <h2 className="text-center font-display text-xl font-extrabold text-amber-300">⚔️ Đấu trường Arena</h2>
+      <h2 className="flex items-center justify-center gap-2 text-center font-display text-xl font-extrabold text-amber-300"><IconSwords size={20} /> Arena</h2>
       <p className="mt-1 text-center text-sm font-semibold text-slate-300">
         10 câu cùng một đề - ai nhiều điểm hơn thắng, hòa thì ai nhanh hơn thắng.
       </p>
@@ -55,7 +56,7 @@ export default function ArenaCard({
           onClick={isGuest ? onBot : onCreate}
           className="flex-1 rounded-xl bg-rose-600 px-4 py-3 font-extrabold text-white transition hover:bg-rose-500 active:scale-95"
         >
-          {isGuest ? '⚔️ Đấu với máy' : '⚔️ Tạo thử thách'}
+          <span className="inline-flex items-center gap-2"><IconSwords size={18} /> {isGuest ? "Đấu với máy" : "Tạo thử thách"}</span>
         </button>
         {isGuest && onLogin && (
           <button
@@ -90,7 +91,7 @@ export default function ArenaCard({
                       </div>
                     </div>
                     <span className="shrink-0 rounded-lg bg-sky-500/20 px-3 py-2 text-sm font-extrabold text-sky-300">
-                      ⏳ Đang chờ
+                      <span className="inline-flex items-center gap-1"><IconClock size={14} /> Đang chờ</span>
                     </span>
                   </li>
                 ))}
@@ -148,7 +149,7 @@ export default function ArenaCard({
                 >
                   <span className="text-slate-300">vs {opp ?? '?'}</span>
                   <span className={m.is_draw ? 'text-sky-300' : m.i_won ? 'text-emerald-300' : 'text-rose-300'}>
-                    {m.is_draw ? '🤝' : m.i_won ? '🏆' : '😢'} {mine} - {theirs}
+                    <span className="inline-flex items-center gap-1.5">{m.is_draw ? <IconHandshake size={16} /> : m.i_won ? <IconTrophy size={16} /> : <IconX size={16} />} {mine} - {theirs}</span>
                   </span>
                 </li>
               );

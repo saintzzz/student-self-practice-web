@@ -21,6 +21,7 @@ import {
   type RoundAwardResult,
 } from '../lib/engagement/store';
 import { skillKeyForRound } from '../lib/engagement/skills';
+import { IconHome, IconPlay } from './icons';
 
 interface RoundSummaryProps {
   outcome: RoundOutcome;
@@ -237,7 +238,7 @@ export default function RoundSummary({
                 onClick={onDone}
                 className={`w-full sm:w-auto ${NAV_PILL}`}
               >
-                🏠 Xong rồi
+                <span className="inline-flex items-center gap-2"><IconHome size={20} /> Xong rồi</span>
               </button>
             )}
             <button
@@ -246,7 +247,7 @@ export default function RoundSummary({
               onClick={onNextRound}
               className={`w-full sm:w-auto ${CTA_GOLD_XL}`}
             >
-              ▶ Chơi tiếp
+              <span className="inline-flex items-center gap-2"><IconPlay size={20} /> Chơi tiếp</span>
             </button>
           </div>
         </>

@@ -56,23 +56,20 @@ test.describe('App-wide pig mascot (plan.md v10 AC38)', () => {
     await expectMascotVisible(page, undefined, 'on the Round summary screen');
   });
 
-  test('the same pig emoji glyph appears on the Start Batch screen and in the feedback panel (character consistency)', async ({
+  test('the same Bé Heo SVG character appears on the Start Batch screen and in the feedback panel (character consistency)', async ({
     page,
   }) => {
     await gotoApp(page);
     await selectGrade(page);
-    const startScreenMascotText = (await mascotLocator(page).innerText()).trim();
+    // CR-72: character consistency is structural now - both screens
+    // render the same Bé Heo SVG component, located by data-mascot-mood.
+    const startMascot = mascotLocator(page);
+    await expect(startMascot).toBeVisible();
+    await expect(startMascot.locator('svg').first()).toBeVisible();
 
     const { feedback } = await findExtraLetterOutcome(page, 'incorrect');
-    const feedbackMascotText = (await mascotLocator(page, feedback).innerText()).trim();
-
-    expect(
-      startScreenMascotText,
-      `expected the Start Batch screen's mascot text to contain the pig emoji, got: "${startScreenMascotText}"`,
-    ).toContain('🐷');
-    expect(
-      feedbackMascotText,
-      `expected the feedback panel's mascot text to contain the same pig emoji, got: "${feedbackMascotText}"`,
-    ).toContain('🐷');
+    const feedbackMascot = mascotLocator(page, feedback);
+    await expect(feedbackMascot).toBeVisible();
+    await expect(feedbackMascot.locator('svg').first()).toBeVisible();
   });
 });

@@ -6,6 +6,7 @@ import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
+import { IconRefresh, IconSpeaker } from './icons';
 
 const INSTRUCTION = 'Từ nào có vần giống từ này?';
 
@@ -54,7 +55,7 @@ export default function PhonicsRhymeChoiceQuestion({
           onClick={play}
           className={AUDIO_BUTTON_CLASSNAME}
         >
-          {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
+          {hasPlayed ? <><IconRefresh size={18} /> Nghe lại</> : <><IconSpeaker size={18} /> Nghe</>}
         </button>
         {hasPlayed && (
           <button

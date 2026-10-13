@@ -3,6 +3,7 @@ import { weakSkillsFor } from '../lib/engagement/coach';
 import { CARD } from '../lib/ui/tokens';
 import type { ExamProgramId } from '../types/exam';
 import type { BankFetchFocus } from '../lib/qb/bank';
+import { IconTarget } from './icons';
 
 interface CoachCardProps {
   gradeId: string;
@@ -27,7 +28,7 @@ export default function CoachCard({ gradeId, onDrill }: CoachCardProps) {
 
   return (
     <div data-testid="coach-card" className={`mt-4 ${CARD} text-left`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300">🎯 Gợi ý cho em</h2>
+      <h2 className="font-display flex items-center gap-2 text-xl font-extrabold text-amber-300"><IconTarget size={20} aria-hidden="true" /> Gợi ý cho em</h2>
       <p className="mt-1 text-sm font-semibold text-slate-300">
         Dựa trên bài làm 7 ngày qua - ôn đúng chỗ còn yếu:
       </p>

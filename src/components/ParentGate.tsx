@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 import { BTN_PAPER_SECONDARY, GATE_KEY, PAPER_PANEL } from '../lib/ui/tokens';
+import { IconLock } from './icons';
 
 /**
  * kids-UX step 5 (design-kids-ux s3.6, ADR KUX-3): the parent gate.
@@ -216,7 +217,7 @@ export function ParentGate({ onPass, onCancel, title = 'Dành cho ba mẹ' }: Pa
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display text-xl font-bold text-slate-900">🔒 {title}</h2>
+          <h2 className="font-display flex items-center gap-2 text-xl font-bold text-slate-900"><IconLock size={20} className="text-indigo-500" aria-hidden="true" /> {title}</h2>
           <button
             type="button"
             data-testid="parent-gate-cancel"

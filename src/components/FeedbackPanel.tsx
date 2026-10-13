@@ -7,6 +7,7 @@ import { WORD_IPA } from '../data/ipaMap';
 import { EmojiVisual } from './EmojiVisual';
 import Mascot from './Mascot';
 import Confetti from './celebrations/Confetti';
+import { IconSpeaker } from './icons';
 
 interface FeedbackPanelProps {
   kind: QuestionKind;
@@ -140,7 +141,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
             band === 'G12' ? 'min-h-[76px] text-base' : 'min-h-[44px] text-sm'
           }`}
         >
-          🔊 Nghe mẫu
+          <IconSpeaker size={18} /> Nghe mẫu
         </button>
       )}
     </div>

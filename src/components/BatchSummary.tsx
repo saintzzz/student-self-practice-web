@@ -21,6 +21,7 @@ import {
   type Sticker,
 } from '../lib/engagement/store';
 import { savePracticeResult } from '../lib/practiceResults';
+import { IconHome, IconPlay, IconStar } from './icons';
 
 interface BatchSummaryProps {
   result: BatchResult;
@@ -114,7 +115,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
       {award && award.batch.chestStars > 0 && (
         <p className="mt-4 flex justify-center">
           <span data-testid="batch-stars-summary" className={SCORE_PILL_LG}>
-            +{award.batch.chestStars} ⭐
+            <span className="inline-flex items-center gap-1.5">+{award.batch.chestStars} <IconStar size={20} className="text-amber-500" /></span>
           </span>
         </p>
       )}
@@ -213,7 +214,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
               onClick={onChooseGrade}
               className={`${NAV_PILL} w-full text-2xl sm:w-auto`}
             >
-              🏠 Xong rồi
+              <span className="inline-flex items-center gap-2"><IconHome size={20} /> Xong rồi</span>
             </button>
             <button
               type="button"
@@ -221,7 +222,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
               onClick={onStartNewBatch}
               className={`w-full sm:w-auto ${CTA_GOLD_XL}`}
             >
-              ▶ Chơi tiếp
+              <span className="inline-flex items-center gap-2"><IconPlay size={20} /> Chơi tiếp</span>
             </button>
           </div>
         </>

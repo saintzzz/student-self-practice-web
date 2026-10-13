@@ -1,4 +1,5 @@
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { IconRefresh, IconSpeaker } from './icons';
 
 interface ListenButtonsProps {
   hasPlayed: boolean;
@@ -21,7 +22,7 @@ export default function ListenButtons({ hasPlayed, play, playSlow }: ListenButto
         onClick={play}
         className={AUDIO_BUTTON_CLASSNAME}
       >
-        {hasPlayed ? '🔁 Nghe lại' : '🔊 Nghe'}
+        {hasPlayed ? <><IconRefresh size={18} /> Nghe lại</> : <><IconSpeaker size={18} /> Nghe</>}
       </button>
       {hasPlayed && (
         <button

@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import { SHEET, BTN_PAPER_SECONDARY } from '../lib/ui/tokens';
+import { IconCompass } from './icons';
 
 interface ExploreSheetProps {
   open: boolean;
@@ -106,15 +107,14 @@ export default function ExploreSheet({
           <header className="flex items-center justify-between gap-2">
             <h2
               id="explore-sheet-title"
-              className="font-display text-xl font-bold tracking-tight text-slate-800"
+              className="font-display flex items-center gap-2 text-xl font-bold tracking-tight text-slate-800"
             >
-              🗺️ Khám phá
+              <IconCompass size={20} className="text-indigo-500" aria-hidden="true" /> Khám phá
             </h2>
             <div className="flex items-center gap-2">
               <InstructionSpeaker
                 text="Chọn một góc để khám phá nhé!"
                 lang="vi-VN"
-
                 autoplayKey={speakerKey ?? 'explore-sheet'}
               />
               <button

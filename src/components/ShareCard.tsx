@@ -3,6 +3,7 @@ import { NAV_PILL_SM } from '../lib/ui/tokens';
 import { trackFunnel } from '../lib/funnel';
 import { isParentVerified, ParentGate } from './ParentGate';
 import { useLoggedIn } from './SendResultsCard';
+import { IconImage, IconLock } from './icons';
 
 export interface ShareCardProps {
   /** Card title drawn in gold display type (e.g. "Bé An - Lớp 3"). */
@@ -106,7 +107,7 @@ export function ShareCard({ title, lines, label = 'Chia sẻ' }: ShareCardProps)
         onClick={() => (unlocked ? void handleShare() : setGateOpen(true))}
         className={`${NAV_PILL_SM} disabled:opacity-60`}
       >
-        {state === 'working' ? 'Đang tạo ảnh...' : unlocked ? `🖼️ ${label}` : `🔒 ${label}`}
+        {state === 'working' ? 'Đang tạo ảnh...' : <span className="inline-flex items-center gap-2">{unlocked ? <IconImage size={18} /> : <IconLock size={18} />} {label}</span>}
       </button>
       <span role="status" aria-live="polite" className="text-xs font-semibold text-slate-400">
         {state === 'done' ? 'Ảnh đã sẵn sàng!' : state === 'error' ? 'Chưa tạo được ảnh - thử lại nhé.' : ''}

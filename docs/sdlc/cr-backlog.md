@@ -497,4 +497,10 @@
   3. Mobile density pass: EngagementBar -> compact single row, remove
      dead space, re-check each screen at 360-390px.
   4. Content emoji (vocab pictures) stays emoji - that is the pedagogy.
-- **Status:** proposed, not approved; needs Designer phase intake.
+- **Status:** approved by user 2026-10-13 ("Làm CR71 đi" - executed under this
+  visual-craft scope; CR-71 is the separate content-audit remediation).
+  Implemented: headless InstructionSpeaker autoplay on every screen for all
+  grades (commit 157b590), `src/components/icons.tsx` chunky SVG chrome set,
+  Mascot SVG with mood variants, compact EngagementBar, SheetTile/icon
+  migration, orphan-icon guard on Coach tile. Lead review: APPROVE with 2
+  minors (sr-only rank label, motion-reduce recording dot) - both fixed.

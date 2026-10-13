@@ -12,6 +12,7 @@ import Confetti from './celebrations/Confetti';
 import { SendResultsCard } from './SendResultsCard';
 import { ShareCard } from './ShareCard';
 import { CARD, NAV_PILL, SCORE_PILL_LG } from '../lib/ui/tokens';
+import { IconHome, IconPlay } from './icons';
 
 /**
  * kids-UX step 9 (design-kids-ux s3.9, OM-3=C, AC-7.1): the exam results
@@ -166,11 +167,11 @@ export function ExamResult({
           <p className="mt-6 text-base font-bold text-slate-300">Em muốn làm gì tiếp?</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <button type="button" onClick={onExit} className={`${NAV_PILL} flex-1`}>
-              🏠 Xong rồi
+              <span className="inline-flex items-center gap-2"><IconHome size={18} /> Xong rồi</span>
             </button>
             {onRetry && (
               <button type="button" data-testid="exam-play-again" onClick={onRetry} className={FORK_GOLD}>
-                ▶ Chơi tiếp
+                <span className="inline-flex items-center gap-2"><IconPlay size={18} /> Chơi tiếp</span>
               </button>
             )}
           </div>

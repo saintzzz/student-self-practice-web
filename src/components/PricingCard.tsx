@@ -13,6 +13,7 @@ import {
 import { COPY_BTN, PAPER_PANEL } from '../lib/ui/tokens';
 import { GatedLink } from './GatedLink';
 import { trackFunnel } from '../lib/funnel';
+import { IconChat } from './icons';
 
 /**
  * kids-UX step 11 (design-kids-ux s3.8.a, OM-1=B, AC-9.1): the honest
@@ -154,7 +155,7 @@ export function PricingCard() {
             href={zaloUrl}
             className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-sky-100 px-4 font-bold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
           >
-            💬 Nhắn Zalo tư vấn
+            <span className="inline-flex items-center gap-2"><IconChat size={18} /> Nhắn Zalo tư vấn</span>
           </GatedLink>
         </span>
       )}

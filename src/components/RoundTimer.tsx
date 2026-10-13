@@ -1,5 +1,5 @@
 import { CHIP_AMBER, CHIP_AMBER_URGENT } from '../lib/ui/tokens';
-import { EmojiVisual } from './EmojiVisual';
+import { IconClock } from './icons';
 
 interface RoundTimerProps {
   secondsRemaining: number;
@@ -23,7 +23,7 @@ export default function RoundTimer({ secondsRemaining }: RoundTimerProps) {
 
   return (
     <p data-testid="round-timer" className={isUrgent ? CHIP_AMBER_URGENT : CHIP_AMBER}>
-      <EmojiVisual emoji="⏱️" />
+      <IconClock size={16} />
       {formatTimer(secondsRemaining)}
     </p>
   );

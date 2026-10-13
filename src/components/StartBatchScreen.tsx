@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import type { Grade } from '../types';
 import type { ExamProgramId } from '../types/exam';
 import type { ArenaOpenChallenge } from '../lib/arena';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { listBankForms, type AssessmentFormInfo } from '../lib/qb/bank';
 import { getDueReviewItems } from '../lib/engagement/store';
+import { weakSkillsFor } from '../lib/engagement/coach';
 import Mascot from './Mascot';
 import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
@@ -14,6 +15,22 @@ import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
 import HomeShelf from './HomeShelf';
 import { InstructionSpeaker } from './InstructionSpeaker';
+import {
+  IconBook,
+  IconCompass,
+  IconFlag,
+  IconFlask,
+  IconHash,
+  IconHome,
+  IconMedal,
+  IconMuscle,
+  IconNote,
+  IconPlay,
+  IconSwords,
+  IconTarget,
+  IconTrophy,
+  type IconProps,
+} from './icons';
 import ExploreSheet from './ExploreSheet';
 import {
   CARD,
@@ -56,10 +73,10 @@ interface StartBatchScreenProps {
 }
 
 /** CR-24: IOE-style Thi thử - 3 chương trình riêng biệt. */
-const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: string; name: string; desc: string }[] = [
-  { id: 'english', icon: '🇬🇧', name: 'Tiếng Anh', desc: 'Nghe, đọc, ngữ pháp, sắp câu' },
-  { id: 'math', icon: '🔢', name: 'Toán tiếng Anh', desc: 'Tính nhẩm, đọc số, hình học' },
-  { id: 'science', icon: '🔬', name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
+const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: ComponentType<IconProps>; name: string; desc: string }[] = [
+  { id: 'english', icon: IconFlag, name: 'Tiếng Anh', desc: 'Nghe, đọc, ngữ pháp, sắp câu' },
+  { id: 'math', icon: IconHash, name: 'Toán tiếng Anh', desc: 'Tính nhẩm, đọc số, hình học' },
+  { id: 'science', icon: IconFlask, name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
 ];
 
 const FORM_KIND_LABEL: Record<string, string> = {
@@ -95,7 +112,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
         onClick={() => setOpen((v) => !v)}
         className="min-h-[44px] w-full rounded-lg bg-sky-100 px-3 py-2 text-xs font-extrabold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
       >
-        📋 Đề có sẵn ({forms.length}) {open ? '▲' : '▼'}
+        <IconNote size={16} className="mr-1 inline-block" /> Đề có sẵn ({forms.length}) {open ? '▲' : '▼'}
       </button>
       {open && (
         <div className="mt-1 max-h-52 space-y-1 overflow-y-auto pr-1">
@@ -119,10 +136,10 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
 
 /** kids-UX §3.1.c: one "trail tile" row inside the Khám phá sheet - emoji
  *  icon + the relocated card, band-sized (96px G1-2 / 76px G3-5 floor). */
-function SheetTile({ icon, tileClass, children }: { icon: string; tileClass: string; children: ReactNode }) {
+function SheetTile({ icon, tileClass, children }: { icon: ReactNode; tileClass: string; children: ReactNode }) {
   return (
     <section className={tileClass}>
-      <span aria-hidden="true" className="shrink-0 text-2xl leading-none">{icon}</span>
+      <span aria-hidden="true" className="mt-0.5 shrink-0 text-slate-500">{icon}</span>
       <div className="min-w-0 flex-1 [&>*]:mt-0">{children}</div>
     </section>
   );
@@ -149,6 +166,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
   // Local store read - same check ReviewCard makes itself; used only to
   // hide the dead sheet row, the card still decides its own render.
   const [hasDueReview] = useState(() => getDueReviewItems(grade.id).length > 0);
+  /* CR-72: gate the Coach tile too - CoachCard returns null when the
+     student has no weak skills, which used to leave an orphan icon row. */
+  const [hasCoachHints] = useState(() => weakSkillsFor(grade.id).length > 0);
 
   const arenaHandlers = onArenaCreate && onArenaAccept && onArenaBot
     ? { onArenaCreate, onArenaAccept, onArenaBot }
@@ -165,7 +185,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           className="rounded-2xl bg-white p-3 ring-1 ring-sky-200"
         >
           <div className="flex items-center gap-2">
-            <span className="text-2xl" aria-hidden="true">{program.icon}</span>
+            <program.icon size={26} className="shrink-0 text-sky-600" aria-hidden="true" />
             <div>
               <div className="font-extrabold text-slate-800">{program.name}</div>
               <div className="text-xs font-semibold text-slate-500">{program.desc}</div>
@@ -178,7 +198,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               onClick={() => onStartExam(program.id, 'practice')}
               className={`${BTN_DRILL} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
             >
-              ✏️ Luyện đề - {examConfig.drillCount} câu
+              Luyện đề - {examConfig.drillCount} câu
             </button>
             <button
               type="button"
@@ -186,7 +206,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               onClick={() => onStartExam(program.id, 'exam')}
               className={`${BTN_EXAM} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
             >
-              🏆 Thi thử - {examConfig.examCount} câu
+              Thi thử - {examConfig.examCount} câu
             </button>
             <button
               type="button"
@@ -194,7 +214,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
               className={`${BTN_ADVANCED} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
             >
-              🔥 Nâng cao - {examConfig.drillCount} câu
+              Nâng cao - {examConfig.drillCount} câu
             </button>
             <FormPicker gradeId={grade.id} programId={program.id} isAdmin={isAdmin ?? false} onStartExam={onStartExam} />
           </div>
@@ -247,7 +267,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           className={`mt-6 w-full ${CTA_GOLD_XL} sm:w-auto`}
         >
           <span className="flex flex-col items-center">
-            <span>▶ Chơi</span>
+            <span className="inline-flex items-center gap-2"><IconPlay size={18} /> Chơi</span>
             {!isG12 && (
               <span className="text-base font-bold">4 trò nhỏ - khoảng 10 câu mỗi trò</span>
             )}
@@ -263,7 +283,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             onClick={() => setExploreOpen(true)}
             className={isG12 ? `min-h-[76px] w-full text-lg ${DISCLOSURE_BTN}` : DISCLOSURE_BTN}
           >
-            🗺️ Khám phá
+            <span className="inline-flex items-center gap-2"><IconCompass size={20} /> Khám phá</span>
           </button>
         </div>
       </div>
@@ -286,27 +306,29 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         {/* Relocated content - the same card components, unchanged; each
             still decides its own visibility when empty. */}
         {isG12 && (
-          <SheetTile icon="🎯" tileClass={tileClass}>
+          <SheetTile icon={<IconTarget size={24} />} tileClass={tileClass}>
             <DailyQuestCard />
           </SheetTile>
         )}
         {isG12 && hasDueReview && (
-          <SheetTile icon="📚" tileClass={tileClass}>
+          <SheetTile icon={<IconBook size={24} />} tileClass={tileClass}>
             <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
           </SheetTile>
         )}
-        <SheetTile icon="💪" tileClass={tileClass}>
-          <CoachCard
-            gradeId={grade.id}
-            onDrill={(programId, focus) =>
-              onStartExam(programId, 'practice', undefined, {
-                ...focus,
-                label: 'Ôn kỹ năng yếu',
-              })
-            }
-          />
-        </SheetTile>
-        <SheetTile icon="🏡" tileClass={tileClass}>
+        {hasCoachHints && (
+          <SheetTile icon={<IconMuscle size={24} />} tileClass={tileClass}>
+            <CoachCard
+              gradeId={grade.id}
+              onDrill={(programId, focus) =>
+                onStartExam(programId, 'practice', undefined, {
+                  ...focus,
+                  label: 'Ôn kỹ năng yếu',
+                })
+              }
+            />
+          </SheetTile>
+        )}
+        <SheetTile icon={<IconHome size={24} />} tileClass={tileClass}>
           {/* External-review r1 #4: the pet home is where gift-box
               decorations live - the shelf shows what the child earned.
               The wrapper keeps the shelf's own mt-4 (SheetTile strips
@@ -316,11 +338,11 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             <HomeShelf />
           </div>
         </SheetTile>
-        <SheetTile icon="🏅" tileClass={tileClass}>
+        <SheetTile icon={<IconMedal size={24} />} tileClass={tileClass}>
           <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
         </SheetTile>
         {arenaHandlers && (
-          <SheetTile icon="⚔️" tileClass={tileClass}>
+          <SheetTile icon={<IconSwords size={24} />} tileClass={tileClass}>
             <ArenaCard
               gradeId={grade.id}
               isGuest={isGuest ?? false}
@@ -331,7 +353,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             />
           </SheetTile>
         )}
-        <SheetTile icon="🏆" tileClass={tileClass}>
+        <SheetTile icon={<IconTrophy size={24} />} tileClass={tileClass}>
           <div className="min-w-0 flex-1">
             <div className="mb-2 font-extrabold text-slate-800">Thi &amp; luyện đề</div>
             {examProgramsBlock}
