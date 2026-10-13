@@ -13,14 +13,14 @@
         "https://ioe-leduyminh.vercel.app"
       ],
       "deploymentId": "git-auto-deploy",
-      "deploymentUrl": "https://ioe-leduyminh-b3jumx8um-linhld7s-projects.vercel.app",
-      "commit": "e8d99a6",
+      "deploymentUrl": "https://ioe-leduyminh-fyavpgsm7-linhld7s-projects.vercel.app",
+      "commit": "e49cbcb",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-13T16:22:06+07:00",
+      "lastHealthCheck": "2026-10-14T20:05:00+07:00",
       "healthDetails": {
         "GET https://ea.vieschool.com": 200,
-        "cr69": "deployed - vi diacritics meta + supabase preconnect confirmed in prod HTML"
+        "kids-ux": "deployed - G1-2 launchpad (one gold CTA + Kham pha sheet + mascot speaker) verified on prod 390x844, 0 console errors; supabase migration 0039_kids_ux_weekly_digest applied (is_mock_result/skill_label_vi/weekly_report_html smoke-tested)"
       },
       "customDomain": {
         "registrar": "Porkbun",
