@@ -21,6 +21,13 @@ vi.mock('../lib/pronunciationTranscription', () => ({
   transcribePronunciationAudio: (...args: unknown[]) => transcribeMock(...args),
 }));
 
+// Speaker-bleed fix: the hook owns the mic-suppression flag - verify it
+// is raised before the mic opens and released when the phase settles.
+const setMicRecordingMock = vi.hoisted(() => vi.fn());
+vi.mock('../lib/speech', () => ({
+  setMicRecording: (...args: unknown[]) => setMicRecordingMock(...args),
+}));
+
 import { usePronunciationRecording } from './usePronunciationRecording';
 
 interface TestWindow {
@@ -55,6 +62,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     mocks.recorderSupported = true;
     mocks.startAudioRecording.mockReset();
     transcribeMock.mockReset();
+    setMicRecordingMock.mockReset();
   });
 
   it('uses MediaRecorder on iOS even when SpeechRecognition exists', async () => {
@@ -174,5 +182,48 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     await waitFor(() => expect(result.current.phase).toBe('error'));
     expect(result.current.errorReason).toBe('no-speech');
     expect(onAttempt).not.toHaveBeenCalled();
+  });
+
+  it('silences app audio BEFORE the mic opens and releases it only after settling', async () => {
+    mocks.isIOS = true;
+    mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
+    transcribeMock.mockResolvedValue('cat');
+
+    const { result } = renderHook(() => usePronunciationRecording(vi.fn(), 'cat'));
+    act(() => {
+      result.current.startRecording();
+    });
+    await waitFor(() => expect(result.current.phase).toBe('recording'));
+
+    // Suppression must precede microphone acquisition, not follow it.
+    const suppressOrder = setMicRecordingMock.mock.invocationCallOrder[
+      setMicRecordingMock.mock.calls.findIndex((c) => c[0] === true)
+    ];
+    const micOrder = mocks.startAudioRecording.mock.invocationCallOrder[0];
+    expect(suppressOrder).toBeDefined();
+    expect(suppressOrder).toBeLessThan(micOrder!);
+
+    // Baseline: the mount-time idle release must not mask the real one.
+    setMicRecordingMock.mockClear();
+    await act(async () => {
+      result.current.stopRecording();
+    });
+    await waitFor(() => expect(setMicRecordingMock).toHaveBeenCalledWith(false));
+  });
+
+  it('releases the suppression flag when the hook unmounts mid-recording', async () => {
+    mocks.isIOS = true;
+    mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
+
+    const { result, unmount } = renderHook(() => usePronunciationRecording(vi.fn(), 'cat'));
+    act(() => {
+      result.current.startRecording();
+    });
+    await waitFor(() => expect(result.current.phase).toBe('recording'));
+    setMicRecordingMock.mockClear();
+
+    unmount();
+
+    expect(setMicRecordingMock).toHaveBeenCalledWith(false);
   });
 });

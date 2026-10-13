@@ -130,6 +130,63 @@ describe('PronunciationRecordingQuestion', () => {
     }
   });
 
+  it('disables the instruction speaker while recording and re-enables it once answered (SR latch regression)', async () => {
+    class QuietRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: unknown) => void) | null = null;
+      onend: (() => void) | null = null;
+      start(): void {
+        /* stays 'recording' - never emits a result */
+      }
+      stop(): void {}
+      abort(): void {}
+    }
+    const original = { ...testWindow() };
+    testWindow().SpeechRecognition = QuietRecognition;
+    testWindow().webkitSpeechRecognition = QuietRecognition;
+
+    const user = userEvent.setup();
+    try {
+      const { rerender } = render(
+        <PronunciationRecordingQuestion
+          question={PRONUNCIATION_QUESTION}
+          hasAnswered={false}
+          transcript={null}
+          score={null}
+          isCorrect={null}
+          onSubmit={vi.fn()}
+        />,
+      );
+
+      const speaker = screen.getByTestId('instruction-speaker');
+      expect(speaker).not.toBeDisabled();
+
+      await user.click(screen.getByTestId('record-button'));
+      await waitFor(() => expect(speaker).toBeDisabled());
+
+      // SR success leaves phase stuck at 'recording' - the answer state,
+      // not the phase, must re-enable the speaker on the feedback screen.
+      rerender(
+        <PronunciationRecordingQuestion
+          question={PRONUNCIATION_QUESTION}
+          hasAnswered
+          transcript="cat"
+          score={100}
+          isCorrect
+          onSubmit={vi.fn()}
+        />,
+      );
+      expect(speaker).not.toBeDisabled();
+    } finally {
+      testWindow().SpeechRecognition = original.SpeechRecognition;
+      testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
+    }
+  });
+
   it('renders the pronunciation-feedback panel instead of the record control once answered', () => {
     render(
       <PronunciationRecordingQuestion

@@ -8,8 +8,10 @@ import { speakInstruction, type InstructionStatus } from '../lib/speech';
  * speaker. speakInstruction is mocked at the module seam - these specs
  * drive its onStatus callback to assert the token/state mapping.
  */
+const genState = vi.hoisted(() => ({ value: 0 }));
 vi.mock('../lib/speech', () => ({
   speakInstruction: vi.fn(),
+  currentAudioGeneration: () => genState.value,
 }));
 
 const mockSpeak = vi.mocked(speakInstruction);
@@ -28,6 +30,7 @@ function sendStatus(s: InstructionStatus): void {
 
 beforeEach(() => {
   mockSpeak.mockClear();
+  genState.value = 0;
   __resetInstructionAutoplay();
 });
 
@@ -163,6 +166,23 @@ describe('InstructionSpeaker - autoplay once per key', () => {
       vi.advanceTimersByTime(2000);
     });
     expect(mockSpeak).toHaveBeenCalledTimes(1);
+  });
+
+  it('a recording session between schedule and fire permanently retires the autoplay', () => {
+    vi.useFakeTimers();
+    render(<InstructionSpeaker text="A" autoplay autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    // Mic opens and closes inside the 400ms autoplay window.
+    act(() => {
+      genState.value += 1;
+    });
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(mockSpeak).not.toHaveBeenCalled();
   });
 
   it('no autoplayKey or autoplay=false means tap-only', () => {

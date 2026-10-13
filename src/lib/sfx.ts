@@ -53,3 +53,20 @@ export function playSfx(name: SfxName): void {
 export function playGentleWrong(): void {
   playElement('gentle-wrong', 'wrong', 0.35);
 }
+
+/**
+ * Pronunciation-recording support (speaker-bleed fix): a still-ringing
+ * verdict ding from the previous question would land inside the take.
+ * speech.stopAllAudio cannot reach sfx - they are separate elements - so
+ * the mic-open path calls this too.
+ */
+export function stopSfx(): void {
+  if (active) {
+    try {
+      active.pause();
+    } catch {
+      // best-effort
+    }
+    active = null;
+  }
+}

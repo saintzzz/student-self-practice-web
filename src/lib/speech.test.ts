@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { speakInstruction, speakSentence, speakWord } from './speech';
+import { setMicRecording, speakInstruction, speakSentence, speakWord } from './speech';
 
 /** speak() now resolves the audio-file lookup on the microtask queue
  * before falling back to speechSynthesis (MODE==='test' skips file
@@ -262,5 +262,141 @@ describe('speakSentence', () => {
     await flush();
 
     expect(true).toBe(true);
+  });
+});
+
+describe('setMicRecording (pronunciation speaker-bleed fix)', () => {
+  const viVoice = { lang: 'vi-VN', name: 'Google tiếng Việt' } as SpeechSynthesisVoice;
+
+  afterEach(() => {
+    setMicRecording(false);
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('blocks content speech while the flag is held - speak() is a no-op', async () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    setMicRecording(true);
+
+    speakWord('pepper');
+    await flush();
+
+    expect(speakSpy).not.toHaveBeenCalled();
+  });
+
+  it('blocks instruction speech started mid-recording - reports ended so the speaker settles', () => {
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    setMicRecording(true);
+    const onStatus = vi.fn();
+
+    const cancel = speakInstruction('Đọc to từ này lên nhé', { onStatus });
+
+    expect(onStatus).toHaveBeenCalledWith('ended');
+    expect(speakSpy).not.toHaveBeenCalled();
+    cancel();
+  });
+
+  it('cancels queued/playing TTS so already-sounding audio cannot bleed into the mic', () => {
+    const cancelSpy = vi.spyOn(window.speechSynthesis, 'cancel').mockImplementation(() => {});
+
+    setMicRecording(true);
+
+    expect(cancelSpy).toHaveBeenCalled();
+  });
+
+  it('drops speech whose async lookup resolved after the mic opened (pre-recording tap in flight)', async () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+
+    // Tap "Nghe" and immediately tap record before the audio lookup
+    // resolves - the request was never in pendingAudioRequests when
+    // stopAllAudio ran, so only the async-boundary recheck can stop it.
+    speakWord('chocolate');
+    setMicRecording(true);
+    await flush();
+
+    expect(speakSpy).not.toHaveBeenCalled();
+  });
+
+  it('drops a queued instruction whose cancel-settle timer fires after the mic opened', () => {
+    vi.useFakeTimers();
+    vi.spyOn(window.speechSynthesis, 'getVoices').mockReturnValue([viVoice]);
+    Object.defineProperty(window.speechSynthesis, 'speaking', { value: true, configurable: true });
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const onStatus = vi.fn();
+
+    // Engine claims it is busy - the instruction is queued on the 60ms
+    // cancel-settle timer, not yet spoken, when the record tap lands.
+    speakInstruction('Đọc to từ này lên nhé', { onStatus });
+    setMicRecording(true);
+    vi.advanceTimersByTime(120);
+
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(onStatus).toHaveBeenCalledWith('ended');
+    delete (window.speechSynthesis as unknown as Record<string, unknown>).speaking;
+  });
+
+  it('does not retry a suppressed utterance after release - the watchdog is invalidated', async () => {
+    vi.useFakeTimers();
+    Object.defineProperty(window.speechSynthesis, 'speaking', { value: true, configurable: true });
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+
+    speakWord('chocolate');
+    await Promise.resolve();          // test-mode lookup resolves -> synthesize queues the 60ms timer
+    await Promise.resolve();
+    setMicRecording(true);            // mic opens inside the cancel-settle window
+    vi.advanceTimersByTime(120);      // delayed speak is suppressed
+    setMicRecording(false);           // recording ends
+    delete (window.speechSynthesis as unknown as Record<string, unknown>).speaking;
+    vi.advanceTimersByTime(5000);     // past the 2500ms watchdog + 120ms retry
+
+    expect(speakSpy).not.toHaveBeenCalled();
+  });
+
+  it('permanently retires pre-recording speech even when its timer fires after the flag released', async () => {
+    vi.useFakeTimers();
+    Object.defineProperty(window.speechSynthesis, 'speaking', { value: true, configurable: true });
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+
+    speakWord('chocolate');
+    await Promise.resolve();          // synthesize queues the 60ms cancel-settle timer
+    await Promise.resolve();
+    setMicRecording(true);
+    setMicRecording(false);           // mic opens AND closes before the timer fires
+    vi.advanceTimersByTime(5000);     // timer + watchdog + retry windows all pass
+
+    expect(speakSpy).not.toHaveBeenCalled();
+    delete (window.speechSynthesis as unknown as Record<string, unknown>).speaking;
+  });
+
+  it('settles an already-playing en-US instruction to ended when suppression cancels it', async () => {
+    const utterances: SpeechSynthesisUtterance[] = [];
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((u: SpeechSynthesisUtterance) => {
+      utterances.push(u);
+      u.onstart?.({} as SpeechSynthesisEvent);
+    });
+    const onStatus = vi.fn();
+
+    speakInstruction('Read it out loud', { lang: 'en-US', onStatus });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onStatus).toHaveBeenCalledWith('playing');
+
+    // Mic opens -> stopAllAudio cancels the engine -> 'canceled' onerror.
+    setMicRecording(true);
+    utterances[0]?.onerror?.({ error: 'canceled' } as SpeechSynthesisErrorEvent);
+
+    expect(onStatus).toHaveBeenCalledWith('ended');
+  });
+
+  it('releases normal playback when the flag clears', async () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    setMicRecording(true);
+    setMicRecording(false);
+
+    speakWord('pepper');
+    await flush();
+
+    expect(speakSpy).toHaveBeenCalledTimes(1);
   });
 });

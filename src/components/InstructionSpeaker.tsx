@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { speakInstruction, type InstructionStatus } from '../lib/speech';
+import { currentAudioGeneration, speakInstruction, type InstructionStatus } from '../lib/speech';
 import { SPEAKER_BTN, SPEAKER_BTN_BLOCKED, SPEAKER_BTN_PLAYING } from '../lib/ui/tokens';
 import { EmojiVisual } from './EmojiVisual';
 
@@ -38,6 +38,10 @@ export interface InstructionSpeakerProps {
   autoplay?: boolean;
   /** Screen/question identity - autoplay fires at most once per key. */
   autoplayKey?: string;
+  /** Mic-open moments (pronunciation recording) dim the button - speech
+   *  is suppressed anyway, so a tappable-but-silent control would be a
+   *  dead control; a disabled, dimmed one is honest. */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -46,6 +50,7 @@ export function InstructionSpeaker({
   lang,
   autoplay = false,
   autoplayKey,
+  disabled = false,
   className,
 }: InstructionSpeakerProps) {
   const [status, setStatus] = useState<SpeakerStatus>('idle');
@@ -91,8 +96,13 @@ export function InstructionSpeaker({
     if (!autoplay || !autoplayKey || playedKeys.has(autoplayKey)) return;
     playedKeys.add(autoplayKey);
     let fired = false;
+    /* A recording session starting between schedule and fire permanently
+       retires this autoplay (speech.ts audio-generation) - otherwise the
+       instruction would sound after the mic closed, uninvited. */
+    const gen = currentAudioGeneration();
     const timer = window.setTimeout(() => {
       fired = true;
+      if (currentAudioGeneration() !== gen) return;
       // External-review r1 #2: autoplay defers to in-flight content audio.
       speak(true);
     }, AUTOPLAY_DELAY_MS);
@@ -112,10 +122,11 @@ export function InstructionSpeaker({
     <button
       type="button"
       data-testid="instruction-speaker"
-      aria-label="Nghe hướng dẫn"
+      aria-label={disabled ? 'Đang ghi âm - nghe hướng dẫn tạm tắt' : 'Nghe hướng dẫn'}
       title={status === 'error' || status === 'blocked' ? TAP_HINT : undefined}
       onClick={() => speak()}
-      className={className ? `${token} ${className}` : token}
+      disabled={disabled}
+      className={`${className ? `${token} ${className}` : token} ${disabled ? 'opacity-40' : ''}`}
     >
       <span aria-hidden="true">
         <EmojiVisual emoji="🔊" />

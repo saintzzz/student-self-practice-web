@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
+
+// Speaker-bleed fix: assert the mic-suppression flag lifecycle.
+const setMicRecordingMock = vi.hoisted(() => vi.fn());
+vi.mock('../lib/speech', () => ({
+  setMicRecording: (...args: unknown[]) => setMicRecordingMock(...args),
+}));
+
 import { usePronunciationRecording } from './usePronunciationRecording';
 
 interface TestWindow {
@@ -14,6 +21,7 @@ function testWindow(): TestWindow {
 describe('usePronunciationRecording', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    setMicRecordingMock.mockReset();
   });
 
   it('starts in the idle phase when SpeechRecognition is supported', () => {
@@ -45,6 +53,27 @@ describe('usePronunciationRecording', () => {
 
     await waitFor(() => expect(result.current.phase).toBe('recording'));
     await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
+  });
+
+  it('releases mic suppression on a successful SR result - the feedback "Nghe mẫu" stays live', async () => {
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt));
+
+    act(() => {
+      result.current.startRecording();
+    });
+    await waitFor(() => expect(result.current.phase).toBe('recording'));
+    expect(setMicRecordingMock).toHaveBeenCalledWith(true);
+
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
+
+    // SR success never leaves the 'recording' phase, so only finish()
+    // can release suppression - without it the feedback speaker is dead.
+    // finish() calls setMicRecording(false) before invoking onAttempt,
+    // so the release is guaranteed to be in the mock log by now.
+    const calls = setMicRecordingMock.mock.calls;
+    expect(calls.at(-1)?.[0]).toBe(false);
+    expect(calls.filter((c) => c[0] === true).length).toBe(1);
   });
 
   it('moves to permission-denied when the recognizer reports a not-allowed error', async () => {

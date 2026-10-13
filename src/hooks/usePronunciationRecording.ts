@@ -11,6 +11,8 @@ import {
   type AudioRecordingController,
 } from '../lib/audioRecording';
 import { transcribePronunciationAudio } from '../lib/pronunciationTranscription';
+import { setMicRecording } from '../lib/speech';
+import { stopSfx } from '../lib/sfx';
 
 export type PronunciationPhase =
   | 'idle'
@@ -109,7 +111,7 @@ export function usePronunciationRecording(
 
   useEffect(() => {
     // r8: React StrictMode replays mount->cleanup->mount; the cleanup sets
-    // unmountedRef=true, so setup must re-arm it or the second mount is
+    // unmountedRef.current=true, so setup must re-arm it or the second mount is
     // permanently dead.
     unmountedRef.current = false;
     return () => {
@@ -120,13 +122,25 @@ export function usePronunciationRecording(
       }
       controllerRef.current?.stop();
       recorderRef.current?.cancel();
+      setMicRecording(false);
     };
   }, []);
+
+  // The audio-suppression flag is owned by the 'recording' phase - any
+  // transition out of it (processing/error/finish/unmount) releases
+  // normal playback again.
+  useEffect(() => {
+    if (phase !== 'recording') setMicRecording(false);
+  }, [phase]);
 
   const finish = useCallback(
     (finalTranscript: string) => {
       if (settledRef.current || unmountedRef.current) return;
       settledRef.current = true;
+      // SR success never passes through a non-'recording' phase, so the
+      // phase effect cannot release suppression - the feedback screen's
+      // "Nghe mẫu" would stay dead. Release here for every engine.
+      setMicRecording(false);
       onAttempt(finalTranscript);
     },
     [onAttempt],
@@ -267,6 +281,15 @@ export function usePronunciationRecording(
 
   const startRecording = useCallback(() => {
     if (settledRef.current || phase === 'recording' || phase === 'processing') return;
+    // Silence every app-owned sound before the mic opens - anything still
+    // playing (instruction TTS, a word mp3 from the previous question,
+    // "Nghe mẫu") bleeds into the recording and the STT dutifully
+    // transcribes THAT instead of the child ("pepper" -> "chocolate").
+    // The flag also blocks NEW sounds (delayed instruction autoplay)
+    // until the phase effect below releases it. stopSfx silences a
+    // still-ringing verdict ding - sfx uses its own elements.
+    setMicRecording(true);
+    stopSfx();
     if (modeRef.current === 'recorder') {
       void launchRecorder();
     } else {

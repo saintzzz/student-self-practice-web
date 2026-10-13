@@ -65,7 +65,13 @@ export default function PronunciationRecordingQuestion({
     <div>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker
+          text={INSTRUCTION}
+          lang="vi-VN"
+          autoplay={band === 'G12'}
+          autoplayKey={speakerKey}
+          disabled={phase === 'recording' && !hasAnswered}
+        />
       </div>
       <p className="mb-3 text-4xl font-extrabold text-white">{question.word}</p>
 

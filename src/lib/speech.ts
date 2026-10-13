@@ -81,7 +81,7 @@ function pickEnglishVoice(): SpeechSynthesisVoice | null {
  * accepted the utterance and began speaking, the best confirmation
  * available client-side).
  */
-export type SpeechPlaybackStatus = 'unsupported' | 'error' | 'started';
+export type SpeechPlaybackStatus = 'unsupported' | 'error' | 'started' | 'ended';
 
 /**
  * CR-19: every text the app can speak is pre-rendered to an mp3 with a
@@ -104,6 +104,16 @@ interface PendingAudioRequest {
   preempted: boolean;
 }
 const pendingAudioRequests = new Set<PendingAudioRequest>();
+
+/* Pronunciation recording: while the mic is open the app must be SILENT
+ * - any speaker output bleeds into the capture and the STT transcribes
+ * the app instead of the child. stopAllAudio() handles sound already in
+ * flight; `micRecordingActive` blocks sounds STARTED mid-recording; and
+ * `audioGeneration` permanently invalidates pre-recording requests whose
+ * async continuations (URL lookup, cancel-settle timers, retries) could
+ * otherwise fire after the flag was already released. */
+let micRecordingActive = false;
+let audioGeneration = 0;
 
 /* CR-69: the storage bucket serves `Cache-Control: no-cache`, so a fresh
  * Audio() per tap revalidates over the network on every "Nghe lại".
@@ -184,10 +194,20 @@ function tryPlayAudioFile(
   text: string,
   onStatus: ((status: SpeechPlaybackStatus) => void) | undefined,
   speed: SpeechSpeed,
+  gen: number,
 ): Promise<boolean> {
   return audioUrlFor(text).then((url) => {
     if (!url) return false;
     return new Promise<boolean>((resolve) => {
+      // The mic may have opened while the URL lookup was in flight -
+      // requests created after stopAllAudio() ran were never preempted,
+      // and a generation bump permanently retires pre-recording work so
+      // it cannot speak even after the mic releases. 'true' = handled
+      // silently, do not fall back to TTS (also suppressed).
+      if (micRecordingActive || gen !== audioGeneration) {
+        resolve(true);
+        return;
+      }
       const audio = cachedAudio(text, url);
       audio.playbackRate = speed === 'slow' ? NORMAL_FILE_RATE * SLOW_FACTOR : NORMAL_FILE_RATE;
       const request: PendingAudioRequest = { audio, preempted: false };
@@ -251,11 +271,16 @@ function synthesize(
   onStatus?: (status: SpeechPlaybackStatus) => void,
   speed: SpeechSpeed = 'normal',
   isRetry = false,
+  gen: number = audioGeneration,
 ): void {
   if (typeof window === 'undefined' || !window.speechSynthesis) {
     onStatus?.('unsupported');
     return;
   }
+  // Suppressed mid-flight (retry timer, watchdog retry, or delayed
+  // speak after cancel) - or permanently invalidated when a recording
+  // session bumped the generation after this utterance was requested.
+  if (micRecordingActive || gen !== audioGeneration) return;
 
   try {
     const synth = window.speechSynthesis;
@@ -290,7 +315,7 @@ function synthesize(
         sendStatus('error');
         return;
       }
-      setTimeout(() => synthesize(text, onStatus, speed, true), 120);
+      setTimeout(() => synthesize(text, onStatus, speed, true, gen), 120);
     };
     utterance.onstart = () => sendStatus('started');
     utterance.onend = () => {
@@ -302,7 +327,15 @@ function synthesize(
       // cancel(), not failures - reporting them would flash a bogus
       // error at the student. 'not-allowed' means a real rejection.
       const reason = event?.error;
-      if (reason === 'canceled' || reason === 'interrupted') return;
+      if (reason === 'canceled' || reason === 'interrupted') {
+        /* The mic-suppression path cancels utterances out from under
+           their callers - without a terminal status an instruction
+           speaker would pulse 'playing' forever. 'ended' bypasses the
+           once-only sendStatus (which 'started' already consumed);
+           ordinary callers ignore it, canceled content stays silent. */
+        if (micRecordingActive) onStatus?.('ended');
+        return;
+      }
       retry();
     };
     setTimeout(() => {
@@ -330,6 +363,15 @@ function synthesize(
       synth.cancel();
       synth.resume();
       setTimeout(() => {
+        if (micRecordingActive || gen !== audioGeneration) {
+          // Detach + clear or the 2500ms watchdog would still see this
+          // never-spoken utterance and retry it after the mic released.
+          utterance.onstart = null;
+          utterance.onend = null;
+          utterance.onerror = null;
+          if (activeUtterance === utterance) activeUtterance = null;
+          return;
+        }
         try {
           synth.speak(utterance);
         } catch {
@@ -359,14 +401,72 @@ function speak(
   onStatus?: (status: SpeechPlaybackStatus) => void,
   speed: SpeechSpeed = 'normal',
 ): void {
+  // The microphone is open for pronunciation recording - app audio must
+  // stay silent or it gets transcribed as the child's speech.
+  if (micRecordingActive) return;
+  // Capture the generation now - a recording session starting mid-flight
+  // permanently retires this request (see audioGeneration).
+  const gen = audioGeneration;
   // Stop any file playback from a previous tap before starting anew.
   if (activeAudio) {
     activeAudio.pause();
     activeAudio = null;
   }
-  void tryPlayAudioFile(text, onStatus, speed).then((played) => {
-    if (!played) synthesize(text, onStatus, speed);
+  void tryPlayAudioFile(text, onStatus, speed, gen).then((played) => {
+    if (!played) synthesize(text, onStatus, speed, false, gen);
   });
+}
+
+/**
+ * Pronunciation-recording support: silences EVERY owned audio source so
+ * the mic never captures the app's own speaker output - that bleed is
+ * what made the STT return an unrelated word (the transcript heard the
+ * app, not the child). Covers the TTS queue (instructions included),
+ * playing mp3s, and still-loading mp3 requests (marked preempted so they
+ * can neither start late nor fall back to English TTS mid-recording).
+ */
+export function stopAllAudio(): void {
+  for (const req of pendingAudioRequests) {
+    req.preempted = true;
+    try { req.audio.pause(); } catch { /* best-effort */ }
+  }
+  if (activeAudio) {
+    try { activeAudio.pause(); } catch { /* best-effort */ }
+    activeAudio = null;
+  }
+  /* Don't detach utterance handlers - synth.cancel() delivers 'canceled'/
+     'interrupted' onerror so listeners (InstructionSpeaker status) unwind
+     to idle naturally instead of sticking on 'playing'. */
+  try {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  } catch {
+    // cancel is best-effort
+  }
+}
+
+/**
+ * usePronunciationRecording flips this on when the mic opens and off
+ * when recording settles - stopAllAudio() silences in-flight sound AND
+ * the flag rejects new speak calls until released, so a delayed autoplay
+ * timer cannot start talking into an open microphone.
+ */
+export function setMicRecording(active: boolean): void {
+  micRecordingActive = active;
+  if (active) {
+    // Bump BEFORE silencing so every continuation queued under the old
+    // generation is dead even if it outlives this recording session.
+    audioGeneration += 1;
+    stopAllAudio();
+  }
+}
+
+/** Snapshot token for callers that schedule audio LATER (e.g. the 400ms
+ *  instruction-autoplay timer) - compare at fire time; a bump means a
+ *  recording session intervened and the scheduled sound is stale. */
+export function currentAudioGeneration(): number {
+  return audioGeneration;
 }
 
 /**
@@ -468,6 +568,13 @@ export function speakInstruction(
   const onStatus = opts?.onStatus;
   const noop = () => {};
 
+  // Recording in progress - instruction audio would land IN the
+  // recording. Report 'ended' so the speaker button settles to idle.
+  if (micRecordingActive) {
+    onStatus?.('ended');
+    return noop;
+  }
+
   const contentAudioBusy = (): boolean => {
     if (pendingAudioRequests.size > 0) return true; // mp3 requested, 'playing' not yet fired
     if (activeAudio && !activeAudio.paused && !activeAudio.ended) return true;
@@ -499,13 +606,20 @@ export function speakInstruction(
   }
   if (!opts?.autoplay) stopContentAudio();
 
+  // Generation captured at request time - a recording session starting
+  // mid-flight permanently retires this instruction's queued timers.
+  const gen = audioGeneration;
+
   if (lang === 'en-US') {
     let terminal = false;
     let cancelled = false;
     speak(text, (s) => {
       if (terminal || cancelled) return;
       if (s === 'started') onStatus?.('playing');
-      else {
+      else if (s === 'ended') {
+        terminal = true;
+        onStatus?.('ended');
+      } else {
         terminal = true;
         onStatus?.(s === 'unsupported' ? 'unavailable' : 'error');
       }
@@ -614,6 +728,14 @@ export function speakInstruction(
       timers.push(
         window.setTimeout(() => {
           if (cancelled) return;
+          // Mic opened (or a stale pre-recording request surfaced) during
+          // the cancel-settle beat - this utterance must never start.
+          // Report 'ended' before cancel() (finish ignores cancelled=true).
+          if (micRecordingActive || gen !== audioGeneration) {
+            finish('ended');
+            cancel();
+            return;
+          }
           try {
             synth.speak(self);
           } catch {
