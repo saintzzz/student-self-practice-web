@@ -264,6 +264,18 @@ export default function QuestionCard({
   const pictureWordId = feedbackPictureWordId(question);
   const pictureVisual = pictureWordId ? getWordVisual(pictureWordId) : undefined;
 
+  const nextButton = (
+    <button
+      type="button"
+      data-testid="next-button"
+      disabled={!hasAnswered}
+      onClick={onNext}
+      className={`mt-2 w-full sm:w-auto [@media(max-height:420px)]:mt-1 ${CONTINUE_BUTTON_CLASSNAME}`}
+    >
+      <span className="inline-flex items-center gap-1.5">Câu tiếp theo <IconArrowRight size={18} /></span>
+    </button>
+  );
+
   return (
     <div
       data-testid="question-card"
@@ -297,31 +309,30 @@ export default function QuestionCard({
 
       {/* pronunciation-recording renders its own complete feedback panel
           (transcript + score + explanation) - see PronunciationRecordingQuestion. */}
-      {currentAnswer && question.kind !== 'pronunciation-recording' && (
-        <FeedbackPanel
-          kind={question.kind}
-          isCorrect={currentAnswer.isCorrect}
-          correctWord={getCorrectWord(question)}
-          explanation={question.explanation}
-          pickedAnswer={pickedAnswerText(question, currentAnswer)}
-          fullSentence={
-            question.kind === 'listening-sentence-fill-blank' ? question.sentence : undefined
-          }
-          picture={
-            pictureVisual ? { emoji: pictureVisual.emoji, imageUrl: pictureVisual.imageUrl } : undefined
-          }
-        />
+      {currentAnswer && question.kind !== 'pronunciation-recording' ? (
+        /* CR-73 QuestionFrame s5.2 + s6: the feedback ZONE is the panel
+           plus the Next control as one bottom-anchored unit. At <=420px
+           heights it detaches into a fixed bottom sheet so it can never
+           push the answer zone off-screen. */
+        <div className="sticky bottom-2 z-30 [@media(max-height:420px)]:fixed [@media(max-height:420px)]:inset-x-2 [@media(max-height:420px)]:bottom-0 [@media(max-height:420px)]:z-40 [@media(max-height:420px)]:rounded-t-2xl [@media(max-height:420px)]:bg-[#0d1b26] [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <FeedbackPanel
+            kind={question.kind}
+            isCorrect={currentAnswer.isCorrect}
+            correctWord={getCorrectWord(question)}
+            explanation={question.explanation}
+            pickedAnswer={pickedAnswerText(question, currentAnswer)}
+            fullSentence={
+              question.kind === 'listening-sentence-fill-blank' ? question.sentence : undefined
+            }
+            picture={
+              pictureVisual ? { emoji: pictureVisual.emoji, imageUrl: pictureVisual.imageUrl } : undefined
+            }
+          />
+          {nextButton}
+        </div>
+      ) : (
+        nextButton
       )}
-
-      <button
-        type="button"
-        data-testid="next-button"
-        disabled={!hasAnswered}
-        onClick={onNext}
-        className={`mt-2 w-full sm:w-auto [@media(max-height:420px)]:mt-1 ${CONTINUE_BUTTON_CLASSNAME}`}
-      >
-        <span className="inline-flex items-center gap-1.5">Câu tiếp theo <IconArrowRight size={18} /></span>
-      </button>
     </div>
   );
 }

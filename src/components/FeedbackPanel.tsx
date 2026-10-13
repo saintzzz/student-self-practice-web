@@ -84,11 +84,10 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
       /* kids-UX s3.4: announce the verdict gently; aria-live lets the
          teach-back reach screen-reader kids without moving focus. */
       aria-live="polite"
-      /* CR-73 QuestionFrame s5.2 feedback zone: bottom-anchored
-         (sticky) with a bounded scroll region + safe-area pad; at
-         <=420px heights it leaves the flow entirely and becomes a
-         bottom-sheet overlay so it can never push the answer zone. */
-      className={`sticky bottom-2 z-30 mt-3 max-h-[min(40vh,320px)] overflow-y-auto overscroll-contain rounded-2xl p-4 pl-5 pb-[max(1rem,env(safe-area-inset-bottom))] text-left ring-2 shadow-md [@media(max-height:420px)]:fixed [@media(max-height:420px)]:inset-x-2 [@media(max-height:420px)]:bottom-0 [@media(max-height:420px)]:z-40 [@media(max-height:420px)]:mt-0 [@media(max-height:420px)]:rounded-b-none [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 [@media(max-height:420px)]:pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
+      /* CR-73 QuestionFrame s5.2: the bounded scroll region of the
+         feedback zone - QuestionCard owns the bottom-anchor/sheet
+         positioning for [panel + Next] as one unit (spec s6 anatomy). */
+      className={`relative mt-3 max-h-[min(40vh,320px)] overflow-y-auto overscroll-contain rounded-2xl p-4 pl-5 pb-[max(1rem,env(safe-area-inset-bottom))] text-left ring-2 shadow-md [@media(max-height:420px)]:mt-0 [@media(max-height:420px)]:rounded-b-none [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
         isCorrect
           ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 ring-emerald-400/50'
           : 'bg-sky-500/15 ring-sky-400/50'
