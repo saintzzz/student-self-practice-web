@@ -9,7 +9,6 @@ import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 const INSTRUCTION = 'Nghe âm rồi chọn đúng hình nhé!';
 
@@ -33,7 +32,6 @@ export default function PhonicsWordChoiceQuestion({
   onSelectOption,
   speakerKey,
 }: PhonicsWordChoiceQuestionProps) {
-  const { band } = useViewer();
   // speakWord on a bare key ("c") reads the letter name ("see"); the
   // utterance "c, as in cat" carries the actual sound via the example.
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(getSoundUtterance(question.sound), onStatus, speed), getSoundUtterance(question.sound));
@@ -50,7 +48,7 @@ export default function PhonicsWordChoiceQuestion({
     <div>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
       <div className="mb-3 flex items-center justify-center gap-3">
         <span className="text-6xl font-extrabold text-white [@media(max-height:420px)]:text-5xl">

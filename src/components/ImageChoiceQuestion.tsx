@@ -3,7 +3,6 @@ import { getWordVisual } from '../lib/emoji/wordVisual';
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 const INSTRUCTION = 'Từ nào đúng với hình này?';
 
@@ -21,14 +20,13 @@ export default function ImageChoiceQuestion({
   onSelectOption,
   speakerKey,
 }: ImageChoiceQuestionProps) {
-  const { band } = useViewer();
   const hasAnswered = selectedIndex !== null;
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
       <div
         className="mb-3 text-8xl [@media(max-height:420px)]:text-6xl"

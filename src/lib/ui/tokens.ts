@@ -126,15 +126,6 @@ export const OPTION_PICKED_WRONG = 'bg-slate-200 text-slate-700 border-slate-400
 export const OPTION_REVEAL_CORRECT =
   'bg-emerald-100 text-emerald-900 border-emerald-500 ring-2 ring-emerald-300';
 
-/** Speaker affordance - indigo means "Bé Heo is talking" (never gold,
- *  never emerald). `SPEAKER_BTN` is the idle tappable state. */
-export const SPEAKER_BTN =
-  'inline-flex min-h-[76px] min-w-[76px] items-center justify-center rounded-full bg-indigo-100 text-indigo-700 ring-2 ring-indigo-300 transition hover:bg-indigo-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none';
-export const SPEAKER_BTN_PLAYING =
-  'inline-flex min-h-[76px] min-w-[76px] items-center justify-center rounded-full bg-indigo-600 text-white ring-2 ring-indigo-400 animate-pulse motion-reduce:animate-none';
-export const SPEAKER_BTN_BLOCKED =
-  'inline-flex min-h-[76px] min-w-[76px] items-center justify-center rounded-full bg-indigo-100 text-indigo-700 ring-4 ring-indigo-400 ring-offset-2 ring-offset-white animate-bounce motion-reduce:animate-none';
-
 /** Parent-facing "paper" surfaces - light, calm, print-friendly (R5).
  *  Separated from the navy play chrome so a parent instantly reads
  *  "this part is for me". */

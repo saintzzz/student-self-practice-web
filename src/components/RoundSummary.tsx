@@ -10,7 +10,6 @@ import { InstructionSpeaker } from './InstructionSpeaker';
 import GiftBoxPicker from './GiftBoxPicker';
 import { SendResultsCard } from './SendResultsCard';
 import { ShareCard } from './ShareCard';
-import { useViewer } from '../lib/viewer/ViewerContext';
 import { GRADES } from '../data/vocabulary';
 import {
   checkStreakStickers,
@@ -75,7 +74,6 @@ export default function RoundSummary({
   speakerKey,
 }: RoundSummaryProps) {
   const status = getScoreStatus(outcome.points, outcome.maxPoints);
-  const { band } = useViewer();
   const awarded = useRef<RoundAwardResult | null>(null);
   const [award, setAward] = useState<RoundAwardResult | null>(null);
 
@@ -136,7 +134,7 @@ export default function RoundSummary({
               : 'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'
           }
           lang="vi-VN"
-          autoplay={band === 'G12'}
+
           autoplayKey={speakerKey ? `${speakerKey}-summary` : undefined}
         />
       </div>
@@ -227,7 +225,7 @@ export default function RoundSummary({
             <InstructionSpeaker
               text="Em muốn nghỉ hay chơi tiếp nào?"
               lang="vi-VN"
-              autoplay={band === 'G12'}
+
               autoplayKey={speakerKey ? `${speakerKey}-fork` : undefined}
             />
           </div>

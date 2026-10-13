@@ -3,7 +3,6 @@ import { usePronunciationRecording } from '../hooks/usePronunciationRecording';
 import PronunciationFeedbackPanel from './PronunciationFeedbackPanel';
 import PronunciationStatusMessage from './PronunciationStatusMessage';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 const INSTRUCTION = 'Đọc to từ này lên nhé:';
 
@@ -55,7 +54,6 @@ export default function PronunciationRecordingQuestion({
   onSubmit,
   speakerKey,
 }: PronunciationRecordingQuestionProps) {
-  const { band } = useViewer();
   const { phase, errorReason, startRecording, stopRecording, retry, skip } = usePronunciationRecording(
     onSubmit,
     question.word,
@@ -68,9 +66,8 @@ export default function PronunciationRecordingQuestion({
         <InstructionSpeaker
           text={INSTRUCTION}
           lang="vi-VN"
-          autoplay={band === 'G12'}
+
           autoplayKey={speakerKey}
-          disabled={phase === 'recording' && !hasAnswered}
         />
       </div>
       <p className="mb-3 text-4xl font-extrabold text-white">{question.word}</p>

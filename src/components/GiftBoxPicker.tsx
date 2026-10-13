@@ -4,7 +4,6 @@ import { HOME_ITEMS } from '../data/homeItems';
 import { GIFT_BOX } from '../lib/ui/tokens';
 import { EmojiVisual } from './EmojiVisual';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 interface GiftBoxPickerProps {
   /**
@@ -31,7 +30,6 @@ const BOX_COUNT = 3;
  * An exhausted pool renders nothing (the sticker chips above still show).
  */
 export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps) {
-  const { band } = useViewer();
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [result, setResult] = useState<HomeItemResult | null>(null);
   const [poolEmpty] = useState(() => ownedHomeItems().length >= HOME_ITEMS.length);
@@ -70,7 +68,7 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
           <InstructionSpeaker
             text="Em mở được quà! Chọn một hộp quà nhé!"
             lang="vi-VN"
-            autoplay={band === 'G12'}
+
             autoplayKey={`gift-${stickerId}`}
           />
         </div>

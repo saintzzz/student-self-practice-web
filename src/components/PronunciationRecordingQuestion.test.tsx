@@ -130,7 +130,7 @@ describe('PronunciationRecordingQuestion', () => {
     }
   });
 
-  it('disables the instruction speaker while recording and re-enables it once answered (SR latch regression)', async () => {
+  it('has no speaker button (CR-72) and still records + answers cleanly (SR latch regression)', async () => {
     class QuietRecognition {
       lang = '';
       continuous = false;
@@ -162,14 +162,13 @@ describe('PronunciationRecordingQuestion', () => {
         />,
       );
 
-      const speaker = screen.getByTestId('instruction-speaker');
-      expect(speaker).not.toBeDisabled();
+      expect(screen.queryByTestId('instruction-speaker')).not.toBeInTheDocument();
 
       await user.click(screen.getByTestId('record-button'));
-      await waitFor(() => expect(speaker).toBeDisabled());
+      await waitFor(() => expect(screen.getByTestId('recording-indicator')).toBeInTheDocument());
 
-      // SR success leaves phase stuck at 'recording' - the answer state,
-      // not the phase, must re-enable the speaker on the feedback screen.
+      // SR success leaves phase stuck at 'recording' - the answer state
+      // must still bring the feedback panel up.
       rerender(
         <PronunciationRecordingQuestion
           question={PRONUNCIATION_QUESTION}
@@ -180,7 +179,7 @@ describe('PronunciationRecordingQuestion', () => {
           onSubmit={vi.fn()}
         />,
       );
-      expect(speaker).not.toBeDisabled();
+      expect(screen.getByTestId('pronunciation-feedback')).toBeVisible();
     } finally {
       testWindow().SpeechRecognition = original.SpeechRecognition;
       testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;

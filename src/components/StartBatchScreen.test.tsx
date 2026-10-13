@@ -69,7 +69,8 @@ describe('StartBatchScreen', () => {
     expect(screen.queryByTestId('drill-english')).not.toBeInTheDocument();
     // The four launchpad decisions.
     expect(screen.getByTestId('back-to-grades')).toBeVisible();
-    expect(screen.getByTestId('instruction-speaker')).toBeVisible();
+    // CR-72: headless instruction speaker - autoplays, renders no button.
+    expect(screen.queryByTestId('instruction-speaker')).not.toBeInTheDocument();
     expect(screen.getByTestId('start-batch-button')).toBeVisible();
     expect(screen.getByTestId('explore-toggle')).toBeVisible();
   });

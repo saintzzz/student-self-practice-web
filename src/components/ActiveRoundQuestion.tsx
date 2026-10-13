@@ -11,7 +11,7 @@ interface ActiveRoundQuestionProps {
   onNextQuestion: () => void;
   /**
    * kids-UX (design s3.2): round-scoped key so the instruction speaker
-   * autoplays once per ROUND on G1-2, not once per question.
+   * autoplays once per ROUND (all grades), not once per question.
    */
   speakerKey?: string;
 }

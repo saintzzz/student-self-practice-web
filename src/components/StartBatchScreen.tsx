@@ -210,8 +210,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL}>
             ← Quay lại
           </button>
-          {/* kids-UX §3.2: persistent instruction speaker; autoplays once on
-              G1-2, tap-to-hear on G3-5. */}
+          {/* CR-72: headless instruction speaker - autoplays once per
+              screen for every grade, no visible button. */}
           <InstructionSpeaker
             text={
               isG12
@@ -219,7 +219,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                 : 'Bấm nút Chơi để bắt đầu, hoặc mở Khám phá để xem thêm nhé!'
             }
             lang="vi-VN"
-            autoplay={isG12}
+
             autoplayKey={`start-${grade.id}`}
           />
         </div>
@@ -281,7 +281,6 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         open={exploreOpen}
         onClose={() => setExploreOpen(false)}
         returnFocusRef={exploreToggleRef}
-        speakerAutoplay={isG12}
         speakerKey={`explore-${grade.id}`}
       >
         {/* Relocated content - the same card components, unchanged; each

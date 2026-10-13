@@ -6,7 +6,6 @@ import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
 import ListenButtons from './ListenButtons';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 const INSTRUCTION = 'Nghe và gõ từ em nghe được nhé!';
 
@@ -24,7 +23,6 @@ export default function ListeningFillBlankQuestion({
   onSubmit,
   speakerKey,
 }: ListeningFillBlankQuestionProps) {
-  const { band } = useViewer();
   const [inputValue, setInputValue] = useState('');
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
 
@@ -38,7 +36,7 @@ export default function ListeningFillBlankQuestion({
     <div>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}

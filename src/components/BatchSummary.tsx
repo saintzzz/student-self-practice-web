@@ -9,7 +9,6 @@ import { InstructionSpeaker } from './InstructionSpeaker';
 import GiftBoxPicker from './GiftBoxPicker';
 import { SendResultsCard } from './SendResultsCard';
 import { ShareCard } from './ShareCard';
-import { useViewer } from '../lib/viewer/ViewerContext';
 import { GRADES } from '../data/vocabulary';
 import {
   checkStreakStickers,
@@ -52,7 +51,6 @@ interface BatchSummaryProps {
  */
 export default function BatchSummary({ result, gradeId, onStartNewBatch, onChooseGrade, objectiveId, speakerKey }: BatchSummaryProps) {
   const status = getScoreStatus(result.points, result.maxPoints);
-  const { band } = useViewer();
   /* CR-69: ending a batch via "KẾT THÚC" before answering anything must
     not pay rewards or write a 0-question practice result. kids-UX: the
     gift, fork, share and send-results surfaces all stay behind this same
@@ -101,7 +99,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
           <InstructionSpeaker
             text={`Hoàn thành bài luyện tập! Em đúng ${result.totalCorrect} trên ${result.totalQuestions} câu.`}
             lang="vi-VN"
-            autoplay={band === 'G12'}
+
             autoplayKey={speakerKey ? `${speakerKey}-summary` : undefined}
           />
         )}
@@ -204,7 +202,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
             <InstructionSpeaker
               text="Em muốn nghỉ hay chơi tiếp nào?"
               lang="vi-VN"
-              autoplay={band === 'G12'}
+
               autoplayKey={speakerKey ? `${speakerKey}-fork` : undefined}
             />
           </div>

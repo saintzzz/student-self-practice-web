@@ -34,27 +34,11 @@ test.describe('kids-UX: launchpad (AC-2.x)', () => {
     // First paint: the gold CTA is there; the exam tiles are NOT.
     await expect(page.getByTestId('start-batch-button')).toBeVisible();
     await expect(page.getByTestId('explore-toggle')).toBeVisible();
-    // AC-1.4: the speaker renders only when a vi-VN voice exists. Headless
-    // CI runners often lack one, and the autoplay correctly hides the
-    // button once it reports 'unavailable' - assert whichever branch the
-    // browser's real voice list dictates.
-    const hasViVoice = await page.evaluate(
-      () =>
-        new Promise<boolean>((resolve) => {
-          const synth = window.speechSynthesis;
-          if (!synth) return resolve(false);
-          const check = () =>
-            synth.getVoices().some((v) => v.lang?.toLowerCase().startsWith('vi'));
-          if (synth.getVoices().length > 0) return resolve(check());
-          synth.addEventListener('voiceschanged', () => resolve(check()), { once: true });
-          window.setTimeout(() => resolve(check()), 3000);
-        }),
-    );
-    if (hasViVoice) {
-      await expect(page.getByTestId('instruction-speaker')).toBeVisible();
-    } else {
-      await expect(page.getByTestId('instruction-speaker')).toHaveCount(0);
-    }
+    // CR-72: the instruction speaker is headless - it autoplays on every
+    // screen for every grade and renders no button. Assert the chrome is
+    // gone and the instruction text is what remains.
+    await expect(page.getByTestId('instruction-speaker')).toHaveCount(0);
+    await expect(page.getByText('Mình cùng chơi 4 trò nhỏ nhé!', { exact: false })).toBeVisible();
     await expect(page.getByTestId('drill-english')).not.toBeVisible();
 
     // Sheet opens, carries the relocated surfaces, and closes cleanly.

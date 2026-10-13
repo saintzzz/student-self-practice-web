@@ -6,7 +6,6 @@ import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import ListenButtons from './ListenButtons';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 const INSTRUCTION = 'Nghe hoặc đọc câu rồi chọn hình đúng nhé!';
 
@@ -31,7 +30,6 @@ export default function DescribeAndChooseImageQuestion({
   onSelectOption,
   speakerKey,
 }: DescribeAndChooseImageQuestionProps) {
-  const { band } = useViewer();
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
     speakSentence(question.sentence, onStatus, speed),
     question.sentence,
@@ -42,7 +40,7 @@ export default function DescribeAndChooseImageQuestion({
     <div>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
       <p className="mb-3 text-3xl font-extrabold text-white">{question.sentence}</p>
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />

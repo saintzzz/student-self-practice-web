@@ -3,7 +3,6 @@ import { EmojiVisual } from './EmojiVisual';
 import { OPTION_PICKED_WRONG, OPTION_REVEAL_CORRECT } from '../lib/ui/tokens';
 import { getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 const INSTRUCTION = 'Từ này có 1 chữ cái thừa! Bấm vào chữ cái em nghĩ là thừa nhé.';
 
@@ -60,7 +59,6 @@ export default function ExtraLetterQuestion({
   onSelectLetter,
   speakerKey,
 }: ExtraLetterQuestionProps) {
-  const { band } = useViewer();
   const hasAnswered = selectedLetterIndex !== null;
   const wasCorrect = hasAnswered && selectedLetterIndex === question.extraIndex;
 
@@ -72,7 +70,7 @@ export default function ExtraLetterQuestion({
         <p className="text-xl font-semibold text-amber-200 [@media(max-height:600px)]:text-base">
           {INSTRUCTION}
         </p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
       <div className="mb-2 flex justify-center gap-1.5 sm:gap-3">
         {question.displayLetters.map((letter, index) => (

@@ -31,8 +31,8 @@ interface QuestionCardProps {
   onNext: () => void;
   /**
    * kids-UX (design s3.2): round-scoped speaker key - forwarded to every
-   * question body so its instruction speaker autoplays once per round on
-   * G1-2 and stays tap-only on G3-5.
+   * question body so its instruction speaker autoplays once per round
+   * (all grades, headless - no speaker button).
    */
   speakerKey?: string;
 }

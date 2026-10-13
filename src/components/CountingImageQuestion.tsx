@@ -2,7 +2,6 @@ import type { CountingImageOption, CountingImageQuestion as CountingImageQuestio
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
-import { useViewer } from '../lib/viewer/ViewerContext';
 
 interface CountingImageQuestionProps {
   question: CountingImageQuestionType;
@@ -22,7 +21,6 @@ export default function CountingImageQuestion({
   onSelectOption,
   speakerKey,
 }: CountingImageQuestionProps) {
-  const { band } = useViewer();
   const hasAnswered = selectedIndex !== null;
   const isCountToImage = question.direction === 'count-to-image';
   const instruction = isCountToImage ? 'Chọn hình có đúng số lượng nhé!' : 'Đếm số lượng rồi chọn đáp án đúng!';
@@ -31,7 +29,7 @@ export default function CountingImageQuestion({
     <div>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{instruction}</p>
-        <InstructionSpeaker text={instruction} lang="vi-VN" autoplay={band === 'G12'} autoplayKey={speakerKey} />
+        <InstructionSpeaker text={instruction} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
 
       {isCountToImage ? (

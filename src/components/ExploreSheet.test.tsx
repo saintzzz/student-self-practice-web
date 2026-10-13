@@ -91,7 +91,9 @@ describe('ExploreSheet', () => {
     await vi.waitFor(() => expect(document.activeElement).toBe(dialog));
 
     fireEvent.keyDown(document, { key: 'Tab' });
-    const first = screen.getByTestId('instruction-speaker');
+    // CR-72: the headless instruction speaker is gone - the sheet's only
+    // control is Đóng, so first === last here.
+    const first = screen.getByTestId('explore-close');
     const last = screen.getByTestId('explore-close');
     expect(document.activeElement).toBe(first);
 

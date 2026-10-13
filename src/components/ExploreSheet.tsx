@@ -8,8 +8,6 @@ interface ExploreSheetProps {
   onClose: () => void;
   /** Focus returns to this element on every close path (AC-2.3). */
   returnFocusRef?: RefObject<HTMLElement | null>;
-  /** G1-2 autoplay for the header speaker (AC-1.3). */
-  speakerAutoplay?: boolean;
   speakerKey?: string;
   children: ReactNode;
 }
@@ -27,7 +25,6 @@ export default function ExploreSheet({
   open,
   onClose,
   returnFocusRef,
-  speakerAutoplay = false,
   speakerKey,
   children,
 }: ExploreSheetProps) {
@@ -117,7 +114,7 @@ export default function ExploreSheet({
               <InstructionSpeaker
                 text="Chọn một góc để khám phá nhé!"
                 lang="vi-VN"
-                autoplay={speakerAutoplay}
+
                 autoplayKey={speakerKey ?? 'explore-sheet'}
               />
               <button
