@@ -145,4 +145,75 @@ describe('InstructionSpeaker - autoplay once per key (all grades)', () => {
     view.unmount();
     expect(cancel).toHaveBeenCalledTimes(1);
   });
+
+  // External-review r19-03: a blocked/error/unavailable autoplay must
+  // release the key so the instruction can retry - the buttonless UI has
+  // no other path to the instruction audio.
+  it('releases the key when the browser blocks autoplay, so a remount retries', () => {
+    vi.useFakeTimers();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    const first = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(mockSpeak).toHaveBeenCalledTimes(1);
+    act(() => {
+      statusCb?.('blocked');
+    });
+    first.unmount();
+
+    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(mockSpeak).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries the instruction on the first user gesture after autoplay is blocked', () => {
+    vi.useFakeTimers();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    act(() => {
+      statusCb?.('blocked');
+    });
+    act(() => {
+      window.dispatchEvent(new Event('pointerdown'));
+    });
+    expect(mockSpeak).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the key consumed when playback actually played', () => {
+    vi.useFakeTimers();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    const first = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    act(() => {
+      statusCb?.('playing');
+      statusCb?.('ended');
+    });
+    first.unmount();
+
+    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(mockSpeak).toHaveBeenCalledTimes(1);
+  });
 });

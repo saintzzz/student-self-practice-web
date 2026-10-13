@@ -23,7 +23,8 @@ const value = args[1];
 
 function sh(cmd) {
   try {
-    return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    // codex CLI writes status to stderr - merge it into the capture.
+    return execSync(`${cmd} 2>&1`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
   } catch {
     return null;
   }
@@ -40,43 +41,49 @@ if (!/logged in/i.test(loginStatus)) {
   process.exit(1);
 }
 
-let reviewArgs;
+// `codex review` shells out to `git diff` itself - blocked by the exec
+// sandbox policy in this environment. Compute the diff here and feed it to
+// `codex exec` on stdin instead: same external reviewer, no exec needed.
+let diffCmd;
 let label;
 if (flag === '--base' && value) {
-  reviewArgs = ['review', '--base', value];
+  diffCmd = `git diff ${value}..HEAD`;
   label = `base ${value}`;
 } else if (flag === '--uncommitted') {
-  reviewArgs = ['review', '--uncommitted'];
+  diffCmd = 'git diff HEAD';
   label = 'working tree';
 } else {
   const sha = flag === '--commit' && value ? value : sh('git rev-parse --short HEAD');
-  reviewArgs = ['review', '--commit', sha];
+  diffCmd = `git show ${sha} --format=short`;
   label = `commit ${sha}`;
 }
 
-// PROMPT conflicts with --commit/--base in codex review; only allowed with
-// the default/--uncommitted invocation.
-if (flag === '--uncommitted') {
-  reviewArgs.push(
-    'External post-deploy review per AGENTS.md. Scope: source correctness, ' +
-      'structure, security, performance, UI/UX. Output findings as a numbered ' +
-      'list: [severity blocker/major/minor] file:line - problem - suggested fix. ' +
-      'If nothing actionable, say CLEAN explicitly. Terse, high signal.',
-  );
+const diff = execSync(diffCmd, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+if (!diff.trim()) {
+  console.error('empty diff - nothing to review');
+  process.exit(1);
 }
 
-console.log(`Running codex review on ${label}...`);
+const prompt =
+  `External post-deploy review per AGENTS.md - independent reviewer, be adversarial.\n` +
+  `Scope: source correctness, structure, security, performance, UI/UX, a11y.\n` +
+  `Repo: Vite+React+TS kids English-learning app (Vietnamese G1-5).\n` +
+  `Output: numbered findings "[severity blocker/major/minor] file:line - problem - fix". ` +
+  `If nothing actionable, say CLEAN explicitly. Terse, high signal.\n\n` +
+  `DIFF (${label}):\n${diff}`;
+
+console.log(`Running codex exec on ${label}...`);
 let output;
 try {
-  // .cmd shim on Windows - route through the shell for all platforms.
-  const quoted = reviewArgs.map((a) => `"${String(a).replaceAll('"', '\\"')}"`).join(' ');
-  output = execSync(`codex ${quoted}`, {
+  output = execSync('codex exec -', {
+    input: prompt,
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'inherit'],
     timeout: 20 * 60 * 1000,
+    maxBuffer: 16 * 1024 * 1024,
   });
 } catch (e) {
-  console.error(`codex review failed: ${e.message}`);
+  console.error(`codex exec failed: ${e.message}`);
   process.exit(1);
 }
 

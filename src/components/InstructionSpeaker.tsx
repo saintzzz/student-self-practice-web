@@ -48,19 +48,47 @@ export function InstructionSpeaker({ text, lang, autoplayKey }: InstructionSpeak
 
   /* Autoplay once per `autoplayKey`. The key is reserved when the timer is
      SCHEDULED (not when it fires) so two simultaneous mounts of the same
-     key cannot double-speak. */
+     key cannot double-speak. If playback is refused ('blocked', 'error',
+     'unavailable') the key is released so the next screen visit retries -
+     and a one-shot pointerdown listener is armed because a browser that
+     blocked autoplay will allow speech once the user has gestured. This
+     restores a retry path after the replay button was removed (r19-03). */
   useEffect(() => {
     if (!autoplayKey || playedKeys.has(autoplayKey)) return;
     playedKeys.add(autoplayKey);
     let fired = false;
+    let disposed = false;
     const gen = currentAudioGeneration();
+
+    const attempt = () => {
+      cancelRef.current = speakInstruction(text, {
+        lang,
+        autoplay: true,
+        onStatus: (status) => {
+          if (status === 'playing' || status === 'ended') return;
+          playedKeys.delete(autoplayKey);
+          if (status === 'blocked' && !disposed) {
+            window.addEventListener('pointerdown', retry, { once: true, capture: true });
+          }
+        },
+      });
+    };
+
+    const retry = () => {
+      if (disposed || playedKeys.has(autoplayKey)) return;
+      playedKeys.add(autoplayKey);
+      attempt();
+    };
+
     const timer = window.setTimeout(() => {
       fired = true;
       if (currentAudioGeneration() !== gen) return;
-      cancelRef.current = speakInstruction(text, { lang, autoplay: true });
+      attempt();
     }, AUTOPLAY_DELAY_MS);
     return () => {
+      disposed = true;
       window.clearTimeout(timer);
+      window.removeEventListener('pointerdown', retry, { capture: true });
       if (!fired) playedKeys.delete(autoplayKey);
       if (!fired) return;
       cancelRef.current?.();

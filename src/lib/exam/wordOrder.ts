@@ -133,6 +133,36 @@ const DETERMINERS = new Set([
   'this', 'that', 'these', 'those', 'some', 'any', 'no', 'each', 'every',
 ]);
 
+/** Function words that can legitimately precede a swappable conjunct:
+ * verbs, auxiliaries, prepositions, connectives. "I like English and
+ * maths" can swap because 'like' bounds the NP; "a red pen and blue
+ * ruler" cannot because 'red' binds 'pen' into a bigger NP. Kept
+ * deliberately narrow - under-accepting is safe, over-accepting was the
+ * r19-02 defect. */
+const CONJUNCT_BOUNDARY_LEFT = new Set([
+  'like', 'love', 'hate', 'enjoy', 'prefer', 'want', 'need', 'have', 'has',
+  'had', 'play', 'study', 'learn', 'teach', 'speak', 'read', 'write',
+  'draw', 'sing', 'dance', 'eat', 'drink', 'watch', 'see', 'saw', 'buy',
+  'use', 'make', 'do', 'does', 'did', 'is', 'are', 'am', 'was', 'were',
+  'be', 'been', 'get', 'got', 'take', 'took', 'bring', 'give', 'meet',
+  'met', 'know', 'visit', 'collect', 'find', 'found', 'choose', 'wear',
+  'wash', 'cook', 'clean', 'help', 'open', 'close', 'go', 'went', 'come',
+  'came', 'to', 'and', 'or', 'but', 'not', 'than', 'as', 'with', 'of',
+  'at', 'in', 'on', 'by', 'about', 'from', 'for',
+]);
+
+/** Function words that can legitimately FOLLOW a swappable conjunct:
+ * verbs, auxiliaries, conjunctions, adjunct heads, frequency adverbs.
+ * "maths and English are fun" / "cats and dogs every day" can swap; a
+ * content noun/adjective right after means it belongs to the conjunct. */
+const CONJUNCT_BOUNDARY_RIGHT = new Set([
+  'is', 'are', 'am', 'was', 'were', 'be', 'do', 'does', 'did', 'have',
+  'has', 'had', 'can', 'could', 'will', 'would', 'shall', 'should', 'may',
+  'might', 'must', 'and', 'or', 'but', 'to', 'of', 'with', 'about',
+  'in', 'on', 'at', 'by', 'from', 'for', 'after', 'before', 'during',
+  'every', 'each', 'both', 'usually', 'often', 'sometimes', 'not',
+]);
+
 /** Determiner check used ONLY by adjunct fronting. 'her' is ambiguous -
  * in "I will visit her next week" it is an object pronoun and "next
  * week" is a real adjunct, so it is left out here (it stays in
@@ -140,6 +170,42 @@ const DETERMINERS = new Set([
 const ADJUNCT_DETERMINERS = new Set([...DETERMINERS].filter((t) => t !== 'her'));
 
 const BE_FORMS = new Set(['am', 'is', 'are', 'was', 'were']);
+
+/** "verb preposition" bonds where the PP is a COMPLEMENT, not a movable
+ * adjunct: "I look at a cat" must not produce "At a cat I look". Built
+ * from the verb+prep pairs the bank actually uses, expanded to s/ed/ing
+ * forms plus the irregular pasts that show up. External-review r19-01. */
+const PP_COMPLEMENT_BONDS = (() => {
+  const verbPreps: ReadonlyArray<readonly [string, readonly string[]]> = [
+    ['look', ['at', 'for', 'after']], ['listen', ['to']], ['play', ['with']],
+    ['wait', ['for']], ['live', ['in', 'at']], ['sit', ['on', 'in', 'at']],
+    ['stand', ['on', 'in', 'at']], ['walk', ['to', 'with', 'in', 'on']],
+    ['run', ['to', 'with', 'in']], ['go', ['to', 'with', 'in', 'on', 'for']],
+    ['come', ['to', 'from', 'with', 'for']], ['arrive', ['at', 'in']],
+    ['point', ['at', 'to']], ['laugh', ['at']], ['talk', ['to', 'with', 'about']],
+    ['speak', ['to', 'with', 'about']], ['read', ['about', 'to']],
+    ['write', ['about', 'to']], ['learn', ['about', 'from']],
+    ['think', ['about', 'of']], ['dream', ['about', 'of']],
+    ['work', ['on', 'with', 'at', 'for']], ['stay', ['at', 'in', 'with']],
+    ['study', ['for', 'with', 'at']], ['ride', ['to', 'in']], ['fly', ['to']],
+    ['swim', ['in']], ['sleep', ['in', 'on']], ['belong', ['to']],
+    ['ask', ['for', 'about']], ['search', ['for']], ['shout', ['at']],
+    ['cry', ['for', 'about']], ['worry', ['about']],
+  ];
+  const irregularPast: Record<string, string[]> = {
+    go: ['went'], come: ['came'], sit: ['sat'], stand: ['stood'],
+    run: ['ran'], write: ['wrote'], speak: ['spoke'], read: [],
+    fly: ['flew'], ride: ['rode'], think: ['thought'], dream: ['dreamt'],
+  };
+  const bonds = new Set<string>();
+  for (const [verb, preps] of verbPreps) {
+    const forms = [verb, `${verb}s`, `${verb}ed`, `${verb}ing`, ...(irregularPast[verb] ?? [])];
+    for (const form of forms) {
+      for (const prep of preps) bonds.add(`${form} ${prep}`);
+    }
+  }
+  return bonds;
+})();
 
 /** Past participles that let "was born in ..." front its adjunct (the be
  * is passive, not a locative complement). Covers the irregular forms the
@@ -190,6 +256,9 @@ export function acceptedWordOrders(sentence: string): string[] {
     // phrase, not an adjunct: "I read the last page" must not produce
     // "last page I read the".
     if (ADJUNCT_DETERMINERS.has(bare[i - 1]!)) continue;
+    // A preposition bound to the preceding verb is a complement, not an
+    // adjunct: "I look at a cat" -> *"At a cat I look".
+    if (PP_COMPLEMENT_BONDS.has(`${bare[i - 1]} ${bare[i]}`)) continue;
     // If the clause's verb is a plain be-form, the phrase is a complement
     // ("Our classroom is on the second floor" -> *"On the second floor
     // our classroom is"). Be used as a passive/progressive auxiliary is
@@ -234,14 +303,27 @@ export function acceptedWordOrders(sentence: string): string[] {
     accepted.add([bare[1]!, bare[0]!, ...bare.slice(2)].join(' '));
   }
 
-  // Conjunct swap: "English and maths" <-> "maths and English". Requires
-  // bare nouns on both sides (a determiner marks a bigger NP: "a pen and
-  // a ruler") and is skipped for fixed phrases and place names.
+  // Conjunct swap: "English and maths" <-> "maths and English". Both
+  // conjuncts must be single BARE words, and each needs a boundary: the
+  // left conjunct must follow a verb/aux/preposition/pronoun (or start the
+  // sentence), the right conjunct must be followed by end-of-sentence or
+  // a function word. "a red pen and blue ruler" must not produce
+  // "a red blue and pen ruler" (external-review r19-02). Determiners and
+  // fixed phrases still block earlier.
   const andIdx = bare.indexOf('and');
   if (andIdx > 0 && andIdx < tokens.length - 1) {
     const sentenceText = bare.join(' ');
     const isFixed = FIXED_AND_PHRASES.some((phrase) => sentenceText.includes(phrase));
-    if (!isFixed && !DETERMINERS.has(bare[andIdx - 1]!) && !DETERMINERS.has(bare[andIdx + 1]!)) {
+    const leftBoundary = andIdx - 2 < 0 || CONJUNCT_BOUNDARY_LEFT.has(bare[andIdx - 2]!);
+    const rightTail = bare[andIdx + 2];
+    const rightBoundary = rightTail === undefined || CONJUNCT_BOUNDARY_RIGHT.has(rightTail);
+    if (
+      !isFixed &&
+      leftBoundary &&
+      rightBoundary &&
+      !DETERMINERS.has(bare[andIdx - 1]!) &&
+      !DETERMINERS.has(bare[andIdx + 1]!)
+    ) {
       const swapped = bare.slice();
       [swapped[andIdx - 1], swapped[andIdx + 1]] = [swapped[andIdx + 1]!, swapped[andIdx - 1]!];
       accepted.add(swapped.join(' '));

@@ -19,10 +19,13 @@ const VOWEL_LETTERS = new Set(['a', 'e', 'i', 'o', 'u']);
  * table protects any future word that lands in an article-bearing class.
  */
 const ARTICLE_A_WORDS = new Set(['one', 'once', 'unicorn', 'uniform', 'university', 'user', 'ukelele', 'euro', 'eucalyptus', 'ufo']);
-const ARTICLE_AN_WORDS = new Set(['hour', 'honest', 'honor', 'heir', 'hourglass']);
+const ARTICLE_AN_WORDS = new Set(['hour', 'honest', 'honor', 'heir', 'hourglass', 'x-ray', 'xray']);
 
 function article(word: string): 'a' | 'an' {
-  const token = word.trim().split(/[\s-]/)[0]!.toLowerCase();
+  const full = word.trim().toLowerCase();
+  if (ARTICLE_A_WORDS.has(full)) return 'a';
+  if (ARTICLE_AN_WORDS.has(full)) return 'an';
+  const token = full.split(/[\s-]/)[0]!;
   if (ARTICLE_A_WORDS.has(token)) return 'a';
   if (ARTICLE_AN_WORDS.has(token)) return 'an';
   const firstLetter = token.charAt(0);

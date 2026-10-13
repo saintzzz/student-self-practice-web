@@ -224,6 +224,58 @@ describe('isWordOrderCorrect', () => {
       ]),
     ).toBe(true);
   });
+
+  // External-review r19-01: a PP bound to the preceding verb is a
+  // complement, not a movable adjunct - fronting produces non-English.
+  it('rejects fronting a verb-bound prepositional complement', () => {
+    expect(
+      isWordOrderCorrect('I look at a cat.', ['At', 'a', 'cat', 'I', 'look.']),
+    ).toBe(false);
+    expect(
+      isWordOrderCorrect('I play with a ball.', ['With', 'a', 'ball', 'I', 'play.']),
+    ).toBe(false);
+    expect(
+      isWordOrderCorrect('I listen to music.', ['To', 'music', 'I', 'listen.']),
+    ).toBe(false);
+    expect(
+      isWordOrderCorrect('She goes to school.', ['To', 'school', 'she', 'goes.']),
+    ).toBe(false);
+  });
+
+  it('still accepts a genuine adjunct fronted off a non-bound verb', () => {
+    // "at seven" is a time adjunct, not the complement of "get up".
+    expect(
+      isWordOrderCorrect('I get up at seven.', ['At', 'seven', 'I', 'get', 'up.']),
+    ).toBe(true);
+  });
+
+  // External-review r19-02: conjunct swap must not tear a noun phrase -
+  // "a red pen and blue ruler" has modifiers inside each conjunct.
+  it('rejects conjunct swap when conjuncts carry modifiers', () => {
+    expect(
+      isWordOrderCorrect('I have a red pen and a blue ruler.', [
+        'I', 'have', 'a', 'red', 'blue', 'and', 'pen', 'a', 'ruler.',
+      ]),
+    ).toBe(false);
+    expect(
+      isWordOrderCorrect('I have a pen and a ruler.', [
+        'I', 'have', 'a', 'a', 'and', 'pen', 'ruler.',
+      ]),
+    ).toBe(false);
+  });
+
+  it('still accepts a clean bare-noun conjunct swap', () => {
+    expect(
+      isWordOrderCorrect('I like English and maths.', [
+        'I', 'like', 'maths', 'and', 'English.',
+      ]),
+    ).toBe(true);
+    expect(
+      isWordOrderCorrect('English and maths are fun.', [
+        'Maths', 'and', 'English', 'are', 'fun.',
+      ]),
+    ).toBe(true);
+  });
 });
 
 /**
