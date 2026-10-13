@@ -13,8 +13,8 @@
         "https://ioe-leduyminh.vercel.app"
       ],
       "deploymentId": "git-auto-deploy",
-      "deploymentUrl": "https://ioe-leduyminh-fyavpgsm7-linhld7s-projects.vercel.app",
-      "commit": "e49cbcb",
+      "deploymentUrl": "https://ioe-leduyminh-hpf9cz749-linhld7s-projects.vercel.app",
+      "commit": "233853d",
       "healthEndpoint": "/",
       "healthStatus": "ready",
       "lastHealthCheck": "2026-10-14T20:05:00+07:00",

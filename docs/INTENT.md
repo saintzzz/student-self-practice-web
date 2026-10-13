@@ -31,3 +31,9 @@ Current state after CR-69 critique (design health 25/32): the shell has identity
 ---
 Origin: human brainstorm (owner request)
 Committed by: orchestrator (intake)
+
+## Outcome (2026-10-14)
+- Status: DELIVERED + DEPLOYED (ea.vieschool.com, commit 233853d).
+- Pipeline: full SDLC - discovery research, PM plan, BA PRD r2 + human rulings (OM-1..5), designer spec "Mot con duong vang" + human gate, Tech Lead ADR + human rulings, dev (6 parallel workers + orchestrator merge), dev-lead r3 APPROVE, test-lead APPROVE (mutation-verified), human go-live, external review r18 CLEAN (4 rounds).
+- Open questions resolved: pricing = in-app honest card + manual transfer (OM-1B); redesign = full kid shell restructure (mascot-led, one-gold-CTA); parent dashboard = read-only report + email digest enrichment (remote view deferred to CR-70).
+- Deferred: CR-70 backlog (marketing landing, remote parent view, guest email capture, auth redesign, real payment gateway).
