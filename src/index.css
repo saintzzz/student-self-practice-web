@@ -77,6 +77,19 @@
    saturated sky fallback so pre-shell paint never flashes white. */
 body {
   @apply min-h-screen bg-sky-200 text-slate-900;
+  /* Notched phones: bottom UI clears the home indicator. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Kids hammer-tap buttons - kill the 300ms double-tap zoom delay
+   everywhere instead of per-element touch-manipulation classes. */
+button,
+a,
+[role='button'],
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 /* ------------------------------------------------------------------

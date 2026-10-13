@@ -98,7 +98,7 @@ export const DISCLOSURE_BTN =
 
 /** Bottom sheet that hosts secondary choices ("Khám phá"). */
 export const SHEET =
-  'fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-[2rem] bg-white shadow-2xl ring-1 ring-sky-200';
+  'fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto overscroll-contain rounded-t-[2rem] bg-white shadow-2xl ring-1 ring-sky-200';
 
 /** One option row inside the sheet. 96px for G1-2 hands; G3-5 may drop
  *  to 76px via TRAIL_TILE_SM. */

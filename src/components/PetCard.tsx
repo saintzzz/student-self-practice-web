@@ -95,7 +95,7 @@ export default function PetCard() {
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/10">
               <div
                 data-testid="pet-xp-bar"
-                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400 transition-all motion-reduce:transition-none"
+                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${Math.max(4, pct)}%` }}
               />
             </div>

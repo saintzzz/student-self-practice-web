@@ -215,7 +215,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                 <div className={PAPER_PROGRESS_TRACK + ' flex-1'}>
                   <div
                     data-testid={`report-day-${d.dateISO}`}
-                    className={`${PAPER_PROGRESS_FILL} transition-all motion-reduce:transition-none`}
+                    className={`${PAPER_PROGRESS_FILL} transition-[width] motion-reduce:transition-none`}
                     style={{ width: `${(d.total / maxDay) * 100}%` }}
                   />
                 </div>
@@ -245,7 +245,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                   <div className={PAPER_PROGRESS_TRACK + ' flex-1'}>
                     <div
                       data-testid={`report-minutes-${d.date}`}
-                      className={`${PAPER_PROGRESS_FILL} transition-all motion-reduce:transition-none`}
+                      className={`${PAPER_PROGRESS_FILL} transition-[width] motion-reduce:transition-none`}
                       style={{ width: `${(d.minutes / maxMinutes) * 100}%` }}
                     />
                   </div>
@@ -326,7 +326,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
                         <div className={PAPER_PROGRESS_TRACK + ' flex-1'}>
                           <div
                             data-testid={`report-skill-${grade.id}-${skill.key}`}
-                            className={`h-full rounded-full ${accuracyColor(skill.accuracy)} transition-all motion-reduce:transition-none`}
+                            className={`h-full rounded-full ${accuracyColor(skill.accuracy)} transition-[width] motion-reduce:transition-none`}
                             style={{ width: `${Math.round(skill.accuracy * 100)}%` }}
                           />
                         </div>

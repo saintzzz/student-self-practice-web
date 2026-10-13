@@ -399,7 +399,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           <div
             data-testid="exam-timer"
             className={`shrink-0 rounded-lg px-3 py-1 font-mono text-xl font-extrabold tabular-nums sm:text-2xl ${
-              left <= 60 ? 'animate-pulse bg-rose-600 text-white' : 'bg-[#0a1520] text-amber-300'
+              left <= 60 ? 'animate-pulse motion-reduce:animate-none bg-rose-600 text-white' : 'bg-[#0a1520] text-amber-300'
             }`}
           >
             <IconClock size={18} className="mr-1 inline-block" /> {mm}:{ss}

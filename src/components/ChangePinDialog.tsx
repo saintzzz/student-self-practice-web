@@ -51,7 +51,7 @@ export default function ChangePinDialog({ onClose }: ChangePinDialogProps) {
       aria-label="Đổi mã PIN"
       onClick={onClose}
     >
-      <div className={`${CARD_DARK} w-full max-w-sm`} onClick={(e) => e.stopPropagation()}>
+      <div className={`${CARD_DARK} w-full max-w-sm overscroll-contain`} onClick={(e) => e.stopPropagation()}>
         <h2 className="mb-4 text-center font-display text-2xl font-extrabold text-amber-300">
           Đổi mã PIN
         </h2>

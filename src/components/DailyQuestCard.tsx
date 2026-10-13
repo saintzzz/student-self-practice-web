@@ -71,7 +71,7 @@ export default function DailyQuestCard() {
                   {quest.target > 1 && !quest.done && (
                     <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
                       <div
-                        className="h-full rounded-full bg-emerald-400 transition-all motion-reduce:transition-none"
+                        className="h-full rounded-full bg-emerald-400 transition-[width] motion-reduce:transition-none"
                         style={{ width: `${pct}%` }}
                       />
                     </div>

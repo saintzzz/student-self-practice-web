@@ -40,7 +40,7 @@ export default function ConfirmEndDialog({
       aria-label={title}
       onClick={onCancel}
     >
-      <div ref={dialogRef} className={`${CARD_DARK} w-full max-w-sm text-center`} onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} className={`${CARD_DARK} w-full max-w-sm overscroll-contain text-center`} onClick={(e) => e.stopPropagation()}>
         <h2 className="font-display text-2xl font-extrabold text-amber-300">{title}</h2>
         <p className="mt-2 text-lg text-slate-300">{body}</p>
         <div className="mt-5 flex gap-3">

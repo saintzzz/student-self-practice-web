@@ -213,7 +213,7 @@ export function ParentGate({ onPass, onCancel, title = 'Dành cho ba mẹ' }: Pa
     >
       <div
         ref={dialogRef}
-        className={`${PAPER_PANEL} w-full max-w-sm text-center ${shaking ? 'tile-shake motion-reduce:animate-none' : ''}`}
+        className={`${PAPER_PANEL} w-full max-w-sm overscroll-contain text-center ${shaking ? 'tile-shake motion-reduce:animate-none' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2">
