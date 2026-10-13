@@ -14,14 +14,14 @@
       ],
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh-hpf9cz749-linhld7s-projects.vercel.app",
-      "commit": "41957df",
+      "commit": "2a03ee3",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-14T00:30:00+07:00",
+      "lastHealthCheck": "2026-10-14T03:25:00+07:00",
       "healthDetails": {
         "GET https://ea.vieschool.com": 200,
-        "canary": "theme-color meta present in served HTML (confirms 41957df live)",
-        "kids-ux": "CR-72 deployed - headless InstructionSpeaker autoplay all grades, SVG icon chrome + mascot moods, compact EngagementBar; web-interface-guidelines sweep (overscroll/safe-area/touch-action/motion-reduce); verified on prod 390x844, 0 console errors"
+        "canary": "hub-tile-* testids live on prod (confirms CR-73 ModeHub IA deployed); feedback sheet .fixed + 408px reserve verified on prod 390x844, 0 console errors",
+        "kids-ux": "CR-73 full redesign deployed - ModeHub inline IA replaces ExploreSheet, semantic token layers, exam gold remediation, density-aware floors, fixed feedback sheet at all heights; external review loop r22-r24 closed CLEAN"
       },
       "customDomain": {
         "registrar": "Porkbun",
