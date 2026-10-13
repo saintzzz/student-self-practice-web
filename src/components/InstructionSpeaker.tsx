@@ -67,13 +67,15 @@ export function InstructionSpeaker({ text, lang, autoplayKey }: InstructionSpeak
         onStatus: (status) => {
           if (status === 'playing' || status === 'ended') return;
           playedKeys.delete(autoplayKey);
-          // Any failure arms a gesture retry - pointerdown AND keydown so
-          // keyboard / assistive-tech users can trigger it too (r20-02).
+          // Any failure arms a gesture retry - pointerdown AND keydown AND
+          // click: assistive tech activates controls via synthesized click
+          // events which fire neither pointerdown nor keydown (r21-01).
           // 'unavailable' also retries: TTS can appear after a reload or
           // an extension init, and a no-op retry is harmless.
           if (!disposed) {
             window.addEventListener('pointerdown', retry, { once: true, capture: true });
             window.addEventListener('keydown', retry, { once: true, capture: true });
+            window.addEventListener('click', retry, { once: true, capture: true });
           }
         },
       });
@@ -95,6 +97,7 @@ export function InstructionSpeaker({ text, lang, autoplayKey }: InstructionSpeak
       window.clearTimeout(timer);
       window.removeEventListener('pointerdown', retry, { capture: true });
       window.removeEventListener('keydown', retry, { capture: true });
+      window.removeEventListener('click', retry, { capture: true });
       if (!fired) playedKeys.delete(autoplayKey);
       if (!fired) return;
       cancelRef.current?.();

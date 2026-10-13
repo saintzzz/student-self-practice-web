@@ -215,6 +215,28 @@ describe('InstructionSpeaker - autoplay once per key (all grades)', () => {
     expect(mockSpeak).toHaveBeenCalledTimes(2);
   });
 
+  // r21-01: assistive tech activates via synthesized click - a click
+  // listener covers the last gesture class pointer/keydown miss.
+  it('retries on a synthesized click after autoplay is blocked', () => {
+    vi.useFakeTimers();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    act(() => {
+      statusCb?.('blocked');
+    });
+    act(() => {
+      window.dispatchEvent(new Event('click'));
+    });
+    expect(mockSpeak).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps the key consumed when playback actually played', () => {
     vi.useFakeTimers();
     let statusCb: ((s: string) => void) | undefined;
