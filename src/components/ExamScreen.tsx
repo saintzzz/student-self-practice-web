@@ -38,8 +38,8 @@ import ConfirmEndDialog from './ConfirmEndDialog';
 import { WORD_IPA } from '../data/ipaMap';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
 import Mascot from './Mascot';
-import { EXAM_HEADER_BRAND } from '../lib/ui/tokens';
-import { IconBook, IconClock, IconHandshake, IconMail, IconMedal, IconMuscle, IconNote, IconParty, IconPencil, IconSpeaker, IconSwords, IconTrophy } from './icons';
+import { EXAM_HEADER_BRAND, EXAM_NAV_ANSWERED, EXAM_NAV_CELL, EXAM_OPTION, EXAM_SELECTED, BTN_AUDIO, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { IconArrowRight, IconBook, IconCheck, IconChevronLeft, IconChevronRight, IconClock, IconHandshake, IconMail, IconMedal, IconMuscle, IconNote, IconParty, IconPencil, IconSpeaker, IconSwords, IconTrophy } from './icons';
 
 /**
  * CR-24 - IOE-style Thi thử player. Visual language follows the real
@@ -409,7 +409,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           type="button"
           data-testid="exam-submit"
           onClick={() => setSubmitConfirmOpen(true)}
-          className="min-h-[44px] shrink-0 rounded-lg bg-sky-600 px-4 text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+          className="min-h-[48px] shrink-0 rounded-lg bg-sky-700 px-4 text-base font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60"
         >
           {isPractice ? 'KẾT THÚC' : 'NỘP BÀI'}
         </button>
@@ -447,29 +447,34 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             aria-label="Trước"
             disabled={stripOffset === 0}
             onClick={() => setStripOffset(Math.max(0, stripOffset - STRIP_PAGE))}
-            className="min-h-[44px] shrink-0 rounded-md bg-amber-500/90 px-3 text-sm font-extrabold text-amber-950 disabled:opacity-30"
+            className={`${EXAM_NAV_CELL} shrink-0 disabled:opacity-30`}
           >
-            ◀
+            <IconChevronLeft size={20} />
           </button>
           <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {stripQuestions.map((q, i) => {
               const index = stripOffset + i;
               const isCurrent = index === exam.currentIndex;
               const answered = answeredSet[index] !== null && answeredSet[index] !== undefined;
+              /* CR-73 exam.navStrip: unanswered = exam.card; answered =
+                 status.success translucent + check (not color-alone);
+                 current = exam.selected ring; current+answered keeps
+                 the check + aria-current. */
               return (
                 <button
                   key={q.id}
                   type="button"
                   data-testid={`exam-nav-${index}`}
+                  aria-current={isCurrent ? 'step' : undefined}
                   onClick={() => jump(index)}
-                  className={`h-11 w-11 shrink-0 rounded-md text-sm font-extrabold transition ${
-                    isCurrent
-                      ? 'bg-orange-500 text-white ring-2 ring-orange-300'
-                      : answered
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-amber-300 text-amber-950 hover:bg-amber-200'
+                  className={`${EXAM_NAV_CELL} shrink-0 ${
+                    isCurrent ? EXAM_SELECTED : answered ? EXAM_NAV_ANSWERED : ''
                   }`}
                 >
+                  {answered && !isCurrent && (
+                    <IconCheck size={12} aria-hidden="true" className="mr-0.5" />
+                  )}
+                  {answered && <span className="sr-only">đã trả lời</span>}
                   {index + 1}
                 </button>
               );
@@ -480,9 +485,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             aria-label="Sau"
             disabled={stripOffset + STRIP_PAGE >= exam.questions.length}
             onClick={() => setStripOffset(stripOffset + STRIP_PAGE)}
-            className="min-h-[44px] shrink-0 rounded-md bg-amber-500/90 px-3 text-sm font-extrabold text-amber-950 disabled:opacity-30"
+            className={`${EXAM_NAV_CELL} shrink-0 disabled:opacity-30`}
           >
-            ▶
+            <IconChevronRight size={20} />
           </button>
         </div>
       )}
@@ -510,7 +515,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               onClick={practiceNext}
               className="mt-3 w-full rounded-lg bg-amber-400 px-4 py-2.5 font-extrabold text-amber-950 transition hover:bg-amber-300 active:scale-95 sm:w-auto"
             >
-              {isLastQuestion ? 'Xem kết quả →' : 'Câu tiếp theo →'}
+              <span className="inline-flex items-center gap-1.5">{isLastQuestion ? 'Xem kết quả' : 'Câu tiếp theo'} <IconArrowRight size={16} /></span>
             </button>
           </div>
         )}
@@ -654,10 +659,8 @@ export function ExamQuestionView({
                 type="button"
                 data-testid={`exam-tf-${v}`}
                 onClick={() => onAnswer({ type: 'bool', value: v })}
-                className={`rounded-xl px-10 py-4 text-lg font-extrabold transition active:scale-95 ${
-                  answer?.type === 'bool' && answer.value === v
-                    ? 'bg-orange-500 text-white ring-2 ring-orange-300'
-                    : 'bg-amber-300 text-amber-950 hover:bg-amber-200'
+                className={`${EXAM_OPTION} px-10 text-lg ${
+                  answer?.type === 'bool' && answer.value === v ? EXAM_SELECTED : ''
                 }`}
               >
                 {v ? 'True' : 'False'}
@@ -723,7 +726,7 @@ export function ExamQuestionView({
                 type="button"
                 data-testid={`exam-letter-${i}`}
                 onClick={() => onAnswer({ type: 'option', index: i })}
-                className="h-14 w-14 rounded-xl bg-amber-300 text-2xl font-extrabold uppercase text-amber-950 shadow-md transition hover:bg-amber-200 active:scale-95"
+                className="h-16 w-16 rounded-xl bg-[#16232e] text-2xl font-extrabold uppercase text-white ring-1 ring-[#22303d] shadow-md transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:scale-95"
               >
                 {letter}
               </button>
@@ -774,10 +777,8 @@ function OptionButtons({
           type="button"
           data-testid={`exam-option-${i}`}
           onClick={() => onPick(i)}
-          className={`rounded-xl px-4 py-4 text-left font-mono text-lg font-bold transition active:scale-95 ${
-            selected === i
-              ? 'bg-orange-500 text-white ring-2 ring-orange-300'
-              : 'bg-[#22303d] text-slate-100 ring-1 ring-white/10 hover:bg-[#2a3a4a]'
+          className={`${EXAM_OPTION} text-left font-mono text-lg ${
+            selected === i ? EXAM_SELECTED : ''
           }`}
         >
           <span className="mr-2 font-extrabold text-amber-400">{labels[i]}.</span>
@@ -855,7 +856,7 @@ export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQu
             type="button"
             data-testid={`exam-slot-${slot}`}
             onClick={() => setPicked((prev) => prev.filter((_, s) => s !== slot))}
-            className="rounded-lg bg-emerald-600 px-3 py-2 font-mono text-base font-bold text-white shadow"
+            className={`${EXAM_OPTION} !min-h-[48px] px-3 py-2 font-mono text-base ${EXAM_SELECTED}`}
           >
             {question.tiles[tileIndex]}
           </button>
@@ -869,7 +870,7 @@ export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQu
             type="button"
             data-testid={`exam-tile-${tileIndex}`}
             onClick={() => pick(tileIndex)}
-            className="rounded-lg bg-amber-300 px-4 py-2.5 font-mono text-lg font-extrabold text-amber-950 shadow-md transition hover:bg-amber-200 active:scale-95"
+            className="min-h-[64px] rounded-lg bg-[#16232e] px-4 py-2.5 font-mono text-lg font-extrabold text-white ring-1 ring-[#22303d] shadow-md transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:scale-95"
           >
             {question.tiles[tileIndex]}
           </button>
@@ -891,7 +892,7 @@ function ListenButton({ text }: { text: string }) {
         type="button"
         data-testid="exam-listen"
         onClick={() => speakSentence(text)}
-        className="flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-base font-extrabold text-white shadow-lg transition hover:bg-orange-400 active:scale-95"
+        className={`${BTN_AUDIO} rounded-full px-5 py-3`}
       >
         <IconSpeaker size={18} /> Nghe lại
       </button>
@@ -1064,7 +1065,7 @@ function ArenaResult({
             type="button"
             data-testid="arena-exit"
             onClick={onExit}
-            className="mt-6 w-full rounded-xl bg-amber-400 px-4 py-3 font-extrabold text-amber-950 transition hover:bg-amber-300"
+            className={`mt-6 w-full ${BTN_SECONDARY_NAVY}`}
           >
             Quay lại
           </button>

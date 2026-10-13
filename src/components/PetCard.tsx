@@ -8,7 +8,7 @@ import {
   PET_XP_PER_CORRECT,
   type PetSpecies,
 } from '../lib/engagement/store';
-import { CARD } from '../lib/ui/tokens';
+import { CARD, BTN_REWARD_EARNED } from '../lib/ui/tokens';
 import { IconParty, IconPaw } from './icons';
 
 /**
@@ -55,7 +55,7 @@ export default function PetCard() {
             type="button"
             data-testid="pet-evolved-ok"
             onClick={dismissCongrats}
-            className="shrink-0 rounded-lg bg-amber-400 px-3 py-1.5 text-sm font-extrabold text-amber-950 transition hover:bg-amber-300 active:scale-95"
+            className={`shrink-0 ${BTN_REWARD_EARNED} !min-h-[40px] px-3 py-1.5 text-sm`}
           >
             Tuyệt!
           </button>

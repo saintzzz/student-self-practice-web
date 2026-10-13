@@ -1,4 +1,5 @@
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { IconArrowRight } from './icons';
 import { CARD, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface RoundStubProps {
@@ -25,7 +26,7 @@ export default function RoundStub({ titleVi, onNextRound }: RoundStubProps) {
         Vòng này đang được phát triển. Hẹn gặp lại em trong bản cập nhật tiếp theo nhé!
       </p>
       <button type="button" data-testid="next-round-button" onClick={onNextRound} className={`mt-6 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}>
-        Tiếp tục →
+        <span className="inline-flex items-center gap-1.5">Tiếp tục <IconArrowRight size={18} /></span>
       </button>
     </div>
   );

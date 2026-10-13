@@ -4,6 +4,12 @@
 > page, section, component, and UI update must follow this file so the design
 > stays consistent. Source of truth in code: `src/lib/ui/tokens.ts` +
 > `src/lib/ui/theme.ts`. This document mirrors them - update both together.
+>
+> **CR-73 (v2):** the approved redesign spec is
+> `docs/design/v2/DESIGN-SPEC-v2.md`; requirement change record is
+> `docs/sdlc/CR-73-full-redesign.md`. Semantic token layers, the inline
+> ModeHub IA, exam gold remediation and the revised state contracts below
+> are normative - the older free-form classes they replaced are gone.
 
 ---
 
@@ -55,8 +61,35 @@ Two coordinated systems: the **brand shell** (navy/gold, all chrome) and the
 **Land card tints** (map only, `theme.ts`): sky / lime / emerald / indigo /
 violet `*-50/95` card + `*-400/500` disc + `*-800/900` accent text.
 
-**Status semantics (do not remap):** emerald = correct/go, rose = wrong/danger,
-amber = progress/score/star, sky = info, indigo = audio.
+**Status semantics (do not remap, CR-73 amended):** emerald = correct/go,
+rose = destructive/urgent-status only (answer-wrong is desaturated slate
+`feedback.wrong` - never red-shaming), amber = warning/progress, sky = info,
+**indigo = audio** (interactive listen controls only - no longer "exam").
+**Gold fills = reward + next-step actions only** (≤1 gold CTA per screen;
+`reward.earned` gradient allowed on pet-evolve / quest-claim).
+
+### Semantic token layers (CR-73)
+
+`tokens.ts` now carries named semantic layers on top of the legacy exports
+(names kept for compatibility - import tokens, never re-spell classes):
+
+- **Hub (paper panel inside navy launchpad):** `HUB_PANEL` light panel,
+  `TRAIL_TILE` 96px G1-2 / `TRAIL_TILE_SM` 76px G3-5 section tiles,
+  `TRAIL_TILE_EXPANDED` selected wash, `BTN_DRILL` / `BTN_ADVANCED` paper
+  secondary actions, `BTN_EXAM` navy exam-register entries,
+  `BTN_PAPER_ACTION` strong paper rows (sky-700+white = 5.93:1).
+- **Exam (`exam.card` `#16232e`):** `EXAM_OPTION` 64px option/key tile,
+  `EXAM_SELECTED` orange **ring** + orange-200 text (the old orange-500
+  fill + white text was 2.80:1 - banned), `EXAM_NAV_CELL` 48px strip cell,
+  `EXAM_NAV_ANSWERED` emerald translucent + check icon (8.11:1,
+  never color alone - `aria-current="step"` + sr-only label on current).
+- **Actions:** `BTN_AUDIO` (indigo = every Nghe-mẫu/listen control),
+  `BTN_SECONDARY_NAVY` (white/10+sky-200 = 9.19:1),
+  `BTN_SECONDARY_PAPER` (sky-100+sky-800 = 6.59:1),
+  `BTN_REWARD_EARNED` (gold gradient - reward moments only).
+- **Focus rings:** navy surfaces `focus-visible:ring-amber-300/60`;
+  paper surfaces `focus-visible:ring-sky-600` (4.1:1 non-text on white;
+  sky-400 was 2.14:1 and is banned on paper).
 
 ### Surface-pairing rule (CR-44 - the bug this file exists to prevent)
 
@@ -107,8 +140,19 @@ exception surface (paper reports). No theme switch.
   title → subtitle → placement CTA → engagement chips → parent-report pill →
   grade card grid (`grid-cols-1 sm:grid-cols-2 gap-6`) → footer (stacked:
   image-source pill row, then attribution row).
-- **Touch targets:** `min-h-[76px]` for standalone interactive elements (tokens
-  invariant); compact chips still `min-h-9`+ inside groups.
+- **Page anatomy (launchpad, CR-73):** back nav → gold `Chơi` CTA →
+  (G3-5 only: DailyQuestCard) → inline **ModeHub** sections → footer.
+  The old bottom-sheet `ExploreSheet` IA is replaced by `ModeHub`
+  (`src/components/ModeHub.tsx`) - all sections collapsed on first paint,
+  collapsed children unmount while empty `hub-panel-*`/`hub-section-*`
+  region wrappers stay mounted as valid `aria-controls` targets.
+  G1-2 first paint ≤4 decisions (Back, Chơi, Luyện thêm, Phần thưởng) with
+  per-program subtiles (English/Math/Science/Arena/Review, ≤4 new controls
+  per expansion); G3-5 ≤6 (Back, Chơi, quest card, Luyện & thi, Đấu trường,
+  Phần thưởng) with grouped sections.
+- **Touch targets (CR-73 band floors):** 76px G1-2 standalone; 64px G3-5
+  standalone (drill/exam/secondary rows); 48px kid non-standalone controls;
+  44px admin/adult minimum; 36px chips in a row.
 - **Breakpoints:** 375 mobile / 768 tablet / 1280 desktop; cards 1→2 cols at `sm`.
 
 ## 6. Component system
@@ -125,8 +169,22 @@ exception surface (paper reports). No theme switch.
   - `SCORE_PILL` / `SCORE_PILL_LG` - gold treasure score pills (amber-950 text).
   - `CARD_TINT.*` - translucent status panels on navy.
   - `SCREEN_ENTER` - shared enter animation.
-- **Buttons:** gradient pill (amber CTA) / `BTN`, `BTN_SECONDARY` (white pill on
-  light), `BTN_DANGER` (rose); all with hover-lift/press-scale + `focus:ring-4`.
+- **Buttons:** `CTA_GOLD_XL` (the one gold primary path per screen),
+  `BTN_SECONDARY_NAVY`/`BTN_SECONDARY_PAPER` (action.secondary by surface),
+  `BTN_AUDIO` (action.audio indigo), `BTN_REWARD_EARNED` (reward.earned gold),
+  `BTN_EXAM`/`BTN_DRILL`/`BTN_ADVANCED` (hub entries on paper),
+  `BTN_PAPER_ACTION`/`BTN_PAPER_SECONDARY` (parent/admin paper rows),
+  `BTN`/`BTN_SECONDARY`/`BTN_DANGER` legacy exports. All ship
+  hover/press/`focus-visible` states per §11.
+- **Card action classification (CR-73):** review/coach start, arena accept,
+  arena create/bot and guest login → `action.secondary`; pet evolve +
+  quest claim → `reward.earned`; `arena-exit` → `action.secondary`
+  (never gold, never destructive).
+- **ModeHub (CR-73):** inline accordion - `hub-tile-*` top tiles control
+  `hub-panel-*`; `hub-subtile-*` nested tiles control `hub-section-*`.
+  `aria-expanded` + `aria-controls` + Enter/Space + per-expansion headless
+  `InstructionSpeaker` prompts. Arena challenge lists are capped with
+  "Xem thêm" inline expansion (explicit tap-budget exception).
 - **End-session control (CR-55):** every in-progress play surface carries a
   `bg-sky-600` uppercase action in the top chrome - `KẾT THÚC` (drill,
   batch) / `NỘP BÀI` (exam). Solid sky (not a translucent chip) so it reads
@@ -147,10 +205,17 @@ exception surface (paper reports). No theme switch.
 
 ## 8. Icon system
 
-- **Library:** none - `EmojiVisual` renders kid-friendly emoji (🐷⭐🔥🏅) as the
-  illustration language, always `aria-hidden` + paired with text labels.
-- **Rule:** emojis are decoration/illustration, never the sole carrier of state
-  or meaning (earned vs locked stickers also differ by `???`/name + dimming).
+- **UI chrome (CR-72/CR-73):** `src/components/icons.tsx` - hand-drawn SVG
+  icon set (stroke 2, rounded caps, chunky kid-friendly grid 24):
+  chevrons (up/down for hub disclosure), arrows (back/next, replacing
+  unicode `←`/`→`/`➜` chrome), speaker/audio, trophy, medal, star, flame,
+  clock, compass, refresh, flag, check, gift, flask, muscle, handshake.
+  Always `aria-hidden` + paired with text labels.
+- **Content illustration:** `EmojiVisual`/Twemoji renders emoji (🐷⭐🔥🏅🍎🐱)
+  as the pedagogical illustration language - intentional for a kids product.
+- **Rule:** emoji = content/illustration, SVG icons = UI chrome. Neither is
+  the sole carrier of state (earned vs locked stickers also differ by
+  `???`/name + dimming; exam answered cells carry a check icon + text).
 
 ## 9. Image & asset rules
 
@@ -181,11 +246,16 @@ exception surface (paper reports). No theme switch.
   (≥24px or ≥19px bold) ≥3:1. Verified pairs listed in §3.
 - **Surface-pairing rule (§3) is mandatory** - it exists because text/bg pairs
   were shipped broken twice.
-- **Focus:** `focus:ring-4` on every interactive element; never `outline:none`
-  without replacement.
+- **Focus:** `focus-visible` ring on every interactive element - amber-300/60
+  family on navy, `sky-600` on paper (3:1 non-text minimum); never
+  `outline:none` without replacement.
 - **Semantics:** real `button`/`a`/`footer` elements; `data-testid` on all
-  interactive content; `aria-expanded`/`aria-pressed`/`aria-hidden` where
-  relevant; decorative emoji `aria-hidden`.
+  interactive content; `aria-expanded`/`aria-pressed`/`aria-current`/
+  `aria-hidden` where relevant; decorative emoji/icons `aria-hidden`.
+  Hub tiles: `aria-expanded` + `aria-controls` naming `hub-panel-*` /
+  `hub-section-*` region ids (regions stay mounted when collapsed).
+  Exam strip: answered cells get check icon + `status.success` tint;
+  current gets `aria-current="step"` + sr-only text - both, not color alone.
 - **Motion:** `prefers-reduced-motion` honored everywhere (`motion-reduce:`).
 - **Never color alone:** states pair icon/emoji + label + tint.
 

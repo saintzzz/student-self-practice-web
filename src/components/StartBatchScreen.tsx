@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import type { Grade } from '../types';
 import type { ExamProgramId } from '../types/exam';
 import type { ArenaOpenChallenge } from '../lib/arena';
@@ -15,23 +15,23 @@ import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
 import HomeShelf from './HomeShelf';
 import { InstructionSpeaker } from './InstructionSpeaker';
+import ModeHub, { HubGroup, type HubTileDef } from './ModeHub';
 import {
+  IconArrowLeft,
+  IconArrowRight,
   IconBook,
-  IconCompass,
+  IconChevronDown,
+  IconChevronUp,
   IconFlag,
   IconFlask,
+  IconGift,
   IconHash,
-  IconHome,
-  IconMedal,
   IconMuscle,
   IconNote,
   IconPlay,
   IconSwords,
-  IconTarget,
-  IconTrophy,
   type IconProps,
 } from './icons';
-import ExploreSheet from './ExploreSheet';
 import {
   CARD,
   H1,
@@ -40,12 +40,10 @@ import {
   NAV_PILL,
   SCREEN_ENTER,
   CTA_GOLD_XL,
-  DISCLOSURE_BTN,
-  TRAIL_TILE,
-  TRAIL_TILE_SM,
   BTN_DRILL,
   BTN_EXAM,
   BTN_ADVANCED,
+  BTN_PAPER_ACTION,
 } from '../lib/ui/tokens';
 import { examConfigForGrade } from '../lib/exam/examSession';
 import { getLand } from '../lib/ui/theme';
@@ -79,6 +77,12 @@ const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: ComponentType<IconProps
   { id: 'science', icon: IconFlask, name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
 ];
 
+const PROGRAM_VOICE_HINT: Record<ExamProgramId, string> = {
+  english: 'Chọn cách luyện Tiếng Anh nhé!',
+  math: 'Chọn cách luyện Toán bằng tiếng Anh nhé!',
+  science: 'Chọn cách luyện Khoa học nhé!',
+};
+
 const FORM_KIND_LABEL: Record<string, string> = {
   'unit-test': 'Kiểm tra unit',
   diagnostic: 'Chẩn đoán đầu vào',
@@ -90,8 +94,8 @@ const FORM_KIND_LABEL: Record<string, string> = {
 
 /** CR-48 phase 5 + CR-50: collapsible V6 assessment forms per program.
  *  Teacher-only surface - students drill via Luyen de / Thi thu.
- *  kids-UX: lives inside the light Khám phá sheet, so the chrome moved
- *  from navy-glass to the paper register. */
+ *  CR-73: indigo rows -> semantic action.secondary on paper
+ *  (`BTN_PAPER_ACTION`); unicode arrows -> icons.tsx chevrons. */
 function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: string; programId: ExamProgramId; isAdmin: boolean; onStartExam: (p: ExamProgramId, m: 'exam', formId: string) => void }) {
   const [forms, setForms] = useState<AssessmentFormInfo[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -110,9 +114,10 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
         type="button"
         data-testid={`forms-toggle-${programId}`}
         onClick={() => setOpen((v) => !v)}
-        className="min-h-[44px] w-full rounded-lg bg-sky-100 px-3 py-2 text-xs font-extrabold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        className="min-h-[44px] w-full rounded-lg bg-sky-100 px-3 py-2 text-xs font-extrabold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600"
       >
-        <IconNote size={16} className="mr-1 inline-block" /> Đề có sẵn ({forms.length}) {open ? '▲' : '▼'}
+        <IconNote size={16} className="mr-1 inline-block" /> Đề có sẵn ({forms.length}){' '}
+        {open ? <IconChevronUp size={14} className="inline-block" /> : <IconChevronDown size={14} className="inline-block" />}
       </button>
       {open && (
         <div className="mt-1 max-h-52 space-y-1 overflow-y-auto pr-1">
@@ -122,10 +127,10 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
               type="button"
               data-testid={`form-${f.id}`}
               onClick={() => onStartExam(programId, 'exam', f.id)}
-              className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-left text-xs font-bold text-white transition hover:bg-indigo-500 active:scale-[0.98] motion-reduce:transition-none"
+              className={`flex w-full items-center justify-between gap-2 text-left ${BTN_PAPER_ACTION}`}
             >
               <span>{f.kind === 'unit-test' ? f.title : FORM_KIND_LABEL[f.kind] ?? f.kind} - đề {f.id.slice(-2)} · {f.total_questions} câu</span>
-              <span className="text-indigo-200">→</span>
+              <IconArrowRight size={14} className="shrink-0" />
             </button>
           ))}
         </div>
@@ -134,56 +139,38 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
   );
 }
 
-/** kids-UX §3.1.c: one "trail tile" row inside the Khám phá sheet - emoji
- *  icon + the relocated card, band-sized (96px G1-2 / 76px G3-5 floor). */
-function SheetTile({ icon, tileClass, children }: { icon: ReactNode; tileClass: string; children: ReactNode }) {
-  return (
-    <section className={tileClass}>
-      <span aria-hidden="true" className="mt-0.5 shrink-0 text-slate-500">{icon}</span>
-      <div className="min-w-0 flex-1 [&>*]:mt-0">{children}</div>
-    </section>
-  );
-}
-
 /**
- * kids-UX (design-kids-ux §3.1): the launchpad collapses to ONE gold
- * action ("Chơi"). G1-2 sees 4 interactive elements (back, speaker, Chơi,
- * Khám phá); G3-5 keeps progress cards (DailyQuest, Review) on screen and
- * folds everything else into the Khám phá sheet - the sheet renders the
- * same card components, unchanged.
+ * CR-73 redesign (design-spec-v2 §5.1): the launchpad = one gold
+ * `action.primary` ("Chơi") + an inline Mode Hub of labeled section
+ * tiles inside a light paper panel. The Khám phá bottom sheet is gone -
+ * every destination is visible-by-label and expands in place.
+ *
+ *  - G1-2: back + Chơi + "Luyện thêm" (per-program subtiles, ≤4 new
+ *    controls per expansion) + "Phần thưởng" = ≤4 interactive elements.
+ *  - G3-5: back + Chơi + DailyQuestCard + 3 section tiles = ≤6 (AC-2.1
+ *    amendment: count = elements visible with all sections collapsed).
+ *  - CR-46 preserved: every grade reaches every program/mode - only
+ *    the container path differs per band.
  */
 export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
-  // CR-46: same modes for every grade - only question counts scale.
   const examConfig = examConfigForGrade(grade.id);
   const { band } = useViewer();
-  // Band source of truth is the viewer context (ADR KUX-5); the grade-id
-  // check keeps un-wrapped renders (unit tests) on the right band.
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
-  const tileClass = isG12 ? TRAIL_TILE : TRAIL_TILE_SM;
   const land = getLand(grade.id);
-  const [exploreOpen, setExploreOpen] = useState(false);
-  const exploreToggleRef = useRef<HTMLButtonElement>(null);
-  // Local store read - same check ReviewCard makes itself; used only to
-  // hide the dead sheet row, the card still decides its own render.
   const [hasDueReview] = useState(() => getDueReviewItems(grade.id).length > 0);
-  /* CR-72: gate the Coach tile too - CoachCard returns null when the
-     student has no weak skills, which used to leave an orphan icon row. */
   const [hasCoachHints] = useState(() => weakSkillsFor(grade.id).length > 0);
 
   const arenaHandlers = onArenaCreate && onArenaAccept && onArenaBot
     ? { onArenaCreate, onArenaAccept, onArenaBot }
     : null;
 
-  const examProgramsBlock = (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold text-slate-600">
-        Luyện đề: {examConfig.drillCount} câu, chữa ngay. Thi thử: {examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút, giống thi thật.
-      </p>
-      {EXAM_PROGRAMS.map((program) => (
-        <div
-          key={program.id}
-          className="rounded-2xl bg-white p-3 ring-1 ring-sky-200"
-        >
+  /** One program block: 3 mode buttons + admin FormPicker (paper card
+   *  inside the hub panel). The header repeats the program name, so it
+   *  only renders when there is no subtile label carrying it (G3-5). */
+  function programBlock(program: (typeof EXAM_PROGRAMS)[number], showHeader = true): ReactNode {
+    return (
+      <div key={program.id} className="rounded-2xl bg-white p-3 ring-1 ring-sky-200">
+        {showHeader && (
           <div className="flex items-center gap-2">
             <program.icon size={26} className="shrink-0 text-sky-600" aria-hidden="true" />
             <div>
@@ -191,55 +178,205 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               <div className="text-xs font-semibold text-slate-500">{program.desc}</div>
             </div>
           </div>
-          <div className="mt-2 flex flex-col gap-2">
-            <button
-              type="button"
-              data-testid={`drill-${program.id}`}
-              onClick={() => onStartExam(program.id, 'practice')}
-              className={`${BTN_DRILL} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
-            >
-              Luyện đề - {examConfig.drillCount} câu
-            </button>
-            <button
-              type="button"
-              data-testid={`exam-program-${program.id}`}
-              onClick={() => onStartExam(program.id, 'exam')}
-              className={`${BTN_EXAM} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
-            >
-              Thi thử - {examConfig.examCount} câu
-            </button>
-            <button
-              type="button"
-              data-testid={`advanced-${program.id}`}
-              onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
-              className={`${BTN_ADVANCED} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
-            >
-              Nâng cao - {examConfig.drillCount} câu
-            </button>
-            <FormPicker gradeId={grade.id} programId={program.id} isAdmin={isAdmin ?? false} onStartExam={onStartExam} />
-          </div>
+        )}
+        <div className="mt-2 flex flex-col gap-2">
+          <button
+            type="button"
+            data-testid={`drill-${program.id}`}
+            onClick={() => onStartExam(program.id, 'practice')}
+            className={`${BTN_DRILL} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
+          >
+            Luyện đề - {examConfig.drillCount} câu
+          </button>
+          <button
+            type="button"
+            data-testid={`exam-program-${program.id}`}
+            onClick={() => onStartExam(program.id, 'exam')}
+            className={`${BTN_EXAM} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
+          >
+            Thi thử - {examConfig.examCount} câu
+          </button>
+          <button
+            type="button"
+            data-testid={`advanced-${program.id}`}
+            onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
+            className={`${BTN_ADVANCED} w-full${isG12 ? ' !min-h-[76px]' : ''}`}
+          >
+            Nâng cao - {examConfig.drillCount} câu
+          </button>
+          <FormPicker gradeId={grade.id} programId={program.id} isAdmin={isAdmin ?? false} onStartExam={onStartExam} />
         </div>
-      ))}
+      </div>
+    );
+  }
+
+  const reviewCardEl = hasDueReview ? (
+    <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
+  ) : null;
+
+  const coachCardEl = hasCoachHints ? (
+    <CoachCard
+      gradeId={grade.id}
+      onDrill={(programId, focus) =>
+        onStartExam(programId, 'practice', undefined, {
+          ...focus,
+          label: 'Ôn kỹ năng yếu',
+        })
+      }
+    />
+  ) : null;
+
+  const arenaCardEl = arenaHandlers ? (
+    <ArenaCard
+      gradeId={grade.id}
+      isGuest={isGuest ?? false}
+      onCreate={arenaHandlers.onArenaCreate}
+      onAccept={arenaHandlers.onArenaAccept}
+      onBot={arenaHandlers.onArenaBot}
+      onLogin={onLogin}
+    />
+  ) : null;
+
+  const leaderboardEl = (
+    <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
+  );
+
+  const rewardCards = (withQuest: boolean) => (
+    <div id="hub-section-reward" data-testid="hub-section-reward">
+      {withQuest && <DailyQuestCard />}
+      <PetCard />
+      <HomeShelf />
     </div>
   );
+
+  const learnNote = (
+    <p className="text-sm font-semibold text-slate-600">
+      Luyện đề: {examConfig.drillCount} câu, chữa ngay. Thi thử: {examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút, giống thi thật.
+    </p>
+  );
+
+  const tiles: HubTileDef[] = isG12
+    ? [
+        {
+          id: 'more',
+          icon: IconBook,
+          label: 'Luyện thêm',
+          sub: 'Đề, đấu trường và ôn tập',
+          voiceHint: 'Chọn môn hoặc mục để luyện thêm nhé!',
+          content: (
+            <HubGroup
+              isG12={isG12}
+              subtile
+              voiceKeyPrefix="hub-sub"
+              tiles={[
+                ...EXAM_PROGRAMS.map((program) => ({
+                  id: program.id,
+                  icon: program.icon,
+                  label: program.name,
+                  sub: program.desc,
+                  voiceHint: PROGRAM_VOICE_HINT[program.id],
+                  content: programBlock(program, false),
+                })),
+                {
+                  id: 'arena',
+                  icon: IconSwords,
+                  label: 'Đấu trường',
+                  sub: 'Thi đua với bạn bè',
+                  voiceHint: 'Chọn bạn đấu nhé!',
+                  content: (
+                    <>
+                      {arenaCardEl}
+                      {leaderboardEl}
+                    </>
+                  ),
+                },
+                ...(hasDueReview || hasCoachHints
+                  ? [{
+                      id: 'review',
+                      icon: IconMuscle,
+                      label: 'Ôn tập',
+                      sub: 'Câu sai và điểm yếu của em',
+                      voiceHint: 'Ôn lại những câu chưa chắc nhé!',
+                      content: (
+                        <>
+                          {reviewCardEl}
+                          {coachCardEl}
+                        </>
+                      ),
+                    }]
+                  : []),
+              ]}
+            />
+          ),
+        },
+        {
+          id: 'reward',
+          icon: IconGift,
+          label: 'Phần thưởng',
+          sub: 'Quà, bạn đồng hành và nhà của em',
+          voiceHint: 'Xem quà của em nhé!',
+          content: rewardCards(true),
+        },
+      ]
+    : [
+        {
+          id: 'learn',
+          icon: IconBook,
+          label: 'Luyện & thi',
+          sub: 'Đề luyện, thi thử và ôn tập',
+          voiceHint: 'Chọn môn để luyện nhé!',
+          content: (
+            <>
+              <div id="hub-section-learn" data-testid="hub-section-learn" className="space-y-3">
+                {learnNote}
+                {EXAM_PROGRAMS.map((p) => programBlock(p))}
+              </div>
+              {hasDueReview && (
+                <div id="hub-section-review" data-testid="hub-section-review">{reviewCardEl}</div>
+              )}
+              {hasCoachHints && (
+                <div id="hub-section-coach" data-testid="hub-section-coach">{coachCardEl}</div>
+              )}
+            </>
+          ),
+        },
+        {
+          id: 'arena',
+          icon: IconSwords,
+          label: 'Đấu trường',
+          sub: 'Thử thách và bảng xếp hạng',
+          voiceHint: 'Chọn bạn đấu nhé!',
+          content: (
+            <>
+              <div id="hub-section-arena" data-testid="hub-section-arena">{arenaCardEl}</div>
+              <div id="hub-section-rank" data-testid="hub-section-rank">{leaderboardEl}</div>
+            </>
+          ),
+        },
+        {
+          id: 'reward',
+          icon: IconGift,
+          label: 'Phần thưởng',
+          sub: 'Bạn đồng hành và nhà của em',
+          voiceHint: 'Xem quà của em nhé!',
+          content: rewardCards(false),
+        },
+      ];
 
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
       <div className={`${CARD} text-center`}>
         <div className="mb-6 flex items-start justify-between gap-2">
           <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL}>
-            ← Quay lại
+            <span className="inline-flex items-center gap-1.5"><IconArrowLeft size={18} /> Quay lại</span>
           </button>
-          {/* CR-72: headless instruction speaker - autoplays once per
-              screen for every grade, no visible button. */}
           <InstructionSpeaker
             text={
               isG12
-                ? 'Mình cùng chơi bốn trò nhỏ nhé. Bấm nút Chơi màu vàng để bắt đầu!'
-                : 'Bấm nút Chơi để bắt đầu, hoặc mở Khám phá để xem thêm nhé!'
+                ? 'Bấm Chơi màu vàng để bắt đầu, hoặc bấm Luyện thêm hoặc Phần thưởng để xem thêm!'
+                : 'Bấm Chơi để bắt đầu, hoặc mở một mục bên dưới nhé!'
             }
             lang="vi-VN"
-
             autoplayKey={`start-${grade.id}`}
           />
         </div>
@@ -273,93 +410,17 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             )}
           </span>
         </button>
-        <div className="mt-4">
-          <button
-            type="button"
-            ref={exploreToggleRef}
-            data-testid="explore-toggle"
-            aria-haspopup="dialog"
-            aria-expanded={exploreOpen}
-            onClick={() => setExploreOpen(true)}
-            className={isG12 ? `min-h-[76px] w-full text-lg ${DISCLOSURE_BTN}` : DISCLOSURE_BTN}
-          >
-            <span className="inline-flex items-center gap-2"><IconCompass size={20} /> Khám phá</span>
-          </button>
+
+        {/* G3-5: the headline progress card stays on-screen above the
+            hub (AC-2.1 amendment: ≤6 elements with sections collapsed). */}
+        {!isG12 && <DailyQuestCard />}
+
+        {/* CR-73: the hub lives inside the launchpad card as a light
+            paper panel - labeled tiles, inline expansion, no sheet. */}
+        <div className="mt-5 text-left">
+          <ModeHub tiles={tiles} isG12={isG12} voiceKeyPrefix={`hub-${grade.id}`} />
         </div>
       </div>
-
-      {/* G3-5 keeps progress info on screen (AC-2.2, ≤6 decisions);
-          G1-2 moves everything into the sheet. */}
-      {!isG12 && (
-        <>
-          <DailyQuestCard />
-          <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
-        </>
-      )}
-
-      <ExploreSheet
-        open={exploreOpen}
-        onClose={() => setExploreOpen(false)}
-        returnFocusRef={exploreToggleRef}
-        speakerKey={`explore-${grade.id}`}
-      >
-        {/* Relocated content - the same card components, unchanged; each
-            still decides its own visibility when empty. */}
-        {isG12 && (
-          <SheetTile icon={<IconTarget size={24} />} tileClass={tileClass}>
-            <DailyQuestCard />
-          </SheetTile>
-        )}
-        {isG12 && hasDueReview && (
-          <SheetTile icon={<IconBook size={24} />} tileClass={tileClass}>
-            <ReviewCard gradeId={grade.id} onStartReview={() => onStartExam('english', 'review')} />
-          </SheetTile>
-        )}
-        {hasCoachHints && (
-          <SheetTile icon={<IconMuscle size={24} />} tileClass={tileClass}>
-            <CoachCard
-              gradeId={grade.id}
-              onDrill={(programId, focus) =>
-                onStartExam(programId, 'practice', undefined, {
-                  ...focus,
-                  label: 'Ôn kỹ năng yếu',
-                })
-              }
-            />
-          </SheetTile>
-        )}
-        <SheetTile icon={<IconHome size={24} />} tileClass={tileClass}>
-          {/* External-review r1 #4: the pet home is where gift-box
-              decorations live - the shelf shows what the child earned.
-              The wrapper keeps the shelf's own mt-4 (SheetTile strips
-              direct-child top margins). */}
-          <div>
-            <PetCard />
-            <HomeShelf />
-          </div>
-        </SheetTile>
-        <SheetTile icon={<IconMedal size={24} />} tileClass={tileClass}>
-          <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
-        </SheetTile>
-        {arenaHandlers && (
-          <SheetTile icon={<IconSwords size={24} />} tileClass={tileClass}>
-            <ArenaCard
-              gradeId={grade.id}
-              isGuest={isGuest ?? false}
-              onCreate={arenaHandlers.onArenaCreate}
-              onAccept={arenaHandlers.onArenaAccept}
-              onBot={arenaHandlers.onArenaBot}
-              onLogin={onLogin}
-            />
-          </SheetTile>
-        )}
-        <SheetTile icon={<IconTrophy size={24} />} tileClass={tileClass}>
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 font-extrabold text-slate-800">Thi &amp; luyện đề</div>
-            {examProgramsBlock}
-          </div>
-        </SheetTile>
-      </ExploreSheet>
     </div>
   );
 }

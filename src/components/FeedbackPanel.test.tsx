@@ -130,14 +130,14 @@ describe('FeedbackPanel', () => {
       expect(screen.queryByTestId('feedback-listen-model')).toBeNull();
     });
 
-    it('dev-review r2 #3: the demo button is 76px on G1-2, 44px on G3-5', async () => {
+    it('dev-review r2 #3 + CR-73 floors: the demo button is 76px on G1-2, 64px on G3-5', async () => {
       const { ViewerProvider } = await import('../lib/viewer/ViewerContext');
       const small = render(
         <ViewerProvider gradeId="grade-4">
           <FeedbackPanel kind="extra-letter" isCorrect={false} correctWord="bird" explanation="x" />
         </ViewerProvider>,
       );
-      expect(screen.getByTestId('feedback-listen-model').className).toContain('min-h-[44px]');
+      expect(screen.getByTestId('feedback-listen-model').className).toContain('min-h-[64px]');
       small.unmount();
       render(
         <ViewerProvider gradeId="grade-1">

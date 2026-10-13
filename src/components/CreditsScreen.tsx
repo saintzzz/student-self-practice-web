@@ -7,6 +7,7 @@ import {
 } from '../lib/credits/attribution';
 
 import { NAV_PILL, H1, H2, SCREEN_ENTER } from '../lib/ui/tokens';
+import { IconArrowLeft } from './icons';
 
 const PILL = NAV_PILL;
 const CARD = 'mb-3 rounded-2xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 shadow-md ring-1 ring-sky-400/30';
@@ -43,7 +44,7 @@ export default function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
     <div className={`mx-auto max-w-2xl px-4 py-6 text-left sm:py-10 ${SCREEN_ENTER}`}>
       <button type="button" data-testid="credits-back" onClick={onBack} className={`mb-6 ${PILL}`}>
-        ← Quay lại
+        <span className="inline-flex items-center gap-1.5"><IconArrowLeft size={18} /> Quay lại</span>
       </button>
       <h1 ref={headingRef} tabIndex={-1} className={`mb-3 ${H1}`}>
         Nguồn hình ảnh và giấy phép

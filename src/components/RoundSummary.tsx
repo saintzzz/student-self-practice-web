@@ -21,7 +21,7 @@ import {
   type RoundAwardResult,
 } from '../lib/engagement/store';
 import { skillKeyForRound } from '../lib/engagement/skills';
-import { IconHome, IconPlay } from './icons';
+import { IconArrowRight, IconHome, IconPlay } from './icons';
 
 interface RoundSummaryProps {
   outcome: RoundOutcome;
@@ -191,7 +191,7 @@ export default function RoundSummary({
             onClick={onRequestLogin}
             className={`mt-4 w-full sm:w-auto ${CONTINUE_BUTTON_CLASSNAME}`}
           >
-            Đăng nhập để chơi tiếp →
+            <span className="inline-flex items-center gap-1.5">Đăng nhập để chơi tiếp <IconArrowRight size={18} /></span>
           </button>
           {onExit && (
             <button

@@ -9,10 +9,13 @@
  * CR-11 (design-spec s17): premium finish - subtle card gradients,
  * glassy chips, gold score pills, tighter display type.
  *
- * Invariants encoded here (do not relax):
- *  - 76px minimum interactive targets on anything touched alone.
+ * Invariants encoded here (CR-73 amendment - band-based touch floors):
+ *  - 76px minimum on G1-2 standalone controls; 64px on G3-5 standalone;
+ *    48px floor for other kid controls; 44px adult; 36px chips in a row.
  *  - status colors keep their semantics: emerald = correct/go,
- *    rose = wrong, amber = progress/score, sky = info, indigo = audio.
+ *    rose = destructive/urgent status only (never answer-wrong - that is
+ *    slate `feedback.wrong`), amber = warning/progress, sky = info,
+ *    indigo = audio. Gold fills = reward + next-step only.
  *  - every animation is transform/opacity and pairs with
  *    motion-reduce:animate-none.
  */
@@ -96,24 +99,38 @@ export const CTA_GOLD_XL =
 export const DISCLOSURE_BTN =
   'inline-flex min-h-[44px] items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-sm font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300';
 
-/** Bottom sheet that hosts secondary choices ("Khám phá"). */
-export const SHEET =
-  'fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto overscroll-contain rounded-t-[2rem] bg-white shadow-2xl ring-1 ring-sky-200';
-
-/** One option row inside the sheet. 96px for G1-2 hands; G3-5 may drop
- *  to 76px via TRAIL_TILE_SM. */
+/** Hub section tile (CR-73 `tile.hub` contract): paper pairs - the hub
+ *  is a light paper panel inside the navy launchpad card. 96px for G1-2
+ *  hands; G3-5 drops to 76px via TRAIL_TILE_SM. Focus ring sky-600
+ *  (4.1:1 non-text on paper - sky-400 was 2.14:1, below the 3:1 floor). */
 export const TRAIL_TILE =
-  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
+  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const TRAIL_TILE_SM =
-  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none';
+  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+/** Expanded tile visual (contract "S" state): chevron rotates via
+ *  markup swap; the tile keeps the selected wash + ring. */
+export const TRAIL_TILE_EXPANDED = 'bg-sky-100 ring-1 ring-sky-400';
 
-/** Drill / exam / advanced secondary actions (inside sheet or G3-5 home). */
+/** The light paper panel holding hub sections inside the navy
+ *  launchpad card (CR-73 §5.1). Navy cards nested inside keep their
+ *  `surface.raised` - the panel is a container, not a text surface. */
+export const HUB_PANEL =
+  'mt-4 rounded-3xl bg-sky-50 p-4 ring-1 ring-sky-200 sm:p-5';
+
+/** Drill / exam / advanced actions on the paper hub panel (CR-73 remap:
+ *  indigo is `action.audio` only - exam entries now read in the navy
+ *  exam register, drill/advanced as paper secondary). */
 export const BTN_DRILL =
-  'min-h-[64px] rounded-2xl border-2 border-indigo-300 bg-white px-4 font-bold text-indigo-900 transition hover:bg-indigo-50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 motion-reduce:transition-none';
+  'min-h-[64px] rounded-2xl bg-sky-100 px-4 font-bold text-sky-800 transition hover:bg-sky-200 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const BTN_EXAM =
-  'min-h-[64px] rounded-2xl border-b-4 border-indigo-900 bg-indigo-700 px-4 font-bold text-white transition hover:bg-indigo-600 active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 motion-reduce:transition-none';
+  'min-h-[64px] rounded-2xl border-b-4 border-[#0b1224] bg-[#162C55] px-4 font-bold text-white transition hover:bg-[#1d3a6b] active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const BTN_ADVANCED =
-  'min-h-[64px] rounded-2xl border-2 border-sky-300 bg-white/70 px-4 font-bold text-sky-800 transition hover:bg-sky-50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none';
+  'min-h-[64px] rounded-2xl border-2 border-sky-300 bg-white/70 px-4 font-bold text-sky-800 transition hover:bg-sky-50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+
+/** Strong action row on paper (sky-700 + white = 5.93:1) - FormPicker
+ *  "start this form" rows. */
+export const BTN_PAPER_ACTION =
+  'min-h-[44px] rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 active:scale-[0.98] motion-reduce:transition-none';
 
 /** Gift-box reward pick: three identical boxes, child taps one. */
 export const GIFT_BOX =
@@ -148,3 +165,42 @@ export const COPY_BTN =
  *  only brand injection is this small badge in the exam header. */
 export const EXAM_HEADER_BRAND =
   'inline-flex items-center gap-1 rounded-full bg-[#0b1224] px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-300/40';
+
+/* ------------------------------------------------------------------ */
+/* CR-73 semantic layer - exam surface (exam.card/exam.line primitives). */
+/* Exam gold remediation: NO amber fills inside the exam hall - gold is  */
+/* reward/next-step only. exam.selected = orange RING + light text (the */
+/* old orange-500 fill + white text failed at 2.80:1).                   */
+/* ------------------------------------------------------------------ */
+
+/** exam.option + exam aux keys (T/F, extra-letter, `exam-tile-*`
+ *  word-order tiles): non-gold exam.card fill, focus ring, 64px floor. */
+export const EXAM_OPTION =
+  'min-h-[64px] rounded-xl bg-[#16232e] px-4 py-3 font-bold text-white ring-1 ring-[#22303d] transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:translate-y-0.5 motion-reduce:transition-none';
+/** exam.selected state - apply alongside EXAM_OPTION when picked. */
+export const EXAM_SELECTED = 'ring-2 ring-orange-500 text-orange-200';
+/** exam.navStrip cell (question strip `exam-nav-*`): 48px floor. */
+export const EXAM_NAV_CELL =
+  'flex h-12 w-12 items-center justify-center rounded-lg bg-[#16232e] text-sm font-bold text-white ring-1 ring-[#22303d] transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60';
+/** answered strip cell - status.success translucent + check icon in
+ *  markup (8.11:1 on exam.card, never color-alone). */
+export const EXAM_NAV_ANSWERED = 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/40';
+
+/** action.audio (navy variant) - indigo = audio, interactive only.
+ *  `exam-listen` and every Nghe-mẫu control maps here. */
+export const BTN_AUDIO =
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-indigo-500/20 px-4 py-2 font-bold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 active:scale-[0.98] motion-reduce:transition-none';
+
+/** action.secondary on navy surfaces (white/10 + sky-200 = 9.19:1).
+ *  Used for all reclassified card buttons inside navy CARDs. */
+export const BTN_SECONDARY_NAVY =
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-[0.98] motion-reduce:transition-none';
+
+/** action.secondary on paper surfaces (sky-100 + sky-800 = 6.59:1). */
+export const BTN_SECONDARY_PAPER =
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-sky-100 px-4 py-2.5 font-bold text-sky-800 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 active:scale-[0.98] motion-reduce:transition-none';
+
+/** reward.earned - the only gold gradient allowed off `action.primary`
+ *  paths (pet evolve congrats, quest claim). Reward, not navigation. */
+export const BTN_REWARD_EARNED =
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2.5 font-extrabold text-amber-950 shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100';

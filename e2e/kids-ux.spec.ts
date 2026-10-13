@@ -3,8 +3,10 @@ import { gotoApp } from './utils/auth-flow';
 import { selectGrade } from './utils/practice-flow';
 
 /**
- * kids-UX redesign (PRD R1/R2/R5): launchpad IA, parent gate, and the
- * Khám phá sheet. Covers AC-2.1/2.2/2.3 (one gold CTA + sheet), AC-5.1
+ * kids-UX launchpad (CR-73 redesign): launchpad IA + parent gate.
+ * The Khám phá bottom sheet is replaced by the inline Mode Hub:
+ * labeled section tiles expand in place inside a paper panel.
+ * Covers the amended AC-2.x (collapsed-element count) + AC-5.1
  * (report pill gated).
  */
 
@@ -26,36 +28,36 @@ async function solveParentGate(page: import('@playwright/test').Page): Promise<v
   await page.getByTestId('parent-gate-ok').click();
 }
 
-test.describe('kids-UX: launchpad (AC-2.x)', () => {
-  test('G1-2: one gold CTA, everything else inside the Khám phá sheet', async ({ page }) => {
+test.describe('kids-UX: launchpad (CR-73)', () => {
+  test('G1-2: one gold CTA + two hub tiles; programs behind per-program subtiles', async ({ page }) => {
     await gotoApp(page);
     await selectGrade(page, 0); // grade-1
 
-    // First paint: the gold CTA is there; the exam tiles are NOT.
+    // First paint: gold CTA + the two hub tiles are there; programs are NOT.
     await expect(page.getByTestId('start-batch-button')).toBeVisible();
-    await expect(page.getByTestId('explore-toggle')).toBeVisible();
-    // CR-72: the instruction speaker is headless - it autoplays on every
-    // screen for every grade and renders no button. Assert the chrome is
-    // gone and the instruction text is what remains.
+    await expect(page.getByTestId('hub-tile-more')).toBeVisible();
+    await expect(page.getByTestId('hub-tile-reward')).toBeVisible();
     await expect(page.getByTestId('instruction-speaker')).toHaveCount(0);
     await expect(page.getByText('Mình cùng chơi 4 trò nhỏ nhé!', { exact: false })).toBeVisible();
-    await expect(page.getByTestId('drill-english')).not.toBeVisible();
+    await expect(page.getByTestId('drill-english')).toHaveCount(0);
 
-    // Sheet opens, carries the relocated surfaces, and closes cleanly.
-    await page.getByTestId('explore-toggle').click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // Luyện thêm expands inline (no dialog), subtiles appear, program
+    // modes one level deeper.
+    await page.getByTestId('hub-tile-more').click();
+    await expect(page.getByTestId('hub-subtile-english')).toBeVisible();
+    await page.getByTestId('hub-subtile-english').click();
     await expect(page.getByTestId('drill-english')).toBeVisible();
-    await page.getByTestId('explore-close').click();
-    await expect(page.getByRole('dialog')).not.toBeVisible();
-    // Focus returns to the toggle (modal contract).
-    await expect(page.getByTestId('explore-toggle')).toBeFocused();
+    // Collapsing keeps focus on the tile (no focus-return needed - the
+    // focus never left it).
+    await page.getByTestId('hub-tile-more').click();
+    await expect(page.getByTestId('hub-subtile-english')).toHaveCount(0);
   });
 
-  test('G3-5: sheet still holds drill/exam entries and they still launch', async ({ page }) => {
+  test('G3-5: hub tiles hold drill/exam entries and they still launch', async ({ page }) => {
     await gotoApp(page);
     await selectGrade(page, 2); // grade-3
 
-    await page.getByTestId('explore-toggle').click();
+    await page.getByTestId('hub-tile-learn').click();
     await page.getByTestId('drill-english').click();
     // Practice mode lands on the drill intro screen first.
     await page.getByRole('button', { name: 'Bắt đầu luyện' }).click();

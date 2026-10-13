@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getDueReviewItems } from '../lib/engagement/store';
-import { CARD } from '../lib/ui/tokens';
+import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
 import { IconBook } from './icons';
 
 interface ReviewCardProps {
@@ -31,7 +31,7 @@ export default function ReviewCard({ gradeId, onStartReview }: ReviewCardProps) 
           type="button"
           data-testid="start-review"
           onClick={onStartReview}
-          className="shrink-0 rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 px-5 py-3 font-display text-lg font-extrabold text-amber-950 shadow-[inset_0_-3px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
+          className={`shrink-0 ${BTN_SECONDARY_NAVY} px-5 py-3 text-lg`}
         >
           Ôn ngay
         </button>

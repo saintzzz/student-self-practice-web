@@ -190,7 +190,7 @@ describe('ReviewQueueCard - r10 load lifecycle', () => {
       await flush();
     });
     // Go to page 2 (offset 20) which holds the single remaining row.
-    fireEvent.click(screen.getByText('Sau →'));
+    fireEvent.click(screen.getByRole('button', { name: /Sau/ }));
     await act(flush);
     await act(async () => {
       queueResolvers.filter((r) => r.status === 'pending').pop()!.resolve({

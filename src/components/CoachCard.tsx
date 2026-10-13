@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { weakSkillsFor } from '../lib/engagement/coach';
-import { CARD } from '../lib/ui/tokens';
+import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
 import type { ExamProgramId } from '../types/exam';
 import type { BankFetchFocus } from '../lib/qb/bank';
 import { IconTarget } from './icons';
@@ -59,7 +59,7 @@ export default function CoachCard({ gradeId, onDrill }: CoachCardProps) {
               type="button"
               data-testid={`coach-drill-${w.skillKey}`}
               onClick={() => onDrill(w.program, { skills: w.drillSkills })}
-              className="shrink-0 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2 text-sm font-extrabold text-amber-950 shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-400"
+              className={`shrink-0 ${BTN_SECONDARY_NAVY} !min-h-[44px] px-4 py-2 text-sm`}
             >
               Ôn ngay
             </button>

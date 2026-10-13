@@ -17,6 +17,7 @@ import PhonicsEndingChoiceQuestion from './PhonicsEndingChoiceQuestion';
 import PhonicsRhymeChoiceQuestion from './PhonicsRhymeChoiceQuestion';
 import FeedbackPanel from './FeedbackPanel';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { IconArrowRight } from './icons';
 
 interface QuestionCardProps {
   question: Question;
@@ -319,7 +320,7 @@ export default function QuestionCard({
         onClick={onNext}
         className={`mt-2 w-full sm:w-auto [@media(max-height:420px)]:mt-1 ${CONTINUE_BUTTON_CLASSNAME}`}
       >
-        Câu tiếp theo →
+        <span className="inline-flex items-center gap-1.5">Câu tiếp theo <IconArrowRight size={18} /></span>
       </button>
     </div>
   );

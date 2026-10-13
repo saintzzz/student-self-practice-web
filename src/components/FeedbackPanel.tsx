@@ -84,7 +84,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
       /* kids-UX s3.4: announce the verdict gently; aria-live lets the
          teach-back reach screen-reader kids without moving focus. */
       aria-live="polite"
-      className={`relative mt-3 overflow-hidden rounded-2xl p-4 pl-5 text-left ring-2 shadow-md [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
+      className={`relative mt-3 max-h-[min(40vh,320px)] overflow-y-auto overscroll-contain rounded-2xl p-4 pl-5 text-left ring-2 shadow-md [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:p-2 [@media(max-height:420px)]:pl-3 ${
         isCorrect
           ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 ring-emerald-400/50'
           : 'bg-sky-500/15 ring-sky-400/50'
@@ -137,8 +137,8 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
           onClick={() => speakWord(correctWord)}
           /* dev-review r2 #3: a kid-facing control obeys AC-8.2 - 76px on
              G1-2, 44px floor on G3-5. */
-          className={`mt-3 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-4 font-extrabold text-indigo-700 ring-2 ring-indigo-300 transition hover:bg-indigo-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none [@media(max-height:420px)]:mt-2 ${
-            band === 'G12' ? 'min-h-[76px] text-base' : 'min-h-[44px] text-sm'
+          className={`mt-3 inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-4 font-extrabold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none [@media(max-height:420px)]:mt-2 ${
+            band === 'G12' ? 'min-h-[76px] text-base' : 'min-h-[64px] text-sm'
           }`}
         >
           <IconSpeaker size={18} /> Nghe mẫu

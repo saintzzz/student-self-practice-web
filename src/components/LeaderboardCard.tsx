@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { fetchLeaderboard, type LeaderboardEntry } from '../lib/leaderboard';
 import { isSupabaseConfigured } from '../lib/supabase/client';
-import { CARD } from '../lib/ui/tokens';
-import { IconMedal, IconTrophy } from './icons';
+import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { IconLock, IconMedal, IconTrophy } from './icons';
 
 interface LeaderboardCardProps {
   gradeId: string;
@@ -50,12 +50,18 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
               type="button"
               data-testid="leaderboard-login"
               onClick={onLogin}
-              className="mt-3 rounded-2xl bg-sky-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-sky-500 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+              className={`mt-3 ${BTN_SECONDARY_NAVY}`}
             >
               Đăng nhập
             </button>
           )}
         </div>
+      ) : !configured ? (
+        /* CR-73: explicit locked/empty state when Supabase is absent -
+           the card used to spin "Đang tải…" forever. */
+        <p data-testid="leaderboard-locked" className="mt-3 text-sm font-semibold text-slate-400">
+          <IconLock size={16} className="mr-1 inline-block" /> Bảng xếp hạng tạm chưa kết nối - thử lại sau nhé!
+        </p>
       ) : !loaded ? (
         <p className="mt-3 text-sm font-semibold text-slate-400">Đang tải bảng xếp hạng...</p>
       ) : entries!.length === 0 ? (

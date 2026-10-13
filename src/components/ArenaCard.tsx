@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { arenaOpen, arenaRecent, type ArenaOpenChallenge, type ArenaRecentRow } from '../lib/arena';
-import { CARD } from '../lib/ui/tokens';
+import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
 import { IconClock, IconHandshake, IconSwords, IconTrophy, IconX } from './icons';
 
 /** CR-34: Đấu trường card on the grade home screen.
@@ -23,6 +23,10 @@ export default function ArenaCard({
 }) {
   const [open, setOpen] = useState<ArenaOpenChallenge[] | null>(null);
   const [recent, setRecent] = useState<ArenaRecentRow[] | null>(null);
+  /* CR-73: the accept list caps at 2 visible challenges + an inline
+     "Xem thêm" expansion - keeps hub expansions inside the ≤4-new-controls
+     rule on the G1-2 path. */
+  const [showAllAccepts, setShowAllAccepts] = useState(false);
 
   // CR-56: my own open challenges wait for an accepter - they are not
   // accept-able and must not hide behind the "nothing here" empty state.
@@ -54,7 +58,7 @@ export default function ArenaCard({
           type="button"
           data-testid="arena-create"
           onClick={isGuest ? onBot : onCreate}
-          className="flex-1 rounded-xl bg-rose-600 px-4 py-3 font-extrabold text-white transition hover:bg-rose-500 active:scale-95"
+          className={`flex-1 ${BTN_SECONDARY_NAVY}`}
         >
           <span className="inline-flex items-center gap-2"><IconSwords size={18} /> {isGuest ? "Đấu với máy" : "Tạo thử thách"}</span>
         </button>
@@ -62,7 +66,7 @@ export default function ArenaCard({
           <button
             type="button"
             onClick={onLogin}
-            className="flex-1 rounded-xl bg-sky-600 px-4 py-3 font-extrabold text-white transition hover:bg-sky-500"
+            className={`flex-1 ${BTN_SECONDARY_NAVY}`}
           >
             Đăng nhập để đấu với bạn thật
           </button>
@@ -106,30 +110,42 @@ export default function ArenaCard({
               Chưa có thử thách nào của bạn bè - em có thể tạo thử thách mới nhé!
             </p>
           ) : (
-            <ul className="mt-2 space-y-2">
-              {theirs.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex items-center justify-between gap-2 rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-white/10"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-extrabold text-white">{c.creator_name}</div>
-                    <div className="text-xs font-bold text-slate-400">
-                      {c.creator_score} điểm - {Math.floor(c.creator_time_ms / 60000)}:
-                      {String(Math.floor(c.creator_time_ms / 1000) % 60).padStart(2, '0')}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    data-testid={`arena-accept-${c.id}`}
-                    onClick={() => onAccept(c)}
-                    className="shrink-0 rounded-lg bg-amber-400 px-3 py-2 text-sm font-extrabold text-amber-950 transition hover:bg-amber-300 active:scale-95"
+            <>
+              <ul className="mt-2 space-y-2">
+                {(showAllAccepts ? theirs : theirs.slice(0, 2)).map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-white/10"
                   >
-                    Nhận kèo
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-extrabold text-white">{c.creator_name}</div>
+                      <div className="text-xs font-bold text-slate-400">
+                        {c.creator_score} điểm - {Math.floor(c.creator_time_ms / 60000)}:
+                        {String(Math.floor(c.creator_time_ms / 1000) % 60).padStart(2, '0')}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid={`arena-accept-${c.id}`}
+                      onClick={() => onAccept(c)}
+                      className={`shrink-0 ${BTN_SECONDARY_NAVY} !min-h-[44px] px-3 py-2 text-sm`}
+                    >
+                      Nhận kèo
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {theirs.length > 2 && !showAllAccepts && (
+                <button
+                  type="button"
+                  data-testid="arena-accept-more"
+                  onClick={() => setShowAllAccepts(true)}
+                  className={`mt-2 w-full ${BTN_SECONDARY_NAVY}`}
+                >
+                  Xem thêm {theirs.length - 2} thử thách
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

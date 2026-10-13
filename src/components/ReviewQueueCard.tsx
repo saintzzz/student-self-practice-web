@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '../lib/supabase/client';
 import { optionLabel } from '../lib/qb/bank';
 import { H2 } from '../lib/ui/tokens';
+import { IconChevronLeft, IconChevronRight } from './icons';
 
 interface QueueRow {
   question_id: string;
@@ -312,9 +313,9 @@ export default function ReviewQueueCard() {
       </div>
       {total > PAGE && (
         <div className="mt-4 flex justify-center gap-2">
-          <button type="button" disabled={offset === 0} onClick={() => setOffset((o) => Math.max(0, o - PAGE))} className="rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-bold text-sky-700 disabled:opacity-40">← Trước</button>
+          <button type="button" disabled={offset === 0} onClick={() => setOffset((o) => Math.max(0, o - PAGE))} className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-bold text-sky-700 disabled:opacity-40"><IconChevronLeft size={14} /> Trước</button>
           <span className="self-center text-xs font-bold text-slate-500">{offset + 1}-{Math.min(offset + PAGE, total)} / {total}</span>
-          <button type="button" disabled={offset + PAGE >= total} onClick={() => setOffset((o) => o + PAGE)} className="rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-bold text-sky-700 disabled:opacity-40">Sau →</button>
+          <button type="button" disabled={offset + PAGE >= total} onClick={() => setOffset((o) => o + PAGE)} className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-bold text-sky-700 disabled:opacity-40">Sau <IconChevronRight size={14} /></button>
         </div>
       )}
     </div>

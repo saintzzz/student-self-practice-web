@@ -222,6 +222,48 @@ export function IconArrowLeft(props: IconProps) {
   );
 }
 
+/** CR-73: directional set - replaces all unicode arrow chrome
+ *  (←/→/◀/▶/▲/▼) with the SVG family. */
+export function IconArrowRight(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+export function IconChevronLeft(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M14.5 5.5L8 12l6.5 6.5" />
+    </svg>
+  );
+}
+
+export function IconChevronRight(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M9.5 5.5L16 12l-6.5 6.5" />
+    </svg>
+  );
+}
+
+export function IconChevronUp(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M5.5 14.5L12 8l6.5 6.5" />
+    </svg>
+  );
+}
+
+export function IconChevronDown(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M5.5 9.5L12 16l6.5-6.5" />
+    </svg>
+  );
+}
+
 export function IconHeart(props: IconProps) {
   return (
     <svg {...iconProps(props)} fill="currentColor" stroke="none">

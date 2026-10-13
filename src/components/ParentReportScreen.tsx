@@ -20,7 +20,7 @@ import {
   PAPER_TREND_UP,
 } from '../lib/ui/tokens';
 import type { Grade } from '../types';
-import { IconBook, IconBulb, IconChart, IconFlame, IconMail, IconStar, IconTrendingUp } from './icons';
+import { IconArrowLeft, IconBook, IconBulb, IconChart, IconFlame, IconMail, IconStar, IconTrendingUp } from './icons';
 
 interface ParentReportScreenProps {
   grades: readonly Grade[];
@@ -156,7 +156,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-extrabold text-sky-800"><IconChart size={22} className="mr-1.5 inline-block" /> Góc ba mẹ</h1>
           <button type="button" data-testid="report-back" onClick={onBack} className={`${NAV_PILL} !text-sky-800 !bg-sky-100 !ring-sky-300`}>
-            ← Quay lại
+            <span className="inline-flex items-center gap-1.5"><IconArrowLeft size={18} /> Quay lại</span>
           </button>
         </div>
 
