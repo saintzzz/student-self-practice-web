@@ -288,9 +288,11 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className={`rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6 ${
-        showFeedbackZone ? 'pb-[calc(min(40vh,320px)+5.5rem)]' : ''
-      }`}
+      className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6"
+      /* r23: inline style - the sm:p-6 / max-height:420px p-2 responsive
+         variants emit after base pb-* utilities and would silently drop
+         the feedback-sheet reservation at desktop widths/short heights. */
+      style={showFeedbackZone ? { paddingBottom: 'calc(min(40vh,320px) + 5.5rem)' } : undefined}
     >
       {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
           wrapper already provides that exact centering/padding, and this
