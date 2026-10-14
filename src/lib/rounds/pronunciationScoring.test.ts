@@ -226,4 +226,35 @@ describe('scorePronunciationAttempt', () => {
       expect(result.isCorrect).toBe(true);
     });
   });
+
+  describe('digit transcripts (CR-75)', () => {
+    it.each([
+      ['one', '1'],
+      ['one', '1.'],
+      ['two', '2'],
+      ['five', '5!'],
+      ['ten', '10'],
+      ['seven', '7'],
+    ])('scores a digitized transcript as an exact match: %s vs %j', (target, transcript) => {
+      const result = scorePronunciationAttempt(target, transcript);
+      expect(result.score).toBe(100);
+      expect(result.isCorrect).toBe(true);
+    });
+
+    it('accepts a digitized alternative transcript when the primary is off', () => {
+      const result = scorePronunciationAttempt('eight', 'ate', { alternatives: ['8'] });
+      expect(result.score).toBe(100);
+      expect(result.isCorrect).toBe(true);
+    });
+
+    it('does not let digits rescue an unrelated word', () => {
+      const result = scorePronunciationAttempt('cat', '5');
+      expect(result.isCorrect).toBe(false);
+    });
+
+    it('maps digit tokens inside a longer transcript', () => {
+      expect(normalizeForPronunciationComparison('number 4.')).toBe('number four');
+    });
+  });
 });
+

@@ -64,13 +64,33 @@ const PHONETIC_SIMILARITY_WEIGHT = 0.3;
 /** At confidence 0 a non-exact score is reduced by at most 15%; at confidence 1 there is no reduction. */
 const CONFIDENCE_MIN_FACTOR = 0.85;
 
-/** Lowercases, trims, and strips punctuation so "Cat!" and "cat" compare equal. */
+/**
+ * CR-75: server-side STT (Whisper/Gemini) digitizes number words - a
+ * child saying "one" comes back as "1.", which scored 0% against the
+ * target "one" (edit distance 3 + empty phonetic code). Digit tokens map
+ * back to their word forms before comparison. Covers the vocabulary's
+ * one-ten plus the rest of 0-20 and the tens for safety.
+ */
+const DIGIT_TO_WORD: Record<string, string> = {
+  '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+  '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+  '10': 'ten', '11': 'eleven', '12': 'twelve', '13': 'thirteen',
+  '14': 'fourteen', '15': 'fifteen', '16': 'sixteen', '17': 'seventeen',
+  '18': 'eighteen', '19': 'nineteen', '20': 'twenty', '30': 'thirty',
+  '40': 'forty', '50': 'fifty', '60': 'sixty', '70': 'seventy',
+  '80': 'eighty', '90': 'ninety', '100': 'hundred', '1000': 'thousand',
+};
+
+/** Lowercases, trims, and strips punctuation so "Cat!" and "cat" compare equal. Digit tokens become words. */
 export function normalizeForPronunciationComparison(text: string): string {
   return text
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((token) => DIGIT_TO_WORD[token] ?? token)
+    .join(' ')
     .trim();
 }
 
