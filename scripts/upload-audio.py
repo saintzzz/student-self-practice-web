@@ -13,7 +13,14 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KEYS = json.load(open(os.path.expanduser("~/.config/devin/secrets/supabase_new_keys.json")))
+# CR-74: Devin Desktop stores secrets under %APPDATA% on Windows; the
+# original POSIX path stays as a fallback for the WSL/Mac machine.
+_KEYS_CANDIDATES = [
+    os.environ.get("SUPABASE_KEYS_JSON"),
+    os.path.expanduser("~/.config/devin/secrets/supabase_new_keys.json"),
+    os.path.join(os.environ.get("APPDATA", ""), "devin", "secrets", "supabase_new_keys.json"),
+]
+KEYS = json.load(open(next(p for p in _KEYS_CANDIDATES if p and os.path.exists(p))))
 SR = KEYS["keys"]["service_role"]
 BASE = KEYS["url"] + "/storage/v1/object/ea-audio/"
 OUT = os.path.join(ROOT, "audio-out")

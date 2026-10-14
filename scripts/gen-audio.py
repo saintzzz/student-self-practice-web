@@ -14,8 +14,11 @@ import edge_tts
 
 # CR-19 r2 voice split (user picked): Ana (child voice) reads bare words
 # and phonics utterances; Andrew (warm adult male) reads full sentences.
+# CR-74: field report - Andrew swallows final syllables for early readers
+# ("mountain" heard as "mouse"). One consistent child voice wins:
+# sentences now read with Ana too.
 VOICE_WORD = "en-US-AnaNeural"
-VOICE_SENTENCE = "en-US-AndrewNeural"
+VOICE_SENTENCE = "en-US-AnaNeural"
 RATE = "-8%"               # slightly slower for early readers
 OUT_DIR = "audio-out"
 CONCURRENCY = 24
@@ -50,7 +53,10 @@ async def render_one(name: str, kind: str, text: str) -> None:
 
 async def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
-    lines = [l.rstrip("\n").split("\t") for l in open("audio-texts.tsv")]
+    # Optional argv: path to a filtered tsv (e.g. sentences-only for the
+    # CR-74 re-render) - defaults to the full enumeration.
+    tsv = sys.argv[1] if len(sys.argv) > 1 else "audio-texts.tsv"
+    lines = [l.rstrip("\n").split("\t") for l in open(tsv)]
     tasks = [render_one(name, kind, text) for name, kind, text in lines]
     await asyncio.gather(*tasks)
     print(f"done={done} fail={fail} total={len(lines)}")
