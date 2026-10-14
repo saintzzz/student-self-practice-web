@@ -183,9 +183,13 @@ function audioUrlFor(text: string): Promise<string | null> {
  * Kid-paced speech speeds. The default play is deliberately slower than
  * a normal adult speaking rate - early readers were missing whole words
  * at rate ~0.9. "Nghe chậm" replays at an even gentler speed.
+ * Field feedback (CR-77): rendered files are already slowed -8% at
+ * generation, so file play at 0.8 compounded to ~0.74 effective - felt
+ * sluggish. 0.9 playback lands ~0.83 effective, still below the ~0.9
+ * that lost early readers.
  */
-const NORMAL_UTTERANCE_RATE = 0.7;
-const NORMAL_FILE_RATE = 0.8;
+const NORMAL_UTTERANCE_RATE = 0.75;
+const NORMAL_FILE_RATE = 0.9;
 const SLOW_FACTOR = 0.7;
 
 export type SpeechSpeed = 'normal' | 'slow';
