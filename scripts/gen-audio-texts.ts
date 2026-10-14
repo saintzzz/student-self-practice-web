@@ -12,7 +12,7 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { ALL_WORDS } from '../src/data/vocabulary';
 import { generateListeningSentenceFillBlankQuestions } from '../src/lib/generators/listeningSentenceFillBlank';
-import { getSoundUtterance } from '../src/lib/phonics/initialSounds';
+import { getSoundExample, getSoundUtterance } from '../src/lib/phonics/initialSounds';
 
 const VOWEL_LETTERS = new Set(['a', 'e', 'i', 'o', 'u']);
 function article(word: string): 'a' | 'an' {
@@ -45,12 +45,18 @@ for (const w of ALL_WORDS) {
   texts.set(`There isn't ${article(w.word)} ${w.word} here.`, 'sentence');
 }
 
-// 4. Phonics sound utterances ("c, as in cat") - one per sound key
+// 4. Phonics sound utterances ("c, as in cat") - canonical example plus
+// the first alternate per sound: PhonicsWordChoiceQuestion speaks the
+// alternate when the canonical example IS the answer word (CR-76).
 const SOUND_KEYS = [
   'a', 'b', 'c', 'ch', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
   'n', 'o', 'p', 'q', 'r', 's', 'sh', 't', 'th', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
-for (const s of SOUND_KEYS) texts.set(getSoundUtterance(s), 'word');
+for (const s of SOUND_KEYS) {
+  texts.set(getSoundUtterance(s), 'word');
+  const canonical = getSoundExample(s);
+  if (canonical) texts.set(getSoundUtterance(s, canonical), 'word');
+}
 
 // hash<TAB>type<TAB>text - Ana reads words, Andrew reads sentences (CR-19 r2)
 const lines = [...texts.entries()]

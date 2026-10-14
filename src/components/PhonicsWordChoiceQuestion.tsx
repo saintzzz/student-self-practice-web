@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { PhonicsWordChoiceQuestion as PhonicsWordChoiceQuestionType } from '../types';
 import { getWordVisual } from '../lib/emoji/wordVisual';
-import { getSoundUtterance } from '../lib/phonics/initialSounds';
+import { getSoundExample, getSoundUtterance } from '../lib/phonics/initialSounds';
+import { ALL_WORDS } from '../data/vocabulary';
 import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
@@ -35,7 +36,16 @@ export default function PhonicsWordChoiceQuestion({
 }: PhonicsWordChoiceQuestionProps) {
   // speakWord on a bare key ("c") reads the letter name ("see"); the
   // utterance "c, as in cat" carries the actual sound via the example.
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(getSoundUtterance(question.sound), onStatus, speed), getSoundUtterance(question.sound));
+  // CR-76: the example excludes the answer word (audio must not name the
+  // correct picture) and is shown as a visual scaffold so kids can decode
+  // the "as in" convention ("như từ cat" + the cat picture).
+  const example = getSoundExample(question.sound, question.word);
+  const exampleVisual = useMemo(() => {
+    const entry = example ? ALL_WORDS.find((w) => w.word === example) : undefined;
+    return entry ? getWordVisual(entry.id) : undefined;
+  }, [example]);
+  const utterance = getSoundUtterance(question.sound, question.word);
+  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(utterance, onStatus, speed), utterance);
   const hasAnswered = selectedIndex !== null;
 
   const [photoGroupFailed, setPhotoGroupFailed] = useState(false);
@@ -51,10 +61,21 @@ export default function PhonicsWordChoiceQuestion({
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
         <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
-      <div className="mb-3 flex items-center justify-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-center gap-3">
         <span className="text-6xl font-extrabold text-white [@media(max-height:420px)]:text-5xl">
           {question.sound}
         </span>
+        {example && (
+          <span
+            data-testid="sound-example"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-base font-semibold text-sky-100 ring-1 ring-sky-300/30"
+          >
+            như từ <span className="font-extrabold text-amber-200">“{example}”</span>
+            {exampleVisual && (
+              <EmojiVisual emoji={exampleVisual.emoji} imageUrl={exampleVisual.imageUrl} />
+            )}
+          </span>
+        )}
         <button
           type="button"
           data-testid="play-audio-button"

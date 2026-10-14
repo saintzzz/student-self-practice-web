@@ -1,3 +1,5 @@
+import { ALL_WORDS } from '../../data/vocabulary';
+
 /**
  * Phonics dimension for CR-03 (research doc 2.2: each SGK Tieng Anh 2 unit
  * is tied to one phonics sound). Maps a word to its initial *sound* group
@@ -54,6 +56,8 @@ const INITIAL_SOUND_EXCEPTIONS: Readonly<Record<string, string>> = {
   ginger: 'j',
   // ph- = /f/: phone (saxophone resolves on its own first letter 's')
   phone: 'f',
+  // CR-76: "CD" is a letter-name word - /s-/ onset ("see-dee"), not /k-/.
+  cd: 's',
   // rh- = /r/: rhinoceros
   rhinoceros: 'r',
   // silent w/k: wrestling, knot
@@ -171,7 +175,34 @@ const SOUND_UTTERANCE_EXAMPLES: Readonly<Record<string, string>> = {
   z: 'zebra',
 };
 
-export function getSoundUtterance(sound: string): string {
-  const example = SOUND_UTTERANCE_EXAMPLES[sound];
+/**
+ * Ordered example candidates for a sound: the canonical example first,
+ * then every other bank word sharing the initial sound (alphabetical).
+ * CR-76: the word-choice question speaks `exampleCandidates[0]` unless it
+ * IS the answer word - in that case it advances to [1] - so the audio
+ * never names the correct option ("c, as in cat" while 'cat' is the
+ * answer would leak it). Only the first two candidates are ever picked;
+ * gen-audio-texts.ts renders exactly those two utterances per sound.
+ */
+function soundExampleCandidates(sound: string): string[] {
+  const canonical = SOUND_UTTERANCE_EXAMPLES[sound];
+  // Examples must read like the sound: only plain lowercase single words.
+  // Acronyms are excluded (CD is /s-/ not /k-/; see exceptions above) and
+  // multi-word entries make poor "as in" anchors for young readers.
+  const others = ALL_WORDS.filter(
+    (w) => /^[a-z]+$/.test(w.word) && w.word !== canonical && getInitialSound(w.word) === sound,
+  )
+    .map((w) => w.word)
+    .sort();
+  return canonical ? [canonical, ...others] : others;
+}
+
+/** First example candidate that is not `excludeWord` (the answer word). */
+export function getSoundExample(sound: string, excludeWord?: string): string | undefined {
+  return soundExampleCandidates(sound).find((w) => w !== excludeWord);
+}
+
+export function getSoundUtterance(sound: string, excludeWord?: string): string {
+  const example = getSoundExample(sound, excludeWord);
   return example ? `${sound}, as in ${example}` : sound;
 }

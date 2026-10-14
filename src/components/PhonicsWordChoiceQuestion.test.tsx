@@ -49,12 +49,36 @@ describe('PhonicsWordChoiceQuestion', () => {
   it('speaks "sound, as in example" (not the bare letter name) via the listen button', async () => {
     const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
     const user = userEvent.setup();
-    render(<PhonicsWordChoiceQuestion question={QUESTION} selectedIndex={null} onSelectOption={vi.fn()} />);
+    // A question whose answer is NOT the canonical example keeps it.
+    const cornQuestion = { ...QUESTION, word: 'corn', wordId: 'fixture-corn' };
+    render(<PhonicsWordChoiceQuestion question={cornQuestion} selectedIndex={null} onSelectOption={vi.fn()} />);
 
     await user.click(screen.getByTestId('play-audio-button'));
     expect(speakSpy).toHaveBeenCalledOnce();
     const utterance = speakSpy.mock.calls[0]![0] as SpeechSynthesisUtterance;
     expect(utterance.text).toBe('c, as in cat');
+  });
+
+  // CR-76: when the canonical example IS the answer word the audio would
+  // literally name the correct option - advance to the next bank word
+  // sharing the sound instead.
+  it('picks a different example when the canonical one is the answer word', async () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<PhonicsWordChoiceQuestion question={QUESTION} selectedIndex={null} onSelectOption={vi.fn()} />);
+
+    await user.click(screen.getByTestId('play-audio-button'));
+    const utterance = speakSpy.mock.calls[0]![0] as SpeechSynthesisUtterance;
+    expect(utterance.text).toBe('c, as in cactus');
+  });
+
+  it('shows the example as a visual scaffold matching the spoken phrase', () => {
+    render(<PhonicsWordChoiceQuestion question={QUESTION} selectedIndex={null} onSelectOption={vi.fn()} />);
+
+    const scaffold = screen.getByTestId('sound-example');
+    expect(scaffold).toBeVisible();
+    expect(scaffold).toHaveTextContent('cactus');
+    expect(scaffold).not.toHaveTextContent('cat');
   });
 
   it('calls onSelectOption with the clicked index', async () => {
