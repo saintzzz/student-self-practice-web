@@ -255,6 +255,14 @@ describe('scorePronunciationAttempt', () => {
     it('maps digit tokens inside a longer transcript', () => {
       expect(normalizeForPronunciationComparison('number 4.')).toBe('number four');
     });
+
+    it.each([
+      ['ten', '1.0'],
+      ['fifteen', '1.5'],
+      ['ten', '10:00'],
+    ])('does not fuse fused digits+interior punctuation into a word: %s vs %j', (target, transcript) => {
+      expect(scorePronunciationAttempt(target, transcript).isCorrect).toBe(false);
+    });
   });
 });
 

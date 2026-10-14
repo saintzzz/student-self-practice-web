@@ -81,16 +81,24 @@ const DIGIT_TO_WORD: Record<string, string> = {
   '80': 'eighty', '90': 'ninety', '100': 'hundred', '1000': 'thousand',
 };
 
-/** Lowercases, trims, and strips punctuation so "Cat!" and "cat" compare equal. Digit tokens become words. */
+/** Lowercases, trims, maps pure digit tokens to words ("1." -> "one"), then strips remaining
+ *  punctuation and unmappable digits so "Cat!" -> "cat" and "1.0" can never fuse into "ten". */
 export function normalizeForPronunciationComparison(text: string): string {
   return text
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, ' ')
     .split(' ')
-    .map((token) => DIGIT_TO_WORD[token] ?? token)
+    .map((token) => {
+      // r25: digits + trailing sentence punctuation map ("1." -> "one");
+      // digits fused with interior punctuation ("1.0", "3:30") must NOT
+      // become a different number word after stripping.
+      const digits = token.match(/^(\d+)[.,!?;:]*$/)?.[1];
+      return digits !== undefined ? (DIGIT_TO_WORD[digits] ?? '') : token;
+    })
     .join(' ')
+    .replace(/[^a-z\s]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
