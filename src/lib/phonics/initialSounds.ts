@@ -184,17 +184,25 @@ const SOUND_UTTERANCE_EXAMPLES: Readonly<Record<string, string>> = {
  * answer would leak it). Only the first two candidates are ever picked;
  * gen-audio-texts.ts renders exactly those two utterances per sound.
  */
+// Candidates are bank-derived and immutable - memoize per sound so
+// question renders do not re-filter/re-sort ALL_WORDS twice (r26 F2).
+const EXAMPLE_CANDIDATES: Map<string, string[]> = new Map();
 function soundExampleCandidates(sound: string): string[] {
-  const canonical = SOUND_UTTERANCE_EXAMPLES[sound];
-  // Examples must read like the sound: only plain lowercase single words.
-  // Acronyms are excluded (CD is /s-/ not /k-/; see exceptions above) and
-  // multi-word entries make poor "as in" anchors for young readers.
-  const others = ALL_WORDS.filter(
-    (w) => /^[a-z]+$/.test(w.word) && w.word !== canonical && getInitialSound(w.word) === sound,
-  )
-    .map((w) => w.word)
-    .sort();
-  return canonical ? [canonical, ...others] : others;
+  let cached = EXAMPLE_CANDIDATES.get(sound);
+  if (!cached) {
+    const canonical = SOUND_UTTERANCE_EXAMPLES[sound];
+    // Examples must read like the sound: only plain lowercase single words.
+    // Acronyms are excluded (CD is /s-/ not /k-/; see exceptions above) and
+    // multi-word entries make poor "as in" anchors for young readers.
+    const others = ALL_WORDS.filter(
+      (w) => /^[a-z]+$/.test(w.word) && w.word !== canonical && getInitialSound(w.word) === sound,
+    )
+      .map((w) => w.word)
+      .sort();
+    cached = canonical ? [canonical, ...others] : others;
+    EXAMPLE_CANDIDATES.set(sound, cached);
+  }
+  return cached;
 }
 
 /** First example candidate that is not `excludeWord` (the answer word). */
