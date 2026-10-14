@@ -20,10 +20,13 @@ function article(word: string): 'a' | 'an' {
   return VOWEL_LETTERS.has(firstLetter) ? 'an' : 'a';
 }
 
-const texts = new Map<string, 'word' | 'sentence'>();
+const texts = new Map<string, 'word' | 'word-short' | 'sentence'>();
 
-// 1. Bare words (ListeningFillBlank, ListeningImageChoice, phonics word questions)
-for (const w of ALL_WORDS) texts.set(w.word, 'word');
+// 1. Bare words (ListeningFillBlank, ListeningImageChoice, phonics word
+//    questions). CR-78: words <=6 chars render via the 'word-short'
+//    recipe (text + "!" at -30%) - single syllables otherwise compress to
+//    ~200ms and are heard wrong ("eight" heard as "T").
+for (const w of ALL_WORDS) texts.set(w.word, w.word.length <= 6 ? 'word-short' : 'word');
 
 // 2. Sentence fill-blank: word x every template in its class
 for (const q of generateListeningSentenceFillBlankQuestions(ALL_WORDS)) {

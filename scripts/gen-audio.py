@@ -20,6 +20,11 @@ import edge_tts
 VOICE_WORD = "en-US-AnaNeural"
 VOICE_SENTENCE = "en-US-AnaNeural"
 RATE = "-8%"               # slightly slower for early readers
+# CR-78: short words need a stronger recipe - Ana compresses single
+# syllables to ~0.2s at -8% ("eight" was heard as "T"). word-short
+# renders the text with a "!" suffix at -30%: emphatic enunciation +
+# ~0.4s of speech (measured across monosyllables).
+SHORT_RATE = "-30%"
 OUT_DIR = "audio-out"
 CONCURRENCY = 24
 
@@ -36,8 +41,11 @@ async def render_one(name: str, kind: str, text: str) -> None:
     async with sem:
         for attempt in range(3):
             try:
-                voice = VOICE_SENTENCE if kind == "sentence" else VOICE_WORD
-                comm = edge_tts.Communicate(text, voice, rate=RATE)
+                if kind == "word-short":
+                    comm = edge_tts.Communicate(text + "!", VOICE_WORD, rate=SHORT_RATE)
+                else:
+                    voice = VOICE_SENTENCE if kind == "sentence" else VOICE_WORD
+                    comm = edge_tts.Communicate(text, voice, rate=RATE)
                 await comm.save(path)
                 done += 1
                 if done % 250 == 0:
