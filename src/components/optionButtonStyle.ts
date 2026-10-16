@@ -1,4 +1,4 @@
-import { OPTION_PICKED_WRONG, OPTION_REVEAL_CORRECT } from '../lib/ui/tokens';
+import { OPTION_PICKED_WRONG, OPTION_REVEAL_CORRECT, toy } from '../lib/ui/tokens';
 
 /**
  * Shared styling for the 4-option "pick one" button shell used by
@@ -20,15 +20,16 @@ export function getOptionButtonClassName(
      edge, lift + ring glow on hover. CR-16: navy tile on the branded dark
      play surface; status colors keep their semantics (emerald = correct,
      rose = wrong). */
+  /* CR-79 toy-block: base keeps structural classes only - each state
+     branch owns its complete face+shadow (never concatenated). */
   const base =
     'flex min-h-[76px] w-full items-center justify-center rounded-2xl border-4 p-5 text-2xl font-bold ' +
-    'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.25),0_4px_10px_-4px_rgba(0,0,0,0.4)] ' +
-    'transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] motion-reduce:transition-none ' +
-    'motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-400/60';
+    'transition focus:outline-none focus:ring-4 focus:ring-amber-400/60';
 
   if (selectedIndex === null) {
-    return `${base} border-[#2a3a5e] bg-gradient-to-b from-[#1d3465] to-[#162C55] text-white ` +
-      'hover:border-amber-400/70 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.25),0_8px_18px_-6px_rgba(245,158,11,0.45)]';
+    /* Decorative pre-judge frame tints by index (B4) - the judged
+       branches below keep the v2 semantics untouched. */
+    return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} ${toy.tints[index % toy.tints.length]} text-white`;
   }
 
   const missed = selectedIndex !== correctIndex;

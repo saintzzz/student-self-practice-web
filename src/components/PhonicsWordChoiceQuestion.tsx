@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { PhonicsWordChoiceQuestion as PhonicsWordChoiceQuestionType } from '../types';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
+import { DISPLAY_GLYPH } from '../lib/ui/tokens';
 import { getWordVisual } from '../lib/emoji/wordVisual';
 import { getSoundExample, getSoundUtterance } from '../lib/phonics/initialSounds';
 import { ALL_WORDS } from '../data/vocabulary';
@@ -47,6 +50,8 @@ export default function PhonicsWordChoiceQuestion({
   const utterance = getSoundUtterance(question.sound, question.word);
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(utterance, onStatus, speed), utterance);
   const hasAnswered = selectedIndex !== null;
+  const demo = useDemoHint('phonics-word-choice');
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const [photoGroupFailed, setPhotoGroupFailed] = useState(false);
   const optionImageUrls = useMemo(() => {
@@ -62,7 +67,9 @@ export default function PhonicsWordChoiceQuestion({
         <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
       <div className="mb-3 flex flex-wrap items-center justify-center gap-3">
-        <span className="text-6xl font-extrabold text-white [@media(max-height:420px)]:text-5xl">
+        {/* CR-79 B3: the sound letter gets the display-glyph treatment -
+            letterpress amber on navy, not plain white text. */}
+        <span className={`${DISPLAY_GLYPH} [@media(max-height:420px)]:text-5xl`}>
           {question.sound}
         </span>
         {example && (
@@ -97,7 +104,7 @@ export default function PhonicsWordChoiceQuestion({
       </div>
       {playbackFailed && <AudioPlaybackWarning />}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((emoji, index) => (
           <button
             key={`option-${index}-${emoji}`}
@@ -126,6 +133,9 @@ export default function PhonicsWordChoiceQuestion({
             </span>
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} onDone={demo.dismiss} />
+        ) : null}
       </div>
     </div>
   );

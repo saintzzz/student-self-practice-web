@@ -5,9 +5,15 @@ import {
   MAX_PAIR_MATCHING_MISTAKES,
   clickPairMatchingTile,
   createPairMatchingBoardState,
+  dropPairMatchingTile,
   getPairMatchingOutcome,
   isPairMatchingTileMatched,
 } from '../lib/rounds/pairMatchingBoard';
+import { useViewer } from '../lib/viewer/ViewerContext';
+import { useDragTile } from '../hooks/useDragTile';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
+import { QUESTION_BODY, QUESTION_BODY_CENTER, toy } from '../lib/ui/tokens';
 
 import { InstructionSpeaker } from './InstructionSpeaker';
 
@@ -22,13 +28,12 @@ interface PicturePairMatchingQuestionProps {
 }
 
 function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boolean): string {
-  /* CR-12 DS-X3: memory tiles become flip-card keys - gradient face,
-     sheen + bottom edge; states keep their semantic colors. */
+  /* CR-79 toy-block: structural base keeps size/radius/focus only - each
+     state branch now owns its complete face+shadow so tokens never
+     concatenate onto judged classes. */
   const base =
     'flex min-h-[76px] w-full items-center justify-center rounded-2xl border-4 p-4 text-2xl font-bold ' +
-    'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.08),0_4px_10px_-4px_rgba(15,23,42,0.15)] ' +
-    'transition hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none ' +
-    'motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-amber-400/60 disabled:cursor-not-allowed';
+    'transition focus:outline-none focus:ring-4 focus:ring-amber-400/60 disabled:cursor-not-allowed touch-pan-y';
 
   if (isMatched) {
     return `${base} border-emerald-400 bg-gradient-to-b from-emerald-500/25 to-emerald-600/15 text-emerald-100 ` +
@@ -42,8 +47,8 @@ function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boo
     return `${base} border-amber-400/70 bg-gradient-to-b from-amber-500/25 to-amber-600/15 text-white ` +
       'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(217,119,6,0.25),0_6px_14px_-6px_rgba(217,119,6,0.45)]';
   }
-  return `${base} border-[#2a3a5e] bg-gradient-to-b from-[#1d3465] to-[#162C55] text-white ` +
-    'hover:border-amber-400/70 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.08),0_8px_18px_-6px_rgba(56,189,248,0.5)]';
+  /* CR-79 toy.face/faceHover/pressed - the "toy block" read. */
+  return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} border-[#2a3a5e] text-white`;
 }
 
 /**
@@ -67,6 +72,17 @@ export default function PicturePairMatchingQuestion({
   const [state, setState] = useState(createPairMatchingBoardState);
   const hasSubmittedRef = useRef(false);
   const outcome = getPairMatchingOutcome(state);
+  const viewer = useViewer();
+  const demo = useDemoHint('picture-pair-matching');
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  /* CR-79: drag-to-connect for G1-2; tap stays for everyone. */
+  const drag = useDragTile({
+    enabled: viewer.band === 'G12' && !hasAnswered && outcome === null,
+    targetAttr: 'data-pair-index',
+    onDrop: (src, dst) =>
+      setState((prev) => dropPairMatchingTile(prev, question.tiles, src, dst)),
+  });
 
   useEffect(() => {
     if (outcome === null || hasSubmittedRef.current) return;
@@ -74,13 +90,15 @@ export default function PicturePairMatchingQuestion({
     onSubmit(outcome === 'solved');
   }, [outcome, onSubmit]);
 
-  function handleTileClick(tileIndex: number): void {
+  function handleTileClick(tileIndex: number, detail: number): void {
     if (hasAnswered) return;
+    if (drag.shouldSuppressClick(detail)) return;
     setState((prev) => clickPairMatchingTile(prev, question.tiles, tileIndex));
   }
 
   return (
-    <div>
+    <div className={QUESTION_BODY}>
+      <div className={QUESTION_BODY_CENTER}>
       <div className="mb-2 flex items-center justify-center gap-2">
         <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
         <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
@@ -89,7 +107,7 @@ export default function PicturePairMatchingQuestion({
         Sai: {state.mistakeCount}/{MAX_PAIR_MATCHING_MISTAKES}
       </p>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4">
+      <div ref={gridRef} className="relative grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4">
         {question.tiles.map((tile, index) => {
           const isMatched = outcome === 'failed' || isPairMatchingTileMatched(state, question.tiles, index);
           const isPending = state.pendingTileIndex === index;
@@ -98,16 +116,27 @@ export default function PicturePairMatchingQuestion({
             state.lastAttempt !== null &&
             !state.lastAttempt.correct &&
             (state.lastAttempt.tileIndexA === index || state.lastAttempt.tileIndexB === index);
+          const isDropHover =
+            drag.dragging && drag.hoverIndex === index && index !== drag.sourceIndex && !isMatched;
 
           return (
             <button
               key={`tile-${index}`}
               type="button"
               data-testid={`pair-tile-${index}`}
+              data-pair-index={index}
               data-correct={isMatched ? 'true' : isWrongFlash ? 'false' : undefined}
               disabled={hasAnswered || isMatched || outcome !== null}
-              onClick={() => handleTileClick(index)}
-              className={tileClassName(isMatched, isPending, isWrongFlash)}
+              onClick={(e) => handleTileClick(index, e.detail)}
+              onPointerDown={drag.onPointerDown(index)}
+              onPointerMove={drag.onPointerMove}
+              onPointerUp={drag.onPointerUp}
+              onPointerCancel={drag.onPointerCancel}
+              onLostPointerCapture={drag.onLostPointerCapture}
+              className={
+                tileClassName(isMatched, isPending, isWrongFlash) +
+                (isDropHover ? ' ring-4 ring-amber-300' : '')
+              }
               // CR-02: picture tiles announce their emoji so screen readers
               // can play the same matching game sighted users get; word
               // tiles already carry their text label.
@@ -123,6 +152,11 @@ export default function PicturePairMatchingQuestion({
             </button>
           );
         })}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} variant="drag" onDone={demo.dismiss} />
+        ) : null}
+      </div>
+      {drag.ghostNode}
       </div>
     </div>
   );

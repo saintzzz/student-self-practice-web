@@ -2,7 +2,7 @@ import { useState, type ComponentType, type ReactNode } from 'react';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import { IconChevronDown, IconChevronUp, type IconProps } from './icons';
 import { useViewer } from '../lib/viewer/ViewerContext';
-import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, HUB_PANEL } from '../lib/ui/tokens';
+import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, HUB_PANEL, HUB_ICON_TINTS } from '../lib/ui/tokens';
 
 /**
  * CR-73 s5.1 Mode Hub - the Kham pha sheet's replacement: labeled,
@@ -63,7 +63,7 @@ export function HubGroup({
 
   return (
     <div className="space-y-3">
-      {tiles.map((tile) => {
+      {tiles.map((tile, index) => {
         const open = openId === tile.id;
         const regionIds = tile.sections
           ? tile.sections.map((s) => `${regionPrefix}-${s.id}`)
@@ -78,7 +78,11 @@ export function HubGroup({
               onClick={() => setOpenId(open ? null : tile.id)}
               className={`${tileClass}${open ? ` ${TRAIL_TILE_EXPANDED}` : ''}`}
             >
-              <tile.icon size={24} aria-hidden="true" className="mt-0.5 shrink-0 text-sky-600" />
+              {/* CR-79 B4 on paper: rotating soft icon-chip tints -
+                  tiles differentiate without changing the paper body. */}
+              <span className={`mt-0.5 shrink-0 rounded-xl p-1.5 ${HUB_ICON_TINTS[index % HUB_ICON_TINTS.length]}`}>
+                <tile.icon size={24} aria-hidden="true" />
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-extrabold text-slate-800">{tile.label}</span>
                 {tile.sub && (

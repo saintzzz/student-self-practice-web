@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import type { PhonicsBlendChoiceQuestion, PhonicsFinalChoiceQuestion } from '../types';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
@@ -33,6 +36,8 @@ export default function PhonicsEndingChoiceQuestion({
 }: PhonicsEndingChoiceQuestionProps) {
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
   const hasAnswered = selectedIndex !== null;
+  const demo = useDemoHint(question.kind);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const isFinal = question.kind === 'phonics-final-choice';
   const promptText = isFinal ? 'Từ này kết thúc bằng âm nào?' : 'Từ này bắt đầu bằng cụm âm nào?';
@@ -48,7 +53,7 @@ export default function PhonicsEndingChoiceQuestion({
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
           <EmojiVisual emoji={question.emoji} animated variant="block" />
         </span>
-        <span className="text-4xl font-extrabold text-white [@media(max-height:420px)]:text-3xl">
+        <span className="font-display text-4xl font-extrabold text-amber-100 [@media(max-height:420px)]:text-3xl">
           {question.word}
         </span>
         <button
@@ -72,7 +77,7 @@ export default function PhonicsEndingChoiceQuestion({
       </div>
       {playbackFailed && <AudioPlaybackWarning />}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div ref={gridRef} className="relative grid grid-cols-2 gap-4 sm:grid-cols-4">
         {question.options.map((option, index) => (
           <button
             key={`option-${index}-${option}`}
@@ -90,6 +95,9 @@ export default function PhonicsEndingChoiceQuestion({
             </span>
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} onDone={demo.dismiss} />
+        ) : null}
       </div>
     </div>
   );

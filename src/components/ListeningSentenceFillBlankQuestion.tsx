@@ -1,4 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import type { ListeningSentenceFillBlankQuestion as ListeningSentenceFillBlankQuestionType } from '../types';
 import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
@@ -31,6 +33,8 @@ export default function ListeningSentenceFillBlankQuestion({
   speakerKey,
 }: ListeningSentenceFillBlankQuestionProps) {
   const [inputValue, setInputValue] = useState('');
+  const demo = useDemoHint('listening-sentence-fill-blank');
+  const formRef = useRef<HTMLFormElement>(null);
   const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
     speakSentence(question.sentence, onStatus, speed),
     question.sentence,
@@ -51,7 +55,7 @@ export default function ListeningSentenceFillBlankQuestion({
       <p className="mb-3 text-3xl font-extrabold text-white">{question.displaySentence}</p>
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
-      <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+      <form onSubmit={handleSubmit} ref={formRef} className="relative flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
         <input
           type="text"
           data-testid="answer-input"
@@ -64,6 +68,9 @@ export default function ListeningSentenceFillBlankQuestion({
         <button type="submit" data-testid="submit-answer-button" disabled={hasAnswered} className={SUBMIT_ANSWER_BUTTON_CLASSNAME}>
           Kiểm tra
         </button>
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={formRef} onDone={demo.dismiss} />
+        ) : null}
       </form>
     </div>
   );

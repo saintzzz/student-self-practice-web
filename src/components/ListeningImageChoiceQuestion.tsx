@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import type { ListeningImageChoiceQuestion as ListeningImageChoiceQuestionType } from '../types';
 import { getWordVisual } from '../lib/emoji/wordVisual';
 import { EmojiVisual } from './EmojiVisual';
@@ -45,6 +47,8 @@ export default function ListeningImageChoiceQuestion({
     const urls = question.optionWordIds.map((id) => getWordVisual(id)?.imageUrl);
     return urls.every((u): u is string => typeof u === 'string') ? urls : null;
   }, [question.optionWordIds, photoGroupFailed]);
+  const demo = useDemoHint('listening-image-choice');
+  const gridRef = useRef<HTMLDivElement>(null);
 
   return (
     <div>
@@ -55,7 +59,7 @@ export default function ListeningImageChoiceQuestion({
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((emoji, index) => (
           <button
             key={`option-${index}-${emoji}`}
@@ -90,6 +94,9 @@ export default function ListeningImageChoiceQuestion({
             </span>
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} onDone={demo.dismiss} />
+        ) : null}
       </div>
     </div>
   );

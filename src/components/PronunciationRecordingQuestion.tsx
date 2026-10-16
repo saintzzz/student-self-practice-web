@@ -1,5 +1,8 @@
+import { useRef } from 'react';
 import type { PronunciationRecordingQuestion as PronunciationRecordingQuestionType } from '../types';
 import { usePronunciationRecording } from '../hooks/usePronunciationRecording';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import PronunciationFeedbackPanel from './PronunciationFeedbackPanel';
 import PronunciationStatusMessage from './PronunciationStatusMessage';
 import { InstructionSpeaker } from './InstructionSpeaker';
@@ -59,6 +62,8 @@ export default function PronunciationRecordingQuestion({
     onSubmit,
     question.word,
   );
+  const demo = useDemoHint('pronunciation-recording');
+  const micRef = useRef<HTMLDivElement>(null);
 
   return (
     <div>
@@ -127,7 +132,7 @@ export default function PronunciationRecordingQuestion({
           )}
 
           {(phase === 'idle' || phase === 'recording') && (
-            <div>
+            <div ref={micRef} className="relative">
               <button
                 type="button"
                 data-testid="record-button"
@@ -141,6 +146,9 @@ export default function PronunciationRecordingQuestion({
                   <span className="inline-flex items-center gap-2"><span className="inline-block h-3 w-3 animate-pulse motion-reduce:animate-none rounded-full bg-rose-500" /> Đang lắng nghe - em đọc xong sẽ tự chấm luôn</span>
                 </p>
               )}
+              {demo.showDemo && phase === 'idle' ? (
+                <DemoHint containerRef={micRef} onDone={demo.dismiss} />
+              ) : null}
             </div>
           )}
         </>

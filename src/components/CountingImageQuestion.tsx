@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import type { CountingImageOption, CountingImageQuestion as CountingImageQuestionType } from '../types';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
@@ -22,6 +25,8 @@ export default function CountingImageQuestion({
   speakerKey,
 }: CountingImageQuestionProps) {
   const hasAnswered = selectedIndex !== null;
+  const demo = useDemoHint('counting-image');
+  const gridRef = useRef<HTMLDivElement>(null);
   const isCountToImage = question.direction === 'count-to-image';
   const instruction = isCountToImage ? 'Chọn hình có đúng số lượng nhé!' : 'Đếm số lượng rồi chọn đáp án đúng!';
 
@@ -40,7 +45,7 @@ export default function CountingImageQuestion({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (
           <button
             key={`${option.word}-${option.count}`}
@@ -61,6 +66,9 @@ export default function CountingImageQuestion({
             )}
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} onDone={demo.dismiss} />
+        ) : null}
       </div>
     </div>
   );

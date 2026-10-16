@@ -3,6 +3,7 @@ import {
   MAX_PAIR_MATCHING_MISTAKES,
   clickPairMatchingTile,
   createPairMatchingBoardState,
+  dropPairMatchingTile,
   getPairMatchingOutcome,
   isPairMatchingTileMatched,
 } from './pairMatchingBoard';
@@ -169,5 +170,54 @@ describe('clickPairMatchingTile - guards', () => {
     state = click(state, 4); // fresh first click of a new attempt
     expect(state.lastAttempt).toBeNull();
     expect(state.pendingTileIndex).toBe(4);
+  });
+});
+
+describe('dropPairMatchingTile (CR-79 drag commit)', () => {
+  it('commits a correct pair atomically like two taps', () => {
+    const state = dropPairMatchingTile(createPairMatchingBoardState(), TILES, 0, 1);
+    expect(state.matchedPairIndices).toEqual([0]);
+    expect(state.mistakeCount).toBe(0);
+    expect(state.pendingTileIndex).toBeNull();
+    expect(state.lastAttempt).toEqual({ tileIndexA: 0, tileIndexB: 1, correct: true });
+  });
+
+  it('clears a stale pending tile before evaluating the drag pair', () => {
+    // tap tile 2 (fish word) -> pending; then drag 0->1 (cat pair)
+    const pending = click(createPairMatchingBoardState(), 2);
+    const state = dropPairMatchingTile(pending, TILES, 0, 1);
+    expect(state.matchedPairIndices).toEqual([0]);
+    expect(state.mistakeCount).toBe(0); // pending 2 must NOT be judged against source 0
+    expect(state.pendingTileIndex).toBeNull();
+  });
+
+  it('a wrong drop consumes one mistake and clears pending', () => {
+    const state = dropPairMatchingTile(createPairMatchingBoardState(), TILES, 0, 3);
+    expect(state.mistakeCount).toBe(1);
+    expect(state.matchedPairIndices).toEqual([]);
+    expect(state.pendingTileIndex).toBeNull();
+    expect(state.lastAttempt).toEqual({ tileIndexA: 0, tileIndexB: 3, correct: false });
+  });
+
+  it('self-drop and drops on matched tiles are no-ops', () => {
+    const matched = dropPairMatchingTile(createPairMatchingBoardState(), TILES, 0, 1);
+    expect(dropPairMatchingTile(matched, TILES, 2, 2)).toBe(matched);
+    expect(dropPairMatchingTile(matched, TILES, 2, 0)).toBe(matched); // dest matched
+    expect(dropPairMatchingTile(matched, TILES, 0, 2)).toBe(matched); // source matched
+    expect(dropPairMatchingTile(matched, TILES, 2, 99)).toBe(matched); // out of range
+  });
+
+  it('is a no-op once the board is resolved', () => {
+    let state = createPairMatchingBoardState();
+    for (const [a, b] of [
+      [0, 3],
+      [0, 3],
+      [0, 3],
+      [0, 3],
+    ]) {
+      state = dropPairMatchingTile(state, TILES, a!, b!);
+    }
+    expect(getPairMatchingOutcome(state)).toBe('failed');
+    expect(dropPairMatchingTile(state, TILES, 0, 1)).toBe(state);
   });
 });

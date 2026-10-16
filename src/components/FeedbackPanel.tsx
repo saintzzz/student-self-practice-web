@@ -27,6 +27,8 @@ interface FeedbackPanelProps {
    * (photo -> lottie -> svg -> native), so a plain emoji works too.
    */
   picture?: { emoji: string; imageUrl?: string };
+  /** CR-79 A5: streak>=3 beat - mascot celebrates, confetti doubles. */
+  celebrate?: boolean;
 }
 
 const KINDS_WITH_ANSWER_FEEDBACK_TESTID: readonly QuestionKind[] = [
@@ -57,7 +59,7 @@ const WORD_LINE_BASE_CLASS =
  * <div> only when the happy accent is present (isCorrect), and the
  * correct-word line uses <div> only when a picture prop is present.
  */
-export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture }: FeedbackPanelProps) {
+export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture, celebrate }: FeedbackPanelProps) {
   const { density } = useViewer();
   // CR-20: verdict sound on mount - chime for correct. kids-UX (design
   // s3.4): the wrong verdict plays the muted gentle cue, not a penalty
@@ -100,11 +102,11 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
         aria-hidden="true"
         className={`absolute inset-y-0 left-0 w-1.5 ${isCorrect ? 'bg-emerald-400' : 'bg-sky-400'}`}
       />
-      {isCorrect && <Confetti />}
+      {isCorrect && <Confetti big={celebrate} />}
       <HeadlineTag
         className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-300' : 'text-white'}`}
       >
-        <Mascot mood={isCorrect ? 'happy' : 'encouraging'} size="inline" />
+        <Mascot mood={isCorrect ? (celebrate ? 'celebrating' : 'happy') : 'encouraging'} size="inline" />
         {isCorrect ? 'Chính xác! Giỏi quá!' : 'Chưa đúng rồi, cố lên nhé!'}
       </HeadlineTag>
       {!isCorrect && pickedAnswer && (

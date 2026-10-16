@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
 import { computeLiveScore } from '../lib/liveScore';
-import { SCREEN_ENTER } from '../lib/ui/tokens';
+import { SCREEN_ENTER, scene } from '../lib/ui/tokens';
 import { useRoundTimer } from '../hooks/useRoundTimer';
 import RoundProgress from './RoundProgress';
 import LiveScore from './LiveScore';
@@ -111,10 +111,13 @@ export default function BatchScreen({
       : batch.completedRounds.length / TOTAL_ROUNDS;
 
   return (
-    <div className={`mx-auto max-w-2xl px-4 pt-2 ${SCREEN_ENTER}`}>
+    <div className={`mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col px-4 pt-2 ${scene.glow} ${SCREEN_ENTER}`}>
+      {/* CR-79 C1: full-viewport column - chrome shrink-0, question card
+          flex-1 so content fills the screen instead of leaving a dead
+          bottom band. */}
       {/* DS-U2 single play chrome: round chip + track + score/timer chips
           in one card strip; title line drops on <=420px heights. */}
-      <div className="mb-2 flex flex-col gap-1.5 rounded-2xl bg-[#0B1B3A]/85 p-2 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6),0_4px_12px_-6px_rgba(0,0,0,0.4)] ring-1 ring-[#2a3a5e] backdrop-blur-md sm:flex-row sm:items-start sm:gap-2 sm:rounded-full sm:px-4 sm:py-2.5 [@media(max-height:420px)]:mb-1">
+      <div className="mb-2 flex shrink-0 flex-col gap-1.5 rounded-2xl bg-[#0B1B3A]/85 p-2 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6),0_4px_12px_-6px_rgba(0,0,0,0.4)] ring-1 ring-[#2a3a5e] backdrop-blur-md sm:flex-row sm:items-start sm:gap-2 sm:rounded-full sm:px-4 sm:py-2.5 [@media(max-height:420px)]:mb-1">
         <RoundProgress
           roundNumber={definition.roundNumber}
           totalRounds={TOTAL_ROUNDS}

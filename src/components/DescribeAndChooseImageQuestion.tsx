@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import type { DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
 import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
@@ -35,6 +38,8 @@ export default function DescribeAndChooseImageQuestion({
     question.sentence,
   );
   const hasAnswered = selectedIndex !== null;
+  const demo = useDemoHint('describe-and-choose-image');
+  const gridRef = useRef<HTMLDivElement>(null);
 
   return (
     <div>
@@ -46,7 +51,7 @@ export default function DescribeAndChooseImageQuestion({
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (
           <button
             key={`${option.word}-${option.count}`}
@@ -68,6 +73,9 @@ export default function DescribeAndChooseImageQuestion({
             </span>
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} onDone={demo.dismiss} />
+        ) : null}
       </div>
     </div>
   );

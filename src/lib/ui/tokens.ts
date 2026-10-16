@@ -204,3 +204,61 @@ export const BTN_SECONDARY_PAPER =
  *  paths (pet evolve congrats, quest claim). Reward, not navigation. */
 export const BTN_REWARD_EARNED =
   'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2.5 font-extrabold text-amber-950 shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100';
+
+/* ------------------------------------------------------------------ */
+/* CR-79 "toy-block" depth layer (DESIGN-SPEC-v3 s3)                    */
+/* Tactile pressed-depth on navy play surfaces ONLY - exam.* surfaces   */
+/* and paper parent surfaces never use these.                           */
+/* ------------------------------------------------------------------ */
+
+export const scene = {
+  /** Layered depth glow behind the practice play surface. */
+  glow: 'bg-[radial-gradient(ellipse_60%_45%_at_50%_0%,rgba(56,89,165,0.38),transparent),radial-gradient(ellipse_50%_40%_at_15%_100%,rgba(245,158,11,0.10),transparent)]',
+} as const;
+
+export const toy = {
+  /** Toy-block face: gradient + top sheen + solid offset base. Border
+   *  color is deliberately NOT baked in - callers add `border-[#2a3a5e]`
+   *  or a `toy.tints[i]` tint so the two never fight. */
+  face: 'bg-gradient-to-b from-[#1d3465] to-[#162C55] ' +
+    'shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_5px_0_#0a1730]',
+  faceHover:
+    'hover:border-amber-400/70 hover:-translate-y-0.5 ' +
+    'hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_7px_0_#0a1730] motion-reduce:hover:translate-y-0',
+  /** Press = sink 5px into the base. Under reduced-motion the sink is
+   *  flattened; the shadow swap still gives press feedback. */
+  pressed:
+    'active:translate-y-[5px] active:shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_0_0_#0a1730] ' +
+    'motion-reduce:transition-none motion-reduce:active:translate-y-0',
+  correctGlow:
+    'shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_0_0_3px_rgba(52,211,153,0.55),0_0_18px_rgba(52,211,153,0.45)]',
+  /** Decorative pre-judge frame tints, applied by index % 4 -
+   *  border-only, never concatenated onto judged classes. */
+  tints: [
+    'border-sky-400/40',
+    'border-rose-300/40',
+    'border-violet-400/40',
+    'border-emerald-300/40',
+  ],
+} as const;
+
+/** B3 display glyph - big sound letters get letterpress display type. */
+export const DISPLAY_GLYPH =
+  'font-display text-7xl font-black text-amber-100 drop-shadow-[0_3px_0_rgba(0,0,0,0.35)]';
+
+/** ModeHub icon chips: soft rotating tints on the paper hub (B4 on
+ *  light surfaces - the tile body stays uniform sky paper, the icon
+ *  chip carries the accent so tiles differentiate without noise). */
+export const HUB_ICON_TINTS = [
+  'bg-sky-200/80 text-sky-700',
+  'bg-rose-200/80 text-rose-700',
+  'bg-violet-200/80 text-violet-700',
+  'bg-emerald-200/80 text-emerald-700',
+] as const;
+
+/** Scroll-safe vertical centering for question-kind roots (CR-79 s4):
+ *  centers content when the card has spare height, scrolls when floors
+ *  exceed the available height - tiles never compress. */
+export const QUESTION_BODY =
+  'flex min-h-0 flex-1 flex-col overflow-y-auto';
+export const QUESTION_BODY_CENTER = 'my-auto w-full';

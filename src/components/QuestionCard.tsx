@@ -16,6 +16,9 @@ import PhonicsWordChoiceQuestion from './PhonicsWordChoiceQuestion';
 import PhonicsEndingChoiceQuestion from './PhonicsEndingChoiceQuestion';
 import PhonicsRhymeChoiceQuestion from './PhonicsRhymeChoiceQuestion';
 import FeedbackPanel from './FeedbackPanel';
+import Mascot from './Mascot';
+import { useViewer } from '../lib/viewer/ViewerContext';
+import { QUESTION_BODY, QUESTION_BODY_CENTER } from '../lib/ui/tokens';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { IconArrowRight } from './icons';
 
@@ -36,6 +39,9 @@ interface QuestionCardProps {
    * (all grades, headless - no speaker button).
    */
   speakerKey?: string;
+  /** CR-79 A5: consecutive-correct run ending at the current answer -
+   *  >=3 upgrades the feedback celebration to the bigger beat. */
+  correctStreak?: number;
 }
 
 function renderQuestionBody(
@@ -259,8 +265,10 @@ export default function QuestionCard({
   onSubmitPairMatching,
   onNext,
   speakerKey,
+  correctStreak = 0,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
+  const { band } = useViewer();
   /* r22: the feedback zone renders as a bottom sheet at EVERY viewport
      height (not only <=420px) so mounting it can never push the answer
      zone off-screen. The card reserves matching bottom space so content
@@ -288,7 +296,7 @@ export default function QuestionCard({
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6"
+      className="relative flex min-h-0 flex-1 flex-col rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6"
       /* r23: inline style - the sm:p-6 / max-height:420px p-2 responsive
          variants emit after base pb-* utilities and would silently drop
          the feedback-sheet reservation at desktop widths/short heights. */
@@ -301,21 +309,42 @@ export default function QuestionCard({
           the width available for wrapped tile rows on narrow phones. */}
       <p
         data-testid="question-progress"
-        className="mx-auto mb-2 inline-block rounded-full bg-amber-500/15 px-3 py-0.5 text-sm font-bold text-amber-200 ring-1 ring-amber-400/30 [@media(max-height:420px)]:mb-1"
+        className="mx-auto mb-2 inline-block self-center rounded-full bg-amber-500/15 px-3 py-0.5 text-sm font-bold text-amber-200 ring-1 ring-amber-400/30 [@media(max-height:420px)]:mb-1"
       >
         Câu {questionNumber}/{totalQuestions}
       </p>
 
-      {renderQuestionBody(
-        question,
-        currentAnswer,
-        onSubmitOption,
-        onSubmitListening,
-        onSubmitExtraLetter,
-        onSubmitPronunciation,
-        onSubmitPairMatching,
-      speakerKey,
-    )}
+      {/* CR-79 A1: Bé Heo keeps the child company while answering -
+          unmounts the moment the feedback surface mounts so the sheet's
+          mascot is the only one on screen (AC-79.1). */}
+      {!hasAnswered && (
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute right-3 top-3 z-10 ${
+            band === 'G345' ? 'origin-top-right scale-[0.8]' : ''
+          }`}
+        >
+          <Mascot mood="encouraging" size="companion" />
+        </span>
+      )}
+
+      {/* CR-79 C1: the body fills the card's free height (my-auto
+          centers it; overflow-y keeps tiles reachable on short
+          viewports) - no more dead bottom band on phones. */}
+      <div className={QUESTION_BODY}>
+        <div className={QUESTION_BODY_CENTER}>
+          {renderQuestionBody(
+            question,
+            currentAnswer,
+            onSubmitOption,
+            onSubmitListening,
+            onSubmitExtraLetter,
+            onSubmitPronunciation,
+            onSubmitPairMatching,
+            speakerKey,
+          )}
+        </div>
+      </div>
 
       {/* pronunciation-recording renders its own complete feedback panel
           (transcript + score + explanation) - see PronunciationRecordingQuestion. */}
@@ -338,11 +367,12 @@ export default function QuestionCard({
             picture={
               pictureVisual ? { emoji: pictureVisual.emoji, imageUrl: pictureVisual.imageUrl } : undefined
             }
+            celebrate={correctStreak >= 3}
           />
           {nextButton}
         </div>
       ) : (
-        nextButton
+        <span className="block w-full self-center sm:w-auto">{nextButton}</span>
       )}
     </div>
   );

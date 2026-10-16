@@ -105,13 +105,12 @@ two-column drag-across is natural and pedagogically meaningful.
 
 ### 2.4 Celebration (A5)
 
-- `StarBurst` (`src/components/StarBurst.tsx`): decorative span owned
-  by `QuestionCard`, anchored **bottom-left of the card** (the former
-  mascot position - the eye lands there after answering; stable across
-  the mascot hand-off). 8 particles, 600ms, transform/opacity only,
-  `motion-reduce:hidden`.
-- Trigger: `currentAnswer.isCorrect` transition null→true, keyed to
-  `question.id` (one burst per question; cleared on question change).
+- The correct-answer burst **reuses the existing `Confetti`** already
+  mounted inside `FeedbackPanel` on correct answers (14 particles,
+  confetti-burst keyframes, globally hidden under reduced-motion) -
+  it fires exactly where the eye lands after judging.
+- Streak beat: `Confetti` gains `big` (28 particles) and the sheet's
+  mascot switches to `celebrating`.
 - Streak beat: `BatchScreen` computes `correctStreak` = count of
   consecutive `isCorrect` answers ending at the current result (tail
   run-length of the results array, current answer included). At

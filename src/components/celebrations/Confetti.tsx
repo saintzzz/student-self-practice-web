@@ -16,24 +16,31 @@ interface Particle {
   delay: number;
 }
 
-const PARTICLES: Particle[] = Array.from({ length: 14 }, (_, i) => {
-  const angle = (i / 14) * Math.PI * 2;
-  const dist = 46 + (i % 4) * 16;
-  return {
-    dx: Math.cos(angle) * dist,
-    dy: Math.sin(angle) * dist - 18,
-    rot: (i % 5) * 72 - 144,
-    size: 7 + (i % 3) * 3,
-    round: i % 2 === 0,
-    color: COLORS[i % COLORS.length],
-    delay: (i % 4) * 35,
-  };
-});
+function makeParticles(count: number): Particle[] {
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (i / count) * Math.PI * 2;
+    const dist = 46 + (i % 4) * 16;
+    return {
+      dx: Math.cos(angle) * dist,
+      dy: Math.sin(angle) * dist - 18,
+      rot: (i % 5) * 72 - 144,
+      size: 7 + (i % 3) * 3,
+      round: i % 2 === 0,
+      color: COLORS[i % COLORS.length],
+      delay: (i % 4) * 35,
+    };
+  });
+}
 
-export default function Confetti() {
+const PARTICLES: Particle[] = makeParticles(14);
+const PARTICLES_BIG: Particle[] = makeParticles(28);
+
+/** CR-79 A5: `big` = the streak>=3 beat (double particle count). */
+export default function Confetti({ big = false }: { big?: boolean }) {
+  const particles = big ? PARTICLES_BIG : PARTICLES;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-visible">
-      {PARTICLES.map((p, i) => (
+      {particles.map((p, i) => (
         <span
           key={i}
           className="confetti-particle absolute left-1/2 top-2"

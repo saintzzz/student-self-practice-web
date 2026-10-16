@@ -1,4 +1,7 @@
+import { useRef } from 'react';
 import type { ImageChoiceQuestion as ImageChoiceQuestionType } from '../types';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 import { getWordVisual } from '../lib/emoji/wordVisual';
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
@@ -21,6 +24,8 @@ export default function ImageChoiceQuestion({
   speakerKey,
 }: ImageChoiceQuestionProps) {
   const hasAnswered = selectedIndex !== null;
+  const demo = useDemoHint('image-choice');
+  const gridRef = useRef<HTMLDivElement>(null);
 
   return (
     <div>
@@ -39,7 +44,7 @@ export default function ImageChoiceQuestion({
           variant="block"
         />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (
           <button
             key={option}
@@ -54,6 +59,9 @@ export default function ImageChoiceQuestion({
             {option}
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={gridRef} onDone={demo.dismiss} />
+        ) : null}
       </div>
     </div>
   );

@@ -32,6 +32,14 @@ export default function ActiveRoundQuestion({
     return null;
   }
 
+  /* CR-79 A5: consecutive-correct run ending at the current answer.
+     recordAnswer pushes each attempt into session.answers as it lands,
+     so the tail run-length already includes the current answer. */
+  let correctStreak = 0;
+  for (let i = session.answers.length - 1; i >= 0 && session.answers[i].isCorrect; i -= 1) {
+    correctStreak += 1;
+  }
+
   return (
     <QuestionCard
       question={question}
@@ -45,6 +53,7 @@ export default function ActiveRoundQuestion({
       onSubmitPairMatching={onSubmitPairMatching}
       onNext={onNextQuestion}
       speakerKey={speakerKey}
+      correctStreak={correctStreak}
     />
   );
 }

@@ -1,8 +1,17 @@
+import { useRef } from 'react';
 import type { ExtraLetterQuestion as ExtraLetterQuestionType } from '../types';
 import { EmojiVisual } from './EmojiVisual';
-import { OPTION_PICKED_WRONG, OPTION_REVEAL_CORRECT } from '../lib/ui/tokens';
+import {
+  OPTION_PICKED_WRONG,
+  OPTION_REVEAL_CORRECT,
+  QUESTION_BODY,
+  QUESTION_BODY_CENTER,
+  toy,
+} from '../lib/ui/tokens';
 import { getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { InstructionSpeaker } from './InstructionSpeaker';
+import { useDemoHint } from '../hooks/useDemoHint';
+import DemoHint from './DemoHint';
 
 const INSTRUCTION = 'Từ này có 1 chữ cái thừa! Bấm vào chữ cái em nghĩ là thừa nhé.';
 
@@ -23,15 +32,15 @@ function getTileClassName(index: number, selectedLetterIndex: number | null, ext
      a word - flex-1 lets them share the row, max-w caps at 76px, and
      the 76px HEIGHT is preserved so the touch target stays generous
      even when narrow screens make tiles thin. */
+  /* CR-79 toy-block: base keeps structural classes only; the unanswered
+     branch takes the toy face, judged branches keep their own shadows. */
   const base =
     'relative flex h-[76px] min-w-0 flex-1 max-w-[76px] items-center justify-center rounded-2xl border-4 text-3xl ' +
-    'font-extrabold uppercase shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.08),0_4px_10px_-4px_rgba(15,23,42,0.15)] ' +
-    'transition hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none ' +
-    'motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-amber-400/60 [@media(max-width:360px)]:text-2xl';
+    'font-extrabold uppercase transition ' +
+    'focus:outline-none focus:ring-4 focus:ring-amber-400/60 [@media(max-width:360px)]:text-2xl';
 
   if (selectedLetterIndex === null) {
-    return `${base} border-[#2a3a5e] bg-gradient-to-b from-[#1d3465] to-[#162C55] text-white ` +
-      'hover:border-amber-400/70 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(0,0,0,0.08),0_8px_18px_-6px_rgba(56,189,248,0.5)]';
+    return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} border-[#2a3a5e] text-white`;
   }
 
   const missed = selectedLetterIndex !== extraIndex;
@@ -61,9 +70,12 @@ export default function ExtraLetterQuestion({
 }: ExtraLetterQuestionProps) {
   const hasAnswered = selectedLetterIndex !== null;
   const wasCorrect = hasAnswered && selectedLetterIndex === question.extraIndex;
+  const demo = useDemoHint('extra-letter');
+  const rowRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div>
+    <div className={QUESTION_BODY}>
+      <div className={QUESTION_BODY_CENTER}>
       {/* CR-12: smaller prompt on <=600px heights so long words (3 tile
           rows) keep the next-button near the fold on short phones. */}
       <div className="mb-2 flex items-center justify-center gap-2">
@@ -72,7 +84,7 @@ export default function ExtraLetterQuestion({
         </p>
         <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
       </div>
-      <div className="mb-2 flex justify-center gap-1.5 sm:gap-3">
+      <div ref={rowRef} className="relative mb-2 flex justify-center gap-1.5 sm:gap-3">
         {question.displayLetters.map((letter, index) => (
           <button
             key={`${letter}-${index}`}
@@ -103,6 +115,10 @@ export default function ExtraLetterQuestion({
             )}
           </button>
         ))}
+        {demo.showDemo && !hasAnswered ? (
+          <DemoHint containerRef={rowRef} onDone={demo.dismiss} />
+        ) : null}
+      </div>
       </div>
     </div>
   );

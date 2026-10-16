@@ -135,6 +135,19 @@ textarea {
   animation: confetti-burst 700ms cubic-bezier(0.2, 0.7, 0.4, 1) both;
 }
 
+/* CR-79 demo-hint "finger dot" - pulses on a control (tap kinds) or
+   travels a fixed arc (drag kinds). transform/opacity only. */
+@keyframes demo-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.55; }
+}
+@keyframes demo-travel {
+  0%, 15% { transform: translate(-50%, -50%); }
+  70%, 100% { transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))); }
+}
+.demo-dot-pulse { animation: demo-pulse 900ms ease-in-out 2 both; }
+.demo-dot-travel { animation: demo-travel 1400ms ease-in-out 2 both; }
+
 /* DS-R3 star drop: fall from above with a squash-bounce landing. */
 @keyframes star-drop {
   0% { transform: translateY(-56px) scale(0.4); opacity: 0; }
@@ -196,7 +209,8 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .land-drift, .land-drift-slow, .land-sway, .land-twinkle, .land-float,
   .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip,
-  .ambient-sparkle, .mascot-float, .progress-shimmer {
+  .ambient-sparkle, .mascot-float, .progress-shimmer,
+  .demo-dot-pulse, .demo-dot-travel {
     animation: none;
   }
   .confetti-particle { display: none; }

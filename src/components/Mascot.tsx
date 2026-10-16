@@ -4,8 +4,9 @@ export type MascotMood = 'greeting' | 'happy' | 'encouraging' | 'celebrating';
 
 interface MascotProps {
   mood: MascotMood;
-  /** 'inline' keeps the mascot small for tight-vertical-space contexts (FeedbackPanel). */
-  size?: 'inline' | 'block';
+  /** 'inline' keeps the mascot small for tight-vertical-space contexts (FeedbackPanel);
+   *  'companion' is the CR-79 in-question size (56px). */
+  size?: 'inline' | 'block' | 'companion';
 }
 
 interface MoodConfig {
@@ -40,6 +41,7 @@ const MOOD_CONFIG: Record<MascotMood, MoodConfig> = {
 const SIZE_CLASSNAME: Record<NonNullable<MascotProps['size']>, string> = {
   inline: 'h-8 w-8 [@media(max-height:420px)]:h-6 [@media(max-height:420px)]:w-6',
   block: 'h-20 w-20',
+  companion: 'h-14 w-14 [@media(max-height:420px)]:h-10 [@media(max-height:420px)]:w-10',
 };
 
 /* Palette - warm pig pink with a deep-plum outline so the character reads
@@ -139,7 +141,8 @@ export default function Mascot({ mood, size = 'block' }: MascotProps) {
   const { animationClassName, ariaLabel } = MOOD_CONFIG[mood];
 
   /* CR-12 DS-X4: block mascots get a soft radial halo + gentle float so
-     the character reads like a hero element, not a floating glyph. */
+     the character reads like a hero element, not a floating glyph.
+     CR-79: the companion keeps the float but drops the big halo. */
   const block = size === 'block';
 
   return (
@@ -158,7 +161,7 @@ export default function Mascot({ mood, size = 'block' }: MascotProps) {
       )}
       <span
         aria-hidden="true"
-        className={`relative ${SIZE_CLASSNAME[size]} ${block ? 'mascot-float motion-reduce:animate-none' : ''}`}
+        className={`relative ${SIZE_CLASSNAME[size]} ${size !== 'inline' ? 'mascot-float motion-reduce:animate-none' : ''}`}
       >
         <PigFace mood={mood} />
       </span>

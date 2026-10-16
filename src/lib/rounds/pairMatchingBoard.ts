@@ -98,3 +98,27 @@ export function clickPairMatchingTile(
     lastAttempt: { tileIndexA: state.pendingTileIndex, tileIndexB: tileIndex, correct: false },
   };
 }
+
+/**
+ * CR-79 (DESIGN-SPEC-v3 s2.2): atomic drag commit. Clears any pending
+ * tap selection FIRST so a stale pending tile can never contaminate the
+ * dragged pair, then evaluates source->dest exactly like two taps in a
+ * single state update. Self-drops, drops on matched tiles, drags from
+ * matched tiles, and out-of-range indices are all no-ops.
+ */
+export function dropPairMatchingTile(
+  state: PairMatchingBoardState,
+  tiles: PicturePairMatchingQuestion['tiles'],
+  sourceIndex: number,
+  destIndex: number,
+): PairMatchingBoardState {
+  if (sourceIndex === destIndex) return state;
+  if (sourceIndex < 0 || destIndex < 0 || sourceIndex >= tiles.length || destIndex >= tiles.length) {
+    return state;
+  }
+  if (getPairMatchingOutcome(state) !== null) return state;
+  if (isPairMatchingTileMatched(state, tiles, sourceIndex)) return state;
+  if (isPairMatchingTileMatched(state, tiles, destIndex)) return state;
+  const cleared: PairMatchingBoardState = { ...state, pendingTileIndex: null };
+  return clickPairMatchingTile(clickPairMatchingTile(cleared, tiles, sourceIndex), tiles, destIndex);
+}
