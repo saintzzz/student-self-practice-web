@@ -25,6 +25,9 @@ export interface Land {
   accentText: string;
   /** A small emoji motif hint for the land (decorative). */
   motif: string;
+  /** CR-81: solid accent strip on the top edge of the navy play board -
+   *  the land's "flag color" so each grade's board carries its identity. */
+  nightRim: string;
 }
 
 export const LANDS: Record<LandKey, Land> = {
@@ -38,6 +41,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-sky-400',
     accentText: 'text-sky-800',
     motif: '☁️',
+    nightRim: 'bg-sky-400',
   },
   playground: {
     key: 'playground',
@@ -49,6 +53,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-lime-500',
     accentText: 'text-lime-800',
     motif: '🌞',
+    nightRim: 'bg-lime-400',
   },
   town: {
     key: 'town',
@@ -60,6 +65,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-sky-500',
     accentText: 'text-sky-800',
     motif: '🏠',
+    nightRim: 'bg-sky-400',
   },
   jungle: {
     key: 'jungle',
@@ -71,6 +77,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-emerald-600',
     accentText: 'text-emerald-900',
     motif: '🌴',
+    nightRim: 'bg-emerald-400',
   },
   city: {
     key: 'city',
@@ -82,6 +89,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-indigo-500',
     accentText: 'text-indigo-800',
     motif: '🏙️',
+    nightRim: 'bg-indigo-400',
   },
   space: {
     key: 'space',
@@ -93,6 +101,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-violet-500',
     accentText: 'text-violet-800',
     motif: '🚀',
+    nightRim: 'bg-violet-400',
   },
   /** CR-14: VieSchool brand surface - deep navy + gold (landing palette)
       for adult-facing surfaces (login, admin). */
@@ -106,6 +115,7 @@ export const LANDS: Record<LandKey, Land> = {
     discBg: 'bg-amber-400',
     accentText: 'text-amber-300',
     motif: '✨',
+    nightRim: 'bg-amber-400',
   },
 };
 

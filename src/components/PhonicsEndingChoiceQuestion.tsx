@@ -8,7 +8,7 @@ import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 import { IconRefresh, IconSpeaker } from './icons';
 
 type EndingChoiceQuestion = PhonicsFinalChoiceQuestion | PhonicsBlendChoiceQuestion;
@@ -45,10 +45,7 @@ export default function PhonicsEndingChoiceQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{promptText}</p>
-        <InstructionSpeaker text={promptText} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={promptText} speakerKey={speakerKey} />
       <div className="mb-3 flex items-center justify-center gap-3">
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
           <EmojiVisual emoji={question.emoji} animated variant="block" />

@@ -7,7 +7,7 @@ import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { SUBMIT_ANSWER_BUTTON_CLASSNAME } from './actionButtonStyle';
 import ListenButtons from './ListenButtons';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 
 const INSTRUCTION = 'Nghe và gõ từ em nghe được nhé!';
 
@@ -38,10 +38,7 @@ export default function ListeningFillBlankQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
       <form onSubmit={handleSubmit} ref={formRef} className="relative flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

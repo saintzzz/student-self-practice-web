@@ -7,6 +7,9 @@ interface LandShellProps {
   gradeId?: string | null;
   /** Direct override when a screen knows its land but not a grade. */
   land?: LandKey;
+  /** CR-81: kid play surfaces ride the deep-navy page while the land
+   *  art renders as a moonlit scene beneath the board. */
+  night?: boolean;
   children: ReactNode;
 }
 
@@ -15,11 +18,11 @@ interface LandShellProps {
  * art behind the content. Replaces the flat body gradient; each screen
  * renders inside so per-screen testids/layout are untouched.
  */
-export default function LandShell({ gradeId, land, children }: LandShellProps) {
+export default function LandShell({ gradeId, land, night = false, children }: LandShellProps) {
   const resolved = land ? LANDS[land] : getLand(gradeId);
   return (
-    <div className={`relative min-h-screen ${resolved.pageGradient}`}>
-      <LandScene land={resolved.key} />
+    <div className={`relative min-h-screen ${night ? LANDS.brand.pageGradient : resolved.pageGradient}`}>
+      <LandScene land={resolved.key} night={night} />
       <div className="relative z-10">{children}</div>
     </div>
   );

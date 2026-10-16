@@ -9,7 +9,7 @@ import {
   toy,
 } from '../lib/ui/tokens';
 import { getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 
@@ -78,12 +78,7 @@ export default function ExtraLetterQuestion({
       <div className={QUESTION_BODY_CENTER}>
       {/* CR-12: smaller prompt on <=600px heights so long words (3 tile
           rows) keep the next-button near the fold on short phones. */}
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200 [@media(max-height:600px)]:text-base">
-          {INSTRUCTION}
-        </p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <div ref={rowRef} className="relative mb-2 flex justify-center gap-1.5 sm:gap-3">
         {question.displayLetters.map((letter, index) => (
           <button

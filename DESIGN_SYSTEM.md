@@ -10,6 +10,16 @@
 > `docs/sdlc/CR-73-full-redesign.md`. Semantic token layers, the inline
 > ModeHub IA, exam gold remediation and the revised state contracts below
 > are normative - the older free-form classes they replaced are gone.
+>
+> **CR-81 (v4):** "de-AI-look" remediation - spec
+> `docs/design/v4/DESIGN-SPEC-v4.md`, CR `docs/sdlc/CR-81-de-ai-look-design-system.md`.
+> Kid play surfaces now run the **night-journey board** concept: the deep-navy
+> page stays, but the grade's land scene renders as a moonlit backdrop
+> (`LandScene night`) beneath the board, and the board carries a land rim.
+> Indigo is removed from the palette (audio = board-blue + amber), option
+> tiles use one uniform unanswered frame, instructions live in the
+> left-aligned `QUESTION_BANNER` speech scroll, and emoji prompts sit in
+> `EXHIBIT` light frames.
 
 ---
 
@@ -63,10 +73,13 @@ violet `*-50/95` card + `*-400/500` disc + `*-800/900` accent text.
 
 **Status semantics (do not remap, CR-73 amended):** emerald = correct/go,
 rose = destructive/urgent-status only (answer-wrong is desaturated slate
-`feedback.wrong` - never red-shaming), amber = warning/progress, sky = info,
-**indigo = audio** (interactive listen controls only - no longer "exam").
+`feedback.wrong` - never red-shaming), amber = warning/progress, sky = info.
+**CR-81: indigo is removed from the palette** - audio controls are board-blue
+navy (`#1d3465`/`#2a4a82`) with amber accents (`AUDIO_BUTTON_CLASSNAME`,
+`BTN_AUDIO`); no hue owns "audio" any more.
 **Gold fills = reward + next-step actions only** (≤1 gold CTA per screen;
-`reward.earned` gradient allowed on pet-evolve / quest-claim).
+`reward.earned` gradient allowed on pet-evolve / quest-claim). "Kiểm tra"
+submit now joins the gold family (commit/advance voice).
 
 ### Semantic token layers (CR-73)
 
@@ -90,6 +103,30 @@ rose = destructive/urgent-status only (answer-wrong is desaturated slate
 - **Focus rings:** navy surfaces `focus-visible:ring-amber-300/60`;
   paper surfaces `focus-visible:ring-sky-600` (4.1:1 non-text on white;
   sky-400 was 2.14:1 and is banned on paper).
+
+### Night-journey board (CR-81)
+
+Kid play surfaces (`start-batch`, `batch` + summaries inside them) render
+inside `LandShell night`: page keeps the deep-navy `brand` gradient while
+the grade's land art renders moonlit (`LandScene` `night` prop -
+`brightness-[0.6] saturate-[0.7]` on the scene SVG; sparkles stay bright
+as stars). `shell(node, gradeId)` in `App.tsx` routes this; adult surfaces
+(grade-select map, login, credits, admin, report, exam) stay `brand`.
+
+- **Land rim:** `land.nightRim` (theme.ts) - a solid accent strip on the
+  board's top edge (playground lime-400, town sky-400, jungle emerald-400,
+  city indigo-400, space violet-400). Read via `useViewer().land`.
+- **Scene peek:** `BatchScreen` reserves `pb-16 sm:pb-20` (`pb-2` under
+  `max-height:420px`) so the moonlit land shows beneath the board - the
+  world frames the board instead of a void.
+- **QUESTION_BANNER:** left-aligned slate strip for instructions; the
+  mascot (top-right of the card) reads as its speaker. Amber is banned
+  from instruction copy (reserved for reward/progress).
+- **EXHIBIT / EXHIBIT_TILT:** light inner frame (`slate-50/95`) behind
+  emoji/image prompts and image options - "a card pinned to the board".
+  Tilt applies to the inner frame by index parity, never the button.
+- **Option tiles:** one unanswered frame `border-[#3b5280]` + `toy.face`;
+  per-index rainbow borders are banned (color = judged state only).
 
 ### Surface-pairing rule (CR-44 - the bug this file exists to prevent)
 

@@ -111,7 +111,10 @@ export default function BatchScreen({
       : batch.completedRounds.length / TOTAL_ROUNDS;
 
   return (
-    <div className={`mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col px-4 pt-2 ${scene.glow} ${SCREEN_ENTER}`}>
+    <div className={`mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col px-4 pt-2 ${scene.glow} ${SCREEN_ENTER} pb-16 sm:pb-20 [@media(max-height:420px)]:pb-2`}>
+      {/* CR-81: bottom padding floats the board above the moonlit land
+          scene - the journey world peeks from beneath instead of a
+          dead navy void. Shrinks to a sliver on short landscape. */}
       {/* CR-79 C1: full-viewport column - chrome shrink-0, question card
           flex-1 so content fills the screen instead of leaving a dead
           bottom band. */}

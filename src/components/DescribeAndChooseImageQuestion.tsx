@@ -7,8 +7,9 @@ import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import { EXHIBIT, EXHIBIT_TILT } from '../lib/ui/tokens';
 import ListenButtons from './ListenButtons';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 
 const INSTRUCTION = 'Nghe hoặc đọc câu rồi chọn hình đúng nhé!';
 
@@ -43,10 +44,7 @@ export default function DescribeAndChooseImageQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <p className="mb-3 text-3xl font-extrabold text-white">{question.sentence}</p>
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
@@ -68,7 +66,7 @@ export default function DescribeAndChooseImageQuestion({
             aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + option.emoji.repeat(option.count)}
           >
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
-            <span aria-hidden="true" className="text-4xl leading-relaxed">
+            <span aria-hidden="true" className={`text-4xl leading-relaxed ${EXHIBIT} ${EXHIBIT_TILT[index % 2]}`}>
               <EmojiVisual emoji={option.emoji} count={option.count} />
             </span>
           </button>

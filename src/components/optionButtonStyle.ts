@@ -27,9 +27,10 @@ export function getOptionButtonClassName(
     'transition focus:outline-none focus:ring-4 focus:ring-amber-400/60';
 
   if (selectedIndex === null) {
-    /* Decorative pre-judge frame tints by index (B4) - the judged
-       branches below keep the v2 semantics untouched. */
-    return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} ${toy.tints[index % toy.tints.length]} text-white`;
+    /* CR-81 S9: one quiet slate frame for all unanswered options - the
+       per-index rainbow tints read as decoration noise; color is now
+       reserved for judged states only. */
+    return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} border-[#3b5280] text-white`;
   }
 
   const missed = selectedIndex !== correctIndex;

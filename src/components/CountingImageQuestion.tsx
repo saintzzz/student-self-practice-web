@@ -4,7 +4,8 @@ import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import { EXHIBIT, EXHIBIT_TILT } from '../lib/ui/tokens';
+import QuestionBanner from './QuestionBanner';
 
 interface CountingImageQuestionProps {
   question: CountingImageQuestionType;
@@ -32,16 +33,15 @@ export default function CountingImageQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{instruction}</p>
-        <InstructionSpeaker text={instruction} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={instruction} speakerKey={speakerKey} />
 
       {isCountToImage ? (
         <p className="mb-3 text-4xl font-extrabold text-white">{countLabel(question.prompt)}</p>
       ) : (
         <div className="mb-3 text-6xl leading-relaxed" aria-hidden="true">
-          <EmojiVisual emoji={question.prompt.emoji} count={question.prompt.count} />
+          <span className={EXHIBIT}>
+            <EmojiVisual emoji={question.prompt.emoji} count={question.prompt.count} />
+          </span>
         </div>
       )}
 
@@ -58,7 +58,7 @@ export default function CountingImageQuestion({
           >
             {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
             {isCountToImage ? (
-              <span aria-hidden="true">
+              <span aria-hidden="true" className={`${EXHIBIT} ${EXHIBIT_TILT[index % 2]}`}>
                 <EmojiVisual emoji={option.emoji} count={option.count} />
               </span>
             ) : (

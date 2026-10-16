@@ -8,8 +8,9 @@ import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import { EXHIBIT, EXHIBIT_TILT } from '../lib/ui/tokens';
 import ListenButtons from './ListenButtons';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 
 const INSTRUCTION = 'Nghe từ rồi chọn đúng hình nhé!';
 
@@ -52,10 +53,7 @@ export default function ListeningImageChoiceQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <ListenButtons hasPlayed={hasPlayed} play={play} playSlow={playSlow} />
       {playbackFailed && <AudioPlaybackWarning />}
 
@@ -77,7 +75,9 @@ export default function ListeningImageChoiceQuestion({
             aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + emoji}
           >
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
-            <span aria-hidden="true" className="text-6xl">
+            {/* CR-81 S3: framed exhibit - emoji sits on a pinned card,
+                alternating tilt reads hand-placed (inner span only). */}
+            <span aria-hidden="true" className={`text-6xl ${EXHIBIT} ${EXHIBIT_TILT[index % 2]}`}>
               <EmojiVisual
                 // Keyed on the group state so flipping to the fallback
                 // remounts every option into svg mode - EmojiVisual derives

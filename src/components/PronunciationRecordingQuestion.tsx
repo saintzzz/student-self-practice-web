@@ -5,7 +5,7 @@ import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import PronunciationFeedbackPanel from './PronunciationFeedbackPanel';
 import PronunciationStatusMessage from './PronunciationStatusMessage';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 import { IconClock, IconMic, IconStop } from './icons';
 
 const INSTRUCTION = 'Đọc to từ này lên nhé:';
@@ -67,15 +67,7 @@ export default function PronunciationRecordingQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker
-          text={INSTRUCTION}
-          lang="vi-VN"
-
-          autoplayKey={speakerKey}
-        />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <p className="mb-3 text-4xl font-extrabold text-white">{question.word}</p>
 
       {hasAnswered ? (

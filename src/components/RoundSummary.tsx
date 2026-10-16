@@ -177,9 +177,9 @@ export default function RoundSummary({
       {locked ? (
         <div
           data-testid="guest-lock-panel"
-          className="mt-6 rounded-3xl border-2 border-indigo-400/40 bg-gradient-to-br from-indigo-500/20 via-[#162C55] to-amber-500/10 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_12px_28px_-12px_rgba(79,70,229,0.35)]"
+          className="mt-6 rounded-3xl border-2 border-amber-400/40 bg-gradient-to-br from-[#1d3465] via-[#162C55] to-amber-500/10 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_12px_28px_-12px_rgba(0,0,0,0.4)]"
         >
-          <p className="font-display text-xl font-extrabold tracking-tight text-indigo-200">
+          <p className="font-display text-xl font-extrabold tracking-tight text-amber-200">
             Hết vòng chơi thử miễn phí
           </p>
           <p className="mt-2 text-base font-semibold text-slate-300">

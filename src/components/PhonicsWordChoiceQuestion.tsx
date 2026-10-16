@@ -12,7 +12,7 @@ import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 import { IconRefresh, IconSpeaker } from './icons';
 
 const INSTRUCTION = 'Nghe âm rồi chọn đúng hình nhé!';
@@ -62,10 +62,7 @@ export default function PhonicsWordChoiceQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <div className="mb-3 flex flex-wrap items-center justify-center gap-3">
         {/* CR-79 B3: the sound letter gets the display-glyph treatment -
             letterpress amber on navy, not plain white text. */}

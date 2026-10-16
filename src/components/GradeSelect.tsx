@@ -122,7 +122,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       {guestTrial && (
         <p
           data-testid="guest-trial-hint"
-          className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-400/40 bg-indigo-500/15 px-4 py-1.5 text-sm font-bold text-indigo-200 backdrop-blur"
+          className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-4 py-1.5 text-sm font-bold text-sky-200 backdrop-blur"
         >
           Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 4 vòng
         </p>

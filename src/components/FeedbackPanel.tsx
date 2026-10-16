@@ -142,7 +142,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
           onClick={() => speakWord(correctWord)}
           /* dev-review r2 #3 + CR-73 density: a kid-facing control obeys
              the band floor - 76px on G1-2, 64px on G3-5. */
-          className={`mt-3 inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-4 font-extrabold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 motion-reduce:transition-none [@media(max-height:420px)]:mt-2 ${
+          className={`mt-3 inline-flex items-center gap-2 rounded-full bg-[#1d3465] px-4 font-extrabold text-sky-100 ring-1 ring-[#3b5280] transition hover:bg-[#24406f] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 motion-reduce:transition-none [@media(max-height:420px)]:mt-2 ${
             density.primaryMinH >= 76 ? 'min-h-[76px] text-base' : 'min-h-[64px] text-sm'
           }`}
         >

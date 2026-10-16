@@ -5,7 +5,8 @@ import DemoHint from './DemoHint';
 import { getWordVisual } from '../lib/emoji/wordVisual';
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
-import { InstructionSpeaker } from './InstructionSpeaker';
+import { EXHIBIT } from '../lib/ui/tokens';
+import QuestionBanner from './QuestionBanner';
 
 const INSTRUCTION = 'Từ nào đúng với hình này?';
 
@@ -29,20 +30,21 @@ export default function ImageChoiceQuestion({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <div
         className="mb-3 text-8xl [@media(max-height:420px)]:text-6xl"
         aria-hidden="true"
       >
-        <EmojiVisual
-          emoji={question.emoji}
-          animated
-          imageUrl={getWordVisual(question.wordId)?.imageUrl}
-          variant="block"
-        />
+        {/* CR-81 S3: exhibit frame - the prompt visual reads as a card
+            pinned to the board, not a bare emoji on navy. */}
+        <span className={EXHIBIT}>
+          <EmojiVisual
+            emoji={question.emoji}
+            animated
+            imageUrl={getWordVisual(question.wordId)?.imageUrl}
+            variant="block"
+          />
+        </span>
       </div>
       <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (

@@ -6,7 +6,7 @@ import type { LandKey } from '../../lib/ui/theme';
  * needed, transform-friendly (a few elements drift/wave via CSS
  * keyframes defined in index.css, all reduced-motion safe).
  */
-export default function LandScene({ land }: { land: LandKey }) {
+export default function LandScene({ land, night = false }: { land: LandKey; night?: boolean }) {
   return (
     <>
       {/* CR-12 DS-X1 ambience: soft top glow + gentle bottom vignette,
@@ -14,7 +14,7 @@ export default function LandScene({ land }: { land: LandKey }) {
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b to-transparent ${
-          land === 'space' || land === 'brand' ? 'from-white/10' : 'from-white/40'
+          land === 'space' || land === 'brand' || night ? 'from-white/10' : 'from-white/40'
         }`}
       />
       <div
@@ -25,12 +25,16 @@ export default function LandScene({ land }: { land: LandKey }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 select-none overflow-hidden"
       >
+        {/* CR-81 night-journey: on play surfaces the land art renders as
+            a moonlit silhouette - same SVG, dimmed and desaturated via a
+            filter so it sits comfortably behind the navy board. The
+            sparkle dots stay bright (they read as stars at night). */}
         <svg
           viewBox="0 0 1200 320"
           preserveAspectRatio="xMidYMax slice"
-          className="block h-44 w-full sm:h-60"
+          className={`block h-44 w-full sm:h-60 ${night ? 'brightness-[0.6] saturate-[0.7]' : ''}`}
         >
-          <AmbientSparkles dark={land === 'space' || land === 'brand'} />
+          <AmbientSparkles dark={land === 'space' || land === 'brand' || night} />
           {land === 'sky' && <SkyScene />}
           {land === 'playground' && <PlaygroundScene />}
           {land === 'town' && <TownScene />}

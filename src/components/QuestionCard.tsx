@@ -268,7 +268,7 @@ export default function QuestionCard({
   correctStreak = 0,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
-  const { band } = useViewer();
+  const { band, land } = useViewer();
   /* r22: the feedback zone renders as a bottom sheet at EVERY viewport
      height (not only <=420px) so mounting it can never push the answer
      zone off-screen. The card reserves matching bottom space so content
@@ -307,6 +307,12 @@ export default function QuestionCard({
           component is always rendered nested inside it; re-applying the
           same px-4 here was doubling the horizontal padding and shrinking
           the width available for wrapped tile rows on narrow phones. */}
+      {/* CR-81: land rim - the board's top edge carries the viewer's
+          land flag color so each grade's board reads as "its" land. */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-0 top-0 h-1.5 rounded-t-3xl ${land.nightRim}`}
+      />
       <p
         data-testid="question-progress"
         className="mx-auto mb-2 inline-block self-center rounded-full bg-amber-500/15 px-3 py-0.5 text-sm font-bold text-amber-200 ring-1 ring-amber-400/30 [@media(max-height:420px)]:mb-1"

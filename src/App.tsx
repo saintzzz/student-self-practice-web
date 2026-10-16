@@ -353,12 +353,15 @@ export default function App() {
     setBatch(endBatchEarly(batch));
   }
 
-  // CR-10 DS-T1: every screen lives inside a land shell. CR-16: the whole
-  // app rides the VieSchool navy/gold 'brand' surface so play screens match
-  // login/landing/admin - per-grade land identity stays inside the map's
-  // grade cards (kid-friendly accents on a branded backdrop).
-  const shell = (node: ReactNode, _gradeId?: string | null) => (
-    <LandShell land="brand">{node}</LandShell>
+  // CR-10 DS-T1: every screen lives inside a land shell. CR-16 + CR-81:
+  // adult surfaces ride the VieSchool navy/gold 'brand' surface; kid play
+  // surfaces (start-batch, batch) keep the deep-navy board but the real
+  // grade land renders as a moonlit journey scene beneath it - the
+  // "night board" sits inside the land the child is travelling through.
+  const shell = (node: ReactNode, gradeId?: string | null) => (
+    gradeId
+      ? <LandShell gradeId={gradeId} night>{node}</LandShell>
+      : <LandShell land="brand">{node}</LandShell>
   );
 
   // kids-UX (ADR KUX-5): every screen renders inside one ViewerProvider so

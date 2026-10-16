@@ -13,9 +13,9 @@ import { useViewer } from '../lib/viewer/ViewerContext';
 import { useDragTile } from '../hooks/useDragTile';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
-import { QUESTION_BODY, QUESTION_BODY_CENTER, toy } from '../lib/ui/tokens';
+import { EXHIBIT, QUESTION_BODY, QUESTION_BODY_CENTER, toy } from '../lib/ui/tokens';
 
-import { InstructionSpeaker } from './InstructionSpeaker';
+import QuestionBanner from './QuestionBanner';
 
 const INSTRUCTION = 'Ghép mỗi từ tiếng Anh với đúng hình của nó nhé!';
 
@@ -50,7 +50,7 @@ function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boo
       'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(217,119,6,0.25),0_6px_14px_-6px_rgba(217,119,6,0.45)]';
   }
   /* CR-79 toy.face/faceHover/pressed - the "toy block" read. */
-  return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} border-[#2a3a5e] text-white`;
+  return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} border-[#3b5280] text-white`;
 }
 
 /**
@@ -102,10 +102,7 @@ export default function PicturePairMatchingQuestion({
   return (
     <div className={QUESTION_BODY}>
       <div className={QUESTION_BODY_CENTER}>
-      <div className="mb-2 flex items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-amber-200">{INSTRUCTION}</p>
-        <InstructionSpeaker text={INSTRUCTION} lang="vi-VN" autoplayKey={speakerKey} />
-      </div>
+      <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <p data-testid="pair-matching-mistake-count" className="mb-2 text-lg font-bold text-rose-300">
         Sai: {state.mistakeCount}/{MAX_PAIR_MATCHING_MISTAKES}
       </p>
@@ -146,7 +143,7 @@ export default function PicturePairMatchingQuestion({
               aria-label={tile.tileType === 'picture' ? tile.label : undefined}
             >
               {tile.tileType === 'picture' ? (
-                <span aria-hidden="true">
+                <span aria-hidden="true" className={EXHIBIT}>
                   <EmojiVisual emoji={tile.label} />
                 </span>
               ) : (

@@ -111,11 +111,10 @@ export const TRAIL_TILE_SM =
  *  markup swap; the tile keeps the selected wash + ring. */
 export const TRAIL_TILE_EXPANDED = 'bg-sky-100 ring-1 ring-sky-400';
 
-/** The light paper panel holding hub sections inside the navy
- *  launchpad card (CR-73 §5.1). Navy cards nested inside keep their
- *  `surface.raised` - the panel is a container, not a text surface. */
-export const HUB_PANEL =
-  'mt-4 rounded-3xl bg-sky-50 p-4 ring-1 ring-sky-200 sm:p-5';
+/** The hub's container inside the navy launchpad card. CR-81 S6:
+ *  de-nested - the paper tile rows sit directly on the navy board
+ *  instead of a card-in-card panel. */
+export const HUB_PANEL = 'mt-4';
 
 /** Drill / exam / advanced actions on the paper hub panel (CR-73 remap:
  *  indigo is `action.audio` only - exam entries now read in the navy
@@ -186,10 +185,11 @@ export const EXAM_NAV_CELL =
  *  markup (8.11:1 on exam.card, never color-alone). */
 export const EXAM_NAV_ANSWERED = 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/40';
 
-/** action.audio (navy variant) - indigo = audio, interactive only.
- *  `exam-listen` and every Nghe-mẫu control maps here. */
+/** action.audio on navy - quiet board-blue face, amber ring hint.
+ *  `exam-listen` and every Nghe-mẫu control maps here. CR-81: indigo
+ *  removed from the palette - audio reads as a board control. */
 export const BTN_AUDIO =
-  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-indigo-500/20 px-4 py-2 font-bold text-indigo-200 ring-1 ring-indigo-400/40 transition hover:bg-indigo-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none';
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-[#1d3465] px-4 py-2 font-bold text-sky-100 ring-1 ring-[#3b5280] transition hover:bg-[#24406f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 active:scale-[0.98] motion-reduce:active:scale-100 motion-reduce:transition-none';
 
 /** action.secondary on navy surfaces (white/10 + sky-200 = 9.19:1).
  *  Used for all reclassified card buttons inside navy CARDs. */
@@ -262,3 +262,22 @@ export const HUB_ICON_TINTS = [
 export const QUESTION_BODY =
   'flex min-h-0 flex-1 flex-col overflow-y-auto';
 export const QUESTION_BODY_CENTER = 'my-auto w-full';
+
+/* ------------------------------------------------------------------ */
+/* CR-81 "night journey" board language (DESIGN-SPEC-v4)                */
+/* ------------------------------------------------------------------ */
+
+/** QuestionBanner: left-aligned speech-scroll strip carrying the
+ *  instruction. Slate-on-slate - amber stays reserved for reward/
+ *  progress markers (S10). */
+export const QUESTION_BANNER =
+  'mb-3 flex w-full items-center gap-3 rounded-2xl bg-white/[0.07] px-4 py-2.5 text-left ring-1 ring-white/10';
+
+/** Exhibit frame: the light inner panel an emoji/image prompt or option
+ *  sits inside - a "polaroid pinned to the board" instead of a bare
+ *  emoji floating on navy (S3). Wrap the visual, never the button. */
+export const EXHIBIT =
+  'inline-block rounded-2xl bg-slate-50/95 px-3 py-1.5 shadow-[inset_0_2px_6px_rgba(15,23,42,0.15),0_1px_0_rgba(255,255,255,0.12)]';
+/** Slight alternating tilt so exhibits look hand-pinned, not templated
+ *  - applied by index parity, transform-only. */
+export const EXHIBIT_TILT = ['-rotate-[1.5deg]', 'rotate-[1.5deg]'] as const;
