@@ -61,11 +61,16 @@ export default function DemoHint({ containerRef, variant = 'tap', onDone }: Demo
     };
     window.addEventListener('pointerdown', finish, { capture: true });
     window.addEventListener('keydown', finish, { capture: true });
+    /* r30: under reduced-motion the CSS animation never runs, so
+       animationend can never fire - a plain timeout is the universal
+       completion path (it also covers browsers that drop the event). */
+    const timer = setTimeout(finish, variant === 'drag' ? 3200 : 2400);
     return () => {
       window.removeEventListener('pointerdown', finish, { capture: true });
       window.removeEventListener('keydown', finish, { capture: true });
+      clearTimeout(timer);
     };
-  }, [onDone]);
+  }, [onDone, variant]);
 
   if (!pos) return null;
 

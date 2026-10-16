@@ -49,6 +49,8 @@ export function useDragTile(opts: {
 
   const cleanup = useCallback(() => {
     sessionRef.current = null;
+    cancelAnimationFrame(rafRef.current); // r30: a queued frame would
+    // otherwise recreate ghost/hover after the drag already ended
     setGhost(null);
     setHoverIndex(null);
   }, []);
@@ -84,7 +86,9 @@ export function useDragTile(opts: {
       cancelAnimationFrame(rafRef.current);
       const { clientX, clientY } = e;
       rafRef.current = requestAnimationFrame(() => {
-        setGhost({ x: clientX, y: clientY, html: s.ghostHtml, sourceIndex: s.sourceIndex });
+        const live = sessionRef.current;
+        if (!live || !live.active) return; // ended before the frame ran
+        setGhost({ x: clientX, y: clientY, html: live.ghostHtml, sourceIndex: live.sourceIndex });
         setHoverIndex(targetIndexAt(clientX, clientY));
       });
     },

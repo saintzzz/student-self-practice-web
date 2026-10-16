@@ -79,8 +79,11 @@ two-column drag-across is natural and pedagogically meaningful.
   `suppressClickRef`. Keyboard unaffected (buttons stay real
   `<button>`s). All existing testids (`pair-tile-*`), aria names,
   disabled guards and `data-*` verdict attributes preserved verbatim.
-- `touch-action: pan-y` on pair tiles - horizontal drag works, vertical
-  page scroll preserved.
+- `touch-action: none` on pair tiles **while drag is armed** (G1-2
+  un-resolved board); `pan-y` otherwise. External-review r30 caught that
+  `pan-y` lets the browser claim vertical/diagonal gestures and cancel
+  the pointer mid-drag - on a 2-column board most drags are diagonal.
+  The card still scrolls from non-tile space.
 - Reduced motion: drag still works (it is input, not decoration);
   spring-back becomes instant snap (`motion-reduce:transition-none` on
   the ghost); no bob/pulse anywhere.
@@ -186,7 +189,7 @@ export const toy = {
 | `BatchScreen` | `min-h-[100dvh] flex-col` chain; computes `correctStreak` |
 | `Mascot` | reuse existing moods; `encouraging` = idle |
 | `optionButtonStyle.ts` | toy face in unanswered branch + indexed tints |
-| `ExtraLetterQuestion`/`PicturePairMatchingQuestion` tile styles | toy face; pair tiles + drag wiring + `touch-action:pan-y` |
+| `ExtraLetterQuestion`/`PicturePairMatchingQuestion` tile styles | toy face; pair tiles + drag wiring + `touch-action:none` while armed (r30) |
 | `FeedbackPanel` | restyle to toy/depth tokens (layout contract unchanged) |
 | ModeHub tiles | toy face + tints |
 | each question body | `useDemoHint` on its row wrapper |

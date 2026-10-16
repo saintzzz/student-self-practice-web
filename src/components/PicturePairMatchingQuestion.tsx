@@ -27,13 +27,15 @@ interface PicturePairMatchingQuestionProps {
   speakerKey?: string;
 }
 
-function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boolean): string {
+function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boolean, dragEnabled: boolean): string {
   /* CR-79 toy-block: structural base keeps size/radius/focus only - each
      state branch now owns its complete face+shadow so tokens never
-     concatenate onto judged classes. */
+     concatenate onto judged classes. r30: touch-none while drag is armed -
+     pan-y lets the browser steal vertical/diagonal drags via pointercancel;
+     the surrounding card still scrolls from non-tile space. */
   const base =
     'flex min-h-[76px] w-full items-center justify-center rounded-2xl border-4 p-4 text-2xl font-bold ' +
-    'transition focus:outline-none focus:ring-4 focus:ring-amber-400/60 disabled:cursor-not-allowed touch-pan-y';
+    `transition focus:outline-none focus:ring-4 focus:ring-amber-400/60 disabled:cursor-not-allowed ${dragEnabled ? 'touch-none' : 'touch-pan-y'}`;
 
   if (isMatched) {
     return `${base} border-emerald-400 bg-gradient-to-b from-emerald-500/25 to-emerald-600/15 text-emerald-100 ` +
@@ -77,8 +79,9 @@ export default function PicturePairMatchingQuestion({
   const gridRef = useRef<HTMLDivElement>(null);
 
   /* CR-79: drag-to-connect for G1-2; tap stays for everyone. */
+  const dragEnabled = viewer.band === 'G12' && !hasAnswered && outcome === null;
   const drag = useDragTile({
-    enabled: viewer.band === 'G12' && !hasAnswered && outcome === null,
+    enabled: dragEnabled,
     targetAttr: 'data-pair-index',
     onDrop: (src, dst) =>
       setState((prev) => dropPairMatchingTile(prev, question.tiles, src, dst)),
@@ -134,7 +137,7 @@ export default function PicturePairMatchingQuestion({
               onPointerCancel={drag.onPointerCancel}
               onLostPointerCapture={drag.onLostPointerCapture}
               className={
-                tileClassName(isMatched, isPending, isWrongFlash) +
+                tileClassName(isMatched, isPending, isWrongFlash, dragEnabled) +
                 (isDropHover ? ' ring-4 ring-amber-300' : '')
               }
               // CR-02: picture tiles announce their emoji so screen readers
