@@ -17,8 +17,10 @@
  * on hover. Colors keep CR-09 semantics: emerald = go/submit, amber =
  * progress/continue, indigo = audio.
  */
+/* CR-81 r32: text color is per-variant, not in the base - `text-white`
+   + `text-amber-950` would fight on stylesheet order, not class order. */
 const PREMIUM_BASE =
-  'inline-flex min-h-[76px] items-center justify-center gap-2 font-display font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_10px_20px_-6px_rgba(0,0,0,0.3)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_2px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.18),0_3px_8px_-4px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-sm';
+  'inline-flex min-h-[76px] items-center justify-center gap-2 font-display font-bold shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-4px_0_rgba(0,0,0,0.18),0_10px_20px_-6px_rgba(0,0,0,0.3)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_2px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.18),0_3px_8px_-4px_rgba(0,0,0,0.25)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-sm';
 
 /** "Nghe" / "Nghe lại" audio-play buttons (listening + describe-image
  *  questions). CR-81: deep-navy "speaker block" on the board + amber
@@ -34,4 +36,4 @@ export const SUBMIT_ANSWER_BUTTON_CLASSNAME =
 
 /** "Câu tiếp theo" / "Vòng tiếp theo" / "Luyện tập bài mới" progression buttons. */
 export const CONTINUE_BUTTON_CLASSNAME =
-  `${PREMIUM_BASE} rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 px-10 py-3 text-2xl focus:ring-amber-500`;
+  `${PREMIUM_BASE} rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 px-10 py-3 text-2xl text-amber-950 focus:ring-amber-500`;
