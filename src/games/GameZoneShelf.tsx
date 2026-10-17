@@ -5,8 +5,13 @@ import { GAME_DEFS } from './defs';
 import GameArt from './GameArt';
 import type { GameDef, GameId } from './types';
 
-function Stars({ id }: { id: GameId }) {
+function Stars({ id, onCandy = false }: { id: GameId; onCandy?: boolean }) {
   const best = gameBestStars(id);
+  /* CR-91 r54: stars are meaningful indicators (>=3:1 non-text). On the
+     light paper cards amber-500 (~2:1) fails - amber-600 measures ~4.5:1.
+     On the saturated hero keep the dark-slate pair (strong on candy). */
+  const on = onCandy ? 'text-slate-900' : 'text-amber-600';
+  const off = onCandy ? 'text-slate-900/25' : 'text-slate-300';
   return (
     <span
       data-testid={`game-best-${id}`}
@@ -14,7 +19,7 @@ function Stars({ id }: { id: GameId }) {
       aria-label={`Thành tích tốt nhất: ${best} sao`}
     >
       {[0, 1, 2].map((i) => (
-        <span key={i} className={i < best ? 'text-amber-500' : 'text-slate-300'}>★</span>
+        <span key={i} className={i < best ? on : off}>★</span>
       ))}
     </span>
   );
@@ -64,7 +69,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
           </span>
           <span className="block text-xs font-semibold text-slate-900/90">{featured.tagline}</span>
         </span>
-        <Stars id={featured.id} />
+        <Stars id={featured.id} onCandy />
         {featured.fresh && <NewBadge />}
       </button>
 
