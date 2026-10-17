@@ -326,25 +326,19 @@ export function phonemeSimilarity(target: string, candidate: string): number {
 }
 
 /**
- * True only when EVERY target token is covered by some candidate token
- * at phoneme-identity level. The best-pair `phonemeSimilarity` alone
- * would floor an incomplete attempt ("red" for "red apple" pairs 1.0) -
- * the homophone floor must not rescue a phrase missing half its words
- * (external review r49).
+ * Whole-utterance phoneme identity: the JOINED phoneme codes of target
+ * and candidate must match exactly (a trailing stray -s/-z tolerated).
+ * Best-pair `phonemeSimilarity` is lenient by design (it rescues "a cat"
+ * for "cat"), but the homophone floor must NOT - it must reject partial
+ * phrases ("red" for "red apple"), reordered words ("apple red"), and
+ * dropped repetitions ("know" for "no no"). r49 + r51.
  */
 function phonemeCompleteMatch(target: string, candidate: string): boolean {
-  const tCodes = target.split(' ').map(phonemeCode).filter(Boolean);
-  const cCodes = candidate.split(' ').map(phonemeCode).filter(Boolean);
-  if (tCodes.length === 0 || cCodes.length === 0) return false;
-  return tCodes.every((t) =>
-    cCodes.some((c) => {
-      for (const cv of [c, c.replace(/[sz]$/, '')]) {
-        if (cv && 1 - levenshteinDistance(t, cv) / Math.max(t.length, cv.length) >= 0.99) {
-          return true;
-        }
-      }
-      return false;
-    }),
+  const tJoin = target.split(' ').map(phonemeCode).filter(Boolean).join('');
+  const cJoin = candidate.split(' ').map(phonemeCode).filter(Boolean).join('');
+  if (!tJoin || !cJoin) return false;
+  return [cJoin, cJoin.replace(/[sz]$/, '')].some(
+    (v) => v !== '' && 1 - levenshteinDistance(tJoin, v) / Math.max(tJoin.length, v.length) >= 0.99,
   );
 }
 

@@ -301,6 +301,14 @@ describe('scorePronunciationAttempt', () => {
       expect(result.isCorrect).toBe(false);
     });
 
+    it.each([
+      // r51: the floor must respect word ORDER and repetition too.
+      ['red apple', 'apple red'],
+      ['no no', 'know'],
+    ])('does not floor a reordered or shrunken homophone-ish attempt: %s vs %s', (target, heard) => {
+      expect(scorePronunciationAttempt(target, heard).isCorrect).toBe(false);
+    });
+
     it('still floors a complete multi-word homophone match', () => {
       expect(scorePronunciationAttempt('red apple', 'read apple').isCorrect).toBe(true);
     });
