@@ -38,7 +38,7 @@ describe('MemoryMatch', () => {
   it('renders an 8-card face-down board', () => {
     render(<MemoryMatch grade={GRADE} seed={SEED} onEnd={vi.fn()} />);
     expect(screen.getByTestId('game-memory-match')).toBeVisible();
-    expect(screen.getAllByTestId(/^memory-card-/).length ?? 8).toBe(8);
+    expect(screen.getAllByTestId(/^memory-card-/).length).toBe(8);
   });
 
   it('flawless 4-move run earns max points (3-star clean play)', () => {

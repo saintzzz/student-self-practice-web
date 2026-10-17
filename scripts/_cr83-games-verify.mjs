@@ -1,4 +1,7 @@
 import { chromium } from 'playwright';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const shot = (name) => join(tmpdir(), name);
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const BASE = process.env.BASE ?? 'http://localhost:5173';
@@ -21,14 +24,14 @@ await page.waitForTimeout(1200);
 const shelf = page.locator('[data-testid="game-zone-shelf"]');
 console.log('shelf visible:', await shelf.count());
 console.log('game cards:', await page.locator('[data-testid^="game-card-"]').count());
-await page.screenshot({ path: 'cr83-hub.png', fullPage: true });
+await page.screenshot({ path: shot('cr83-hub.png'), fullPage: true });
 
 // Open Balloon Pop
 await page.locator('[data-testid="game-card-balloon-pop"]').click();
 await page.waitForTimeout(3500);
 console.log('balloon screen:', await page.locator('[data-testid="game-balloon-pop"]').count());
 console.log('options:', await page.locator('[data-testid^="option-"]').count());
-await page.screenshot({ path: 'cr83-balloon.png' });
+await page.screenshot({ path: shot('cr83-balloon.png') });
 
 // Pop one balloon (any option) then exit
 await page.locator('[data-testid="option-0"]').first().click({ force: true });
@@ -46,7 +49,7 @@ console.log('ttt cells:', await page.locator('[data-testid^="ttt-cell-"]').count
 await page.locator('[data-testid="ttt-cell-4"]').click();
 await page.waitForTimeout(600);
 console.log('ttt options after cell pick:', await page.locator('[data-testid^="option-"]').count());
-await page.screenshot({ path: 'cr83-ttt.png' });
+await page.screenshot({ path: shot('cr83-ttt.png') });
 
 await browser.close();
 console.log('DONE');

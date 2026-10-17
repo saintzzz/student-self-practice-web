@@ -198,3 +198,19 @@ Two pure wraps (existing mechanics, new shell) + four new mechanics:
   the post-CR-82 explicit-audio doctrine (app listening questions use
   useAudioPlayback = explicit tap). Fixed: autoplay prop removed; "Nghe
   tu" is a tap-only prompt, same contract as practice listening.
+
+## External review r2 -> clean
+
+- All four r1 findings CONFIRMED-FIXED (reviewer-claude): timer cleanup
+  verified in all six games incl. LetterCatch's split refs; star inflation
+  closed (flawless-only bonus, wrong bubble drops word to 1 pt); TTT
+  aria-labels live-update; ModelSpeaker is tap-only.
+- N1 fixed: wrongTimerRef cleared before re-set (double wrong-tap within
+  450ms cannot orphan a timer).
+- N3 fixed: test assertion nit.
+- N2: verify script now writes screenshots to os.tmpdir (no repo litter).
+- Lint note: repo has no eslint.config (ESLint v9 needs flat config and
+  the project never shipped one); the project's static gate is `tsc -b`
+  (clean) + vitest (green) + build (clean). Recorded honestly rather than
+  claiming a lint run that cannot execute - flagged for a future
+  housekeeping CR if a lint config is wanted.

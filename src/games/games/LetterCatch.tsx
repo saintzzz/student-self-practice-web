@@ -105,6 +105,7 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
     const nextMisses = misses + 1;
     setMisses(nextMisses);
     setWrongTile(tile.id);
+    if (wrongTimerRef.current) clearTimeout(wrongTimerRef.current);
     wrongTimerRef.current = setTimeout(() => setWrongTile(null), 450);
   };
 
