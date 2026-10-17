@@ -38,6 +38,8 @@ export interface GameProps {
   grade: Grade;
   /** Fresh per play - seeds every pick so a replay is a new run. */
   seed: string;
+  /** CR-88 difficulty ladder - 1 keeps each game's original tuning. */
+  level?: number;
   onEnd: (end: GameEnd) => void;
 }
 
@@ -54,6 +56,9 @@ export interface GameDef {
   tone?: HubTone;
   /** Recently added game - the shelf badges it "Mới". */
   fresh?: boolean;
+  /** CR-88: composed card art - the emoji that make up the game's mini
+   *  scene (hero emoji first, then scenery). */
+  art?: readonly string[];
 }
 
 /**

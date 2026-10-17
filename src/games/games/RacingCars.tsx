@@ -2,18 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 6;
-const STEPS = ROUNDS;
 
 /**
  * CR-83 Game 3 - Dua xe (Racing): every picture->word answer moves the
  * pig car one step; a miss moves the fox rival. Six questions always;
  * whoever is ahead at the end wins. Score = correct answers (max 6).
  */
-export default function RacingCars({ grade, seed, onEnd }: GameProps) {
-  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
+export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
+  const STEPS = spec.rounds;
+  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, spec.rounds), [grade.id, seed, spec.rounds]);
   const [round, setRound] = useState(0);
   const [player, setPlayer] = useState(0);
   const [rival, setRival] = useState(0);

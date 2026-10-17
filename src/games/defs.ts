@@ -11,6 +11,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Lật thẻ nhớ',
     tagline: 'Ghép hình với từ giống nhau',
     emoji: '🃏',
+    art: ['🎴','🃏','✨'],
     tone: 'sky',
   },
   {
@@ -18,6 +19,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Bóng bay',
     tagline: 'Nghe từ rồi chạm đúng bóng',
     emoji: '🎈',
+    art: ['☁️','🎈','🎈','🌤️'],
     tone: 'rose',
   },
   {
@@ -25,6 +27,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Đua xe',
     tagline: 'Trả lời đúng để xe Heo về đích',
     emoji: '🏎️',
+    art: ['💨','🏎️','🏁'],
     tone: 'orange',
   },
   {
@@ -32,6 +35,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Câu cá',
     tagline: 'Chạm con cá mang hình đúng',
     emoji: '🎣',
+    art: ['🎣','🐟','🌊','🐠'],
     tone: 'sky',
   },
   {
@@ -39,6 +43,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Bắt chữ',
     tagline: 'Chạm bóng chữ theo thứ tự đánh vần',
     emoji: '🫧',
+    art: ['🫧','🔤','🫧'],
     tone: 'amber',
   },
   {
@@ -46,6 +51,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Caro',
     tagline: 'Trả lời để đặt X thắng máy',
     emoji: '⭕',
+    art: ['❌','⭕','❌','⭕'],
     tone: 'emerald',
   },
   {
@@ -53,6 +59,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Đập chuột',
     tagline: 'Nghe từ rồi đập con chuột đúng',
     emoji: '🔨',
+    art: ['🔨','🐹','🕳️'],
     tone: 'emerald',
   },
   {
@@ -60,6 +67,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Cho Heo ăn',
     tagline: 'Chọn đúng đĩa để cho Heo ăn',
     emoji: '🐷',
+    art: ['🥕','🐷','🍎'],
     tone: 'rose',
   },
   {
@@ -67,6 +75,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Lật tranh',
     tagline: 'Trả lời đúng để lật mở bức tranh',
     emoji: '🖼️',
+    art: ['🧩','🖼️','✨'],
     tone: 'emerald',
   },
   {
@@ -74,6 +83,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Hòm kho báu',
     tagline: 'Trả lời đúng để mở ổ khóa vàng',
     emoji: '🧰',
+    art: ['🔒','🧰','💰'],
     tone: 'orange',
   },
   {
@@ -81,6 +91,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Đào vàng',
     tagline: 'Trả lời đúng rồi chọn rương may mắn',
     emoji: '💎',
+    art: ['⛏️','💎','🐉'],
     tone: 'amber',
     fresh: true,
   },
@@ -89,6 +100,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Ai là triệu phú',
     tagline: 'Lên đỉnh giải thưởng trước khi hết giờ',
     emoji: '🎤',
+    art: ['🎤','🏆','⭐'],
     tone: 'orange',
     fresh: true,
     grades: ['grade-3', 'grade-4', 'grade-5'],
@@ -98,6 +110,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Đi mê cung',
     tagline: 'Dẫn Heo tới ô đáp án, né con ma',
     emoji: '👻',
+    art: ['🌽','🐷','👻'],
     tone: 'emerald',
     fresh: true,
   },
@@ -106,6 +119,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Rắn đánh vần',
     tagline: 'Ăn chữ cái theo thứ tự đánh vần',
     emoji: '🐛',
+    art: ['🍎','🐛','🔤'],
     tone: 'rose',
     fresh: true,
   },
@@ -114,6 +128,7 @@ export const GAME_DEFS: readonly GameDef[] = [
     title: 'Giữ thành',
     tagline: 'Trả lời đúng bắn hạ quái trước cổng',
     emoji: '🏰',
+    art: ['👾','🏰','⚡'],
     tone: 'amber',
     fresh: true,
   },

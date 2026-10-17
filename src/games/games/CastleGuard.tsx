@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 8;
 const PATH = 6;
-const HEARTS = 3;
 const SLIMES = ['🟢', '👾', '🦠', '🧟'];
 
 interface Slime {
@@ -21,11 +21,13 @@ interface Slime {
  * pops the front slime; a miss lets the whole wave creep one cell. A
  * slime reaching the gate costs a heart - 3 hearts, 8 waves.
  */
-export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
-  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
+export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
+  const creep = Math.round(spec.speedScale);
+  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, spec.rounds), [grade.id, seed, spec.rounds]);
   const [round, setRound] = useState(0);
   const [slimes, setSlimes] = useState<Slime[]>([{ id: 0, cell: 0, emoji: SLIMES[0]! }]);
-  const [hearts, setHearts] = useState(HEARTS);
+  const [hearts, setHearts] = useState(spec.lives);
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -86,14 +88,14 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
     }
     const next = [...wrongPicks, index];
     setWrongPicks(next);
-    if (next.length >= 2) {
+    if (next.length >= spec.missLimit) {
       timerRef.current = setTimeout(() => {
         // Missed round: the whole wave creeps forward one cell.
         let newHearts = hearts;
         const moved: Slime[] = [];
         for (const s of slimes) {
-          if (s.cell + 1 >= PATH) newHearts -= 1;
-          else moved.push({ ...s, cell: s.cell + 1 });
+          if (s.cell + creep >= PATH) newHearts -= 1;
+          else moved.push({ ...s, cell: s.cell + creep });
         }
         advance(moved, newHearts, newCorrect, points);
       }, 750);
@@ -109,7 +111,7 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
     <div data-testid="game-castle-guard" className="flex flex-col items-center gap-4">
       <GameRoundDots total={rounds.length} done={round} />
       <div className="flex items-center gap-1 text-xl" data-testid="castle-hearts">
-        {Array.from({ length: HEARTS }, (_, i) => (
+        {Array.from({ length: spec.lives }, (_, i) => (
           <span key={i} className={i < hearts ? '' : 'opacity-25'}>❤️</span>
         ))}
       </div>

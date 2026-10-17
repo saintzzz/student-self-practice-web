@@ -3,6 +3,7 @@ import { hashString } from '../../lib/prng';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 6;
@@ -31,8 +32,9 @@ function rewardFor(seed: string, round: number, chest: number): ChestReward {
   return { emoji: '🐉', label: 'Rồng cướp một nửa!', apply: (g) => Math.ceil(g / 2) };
 }
 
-export default function GoldQuest({ grade, seed, onEnd }: GameProps) {
-  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
+export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
+  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, spec.rounds), [grade.id, seed, spec.rounds]);
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<'question' | 'chest'>('question');
   const [gems, setGems] = useState(0);
@@ -86,7 +88,7 @@ export default function GoldQuest({ grade, seed, onEnd }: GameProps) {
     }
     const next = [...wrongPicks, index];
     setWrongPicks(next);
-    if (next.length >= 2) {
+    if (next.length >= spec.missLimit) {
       setMissed(true);
       timerRef.current = setTimeout(() => advance(correctCount), 750);
       return;

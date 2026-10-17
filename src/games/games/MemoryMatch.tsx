@@ -3,6 +3,7 @@ import { seededShuffleIndices } from '../../lib/prng';
 import { playSfx } from '../../lib/sfx';
 import { pickGameWords } from '../sources';
 import { GameRoundDots, PairBoardField, gameVerdictSfx, type PairBoardTile } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const PAIRS = 4;
@@ -12,15 +13,16 @@ const PAIRS = 4;
  * 8-card face-down board. Two flips per move; efficiency bonus for
  * clearing in few moves. Draws from the grade's literal-emoji vocab.
  */
-export default function MemoryMatch({ grade, seed, onEnd }: GameProps) {
+export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, PAIRS);
   const tiles = useMemo<PairBoardTile[]>(() => {
-    const words = pickGameWords(grade.id, seed, PAIRS);
+    const words = pickGameWords(grade.id, seed, spec.rounds);
     const raw = words.flatMap((w): PairBoardTile[] => [
       { id: `${w.id}-img`, pairId: w.id, face: 'emoji', label: w.emoji },
       { id: `${w.id}-word`, pairId: w.id, face: 'word', label: w.word },
     ]);
     return seededShuffleIndices(raw.length, `${seed}:order`).map((i) => raw[i]!);
-  }, [grade.id, seed]);
+  }, [grade.id, seed, spec.rounds]);
 
   const [open, setOpen] = useState<number[]>([]);
   const [matched, setMatched] = useState<Set<number>>(new Set());
@@ -35,8 +37,8 @@ export default function MemoryMatch({ grade, seed, onEnd }: GameProps) {
     endedRef.current = true;
     // 4 pairs found = 8 base; flawless 4-move run +2, <=6 moves +1 -
     // any mismatch drops below max, so 3 stars means clean play (BA rule).
-    const bonus = moveCount <= 4 ? 2 : moveCount <= 6 ? 1 : 0;
-    onEnd({ points: 8 + bonus, maxPoints: 10, correctCount: PAIRS });
+    const bonus = moveCount <= spec.rounds ? 2 : moveCount <= spec.rounds + 2 ? 1 : 0;
+    onEnd({ points: spec.rounds * 2 + bonus, maxPoints: spec.rounds * 2 + 2, correctCount: spec.rounds });
   };
 
   const tap = (idx: number) => {
@@ -70,7 +72,7 @@ export default function MemoryMatch({ grade, seed, onEnd }: GameProps) {
   return (
     <div data-testid="game-memory-match" className="flex flex-col items-center gap-4">
       <div className="flex items-center gap-4">
-        <GameRoundDots total={PAIRS} done={matched.size / 2} />
+        <GameRoundDots total={spec.rounds} done={matched.size / 2} />
         <span className="text-sm font-semibold text-slate-300">Lượt lật: {moves}</span>
       </div>
       <PairBoardField

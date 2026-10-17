@@ -420,20 +420,30 @@ export function recordGameResult(
   seed: string,
   points: number,
   maxPoints: number,
+  level?: number,
 ): RoundAwardResult {
   const result = recordRoundResult(
     gradeId,
     0,
     points,
     maxPoints,
-    `game:${gameId}:${seed}`,
+    `game:${gameId}:L${level ?? 1}:${seed}`,
   );
   if (!result.alreadyGranted) {
     const state = load();
     const stars = starsForScore(points, maxPoints);
     const best = state.gameBest ?? {};
-    if ((best[gameId] ?? 0) < stars) {
-      best[gameId] = stars;
+    /* Track overall best plus the per-level best the level picker
+       reads (CR-88). */
+    const keys = level ? [gameId, `${gameId}:L${level}`] : [gameId];
+    let dirty = false;
+    for (const key of keys) {
+      if ((best[key] ?? 0) < stars) {
+        best[key] = stars;
+        dirty = true;
+      }
+    }
+    if (dirty) {
       state.gameBest = best;
       persist(state);
     }
@@ -444,6 +454,11 @@ export function recordGameResult(
 /** CR-83: best star count for a game (0 = never finished). */
 export function gameBestStars(gameId: string): number {
   return load().gameBest?.[gameId] ?? 0;
+}
+
+/** CR-88: best stars for one level of a game. */
+export function gameLevelStars(gameId: string, level: number): number {
+  return load().gameBest?.[`${gameId}:L${level}`] ?? 0;
 }
 
 export interface BatchAwardResult {

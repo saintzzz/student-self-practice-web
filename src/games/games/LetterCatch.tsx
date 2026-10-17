@@ -4,6 +4,7 @@ import { playSfx } from '../../lib/sfx';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { spellableWords } from '../sources';
 import { GameRoundDots, LetterOrderField, ModelSpeaker, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 import type { SpellTile } from '../../types';
 
@@ -11,12 +12,12 @@ const WORDS_PER_RUN = 4;
 const EXTRA_LETTERS = 'abcdefghijklmnopqrstuvwxyz';
 
 /** Target letters + 2 distractor bubbles, shuffled deterministically. */
-function buildTiles(word: string, key: string): SpellTile[] {
+function buildTiles(word: string, key: string, distractCount = 2): SpellTile[] {
   const target = word.toLowerCase();
   const letters: SpellTile[] = target.split('').map((letter, i) => ({ id: `${letter}-${i}`, letter }));
   const distract: SpellTile[] = [];
   let k = 0;
-  while (distract.length < 2 && k < 40) {
+  while (distract.length < distractCount && k < 40) {
     const l = EXTRA_LETTERS[seededShuffleIndices(26, `${key}:d${k}`)[0] ?? 0]!;
     k += 1;
     if (!target.includes(l) && !distract.some((d) => d.letter === l)) {
@@ -33,10 +34,11 @@ function buildTiles(word: string, key: string): SpellTile[] {
  * distractors) float on the strip. Tap them in spelling order - a wrong
  * bubble shakes and the word still completes, just for fewer points.
  */
-export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
+export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, WORDS_PER_RUN);
   const words = useMemo(
-    () => spellableWords(grade.id, seed, WORDS_PER_RUN),
-    [grade.id, seed],
+    () => spellableWords(grade.id, seed, spec.rounds),
+    [grade.id, seed, spec.rounds],
   );
   const [wordIdx, setWordIdx] = useState(0);
   const [placed, setPlaced] = useState<string[]>([]);
@@ -57,7 +59,7 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
   const word = words[Math.min(wordIdx, words.length - 1)];
   const target = word?.word.toLowerCase() ?? '';
   const tiles = useMemo(
-    () => (word ? buildTiles(word.word, `${seed}:${word.id}`) : []),
+    () => (word ? buildTiles(word.word, `${seed}:${word.id}`, 1 + (spec.level ?? 1)) : []),
     [word, seed],
   );
 
@@ -75,7 +77,7 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
     setDone(nextDone);
     if (nextDone >= words.length) {
       timerRef.current = setTimeout(
-        () => onEnd({ points: nextPoints, maxPoints: WORDS_PER_RUN * 2, correctCount: nextDone }),
+        () => onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextDone }),
         650,
       );
       return;

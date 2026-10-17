@@ -3,6 +3,7 @@ import { seededShuffleIndices } from '../../lib/prng';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const WIN_LINES = [
@@ -26,7 +27,8 @@ function winnerOf(board: Cell[]): 'X' | 'O' | null {
  * free extra cell - to the computer. Win = 3-in-row before the board
  * fills. Score = correct answers + result bonus (win 4 / draw 2), max 9.
  */
-export default function TicTacToe({ grade, seed, onEnd }: GameProps) {
+export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level);
   const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, 9), [grade.id, seed]);
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [pendingCell, setPendingCell] = useState<number | null>(null);
@@ -52,10 +54,31 @@ export default function TicTacToe({ grade, seed, onEnd }: GameProps) {
     );
   };
 
+  /* L2: CPU blocks a winning X line. L3: it finishes its own win
+     first. L1 stays playful-random. */
+  const threatCell = (b: Cell[], mark: Cell): number | null => {
+    for (const [a, c, d] of WIN_LINES) {
+      const trio = [b[a!], b[c!], b[d!]];
+      if (trio.filter((v) => v === mark).length === 2 && trio.includes(null)) {
+        return [a!, c!, d!][trio.indexOf(null)]!;
+      }
+    }
+    return null;
+  };
+
   const cpuMove = (b: Cell[], exclude?: number): Cell[] => {
     const empties = b.map((c, i) => (c ? -1 : i)).filter((i) => i >= 0 && i !== exclude);
     if (!empties.length) return b;
-    const pick = seededShuffleIndices(empties.length, `${seed}:cpu:${b.join('')}`)[0]!;
+    const smart =
+      spec.level >= 3
+        ? threatCell(b, 'O') ?? threatCell(b, 'X')
+        : spec.level === 2
+          ? threatCell(b, 'X')
+          : null;
+    const pick =
+      smart !== null && empties.includes(smart)
+        ? empties.indexOf(smart)
+        : seededShuffleIndices(empties.length, `${seed}:cpu:${b.join('')}`)[0]!;
     const next = [...b];
     next[empties[pick]!] = 'O';
     return next;

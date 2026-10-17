@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 5;
-const LOCKS = ROUNDS;
 
 /**
  * CR-84 Game 10 - Hom kho bau (Treasure Chest): a locked chest holds 5
@@ -13,8 +13,10 @@ const LOCKS = ROUNDS;
  * miss earns nothing. Answer every round correctly to loot the chest.
  * Scoring: first-try 2 / second-try 1 / 0 per round, max 10.
  */
-export default function TreasureChest({ grade, seed, onEnd }: GameProps) {
-  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
+export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
+  const LOCKS = spec.rounds;
+  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, spec.rounds), [grade.id, seed, spec.rounds]);
   const [round, setRound] = useState(0);
   const [locksOpen, setLocksOpen] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -38,7 +40,7 @@ export default function TreasureChest({ grade, seed, onEnd }: GameProps) {
       if (endedRef.current) return;
       endedRef.current = true;
       const report = () =>
-        onEnd({ points: nextPoints, maxPoints: ROUNDS * 2, correctCount: newCorrect });
+        onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: newCorrect });
       // Let the opened chest breathe for a beat before the end screen swaps in.
       if (nextLocks >= LOCKS) {
         timerRef.current = setTimeout(report, 900);
@@ -65,7 +67,7 @@ export default function TreasureChest({ grade, seed, onEnd }: GameProps) {
     }
     const next = [...wrongPicks, index];
     setWrongPicks(next);
-    if (next.length >= 2) {
+    if (next.length >= spec.missLimit) {
       timerRef.current = setTimeout(() => advance(0, false, newCorrect), 650);
       return;
     }

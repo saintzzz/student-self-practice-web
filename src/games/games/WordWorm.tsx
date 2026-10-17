@@ -2,13 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { spellableWords } from '../sources';
 import { gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const COLS = 6;
 const ROWS = 5;
-const HEARTS = 3;
 const WORDS_PER_RUN = 3;
-const DISTRACTORS = 3;
 const ALPHA = 'abcdefghijklmnopqrstuvwxyz';
 
 interface LetterCell {
@@ -23,16 +22,18 @@ interface LetterCell {
  * buttons step the worm one cell; eat letters in spelling order to grow.
  * Wrong letter, wall or self-bite costs a heart - 3 hearts, 3 words.
  */
-export default function WordWorm({ grade, seed, onEnd }: GameProps) {
+export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, WORDS_PER_RUN);
+  const distractors = 2 + spec.level;
   const words = useMemo(
-    () => spellableWords(grade.id, seed, WORDS_PER_RUN).map((w) => w.word.toLowerCase()),
-    [grade.id, seed],
+    () => spellableWords(grade.id, seed, spec.rounds).map((w) => w.word.toLowerCase()),
+    [grade.id, seed, spec.rounds],
   );
   const [wordIdx, setWordIdx] = useState(0);
   const [snake, setSnake] = useState<number[]>([Math.floor(ROWS / 2) * COLS + 2]);
   const [letterIdx, setLetterIdx] = useState(0);
   const [cells, setCells] = useState<LetterCell[]>([]);
-  const [hearts, setHearts] = useState(HEARTS);
+  const [hearts, setHearts] = useState(spec.lives);
   const [eaten, setEaten] = useState(0);
   const endedRef = useRef(false);
   const snakeRef = useRef(snake);
@@ -53,13 +54,13 @@ export default function WordWorm({ grade, seed, onEnd }: GameProps) {
       placed.push({ cell: free[order[i]!]!, letter: word[i]!, target: i });
     }
     const others = ALPHA.split('').filter((c) => !word.includes(c));
-    for (let d = 0; d < DISTRACTORS && word.length + d < order.length; d += 1) {
+    for (let d = 0; d < distractors && word.length + d < order.length; d += 1) {
       const letter = others[(d * 7 + wordIdx * 3) % others.length]!;
       placed.push({ cell: free[order[word.length + d]!]!, letter, target: -1 });
     }
     setCells(placed);
     setLetterIdx(0);
-  }, [wordIdx, word, seed]);
+  }, [wordIdx, word, seed, distractors]);
 
   const finish = (finalEaten: number) => {
     if (endedRef.current) return;
@@ -129,7 +130,7 @@ export default function WordWorm({ grade, seed, onEnd }: GameProps) {
   return (
     <div data-testid="game-word-worm" className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-1 text-xl" data-testid="worm-hearts">
-        {Array.from({ length: HEARTS }, (_, i) => (
+        {Array.from({ length: spec.lives }, (_, i) => (
           <span key={i} className={i < hearts ? '' : 'opacity-25'}>❤️</span>
         ))}
       </div>

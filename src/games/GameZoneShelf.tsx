@@ -2,6 +2,7 @@ import { gameBestStars } from '../lib/engagement/store';
 import { hashString } from '../lib/prng';
 import { gameCardClass, gameHeroClass } from '../lib/ui/tokens';
 import { GAME_DEFS } from './defs';
+import GameArt from './GameArt';
 import type { GameDef, GameId } from './types';
 
 function Stars({ id }: { id: GameId }) {
@@ -53,7 +54,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
         onClick={() => onPlay(featured.id)}
         className={gameHeroClass(featured.tone ?? 'amber')}
       >
-        <span className="shrink-0 text-5xl" aria-hidden>{featured.emoji}</span>
+        <span className="shrink-0" aria-hidden><GameArt art={featured.art} emoji={featured.emoji} size="hero" /></span>
         <span className="min-w-0 flex-1">
           <span className="inline-block rounded-full bg-white/40 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-900 ring-1 ring-white/60">
             Trò chơi hôm nay
@@ -77,7 +78,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
             className={gameCardClass(def.tone ?? 'sky')}
           >
             {def.fresh && <NewBadge />}
-            <span className="text-4xl" aria-hidden>{def.emoji}</span>
+            <GameArt art={def.art} emoji={def.emoji} />
             <span className="font-display text-base font-extrabold leading-tight">
               {def.title}
             </span>

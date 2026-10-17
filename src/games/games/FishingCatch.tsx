@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 5;
@@ -11,10 +12,11 @@ const ROUNDS = 5;
  * (text prompt, plus a replay speaker for pre-readers); four fish carry
  * picture options. Tap the right fish to land it in the bucket.
  */
-export default function FishingCatch({ grade, seed, onEnd }: GameProps) {
+export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
   const rounds = useMemo(
-    () => listeningImageRounds(grade.id, seed, ROUNDS),
-    [grade.id, seed],
+    () => listeningImageRounds(grade.id, seed, spec.rounds),
+    [grade.id, seed, spec.rounds],
   );
   const [round, setRound] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -34,7 +36,7 @@ export default function FishingCatch({ grade, seed, onEnd }: GameProps) {
     setCorrectCount(nextCorrect);
     setWrongPicks([]);
     if (round + 1 >= rounds.length) {
-      onEnd({ points: nextPoints, maxPoints: ROUNDS * 2, correctCount: nextCorrect });
+      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect });
       return;
     }
     setRound(round + 1);
@@ -54,7 +56,7 @@ export default function FishingCatch({ grade, seed, onEnd }: GameProps) {
     gameVerdictSfx(false);
     const next = [...wrongPicks, index];
     setWrongPicks(next);
-    if (next.length >= 2) {
+    if (next.length >= spec.missLimit) {
       setLock(true);
       timerRef.current = setTimeout(() => advance(0, false), 650);
     }

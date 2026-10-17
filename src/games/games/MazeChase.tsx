@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { listeningImageRounds } from '../sources';
 import { GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const COLS = 6;
 const ROWS = 4;
 const CELLS = COLS * ROWS;
-const HEARTS = 3;
 const ROUNDS = 6;
 const WALL_COUNT = 4;
 
@@ -74,12 +74,15 @@ interface Layout {
  * through the maze to the pad holding the correct picture; a ghost
  * chases one step per move. Wrong pad or ghost touch costs a heart.
  */
-export default function MazeChase({ grade, seed, onEnd }: GameProps) {
-  const rounds = useMemo(() => listeningImageRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
+export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
+  const wallCount = WALL_COUNT + (spec.level - 1) * 2;
+  const ghostSteps = Math.round(spec.speedScale);
+  const rounds = useMemo(() => listeningImageRounds(grade.id, seed, spec.rounds), [grade.id, seed, spec.rounds]);
   const [round, setRound] = useState(0);
   const [hero, setHero] = useState(0);
   const [ghost, setGhost] = useState(CELLS - 1);
-  const [hearts, setHearts] = useState(HEARTS);
+  const [hearts, setHearts] = useState(spec.lives);
   const [correctCount, setCorrectCount] = useState(0);
   const [removedPads, setRemovedPads] = useState<number[]>([]);
   const [lock, setLock] = useState(false);
@@ -103,7 +106,7 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
       // Walls never cover the hero cell - a hero standing inside a wall
       // would make the BFS connectivity check dishonest and can seal the
       // board shut (review r1 soft-lock).
-      const walls = new Set(order.filter((c) => c !== heroCell).slice(0, WALL_COUNT));
+      const walls = new Set(order.filter((c) => c !== heroCell).slice(0, wallCount));
       pads.length = 0;
       padCells.clear();
       let slot = 0;
@@ -125,7 +128,7 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
     pads.length = 0;
     for (let o = 0; o < 4; o += 1) pads.push({ cell: (o * 5 + 7) % CELLS, option: o });
     return { walls: new Set(), pads: [...pads], ghost: CELLS - 1 };
-  }, [seed, round]);
+  }, [seed, round, wallCount]);
 
   // Ghost spawns at the layout-validated cell each round (never a wall,
   // pad or the hero) - review r2: the computed spawn was previously
@@ -177,8 +180,15 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
       setLock(false);
       return;
     }
-    // Empty step - the ghost takes its turn.
-    const gstep = nextStep(ghost, cell, layout.walls);
+    // Empty step - the ghost takes its turn; level 3 moves it twice.
+    let gpos = ghost;
+    for (let s = 0; s < ghostSteps; s += 1) {
+      const st = nextStep(gpos, cell, layout.walls);
+      if (st === null) break;
+      gpos = st;
+      if (gpos === cell) break;
+    }
+    const gstep = gpos === ghost ? null : gpos;
     if (gstep === null) return;
     if (gstep === cell) {
       const newHearts = hearts - 1;
@@ -201,7 +211,7 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
     <div data-testid="game-maze-chase" className="flex flex-col items-center gap-3">
       <GameRoundDots total={rounds.length} done={round} />
       <div className="flex items-center gap-1 text-xl" data-testid="maze-hearts">
-        {Array.from({ length: HEARTS }, (_, i) => (
+        {Array.from({ length: spec.lives }, (_, i) => (
           <span key={i} className={i < hearts ? '' : 'opacity-25'}>❤️</span>
         ))}
       </div>

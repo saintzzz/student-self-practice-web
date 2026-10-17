@@ -3,6 +3,7 @@ import { seededPickN, seededShuffleIndices } from '../../lib/prng';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const TILES = 9;
@@ -12,16 +13,21 @@ const SCENE_EMOJI = ['🌈', '🏰', '🚀', '🎠', '🐳', '🦋', '🌻', '�
  * CR-84 Game 9 - Lat tranh (Picture Reveal): a hidden scene sits under 9
  * cover tiles. Every correct picture->word answer lifts one cover; a
  * miss earns nothing. Reveal all 9 to win - flawless run = 3 stars.
+ *
+ * CR-88: the grid grows with level - 9 tiles (3x3) at Màn 1, 12 at Màn
+ * 2, 15 at Màn 3 - more covers to lift, less room for misses.
  */
-export default function PictureReveal({ grade, seed, onEnd }: GameProps) {
-  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, TILES), [grade.id, seed]);
+export default function PictureReveal({ grade, seed, level = 1, onEnd }: GameProps) {
+  const spec = specFor(level);
+  const tiles = TILES + (spec.level - 1) * 3;
+  const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, tiles), [grade.id, seed, tiles]);
   const scene = useMemo(
     () => seededPickN(SCENE_EMOJI, 1, `${seed}:scene`)[0] ?? '🌈',
     [seed],
   );
   const revealOrder = useMemo(
-    () => seededShuffleIndices(TILES, `${seed}:reveal`),
-    [seed],
+    () => seededShuffleIndices(tiles, `${seed}:reveal`),
+    [seed, tiles],
   );
   const [round, setRound] = useState(0);
   const [revealed, setRevealed] = useState(0);
@@ -39,10 +45,10 @@ export default function PictureReveal({ grade, seed, onEnd }: GameProps) {
     const nextRevealed = revealed + addedReveal;
     setRevealed(nextRevealed);
     setWrongPicks([]);
-    if (round + 1 >= rounds.length || nextRevealed >= TILES) {
+    if (round + 1 >= rounds.length || nextRevealed >= tiles) {
       if (endedRef.current) return;
       endedRef.current = true;
-      onEnd({ points: nextRevealed, maxPoints: TILES, correctCount: newCorrect });
+      onEnd({ points: nextRevealed, maxPoints: tiles, correctCount: newCorrect });
       return;
     }
     setRound(round + 1);
@@ -70,7 +76,7 @@ export default function PictureReveal({ grade, seed, onEnd }: GameProps) {
         data-testid="reveal-board"
         className="relative grid w-56 grid-cols-3 gap-1.5 overflow-hidden rounded-2xl border-2 border-amber-200/50 bg-gradient-to-b from-amber-50 to-orange-100 p-1.5 shadow-[0_12px_28px_-12px_rgba(0,0,0,0.6)]"
       >
-        {Array.from({ length: TILES }, (_, tileIdx) => {
+        {Array.from({ length: tiles }, (_, tileIdx) => {
           const isOpen = openTiles.has(tileIdx);
           return (
             <div

@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   checkStreakStickers,
+  gameBestStars,
+  gameLevelStars,
   getDeviceId,
   getOwnerAccountId,
   getState,
   markOwnerAccountId,
   parkOwnerBlob,
   recordBatchResult,
+  recordGameResult,
   recordRoundResult,
   recordSkillAnswer,
   resetForTests,
@@ -183,5 +186,35 @@ describe('r17 per-device stat attribution', () => {
     expect(Object.keys(devices)).toEqual([getDeviceId()]);
     const mine = devices[getDeviceId()]!;
     expect(mine.skills['grade-3'].vocab).toEqual({ correct: 1, total: 2 });
+  });
+});
+
+describe('recordGameResult levels (CR-88)', () => {
+  it('level scopes the objective id - same seed, different level grants again', () => {
+    const l1 = recordGameResult('grade-2', 'maze-chase', 'seed-z', 10, 10, 1);
+    const l2 = recordGameResult('grade-2', 'maze-chase', 'seed-z', 10, 10, 2);
+    const l1again = recordGameResult('grade-2', 'maze-chase', 'seed-z', 10, 10, 1);
+    expect(l1.alreadyGranted).toBeFalsy();
+    expect(l2.alreadyGranted).toBeFalsy(); // different objective id
+    expect(l1again.alreadyGranted).toBe(true);
+    const keys = Object.keys(getState().grantedObjectives ?? {});
+    expect(keys.some((k) => k.startsWith('game:maze-chase:L1:'))).toBe(true);
+    expect(keys.some((k) => k.startsWith('game:maze-chase:L2:'))).toBe(true);
+  });
+
+  it('tracks per-level best stars plus the aggregate best', () => {
+    recordGameResult('grade-2', 'gold-quest', 'a', 10, 10, 1); // 3*
+    recordGameResult('grade-2', 'gold-quest', 'b', 5, 10, 2);  // 1*
+    expect(gameLevelStars('gold-quest', 1)).toBe(3);
+    expect(gameLevelStars('gold-quest', 2)).toBe(1);
+    expect(gameLevelStars('gold-quest', 3)).toBe(0);
+    expect(gameBestStars('gold-quest')).toBe(3);
+  });
+
+  it('omitted level behaves like level 1 (legacy callers stay valid)', () => {
+    recordGameResult('grade-2', 'fishing-catch', 'c', 10, 10);
+    expect(gameBestStars('fishing-catch')).toBe(3);
+    const keys = Object.keys(getState().grantedObjectives ?? {});
+    expect(keys.some((k) => k.startsWith('game:fishing-catch:L1:'))).toBe(true);
   });
 });

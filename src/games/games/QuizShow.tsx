@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { imageChoiceRounds } from '../sources';
 import { WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 8;
@@ -13,10 +14,12 @@ const PRIZES = ['⭐', '⭐⭐', '🥉', '🥉', '🥈', '🥈', '🥇', '🏆']
  * prize ladder, 20 seconds per question, one 50:50 lifeline, a wrong or
  * timed-out answer ends the run (sudden death). Grades 3-5 only.
  */
-export default function QuizShow({ grade, seed, onEnd }: GameProps) {
+export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level);
+  const secondsCap = Math.round(SECONDS / spec.speedScale);
   const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
   const [round, setRound] = useState(0);
-  const [seconds, setSeconds] = useState(SECONDS);
+  const [seconds, setSeconds] = useState(secondsCap);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lifelineUsed, setLifelineUsed] = useState(false);
@@ -39,11 +42,11 @@ export default function QuizShow({ grade, seed, onEnd }: GameProps) {
 
   // Per-question countdown - resets each round.
   useEffect(() => {
-    setSeconds(SECONDS);
+    setSeconds(secondsCap);
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [round]);
+  }, [round, secondsCap]);
 
   // Time-out ends the run - but not while an accepted answer is in its
   // feedback beat (the interval is cleared on pick; this guards a tick

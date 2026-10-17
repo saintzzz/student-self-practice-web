@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
+import { specFor } from '../levels';
 import type { GameProps } from '../types';
 
 const ROUNDS = 6;
@@ -12,10 +13,11 @@ const ROUNDS = 6;
  * pictures. Feed Heo the right plate. First-try feed = 2 pts, retry = 1,
  * else 0 after 2 misses.
  */
-export default function FeedThePig({ grade, seed, onEnd }: GameProps) {
+export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
+  const spec = specFor(level, ROUNDS);
   const rounds = useMemo(
-    () => listeningImageRounds(grade.id, seed, ROUNDS),
-    [grade.id, seed],
+    () => listeningImageRounds(grade.id, seed, spec.rounds),
+    [grade.id, seed, spec.rounds],
   );
   const [round, setRound] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -37,7 +39,7 @@ export default function FeedThePig({ grade, seed, onEnd }: GameProps) {
     setWrongPicks([]);
     setFed(false);
     if (round + 1 >= rounds.length) {
-      onEnd({ points: nextPoints, maxPoints: ROUNDS * 2, correctCount: nextCorrect });
+      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect });
       return;
     }
     setRound(round + 1);
@@ -58,7 +60,7 @@ export default function FeedThePig({ grade, seed, onEnd }: GameProps) {
     gameVerdictSfx(false);
     const next = [...wrongPicks, index];
     setWrongPicks(next);
-    if (next.length >= 2) {
+    if (next.length >= spec.missLimit) {
       setLock(true);
       timerRef.current = setTimeout(() => advance(0, false), 650);
     }
