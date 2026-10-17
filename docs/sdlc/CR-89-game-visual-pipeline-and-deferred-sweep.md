@@ -65,3 +65,15 @@
 - CR-88 deferred "real art": closed via EmojiVisual pipeline (photo where imageUrl exists -> lottie where asset exists -> twemoji svg) - no new binary assets needed.
 - CR-86 game-as-exam: stays doc'd scope (exam-section embed); game->practice share direction already live via shared generators.
 - Vite chunk warning: mitigated via manualChunks vendor split.
+
+## External review loop (r44-r48)
+
+Mechanism: `npm run review:external` (Codex CLI, diff-only; repo reads sandbox-blocked - documented limitation).
+
+- r44: verify only checked lottie budget on a screen with no animated hero -> expanded to mole/pig/gold with mode + budget asserts (aa7298a).
+- r45: animation check could pass with zero lottie players; Tet approximations mislabeled clean -> gem tally made `animated` (vendored 1f48e clip) as the deterministic lottie proof point; doc now tracks Tet as OPEN (95ad081).
+- r46: img count/mode asserts don't prove render -> `complete && naturalWidth>0` on svgs + `data-emoji-ready` on the lottie (b012034).
+- r47: readiness != playback -> canvas `toDataURL` frame deltas must differ over 700ms (525f399).
+- **r48: CLEAN** - loop closed. Final verify: 14/14 checks, gem clip confirmed playing (frames advance), lottie budget <= 2 everywhere.
+
+Deploy: pushed to `main` (525f399); Vercel auto-deploy serves it on ea.vieschool.com.
