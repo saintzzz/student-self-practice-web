@@ -73,6 +73,23 @@ const pigLottie = await page.locator('[data-emoji-mode="lottie"]').count();
 check('pig lottie budget <=2', pigLottie <= 2, `got ${pigLottie}`);
 await page.screenshot({ path: shot('cr89-pig.png') });
 
+// GoldQuest: the 💎 tally has a vendored lottie asset, so it must enter
+// lottie mode deterministically - proves the animated path works end to
+// end (player chunk loads, wasm boots, clip plays).
+await page.locator('[data-testid="game-exit"]').click();
+await page.waitForTimeout(1200);
+await page.locator('[data-testid="hub-tile-games"]').first().click();
+await page.waitForTimeout(800);
+await page.locator('[data-testid="game-card-gold-quest"]').click();
+await page.waitForTimeout(1500);
+await page.locator('[data-testid="game-level-1"]').click();
+await page.waitForTimeout(4000);
+const gemLottie = await page.locator('[data-testid="gem-tally"] [data-emoji-mode="lottie"]').count();
+check('gem tally animates via lottie', gemLottie >= 1, `got ${gemLottie}`);
+const goldLottie = await page.locator('[data-emoji-mode="lottie"]').count();
+check('gold lottie budget <=2', goldLottie <= 2, `got ${goldLottie}`);
+await page.screenshot({ path: shot('cr89-gold.png') });
+
 console.log(failures === 0 ? 'DONE - all checks passed' : `FAILED ${failures} checks`);
 await browser.close();
 process.exit(failures === 0 ? 0 : 1);

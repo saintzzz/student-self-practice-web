@@ -58,7 +58,7 @@
 ## Content audit outcome (Global Success)
 
 - Dumped all 524 banked words -> emoji mapping review: mappings are clean; bank already aligned to GS topic structure (g1/g3/g4/g5 files).
-- Attempted accuracy swaps for tet.ts (`festival` 🎏 JP koinobori -> better, `apricot blossom` 🏵️) - **reverted**: emoji bank is saturated (517 unique glyphs used); every festive candidate collides or lacks a vendored twemoji svg (AC-1.5/AC-6.3 guards). Kept original unique picks; documented as asset-coverage limitation, not an accuracy bug.
+- **OPEN - tracked, not resolved:** g5-tet `festival` 🎏 (JP koinobori) and `apricot blossom` 🏵️ are cultural approximations. Every attempted replacement either collides with another bank word (AC-6.3 uniqueness) or lacks a vendored twemoji svg (AC-1.5) - the bank uses 517 unique glyphs and the festive set is exhausted. Resolution path: dedicated illustrated assets for culturally-specific words (Tet unit first), tracked as a follow-on art task - the vocabulary wording itself is correct.
 
 ## Deferred sweep outcome
 

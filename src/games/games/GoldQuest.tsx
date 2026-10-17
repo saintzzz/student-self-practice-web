@@ -114,7 +114,7 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
         data-testid="gem-tally"
         className="flex items-center gap-2 rounded-full border-2 border-amber-300/60 bg-navy-800/80 px-4 py-1.5 text-lg font-extrabold text-amber-200"
       >
-        <EmojiVisual emoji="💎" variant="block" /> {gems}
+        <EmojiVisual emoji="💎" animated variant="block" /> {gems}
       </div>
       {phase === 'question' ? (
         <>
