@@ -100,19 +100,25 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
     const heroCell = heroRef.current;
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const order = seededShuffleIndices(CELLS, `${base}:${attempt}`);
-      const walls = new Set(order.slice(0, WALL_COUNT));
+      // Walls never cover the hero cell - a hero standing inside a wall
+      // would make the BFS connectivity check dishonest and can seal the
+      // board shut (review r1 soft-lock).
+      const walls = new Set(order.filter((c) => c !== heroCell).slice(0, WALL_COUNT));
       pads.length = 0;
       padCells.clear();
-      let slot = WALL_COUNT;
+      let slot = 0;
       for (let o = 0; o < 4; o += 1) {
         let cell = order[slot++]!;
         while (walls.has(cell) || cell === heroCell || padCells.has(cell)) cell = order[slot++]!;
         padCells.add(cell);
         pads.push({ cell, option: o });
       }
-      const ghostCell = order[slot++]!;
+      let ghostCell = order[slot++]!;
+      while (walls.has(ghostCell) || ghostCell === heroCell || padCells.has(ghostCell)) {
+        ghostCell = order[slot++]!;
+      }
       if (allReachable(heroCell, pads.map((p) => p.cell), walls)) {
-        return { walls, pads: [...pads], ghost: ghostCell === heroCell ? (ghostCell + 3) % CELLS : ghostCell };
+        return { walls, pads: [...pads], ghost: ghostCell };
       }
     }
     // Fallback: no walls - pads on 4 corners-ish cells.

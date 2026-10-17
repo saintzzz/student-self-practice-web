@@ -44,6 +44,21 @@ describe('CastleGuard', () => {
     expect(screen.getByTestId('path-cell-0').textContent).toBeTruthy();
   });
 
+  it('a second-try answer earns half a point - a miss caps below 3 stars', () => {
+    const onEnd = vi.fn();
+    const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);
+    const wrong = [0, 1, 2, 3].find((i) => i !== rounds[0]!.correctIndex)!;
+    render(<CastleGuard grade={GRADE} seed={SEED} onEnd={onEnd} />);
+    fireEvent.click(screen.getByTestId(`option-${wrong}`));
+    fireEvent.click(screen.getByTestId(`option-${rounds[0]!.correctIndex}`));
+    act(() => vi.advanceTimersByTime(800));
+    for (const q of rounds.slice(1)) {
+      fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
+      act(() => vi.advanceTimersByTime(800));
+    }
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS - 0.5, maxPoints: ROUNDS, correctCount: ROUNDS });
+  });
+
   it('a flawless run reports max points with all hearts', () => {
     const onEnd = vi.fn();
     const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);

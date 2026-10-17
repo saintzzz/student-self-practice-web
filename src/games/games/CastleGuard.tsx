@@ -26,6 +26,7 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
   const [round, setRound] = useState(0);
   const [slimes, setSlimes] = useState<Slime[]>([{ id: 0, cell: 0, emoji: SLIMES[0]! }]);
   const [hearts, setHearts] = useState(HEARTS);
+  const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [boltAt, setBoltAt] = useState<number | null>(null);
@@ -37,20 +38,20 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
 
   const q = rounds[Math.min(round, rounds.length - 1)];
 
-  const finish = (finalCorrect: number) => {
+  const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect });
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect });
   };
 
-  const advance = (newSlimes: Slime[], newHearts: number, newCorrect: number) => {
+  const advance = (newSlimes: Slime[], newHearts: number, newCorrect: number, newPoints: number) => {
     // Wave result already computed; new slime enters for the next round.
     setSlimes(newSlimes);
     setHearts(newHearts);
     setWrongPicks([]);
     setBoltAt(null);
     if (newHearts <= 0 || round + 1 >= rounds.length) {
-      finish(newCorrect);
+      finish(newCorrect, newPoints);
       return;
     }
     const emoji = SLIMES[(round + 1) % SLIMES.length]!;
@@ -68,6 +69,10 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
     const newCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(newCorrect);
     if (correct) {
+      // First-try = full point; a second-try answer pops the slime but
+      // only earns half, so a miss caps the run below 3 stars.
+      const newPoints = points + (wrongPicks.length === 0 ? 1 : 0.5);
+      setPoints(newPoints);
       // Bolt pops the slime closest to the gate (max cell).
       const front = slimes.reduce<Slime | null>(
         (best, s) => (best === null || s.cell > best.cell ? s : best),
@@ -75,7 +80,7 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
       );
       if (front) setBoltAt(front.id);
       timerRef.current = setTimeout(() => {
-        advance(slimes.filter((s) => s.id !== front?.id), hearts, newCorrect);
+        advance(slimes.filter((s) => s.id !== front?.id), hearts, newCorrect, newPoints);
       }, 700);
       return;
     }
@@ -90,7 +95,7 @@ export default function CastleGuard({ grade, seed, onEnd }: GameProps) {
           if (s.cell + 1 >= PATH) newHearts -= 1;
           else moved.push({ ...s, cell: s.cell + 1 });
         }
-        advance(moved, newHearts, newCorrect);
+        advance(moved, newHearts, newCorrect, points);
       }, 750);
       return;
     }

@@ -31,6 +31,17 @@ describe('MazeChase', () => {
     expect(cell1.disabled || cell6.disabled).toBe(false);
   });
 
+  it('the hero cell is never walled and an escape move always exists (r1 soft-lock regression)', () => {
+    // Seed that previously generated walls [0,11,2,7] sealing the board.
+    render(<MazeChase grade={GRADE} seed="review-maze-58" onEnd={vi.fn()} />);
+    expect(screen.getByTestId('maze-cell-0').textContent).not.toBe('🧱');
+    // At least one adjacent cell stays open to move into.
+    const neighbors = [1, COLS].map(
+      (i) => screen.getByTestId(`maze-cell-${i}`) as HTMLButtonElement,
+    );
+    expect(neighbors.some((b) => !b.disabled && b.textContent !== '🧱')).toBe(true);
+  });
+
   it('tapping an open adjacent cell moves Heo', () => {
     render(<MazeChase grade={GRADE} seed={SEED} onEnd={vi.fn()} />);
     const neighbors = [1, COLS].map(

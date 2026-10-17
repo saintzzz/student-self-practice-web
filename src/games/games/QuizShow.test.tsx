@@ -54,6 +54,19 @@ describe('QuizShow', () => {
     expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0 });
   });
 
+  it('an accepted last-second answer does not race the timeout', () => {
+    const onEnd = vi.fn();
+    const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);
+    render(<QuizShow grade={GRADE} seed={SEED} onEnd={onEnd} />);
+    // 19 ticks -> 1 second left; the correct pick must stop the clock.
+    act(() => vi.advanceTimersByTime(19000));
+    fireEvent.click(screen.getByTestId(`option-${rounds[0]!.correctIndex}`));
+    act(() => vi.advanceTimersByTime(3000));
+    expect(onEnd).not.toHaveBeenCalled();
+    // Round 2 runs with a fresh countdown.
+    expect(Number(screen.getByTestId('quiz-timer').textContent)).toBeGreaterThan(0);
+  });
+
   it('a flawless climb reports max points', () => {
     const onEnd = vi.fn();
     const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);

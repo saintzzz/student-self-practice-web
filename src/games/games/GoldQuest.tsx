@@ -36,6 +36,7 @@ export default function GoldQuest({ grade, seed, onEnd }: GameProps) {
   const [round, setRound] = useState(0);
   const [phase, setPhase] = useState<'question' | 'chest'>('question');
   const [gems, setGems] = useState(0);
+  const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [opened, setOpened] = useState<number | null>(null);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -47,10 +48,10 @@ export default function GoldQuest({ grade, seed, onEnd }: GameProps) {
 
   const q = rounds[Math.min(round, rounds.length - 1)];
 
-  const finish = (finalCorrect: number) => {
+  const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect });
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect });
   };
 
   const advance = (newCorrect: number) => {
@@ -58,7 +59,7 @@ export default function GoldQuest({ grade, seed, onEnd }: GameProps) {
     setMissed(false);
     setOpened(null);
     if (round + 1 >= rounds.length) {
-      finish(newCorrect);
+      finish(newCorrect, points);
       return;
     }
     setRound(round + 1);
@@ -74,6 +75,9 @@ export default function GoldQuest({ grade, seed, onEnd }: GameProps) {
     if (correct) {
       const newCorrect = correctCount + 1;
       setCorrectCount(newCorrect);
+      // First-try = full point; a second-try answer still opens the
+      // chest but only earns half, so a miss caps the run below 3 stars.
+      setPoints((p) => p + (wrongPicks.length === 0 ? 1 : 0.5));
       timerRef.current = setTimeout(() => {
         setPhase('chest');
         setLock(false);

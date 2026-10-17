@@ -109,10 +109,13 @@ export default function WordWorm({ grade, seed, onEnd }: GameProps) {
       return;
     }
     if (letter && letter.target !== letterIdx) {
-      // Wrong letter - costs a heart and the letter stays eaten so the
-      // same trap cannot trigger twice.
+      // Wrong letter costs a heart. Only expendable distractors are
+      // removed - a real target letter stays on the board or the word
+      // could never be finished (review r1 soft-lock).
       hurt(hearts - 1);
-      setCells((prev) => prev.filter((c) => c !== letter));
+      if (letter.target === -1) {
+        setCells((prev) => prev.filter((c) => c !== letter));
+      }
       if (hearts - 1 <= 0) return;
     }
     setSnake([next, ...snakeRef.current.slice(0, -1)]);

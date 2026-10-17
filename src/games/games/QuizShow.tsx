@@ -45,9 +45,11 @@ export default function QuizShow({ grade, seed, onEnd }: GameProps) {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [round]);
 
-  // Time-out ends the run.
+  // Time-out ends the run - but not while an accepted answer is in its
+  // feedback beat (the interval is cleared on pick; this guards a tick
+  // that already reached 0 in the same instant).
   useEffect(() => {
-    if (seconds === 0) finish(correctCount);
+    if (seconds === 0 && !endedRef.current && !lock) finish(correctCount);
   }, [seconds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const q = rounds[Math.min(round, rounds.length - 1)];
@@ -57,6 +59,9 @@ export default function QuizShow({ grade, seed, onEnd }: GameProps) {
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
     setLock(true);
+    // Stop the countdown the moment an answer is accepted - a correct
+    // pick at the last second must not race the timeout end.
+    if (intervalRef.current) clearInterval(intervalRef.current);
     if (!correct) {
       // Sudden death - one wrong answer ends the climb.
       setWrongPicks([index]);
