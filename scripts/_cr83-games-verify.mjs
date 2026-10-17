@@ -51,5 +51,28 @@ await page.waitForTimeout(600);
 console.log('ttt options after cell pick:', await page.locator('[data-testid^="option-"]').count());
 await page.screenshot({ path: shot('cr83-ttt.png') });
 
+// CR-84: the four new games - mount + smoke each
+await page.locator('[data-testid="game-exit"]').click();
+await page.waitForTimeout(1200);
+await page.locator('[data-testid="hub-tile-games"]').first().click();
+await page.waitForTimeout(800);
+console.log('game cards total:', await page.locator('[data-testid^="game-card-"]').count());
+
+for (const [id, testid] of [
+  ['whack-a-mole', 'game-whack-a-mole'],
+  ['feed-the-pig', 'game-feed-the-pig'],
+  ['picture-reveal', 'reveal-board'],
+  ['treasure-chest', 'game-treasure-chest'],
+]) {
+  await page.locator(`[data-testid="game-card-${id}"]`).click();
+  await page.waitForTimeout(3200);
+  console.log(`${id} screen:`, await page.locator(`[data-testid="${testid}"]`).count());
+  await page.screenshot({ path: shot(`cr84-${id}.png`) });
+  await page.locator('[data-testid="game-exit"]').click();
+  await page.waitForTimeout(1200);
+  await page.locator('[data-testid="hub-tile-games"]').first().click();
+  await page.waitForTimeout(800);
+}
+
 await browser.close();
 console.log('DONE');

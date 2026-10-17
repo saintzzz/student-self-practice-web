@@ -341,6 +341,12 @@ textarea {
 }
 .game-flip-in { animation: game-flip-in 220ms ease-out; }
 
+@keyframes game-peek {
+  0%, 100% { transform: translateY(14%); }
+  40%, 60% { transform: translateY(-6%); }
+}
+.game-peek { animation: game-peek 2.4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce), (max-height: 420px) {
   .scene-layer { --pan: 0 !important; }
 }
@@ -350,7 +356,7 @@ textarea {
   .trace-start-pulse { animation: none; }
   .audio-bars { animation: none; }
   .tile-shake, .dart-arrow { animation: none; }
-  .game-bob, .game-drift, .game-bubble, .game-shake, .game-flip-in { animation: none; }
+  .game-bob, .game-drift, .game-bubble, .game-shake, .game-flip-in, .game-peek { animation: none; }
 }
 
 /* CR-14: Be Vietnam Pro body font, self-hosted (OFL-1.1) under

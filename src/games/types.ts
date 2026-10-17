@@ -14,7 +14,11 @@ export type GameId =
   | 'racing-cars'
   | 'fishing-catch'
   | 'letter-catch'
-  | 'tic-tac-toe';
+  | 'tic-tac-toe'
+  | 'whack-a-mole'
+  | 'feed-the-pig'
+  | 'picture-reveal'
+  | 'treasure-chest';
 
 export interface GameEnd {
   /** Numerator for starsForScore (normalized per game, see each shell). */

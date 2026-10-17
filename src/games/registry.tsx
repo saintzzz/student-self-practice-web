@@ -12,6 +12,10 @@ import RacingCars from './games/RacingCars';
 import FishingCatch from './games/FishingCatch';
 import LetterCatch from './games/LetterCatch';
 import TicTacToe from './games/TicTacToe';
+import WhackMole from './games/WhackMole';
+import FeedThePig from './games/FeedThePig';
+import PictureReveal from './games/PictureReveal';
+import TreasureChest from './games/TreasureChest';
 import {
   EmojiChoiceField,
   LetterOrderField,
@@ -38,6 +42,10 @@ export const GAME_COMPONENTS: Record<GameId, GameComponent> = {
   'fishing-catch': FishingCatch,
   'letter-catch': LetterCatch,
   'tic-tac-toe': TicTacToe,
+  'whack-a-mole': WhackMole,
+  'feed-the-pig': FeedThePig,
+  'picture-reveal': PictureReveal,
+  'treasure-chest': TreasureChest,
 };
 
 export const GAME_MECHANICS = {

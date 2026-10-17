@@ -13,8 +13,9 @@ import type { SpellTile } from '../types';
 
 /* ------------------------------------------------------------------ */
 /* EmojiChoiceField - pick 1 of 4 picture options.                      */
-/* Used by: BalloonPop ('balloon'), FishingCatch ('fish'), and any      */
-/* future 'listening-image-choice'/'describe-and-choose-image' surface. */
+/* Used by: BalloonPop ('balloon'), FishingCatch ('fish'), WhackMole    */
+/* ('mole'), FeedThePig ('food'); and any 'listening-image-choice' /    */
+/* 'describe-and-choose-image' surface.                                 */
 /* ------------------------------------------------------------------ */
 
 export interface EmojiChoiceFieldProps {
@@ -22,7 +23,7 @@ export interface EmojiChoiceFieldProps {
   options: readonly string[];
   correctIndex: number;
   /** Which visual dress the options wear inside the game scene. */
-  variant?: 'grid' | 'balloon' | 'fish';
+  variant?: 'grid' | 'balloon' | 'fish' | 'mole' | 'food';
   /** Indexes already tapped wrongly - render dimmed/disabled. */
   wrongPicks?: readonly number[];
   disabled?: boolean;
@@ -83,6 +84,43 @@ export function EmojiChoiceField({
               style={{ animationDelay: `${i * 340}ms` }}
             >
               <span className="drop-shadow">{emoji}</span>
+            </button>
+          );
+        }
+        if (variant === 'mole') {
+          return (
+            <button
+              key={i}
+              type="button"
+              data-testid={`option-${i}`}
+              data-correct={i === correctIndex}
+              disabled={disabled || wrong}
+              onClick={() => onPick(i)}
+              className={`${base} mx-auto h-24 w-24 flex-col overflow-hidden rounded-b-full rounded-t-[2rem] border-b-8 border-amber-950/60 bg-gradient-to-b from-amber-800/70 to-amber-950/80 shadow-[inset_0_10px_18px_-6px_rgba(0,0,0,0.7)] active:scale-95 disabled:opacity-40 ${wrong ? 'game-shake' : ''}`}
+              aria-label={`Lỗ ${i + 1}`}
+            >
+              <span
+                className={`game-peek flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}
+                style={{ animationDelay: `${i * 300}ms` }}
+              >
+                {emoji}
+              </span>
+            </button>
+          );
+        }
+        if (variant === 'food') {
+          return (
+            <button
+              key={i}
+              type="button"
+              data-testid={`option-${i}`}
+              data-correct={i === correctIndex}
+              disabled={disabled || wrong}
+              onClick={() => onPick(i)}
+              className={`${base} game-bob mx-auto h-24 w-24 flex-col rounded-full border-4 border-amber-100/80 bg-gradient-to-b from-amber-50 to-orange-100 text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.7),0_10px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+              style={{ animationDelay: `${i * 240}ms` }}
+            >
+              <span className="drop-shadow-sm">{emoji}</span>
             </button>
           );
         }

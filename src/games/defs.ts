@@ -42,4 +42,28 @@ export const GAME_DEFS: readonly GameDef[] = [
     tagline: 'Trả lời để đặt X thắng máy',
     emoji: '⭕',
   },
+  {
+    id: 'whack-a-mole',
+    title: 'Đập chuột',
+    tagline: 'Nghe từ rồi đập con chuột đúng',
+    emoji: '🔨',
+  },
+  {
+    id: 'feed-the-pig',
+    title: 'Cho Heo ăn',
+    tagline: 'Chọn đúng đĩa để cho Heo ăn',
+    emoji: '🐷',
+  },
+  {
+    id: 'picture-reveal',
+    title: 'Lật tranh',
+    tagline: 'Trả lời đúng để lật mở bức tranh',
+    emoji: '🖼️',
+  },
+  {
+    id: 'treasure-chest',
+    title: 'Hòm kho báu',
+    tagline: 'Trả lời đúng để mở ổ khóa vàng',
+    emoji: '🧰',
+  },
 ];
