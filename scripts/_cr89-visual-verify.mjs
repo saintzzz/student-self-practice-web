@@ -35,6 +35,11 @@ const optVis = await page.locator('[data-testid="game-balloon-pop"] [data-emoji-
 check('balloon EmojiVisual options', optVis >= 4, `got ${optVis}`);
 const svgImgs = await page.locator('[data-testid="game-balloon-pop"] [data-emoji-visual] img').count();
 check('balloon svg/img rendered', svgImgs >= 4, `got ${svgImgs}`);
+// images must have actually loaded, not just mounted (r46)
+const loadedImgs = await page.locator('[data-testid="game-balloon-pop"] [data-emoji-visual] img').evaluateAll(
+  (imgs) => imgs.filter((i) => i.complete && i.naturalWidth > 0).length,
+);
+check('balloon svgs actually loaded', loadedImgs >= 4, `${loadedImgs}/${svgImgs} loaded`);
 await page.screenshot({ path: shot('cr89-balloon.png') });
 // lottie cap: at most 2 players on a game screen
 const lottieCount = await page.locator('[data-emoji-mode="lottie"]').count();
@@ -86,6 +91,11 @@ await page.locator('[data-testid="game-level-1"]').click();
 await page.waitForTimeout(4000);
 const gemLottie = await page.locator('[data-testid="gem-tally"] [data-emoji-mode="lottie"]').count();
 check('gem tally animates via lottie', gemLottie >= 1, `got ${gemLottie}`);
+// the clip must have rendered its first frame, not just entered lottie
+// mode - EmojiVisual sets data-emoji-ready once onReady fires (r46)
+await page.locator('[data-testid="gem-tally"] [data-emoji-ready="true"]').waitFor({ timeout: 10000 }).catch(() => {});
+const gemReady = await page.locator('[data-testid="gem-tally"] [data-emoji-mode="lottie"][data-emoji-ready="true"]').count();
+check('gem lottie actually playing', gemReady >= 1, `ready=${gemReady}`);
 const goldLottie = await page.locator('[data-emoji-mode="lottie"]').count();
 check('gold lottie budget <=2', goldLottie <= 2, `got ${goldLottie}`);
 await page.screenshot({ path: shot('cr89-gold.png') });
