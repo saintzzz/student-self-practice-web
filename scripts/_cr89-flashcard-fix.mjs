@@ -25,14 +25,18 @@ console.log('card:', await page.locator('[data-testid="flashcard-card"]').count(
 console.log('counter:', await page.locator('[data-testid="flashcard-counter"]').textContent());
 await page.screenshot({ path: shot('cr89-card1.png') });
 
+let failures = 0;
+const check = (ok, tag, detail) => {
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${tag}${detail ? ' - ' + detail : ''}`);
+  if (!ok) failures += 1;
+};
+
 const checkNoPan = async (tag) => {
   const sw = await page.evaluate(() => document.documentElement.scrollWidth);
   const iw = await page.evaluate(() => window.innerWidth);
   const sx = await page.evaluate(() => window.scrollX);
-  const box = await page.locator('[data-testid="flashcard-card"]').boundingBox();
-  console.log(`${tag}: scrollWidth=${sw} innerWidth=${iw} scrollX=${sx} cardLeft=${box?.x} cardRight=${box ? box.x + box.width : null}`);
-  const visible = box && box.x >= -5 && box.x + box.width <= iw + 5;
-  console.log(`${tag}: card fully in viewport = ${visible}`);
+  check(sw <= iw, `${tag}: no horizontal document overflow`, `scrollWidth=${sw} innerWidth=${iw}`);
+  check(sx === 0, `${tag}: viewport not panned`, `scrollX=${sx}`);
 };
 
 // Rate three cards via the KNOWN button (right fly-out = worst pan case)
@@ -42,18 +46,21 @@ for (let i = 0; i < 3; i++) {
   await checkNoPan(`mid-exit-${i}`);
   await page.waitForTimeout(600); // new card mounted
   await checkNoPan(`next-card-${i}`);
+  const box = await page.locator('[data-testid="flashcard-card"]').boundingBox();
+  check(!!box && box.x >= -5 && box.x + box.width <= 400, `next-card-${i}: card in viewport`, `x=${box?.x}`);
   console.log('counter now:', await page.locator('[data-testid="flashcard-counter"]').textContent());
 }
 await page.screenshot({ path: shot('cr89-card4.png') });
 
-// Buttons visible + solid
+// Buttons visible + solid (no translucent glass on the scenery)
 const again = page.locator('[data-testid="flashcard-again"]');
 const known = page.locator('[data-testid="flashcard-known"]');
 for (const [name, el] of [['again', again], ['known', known]]) {
-  const bg = await el.evaluate((n) => getComputedStyle(n).backgroundColor + '|' + getComputedStyle(n).backgroundImage);
-  const vb = await el.isVisible();
-  console.log(`${name} visible=${vb} bg=${bg}`);
+  const img = await el.evaluate((n) => getComputedStyle(n).backgroundImage);
+  check(await el.isVisible(), `${name} button visible`);
+  check(img.includes('gradient'), `${name} button is solid`, img.slice(0, 60));
 }
 
 await browser.close();
-console.log('DONE');
+if (failures) { console.log(`FAILED: ${failures} check(s)`); process.exit(1); }
+console.log('DONE - all checks passed');

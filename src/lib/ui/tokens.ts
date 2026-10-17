@@ -487,7 +487,10 @@ export const FLASH_SWIPE_LABEL_AGAIN =
 export const BTN_FLASH_AGAIN =
   'inline-flex items-center justify-center gap-2 rounded-2xl border-b-4 border-slate-900 bg-gradient-to-b from-slate-500 to-slate-700 px-5 font-extrabold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.28),0_8px_18px_-8px_rgba(0,0,0,0.55)] transition hover:brightness-110 active:translate-y-0.5 active:border-b-2 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 min-h-[76px]';
 export const BTN_FLASH_KNOWN =
-  'inline-flex items-center justify-center gap-2 rounded-2xl border-b-4 border-emerald-800 bg-gradient-to-b from-emerald-400 to-emerald-600 px-5 font-extrabold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_8px_18px_-8px_rgba(0,0,0,0.55)] transition hover:brightness-105 active:translate-y-0.5 active:border-b-2 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 min-h-[76px]';
+  /* Dark text on the candy gradient (r41: white on emerald-400 ~1.9:1
+     failed AA; emerald-950 on emerald-300/500 >=6:1 - same fix idiom as
+     the CR-87 hub tiles). */
+  'inline-flex items-center justify-center gap-2 rounded-2xl border-b-4 border-emerald-800 bg-gradient-to-b from-emerald-300 to-emerald-500 px-5 font-extrabold text-emerald-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_8px_18px_-8px_rgba(0,0,0,0.55)] transition hover:brightness-105 active:translate-y-0.5 active:border-b-2 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 min-h-[76px]';
 export const FLASH_PANEL = `${material.paperSlate} p-6 text-center`;
 export const CHIP_PAPER_EMERALD = `${CHIP_BASE} bg-emerald-100 text-emerald-800 ring-emerald-300`;
 export const CHIP_PAPER_SKY = `${CHIP_BASE} bg-sky-100 text-sky-800 ring-sky-300`;
