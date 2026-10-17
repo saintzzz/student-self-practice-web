@@ -1,0 +1,34 @@
+import { readFileSync, readdirSync } from 'fs';
+const KEY = 'sb_publishable_dHxiF6xvVWSbbbEdrnZWSg_TgzAgXpB';
+const BASE = 'https://cxjpgfhqchjoernfmcra.supabase.co';
+const files = readdirSync('_pron_eval').filter(f => f.endsWith('.webm'));
+const rows = [];
+for (const f of files) {
+  const target = f.replace(/_(good_child|good_adult|accent_vi|wrong_word)\.webm$/, '');
+  const audio = readFileSync(`_pron_eval/${f}`).toString('base64');
+  let status = 0, j = {};
+  try {
+    const res = await fetch(`${BASE}/functions/v1/practice-transcribe`, {
+      method:'POST', headers:{'Content-Type':'application/json',apikey:KEY,Authorization:`Bearer ${KEY}`},
+      body: JSON.stringify({audio, mimeType:'audio/webm', targetWord:target, mode:'assess'}),
+    });
+    status = res.status; j = await res.json().catch(()=>({}));
+  } catch(e) { j = {error: e.message}; }
+  rows.push({f, target, status, heard: j.transcript, accuracy: j.accuracy});
+  console.log(`${f.padEnd(30)} ${status} heard=${JSON.stringify(j.transcript)} acc=${j.accuracy}`);
+}
+// expected: pass for good_*+accent_vi, fail for wrong_word
+const buckets = {};
+let okN=0, badN=0, errN=0;
+for (const r of rows) {
+  const caze = r.f.match(/(good_child|good_adult|accent_vi|wrong_word)/)[1];
+  const expectPass = caze !== 'wrong_word';
+  if (r.status !== 200 || r.accuracy === undefined) { errN++; buckets[caze]=(buckets[caze]||[0,0]); continue; }
+  const pass = r.accuracy >= 70;
+  const behaved = pass === expectPass;
+  buckets[caze] = buckets[caze]||[0,0]; buckets[caze][behaved?0:1]++;
+  if (behaved) okN++; else badN++;
+}
+console.log('\n--- summary (assess mode, threshold 70) ---');
+for (const [c,[g,b]] of Object.entries(buckets)) console.log(`${c.padEnd(14)} ${g}/${g+b} behaved as expected`);
+console.log(`overall ${okN}/${okN+badN}  (errors excluded: ${errN})`);

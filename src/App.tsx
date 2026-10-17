@@ -50,6 +50,7 @@ import {
   submitPronunciationAnswer,
   submitTracingAnswer,
 } from './lib/practiceSession';
+import type { PronunciationScoringOptions } from './lib/rounds/pronunciationScoring';
 import type { Grade, TracingMeta } from './types';
 
 type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game';
@@ -351,9 +352,9 @@ export default function App() {
     setBatch(updateRoundSession(batch, (session) => submitExtraLetterAnswer(session, letterIndex)));
   }
 
-  function handleSubmitPronunciation(transcript: string): void {
+  function handleSubmitPronunciation(transcript: string, options?: PronunciationScoringOptions): void {
     if (!batch) return;
-    setBatch(updateRoundSession(batch, (session) => submitPronunciationAnswer(session, transcript)));
+    setBatch(updateRoundSession(batch, (session) => submitPronunciationAnswer(session, transcript, options)));
   }
 
   function handleSubmitPairMatching(isCorrect: boolean): void {

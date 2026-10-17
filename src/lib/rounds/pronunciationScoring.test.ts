@@ -264,5 +264,80 @@ describe('scorePronunciationAttempt', () => {
       expect(scorePronunciationAttempt(target, transcript).isCorrect).toBe(false);
     });
   });
+
+  describe('phoneme gate (CR-90)', () => {
+    // The corpus failure mode: a recognizer hears a DIFFERENT real word
+    // ("cut" for "cat") and text similarity alone lets it pass. With
+    // IPA/G2P phoneme comparison those must fail regardless of spelling.
+    it.each([
+      ['cat', 'cut'],
+      ['ship', 'sheep'],
+      ['bad', 'bed'],
+      ['three', 'tree'],
+      ['pig', 'big'],
+      ['rice', 'lice'],
+      ['elephant', 'elegant'],
+      ['bed', 'bird'],
+      ['pen', 'hen'],
+      ['school', 'skull'],
+      ['dog', 'doll'],
+      ['egg', 'leg'],
+      ['fish', 'fit'],
+    ])('fails the wrong-word transcript %s heard as %s', (target, heard) => {
+      const result = scorePronunciationAttempt(target, heard);
+      expect(result.score).toBeLessThan(PRONUNCIATION_CORRECT_THRESHOLD);
+      expect(result.isCorrect).toBe(false);
+    });
+
+    it('still accepts a homophone the recognizer spelled differently', () => {
+      // "eight" heard as "ate": identical phonemes, must pass.
+      expect(scorePronunciationAttempt('eight', 'ate').isCorrect).toBe(true);
+    });
+
+    it('accepts a differently-spelled phonetic match (recognizer respelling)', () => {
+      expect(scorePronunciationAttempt('cat', 'kat').isCorrect).toBe(true);
+    });
+  });
+
+  describe('server assess verdict (CR-90)', () => {
+    it('uses the provider accuracy as the score outright', () => {
+      const result = scorePronunciationAttempt('ship', 'chip', { serverScore: 95 });
+      expect(result.score).toBe(95);
+      expect(result.isCorrect).toBe(true);
+    });
+
+    it('fails a distorted-word verdict below the assess bar', () => {
+      const result = scorePronunciationAttempt('cat', 'cut', { serverScore: 60 });
+      expect(result.score).toBe(60);
+      expect(result.isCorrect).toBe(false);
+    });
+
+    it('rejects accuracy in the ambiguous 70-84 band (strict audio bar)', () => {
+      // big-for-pig graded 80 by the provider - recognizable but not clean.
+      const result = scorePronunciationAttempt('pig', 'big', { serverScore: 80 });
+      expect(result.isCorrect).toBe(false);
+    });
+
+    it('passes accuracy at the assess bar', () => {
+      expect(scorePronunciationAttempt('pig', 'pig', { serverScore: 85 }).isCorrect).toBe(true);
+    });
+
+    it('ignores the transcript entirely when serverScore is present', () => {
+      // Even a perfect transcript cannot rescue a bad audio verdict -
+      // the provider heard the real audio and scored it low.
+      expect(scorePronunciationAttempt('cat', 'cat', { serverScore: 30 }).isCorrect).toBe(false);
+      expect(scorePronunciationAttempt('cat', 'cat', { serverScore: 30 }).score).toBe(30);
+    });
+
+    it('clamps an out-of-range provider accuracy into 0-100', () => {
+      expect(scorePronunciationAttempt('cat', 'cat', { serverScore: 150 }).score).toBe(100);
+      expect(scorePronunciationAttempt('cat', 'cat', { serverScore: -5 }).score).toBe(0);
+    });
+
+    it('falls back to text scoring when serverScore is absent or invalid', () => {
+      expect(scorePronunciationAttempt('cat', 'cat', { serverScore: NaN }).score).toBe(100);
+      expect(scorePronunciationAttempt('cat', 'cat', {}).score).toBe(100);
+    });
+  });
 });
 

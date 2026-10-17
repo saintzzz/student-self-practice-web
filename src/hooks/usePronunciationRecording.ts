@@ -3,14 +3,19 @@ import {
   isSpeechRecognitionSupported,
   startSpeechRecognition,
   type SpeechRecognitionController,
+  type SpeechRecognitionSettle,
 } from '../lib/speechRecognition';
+import type { PronunciationScoringOptions } from '../lib/rounds/pronunciationScoring';
 import {
   isAudioRecordingSupported,
   isIOSOrIPadOS,
   startAudioRecording,
   type AudioRecordingController,
 } from '../lib/audioRecording';
-import { transcribePronunciationAudio } from '../lib/pronunciationTranscription';
+import {
+  isPronunciationServerConfigured,
+  transcribePronunciationAudio,
+} from '../lib/pronunciationTranscription';
 import { setMicRecording } from '../lib/speech';
 import { stopSfx } from '../lib/sfx';
 
@@ -64,24 +69,28 @@ type CaptureMode = 'sr' | 'recorder';
  * toward the expected utterance.
  */
 export function usePronunciationRecording(
-  onAttempt: (transcript: string) => void,
+  onAttempt: (transcript: string, options?: PronunciationScoringOptions) => void,
   targetWord = '',
 ): UsePronunciationRecordingResult {
   const srSupported = isSpeechRecognitionSupported();
   const recorderSupported = isAudioRecordingSupported();
-  // iOS goes straight to recorder even when SR's constructor exists -
-  // on-device dictation errors are the norm there. Anywhere else SR
-  // wins for latency/cost, with recorder as the safety net.
+  // CR-90: when the build carries Supabase env the recorder path reaches
+  // 'assess' mode - a provider hearing the audio and grading it against
+  // the target is strictly better than scoring an STT transcript, so it
+  // becomes the primary engine everywhere, not just on iOS. SR remains
+  // the fallback for guests-without-env builds and browsers without
+  // MediaRecorder.
+  const recorderUsable = recorderSupported && isPronunciationServerConfigured();
   const initialMode: CaptureMode | null = isIOSOrIPadOS()
-    ? recorderSupported
+    ? recorderUsable
       ? 'recorder'
       : srSupported
         ? 'sr'
         : null
-    : srSupported
-      ? 'sr'
-      : recorderSupported
-        ? 'recorder'
+    : recorderUsable
+      ? 'recorder'
+      : srSupported
+        ? 'sr'
         : null;
 
   const [phase, setPhase] = useState<PronunciationPhase>(() =>
@@ -146,7 +155,7 @@ export function usePronunciationRecording(
   }, [phase]);
 
   const finish = useCallback(
-    (finalTranscript: string) => {
+    (finalTranscript: string, options?: PronunciationScoringOptions) => {
       if (settledRef.current || unmountedRef.current) return;
       /* CR-83 mishear guard: a transcript far longer than the target
          ("i am a student" vs target "egg") is the mic capturing
@@ -176,7 +185,7 @@ export function usePronunciationRecording(
       // phase effect cannot release suppression - the feedback screen's
       // "Nghe mẫu" would stay dead. Release here for every engine.
       setMicRecording(false);
-      onAttempt(finalTranscript);
+      onAttempt(finalTranscript, options);
     },
     [onAttempt, targetWord],
   );
@@ -244,7 +253,13 @@ export function usePronunciationRecording(
       targetWord.trim().split(/\s+/).filter(Boolean).length,
     );
     const controller = startSpeechRecognition({
-      onResult: (transcript) => finish(transcript),
+      // CR-90: forward the recognizer's alternates + confidence so the
+      // scorer can evaluate every hypothesis, not just top-1.
+      onResult: (settle: SpeechRecognitionSettle) =>
+        finish(settle.transcript, {
+          alternatives: settle.alternatives,
+          confidence: settle.confidence,
+        }),
       onInterim: (text) => {
         setHeardText(text);
         const heard = text.trim().split(/\s+/).filter(Boolean).length;
@@ -313,20 +328,22 @@ export function usePronunciationRecording(
     try {
       const blob = await controller.stop();
       if (unmountedRef.current) return;
-      const transcript = await transcribePronunciationAudio(blob, targetWord);
-      if (transcript === null) {
+      const result = await transcribePronunciationAudio(blob, targetWord);
+      if (result === null) {
         setErrorReason('transcription');
         setPhase('error');
         return;
       }
-      if (transcript === '') {
+      if (result.transcript === '') {
         // Recorded fine but nothing intelligible - same affordance as
         // SR's silence path: retryable error, not an empty submission.
         setErrorReason('no-speech');
         setPhase('error');
         return;
       }
-      finish(transcript);
+      // CR-90: a present score = the provider graded the audio itself;
+      // absent = plain transcript, the local scorer still applies.
+      finish(result.transcript, result.score !== undefined ? { serverScore: result.score } : undefined);
     } catch {
       setErrorReason('audio-capture');
       setPhase('error');

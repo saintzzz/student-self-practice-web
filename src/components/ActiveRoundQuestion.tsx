@@ -7,7 +7,7 @@ interface ActiveRoundQuestionProps {
   onSubmitOption: (index: number) => void;
   onSubmitListening: (typedAnswer: string) => void;
   onSubmitExtraLetter: (letterIndex: number) => void;
-  onSubmitPronunciation: (transcript: string) => void;
+  onSubmitPronunciation: (transcript: string, options?: import('../lib/rounds/pronunciationScoring').PronunciationScoringOptions) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
   /** CR-82 (D-10): letter-tracing submit carries TracingMeta. */
   onSubmitTracing?: (isCorrect: boolean, meta: TracingMeta) => void;

@@ -1,0 +1,340 @@
+[
+  {
+    "target": "cat",
+    "kind": "good_child",
+    "spoken": "cat",
+    "transcript": "cat",
+    "resp": null
+  },
+  {
+    "target": "cat",
+    "kind": "good_adult",
+    "spoken": "cat",
+    "transcript": "Kate",
+    "resp": null
+  },
+  {
+    "target": "cat",
+    "kind": "accent_vi",
+    "spoken": "cat",
+    "transcript": "cat",
+    "resp": null
+  },
+  {
+    "target": "cat",
+    "kind": "wrong_word",
+    "spoken": "cut",
+    "transcript": "cut",
+    "resp": null
+  },
+  {
+    "target": "dog",
+    "kind": "good_child",
+    "spoken": "dog",
+    "transcript": "dog",
+    "resp": null
+  },
+  {
+    "target": "dog",
+    "kind": "good_adult",
+    "spoken": "dog",
+    "transcript": "dog",
+    "resp": null
+  },
+  {
+    "target": "dog",
+    "kind": "accent_vi",
+    "spoken": "dog",
+    "transcript": null,
+    "resp": {
+      "__error": "tts-failed"
+    }
+  },
+  {
+    "target": "dog",
+    "kind": "wrong_word",
+    "spoken": "doll",
+    "transcript": "doll",
+    "resp": null
+  },
+  {
+    "target": "egg",
+    "kind": "good_child",
+    "spoken": "egg",
+    "transcript": "egg",
+    "resp": null
+  },
+  {
+    "target": "egg",
+    "kind": "good_adult",
+    "spoken": "egg",
+    "transcript": "egg",
+    "resp": null
+  },
+  {
+    "target": "egg",
+    "kind": "accent_vi",
+    "spoken": "egg",
+    "transcript": "F",
+    "resp": null
+  },
+  {
+    "target": "egg",
+    "kind": "wrong_word",
+    "spoken": "leg",
+    "transcript": "leg",
+    "resp": null
+  },
+  {
+    "target": "fish",
+    "kind": "good_child",
+    "spoken": "fish",
+    "transcript": "fish",
+    "resp": null
+  },
+  {
+    "target": "fish",
+    "kind": "good_adult",
+    "spoken": "fish",
+    "transcript": "fish",
+    "resp": null
+  },
+  {
+    "target": "fish",
+    "kind": "accent_vi",
+    "spoken": "fish",
+    "transcript": "fit",
+    "resp": null
+  },
+  {
+    "target": "fish",
+    "kind": "wrong_word",
+    "spoken": "fizz",
+    "transcript": "fiz",
+    "resp": null
+  },
+  {
+    "target": "pig",
+    "kind": "good_child",
+    "spoken": "pig",
+    "transcript": "pig",
+    "resp": null
+  },
+  {
+    "target": "pig",
+    "kind": "good_adult",
+    "spoken": "pig",
+    "transcript": "pig",
+    "resp": null
+  },
+  {
+    "target": "pig",
+    "kind": "accent_vi",
+    "spoken": "pig",
+    "transcript": "P",
+    "resp": null
+  },
+  {
+    "target": "pig",
+    "kind": "wrong_word",
+    "spoken": "big",
+    "transcript": "big",
+    "resp": null
+  },
+  {
+    "target": "three",
+    "kind": "good_child",
+    "spoken": "three",
+    "transcript": "three",
+    "resp": null
+  },
+  {
+    "target": "three",
+    "kind": "good_adult",
+    "spoken": "three",
+    "transcript": "three",
+    "resp": null
+  },
+  {
+    "target": "three",
+    "kind": "accent_vi",
+    "spoken": "three",
+    "transcript": "he",
+    "resp": null
+  },
+  {
+    "target": "three",
+    "kind": "wrong_word",
+    "spoken": "tree",
+    "transcript": "tree",
+    "resp": null
+  },
+  {
+    "target": "school",
+    "kind": "good_child",
+    "spoken": "school",
+    "transcript": "school",
+    "resp": null
+  },
+  {
+    "target": "school",
+    "kind": "good_adult",
+    "spoken": "school",
+    "transcript": "school",
+    "resp": null
+  },
+  {
+    "target": "school",
+    "kind": "accent_vi",
+    "spoken": "school",
+    "transcript": "come",
+    "resp": null
+  },
+  {
+    "target": "school",
+    "kind": "wrong_word",
+    "spoken": "skull",
+    "transcript": "skull",
+    "resp": null
+  },
+  {
+    "target": "ship",
+    "kind": "good_child",
+    "spoken": "ship",
+    "transcript": "chip",
+    "resp": null
+  },
+  {
+    "target": "ship",
+    "kind": "good_adult",
+    "spoken": "ship",
+    "transcript": "ship",
+    "resp": null
+  },
+  {
+    "target": "ship",
+    "kind": "accent_vi",
+    "spoken": "ship",
+    "transcript": "sheep",
+    "resp": null
+  },
+  {
+    "target": "ship",
+    "kind": "wrong_word",
+    "spoken": "sheep",
+    "transcript": "sheep",
+    "resp": null
+  },
+  {
+    "target": "bed",
+    "kind": "good_child",
+    "spoken": "bed",
+    "transcript": "bed",
+    "resp": null
+  },
+  {
+    "target": "bed",
+    "kind": "good_adult",
+    "spoken": "bed",
+    "transcript": "bed",
+    "resp": null
+  },
+  {
+    "target": "bed",
+    "kind": "accent_vi",
+    "spoken": "bed",
+    "transcript": "bed",
+    "resp": null
+  },
+  {
+    "target": "bed",
+    "kind": "wrong_word",
+    "spoken": "bird",
+    "transcript": "bird",
+    "resp": null
+  },
+  {
+    "target": "pen",
+    "kind": "good_child",
+    "spoken": "pen",
+    "transcript": "pen",
+    "resp": null
+  },
+  {
+    "target": "pen",
+    "kind": "good_adult",
+    "spoken": "pen",
+    "transcript": "pen",
+    "resp": null
+  },
+  {
+    "target": "pen",
+    "kind": "accent_vi",
+    "spoken": "pen",
+    "transcript": "pen",
+    "resp": null
+  },
+  {
+    "target": "pen",
+    "kind": "wrong_word",
+    "spoken": "hen",
+    "transcript": "hen",
+    "resp": null
+  },
+  {
+    "target": "elephant",
+    "kind": "good_child",
+    "spoken": "elephant",
+    "transcript": "elephant",
+    "resp": null
+  },
+  {
+    "target": "elephant",
+    "kind": "good_adult",
+    "spoken": "elephant",
+    "transcript": "elephant",
+    "resp": null
+  },
+  {
+    "target": "elephant",
+    "kind": "accent_vi",
+    "spoken": "elephant",
+    "transcript": "FFN",
+    "resp": null
+  },
+  {
+    "target": "elephant",
+    "kind": "wrong_word",
+    "spoken": "elegant",
+    "transcript": "elegant",
+    "resp": null
+  },
+  {
+    "target": "rice",
+    "kind": "good_child",
+    "spoken": "rice",
+    "transcript": "rice",
+    "resp": null
+  },
+  {
+    "target": "rice",
+    "kind": "good_adult",
+    "spoken": "rice",
+    "transcript": "rice",
+    "resp": null
+  },
+  {
+    "target": "rice",
+    "kind": "accent_vi",
+    "spoken": "rice",
+    "transcript": "right",
+    "resp": null
+  },
+  {
+    "target": "rice",
+    "kind": "wrong_word",
+    "spoken": "lice",
+    "transcript": "lice",
+    "resp": null
+  }
+]

@@ -21,7 +21,7 @@ interface BatchScreenProps {
   onSubmitOption: (index: number) => void;
   onSubmitListening: (typedAnswer: string) => void;
   onSubmitExtraLetter: (letterIndex: number) => void;
-  onSubmitPronunciation: (transcript: string) => void;
+  onSubmitPronunciation: (transcript: string, options?: import('../lib/rounds/pronunciationScoring').PronunciationScoringOptions) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
   /** CR-82 (D-10): tracing submits carry TracingMeta (assisted flag). */
   onSubmitTracing?: (isCorrect: boolean, meta: TracingMeta) => void;

@@ -1,6 +1,6 @@
 import type { AnswerRecord, ListeningFillBlankQuestion, ListeningSentenceFillBlankQuestion, Question, SessionResult, TracingMeta } from '../types';
 import { formatCountLabel } from './generators/countingImage';
-import { scorePronunciationAttempt } from './rounds/pronunciationScoring';
+import { scorePronunciationAttempt, type PronunciationScoringOptions } from './rounds/pronunciationScoring';
 
 export interface CurrentAnswer {
   isCorrect: boolean;
@@ -194,6 +194,7 @@ export function submitExtraLetterAnswer(
 export function submitPronunciationAnswer(
   state: PracticeSessionState,
   transcript: string,
+  options?: PronunciationScoringOptions,
 ): PracticeSessionState {
   if (hasAnsweredCurrent(state)) {
     return state;
@@ -204,7 +205,9 @@ export function submitPronunciationAnswer(
     return state;
   }
 
-  const { score, isCorrect } = scorePronunciationAttempt(currentQuestion.word, transcript);
+  // CR-90: options carries the recognizer's alternate transcripts +
+  // confidence (browser SR path); the server recorder path passes neither.
+  const { score, isCorrect } = scorePronunciationAttempt(currentQuestion.word, transcript, options);
   return recordAnswer(
     state,
     { isCorrect, pronunciationTranscript: transcript, pronunciationScore: score },

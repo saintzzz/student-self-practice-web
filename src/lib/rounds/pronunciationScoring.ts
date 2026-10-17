@@ -55,7 +55,16 @@
  *   across all candidates is returned.
  * - isCorrect = score >= PRONUNCIATION_CORRECT_THRESHOLD (70), unchanged.
  */
+import { WORD_IPA } from '../../data/ipaMap';
+
 export const PRONUNCIATION_CORRECT_THRESHOLD = 70;
+/**
+ * Pass bar for a server 'assess' accuracy verdict. Stricter than the
+ * transcript threshold: the provider heard the audio, and the CR-90
+ * corpus shows correct speech clusters at 95-100 while wrong words and
+ * distorted attempts cluster at 40-80. 85 splits the bands cleanly.
+ */
+export const ASSESS_PASS_MIN = 85;
 
 /** Text similarity carries most of the weight; phonetic similarity is a fairness boost, not a dominant signal. */
 const TEXT_SIMILARITY_WEIGHT = 0.7;
@@ -198,6 +207,132 @@ export function phoneticSimilarity(target: string, candidate: string): number {
   return Math.max(0, 1 - distance / maxLength);
 }
 
+/**
+ * CR-90 phoneme layer. Both sides of the comparison normalize into ONE
+ * compact phoneme code alphabet, so every token is comparable:
+ *   - words present in WORD_IPA (the vocab bank, ~1.1k words) use their
+ *     curated American IPA -> symbols folded to single-char codes;
+ *   - out-of-vocabulary tokens (whatever the recognizer heard - "cut",
+ *     "Kate", "elegant") go through a small rule-based grapheme->phoneme
+ *     (`g2pCode`) that keeps vowel quality and digraphs.
+ * The Soundex-style code above drops every vowel, so it is blind to the
+ * exact errors Vietnamese kids make most (ship/sheep, bad/bed). This
+ * code keeps them: ʃɪp -> "Sip" vs ʃip -> "SIp" now differ.
+ */
+
+/** IPA symbol -> code char. Longest match wins while scanning. */
+const IPA_CODE_MAP: Record<string, string> = {
+  'tʃ': 'C', 'ʧ': 'C', 'dʒ': 'J', 'ʤ': 'J',
+  'iː': 'I', 'uː': 'u', 'ɜːr': 'R', 'ɜr': 'R', 'ər': 'R', 'ɚ': 'R',
+  'aɪ': 'Y', 'aʊ': 'W', 'ɔɪ': 'Q', 'eɪ': 'A', 'oʊ': 'O',
+  'ɪ': 'i', 'i': 'I', 'ɛ': 'E', 'e': 'E', 'æ': 'a',
+  // schwa folds INTO the e-class so "elephant"/"elephent" spellings agree.
+  'ʌ': 'V', 'ə': 'E', 'ɑː': 'o', 'ɑ': 'o', 'ɔː': 'o', 'ɔ': 'o', 'ɒ': 'o',
+  'ʊ': 'U', 'u': 'u', 'o': 'O',
+  'ʃ': 'S', 'ʒ': 'Z', 'θ': 'T', 'ð': 'D', 'ŋ': 'N', 'j': 'j',
+  'ˈ': '', 'ˌ': '', 'ː': '', ' ': ' ', "'": '', '.': '',
+};
+
+function ipaToCode(ipa: string): string {
+  let out = '';
+  let i = 0;
+  while (i < ipa.length) {
+    let matched = false;
+    for (const len of [3, 2]) {
+      const sym = ipa.slice(i, i + len);
+      const code = IPA_CODE_MAP[sym];
+      if (code !== undefined) {
+        out += code;
+        i += len;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      const ch = ipa[i]!;
+      out += IPA_CODE_MAP[ch] ?? (/[a-z]/.test(ch) ? ch : '');
+      i += 1;
+    }
+  }
+  return out;
+}
+
+/**
+ * Compact rule-based grapheme->phoneme for OOV transcript words. Not a
+ * real G2P - it only needs to be CONSISTENT with `ipaToCode` on common
+ * words, so digraphs + short/long vowels + silent-e suffice. Applied to
+ * lowercased a-z text.
+ */
+function g2pCode(word: string): string {
+  // silent-e lengthens the preceding vowel (rate/kite/hope/cute)
+  let w = word.replace(/([aeiou])([bcdfgjklmnpqrstvwxz]{1,2})e\b/g, (_m, v: string, c: string) => {
+    const long: Record<string, string> = { a: 'A', e: 'I', i: 'Y', o: 'O', u: 'ju' };
+    return (long[v] ?? v) + c;
+  });
+  // digraphs/trigraphs first (longest patterns before single letters)
+  const rules: [RegExp, string][] = [
+    [/tch/g, 'C'], [/dge/g, 'J'], [/sch/g, 'sk'],
+    [/ph/g, 'f'], [/th/g, 'T'], [/sh/g, 'S'], [/ch/g, 'C'],
+    [/ck/g, 'k'], [/qu/g, 'kw'], [/ng/g, 'N'], [/wh/g, 'w'],
+    [/wr/g, 'r'], [/kn/g, 'n'], [/gn/g, 'n'], [/mb\b/g, 'm'], [/igh/g, 'Y'], [/gh/g, 'g'],
+    [/ee/g, 'I'], [/ea/g, 'I'], [/ey/g, 'I'], [/ie/g, 'I'],
+    [/ai/g, 'A'], [/ay/g, 'A'], [/oa/g, 'O'], [/ow/g, 'O'],
+    [/oo/g, 'u'], [/ou/g, 'W'], [/au/g, 'o'], [/aw/g, 'o'],
+    [/oi/g, 'Q'], [/oy/g, 'Q'],
+    [/eer/g, 'ir'], [/ear/g, 'ir'], [/oor/g, 'or'],
+    [/ar/g, 'Or'], [/or/g, 'or'], [/er/g, 'e'], [/ir/g, 'e'], [/ur/g, 'e'],
+    [/c(?=[eiy])/g, 's'], [/g(?=[eiy])/g, 'J'],
+    [/c/g, 'k'], [/x/g, 'ks'], [/y/g, 'i'],
+  ];
+  for (const [re, rep] of rules) w = w.replace(re, rep);
+  // remaining single vowels -> short codes
+  return w
+    .replace(/a/g, 'a').replace(/e/g, 'E').replace(/i/g, 'i')
+    .replace(/o/g, 'o').replace(/u/g, 'V')
+    .replace(/(.)\1+/g, '$1'); // collapse doubled consonants (ll, ss)
+}
+
+/** One phoneme code per token; WORD_IPA when curated, else g2pCode. */
+export function phonemeCode(word: string): string {
+  const lower = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!lower) return '';
+  const ipa = WORD_IPA[lower];
+  return ipa ? ipaToCode(ipa) : g2pCode(lower);
+}
+
+/**
+ * Phoneme-level similarity in [0,1] - the best token pair across both
+ * sides (a transcript like "a cat" still matches target "cat"). A final
+ * plural -s/-z on the heard word is scored both ways ("cats" ~ "cat" =
+ * perfect) since a correctly pronounced word is often transcribed with
+ * a stray plural marker.
+ */
+export function phonemeSimilarity(target: string, candidate: string): number {
+  const tCodes = target.split(' ').map(phonemeCode).filter(Boolean);
+  const cCodes = candidate.split(' ').map(phonemeCode).filter(Boolean);
+  if (tCodes.length === 0 || cCodes.length === 0) return 0;
+
+  let best = 0;
+  for (const t of tCodes) {
+    for (const c of cCodes) {
+      for (const cv of [c, c.replace(/[sz]$/, '')]) {
+        if (!cv) continue;
+        const distance = levenshteinDistance(t, cv);
+        best = Math.max(best, 1 - distance / Math.max(t.length, cv.length));
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * A candidate that is a phonemically DIFFERENT word below this floor is a
+ * miss, not a near-success - otherwise text similarity alone lets "sheep"
+ * pass for "ship". Homophones (two/too, eight/ate) resolve to identical
+ * codes and sail through at 1.0 - correct behavior.
+ */
+const IPA_ACCEPT_MIN = 0.8;
+
 export interface PronunciationScoreResult {
   score: number;
   isCorrect: boolean;
@@ -215,10 +350,16 @@ export interface PronunciationScoreResult {
  *   `transcript` plus each alternative) is scored and the best one wins.
  * - `confidence`: the `SpeechRecognitionAlternative.confidence` value
  *   (0-1) for the transcript being scored, if the browser reports one.
+ * - `serverScore`: pronunciation accuracy (0-100) returned by the
+ *   practice-transcribe 'assess' mode - the provider listened to the
+ *   audio directly, so it is a real pronunciation judgment that text
+ *   similarity can never produce. When present it IS the score and the
+ *   local similarity math is skipped entirely.
  */
 export interface PronunciationScoringOptions {
   alternatives?: string[];
   confidence?: number;
+  serverScore?: number;
 }
 
 /** Scores a single normalized candidate transcript against the normalized target. Returns a score in [0, 100]. */
@@ -234,9 +375,12 @@ function scoreCandidate(normalizedTarget: string, normalizedCandidate: string, c
   const distance = levenshteinDistance(normalizedTarget, normalizedCandidate);
   const maxLength = Math.max(normalizedTarget.length, normalizedCandidate.length);
   const textSimilarity = maxLength === 0 ? 0 : Math.max(0, 1 - distance / maxLength);
-  const phoneticSimilarityScore = phoneticSimilarity(normalizedTarget, normalizedCandidate);
+  // CR-90: phoneme-level similarity (WORD_IPA + g2p fallback) replaces the
+  // vowel-blind Soundex code - it is the signal that actually hears
+  // ship-vs-sheep.
+  const phoneme = phonemeSimilarity(normalizedTarget, normalizedCandidate);
 
-  let combinedSimilarity = TEXT_SIMILARITY_WEIGHT * textSimilarity + PHONETIC_SIMILARITY_WEIGHT * phoneticSimilarityScore;
+  let combinedSimilarity = TEXT_SIMILARITY_WEIGHT * textSimilarity + PHONETIC_SIMILARITY_WEIGHT * phoneme;
 
   if (confidence !== undefined) {
     const clampedConfidence = Math.min(1, Math.max(0, confidence));
@@ -244,7 +388,25 @@ function scoreCandidate(normalizedTarget: string, normalizedCandidate: string, c
     combinedSimilarity *= confidenceFactor;
   }
 
-  return Math.round(Math.min(1, Math.max(0, combinedSimilarity)) * 100);
+  let score = Math.round(Math.min(1, Math.max(0, combinedSimilarity)) * 100);
+  // CR-90: identical phoneme codes mean the recognizer heard the SAME
+  // pronunciation with a different spelling ("eight" -> "ate") - that is
+  // a correct utterance whatever the edit distance says. The floor rides
+  // the same confidence factor so an unsure hypothesis is still softer
+  // than a confident one.
+  if (phoneme >= 0.99) {
+    const confidenceFactor =
+      confidence === undefined
+        ? 1
+        : CONFIDENCE_MIN_FACTOR + (1 - CONFIDENCE_MIN_FACTOR) * Math.min(1, Math.max(0, confidence));
+    score = Math.max(score, Math.round(95 * confidenceFactor));
+  }
+  // CR-90 hard gate: a transcript that is a phonemically different real
+  // word (below the phoneme floor) is a miss, not a near-success.
+  if (phoneme < IPA_ACCEPT_MIN) {
+    score = Math.min(score, PRONUNCIATION_CORRECT_THRESHOLD - 1);
+  }
+  return score;
 }
 
 /**
@@ -257,6 +419,18 @@ export function scorePronunciationAttempt(
   transcript: string,
   options?: PronunciationScoringOptions,
 ): PronunciationScoreResult {
+  // CR-90: a server 'assess' verdict short-circuits text similarity - the
+  // provider heard the audio and graded it against the target directly.
+  // Corpus calibration (48 synthetic clips, CR-90 eval): clearly-correct
+  // speech lands 95-100 while wrong words / distorted attempts sit at
+  // 60-80, so the pass bar for audio-graded attempts is stricter than the
+  // transcript path's 70.
+  const server = options?.serverScore;
+  if (typeof server === 'number' && Number.isFinite(server)) {
+    const score = Math.round(Math.min(100, Math.max(0, server)));
+    return { score, isCorrect: score >= ASSESS_PASS_MIN };
+  }
+
   const normalizedTarget = normalizeForPronunciationComparison(targetWord);
   const candidateTranscripts = [transcript, ...(options?.alternatives ?? [])];
 

@@ -43,7 +43,7 @@ describe('QuestionCard (pronunciation-recording)', () => {
     await user.click(screen.getByTestId('record-button'));
 
     await waitFor(() => expect(screen.getByTestId('recording-indicator')).toBeVisible());
-    await waitFor(() => expect(onSubmitPronunciation).toHaveBeenCalledWith('practice attempt'));
+    await waitFor(() => expect(onSubmitPronunciation).toHaveBeenCalledWith('practice attempt', expect.anything()));
   });
 
   it('shows pronunciation-feedback (not the shared answer-feedback) once answered', () => {

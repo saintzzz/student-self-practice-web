@@ -14,7 +14,8 @@ vi.mock('../lib/audioRecording', () => ({
   startAudioRecording: vi.fn(),
 }));
 vi.mock('../lib/pronunciationTranscription', () => ({
-  transcribePronunciationAudio: vi.fn(async () => 'apple'),
+  isPronunciationServerConfigured: () => true,
+  transcribePronunciationAudio: vi.fn(async () => ({ transcript: 'apple' })),
 }));
 
 const startRec = vi.mocked(startAudioRecording);

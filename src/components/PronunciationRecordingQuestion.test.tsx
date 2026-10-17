@@ -73,7 +73,7 @@ describe('PronunciationRecordingQuestion', () => {
     expect(screen.queryByTestId('record-button')).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('pronunciation-skip-button'));
-    expect(onSubmit).toHaveBeenCalledWith('');
+    expect(onSubmit).toHaveBeenCalledWith('', undefined);
 
     testWindow().SpeechRecognition = original.SpeechRecognition;
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
@@ -123,7 +123,7 @@ describe('PronunciationRecordingQuestion', () => {
       expect(screen.queryByTestId('record-button')).not.toBeInTheDocument();
 
       await user.click(screen.getByTestId('pronunciation-skip-button'));
-      expect(onSubmit).toHaveBeenCalledWith('');
+      expect(onSubmit).toHaveBeenCalledWith('', undefined);
     } finally {
       testWindow().SpeechRecognition = original.SpeechRecognition;
       testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;

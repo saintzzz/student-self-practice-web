@@ -136,7 +136,7 @@ describe('startSpeechRecognition', () => {
 
     created!.onresult?.(makeResultEvent('cat'));
 
-    expect(onResult).toHaveBeenCalledWith('cat');
+    expect(onResult).toHaveBeenCalledWith({ transcript: 'cat', alternatives: [], confidence: 0.9 });
   });
 
   it('routes a not-allowed error to onPermissionError', () => {

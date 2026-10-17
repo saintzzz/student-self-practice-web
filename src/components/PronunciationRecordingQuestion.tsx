@@ -17,7 +17,7 @@ interface PronunciationRecordingQuestionProps {
   transcript: string | null;
   score: number | null;
   isCorrect: boolean | null;
-  onSubmit: (transcript: string) => void;
+  onSubmit: (transcript: string, options?: import('../lib/rounds/pronunciationScoring').PronunciationScoringOptions) => void;
   /** kids-UX s3.2: round-scoped key for the (now silent) instruction speaker. */
   speakerKey?: string;
 }

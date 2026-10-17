@@ -72,6 +72,129 @@ function json(body: unknown, status = 200, req?: Request) {
   });
 }
 
+// CR-90 assess mode: instead of guessing the words, the provider listens
+// to the audio and grades it against the known target directly - the same
+// judgment a teacher makes. Transcript-based scoring can never tell
+// "cat" said correctly from "cat" spelled wrong ("Kate"); accuracy can.
+// Returns {heard, accuracy 0-100} or an __ERR_/null like the transcribe
+// helpers. Providers that cannot grade audio (Whisper) are skipped in
+// assess mode - the caller falls back to plain transcription and scores
+// the transcript client-side.
+interface AssessResult {
+  heard: string;
+  accuracy: number;
+}
+
+const ASSESS_PROMPT =
+  'You are grading an English pronunciation attempt by a Vietnamese primary-school child. ' +
+  'The child was asked to say this word or phrase: "__TARGET__". ' +
+  'Listen to the audio carefully. Reply with ONLY a JSON object, no markdown: ' +
+  '{"heard": "<the closest English words the child actually said>", "accuracy": <0-100>}. ' +
+  'accuracy scores how close the sounds are to the target pronunciation: ' +
+  '90-100 clearly correct (a child accent is fine), 70-89 recognizable as the target ' +
+  'with minor distortion, 40-69 badly distorted or a different-sounding attempt, ' +
+  '0-39 a clearly different English word, silence, or unintelligible. ' +
+  'Do not assume the child said the target - judge what you actually hear.';
+
+function parseAssessJson(text: string | null): AssessResult | null {
+  if (!text) return null;
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const j = JSON.parse(m[0]) as { heard?: unknown; accuracy?: unknown };
+    const heard = typeof j.heard === 'string' ? j.heard.trim() : '';
+    const accuracy =
+      typeof j.accuracy === 'number' ? Math.max(0, Math.min(100, Math.round(j.accuracy))) : NaN;
+    if (Number.isNaN(accuracy)) return null;
+    return { heard, accuracy };
+  } catch {
+    return null;
+  }
+}
+
+async function assessGemini(
+  key: string,
+  model: string,
+  audioB64: string,
+  mimeType: string,
+  targetWord: string,
+): Promise<AssessResult | null | string> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: ASSESS_PROMPT.replace('__TARGET__', targetWord) },
+              { inline_data: { mime_type: mimeType, data: audioB64 } },
+            ],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 128,
+          temperature: 0,
+          responseMimeType: 'application/json',
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      }),
+    },
+  );
+  if (!res.ok) return `__ERR_${res.status}:${(await res.text()).slice(0, 200)}`;
+  const data = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  };
+  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? null;
+  return parseAssessJson(text);
+}
+
+async function assessOpenRouter(
+  key: string,
+  model: string,
+  baseUrl: string,
+  audioB64: string,
+  mimeType: string,
+  targetWord: string,
+): Promise<AssessResult | null | string> {
+  const format = mimeType.includes('mp4') || mimeType.includes('aac') || mimeType.includes('m4a')
+    ? 'mp4'
+    : mimeType.includes('wav')
+      ? 'wav'
+      : 'webm';
+  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: ASSESS_PROMPT.replace('__TARGET__', targetWord) },
+            { type: 'input_audio', input_audio: { data: audioB64, format } },
+          ],
+        },
+      ],
+      max_tokens: 96,
+      temperature: 0,
+      response_format: { type: 'json_object' },
+    }),
+  });
+  if (!res.ok) return `__ERR_${res.status}:${(await res.text()).slice(0, 200)}`;
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  return parseAssessJson(data.choices?.[0]?.message?.content?.trim() ?? null);
+}
+
 // Gemini transcribes audio sent as inline_data; OpenRouter uses
 // chat/completions with input_audio (OpenAI-compatible); OpenAI uses
 // the whisper transcription endpoint (multipart upload).
@@ -235,6 +358,9 @@ Deno.serve(async (req: Request) => {
     const audioB64 = String(body?.audio ?? '');
     const mimeType = String(body?.mimeType ?? 'audio/webm');
     const targetWord = String(body?.targetWord ?? '').slice(0, 200);
+    // CR-90: 'assess' asks providers to grade the audio against the
+    // target directly; anything else keeps the plain transcript path.
+    const mode = String(body?.mode ?? 'transcribe');
 
     if (!audioB64 || !targetWord) {
       return json({ error: 'missing audio or targetWord' }, 400, req);
@@ -259,6 +385,47 @@ Deno.serve(async (req: Request) => {
     // or 503-ing head key never serializes the whole chain.
     const details: string[] = [];
     const deadline = Date.now() + OVERALL_BUDGET_MS;
+
+    // CR-90 assess pass: only providers that can hear + grade (gemini,
+    // openrouter). A success returns {transcript, accuracy} and ends the
+    // request; total failure falls through to the plain transcribe chain
+    // below so the client can still score a transcript locally.
+    if (mode === 'assess') {
+      const graders = ais.filter((ai) =>
+        ['gemini', 'openrouter'].includes(String(ai.provider ?? 'gemini').toLowerCase()),
+      );
+      for (const ai of graders) {
+        if (Date.now() >= deadline) {
+          details.push('timeout:budget');
+          break;
+        }
+        const provider = String(ai.provider ?? 'gemini').toLowerCase();
+        const model =
+          (ai.model as string) ??
+          (provider === 'openrouter' ? 'google/gemini-2.5-flash' : 'gemini-2.5-flash');
+        try {
+          const r =
+            provider === 'openrouter'
+              ? await assessOpenRouter(
+                  String(ai.api_key),
+                  model,
+                  String(ai.base_url ?? 'https://openrouter.ai/api/v1'),
+                  audioB64,
+                  mimeType,
+                  targetWord,
+                )
+              : await assessGemini(String(ai.api_key), model, audioB64, mimeType, targetWord);
+          if (r !== null && !(typeof r === 'string' && r.startsWith('__ERR_'))) {
+            return json({ transcript: r.heard, accuracy: r.accuracy }, 200, req);
+          }
+          details.push(typeof r === 'string' ? r.slice(0, 160) : `${provider}:no-json`);
+        } catch {
+          details.push(`${provider}:throw`);
+        }
+      }
+      // All graders failed - fall through to plain transcription.
+      details.push('assess:fallback');
+    }
 
     const attempt = async (ai: Record<string, unknown>): Promise<string | null> => {
       const provider = String(ai.provider ?? 'gemini').toLowerCase();

@@ -18,6 +18,7 @@ vi.mock('../lib/audioRecording', () => ({
 
 const transcribeMock = vi.hoisted(() => vi.fn());
 vi.mock('../lib/pronunciationTranscription', () => ({
+  isPronunciationServerConfigured: () => true,
   transcribePronunciationAudio: (...args: unknown[]) => transcribeMock(...args),
 }));
 
@@ -98,7 +99,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     testWindow().SpeechRecognition = DenyingRecognition;
     testWindow().webkitSpeechRecognition = undefined;
     mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
-    transcribeMock.mockResolvedValue('cat');
+    transcribeMock.mockResolvedValue({ transcript: 'cat' });
 
     const onAttempt = vi.fn();
     const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'cat'));
@@ -114,7 +115,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     await act(async () => {
       result.current.stopRecording();
     });
-    expect(onAttempt).toHaveBeenCalledWith('cat');
+    expect(onAttempt).toHaveBeenCalledWith('cat', undefined);
 
     testWindow().SpeechRecognition = original.SpeechRecognition;
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
@@ -124,7 +125,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     mocks.isIOS = true;
     const controller = makeController(new Blob(['audio'], { type: 'audio/mp4' }));
     mocks.startAudioRecording.mockResolvedValue(controller);
-    transcribeMock.mockResolvedValue('cat');
+    transcribeMock.mockResolvedValue({ transcript: 'cat' });
 
     const onAttempt = vi.fn();
     const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'cat'));
@@ -139,7 +140,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     });
 
     expect(transcribeMock).toHaveBeenCalledWith(expect.any(Blob), 'cat');
-    expect(onAttempt).toHaveBeenCalledWith('cat');
+    expect(onAttempt).toHaveBeenCalledWith('cat', undefined);
   });
 
   it('shows retryable error when transcription service fails', async () => {
@@ -166,7 +167,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
   it('maps an empty transcript to the no-speech retry path, not a wrong answer', async () => {
     mocks.isIOS = true;
     mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
-    transcribeMock.mockResolvedValue('');
+    transcribeMock.mockResolvedValue({ transcript: '' });
 
     const onAttempt = vi.fn();
     const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'cat'));
@@ -187,7 +188,7 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
   it('silences app audio BEFORE the mic opens and releases it only after settling', async () => {
     mocks.isIOS = true;
     mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
-    transcribeMock.mockResolvedValue('cat');
+    transcribeMock.mockResolvedValue({ transcript: 'cat' });
 
     const { result } = renderHook(() => usePronunciationRecording(vi.fn(), 'cat'));
     act(() => {

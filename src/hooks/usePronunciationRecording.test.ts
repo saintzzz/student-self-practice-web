@@ -52,7 +52,7 @@ describe('usePronunciationRecording', () => {
     });
 
     await waitFor(() => expect(result.current.phase).toBe('recording'));
-    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt', { alternatives: [], confidence: 0.9 }));
   });
 
   it('releases mic suppression on a successful SR result - the feedback "Nghe mẫu" stays live', async () => {
@@ -65,7 +65,7 @@ describe('usePronunciationRecording', () => {
     await waitFor(() => expect(result.current.phase).toBe('recording'));
     expect(setMicRecordingMock).toHaveBeenCalledWith(true);
 
-    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt', { alternatives: [], confidence: 0.9 }));
 
     // SR success never leaves the 'recording' phase, so only finish()
     // can release suppression - without it the feedback speaker is dead.
@@ -197,7 +197,7 @@ describe('usePronunciationRecording', () => {
     });
 
     // The error never surfaces - the retry lands and the transcript wins.
-    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt'));
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('practice attempt', { alternatives: [], confidence: 0.9 }));
     expect(result.current.phase).not.toBe('error');
     expect(attempts).toBe(2);
 
@@ -292,7 +292,7 @@ describe('usePronunciationRecording', () => {
       result.current.startRecording();
     });
 
-    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('leg'));
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('leg', { alternatives: [], confidence: 0.9 }));
     expect(result.current.phase).not.toBe('error');
 
     testWindow().SpeechRecognition = original.SpeechRecognition;
@@ -311,7 +311,7 @@ describe('usePronunciationRecording', () => {
     });
 
     expect(onAttempt).toHaveBeenCalledTimes(1);
-    expect(onAttempt).toHaveBeenCalledWith('');
+    expect(onAttempt).toHaveBeenCalledWith('', undefined);
   });
 
   it('ignores a startRecording call after skip already settled the attempt (settledRef guard)', () => {

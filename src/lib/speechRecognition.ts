@@ -84,8 +84,17 @@ export async function requestMicrophonePermission(): Promise<boolean> {
   }
 }
 
+/** Richer settle payload for CR-90: the top transcript plus the other
+ *  hypotheses + its confidence, so the scorer can pick the best candidate
+ *  instead of being stuck with whatever the recognizer ranked first. */
+export interface SpeechRecognitionSettle {
+  transcript: string;
+  alternatives: string[];
+  confidence?: number;
+}
+
 export interface SpeechRecognitionHandlers {
-  onResult: (transcript: string) => void;
+  onResult: (settle: SpeechRecognitionSettle) => void;
   onPermissionError: () => void;
   /** Called with the browser's error code ('no-speech', 'network', ...) so callers can auto-retry transient failures and tailor the fallback message. */
   onOtherError: (code: string) => void;
@@ -121,7 +130,10 @@ export function startSpeechRecognition(handlers: SpeechRecognitionHandlers): Spe
   // Interim results keep the service's no-speech timeout from firing as
   // aggressively and let the caller settle on the first FINAL result only.
   recognizer.interimResults = true;
-  recognizer.maxAlternatives = 1;
+  // CR-90: grab the recognizer's other guesses - the top-1 transcript for a
+  // child's short isolated word is often a near-miss while the correct word
+  // sits at index 2-4. scorePronunciationAttempt picks the best candidate.
+  recognizer.maxAlternatives = 5;
 
   let handled = false;
 
@@ -136,8 +148,18 @@ export function startSpeechRecognition(handlers: SpeechRecognitionHandlers): Spe
       return;
     }
     handled = true;
-    const transcript = lastResult[0]?.transcript ?? '';
-    handlers.onResult(transcript);
+    const candidates: { transcript: string; confidence: number }[] = [];
+    for (let i = 0; i < lastResult.length; i++) {
+      const alt = lastResult[i];
+      if (alt && alt.transcript.trim().length > 0) {
+        candidates.push({ transcript: alt.transcript, confidence: alt.confidence });
+      }
+    }
+    handlers.onResult({
+      transcript: candidates[0]?.transcript ?? '',
+      alternatives: candidates.slice(1).map((c) => c.transcript),
+      confidence: candidates[0]?.confidence,
+    });
   };
 
   recognizer.onerror = (event) => {
