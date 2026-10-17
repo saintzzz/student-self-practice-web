@@ -27,7 +27,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { selector, norm } from './qb-ambiguity-lib.mjs';
+import { selector, norm, sceneDependent } from './qb-ambiguity-lib.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -171,12 +171,18 @@ for (const r of rows) {
   if (r.review_status === 'rejected' || r.review_status === 'draft') continue;
   const p = String(r.prompt_text ?? '');
   const choices = choiceArr(r);
-  if (!isCloze(p) || choices.length < 2 || hasContext(r)) continue;
+  if (choices.length < 2 || hasContext(r)) continue;
+  // r41: non-cloze rows can still be ambiguous - yes/no coin flips and
+  // picture/scene-dependent prompts get the sceneDependent gate.
+  if (!isCloze(p)) {
+    if (sceneDependent(p, answerText(r), choices)) pending.push(r.id);
+    continue;
+  }
   const set = detectSet(choices);
   if (!selector(p, answerText(r), choices, set)) pending.push(r.id);
 }
 for (const id of pending)
-  flag('pending-quarantine', 'error', { id }, 'cloze ambiguity: selector proves no unique answer but row still published');
+  flag('pending-quarantine', 'error', { id }, 'cloze/scene ambiguity: selector proves no unique answer but row still published');
 
 /* ---------- emit ---------- */
 const byCheck = {};

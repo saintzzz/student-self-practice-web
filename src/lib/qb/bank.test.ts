@@ -181,6 +181,37 @@ describe('toExamQuestion', () => {
     expect(isExamAnswerCorrect(q, { type: 'option', index: 2 })).toBe(true);
   });
 
+  it('word-to-image-mcq resolves images by assetId when join rows exceed 4 (real prod bug)', () => {
+    // qb_question_assets links extra distractor assets with duplicated
+    // sort_order, so asset_paths is not the ordered 4-option list.
+    const q = toExamQuestion(row({
+      question_type: 'word-to-image-mcq',
+      choices: [
+        { assetId: 'concept-think-b8049a' },
+        { assetId: 'concept-wink-7c380e' },
+        { assetId: 'concept-medal-74478a' },
+        { assetId: 'concept-goal-6711f5' },
+      ],
+      answer: { index: 3 },
+      asset_paths: [
+        'images/concepts/concept-pushpin-f5a59d.webp',
+        'images/concepts/concept-think-b8049a.webp',
+        'images/concepts/concept-wink-7c380e.webp',
+        'images/concepts/concept-medal-74478a.webp',
+        'images/concepts/concept-salad-e7fc08.webp',
+        'images/concepts/concept-goal-6711f5.webp',
+        'images/concepts/concept-sunset-ebf3c4.webp',
+      ],
+    }));
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect(q.optionImages).toEqual([
+      '/images/concepts/concept-think-b8049a.webp',
+      '/images/concepts/concept-wink-7c380e.webp',
+      '/images/concepts/concept-medal-74478a.webp',
+      '/images/concepts/concept-goal-6711f5.webp',
+    ]);
+  });
+
   it('returns null when choices are not exactly 4', () => {
     expect(toExamQuestion(row({ choices: ['a', 'b', 'c'], answer: { index: 0 } }))).toBeNull();
   });

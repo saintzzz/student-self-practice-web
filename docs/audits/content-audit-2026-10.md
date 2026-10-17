@@ -388,3 +388,32 @@ were quarantined the same way (5/5, 0 missing, 0 failed).
   between Monday and Friday" -> three.
 - Rejected (ambiguous): "The first/last day of the week" where Sunday+Monday or
   Saturday+Sunday coexist as convention rivals; "How many ___?" without image.
+
+### Scene-grounding sweep (r41, after user-reported wrong answers)
+
+Production report: "Is she swimming now?" marked "No, she isn't." wrong;
+"Which picture shows 'goal'?" rendered with word options. Root cause was two
+distinct defects:
+
+1. The audit gate only adjudicated cloze (`___`) rows - non-cloze MCQs were
+   never passed through the ambiguity classifier, so ~1.5k polar yes/no
+   coin-flips (picture/scene-dependent prompts with both a grammatical Yes and
+   No among choices) and picture/scene-dependent WH questions stayed published.
+   Fix: new `sceneDependent()` gate in qb-ambiguity-lib.mjs covering bare
+   picture refs, polar yes/no with non-generic subjects (deictic / pronoun /
+   personal / definite-scene NP), wh-questions over deictic or scene subjects,
+   bare "how many X" with no container, and "count the X" with no countable
+   symbols. Exceptions preserved: annotated image stand-ins, quoted text,
+   world-fact generics ("Is the sky blue?"), function/anatomy/conventional
+   clauses, arithmetic riddles, emoji-count prompts, bounded how-many.
+   Applied via qb-quarantine-apply: **3,133 ids quarantined, 0 missing, 0
+   failed**. Re-export: 88,445 rows - audit **all checks clean**.
+   RPC sweep (6 grade/mode draws, 1,200 served rows): 0 banned-id leaks.
+
+2. `word-to-image-mcq` rows render choices as text when `asset_paths.length
+   !== 4` - but qb_question_assets links extra distractor assets (e.g. 7 join
+   rows for 4 options), so ~993 published w2i rows degraded to word buttons.
+   Fix in `src/lib/qb/bank.ts`: `resolveOptionImages()` maps each choice's
+   `assetId` to its file path by id stem (order-independent); positional
+   fallback kept for legacy 4-string-choice rows. Data check: 0 approved
+   image-type rows have missing choice assets - no quarantine needed.

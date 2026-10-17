@@ -128,6 +128,34 @@ function assetUrl(path: string): string {
   return `/${path.replace(/^\/+/, '')}`;
 }
 
+/**
+ * word-to-image-mcq options: choices carry {assetId} objects and the row's
+ * asset_paths can link MORE than the 4 rendered options (extras share
+ * sort_order slots), so match each choice's assetId to its file path by id
+ * stem instead of relying on position or count.
+ */
+function resolveOptionImages(
+  choices: unknown[] | null,
+  paths: string[] | null | undefined,
+): [string, string, string, string] | undefined {
+  if (!choices || choices.length !== 4 || !paths?.length) return undefined;
+  // legacy rows with plain string choices pair 1:1 with exactly 4 paths
+  if (choices.every((c) => typeof c === 'string') && paths.length === 4)
+    return paths.map(assetUrl) as [string, string, string, string];
+  const byId = new Map(
+    paths.map((p) => [p.replace(/\.[^.]+$/, '').split('/').pop()!, p]),
+  );
+  const imgs = choices.map((c) => {
+    const id =
+      c !== null && typeof c === 'object'
+        ? (c as Record<string, unknown>).assetId
+        : undefined;
+    const path = typeof id === 'string' ? byId.get(id) : undefined;
+    return path ? assetUrl(path) : undefined;
+  });
+  return imgs.every(Boolean) ? (imgs as [string, string, string, string]) : undefined;
+}
+
 function toFour<T>(list: T[] | null | undefined): [T, T, T, T] | null {
   if (!list || list.length !== 4) return null;
   return [list[0]!, list[1]!, list[2]!, list[3]!];
@@ -177,8 +205,8 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
       const correctIndex = row.answer.index;
       if (!options || correctIndex === undefined || correctIndex < 0 || correctIndex > 3) return null;
       const optionImages =
-        row.question_type === 'word-to-image-mcq' && row.asset_paths.length === 4
-          ? (toFour(row.asset_paths.map(assetUrl)) ?? undefined)
+        row.question_type === 'word-to-image-mcq'
+          ? resolveOptionImages(row.choices, row.asset_paths)
           : undefined;
       return {
         id: row.id,

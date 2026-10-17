@@ -3880,3 +3880,141 @@ export function selector(p, ans, choices, set) {
   return false;
 }
 
+/* ---- r41: scene/picture grounding for NON-cloze MCQ rows ----
+   qb_questions ships no images (there is no asset column), so any item whose
+   correct option requires an unseen picture, scene, or the reader's own
+   state leaves rival options equally defensible -> ambiguous. Returns true
+   when the row is ungrounded; generic world-fact subjects stay decidable.
+   A parenthetical annotation ("(Picture of 8 books)") states the content in
+   text, so the answer remains derivable - not flagged. */
+const WORLD_UNIQUE =
+  /^(?:the\s+)?(?:sun|sky|moon|earth|world|weather|ocean|sea|rainbow|internet|air|water|fire|ice|snow|wind|grass)\b/i;
+const PERSONAL_WORD =
+  /\b(?:you|your|we|our|i|my|he|she|it|they|his|her|their|its|this|that|these|those|there|here)\b/i;
+const SCENE_NOUN_SRC =
+  'boy|girl|man|woman|lady|baby|child|kid|children|teacher|student|doctor|nurse|farmer|driver|cook|policeman|father|mother|dad|mom|mum|sister|brother|parent|parents|grandma|grandpa|grandmother|grandfather|aunt|uncle|cousin|son|daughter|cat|dog|bird|fish|duck|rabbit|monkey|elephant|lion|tiger|bear|snake|frog|mouse|mice|cow|pig|chicken|horse|sheep|goat|ant|bee|butterfly|goldfish|car|bus|bike|bicycle|motorbike|train|plane|boat|ship|ball|book|notebook|crayon|schoolbag|pen|pencil|ruler|bag|box|table|chair|desk|door|window|room|kitchen|bathroom|bedroom|living room|dining room|balcony|yard|house|school|classroom|garden|park|zoo|farm|beach|market|shop|store|library|hospital|street|road|playground|tree|flower|leaf|apple|banana|orange|mango|cake|candy|toy|doll|kite|balloon|hat|cap|shoe|shoes|shirt|dress|skirt|coat|sock|shorts|umbrella|phone|tv|clock|watch|bed|sofa|lamp|mirror|bowl|cup|plate|spoon|fork|knife|breakfast|lunch|dinner|food|drink|juice|milk|tea|coffee|soup|salad|pizza|sandwich|egg|eggs|meat|fruit|vegetable|face|nose|eye|eyes|ear|ears|mouth|hand|hands|arm|arms|leg|legs|foot|feet|finger|fingers|toe|toes|knee|knees|hair|head|neck|shoulder|shoulders|tooth|teeth|class|lesson|homework|test|game|song|movie|film|story|party|robot|star|stars|cloud|clouds|rain|rice|noodle|noodles|weather|people';
+const SCENE_NP = new RegExp(`\\bthe\\s+(?:${SCENE_NOUN_SRC})s?\\b`, 'i');
+
+export function sceneDependent(p, ans, choices) {
+  const pl = String(p ?? '')
+    .toLowerCase()
+    .trim();
+  if (!pl) return false;
+  const cs = (choices ?? []).map(norm);
+  const pNoQ = pl.replace(/["'‘’“”][^"'‘’“”]*["'‘’“”]/g, ' ');
+
+  // explicit visual refs - bare mention of a picture/looking gesture the bank
+  // cannot display. Annotated forms ("(Picture of 8 books)") state the image
+  // content in text, so the answer stays derivable: skip those.
+  const annotated = /\((?:picture|image|photo|illustration)\b[^)]*\)/i.test(pl);
+  if (annotated) return false;
+  if (
+    /\b(?:in|at|of)\s+the\s+(?:picture|image|photo|illustration|poster)\b|\bpictures?\s+shows?\b|\bwhich\s+(?:picture|image|photo)\b|\bwhat\s+does\s+the\s+picture\b|\blook\s+at\b|\bshown\b/i.test(
+      pNoQ,
+    )
+  )
+    return true;
+  // counting tasks with no countable symbols in the prompt need an image
+  const hasEmoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u.test(pl);
+  if (!hasEmoji && /\bcount(?:ing)?\s+(?:the\s+)?(?:red |green |blue |yellow |big |small )?(?:balls?|eggs?|apples?|books?|stars?|flowers?|dots?|fingers?|shapes?|objects?|things?|animals?|birds?|cars?|cups?|candles?|pencils?|toys?|candies?|blocks?|oranges?|bananas?|cats?|dogs?|fish|birds?)\b/i.test(pl)) return true;
+  if (!hasEmoji && /\bhow many\b/.test(pl)) {
+    const bounded =
+      /\b(?:in|on|of|inside|per|each|every)\s+(?:a|an|the|one|each|every|\d|['"])\w*/.test(pl) ||
+      // bare period/unit containers: "in spring", "in a week", "of the year"
+      /\b(?:in|on|of|per)\s+(?:the\s+)?(?:week|month|year|day|hour|minute|second|spring|summer|autumn|fall|winter|morning|afternoon|evening|january|february|march|april|may|june|july|august|september|october|november|december|monday|tuesday|wednesday|thursday|friday|saturday|sunday|alphabet|english|word|sentence|team|class|dozen)\b/.test(pl) ||
+      /\b(?:do|does|did)\s+(?:a|an|the|your|my|our)\s+\w+\s+have\b/.test(pl) ||
+      // anatomy count: "how many knees do you have" is a body fact
+      /\bhow many\s+(?:\w+\s+)?(?:eyes?|ears?|nose|mouth|head|hands?|arms?|legs?|feet|foot|fingers?|toes?|knees?|teeth|shoulders?|wings?|tails?)\b/.test(pl) ||
+      // arithmetic riddles state their operands ("ten fingers... hide three")
+      /\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+\w+/.test(pl) ||
+      // counting a quoted string/letter ("how many 'e' in banana")
+      /["'‘’“”]/.test(pl);
+    if (!bounded) return true;
+  }
+
+  // polar yes/no coin flip: >=1 grammatical YES and >=1 grammatical NO both
+  // present means only fact/context can decide - reject unless the subject is
+  // generic (world fact). Grammar-decidable items (single valid form) pass.
+  const pm = /^(is|are|do|does|did|can|could|will|would|was|were|have|has|should|may|must)\s+(.+?)\s*\?\s*$/.exec(pl);
+  if (pm) {
+    const auxClass = (w) =>
+      /^(am|is|are|was|were|isn't|aren't|wasn't|weren't|'m|'s|'re|ain't)$/.test(w)
+        ? 'be'
+        : /^(do|does|did|don't|doesn't|didn't)$/.test(w)
+          ? 'do'
+          : /^(can|could|can't|cannot|couldn't|will|would|won't|wouldn't|shall|should|shouldn't|shan't|may|might|must|mustn't)$/.test(w)
+            ? 'mod'
+            : /^(have|has|had|haven't|hasn't|hadn't)$/.test(w)
+              ? 'hv'
+              : null;
+    const qCls = auxClass(pm[1]);
+    const polarAuxOf = (c) => {
+      const body = c.replace(/^(yes|no)\b[,.!]?\s*/i, '').trim();
+      if (!body) return 'bare'; // bare Yes/No is a valid elliptical answer
+      const t = body.split(/\s+/);
+      for (let i = 0; i < t.length; i++) {
+        const two = t.slice(i, i + 2).join(' ');
+        if (auxClass(two)) return auxClass(two);
+        const one = auxClass(t[i]);
+        if (one) return one;
+      }
+      return null;
+    };
+    const yesOk = cs.filter((c) => {
+      const cls2 = polarAuxOf(c);
+      return /^yes\b/i.test(c) && (cls2 === qCls || cls2 === 'bare');
+    }).length;
+    const noOk = cs.filter((c) => {
+      const cls2 = polarAuxOf(c);
+      return /^no\b/i.test(c) && (cls2 === qCls || cls2 === 'bare');
+    }).length;
+    if (yesOk >= 1 && noOk >= 1) {
+      const subj =
+        (
+          /^(?:the|this|that|these|those|a|an|my|your|our|his|her|their|its|some|any)\s+\w+|^\w+/.exec(
+            pm[2],
+          ) ?? ['']
+        )[0] ?? '';
+      const generic =
+        !PERSONAL_WORD.test(subj) && (WORLD_UNIQUE.test(subj) || !/^(?:the|this|that|these|those|my|your|our|his|her|their|its)\b/.test(subj));
+      if (!generic) return true;
+    }
+  }
+
+  // wh-questions over an unseen scene or the reader. A second declarative
+  // sentence or a function/relation clause grounds the referent ("what room
+  // is this? it has a shower", "which one do you use to clean the board") -
+  // those stay decidable.
+  const whq = /^(?:what|where|who|whom|whose|when|why|which|how)\b/.test(pl);
+  if (whq) {
+    const grounded =
+      /[.!]\s*\w|\?\s*[a-z].*\w/.test(pNoQ.replace(/\?\s*$/, '')) ||
+      /\buse[ds]?\s+(?:it|them|one|a|an|the)?\s*to\b|\blearn(?:ing|s)?\s+about\b|\bwhat do you say\b|\bwhen do you say\b|\bsayings?:|\bsaying:|\bhelps?\s+you\s+(?:to\s+)?\w+|\bshould you \w+\s+(?:when|if|for|at|on|in)\b|\bon your (?:face|body|head|hand|hands|arm|arms|leg|legs|foot|feet|finger|fingers|hair|neck|shoulder|shoulders|knee|knees|ear|ears|eye|eyes|tooth|teeth|nose|mouth|back|chest|toe|toes)\b|\bpart of your body\b/.test(
+        pNoQ,
+      );
+    if (!grounded) {
+      // interrogative + aux + deictic pronoun ("what is he doing")
+      if (
+        /\b(?:what|where|who|whom|whose|when|which|how)\s+\w*\s*(?:is|are|was|were|does|do|did|can|could|has|have)\s+(?:he|she|it|they|this|that|these|those|there)\b/.test(
+          pNoQ,
+        )
+      )
+        return true;
+      // interrogative + aux + definite scene noun ("what is the girl doing",
+      // "what colour is the car", "where is the library")
+      if (
+        new RegExp(
+          `\\b(?:what|where|who|whom|whose|when|which|how)\\s+\\w*\\s*(?:is|are|was|were|does|do|did|can|could|has|have)\\s+the\\s+(?:${SCENE_NOUN_SRC})s?\\b`,
+          'i',
+        ).test(pNoQ)
+      )
+        return true;
+      // reader-dependent: "how old are you", "what is your name", "where do
+      // you live", "what do you like"
+      if (/\byou\b|\byour\b/.test(pNoQ) && !/\bcan you\b|\bcould you\b|\bdo you think\b/.test(pNoQ)) return true;
+    }
+  }
+
+  return false;
+}
+
