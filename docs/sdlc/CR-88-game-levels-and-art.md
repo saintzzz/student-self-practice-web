@@ -32,8 +32,54 @@ monkey junior là ứng dụng đầu tư hình ảnh và game play rất tốt.
 
 ## Acceptance
 
-- [ ] Level picker with per-level stars on all 15 games
-- [ ] L2/L3 measurably harder (rounds/speed/lives)
-- [ ] Live clock + time bonus on end screen
-- [ ] Composed-scene card art everywhere the bare emoji showed
-- [ ] tsc + vitest + build + Playwright 390px + external review clean
+- [x] Level picker with per-level stars on all 15 games
+- [x] L2/L3 measurably harder (rounds/speed/lives)
+- [x] Live clock + time bonus on end screen
+- [x] Composed-scene card art everywhere the bare emoji showed
+- [x] tsc + vitest + build + Playwright 390px + external review clean
+
+## Implementation (shipped)
+
+- `src/games/levels.ts` - `GameLevel` 1-3, `specFor(level, baseRounds)` =>
+  `{ rounds, speedScale, lives, missLimit, parSec }`; `timeBonusFor()` pays
+  up to 20% of maxPoints for beating par; `LEVEL_META` = child-facing
+  labels ("Làm quen" / "Nhanh hơn" / "Thử thách").
+- All 15 games consume the spec: rounds scaling everywhere plus
+  per-mechanic knobs - QuizShow shrinks the per-question clock
+  (20s/16s/13s), TicTacToe CPU goes random -> blocks -> strategic,
+  MazeChase adds +2 walls/level and a double-step ghost at L3,
+  WordWorm grows distractors 3->5, CastleGuard speeds the creep and
+  cuts hearts to 2, PictureReveal grows the grid 9->12->15 tiles.
+- `GameScreen` owns the level picker (`game-level-picker`,
+  `game-level-N`), the live header clock (`game-timer`), the seeded
+  run (`<seed>-L<level>`), and the end screen (score + elapsed +
+  "+điểm nhanh" bonus).
+- `recordGameResult(..., level)` - objective id `game:<id>:L<n>:<seed>`
+  (per-level idempotence); `gameLevelStars()` backs the picker's
+  per-rung stars; `gameBestStars()` stays the shelf aggregate.
+- `GameArt` composes each `GameDef.art` emoji list into a mini diorama
+  (hero emoji largest, scenery staggered) - used on shelf cards, the
+  daily hero, and the GameScreen header. No new binary assets.
+
+## Verification
+
+- tsc -b clean; vitest 202 files / 1,678 tests (new: levels.test.ts,
+  GameScreen.test.tsx, store level-scoped describes)
+- vite build clean (GameScreen lazy chunk ~50.6 kB)
+- Playwright 390px (`scripts/_cr88-levels-verify.mjs`): shelf 15 cards,
+  level picker mounts, Màn 2 run shows 7 round-dots + ticking clock,
+  Màn 3 maze shows 2 hearts + denser walls
+
+## External review loop
+
+- r39 (codex-cli): 3 findings, all fixed in bbbb566 - seed rotation on
+  "Chọn màn" (replay at same level silently re-hit the granted
+  objective), omitted-level callers now update the L1 picker stars,
+  speed bonus gated on >=1 star.
+- r40 (codex-cli): CLEAN - loop closed.
+
+## Deferred
+
+- Real illustrated/Lottie art per game (currently composed emoji
+  dioramas); speech-quality art assets belong to the planned art pass
+  once asset sources are approved.
