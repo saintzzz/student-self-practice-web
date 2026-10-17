@@ -14,14 +14,14 @@
       ],
       "deploymentId": "git-auto-deploy",
       "deploymentUrl": "https://ioe-leduyminh-hpf9cz749-linhld7s-projects.vercel.app",
-      "commit": "2a03ee3",
+      "commit": "2c428b9",
       "healthEndpoint": "/",
       "healthStatus": "ready",
-      "lastHealthCheck": "2026-10-14T03:25:00+07:00",
+      "lastHealthCheck": "2026-10-19T08:10:00+07:00",
       "healthDetails": {
         "GET https://ea.vieschool.com": 200,
-        "canary": "hub-tile-* testids live on prod (confirms CR-73 ModeHub IA deployed); feedback sheet .fixed + 408px reserve verified on prod 390x844, 0 console errors",
-        "kids-ux": "CR-73 full redesign deployed - ModeHub inline IA replaces ExploreSheet, semantic token layers, exam gold remediation, density-aware floors, fixed feedback sheet at all heights; external review loop r22-r24 closed CLEAN"
+        "canary": "index-B0z0vybY.js bundle live on prod (confirms CR-82 v5 deployed); starlit brand scene + medallion mascot + unified HUD verified on prod 390x844 screenshots",
+        "kids-ux": "CR-82 deployed - v5 luxury redesign (hero scenes dusk/night, paper exam, tracing canvas, spell-it/gap-bank drag, flashcards, Lottie mascot rig) + QB integrity quarantine (5,970 rejected, bank 91,578 clean); external review loop converged CLEAN r38"
       },
       "customDomain": {
         "registrar": "Porkbun",
