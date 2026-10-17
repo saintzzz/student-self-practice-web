@@ -63,3 +63,20 @@ step-mechanics (progressive reveal, lock-state machine).
 - Real-flow Playwright: shelf renders 10 cards; each new game mounts
   (whack-a-mole/feed-the-pig/picture-reveal/treasure-chest verified on
   390px + screenshots in tmp).
+
+## External Review Loop
+
+- r1 (reviewer-gemini, commit b294f13): REQUEST_CHANGES - 3 findings.
+  1. BLOCKER TreasureChest LOCKS=3 vs ROUNDS=5 capped max score at 6/10
+     so 2-3 stars unreachable, and chest-open visual never rendered.
+  2. MEDIUM PictureReveal opened covers in DOM order; the shuffle only
+     permuted testids.
+  3. MEDIUM 'mole' variant aria-label overrode the emoji, silencing the
+     option for assistive tech.
+- Fixes in 76fc94c: LOCKS=ROUNDS=5 (flawless 10/10, any miss caps),
+  900ms payoff beat before onEnd, Set-based shuffled reveal, label
+  `Lỗ N: emoji`.
+- r2 (reviewer-gemini, commit 76fc94c): APPROVE - all three resolved,
+  timer cleanup + single-fire onEnd + test coverage verified.
+- Deploy: prod bundle index-D45hH8Xj.js / GameScreen-DqPLgYhN.js live
+  with the fix.
