@@ -35,7 +35,6 @@ import {
 import {
   CARD,
   H1,
-  H2,
   PROMPT,
   NAV_PILL,
   SCREEN_ENTER,
@@ -47,6 +46,8 @@ import {
 } from '../lib/ui/tokens';
 import { examConfigForGrade } from '../lib/exam/examSession';
 import { getLand } from '../lib/ui/theme';
+import LandScene from './scene/LandScene';
+import { EmojiVisual } from './EmojiVisual';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { usePressRelease } from '../hooks/usePressRelease';
 import type { BankFetchFocus } from '../lib/qb/bank';
@@ -408,18 +409,43 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             autoplayKey={`start-${grade.id}`}
           />
         </div>
-        <Mascot mood="greeting" />
+        {/* Land vignette: the mascot stands ON its land's ground (strip
+            scene over the land's page gradient) instead of floating on
+            navy - each grade's home screen wears its land identity. */}
+        <div className={`relative mx-auto h-40 max-w-sm overflow-hidden rounded-2xl ring-1 ring-white/20 shadow-[inset_0_2px_0_rgba(255,255,255,0.15)] ${land.pageGradient}`}>
+          <LandScene land={land.key} variant="strip" tone="day" />
+          <div className="absolute inset-x-0 bottom-1 flex justify-center">
+            <Mascot mood="greeting" />
+          </div>
+        </div>
         {isG12 ? (
           <>
-            <p className={`mt-1 ${PROMPT}`}>
-              Mình cùng chơi 4 trò nhỏ nhé! Bấm Chơi nào!
-            </p>
-            {/* Ruling R-14: non-interactive orientation label. */}
-            <h1 className={`mt-2 ${H2}`}>{grade.name} - {land.nameVi}</h1>
+            {/* Speech bubble from the pig - the prompt reads as the
+                mascot talking (Khan Kids / Lingokids character idiom). */}
+            <div className="relative mx-auto mt-3 inline-block max-w-xs rounded-2xl bg-white/95 px-5 py-2.5 shadow-md">
+              <span aria-hidden="true" className="absolute -top-1.5 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 rounded-sm bg-white/95" />
+              <p className="text-lg font-bold text-slate-700">
+                Mình cùng chơi 4 trò nhỏ nhé! Bấm Chơi nào!
+              </p>
+            </div>
+            {/* Ruling R-14: non-interactive orientation label - now a
+                land badge carrying the land's tint + motif. */}
+            <h1 className="mt-3">
+              <span className={`inline-flex items-center gap-1.5 rounded-full ${land.cardTint} px-4 py-1.5 font-display text-base font-extrabold ${land.accentText} ring-2 ${land.cardRing}`}>
+                {land.motif && <EmojiVisual emoji={land.motif} className="text-sm" />}
+                {grade.name} - {land.nameVi}
+              </span>
+            </h1>
           </>
         ) : (
           <>
-            <h1 className={`mt-1 ${H1}`}>{grade.name}: Sẵn sàng phiêu lưu chưa?</h1>
+            <h1 className={`mt-3 ${H1}`}>{grade.name}: Sẵn sàng phiêu lưu chưa?</h1>
+            <p className="mt-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full ${land.cardTint} px-4 py-1.5 text-sm font-extrabold ${land.accentText} ring-2 ${land.cardRing}`}>
+                {land.motif && <EmojiVisual emoji={land.motif} className="text-xs" />}
+                {land.nameVi}
+              </span>
+            </p>
             <p className={`mt-3 ${PROMPT}`}>
               Luyện tập Tiếng Anh: 4 vòng game nhỏ, mỗi vòng khoảng 10 câu hỏi.
             </p>

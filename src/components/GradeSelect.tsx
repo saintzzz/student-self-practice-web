@@ -10,7 +10,69 @@ import { EmojiVisual } from './EmojiVisual';
 import { ParentGate, isParentVerified } from './ParentGate';
 import { GatedLink } from './GatedLink';
 import { NAV_PILL, NAV_PILL_SM, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
-import { IconFamily, IconStar } from './icons';
+import { IconChevronRight, IconFamily, IconFlag, IconStar } from './icons';
+
+/**
+ * CR-82 redesign (journey map): the grade list is a treasure-map trail -
+ * numbered waypoint markers sit ON a winding dotted gold path while the
+ * land postcards zigzag left/right off the path's edge (Reading Eggs /
+ * Lingokids map idiom). The first grade with no stars earned pulses as
+ * "next"; a finish flag closes the trail after the last land.
+ * The trail is drawn as DOM dots along a cubic bezier (x in % of the map
+ * column, y in px) - no SVG, so dots stay perfectly round at any width.
+ */
+const TRAIL_X = { left: 11, right: 89 } as const;
+
+function trailDots(from: number, to: number, h: number) {
+  const N = 11;
+  const c = h * 0.55;
+  return Array.from({ length: N }, (_, k) => {
+    const t = k / (N - 1);
+    const u = 1 - t;
+    return {
+      x: u * u * u * from + 3 * u * u * t * from + 3 * u * t * t * to + t * t * t * to,
+      y: 3 * u * u * t * c + 3 * u * t * t * c + t * t * t * h,
+    };
+  });
+}
+
+/** Dotted gold connector between two waypoints - absolutely fills the
+ *  56px (h-14) gap the parent <li> reserves above its card. It lands on
+ *  the marker column's top edge, where TrailColumn picks it up. */
+function TrailDots({ from, to }: { from: number; to: number }) {
+  return (
+    <span aria-hidden="true" data-testid="trail-dots" className="pointer-events-none absolute inset-x-0 top-0 block h-14">
+      {trailDots(from, to, 56).map((d, i) => (
+        <span
+          key={i}
+          className="absolute h-1.5 w-1.5 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(252,211,77,0.55)]"
+          style={{ left: `${d.x}%`, top: d.y, transform: 'translate(-50%,-50%)' }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Vertical dotted run inside a marker column - the trail enters at the
+ *  column top, disappears behind the opaque disc, and exits at the
+ *  bottom, so the path reads as one continuous line through every
+ *  waypoint (review fix: connectors previously floated in the row gap,
+ *  never touching the markers). */
+function TrailColumn({ above, below }: { above: boolean; below: boolean }) {
+  const run = (top: boolean) => (
+    <span className={`flex h-1/2 flex-col items-center justify-evenly ${top ? 'pb-9' : 'pt-9'}`}>
+      {[0, 1, 2].map((k) => (
+        <span key={k} className="h-1.5 w-1.5 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(252,211,77,0.55)]" />
+      ))}
+    </span>
+  );
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 flex -translate-x-1/2 flex-col">
+      {above ? run(true) : <span className="h-1/2" />}
+      {below ? run(false) : <span className="h-1/2" />}
+    </span>
+  );
+}
 
 interface GradeSelectProps {
   grades: readonly Grade[];
@@ -63,9 +125,9 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
     : grades;
 
   const engagement = getState();
-  // CR-11 DS-P1: a lone trailing card in the 2-col grid centers itself
-  // (odd counts happen with 5 grades and with scoped class subsets).
-  const lastIsLone = visibleGrades.length % 2 === 1;
+  // The first land with no stars is the pulsing "next" waypoint on the
+  // trail (Lingokids "pulsing next" idiom); all-complete => no pulse.
+  const nextId = visibleGrades.find((g) => !(engagement.grades[g.id]?.stars > 0))?.id;
 
   return (
     <div className={`mx-auto max-w-3xl px-4 py-6 text-center sm:py-8 ${SCREEN_ENTER}`}>
@@ -186,19 +248,53 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           Cô/Thầy chưa mở nội dung cho bé - hãy hỏi cô nhé!
         </div>
       ) : (
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <ol className="mx-auto max-w-md">
         {visibleGrades.map((grade, i) => {
           const land = getLand(grade.id);
           const gp = engagement.grades[grade.id];
-          const isLoneLast = lastIsLone && i === visibleGrades.length - 1;
-          return (
+          const stars = gp?.stars ?? 0;
+          const cardLeft = i % 2 === 0;
+          const curX = cardLeft ? TRAIL_X.right : TRAIL_X.left;
+          const isNext = grade.id === nextId;
+          const marker = (
+            <div className="relative flex w-[22%] flex-col items-center justify-center gap-1.5 self-stretch" data-testid={`grade-waypoint-${grade.id}`}>
+              {/* The trail threads through the column: in from the top
+                  (except the first waypoint), out at the bottom into the
+                  next gap curve / the finish tail. */}
+              <TrailColumn above={i > 0} below />
+              <span className="relative z-10 flex flex-col items-center gap-1.5">
+              {isNext && (
+                <span className="flex items-center gap-1 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 px-2 py-0.5 text-[11px] font-extrabold text-amber-950 shadow-md ring-1 ring-amber-200/80">
+                  <IconFlag size={11} /> Tiếp theo
+                </span>
+              )}
+              <span className="relative flex">
+                {isNext && (
+                  /* Review fix (WCAG 2.2.2): the ping runs 3 sweeps then
+                     dies, leaving the static halo - no infinite motion. */
+                  <span aria-hidden="true" className="absolute -inset-1.5 rounded-full bg-amber-300/40 motion-safe:animate-ping motion-safe:[animation-iteration-count:3]" />
+                )}
+                <span
+                  className={`flex h-14 w-14 items-center justify-center rounded-full ${land.discBg} font-display text-2xl font-extrabold text-white ring-4 ring-white/80 shadow-[inset_0_2px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_14px_-4px_rgba(15,23,42,0.4)]`}
+                >
+                  {(grade.name.match(/\d+/) ?? ['?'])[0]}
+                </span>
+              </span>
+              {stars > 0 && (
+                <span className="flex items-center gap-0.5 rounded-full bg-amber-300/90 px-1.5 py-0.5 text-[11px] font-extrabold text-amber-950 shadow">
+                  <IconStar size={10} /> {stars}
+                </span>
+              )}
+              </span>
+            </div>
+          );
+          const card = (
             <button
-              key={grade.id}
               type="button"
               data-testid={`grade-card-${grade.id}`}
               onClick={() => onSelectGrade(grade.id)}
-              className={`relative flex min-h-[76px] items-center gap-4 overflow-hidden rounded-3xl border-4 ${land.cardRing.replace('ring-', 'border-')} ${land.cardTint} bg-gradient-to-br from-white/70 via-white/10 to-transparent p-5 pb-5 pt-[104px] text-left shadow-lg transition hover:-translate-y-1 hover:shadow-2xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-400/60 sm:px-6 ${
-                isLoneLast ? 'sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.75rem)]' : ''
+              className={`relative flex w-full items-center gap-4 overflow-hidden rounded-3xl border-4 ${land.cardRing.replace('ring-', 'border-')} ${land.cardTint} bg-gradient-to-br from-white/70 via-white/10 to-transparent p-4 pb-4 pt-[104px] text-left shadow-lg transition hover:-translate-y-1 hover:shadow-2xl active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-400/60 ${
+                cardLeft ? '' : 'flex-row-reverse text-right'
               }`}
             >
               {/* CR-82 (spec s6.6): 96px day-tone land postcard header -
@@ -211,27 +307,57 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               >
                 <LandScene land={land.key} variant="strip" tone="day" />
               </span>
-              <span
-                aria-hidden="true"
-                className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full ${land.discBg} font-display text-3xl font-extrabold text-white ring-4 ring-white/80 shadow-[inset_0_2px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_14px_-4px_rgba(15,23,42,0.3)]`}
-              >
-                {(grade.name.match(/\d+/) ?? ['?'])[0]}
-              </span>
-              <span className="relative z-10 flex min-w-0 flex-col">
+              <span className="relative z-10 flex min-w-0 flex-1 flex-col">
                 <span className={`font-display text-2xl font-extrabold leading-tight ${land.accentText}`}>
                   {grade.name}
                 </span>
                 <span className="text-base font-bold text-slate-600">
                   {land.nameVi} {land.motif && <EmojiVisual emoji={land.motif} className="inline-block text-sm" />}
                 </span>
-                <span data-testid={`grade-stars-${grade.id}`} className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-amber-700">
-                  <IconStar size={13} className="text-amber-500" /> {gp?.stars ?? 0} sao
+                <span data-testid={`grade-stars-${grade.id}`} className={`mt-1 flex items-center gap-1 text-sm font-bold text-amber-700 ${cardLeft ? '' : 'justify-end'}`}>
+                  <IconStar size={13} className="text-amber-500" /> {stars} sao
                 </span>
               </span>
+              <IconChevronRight
+                size={20}
+                className={`relative z-10 shrink-0 text-slate-400 ${cardLeft ? '' : 'rotate-180'}`}
+              />
             </button>
           );
+          return (
+            <li key={grade.id} className={`relative flex items-center ${i > 0 ? 'pt-14' : ''}`}>
+              {i > 0 && <TrailDots from={100 - curX} to={curX} />}
+              {cardLeft ? (
+                <>
+                  <div className="w-[78%]">{card}</div>
+                  {marker}
+                </>
+              ) : (
+                <>
+                  {marker}
+                  <div className="w-[78%]">{card}</div>
+                </>
+              )}
+            </li>
+          );
         })}
-      </div>
+      </ol>
+      )}
+      {/* Trail tail: the path keeps winding past the last land to a
+          finish flag centered under the map - the journey's "Đích". */}
+      {visibleGrades.length > 0 && (
+        <div aria-hidden="true" className="relative mx-auto h-20 max-w-md">
+          {trailDots(visibleGrades.length % 2 === 1 ? TRAIL_X.right : TRAIL_X.left, 50, 56).map((d, i) => (
+            <span
+              key={i}
+              className="absolute h-1.5 w-1.5 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(252,211,77,0.55)]"
+              style={{ left: `${d.x}%`, top: d.y, transform: 'translate(-50%,-50%)' }}
+            />
+          ))}
+          <span className="absolute left-1/2 top-[60px] flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 px-3 py-1 text-xs font-extrabold text-amber-950 shadow-lg ring-2 ring-amber-200/70">
+            <IconFlag size={13} /> Đích đến
+          </span>
+        </div>
       )}
       {joinClassSlot}
       {/* CR-43: footer stacks vertically - the old inline elements

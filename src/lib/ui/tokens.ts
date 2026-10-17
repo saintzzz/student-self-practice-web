@@ -294,14 +294,17 @@ export const material = {
   /** The play board itself (e3). */
   board:
     'rounded-[2rem] bg-gradient-to-b from-navy-800 to-navy-850 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-2px_0_rgba(0,0,0,0.25),0_32px_64px_-24px_rgba(0,0,0,0.75),0_12px_24px_-12px_rgba(0,0,0,0.5)]',
+  /* CR-82 polish: the tile family reads as cream "Scrabble"/letter tiles
+     on the navy board - light face + dark ink pops the affordance and
+     matches the exam paper material (Duolingo/Reading Eggs idiom). */
   tileFace:
-    'rounded-[1.25rem] border-2 border-navy-500 bg-gradient-to-b from-navy-700 to-navy-800 text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_6px_0_#0a1730,0_14px_20px_-10px_rgba(0,0,0,0.6)]',
+    'rounded-[1.25rem] border-2 border-amber-200/90 bg-gradient-to-b from-white via-amber-50 to-amber-100/80 text-slate-800 shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-3px_0_rgba(146,64,14,0.14),0_6px_0_#c99a4e,0_14px_20px_-10px_rgba(0,0,0,0.6)]',
   tileHover:
-    '[@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-amber-300/60 [@media(hover:hover)]:hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_8px_0_#0a1730,0_18px_24px_-10px_rgba(0,0,0,0.6)] motion-reduce:hover:translate-y-0',
+    '[@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-amber-400 [@media(hover:hover)]:hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-3px_0_rgba(146,64,14,0.14),0_8px_0_#c99a4e,0_18px_24px_-10px_rgba(0,0,0,0.6)] motion-reduce:hover:translate-y-0',
   tilePress:
-    'active:translate-y-[6px] active:shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_0_0_#0a1730] data-[pressed]:translate-y-[6px] data-[pressed]:shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_0_0_#0a1730] transition-[transform,box-shadow] duration-100 ease-out-quint motion-reduce:active:translate-y-0 motion-reduce:data-[pressed]:translate-y-0',
+    'active:translate-y-[6px] active:shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-3px_0_rgba(146,64,14,0.14),0_0_0_#c99a4e] data-[pressed]:translate-y-[6px] data-[pressed]:shadow-[inset_0_2px_0_rgba(255,255,255,0.9),inset_0_-3px_0_rgba(146,64,14,0.14),0_0_0_#c99a4e] transition-[transform,box-shadow] duration-100 ease-out-quint motion-reduce:active:translate-y-0 motion-reduce:data-[pressed]:translate-y-0',
   tileDisabled:
-    'cursor-not-allowed opacity-50 saturate-50 shadow-[0_2px_0_#0a1730]',
+    'cursor-not-allowed opacity-50 saturate-50 shadow-[0_2px_0_#c99a4e]',
   tileFocus:
     'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70',
   tileCorrect:
@@ -377,6 +380,7 @@ export const TYPE_CAPTION_NAVY = `${TYPE_CAPTION_GEO} ${INK_NAVY_MUTED}`;
 export const TYPE_CAPTION_PAPER = `${TYPE_CAPTION_GEO} ${INK_PAPER_SOFT}`;
 export const TYPE_IPA_NAVY = `${TYPE_IPA_GEO} ${INK_NAVY_IPA}`;
 export const TYPE_LETTER_TILE_NAVY = `${TYPE_LETTER_TILE_GEO} ${INK_NAVY}`;
+export const TYPE_LETTER_TILE_PAPER = `${TYPE_LETTER_TILE_GEO} ${INK_PAPER}`;
 export const TYPE_LETTER_CARD_NAVY = `${TYPE_LETTER_CARD_GEO} ${INK_NAVY}`;
 export const TYPE_LETTER_WORD_PAPER = `${TYPE_LETTER_WORD_GEO} ${INK_PAPER}`;
 export const TYPE_TITLE = H1;
@@ -429,7 +433,7 @@ export const SPELL_SLOT =
 export const SPELL_SLOT_TARGET =
   'border-solid border-amber-300 ring-4 ring-amber-300/40';
 export const SPELL_SLOT_FILLED = 'border-solid';
-export const SPELL_TILE = `${material.tileFace} h-[76px] w-[64px] ${TYPE_LETTER_TILE_NAVY}`;
+export const SPELL_TILE = `${material.tileFace} h-[76px] w-[64px] ${TYPE_LETTER_TILE_PAPER}`;
 export const WORD_CHIP = `${material.tileFace} min-h-[76px] px-5 text-xl font-bold`;
 export const GAP_INPUT_TOGGLE = `${BTN_SECONDARY_NAVY} min-h-[48px]`;
 export const SENTENCE_GAP =
