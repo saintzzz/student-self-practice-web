@@ -32,6 +32,7 @@ import { clearParentVerification } from './components/ParentGate';
 import { __resetInstructionAutoplay } from './components/InstructionSpeaker';
 import type { ExamProgramId } from './types/exam';
 import FlashcardErrorBoundary from './components/flashcards/FlashcardErrorBoundary';
+import GameRouteBoundary from './games/GameRouteBoundary';
 import {
   advanceRoundQuestion,
   createBatch,
@@ -51,7 +52,7 @@ import {
 } from './lib/practiceSession';
 import type { Grade, TracingMeta } from './types';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game';
 
 // r16: StrictMode replays the mount effect - the confirm RPC consumes
 // the token on first success, so a naive second call would see
@@ -99,6 +100,8 @@ export default function App() {
   const [examFocus, setExamFocus] = useState<{ skills?: string[]; minDifficulty?: number; label?: string } | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
+  /** CR-83: which Game Zone title the 'game' screen is playing. */
+  const [activeGame, setActiveGame] = useState<import('./games/types').GameId | null>(null);
   /** r6: parent-email confirm-link outcome, rendered as its own screen. */
   const [verifyNotice, setVerifyNotice] = useState<'ok' | 'fail' | null>(null);
   /** r17: the auth uid this tab has loaded state for. Compared against
@@ -530,6 +533,10 @@ export default function App() {
         onArenaAccept={handleArenaAccept}
         onArenaBot={handleArenaBot}
         onStartFlashcards={() => setScreen('flashcards')}
+        onStartGame={(gameId) => {
+          setActiveGame(gameId);
+          setScreen('game');
+        }}
         onBack={handleBackToGrades}
         isGuest={authMode !== 'student'}
         isAdmin={authMode === 'admin'}
@@ -549,6 +556,24 @@ export default function App() {
         <RouteFlashcards
           grade={selectedGrade}
           onExit={() => setScreen('start-batch')}
+        />
+      </LottieBudgetProvider>,
+      { gradeId: selectedGradeId },
+    );
+  }
+
+  // CR-83: Game Zone - arcade run inside the grade's land vignette; the
+  // whole game subtree loads as one lazy chunk behind a retry boundary.
+  if (screen === 'game' && selectedGrade && activeGame) {
+    return shell(
+      <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
+        <GameRouteBoundary
+          grade={selectedGrade}
+          gameId={activeGame}
+          onExit={() => {
+            setActiveGame(null);
+            setScreen('start-batch');
+          }}
         />
       </LottieBudgetProvider>,
       { gradeId: selectedGradeId },

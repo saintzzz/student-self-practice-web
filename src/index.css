@@ -309,6 +309,38 @@ textarea {
   animation: audio-bars 800ms ease-in-out infinite;
 }
 
+/* CR-83 Game Zone ambient + verdict motion. */
+@keyframes game-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.game-bob { animation: game-bob 1.8s ease-in-out infinite; }
+
+@keyframes game-drift {
+  0%, 100% { transform: translateX(-6px) rotate(-2deg); }
+  50% { transform: translateX(6px) rotate(2deg); }
+}
+.game-drift { animation: game-drift 2.6s ease-in-out infinite; }
+
+@keyframes game-bubble {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+.game-bubble { animation: game-bubble 2.2s ease-in-out infinite; }
+
+@keyframes game-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.game-shake { animation: game-shake 420ms ease-in-out; }
+
+@keyframes game-flip-in {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.game-flip-in { animation: game-flip-in 220ms ease-out; }
+
 @media (prefers-reduced-motion: reduce), (max-height: 420px) {
   .scene-layer { --pan: 0 !important; }
 }
@@ -318,6 +350,7 @@ textarea {
   .trace-start-pulse { animation: none; }
   .audio-bars { animation: none; }
   .tile-shake, .dart-arrow { animation: none; }
+  .game-bob, .game-drift, .game-bubble, .game-shake, .game-flip-in { animation: none; }
 }
 
 /* CR-14: Be Vietnam Pro body font, self-hosted (OFL-1.1) under

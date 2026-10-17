@@ -66,6 +66,10 @@ export interface EngagementState {
    *  is bounded by replayable content objectives; eviction would let a
    *  replayed objective double-grant. */
   grantedObjectives?: Record<string, string>;
+  /** CR-83: gameId -> best star count earned in the Game Zone (0..3).
+   *  Powers the shelf badge; stars themselves are granted per run via
+   *  recordRoundResult with `game:<id>:<seed>` objectives. */
+  gameBest?: Record<string, number>;
   /** kids-UX: forward-compat marker - future clients detect and preserve
    *  fields they do not know. Does not protect pre-R0 clients. */
   schemaVersion?: number;
@@ -363,8 +367,9 @@ export interface RoundAwardResult {
 }
 
 /** kids-UX objective id grammar: `round:<seed>:<n>` | `batch:<seed>` |
- *  `gift:<stickerId>` (ruling OBJ-1: keyed by the run's seed). */
-const OBJECTIVE_RE = /^(round|batch|gift):[A-Za-z0-9:_-]{1,80}$/;
+ *  `gift:<stickerId>` | CR-83 `game:<gameId>:<seed>` (ruling OBJ-1:
+ *  keyed by the run's seed - each arcade play is a fresh run). */
+const OBJECTIVE_RE = /^(round|batch|gift|game):[A-Za-z0-9:_-]{1,80}$/;
 
 /** kids-UX: true when this objective already granted its rewards. */
 export function isObjectiveGranted(objectiveId: string): boolean {
@@ -404,6 +409,41 @@ export function recordRoundResult(
   if (objectiveId) grantObjective(state, objectiveId);
   persist(state);
   return { stars, newStickers: [...newly].map((id) => STICKERS.find((s) => s.id === id)!) };
+}
+
+/** CR-83: records a finished Game Zone run - stars per score via
+ *  recordRoundResult (idempotent on `game:<id>:<seed>`), plus the
+ *  per-game best-star tracking the shelf badge reads. */
+export function recordGameResult(
+  gradeId: string,
+  gameId: string,
+  seed: string,
+  points: number,
+  maxPoints: number,
+): RoundAwardResult {
+  const result = recordRoundResult(
+    gradeId,
+    0,
+    points,
+    maxPoints,
+    `game:${gameId}:${seed}`,
+  );
+  if (!result.alreadyGranted) {
+    const state = load();
+    const stars = starsForScore(points, maxPoints);
+    const best = state.gameBest ?? {};
+    if ((best[gameId] ?? 0) < stars) {
+      best[gameId] = stars;
+      state.gameBest = best;
+      persist(state);
+    }
+  }
+  return result;
+}
+
+/** CR-83: best star count for a game (0 = never finished). */
+export function gameBestStars(gameId: string): number {
+  return load().gameBest?.[gameId] ?? 0;
 }
 
 export interface BatchAwardResult {

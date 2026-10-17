@@ -1,0 +1,82 @@
+import { useMemo, useRef, useState } from 'react';
+import { seededShuffleIndices } from '../../lib/prng';
+import { playSfx } from '../../lib/sfx';
+import { pickGameWords } from '../sources';
+import { GameRoundDots, PairBoardField, gameVerdictSfx, type PairBoardTile } from '../mechanics';
+import type { GameProps } from '../types';
+
+const PAIRS = 4;
+
+/**
+ * CR-83 Game 1 - Lat the nho (Memory Match): 4 word<->emoji pairs on an
+ * 8-card face-down board. Two flips per move; efficiency bonus for
+ * clearing in few moves. Draws from the grade's literal-emoji vocab.
+ */
+export default function MemoryMatch({ grade, seed, onEnd }: GameProps) {
+  const tiles = useMemo<PairBoardTile[]>(() => {
+    const words = pickGameWords(grade.id, seed, PAIRS);
+    const raw = words.flatMap((w): PairBoardTile[] => [
+      { id: `${w.id}-img`, pairId: w.id, face: 'emoji', label: w.emoji },
+      { id: `${w.id}-word`, pairId: w.id, face: 'word', label: w.word },
+    ]);
+    return seededShuffleIndices(raw.length, `${seed}:order`).map((i) => raw[i]!);
+  }, [grade.id, seed]);
+
+  const [open, setOpen] = useState<number[]>([]);
+  const [matched, setMatched] = useState<Set<number>>(new Set());
+  const [moves, setMoves] = useState(0);
+  const [lock, setLock] = useState(false);
+  const endedRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const finishIfDone = (matchedCount: number, moveCount: number) => {
+    if (matchedCount < tiles.length || endedRef.current) return;
+    endedRef.current = true;
+    // 4 pairs found = 8 base; <=5 moves +2, <=7 +1 (perfect = 4 moves).
+    const bonus = moveCount <= 5 ? 2 : moveCount <= 7 ? 1 : 0;
+    onEnd({ points: 8 + bonus, maxPoints: 10, correctCount: PAIRS });
+  };
+
+  const tap = (idx: number) => {
+    if (lock || endedRef.current || matched.has(idx) || open.includes(idx)) return;
+    playSfx('flip');
+    if (open.length === 0) {
+      setOpen([idx]);
+      return;
+    }
+    const first = open[0]!;
+    const nextMoves = moves + 1;
+    setMoves(nextMoves);
+    if (tiles[first]!.pairId === tiles[idx]!.pairId) {
+      gameVerdictSfx(true);
+      const next = new Set(matched).add(first).add(idx);
+      setMatched(next);
+      setOpen([]);
+      finishIfDone(next.size, nextMoves);
+      return;
+    }
+    gameVerdictSfx(false);
+    setLock(true);
+    setOpen([first, idx]);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setOpen([]);
+      setLock(false);
+    }, 750);
+  };
+
+  return (
+    <div data-testid="game-memory-match" className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={PAIRS} done={matched.size / 2} />
+        <span className="text-sm font-semibold text-slate-300">Lượt lật: {moves}</span>
+      </div>
+      <PairBoardField
+        tiles={tiles}
+        openIndexes={open}
+        matchedIndexes={matched}
+        onFlip={tap}
+      />
+    </div>
+  );
+}

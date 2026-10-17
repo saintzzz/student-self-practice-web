@@ -16,6 +16,8 @@ import PetCard from './PetCard';
 import HomeShelf from './HomeShelf';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import ModeHub, { HubGroup, type HubTileDef } from './ModeHub';
+import GameZoneShelf from '../games/GameZoneShelf';
+import type { GameId } from '../games/types';
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -67,6 +69,8 @@ interface StartBatchScreenProps {
   /** CR-82 (R-v5-12): flashcards entry - 4th row of the English block.
    *  Optional like the arena handlers: absent = the row does not mount. */
   onStartFlashcards?: () => void;
+  /** CR-83: Game Zone entry - opens the arcade run for a game id. */
+  onStartGame?: (gameId: GameId) => void;
   onBack: () => void;
   /** CR-30: guests see a lock prompt on the leaderboard card. */
   isGuest?: boolean;
@@ -157,7 +161,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
  *  - CR-46 preserved: every grade reaches every program/mode - only
  *    the container path differs per band.
  */
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onStartFlashcards, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onStartFlashcards, onStartGame, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   const examConfig = examConfigForGrade(grade.id);
   const { band, density } = useViewer();
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
@@ -335,6 +339,18 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             { id: 'rank', content: leaderboardEl },
           ],
         },
+        /* CR-83: Game Zone sits between competition and rewards -
+           learn -> đấu -> chơi -> thưởng. */
+        ...(onStartGame
+          ? [{
+              id: 'games',
+              icon: IconPlay,
+              label: 'Khu trò chơi',
+              sub: 'Lật thẻ, bóng bay, đua xe, câu cá và nhiều hơn',
+              voiceHint: 'Chọn một trò chơi nhé!',
+              content: <GameZoneShelf onPlay={onStartGame} />,
+            }]
+          : []),
         {
           id: 'reward',
           icon: IconGift,
@@ -382,6 +398,17 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             </>
           ),
         },
+        /* CR-83: Game Zone between competition and rewards. */
+        ...(onStartGame
+          ? [{
+              id: 'games',
+              icon: IconPlay,
+              label: 'Khu trò chơi',
+              sub: 'Lật thẻ, bóng bay, đua xe, câu cá và nhiều hơn',
+              voiceHint: 'Chọn một trò chơi nhé!',
+              content: <GameZoneShelf onPlay={onStartGame} />,
+            }]
+          : []),
         {
           id: 'reward',
           icon: IconGift,
