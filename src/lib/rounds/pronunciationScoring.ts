@@ -326,6 +326,29 @@ export function phonemeSimilarity(target: string, candidate: string): number {
 }
 
 /**
+ * True only when EVERY target token is covered by some candidate token
+ * at phoneme-identity level. The best-pair `phonemeSimilarity` alone
+ * would floor an incomplete attempt ("red" for "red apple" pairs 1.0) -
+ * the homophone floor must not rescue a phrase missing half its words
+ * (external review r49).
+ */
+function phonemeCompleteMatch(target: string, candidate: string): boolean {
+  const tCodes = target.split(' ').map(phonemeCode).filter(Boolean);
+  const cCodes = candidate.split(' ').map(phonemeCode).filter(Boolean);
+  if (tCodes.length === 0 || cCodes.length === 0) return false;
+  return tCodes.every((t) =>
+    cCodes.some((c) => {
+      for (const cv of [c, c.replace(/[sz]$/, '')]) {
+        if (cv && 1 - levenshteinDistance(t, cv) / Math.max(t.length, cv.length) >= 0.99) {
+          return true;
+        }
+      }
+      return false;
+    }),
+  );
+}
+
+/**
  * A candidate that is a phonemically DIFFERENT word below this floor is a
  * miss, not a near-success - otherwise text similarity alone lets "sheep"
  * pass for "ship". Homophones (two/too, eight/ate) resolve to identical
@@ -391,10 +414,11 @@ function scoreCandidate(normalizedTarget: string, normalizedCandidate: string, c
   let score = Math.round(Math.min(1, Math.max(0, combinedSimilarity)) * 100);
   // CR-90: identical phoneme codes mean the recognizer heard the SAME
   // pronunciation with a different spelling ("eight" -> "ate") - that is
-  // a correct utterance whatever the edit distance says. The floor rides
-  // the same confidence factor so an unsure hypothesis is still softer
-  // than a confident one.
-  if (phoneme >= 0.99) {
+  // a correct utterance whatever the edit distance says. Requires every
+  // target token covered (r49: "red" must not floor for "red apple").
+  // The floor rides the same confidence factor so an unsure hypothesis
+  // is still softer than a confident one.
+  if (phoneme >= 0.99 && phonemeCompleteMatch(normalizedTarget, normalizedCandidate)) {
     const confidenceFactor =
       confidence === undefined
         ? 1

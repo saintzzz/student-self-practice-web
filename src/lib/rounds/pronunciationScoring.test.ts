@@ -294,6 +294,17 @@ describe('scorePronunciationAttempt', () => {
       expect(scorePronunciationAttempt('eight', 'ate').isCorrect).toBe(true);
     });
 
+    it('does not floor an incomplete phrase that covers only one target token (r49)', () => {
+      // "red apple" said as "red": best token-pair is identical, but
+      // "apple" was never said - no homophone rescue.
+      const result = scorePronunciationAttempt('red apple', 'red');
+      expect(result.isCorrect).toBe(false);
+    });
+
+    it('still floors a complete multi-word homophone match', () => {
+      expect(scorePronunciationAttempt('red apple', 'read apple').isCorrect).toBe(true);
+    });
+
     it('accepts a differently-spelled phonetic match (recognizer respelling)', () => {
       expect(scorePronunciationAttempt('cat', 'kat').isCorrect).toBe(true);
     });

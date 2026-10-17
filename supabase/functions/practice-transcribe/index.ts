@@ -43,6 +43,11 @@ const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 // credentials while the caller has already given up.
 const ATTEMPT_TIMEOUT_MS = 12000;
 const OVERALL_BUDGET_MS = 45000;
+// CR-90 r49: assess gets its own sub-budget and attempt cap so a slow
+// grader chain cannot eat the whole window - the plain-transcription
+// fallback below must always get real time to run.
+const ASSESS_BUDGET_MS = 20000;
+const ASSESS_MAX_ATTEMPTS = 3;
 
 // External-review r3: verify_jwt=false means guests can call us - an
 // unauthenticated POST burns real AI quota per attempt. The limiter is a
@@ -391,12 +396,15 @@ Deno.serve(async (req: Request) => {
     // request; total failure falls through to the plain transcribe chain
     // below so the client can still score a transcript locally.
     if (mode === 'assess') {
-      const graders = ais.filter((ai) =>
-        ['gemini', 'openrouter'].includes(String(ai.provider ?? 'gemini').toLowerCase()),
-      );
+      const graders = ais
+        .filter((ai) =>
+          ['gemini', 'openrouter'].includes(String(ai.provider ?? 'gemini').toLowerCase()),
+        )
+        .slice(0, ASSESS_MAX_ATTEMPTS);
+      const assessDeadline = Math.min(deadline, Date.now() + ASSESS_BUDGET_MS);
       for (const ai of graders) {
-        if (Date.now() >= deadline) {
-          details.push('timeout:budget');
+        if (Date.now() >= assessDeadline) {
+          details.push('timeout:assess-budget');
           break;
         }
         const provider = String(ai.provider ?? 'gemini').toLowerCase();

@@ -24,11 +24,12 @@ for (const r of rows) {
   const caze = r.f.match(/(good_child|good_adult|accent_vi|wrong_word)/)[1];
   const expectPass = caze !== 'wrong_word';
   if (r.status !== 200 || r.accuracy === undefined) { errN++; buckets[caze]=(buckets[caze]||[0,0]); continue; }
-  const pass = r.accuracy >= 70;
+  // r49: production floor is ASSESS_PASS_MIN=85 in pronunciationScoring.ts
+  const pass = r.accuracy >= 85;
   const behaved = pass === expectPass;
   buckets[caze] = buckets[caze]||[0,0]; buckets[caze][behaved?0:1]++;
   if (behaved) okN++; else badN++;
 }
-console.log('\n--- summary (assess mode, threshold 70) ---');
+console.log('\n--- summary (assess mode, threshold 85 = ASSESS_PASS_MIN) ---');
 for (const [c,[g,b]] of Object.entries(buckets)) console.log(`${c.padEnd(14)} ${g}/${g+b} behaved as expected`);
 console.log(`overall ${okN}/${okN+badN}  (errors excluded: ${errN})`);
