@@ -79,6 +79,15 @@ body {
   @apply min-h-screen bg-sky-200 text-slate-900;
   /* Notched phones: bottom UI clears the home indicator. */
   padding-bottom: env(safe-area-inset-bottom);
+  /* Fly-out animations (flashcard swipe translateX 130%) must never
+     widen the document - on phones the overflow pans the viewport and
+     the next card renders off-screen. clip keeps sticky working. */
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+html {
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Kids hammer-tap buttons - kill the 300ms double-tap zoom delay

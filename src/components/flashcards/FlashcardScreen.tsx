@@ -281,7 +281,7 @@ export default function FlashcardScreen({ grade, onExit }: FlashcardScreenProps)
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
+    <div className="mx-auto max-w-2xl overflow-x-clip px-4 py-6 sm:py-10">
       {/* Chrome strip: card counter + KẾT THÚC (s14.3 anatomy). */}
       <div className={`mb-4 flex items-center justify-between gap-2 ${material.chrome} p-2 sm:px-4 sm:py-2.5`}>
         <span data-testid="flashcard-counter" className={CHIP_AMBER}>
