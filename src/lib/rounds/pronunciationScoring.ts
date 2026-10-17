@@ -337,9 +337,9 @@ function phonemeCompleteMatch(target: string, candidate: string): boolean {
   const tJoin = target.split(' ').map(phonemeCode).filter(Boolean).join('');
   const cJoin = candidate.split(' ').map(phonemeCode).filter(Boolean).join('');
   if (!tJoin || !cJoin) return false;
-  return [cJoin, cJoin.replace(/[sz]$/, '')].some(
-    (v) => v !== '' && 1 - levenshteinDistance(tJoin, v) / Math.max(tJoin.length, v.length) >= 0.99,
-  );
+  // r52: strict identity - a 0.99 ratio would let one edit slip past
+  // once the joined stream reaches ~100 characters.
+  return [cJoin, cJoin.replace(/[sz]$/, '')].some((v) => v !== '' && v === tJoin);
 }
 
 /**
