@@ -4,6 +4,7 @@ import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 6;
 
@@ -74,7 +75,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
           data-testid="pig-face"
           className={`text-6xl transition-transform motion-reduce:transition-none ${fed ? 'scale-125' : 'game-bob'}`}
         >
-          {fed ? '😋' : '🐷'}
+          <EmojiVisual emoji={fed ? '😋' : '🐷'} animated variant="block" />
         </span>
         <span className="text-sm font-semibold text-slate-300">
           {fed ? 'Ngon quá!' : 'Heo đói bụng rồi!'}

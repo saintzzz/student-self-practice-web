@@ -4,6 +4,7 @@ import { WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 8;
 const SECONDS = 20;
@@ -109,7 +110,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
                   : 'bg-white/15'
             }`}
           >
-            {mark}
+            <EmojiVisual emoji={mark === '⭐⭐' ? '⭐' : mark} count={mark === '⭐⭐' ? 2 : 1} variant="block" />
           </span>
         ))}
       </div>
@@ -123,7 +124,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
         {seconds}
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-        <span className="text-4xl">{visual?.emoji ?? q.emoji}</span>
+        <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
         <span className="text-base font-semibold text-slate-500">là từ nào?</span>
       </div>
       <WordChoiceField
@@ -141,7 +142,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
         onClick={useFiftyFifty}
         className="rounded-full border-2 border-sky-300/60 bg-navy-800/80 px-5 py-2 text-sm font-bold text-sky-200 transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-sky-300 disabled:opacity-40 disabled:hover:translate-y-0"
       >
-        {lifelineUsed ? 'Đã dùng 50:50' : '💡 Trợ giúp 50:50'}
+        {lifelineUsed ? 'Đã dùng 50:50' : <><EmojiVisual emoji="💡" /> Trợ giúp 50:50</>}
       </button>
     </div>
   );

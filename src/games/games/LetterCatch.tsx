@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { playSfx } from '../../lib/sfx';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
+import { EmojiVisual } from '../../components/EmojiVisual';
 import { spellableWords } from '../sources';
 import { GameRoundDots, LetterOrderField, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
@@ -117,7 +118,7 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
     <div data-testid="game-letter-catch" className="flex flex-col items-center gap-5">
       <GameRoundDots total={words.length} done={done} />
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-        <span className="text-4xl">{visual?.emoji ?? '❓'}</span>
+        <EmojiVisual emoji={visual?.emoji ?? '❓'} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
         <span className="font-display text-3xl font-extrabold tracking-[0.3em] text-slate-800">
           {target.split('').map((_, i) => placedWord[i] ?? '_').join('')}
         </span>

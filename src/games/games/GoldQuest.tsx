@@ -5,6 +5,7 @@ import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 6;
 const CHESTS = 3;
@@ -113,12 +114,12 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
         data-testid="gem-tally"
         className="flex items-center gap-2 rounded-full border-2 border-amber-300/60 bg-navy-800/80 px-4 py-1.5 text-lg font-extrabold text-amber-200"
       >
-        💎 {gems}
+        <EmojiVisual emoji="💎" variant="block" /> {gems}
       </div>
       {phase === 'question' ? (
         <>
           <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-            <span className="text-4xl">{visual?.emoji ?? q.emoji}</span>
+            <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
             <span className="text-base font-semibold text-slate-500">là từ nào?</span>
           </div>
           <WordChoiceField
@@ -156,11 +157,11 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
                 >
                   {isOpen && reward ? (
                     <>
-                      <span>{reward.emoji}</span>
+                      <EmojiVisual emoji={reward.emoji} variant="block" />
                       <span className="px-1 text-center text-xs font-bold text-white">{reward.label}</span>
                     </>
                   ) : (
-                    '🧰'
+                    <EmojiVisual emoji="🧰" variant="block" />
                   )}
                 </button>
               );

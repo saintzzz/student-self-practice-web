@@ -4,6 +4,7 @@ import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 5;
 
@@ -84,7 +85,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
         data-testid="chest-visual"
         className={`relative flex h-28 w-40 items-center justify-center rounded-3xl border-4 border-amber-700/80 bg-gradient-to-b from-amber-600 to-amber-800 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.6)] ${locksOpen >= LOCKS ? 'game-flip-in' : ''}`}
       >
-        <span className="text-6xl">{locksOpen >= LOCKS ? '🎁' : '🧰'}</span>
+        <EmojiVisual emoji={locksOpen >= LOCKS ? '🎁' : '🧰'} variant="block" className="text-6xl" />
         <div className="absolute -bottom-3 flex gap-2">
           {Array.from({ length: LOCKS }).map((_, i) => (
             <span
@@ -92,13 +93,13 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
               data-testid={`lock-${i}`}
               className={`text-2xl transition-all motion-reduce:transition-none ${i < locksOpen ? '-translate-y-2 opacity-30' : ''}`}
             >
-              {i < locksOpen ? '🔓' : '🔒'}
+              <EmojiVisual emoji={i < locksOpen ? '🔓' : '🔒'} variant="block" />
             </span>
           ))}
         </div>
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-        <span className="text-4xl">{visual?.emoji ?? q.emoji}</span>
+        <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
         <span className="text-base font-semibold text-slate-500">là từ nào?</span>
       </div>
       <WordChoiceField

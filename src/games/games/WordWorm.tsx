@@ -4,6 +4,7 @@ import { spellableWords } from '../sources';
 import { gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const COLS = 6;
 const ROWS = 5;
@@ -131,7 +132,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
     <div data-testid="game-word-worm" className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-1 text-xl" data-testid="worm-hearts">
         {Array.from({ length: spec.lives }, (_, i) => (
-          <span key={i} className={i < hearts ? '' : 'opacity-25'}>❤️</span>
+          <span key={i} className={i < hearts ? '' : 'opacity-25'}><EmojiVisual emoji="❤️" variant="block" /></span>
         ))}
       </div>
       {/* Spelling strip - the letter the worm must eat next glows. */}
@@ -175,7 +176,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
                       : 'bg-navy-800/70'
               }`}
             >
-              {isHead ? '🐛' : isBody ? '' : letter ? letter.letter : ''}
+              {isHead ? <EmojiVisual emoji="🐛" animated variant="block" /> : isBody ? '' : letter ? letter.letter : ''}
             </div>
           );
         })}
@@ -183,11 +184,11 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
       {/* Direction pad */}
       <div className="grid grid-cols-3 gap-1.5" data-testid="worm-pad">
         <span />
-        <button type="button" data-testid="worm-up" aria-label="Lên" onClick={() => move(0, -1)} className="worm-btn">⬆️</button>
+        <button type="button" data-testid="worm-up" aria-label="Lên" onClick={() => move(0, -1)} className="worm-btn"><EmojiVisual emoji="⬆️" variant="block" /></button>
         <span />
-        <button type="button" data-testid="worm-left" aria-label="Trái" onClick={() => move(-1, 0)} className="worm-btn">⬅️</button>
-        <button type="button" data-testid="worm-down" aria-label="Xuống" onClick={() => move(0, 1)} className="worm-btn">⬇️</button>
-        <button type="button" data-testid="worm-right" aria-label="Phải" onClick={() => move(1, 0)} className="worm-btn">➡️</button>
+        <button type="button" data-testid="worm-left" aria-label="Trái" onClick={() => move(-1, 0)} className="worm-btn"><EmojiVisual emoji="⬅️" variant="block" /></button>
+        <button type="button" data-testid="worm-down" aria-label="Xuống" onClick={() => move(0, 1)} className="worm-btn"><EmojiVisual emoji="⬇️" variant="block" /></button>
+        <button type="button" data-testid="worm-right" aria-label="Phải" onClick={() => move(1, 0)} className="worm-btn"><EmojiVisual emoji="➡️" variant="block" /></button>
       </div>
       <p className="text-sm font-semibold text-slate-300">
         Ăn chữ <span className="text-amber-300">{targetLetter.toUpperCase()}</span> tiếp theo nhé!

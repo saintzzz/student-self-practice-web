@@ -54,7 +54,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
         onClick={() => onPlay(featured.id)}
         className={gameHeroClass(featured.tone ?? 'amber')}
       >
-        <span className="shrink-0" aria-hidden><GameArt art={featured.art} emoji={featured.emoji} size="hero" /></span>
+        <span className="shrink-0" aria-hidden><GameArt art={featured.art} emoji={featured.emoji} size="hero" animated /></span>
         <span className="min-w-0 flex-1">
           <span className="inline-block rounded-full bg-white/40 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-900 ring-1 ring-white/60">
             Trò chơi hôm nay

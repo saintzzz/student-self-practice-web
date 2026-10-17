@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
+import { EmojiVisual } from '../../components/EmojiVisual';
 import { imageChoiceRounds } from '../sources';
 import { WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
@@ -143,7 +144,14 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
       {pendingCell !== null && q && !endedRef.current ? (
         <div className="w-full rounded-2xl border border-white/10 bg-navy-800/60 p-4">
           <p className="mb-3 flex items-center justify-center gap-2 text-center text-base font-semibold text-slate-200">
-            <span className="text-4xl">{getWordVisual(q.wordId)?.emoji ?? q.emoji}</span> là từ nào?
+            <EmojiVisual
+              emoji={getWordVisual(q.wordId)?.emoji ?? q.emoji}
+              imageUrl={getWordVisual(q.wordId)?.imageUrl}
+              animated
+              variant="block"
+              className="text-4xl"
+            />{' '}
+            là từ nào?
           </p>
           <WordChoiceField
             options={q.options}

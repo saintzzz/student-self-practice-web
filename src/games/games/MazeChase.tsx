@@ -4,6 +4,7 @@ import { listeningImageRounds } from '../sources';
 import { GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const COLS = 6;
 const ROWS = 4;
@@ -212,7 +213,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
       <GameRoundDots total={rounds.length} done={round} />
       <div className="flex items-center gap-1 text-xl" data-testid="maze-hearts">
         {Array.from({ length: spec.lives }, (_, i) => (
-          <span key={i} className={i < hearts ? '' : 'opacity-25'}>❤️</span>
+          <span key={i} className={i < hearts ? '' : 'opacity-25'}><EmojiVisual emoji="❤️" variant="block" /></span>
         ))}
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-2.5 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
@@ -232,7 +233,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
           const wall = layout.walls.has(cell);
           const isHero = cell === hero;
           const isGhost = cell === ghost;
-          const content = isHero ? '🐷' : isGhost ? '👻' : pad ? q.options[pad.option] : wall ? '🧱' : '';
+          const contentEmoji = isHero ? '🐷' : isGhost ? '👻' : pad ? q.options[pad.option] : wall ? '🧱' : '';
           return (
             <button
               key={cell}
@@ -253,7 +254,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
                         : 'bg-navy-800/70'
               } ${adjacent && !wall ? 'ring-2 ring-sky-300/70 hover:scale-105 active:scale-95' : ''} disabled:cursor-default focus:outline-none focus:ring-4 focus:ring-amber-300`}
             >
-              {content}
+              {contentEmoji ? <EmojiVisual emoji={contentEmoji} animated={isHero} variant="block" /> : null}
             </button>
           );
         })}

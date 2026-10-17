@@ -4,6 +4,7 @@ import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 6;
 
@@ -72,9 +73,9 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
           className="absolute top-1/2 -translate-y-1/2 text-3xl transition-all duration-500 motion-reduce:transition-none"
           style={{ left: `${6 + (pos / STEPS) * 78}%` }}
         >
-          {who === 'player' ? '🐷' : '🦊'}
+          <EmojiVisual emoji={who === 'player' ? '🐷' : '🦊'} variant="block" />
         </span>
-        <span aria-hidden className="absolute right-1 top-1/2 -translate-y-1/2 text-lg">🏁</span>
+        <span aria-hidden className="absolute right-1 top-1/2 -translate-y-1/2 text-lg"><EmojiVisual emoji="🏁" variant="block" /></span>
       </div>
     );
   };
@@ -84,7 +85,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
       <GameRoundDots total={rounds.length} done={round} />
       <div className="w-full space-y-2">{lane('player')}{lane('rival')}</div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-        <span className="text-5xl">{visual?.emoji ?? q.emoji}</span>
+        <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-5xl" />
         <span className="text-base font-semibold text-slate-500">là từ nào?</span>
       </div>
       <WordChoiceField

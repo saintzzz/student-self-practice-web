@@ -5,6 +5,7 @@ import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const TILES = 9;
 const SCENE_EMOJI = ['🌈', '🏰', '🚀', '🎠', '🐳', '🦋', '🌻', '🍦', '🎪', '🏝️'];
@@ -86,7 +87,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
                 isOpen ? 'scale-100 bg-white/40' : 'scale-95'
               }`}
             >
-              {isOpen ? <span className="game-flip-in">{scene}</span> : (
+              {isOpen ? <EmojiVisual emoji={scene} variant="block" className="game-flip-in text-4xl" /> : (
                 <span className="flex h-full w-full items-center justify-center rounded-xl border border-sky-300/40 bg-gradient-to-b from-navy-600 to-navy-800 text-xl text-sky-300/80 shadow-inner">
                   ✦
                 </span>
@@ -96,7 +97,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
         })}
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-        <span className="text-4xl">{visual?.emoji ?? q.emoji}</span>
+        <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
         <span className="text-base font-semibold text-slate-500">là từ nào?</span>
       </div>
       <WordChoiceField

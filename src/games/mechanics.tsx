@@ -1,6 +1,7 @@
 import { playSfx } from '../lib/sfx';
 import { IconSpeaker } from '../components/icons';
 import { speakWord } from '../lib/speech';
+import { EmojiVisual } from '../components/EmojiVisual';
 import type { SpellTile } from '../types';
 
 /**
@@ -66,7 +67,7 @@ export function EmojiChoiceField({
               className={`${base} game-bob mx-auto h-24 w-20 flex-col rounded-t-full rounded-b-[3rem] bg-gradient-to-b ${BALLOON_COLORS[i % 4]} text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.3),0_8px_18px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
               style={{ animationDelay: `${i * 220}ms` }}
             >
-              <span className="drop-shadow">{emoji}</span>
+              <EmojiVisual emoji={emoji} variant="block" className="text-4xl drop-shadow" />
               <span aria-hidden className="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-inherit" />
             </button>
           );
@@ -83,7 +84,7 @@ export function EmojiChoiceField({
               className={`${base} game-drift h-20 rounded-2xl border-2 border-sky-200/50 bg-gradient-to-b from-sky-300/80 to-sky-500/80 text-3xl shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
               style={{ animationDelay: `${i * 340}ms` }}
             >
-              <span className="drop-shadow">{emoji}</span>
+              <EmojiVisual emoji={emoji} variant="block" className="text-3xl drop-shadow" />
             </button>
           );
         }
@@ -103,7 +104,7 @@ export function EmojiChoiceField({
                 className={`game-peek flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}
                 style={{ animationDelay: `${i * 300}ms` }}
               >
-                {emoji}
+                <EmojiVisual emoji={emoji} variant="block" />
               </span>
             </button>
           );
@@ -120,7 +121,7 @@ export function EmojiChoiceField({
               className={`${base} game-bob mx-auto h-24 w-24 flex-col rounded-full border-4 border-amber-100/80 bg-gradient-to-b from-amber-50 to-orange-100 text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.7),0_10px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
               style={{ animationDelay: `${i * 240}ms` }}
             >
-              <span className="drop-shadow-sm">{emoji}</span>
+              <EmojiVisual emoji={emoji} variant="block" className="text-4xl drop-shadow-sm" />
             </button>
           );
         }
@@ -134,7 +135,7 @@ export function EmojiChoiceField({
             onClick={() => onPick(i)}
             className={`${base} h-24 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 text-5xl shadow-[0_8px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
           >
-            {emoji}
+            <EmojiVisual emoji={emoji} variant="block" />
           </button>
         );
       })}
@@ -277,7 +278,7 @@ export function PairBoardField({ tiles, openIndexes, matchedIndexes, onFlip }: P
           >
             {faceUp ? (
               tile.face === 'emoji' ? (
-                <span className="text-4xl">{tile.label}</span>
+                <EmojiVisual emoji={tile.label} variant="block" className="text-4xl" />
               ) : (
                 <span className="px-1 text-center text-lg font-extrabold text-slate-800">{tile.label}</span>
               )

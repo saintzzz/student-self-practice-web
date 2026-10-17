@@ -4,6 +4,7 @@ import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 8;
 const PATH = 6;
@@ -112,7 +113,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
       <GameRoundDots total={rounds.length} done={round} />
       <div className="flex items-center gap-1 text-xl" data-testid="castle-hearts">
         {Array.from({ length: spec.lives }, (_, i) => (
-          <span key={i} className={i < hearts ? '' : 'opacity-25'}>❤️</span>
+          <span key={i} className={i < hearts ? '' : 'opacity-25'}><EmojiVisual emoji="❤️" variant="block" /></span>
         ))}
       </div>
       {/* The path: slimes enter at cell 0, castle at the right end. */}
@@ -130,7 +131,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
                   key={s.id}
                   className={boltAt === s.id ? 'game-flip-in' : 'game-drift'}
                 >
-                  {boltAt === s.id ? '💥' : s.emoji}
+                  <EmojiVisual emoji={boltAt === s.id ? '💥' : s.emoji} variant="block" />
                 </span>
               ))}
           </div>
@@ -139,11 +140,11 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
           data-testid="castle-gate"
           className="flex h-16 w-14 items-center justify-center rounded-2xl border-4 border-amber-700/80 bg-gradient-to-b from-amber-500/70 to-amber-700/70 text-4xl"
         >
-          🏰
+          <EmojiVisual emoji="🏰" variant="block" />
         </div>
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
-        <span className="text-4xl">{visual?.emoji ?? q.emoji}</span>
+        <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
         <span className="text-base font-semibold text-slate-500">là từ nào?</span>
       </div>
       <WordChoiceField
