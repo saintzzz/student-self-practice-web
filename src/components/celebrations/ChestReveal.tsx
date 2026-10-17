@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { EmojiVisual } from '../EmojiVisual';
+import { IconChest } from '../icons';
 import type { Sticker } from '../../lib/engagement/store';
 
 interface ChestRevealProps {
@@ -33,8 +34,8 @@ export default function ChestReveal({ chestStars, totalStars, newStickers }: Che
   return (
     <div data-testid="chest-reveal" className="mb-4 flex flex-col items-center">
       <div className="relative">
-        <span className="chest-wiggle inline-block text-6xl">
-          <EmojiVisual emoji="🎁" />
+        <span className="chest-wiggle inline-block text-amber-400" data-testid="chest-svg">
+          <IconChest size={64} />
         </span>
         {shown > 0 && (
           <span

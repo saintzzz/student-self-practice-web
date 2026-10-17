@@ -60,7 +60,7 @@ describe('ImageChoiceQuestion', () => {
     // lookup would still render but silently show the wrong photo.
     mockGetWordVisual.mockImplementation((wordId: string) =>
       wordId === 'fixture-cat'
-        ? { emoji: '🐱', imageUrl: '/images/vocab/fixture-cat.webp' }
+        ? { emoji: '🐱', imageUrl: '/images/vocab/fixture-cat.webp', word: 'cat' }
         : undefined,
     );
 

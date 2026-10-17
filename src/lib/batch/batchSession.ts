@@ -17,6 +17,14 @@ export interface RoundOutcome {
   titleVi: string;
   correctCount: number;
   totalCount: number;
+  /**
+   * CR-82 (D-10): skill-stat counts EXCLUDING assisted answers (tracing
+   * auto-draw/auto-step/chunk-skip). Points, stars and quests still use
+   * correctCount/totalCount - assisted items are never punished
+   * (R-v5-07), they just do not inflate mastery.
+   */
+  skillCorrect: number;
+  skillTotal: number;
   /** correctCount * POINTS_PER_CORRECT_ANSWER (plan.md v10, AC34). */
   points: number;
   /** totalCount * POINTS_PER_CORRECT_ANSWER - this Round's max given what was actually answered. */
@@ -67,6 +75,8 @@ function buildRoundOutcome(
       titleVi: definition.titleVi,
       correctCount: 0,
       totalCount: 0,
+      skillCorrect: 0,
+      skillTotal: 0,
       points: 0,
       maxPoints: 0,
       implemented: false,
@@ -74,12 +84,16 @@ function buildRoundOutcome(
   }
 
   const result = computeSessionResult(session);
+  /* CR-82 (D-10): assisted answers are dropped from the mastery slice. */
+  const skillAnswers = result.answers.filter((a) => !a.assisted);
   return {
     roundNumber: definition.roundNumber,
     roundType: definition.roundType,
     titleVi: definition.titleVi,
     correctCount: result.correctCount,
     totalCount: result.totalCount,
+    skillCorrect: skillAnswers.filter((a) => a.isCorrect).length,
+    skillTotal: skillAnswers.length,
     points: result.correctCount * POINTS_PER_CORRECT_ANSWER,
     maxPoints: result.totalCount * POINTS_PER_CORRECT_ANSWER,
     implemented: true,
@@ -115,7 +129,9 @@ function startRound(
     gradeId,
     roundIndex,
     phase: 'active',
-    roundSession: createSession(definition.buildQuestions(seed, getWordsByGrade(gradeId))),
+    roundSession: createSession(
+      definition.buildQuestions(seed, getWordsByGrade(gradeId), { gradeId }),
+    ),
     completedRounds,
     startedAtMs,
   };

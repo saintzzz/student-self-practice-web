@@ -181,7 +181,7 @@ export default function ReviewQueueCard() {
               type="button"
               data-testid={`review-filter-${s}`}
               onClick={() => { setStatusFilter(s); setOffset(0); }}
-              className={`rounded-full px-3 py-1 text-xs font-bold ${statusFilter === s ? 'bg-indigo-600 text-white' : 'bg-sky-100 text-sky-700'}`}
+              className={`rounded-full px-3 py-1 text-xs font-bold ${statusFilter === s ? 'bg-blue-600 text-white' : 'bg-sky-100 text-sky-700'}`}
             >
               {s}
             </button>
@@ -195,7 +195,7 @@ export default function ReviewQueueCard() {
         {rows?.map((r) => (
           <div key={r.question_id} data-testid={`review-item-${r.question_id}`} className="rounded-2xl bg-white p-4 ring-1 ring-sky-100">
             <div className="mb-1 flex flex-wrap items-center gap-2 text-xs font-bold">
-              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-indigo-700">{r.priority}</span>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700">{r.priority}</span>
               <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-700">Lớp {r.q?.grade} · {r.q?.subject} · {r.q?.question_type}</span>
               <span className="ml-auto font-mono text-[10px] text-slate-400">{r.question_id}</span>
             </div>
@@ -204,7 +204,7 @@ export default function ReviewQueueCard() {
               <p className="mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-slate-700 whitespace-pre-wrap">{r.q.passage}</p>
             )}
             {r.q?.statement && (
-              <p className="mt-1 text-xs font-semibold text-indigo-700">Nhận định: {r.q.statement}</p>
+              <p className="mt-1 text-xs font-semibold text-blue-700">Nhận định: {r.q.statement}</p>
             )}
             {r.q?.tokens && r.q.tokens.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
@@ -288,7 +288,7 @@ export default function ReviewQueueCard() {
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Lý do (bắt buộc)"
-                  className="min-w-0 flex-1 rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-sky-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="min-w-0 flex-1 rounded-lg bg-sky-50 px-3 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-sky-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <button
                   type="button"

@@ -29,7 +29,7 @@ async function solveParentGate(page: import('@playwright/test').Page): Promise<v
 }
 
 test.describe('kids-UX: launchpad (CR-73)', () => {
-  test('G1-2: one gold CTA + two hub tiles; programs behind per-program subtiles', async ({ page }) => {
+  test('G1-2: one gold CTA + three hub tiles; programs behind per-program subtiles', async ({ page }) => {
     await gotoApp(page);
     await selectGrade(page, 0); // grade-1
 

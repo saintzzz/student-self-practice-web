@@ -24,6 +24,8 @@ const KIND_TO_SKILL: Record<string, string> = {
   'word-order': 'wordorder',
   'missing-letter': 'spelling',
   'extra-letter': 'spelling',
+  /* CR-82 (D-10): letter tracing is a letter-formation spelling skill. */
+  'letter-tracing': 'spelling',
   'odd-pronunciation': 'pronunciation',
   'true-false-reading': 'reading',
   'text-answer': 'textanswer',

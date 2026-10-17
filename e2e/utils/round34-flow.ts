@@ -210,8 +210,13 @@ export async function runDescribeAndChooseImageRound(
     }
 
     if (kind === 'describe-and-choose-image') {
-      const correctOptionText = (await optionButtons(page).nth(result.correctIndex).innerText()).trim();
-      const [firstChar] = Array.from(correctOptionText);
+      /* After answering, the option button's first innerText char is the
+         "Đáp án: " verdict prefix (CR-02 kids-UX label), NOT the emoji.
+         Read the aria-hidden visual span - EmojiVisual's own content. */
+      const visualText = (
+        await optionButtons(page).nth(result.correctIndex).locator('> span[aria-hidden="true"]').innerText()
+      ).trim();
+      const [firstChar] = Array.from(visualText);
       correctOptionEmojis.push(firstChar ?? '');
     }
 

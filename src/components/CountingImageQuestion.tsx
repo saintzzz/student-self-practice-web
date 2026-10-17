@@ -4,7 +4,9 @@ import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
-import { EXHIBIT, EXHIBIT_TILT } from '../lib/ui/tokens';
+import PressableOptionButton from './PressableOptionButton';
+import { EXHIBIT_TILT, material } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import QuestionBanner from './QuestionBanner';
 
 interface CountingImageQuestionProps {
@@ -26,6 +28,7 @@ export default function CountingImageQuestion({
   speakerKey,
 }: CountingImageQuestionProps) {
   const hasAnswered = selectedIndex !== null;
+  const { density } = useViewer();
   const demo = useDemoHint('counting-image');
   const gridRef = useRef<HTMLDivElement>(null);
   const isCountToImage = question.direction === 'count-to-image';
@@ -39,7 +42,7 @@ export default function CountingImageQuestion({
         <p className="mb-3 text-4xl font-extrabold text-white">{countLabel(question.prompt)}</p>
       ) : (
         <div className="mb-3 text-6xl leading-relaxed" aria-hidden="true">
-          <span className={EXHIBIT}>
+          <span className={material.exhibitPaper}>
             <EmojiVisual emoji={question.prompt.emoji} count={question.prompt.count} />
           </span>
         </div>
@@ -47,24 +50,24 @@ export default function CountingImageQuestion({
 
       <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (
-          <button
+          <PressableOptionButton
             key={`${option.word}-${option.count}`}
             type="button"
             data-testid={`option-${index}`}
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
-            className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            className={getOptionButtonClassName(index, selectedIndex, question.correctIndex, density.tileMinH)}
             {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
           >
             {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
             {isCountToImage ? (
-              <span aria-hidden="true" className={`${EXHIBIT} ${EXHIBIT_TILT[index % 2]}`}>
+              <span aria-hidden="true" className={`${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
                 <EmojiVisual emoji={option.emoji} count={option.count} />
               </span>
             ) : (
               countLabel(option)
             )}
-          </button>
+          </PressableOptionButton>
         ))}
         {demo.showDemo && !hasAnswered ? (
           <DemoHint containerRef={gridRef} onDone={demo.dismiss} />

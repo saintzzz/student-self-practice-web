@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ALL_WORDS } from '../src/data/vocabulary';
 import { gotoApp } from './utils/auth-flow';
+import { answerTracingAutoStep } from './utils/batch-flow';
 import { letterTiles, questionCard } from './utils/practice-flow';
 
 /**
@@ -81,6 +82,9 @@ test.describe('Engagement layer (CR-10)', () => {
       const kind = await questionCard(page).getAttribute('data-question-kind');
       if (kind === 'extra-letter') {
         await letterTiles(page).nth(await correctTileIndex(page)).click();
+      } else if (kind === 'letter-tracing') {
+        /* CR-82 (D-01): keyboard/assisted path - always a correct verdict. */
+        await answerTracingAutoStep(page);
       } else {
         await questionCard(page)
           .locator('[data-testid^="option-"]')

@@ -44,6 +44,20 @@
       "modified": false
     },
     {
+      "id": "andika",
+      "title": "Andika",
+      "author": "SIL International",
+      "license": "OFL-1.1",
+      "licenseLabel": "SIL Open Font License 1.1",
+      "licenseUrl": "https://openfontlicense.org",
+      "sourceUrl": "https://software.sil.org/andika/",
+      "version": "5.3.0 (@fontsource/andika; woff2 700 latin sha256 61c90acb5f966627a0970d5742df8d9a212c2528f88caeed3cb7832234c7ee99, vietnamese sha256 afbc6f5d03009e5267c8cccd0acfab8018cb633a9afc46bd80be97b97a3df972)",
+      "paths": [
+        "/fonts/andika/"
+      ],
+      "modified": false
+    },
+    {
       "id": "bevietnam-pro",
       "title": "Be Vietnam Pro",
       "author": "Bao Anh Bui, Ngan Bui and beVietnam contributors",
@@ -75,16 +89,30 @@
     },
     {
       "id": "vieschool-original-assets",
-      "title": "VieSchool original diagrams and sound effects",
+      "title": "VieSchool original diagrams and sound effects (incl. CR-82 synthesized tap/pop/flip/streak/star ui sfx)",
       "author": "VieSchool",
       "license": "proprietary",
       "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
       "licenseUrl": "",
       "sourceUrl": "",
-      "version": "2026-10-04",
+      "version": "2026-10-17",
       "paths": [
         "/images/v6/",
         "/sfx/"
+      ],
+      "modified": false
+    },
+    {
+      "id": "be-heo-mascot",
+      "title": "Be Heo mascot poses (generated Lottie)",
+      "author": "VieSchool",
+      "license": "proprietary",
+      "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
+      "licenseUrl": "",
+      "sourceUrl": "",
+      "version": "2026-10-17",
+      "paths": [
+        "/mascot/"
       ],
       "modified": false
     }

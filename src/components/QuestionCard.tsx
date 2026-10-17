@@ -1,7 +1,9 @@
-import type { Question } from '../types';
+import { useEffect, useRef, useState } from 'react';
+import type { Question, TracingMeta } from '../types';
 import type { CurrentAnswer } from '../lib/practiceSession';
 import { getCorrectWord } from '../lib/practiceSession';
 import { getWordVisual } from '../lib/emoji/wordVisual';
+import { hasLottie, toEmojiKey } from '../lib/emoji/emojiAssets';
 import ImageChoiceQuestion from './ImageChoiceQuestion';
 import ListeningFillBlankQuestion from './ListeningFillBlankQuestion';
 import ListeningSentenceFillBlankQuestion from './ListeningSentenceFillBlankQuestion';
@@ -15,10 +17,27 @@ import PhonicsSoundChoiceQuestion from './PhonicsSoundChoiceQuestion';
 import PhonicsWordChoiceQuestion from './PhonicsWordChoiceQuestion';
 import PhonicsEndingChoiceQuestion from './PhonicsEndingChoiceQuestion';
 import PhonicsRhymeChoiceQuestion from './PhonicsRhymeChoiceQuestion';
+import TracingChunkBoundary from './tracing/TracingChunkBoundary';
 import FeedbackPanel from './FeedbackPanel';
+import JourneyTrail from './JourneyTrail';
 import Mascot from './Mascot';
+import { BoardPerchContext } from './boardPerchContext';
+import { allocateLottie, LottieBudgetProvider } from './fx/LottieBudget';
+import { useRewardFx } from './fx/RewardFxContext';
+import StreakBurst from './fx/StreakBurst';
+import {
+  lastInstructionSettle,
+  replayLastInstruction,
+  subscribeInstructionSettled,
+} from './InstructionSpeaker';
+import { playSfx } from '../lib/sfx';
+import { rearmDemoHint } from '../hooks/useDemoHint';
+import { preloadMascotAssets } from '../lib/mascot/assets';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useThinkingPose } from '../hooks/useThinkingPose';
 import { useViewer } from '../lib/viewer/ViewerContext';
-import { QUESTION_BODY, QUESTION_BODY_CENTER } from '../lib/ui/tokens';
+import { material, QUESTION_BODY, QUESTION_BODY_CENTER } from '../lib/ui/tokens';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { IconArrowRight } from './icons';
 
@@ -32,6 +51,13 @@ interface QuestionCardProps {
   onSubmitExtraLetter: (letterIndex: number) => void;
   onSubmitPronunciation: (transcript: string) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
+  /**
+   * CR-82 (D-10): letter-tracing submits carry telemetry - assisted
+   * completions land on AnswerRecord.assisted and are excluded from
+   * skill stats. Optional so legacy renders/tests stay valid; the Batch
+   * path always wires it via ActiveRoundQuestion.
+   */
+  onSubmitTracing?: (isCorrect: boolean, meta: TracingMeta) => void;
   onNext: () => void;
   /**
    * kids-UX (design s3.2): round-scoped speaker key - forwarded to every
@@ -52,7 +78,12 @@ function renderQuestionBody(
   onSubmitExtraLetter: (letterIndex: number) => void,
   onSubmitPronunciation: (transcript: string) => void,
   onSubmitPairMatching: (isCorrect: boolean) => void,
+  onSubmitTracing: ((isCorrect: boolean, meta: TracingMeta) => void) | undefined,
   speakerKey?: string,
+  /** CR-82 (D-15): audio-loading child -> board signal for thinking. */
+  onAudioLoadingChange?: (loading: boolean) => void,
+  /** spec s12.7: tracing reports finger-down so `thinking` is suppressed. */
+  onDrawingChange?: (drawing: boolean) => void,
 ) {
   switch (question.kind) {
     case 'image-choice':
@@ -83,6 +114,7 @@ function renderQuestionBody(
           hasAnswered={currentAnswer !== null}
           onSubmit={onSubmitListening}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'listening-sentence-fill-blank':
@@ -93,6 +125,7 @@ function renderQuestionBody(
           hasAnswered={currentAnswer !== null}
           onSubmit={onSubmitListening}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'extra-letter':
@@ -126,6 +159,7 @@ function renderQuestionBody(
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'listening-image-choice':
@@ -136,6 +170,7 @@ function renderQuestionBody(
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'picture-pair-matching':
@@ -156,6 +191,7 @@ function renderQuestionBody(
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'phonics-word-choice':
@@ -166,6 +202,7 @@ function renderQuestionBody(
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'phonics-final-choice':
@@ -177,6 +214,7 @@ function renderQuestionBody(
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
         />
       );
     case 'phonics-rhyme-choice':
@@ -187,6 +225,22 @@ function renderQuestionBody(
           selectedIndex={currentAnswer?.selectedIndex ?? null}
           onSelectOption={onSubmitOption}
           speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
+        />
+      );
+    case 'letter-tracing':
+      return (
+        /* CR-82 (D-22): the tracing body is a lazy chunk behind its own
+           retryable boundary - a chunk failure degrades to a paper panel
+           with "Thu lai" / "Bo qua cau nay", never a dead board. */
+        <TracingChunkBoundary
+          key={question.id}
+          question={question}
+          hasAnswered={currentAnswer !== null}
+          onSubmit={onSubmitTracing ?? (() => {})}
+          speakerKey={speakerKey}
+          onAudioLoadingChange={onAudioLoadingChange}
+          onDrawingChange={onDrawingChange}
         />
       );
   }
@@ -233,6 +287,24 @@ function pickedAnswerText(question: Question, currentAnswer: CurrentAnswer): str
   }
 }
 
+/**
+ * CR-82 (D-20): the kinds whose prompt EmojiVisual requests `animated`
+ * (the 'prompt' slot candidate). image-choice additionally resolves a
+ * curated photo, which wins the fallback chain over Lottie.
+ */
+function animatedPromptEmoji(question: Question): string | undefined {
+  switch (question.kind) {
+    case 'image-choice':
+    case 'phonics-sound-choice':
+    case 'phonics-final-choice':
+    case 'phonics-blend-choice':
+    case 'phonics-rhyme-choice':
+      return question.emoji;
+    default:
+      return undefined;
+  }
+}
+
 function feedbackPictureWordId(question: Question): string | undefined {
   switch (question.kind) {
     case 'extra-letter':
@@ -248,10 +320,22 @@ function feedbackPictureWordId(question: Question): string | undefined {
     case 'phonics-word-choice':
     case 'phonics-rhyme-choice':
       return question.optionWordIds[question.correctIndex];
+    case 'letter-tracing':
+      /* CR-82 (spec s12.5): the sheet picture is the exhibit word. */
+      return question.exampleWordId;
     default:
       return undefined;
   }
 }
+
+/** CR-82 (spec s12.6): per-kind verdict headlines - tracing acknowledges
+    completion instead of shaming a finished trace. */
+const KIND_HEADLINES: Partial<Record<Question['kind'], { correct: string; wrong: string }>> = {
+  'letter-tracing': {
+    correct: 'Em tô đẹp quá!',
+    wrong: 'Em tô xong rồi - lần sau mình tự tô hết nhé!',
+  },
+};
 
 export default function QuestionCard({
   question,
@@ -263,6 +347,7 @@ export default function QuestionCard({
   onSubmitExtraLetter,
   onSubmitPronunciation,
   onSubmitPairMatching,
+  onSubmitTracing,
   onNext,
   speakerKey,
   correctStreak = 0,
@@ -278,6 +363,105 @@ export default function QuestionCard({
   const pictureWordId = feedbackPictureWordId(question);
   const pictureVisual = pictureWordId ? getWordVisual(pictureWordId) : undefined;
 
+  /* CR-82 (spec s9.3): the sheet perch is a sibling layer of the fixed
+     sheet wrapper - JS-decided at max-height:420px so exactly one mascot
+     node exists (the inline headline mascot takes over there). */
+  const shortLandscape = useMediaQuery('(max-height: 420px)');
+  const sheetPerch = showFeedbackZone && !shortLandscape;
+
+  /* CR-82 (D-15): the thinking-pose clock. The instruction-settled epoch
+     arrives through the module channel (one speaker per question); the
+     audio-loading flag is threaded from the question body like speakerKey. */
+  const [idleStartAt, setIdleStartAt] = useState<number | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  /* spec s12.7: finger-down on the tracing canvas suppresses thinking. */
+  const [isDrawing, setIsDrawing] = useState(false);
+  useEffect(() => {
+    setIdleStartAt(null);
+    setAudioLoading(false);
+    setIsDrawing(false);
+  }, [question.id]);
+  /* Captured at render - before any child mount effect can fire. A
+     synchronous 'not-played' settle inside the child's mount effect
+     precedes the subscription below (children effects run first); the
+     buffered epoch check replays only settles that happened during
+     THIS mount, so a stale settle from a previous question is ignored
+     (external review r34-A5). */
+  const mountEpochRef = useRef(Date.now());
+  useEffect(() => {
+    const unsubscribe = subscribeInstructionSettled(() => setIdleStartAt(Date.now()));
+    const settled = lastInstructionSettle();
+    if (settled && settled.epoch >= mountEpochRef.current) {
+      setIdleStartAt(Date.now());
+    }
+    return unsubscribe;
+  }, []);
+
+  /* spec s9.5: first-question-mount preload of idle/happy/encouraging
+     (force-cache, no-op on pre-round screens / jsdom). */
+  useEffect(() => {
+    preloadMascotAssets();
+  }, []);
+
+  const thinking = useThinkingPose({
+    enabled: band === 'G12' && !hasAnswered && !isDrawing,
+    resetKey: question.id,
+    idleStartAt,
+    audioLoading,
+    /* spec s9.2: thinking replays the instruction once and re-arms the
+       kind's demo hint - no text nag. */
+    onThinking: () => {
+      replayLastInstruction();
+      rearmDemoHint(question.kind);
+    },
+  });
+
+  /* CR-82 (D-20): this card is the single Lottie budget owner on question
+     surfaces - prompt illustration, mascot, and the feedback picture all
+     read slots from allocateLottie. */
+  const reducedMotion = usePrefersReducedMotion();
+  const promptEmoji = animatedPromptEmoji(question);
+  const promptHasPhoto =
+    question.kind === 'image-choice' && !!getWordVisual(question.wordId)?.imageUrl;
+  const promptEligible = !!promptEmoji && !promptHasPhoto && hasLottie(toEmojiKey(promptEmoji));
+  const feedbackEligible =
+    !!pictureVisual && !pictureVisual.imageUrl && hasLottie(toEmojiKey(pictureVisual.emoji));
+  const slots = allocateLottie({
+    answered: hasAnswered,
+    promptEligible,
+    feedbackEligible,
+    sheetPerch,
+    reducedMotion,
+  });
+
+  const verdictMood = currentAnswer?.isCorrect
+    ? correctStreak >= 3
+      ? 'celebrating'
+      : 'happy'
+    : 'encouraging';
+
+  /* CR-82 (spec s16.2): correct verdict fires the star-fly toward the
+     LiveScore chip. Origin = the answered tile's rect when the active
+     element still sits inside the card; otherwise the card centre. Fires
+     exactly once per answered question. */
+  const { fireStar } = useRewardFx();
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const starFiredForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hasAnswered || !currentAnswer?.isCorrect) return;
+    if (starFiredForRef.current === question.id) return;
+    starFiredForRef.current = question.id;
+    const card = cardRef.current;
+    if (!card) return;
+    const active = document.activeElement as HTMLElement | null;
+    const origin =
+      active && card.contains(active) ? active.getBoundingClientRect() : card.getBoundingClientRect();
+    fireStar(origin);
+    /* CR-82 (spec s16.3): the star chime is reward tier - queued 250ms
+       behind the verdict ding, never overlapping it. */
+    playSfx('star');
+  }, [hasAnswered, currentAnswer, question.id, fireStar]);
+
   const nextButton = (
     <button
       type="button"
@@ -291,46 +475,61 @@ export default function QuestionCard({
   );
 
   return (
+    <BoardPerchContext.Provider value={!hasAnswered}>
+      <LottieBudgetProvider slots={slots}>
     <div
+      ref={cardRef}
       data-testid="question-card"
       data-question-kind={question.kind}
       data-count-direction={question.kind === 'counting-image' ? question.direction : undefined}
       data-description-type={question.kind === 'describe-and-choose-image' ? question.descriptionType : undefined}
-      className="relative flex min-h-0 flex-1 flex-col rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6)] ring-1 ring-[#2a3a5e] [@media(max-height:420px)]:p-2 sm:p-6"
+      className={`relative flex min-h-0 flex-1 flex-col ${material.board} p-4 text-center [@media(max-height:420px)]:p-2 sm:p-6`}
       /* r23: inline style - the sm:p-6 / max-height:420px p-2 responsive
          variants emit after base pb-* utilities and would silently drop
-         the feedback-sheet reservation at desktop widths/short heights. */
-      style={showFeedbackZone ? { paddingBottom: 'calc(min(40vh,320px) + 5.5rem)' } : undefined}
+         the feedback-sheet reservation at desktop widths/short heights.
+         CR-82 (s9.3 rev2): +2.75rem while the sheet perch overhangs the
+         sheet top so no answer tile sits behind the mascot. */
+      style={
+        showFeedbackZone
+          ? { paddingBottom: `calc(min(40vh,320px) + ${sheetPerch ? '8.25rem' : '5.5rem'})` }
+          : undefined
+      }
     >
       {/* No own mx-auto/max-w-2xl/px-4 here (plan.md v9 fix) - BatchScreen's
           wrapper already provides that exact centering/padding, and this
           component is always rendered nested inside it; re-applying the
           same px-4 here was doubling the horizontal padding and shrinking
           the width available for wrapped tile rows on narrow phones. */}
-      {/* CR-81: land rim - the board's top edge carries the viewer's
-          land flag color so each grade's board reads as "its" land. */}
+      {/* CR-81/CR-82: land rim - the board's top edge carries the viewer's
+          land flag color so each grade's board reads as "its" land
+          (M3: 8px, rounded to the material.board radius). */}
       <span
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 top-0 h-1.5 rounded-t-3xl ${land.nightRim}`}
+        className={`pointer-events-none absolute inset-x-0 top-0 h-2 rounded-t-[2rem] ${land.nightRim}`}
       />
-      <p
-        data-testid="question-progress"
-        className="mx-auto mb-2 inline-block self-center rounded-full bg-amber-500/15 px-3 py-0.5 text-sm font-bold text-amber-200 ring-1 ring-amber-400/30 [@media(max-height:420px)]:mb-1"
+      {/* CR-82 M3 (s7.3): the progress chip is now a journey trail on
+          material.chrome - stepping-stone dots (or the track bar past 12
+          questions) plus the kept "Câu x/y" text. */}
+      <div
+        className={`${material.chrome} mx-auto mb-2 inline-flex items-center gap-3 self-center px-3 py-1.5 [@media(max-height:420px)]:mb-1`}
       >
-        Câu {questionNumber}/{totalQuestions}
-      </p>
+        <JourneyTrail current={questionNumber} total={totalQuestions} />
+        <p data-testid="question-progress" className="text-sm font-bold text-amber-200">
+          Câu {questionNumber}/{totalQuestions}
+        </p>
+      </div>
 
-      {/* CR-79 A1: Bé Heo keeps the child company while answering -
-          unmounts the moment the feedback surface mounts so the sheet's
-          mascot is the only one on screen (AC-79.1). */}
+      {/* CR-82 (spec s9.3): board perch - Bé Heo sits on the board rim
+          leaning over the instruction banner, `idle` by default and
+          `thinking` on the D-15 G1-2 triggers. Unmounts the moment the
+          feedback sheet mounts so the sheet perch is the only mascot on
+          screen (AC-79.1 / one-mascot matrix). */}
       {!hasAnswered && (
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute right-3 top-3 z-10 ${
-            band === 'G345' ? 'origin-top-right scale-[0.8]' : ''
-          }`}
+          className="pointer-events-none absolute -top-9 left-4 z-10"
         >
-          <Mascot mood="encouraging" size="companion" />
+          <Mascot mood={thinking ? 'thinking' : 'idle'} size="companion" />
         </span>
       )}
 
@@ -347,7 +546,13 @@ export default function QuestionCard({
             onSubmitExtraLetter,
             onSubmitPronunciation,
             onSubmitPairMatching,
+            onSubmitTracing,
             speakerKey,
+            /* D-15: bodies forward their audio-loading state - the
+               thinking pose debounces on it (>400ms). */
+            setAudioLoading,
+            /* spec s12.7: tracing's finger-down flag. */
+            setIsDrawing,
           )}
         </div>
       </div>
@@ -360,7 +565,28 @@ export default function QuestionCard({
            unit. It is a fixed bottom sheet at every height - never in
            flow - so mounting it cannot push answers off-screen. Width
            matches the BatchScreen mx-auto max-w-2xl column. */
-        <div className="fixed inset-x-2 bottom-0 z-40 mx-auto max-w-[40rem] rounded-t-2xl bg-[#0d1b26] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        /* CR-82 (s9.3 rev2 F4): the sheet perch is a SIBLING of the
+           bounded FeedbackPanel inside this non-scrolling, non-clipping
+           wrapper - protruding art would be clipped/scrolled inside the
+           panel. The wrapper must keep overflow: visible. */
+        <div
+          data-testid="feedback-sheet"
+          className="fixed inset-x-2 bottom-0 z-40 mx-auto max-w-[40rem] rounded-t-2xl bg-desk p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        >
+          {sheetPerch && (
+            <span
+              aria-hidden="true"
+              data-testid="sheet-perch"
+              className="pointer-events-none absolute -top-11 right-4 z-10"
+            >
+              {/* CR-82 (spec s16.2): streak rings pulse BEHIND the perch
+                  mascot (1 at streak 3, 2 at 5, 3 at 10). */}
+              {currentAnswer.isCorrect && <StreakBurst streak={correctStreak} />}
+              <span className="relative z-10 block">
+                <Mascot mood={verdictMood} size="companion" />
+              </span>
+            </span>
+          )}
           <FeedbackPanel
             kind={question.kind}
             isCorrect={currentAnswer.isCorrect}
@@ -374,6 +600,9 @@ export default function QuestionCard({
               pictureVisual ? { emoji: pictureVisual.emoji, imageUrl: pictureVisual.imageUrl } : undefined
             }
             celebrate={correctStreak >= 3}
+            streak={currentAnswer.isCorrect ? correctStreak : 0}
+            mascotPlacement={sheetPerch ? 'none' : 'inline'}
+            headlines={KIND_HEADLINES[question.kind]}
           />
           {nextButton}
         </div>
@@ -381,5 +610,7 @@ export default function QuestionCard({
         <span className="block w-full self-center sm:w-auto">{nextButton}</span>
       )}
     </div>
+      </LottieBudgetProvider>
+    </BoardPerchContext.Provider>
   );
 }

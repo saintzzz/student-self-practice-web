@@ -15,6 +15,7 @@ import {
   submitOptionAnswer,
   submitPairMatchingAnswer,
   submitPronunciationAnswer,
+  submitTracingAnswer,
 } from '../lib/practiceSession';
 import { ROUND_DURATION_SECONDS } from '../hooks/useRoundTimer';
 
@@ -57,6 +58,12 @@ function answerCurrentQuestion(state: BatchState): BatchState {
     question.kind === 'phonics-rhyme-choice'
   ) {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
+  }
+  if (question.kind === 'letter-tracing') {
+    /* CR-82 (D-10): assisted path - correct verdict, excluded from skills. */
+    return updateRoundSession(state, (session) =>
+      submitTracingAnswer(session, true, { assisted: true, attempts: [] }),
+    );
   }
   if (question.kind === 'picture-pair-matching') {
     return updateRoundSession(state, (session) => submitPairMatchingAnswer(session, true));

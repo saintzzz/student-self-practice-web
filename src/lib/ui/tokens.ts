@@ -93,7 +93,7 @@ export const SCREEN_ENTER = 'animate-screen-enter motion-reduce:animate-none';
 /** The one gold primary-path button on a kid screen ("Chơi", "Nhận quà").
  *  76px tall, wide, unmistakable. Never render two of these per screen. */
 export const CTA_GOLD_XL =
-  'inline-flex min-h-[76px] min-w-[240px] items-center justify-center rounded-3xl border-b-4 border-amber-600 bg-amber-400 px-8 text-2xl font-extrabold text-amber-950 shadow-lg shadow-amber-400/30 transition hover:bg-amber-300 active:translate-y-0.5 motion-reduce:active:translate-y-0 active:border-b-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
+  'inline-flex min-h-[76px] min-w-[240px] items-center justify-center rounded-3xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 px-8 text-2xl font-extrabold text-amber-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.55),inset_0_-3px_0_rgba(180,83,9,0.35),0_6px_0_#b45309,0_16px_24px_-10px_rgba(245,158,11,0.55)] transition hover:brightness-105 active:translate-y-[6px] active:shadow-[inset_0_2px_0_rgba(255,255,255,0.55),inset_0_-3px_0_rgba(180,83,9,0.35),0_0_0_#b45309] data-[pressed]:translate-y-[6px] data-[pressed]:shadow-[inset_0_2px_0_rgba(255,255,255,0.55),inset_0_-3px_0_rgba(180,83,9,0.35),0_0_0_#b45309] motion-reduce:active:translate-y-0 motion-reduce:data-[pressed]:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
 
 /** Secondary exploration entry - quiet, never competes with CTA_GOLD_XL. */
 export const DISCLOSURE_BTN =
@@ -203,7 +203,7 @@ export const BTN_SECONDARY_PAPER =
 /** reward.earned - the only gold gradient allowed off `action.primary`
  *  paths (pet evolve congrats, quest claim). Reward, not navigation. */
 export const BTN_REWARD_EARNED =
-  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2.5 font-extrabold text-amber-950 shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100';
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-4 py-2.5 font-extrabold text-amber-950 shadow-[inset_0_-2px_0_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 data-[pressed]:translate-y-0 data-[pressed]:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 motion-reduce:data-[pressed]:scale-100';
 
 /* ------------------------------------------------------------------ */
 /* CR-79 "toy-block" depth layer (DESIGN-SPEC-v3 s3)                    */
@@ -214,6 +214,18 @@ export const BTN_REWARD_EARNED =
 export const scene = {
   /** Layered depth glow behind the practice play surface. */
   glow: 'bg-[radial-gradient(ellipse_60%_45%_at_50%_0%,rgba(56,89,165,0.38),transparent),radial-gradient(ellipse_50%_40%_at_15%_100%,rgba(245,158,11,0.10),transparent)]',
+  /** CR-82 hero scene (DESIGN-SPEC-v5 s5.1). */
+  root: 'pointer-events-none fixed inset-0 z-0 overflow-hidden',
+  skyDusk: 'bg-gradient-to-b from-navy-950 via-navy-900 to-navy-700',
+  skyNight: 'bg-gradient-to-b from-navy-950 via-navy-950 to-navy-800',
+  horizonGold:
+    'bg-[radial-gradient(90%_38%_at_50%_100%,rgba(251,191,36,0.28),transparent_70%)]',
+  horizonGoldNight:
+    'bg-[radial-gradient(90%_38%_at_50%_100%,rgba(251,191,36,0.14),transparent_70%)]',
+  scrim:
+    'bg-[radial-gradient(62%_52%_at_50%_44%,rgba(11,18,36,0.55),transparent_76%)]',
+  layer:
+    'scene-layer absolute inset-x-[-8%] bottom-0 will-change-transform transition-transform duration-700 ease-out-quint motion-reduce:transition-none',
 } as const;
 
 export const toy = {
@@ -232,27 +244,16 @@ export const toy = {
     'motion-reduce:transition-none motion-reduce:active:translate-y-0',
   correctGlow:
     'shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_0_0_3px_rgba(52,211,153,0.55),0_0_18px_rgba(52,211,153,0.45)]',
-  /** Decorative pre-judge frame tints, applied by index % 4 -
-   *  border-only, never concatenated onto judged classes. */
-  tints: [
-    'border-sky-400/40',
-    'border-rose-300/40',
-    'border-violet-400/40',
-    'border-emerald-300/40',
-  ],
 } as const;
-
-/** B3 display glyph - big sound letters get letterpress display type. */
-export const DISPLAY_GLYPH =
-  'font-display text-7xl font-black text-amber-100 drop-shadow-[0_3px_0_rgba(0,0,0,0.35)]';
 
 /** ModeHub icon chips: soft rotating tints on the paper hub (B4 on
  *  light surfaces - the tile body stays uniform sky paper, the icon
- *  chip carries the accent so tiles differentiate without noise). */
+ *  chip carries the accent so tiles differentiate without noise).
+ *  CR-82: violet entry swapped for amber (palette purge, spec s11). */
 export const HUB_ICON_TINTS = [
   'bg-sky-200/80 text-sky-700',
   'bg-rose-200/80 text-rose-700',
-  'bg-violet-200/80 text-violet-700',
+  'bg-amber-200/80 text-amber-800',
   'bg-emerald-200/80 text-emerald-700',
 ] as const;
 
@@ -281,3 +282,202 @@ export const EXHIBIT =
 /** Slight alternating tilt so exhibits look hand-pinned, not templated
  *  - applied by index parity, transform-only. */
 export const EXHIBIT_TILT = ['-rotate-[1.5deg]', 'rotate-[1.5deg]'] as const;
+
+/* ------------------------------------------------------------------ */
+/* CR-82 (DESIGN-SPEC-v5) - material layer, type layer, exam paper,     */
+/* drag/tracing/flashcard tokens. Contrast pairs are recorded per       */
+/* token row in the spec (measured on the composited surface).          */
+/* ------------------------------------------------------------------ */
+
+/** CR-82 s5.2 material.* - soft-3D toy surfaces on navy. */
+export const material = {
+  /** The play board itself (e3). */
+  board:
+    'rounded-[2rem] bg-gradient-to-b from-navy-800 to-navy-850 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-2px_0_rgba(0,0,0,0.25),0_32px_64px_-24px_rgba(0,0,0,0.75),0_12px_24px_-12px_rgba(0,0,0,0.5)]',
+  tileFace:
+    'rounded-[1.25rem] border-2 border-navy-500 bg-gradient-to-b from-navy-700 to-navy-800 text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_6px_0_#0a1730,0_14px_20px_-10px_rgba(0,0,0,0.6)]',
+  tileHover:
+    '[@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-amber-300/60 [@media(hover:hover)]:hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_8px_0_#0a1730,0_18px_24px_-10px_rgba(0,0,0,0.6)] motion-reduce:hover:translate-y-0',
+  tilePress:
+    'active:translate-y-[6px] active:shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_0_0_#0a1730] data-[pressed]:translate-y-[6px] data-[pressed]:shadow-[inset_0_2px_0_rgba(255,255,255,0.20),inset_0_-3px_0_rgba(0,0,0,0.20),0_0_0_#0a1730] transition-[transform,box-shadow] duration-100 ease-out-quint motion-reduce:active:translate-y-0 motion-reduce:data-[pressed]:translate-y-0',
+  tileDisabled:
+    'cursor-not-allowed opacity-50 saturate-50 shadow-[0_2px_0_#0a1730]',
+  tileFocus:
+    'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70',
+  tileCorrect:
+    'border-emerald-400 bg-gradient-to-b from-emerald-500/30 to-emerald-600/20 text-emerald-100 shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_6px_0_#065f46,0_0_22px_rgba(52,211,153,0.45)]',
+  /** Kept reveal state (light surface, emerald-900 on emerald-100). */
+  tileRevealCorrect: OPTION_REVEAL_CORRECT,
+  /** Sunk slate "that one, done" (kept pairing) + pressed-in depth. */
+  tilePickedWrong: `${OPTION_PICKED_WRONG} translate-y-[4px] shadow-none`,
+  /** Warm paper exhibit - replaces slate-50/95 EXHIBIT for play. */
+  exhibitPaper:
+    'inline-block rounded-2xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200/70 shadow-[inset_0_1px_0_#ffffff,inset_0_-6px_12px_-8px_rgba(146,64,14,0.18),0_4px_10px_-4px_rgba(0,0,0,0.45)]',
+  /** Warm paper slate - tracing + flashcard front. */
+  paperSlate:
+    'rounded-[2rem] bg-amber-50 ring-1 ring-amber-200 shadow-[inset_0_2px_0_#ffffff,0_8px_0_rgba(146,64,14,0.45),0_24px_48px_-20px_rgba(0,0,0,0.7)]',
+  /** Gold CTA material (folds into CTA_GOLD_XL; kept for composites). */
+  goldCta:
+    'rounded-3xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 text-amber-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.55),inset_0_-3px_0_rgba(180,83,9,0.35),0_6px_0_#b45309,0_16px_24px_-10px_rgba(245,158,11,0.55)]',
+  /** Play chrome strip - tokenizes the inline BatchScreen bar. */
+  chrome:
+    'rounded-2xl bg-navy-chrome/85 ring-1 ring-navy-rim backdrop-blur-md shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6),0_4px_12px_-6px_rgba(0,0,0,0.4)] sm:rounded-full',
+} as const;
+
+/* ---------------- CR-82 s5.3 type layer ---------------- */
+
+/** Geometry tokens - face/size/weight/leading, NO color. Components
+ *  never import these directly (FF-2b); only composites below. */
+export const TYPE_HERO_GLYPH_GEO =
+  'font-display text-7xl font-extrabold leading-[1.1] sm:text-8xl [@media(max-height:420px)]:text-5xl';
+export const TYPE_CARD_GLYPH_GEO =
+  'font-display text-6xl font-extrabold leading-[1.1]';
+export const TYPE_HERO_NUMBER_GEO =
+  'font-display text-6xl font-extrabold leading-none tabular-nums';
+export const TYPE_SECTION_GEO =
+  'font-display text-2xl font-bold leading-tight tracking-tight';
+export const TYPE_PROMPT_GEO_G12 = 'text-2xl font-bold leading-snug';
+export const TYPE_PROMPT_GEO_G345 = 'text-xl font-bold leading-snug';
+export const TYPE_INSTRUCTION_GEO = 'text-base font-medium leading-normal sm:text-lg';
+export const TYPE_BODY_GEO = 'text-base font-normal leading-relaxed';
+export const TYPE_CAPTION_GEO = 'text-sm font-medium leading-snug';
+export const TYPE_IPA_GEO = 'font-mono text-sm font-medium leading-snug';
+export const TYPE_LETTER_TILE_GEO = 'font-letter text-3xl font-bold leading-none';
+export const TYPE_LETTER_CARD_GEO = 'font-letter text-6xl font-bold leading-[1.1]';
+export const TYPE_LETTER_WORD_GEO = 'font-letter text-3xl font-bold leading-snug';
+/** tabular-nums utility - the ONLY token allowed next to a composite. */
+export const TYPE_NUMERAL = 'tabular-nums';
+
+/** Ink tokens - one per surface class. */
+export const INK_NAVY = 'text-white';
+export const INK_NAVY_SOFT = 'text-slate-100';
+export const INK_NAVY_MUTED = 'text-slate-300';
+export const INK_NAVY_IPA = 'text-sky-200';
+export const INK_NAVY_HERO =
+  'text-amber-100 drop-shadow-[0_3px_0_rgba(0,0,0,0.35)]';
+export const INK_PAPER = 'text-slate-900';
+export const INK_PAPER_SOFT = 'text-slate-700';
+export const INK_PAPER_HERO = 'text-navy-800';
+
+/** Surface composites - the only type tokens components import. */
+export const TYPE_HERO_GLYPH_NAVY = `${TYPE_HERO_GLYPH_GEO} ${INK_NAVY_HERO}`;
+export const TYPE_CARD_GLYPH_PAPER = `${TYPE_CARD_GLYPH_GEO} ${INK_PAPER_HERO}`;
+export const TYPE_HERO_NUMBER_NAVY = `${TYPE_HERO_NUMBER_GEO} ${INK_NAVY}`;
+export const TYPE_HERO_NUMBER_PAPER = `${TYPE_HERO_NUMBER_GEO} ${INK_PAPER_HERO}`;
+export const TYPE_PROMPT_NAVY_G12 = `${TYPE_PROMPT_GEO_G12} ${INK_NAVY}`;
+export const TYPE_PROMPT_NAVY_G345 = `${TYPE_PROMPT_GEO_G345} ${INK_NAVY}`;
+export const TYPE_PROMPT_PAPER_G12 = `${TYPE_PROMPT_GEO_G12} ${INK_PAPER}`;
+export const TYPE_PROMPT_PAPER_G345 = `${TYPE_PROMPT_GEO_G345} ${INK_PAPER}`;
+export const TYPE_INSTRUCTION_NAVY = `${TYPE_INSTRUCTION_GEO} ${INK_NAVY_SOFT}`;
+export const TYPE_SECTION_NAVY = `${TYPE_SECTION_GEO} ${INK_NAVY}`;
+export const TYPE_SECTION_PAPER = `${TYPE_SECTION_GEO} ${INK_PAPER}`;
+export const TYPE_BODY_NAVY = `${TYPE_BODY_GEO} ${INK_NAVY_MUTED}`;
+export const TYPE_BODY_PAPER = `${TYPE_BODY_GEO} ${INK_PAPER_SOFT}`;
+export const TYPE_CAPTION_NAVY = `${TYPE_CAPTION_GEO} ${INK_NAVY_MUTED}`;
+export const TYPE_CAPTION_PAPER = `${TYPE_CAPTION_GEO} ${INK_PAPER_SOFT}`;
+export const TYPE_IPA_NAVY = `${TYPE_IPA_GEO} ${INK_NAVY_IPA}`;
+export const TYPE_LETTER_TILE_NAVY = `${TYPE_LETTER_TILE_GEO} ${INK_NAVY}`;
+export const TYPE_LETTER_CARD_NAVY = `${TYPE_LETTER_CARD_GEO} ${INK_NAVY}`;
+export const TYPE_LETTER_WORD_PAPER = `${TYPE_LETTER_WORD_GEO} ${INK_PAPER}`;
+export const TYPE_TITLE = H1;
+
+/** v4 name kept as an alias (fixes D1: font-black -> font-extrabold). */
+export const DISPLAY_GLYPH = TYPE_HERO_GLYPH_NAVY;
+
+/* ---------------- CR-82 s10 exam paper tokens ---------------- */
+
+export const EXAM_DESK = 'flex min-h-screen flex-col bg-desk p-2 text-white sm:p-4';
+export const EXAM_SHEET =
+  'mx-auto my-3 w-full max-w-3xl flex-1 rounded-[1.25rem] bg-slate-50 p-5 text-slate-800 ring-1 ring-slate-200 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(0,0,0,0.8)] sm:p-8';
+export const EXAM_SHEET_HEADER =
+  'mb-5 flex items-baseline justify-between border-b-2 border-slate-200 pb-3 font-display text-lg font-bold text-slate-700';
+export const EXAM_QNUM =
+  'mr-2 inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg bg-navy-800 px-2 font-display text-base font-extrabold text-white tabular-nums';
+export const EXAM_OPTION_PAPER =
+  'flex min-h-[64px] w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left font-medium text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 motion-reduce:transition-none';
+export const EXAM_OPTION_KEY =
+  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700';
+export const EXAM_SELECTED_PAPER = 'bg-sky-100 text-sky-900 ring-2 ring-sky-600';
+export const EXAM_SELECTED_KEY_PAPER = 'bg-sky-700 text-white';
+export const EXAM_NAV_FLAGGED = 'bg-amber-100 text-amber-900 ring-amber-400';
+export const EXAM_NAV_CELL_PAPER =
+  'h-12 w-12 rounded-lg bg-white text-slate-700 ring-1 ring-slate-300';
+export const EXAM_NAV_ANSWERED_PAPER =
+  'bg-emerald-50 text-emerald-800 ring-emerald-400';
+export const EXAM_TIMER =
+  'inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-desk-well px-3 font-mono text-xl font-extrabold tabular-nums text-amber-300 sm:text-2xl';
+export const EXAM_TIMER_URGENT = 'bg-rose-600 text-white';
+export const EXAM_VERDICT_CORRECT =
+  'rounded-xl border-l-4 border-emerald-600 bg-emerald-50 p-4 text-emerald-800';
+export const EXAM_VERDICT_WRONG =
+  'rounded-xl border-l-4 border-slate-400 bg-slate-100 p-4 text-slate-700';
+export const EXAM_RING_LABEL = 'tabular-nums text-sm font-extrabold text-white';
+/** The ONE gold action in the untimed practice sitting (N1): CTA_GOLD_XL
+ *  geometry; G3-5 tightens to min-h-64 via `!min-h-[64px]` in the
+ *  component (G1-2 keeps the 76px floor). Never rendered in the timed
+ *  exam sitting. */
+export const EXAM_PRACTICE_NEXT = `${CTA_GOLD_XL} min-w-[200px]`;
+/** Paper ghost for "Đánh dấu câu này" + sheet nav buttons - secondary
+ *  chrome inside EXAM_SHEET (sky-800 on sky-100, 6.59:1). */
+export const EXAM_SHEET_BTN =
+  'inline-flex min-h-[48px] items-center justify-center gap-1.5 rounded-xl bg-sky-100 px-4 py-2 font-bold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+
+/* ---------------- CR-82 s13 drag tokens ---------------- */
+
+export const SPELL_SLOT =
+  'flex h-[76px] min-w-[48px] max-w-[64px] flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-sky-300/70 bg-navy-900/60';
+export const SPELL_SLOT_TARGET =
+  'border-solid border-amber-300 ring-4 ring-amber-300/40';
+export const SPELL_SLOT_FILLED = 'border-solid';
+export const SPELL_TILE = `${material.tileFace} h-[76px] w-[64px] ${TYPE_LETTER_TILE_NAVY}`;
+export const WORD_CHIP = `${material.tileFace} min-h-[76px] px-5 text-xl font-bold`;
+export const GAP_INPUT_TOGGLE = `${BTN_SECONDARY_NAVY} min-h-[48px]`;
+export const SENTENCE_GAP =
+  'inline-flex min-h-[56px] min-w-[7ch] items-center justify-center rounded-xl border-2 border-dashed border-sky-300/70 bg-navy-900/60 px-3 align-middle';
+export const DRAG_GHOST =
+  `${material.tileFace} scale-[1.08] rotate-[3deg] shadow-[0_28px_48px_-16px_rgba(0,0,0,0.75)]`;
+
+/* ---------------- CR-82 s12 tracing tokens ---------------- */
+
+export const TRACE_RULE = 'stroke-amber-200';
+export const TRACE_RULE_BASE = 'stroke-slate-400';
+export const TRACE_TRACK = 'stroke-amber-200';
+export const TRACE_CENTERLINE = 'stroke-slate-500';
+export const TRACE_START = 'fill-emerald-700';
+export const TRACE_ARROW = 'stroke-slate-500';
+export const TRACE_INK = '#0369a1'; // sky-700 - canvas strokeStyle
+export const TRACE_DONE = 'stroke-emerald-600';
+
+/* ---------------- CR-82 s14 flashcard tokens ---------------- */
+
+export const FLASH_CARD = `${material.paperSlate} relative aspect-[3/4] w-[min(84vw,360px)] [perspective:1200px]`;
+export const FLASH_FLIP =
+  'absolute inset-0 rounded-[2rem] [transform-style:preserve-3d] transition-transform duration-400 ease-in-out-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 motion-reduce:transition-none';
+export const FLASH_FLIP_BACK = '[transform:rotateY(180deg)]';
+export const FLASH_FACE_FRONT =
+  'absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 [backface-visibility:hidden] text-slate-900';
+export const FLASH_FACE_BACK =
+  'absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 rounded-[2rem] bg-gradient-to-b from-navy-800 to-navy-850 text-white [transform:rotateY(180deg)] [backface-visibility:hidden]';
+export const FLASH_SWIPE_LABEL_KNOWN =
+  'absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-emerald-700 px-3 py-1 text-lg font-extrabold text-white';
+export const FLASH_SWIPE_LABEL_AGAIN =
+  'absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-slate-700 px-3 py-1 text-lg font-extrabold text-white';
+export const BTN_FLASH_AGAIN = `${BTN_SECONDARY_NAVY} min-h-[76px]`;
+export const BTN_FLASH_KNOWN =
+  'inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500/20 px-5 font-extrabold text-emerald-100 ring-1 ring-emerald-400/50 transition hover:bg-emerald-500/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 active:scale-[0.98] motion-reduce:active:scale-100 min-h-[76px]';
+export const FLASH_PANEL = `${material.paperSlate} p-6 text-center`;
+export const CHIP_PAPER_EMERALD = `${CHIP_BASE} bg-emerald-100 text-emerald-800 ring-emerald-300`;
+export const CHIP_PAPER_SKY = `${CHIP_BASE} bg-sky-100 text-sky-800 ring-sky-300`;
+
+/* ---------------- CR-82 misc ---------------- */
+
+/** Gold hairline for premium frames (ExamResult, flashcard summary). */
+export const GOLD_HAIRLINE =
+  'ring-1 ring-amber-300/60 shadow-[inset_0_0_0_1px_rgba(253,230,138,0.25)]';
+
+/** CR-82 R-v5-12: top-level Đấu trường hub tile - TRAIL_TILE geometry
+ *  with orange arena identity surface (not gold - identity hue). */
+export const TRAIL_TILE_ARENA =
+  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-orange-300 bg-orange-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-orange-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+export const TRAIL_TILE_ARENA_SM =
+  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-orange-300 bg-orange-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-orange-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';

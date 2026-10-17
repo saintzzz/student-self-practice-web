@@ -51,7 +51,30 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
   if (kind === 'extra-letter') {
     await user.click(screen.getByTestId('letter-tile-0'));
   } else if (kind === 'listening-sentence-fill-blank') {
+    /* CR-82 (s13): G1-2 sentence items may offer a word bank - tap a chip
+       to fill the gap (submit stays disabled until the gap is filled);
+       typed items keep the legacy empty-submit path. */
+    if (screen.queryByTestId('gap-bank')) {
+      await user.click(screen.getByTestId('gap-chip-0'));
+    }
     await user.click(screen.getByTestId('submit-answer-button'));
+  } else if (kind === 'listening-fill-blank') {
+    /* CR-82 (s12): G1-2 Spell-it items render a tile bank - each tap places
+       the tile into the first empty slot; submit enables once every slot
+       is filled. Typed fill-blank keeps the answer-input path. */
+    if (screen.queryByTestId('spell-bank')) {
+      for (let i = 0; i < 12; i += 1) {
+        const submit = screen.getByTestId('submit-answer-button');
+        if (!submit.hasAttribute('disabled')) break;
+        const tile = screen.queryAllByTestId(/^spell-tile-/)[0];
+        if (!tile) break;
+        await user.click(tile);
+      }
+      await user.click(screen.getByTestId('submit-answer-button'));
+    } else {
+      await user.type(screen.getByTestId('answer-input'), 'x');
+      await user.click(screen.getByTestId('submit-answer-button'));
+    }
   } else if (kind === 'listening-image-choice' || kind === 'image-choice') {
     await user.click(screen.getByTestId('option-0'));
   } else if (kind === 'pronunciation-recording') {
@@ -66,6 +89,17 @@ async function answerCurrentQuestion(user: ReturnType<typeof userEvent.setup>): 
     kind === 'phonics-rhyme-choice'
   ) {
     await user.click(screen.getByTestId('option-0'));
+  } else if (kind === 'letter-tracing') {
+    /* CR-82 (s12.7): the tracing body is a lazy chunk - wait for it, then
+       drive the keyboard/assisted path once per stroke until the
+       feedback sheet appears. */
+    await waitFor(() => expect(screen.getByTestId('tracing-auto-step')).toBeVisible());
+    for (let i = 0; i < 8 && !screen.queryByTestId('answer-feedback'); i += 1) {
+      const auto = screen.queryByTestId('tracing-auto-step');
+      if (!auto) break;
+      await user.click(auto);
+    }
+    await waitFor(() => expect(screen.getByTestId('answer-feedback')).toBeVisible());
   } else if (kind === 'picture-pair-matching') {
     await resolvePicturePairMatchingBoard(user);
   }
@@ -127,14 +161,16 @@ describe('App (v5/v6 Batch/Round flow)', () => {
 
     await startBatch(user);
     const round1Kinds = await completeActiveRound(user);
-    expect(round1Kinds).toEqual(new Set(['extra-letter', 'image-choice']));
+    /* CR-82 (D-01): grade-1 Round 1 adds letter-tracing to the mix. */
+    expect(round1Kinds).toEqual(new Set(['extra-letter', 'image-choice', 'letter-tracing']));
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
 
     await user.click(screen.getByTestId('next-round-button'));
 
     expect(screen.getByTestId('round-progress')).toHaveTextContent('2/4');
     const round2FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
-    expect(['listening-sentence-fill-blank', 'listening-image-choice']).toContain(round2FirstKind);
+    /* CR-82 (D-01): G1-2 Round 2 adds listening-fill-blank (Spell-it). */
+    expect(['listening-sentence-fill-blank', 'listening-image-choice', 'listening-fill-blank']).toContain(round2FirstKind);
   }, 60000);
 
   it(
@@ -149,7 +185,9 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('next-round-button'));
 
     const round2Kinds = await completeActiveRound(user);
-    expect(round2Kinds).toEqual(new Set(['listening-sentence-fill-blank', 'listening-image-choice']));
+    /* CR-82 (D-01): G1-2 Round 2 is 3 image-choice + 4 sentence + 3
+       Spell-it fill-blank. */
+    expect(round2Kinds).toEqual(new Set(['listening-sentence-fill-blank', 'listening-image-choice', 'listening-fill-blank']));
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 

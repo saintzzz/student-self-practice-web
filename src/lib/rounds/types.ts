@@ -21,6 +21,15 @@ export interface RoundContentDefinition {
    * possible without quick repetition"). CR-07: `words` is the selected
    * grade's vocabulary pool - builders never read ALL_WORDS directly, so
    * a Batch only ever draws from the grade the student picked.
+   *
+   * CR-82 (ARCHITECTURE-v5 D-04): optional `ctx.gradeId` lets builders bake
+   * grade-specific payloads (G1-2 tracing/spell/gap mechanics) at build
+   * time - components render what the payload carries. Older call sites
+   * pass no ctx and get the legacy (grade-agnostic) mix.
    */
-  buildQuestions?: (seed: string, words: readonly VocabWord[]) => Question[];
+  buildQuestions?: (
+    seed: string,
+    words: readonly VocabWord[],
+    ctx?: { gradeId: string },
+  ) => Question[];
 }

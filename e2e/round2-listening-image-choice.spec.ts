@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { startBatch, runExtraLetterRound, goToNextRound } from './utils/batch-flow';
-import { currentQuestionKindOneOf, goToNextQuestion, playAudio, readQuestionProgress, submitListeningAnswer } from './utils/practice-flow';
+import { answerSpellItTap, currentQuestionKindOneOf, goToNextQuestion, playAudio, readQuestionProgress, submitGapAwareListeningAnswer } from './utils/practice-flow';
 import { answerOptionQuestion, optionButtons } from './utils/option-flow';
 
 /**
@@ -57,14 +57,32 @@ test.describe('Batch/Round: Round 2 listening-image-choice (v8 addition)', () =>
       for (let q = 1; q <= total; q++) {
         const progress = await readQuestionProgress(page);
         expect(progress.current, `expected question ${q} of Round 2`).toBe(q);
-        const kind = await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
+        const kind = await currentQuestionKindOneOf(page, [
+          'listening-sentence-fill-blank',
+          'listening-image-choice',
+          /* CR-82 (D-01): G1-2 Round 2 mixes in Spell-it fill-blank. */
+          'listening-fill-blank',
+        ]);
 
         if (kind === 'listening-sentence-fill-blank') {
           // Not under test here -- skip quickly with the same guaranteed-
           // wrong technique used everywhere else in this suite, so this test
           // reaches every listening-image-choice question in the round
-          // without needing to know sentence/vocabulary content.
-          await submitListeningAnswer(page, '0000');
+          // without needing to know sentence/vocabulary content. CR-82:
+          // bank-eligible items flip to typing first.
+          await submitGapAwareListeningAnswer(page, '0000');
+          await goToNextQuestion(page);
+          continue;
+        }
+
+        if (kind === 'listening-fill-blank') {
+          // CR-82 Spell-it - same skip-quickly intent: the shuffled bank
+          // makes the tap-composed word structurally wrong.
+          if (await page.getByTestId('spell-bank').isVisible()) {
+            await answerSpellItTap(page);
+          } else {
+            await submitGapAwareListeningAnswer(page, '0000');
+          }
           await goToNextQuestion(page);
           continue;
         }

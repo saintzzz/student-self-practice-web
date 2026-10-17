@@ -38,19 +38,49 @@ import ConfirmEndDialog from './ConfirmEndDialog';
 import { WORD_IPA } from '../data/ipaMap';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
 import Mascot from './Mascot';
-import { EXAM_HEADER_BRAND, EXAM_NAV_ANSWERED, EXAM_NAV_CELL, EXAM_OPTION, EXAM_SELECTED, BTN_AUDIO, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
-import { IconArrowRight, IconBook, IconCheck, IconChevronLeft, IconChevronRight, IconClock, IconHandshake, IconMail, IconMedal, IconMuscle, IconNote, IconParty, IconPencil, IconSpeaker, IconSwords, IconTrophy } from './icons';
+import { ExamProgressRing } from './exam/ExamProgressRing';
+import { ExamNavigatorDialog } from './exam/ExamNavigatorDialog';
+import { ExamReviewSheet } from './exam/ExamReviewSheet';
+import { useExamShortcuts } from './exam/useExamShortcuts';
+import {
+  EXAM_DESK,
+  EXAM_HEADER_BRAND,
+  EXAM_NAV_ANSWERED,
+  EXAM_NAV_CELL,
+  EXAM_NAV_FLAGGED,
+  EXAM_OPTION_PAPER,
+  EXAM_OPTION_KEY,
+  EXAM_PRACTICE_NEXT,
+  EXAM_QNUM,
+  EXAM_SELECTED,
+  EXAM_SELECTED_KEY_PAPER,
+  EXAM_SELECTED_PAPER,
+  EXAM_SHEET,
+  EXAM_SHEET_BTN,
+  EXAM_SHEET_HEADER,
+  EXAM_TIMER,
+  EXAM_TIMER_URGENT,
+  EXAM_VERDICT_CORRECT,
+  EXAM_VERDICT_WRONG,
+  BTN_SECONDARY_NAVY,
+  BTN_SECONDARY_PAPER,
+  CTA_GOLD_XL,
+  TYPE_BODY_PAPER,
+  TYPE_PROMPT_PAPER_G12,
+  TYPE_PROMPT_PAPER_G345,
+} from '../lib/ui/tokens';
+import { IconArrowRight, IconCheck, IconCheckCircle, IconChevronLeft, IconChevronRight, IconClock, IconFlag, IconHandshake, IconMail, IconMedal, IconMuscle, IconParty, IconSpeaker, IconSwords, IconTrophy } from './icons';
 
 /**
  * CR-24 - IOE-style Thi thử player. Visual language follows the real
- * ioe.vn exam: dark chalkboard in a wooden frame, numbered question
- * strip (10/page), top countdown, SUBMIT button, no per-question
- * verdict (exam conditions). 200 questions / 30 minutes by default.
+ * ioe.vn exam: numbered question strip (10/page), top countdown, SUBMIT
+ * button, no per-question verdict (exam conditions).
  *
- * kids-UX step 9 (design s3.9, OM-3=C): the ONLY brand injection inside
- * the exam hall is the small EXAM_HEADER_BRAND badge in the header -
- * question cards, nav strip, timer and interior chrome stay IOE-faithful.
- * The results view lives in ExamResult.tsx (full brand celebration there).
+ * CR-82 M5 (spec s10, R-v5-03): the hall is now a dark quiet DESK with a
+ * single paper sheet - slate-50 paper, ruled header, lettered options
+ * like a printed IOE sheet. No mascot during the sitting (R-v5-06; the
+ * badge keeps the wordmark only), no gold fills in the timed sitting
+ * (N1), flags + navigator + review-before-submit (D-13/D-18).
  */
 
 export { PROGRAM_LABEL };
@@ -111,8 +141,19 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const telemetryRef = useRef<ExamTelemetry | null>(null);
   /** When the current question first rendered - latency basis. */
   const questionShownAtRef = useRef<number>(0);
-  /** CR-69: confirm before the manual NỘP BÀI / KẾT THÚC ends the session. */
+  /** CR-69: confirm before the manual NỘP BÀI / KẾT THÚC ends the session.
+   *  CR-82 M5: exam mode opens ExamReviewSheet instead (D-13); this flag
+   *  now only drives the PRACTICE-mode ConfirmEndDialog. */
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
+  /** CR-82 M5 (D-18): per-question flags + navigator - pure UI state,
+   *  never written to ExamState/telemetry/results. Cleared in begin()
+   *  and on finish (MEMORY: stale confirm state lesson). */
+  const [flags, setFlags] = useState<ReadonlySet<number>>(new Set());
+  const [navOpen, setNavOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  /** sr-only timer announcements - each fires once per run. */
+  const announced5Ref = useRef(false);
+  const announced1Ref = useRef(false);
 
   // r16: bind the result owner to the identity at activity start - a
   // mid-exam account switch must not attribute the run to the new user.
@@ -179,15 +220,25 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     }
   }, [exam, result, isPractice, isReview, isArena, gradeId, programId]);
 
-  /* CR-69: if the timer expired while the submit confirmation was open,
-     the flag survives into the next exam's retry - reset it wherever a
-     run finishes or a fresh run begins. */
+  /* CR-69 + CR-82 M5: if the timer expired while the submit confirmation
+     or the review sheet was open, the flags survive into the next exam's
+     retry - reset them wherever a run finishes or a fresh run begins. */
   useEffect(() => {
-    if (exam?.finishedAtMs !== null && exam?.finishedAtMs !== undefined) setSubmitConfirmOpen(false);
+    if (exam?.finishedAtMs !== null && exam?.finishedAtMs !== undefined) {
+      setSubmitConfirmOpen(false);
+      setReviewOpen(false);
+      setNavOpen(false);
+      setFlags(new Set());
+    }
   }, [exam]);
 
   async function begin(): Promise<void> {
     setSubmitConfirmOpen(false);
+    setReviewOpen(false);
+    setNavOpen(false);
+    setFlags(new Set());
+    announced5Ref.current = false;
+    announced1Ref.current = false;
     // CR-34: arena duels run on the challenge seed so both players get
     // the identical question set - the only fair basis for a comparison.
     const seed = isArena && arena ? arena.seed : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -342,6 +393,48 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     setStripOffset(Math.floor(index / STRIP_PAGE) * STRIP_PAGE);
   }
 
+  /** CR-82 M5 (D-18): toggle the flag on the current question - pure UI
+   *  state, cleared on begin()/finish. */
+  function toggleFlag(): void {
+    setFlags((prev) => {
+      const next = new Set(prev);
+      if (exam) {
+        if (next.has(exam.currentIndex)) next.delete(exam.currentIndex);
+        else next.add(exam.currentIndex);
+      }
+      return next;
+    });
+  }
+
+  function openSubmit(): void {
+    // CR-82 D-13: exam mode reviews before submitting; practice keeps
+    // the generic confirm dialog.
+    if (isPractice) setSubmitConfirmOpen(true);
+    else setReviewOpen(true);
+  }
+
+  /* CR-82 M5 (D-18): keyboard shortcuts for the timed sitting - bound
+     only while an exam-mode sitting is live and no dialog is open.
+     Hook is unconditional (early returns below); `enabled` gates it. */
+  const liveQuestion = exam && !result ? exam.questions[exam.currentIndex] : undefined;
+  const liveOptionCount = liveQuestion && 'options' in liveQuestion ? liveQuestion.options.length : 0;
+  useExamShortcuts(!isPractice && !!exam && !result, navOpen || reviewOpen || submitConfirmOpen, liveOptionCount, {
+    onPickOption: (index) => answer({ type: 'option', index }),
+    onPrev: () => jump(exam ? exam.currentIndex - 1 : 0),
+    onNext: () => jump(exam ? exam.currentIndex + 1 : 0),
+    onToggleFlag: toggleFlag,
+    onOpenNavigator: () => setNavOpen(true),
+  });
+
+  /* spec s10.4: one-shot sr announcements at 5:00 / 1:00 remaining -
+     flagged in an effect so render stays pure. */
+  const secondsLeftNow = exam ? remainingSeconds(exam, now) : Number.POSITIVE_INFINITY;
+  useEffect(() => {
+    if (isPractice || !exam || exam.finishedAtMs !== null) return;
+    if (!announced5Ref.current && secondsLeftNow <= 300 && secondsLeftNow > 60) announced5Ref.current = true;
+    if (!announced1Ref.current && secondsLeftNow <= 60 && secondsLeftNow > 0) announced1Ref.current = true;
+  }, [exam, isPractice, secondsLeftNow]);
+
   if (!exam) {
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
@@ -365,18 +458,30 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const ss = String(left % 60).padStart(2, '0');
   const stripQuestions = exam.questions.slice(stripOffset, stripOffset + STRIP_PAGE);
   const answeredSet = exam.answers;
+  const answeredCount = answeredSet.filter((a) => a !== null && a !== undefined).length;
+  const unansweredIndexes = exam.questions
+    .map((_, i) => i)
+    .filter((i) => answeredSet[i] === null || answeredSet[i] === undefined);
+  const flaggedIndexes = [...flags].sort((a, b) => a - b);
   const isLastQuestion = exam.currentIndex >= exam.questions.length - 1;
+  const isG12 = gradeId === 'grade-1' || gradeId === 'grade-2';
+  const urgent = !isPractice && left <= 60;
+
+  /* spec s10.4: the live region announces "Còn 5 phút" at 5:00 and
+     "Còn 1 phút" at 1:00 - the flags below make each fire once per run. */
+  const srAnnouncement = !isPractice && left <= 60 && announced1Ref.current
+    ? 'Còn 1 phút'
+    : !isPractice && left <= 300 && announced5Ref.current
+      ? 'Còn 5 phút'
+      : '';
 
   return (
-    <div data-testid="exam-screen" className="flex min-h-screen flex-col bg-[#0d1b26] p-2 text-white sm:p-4">
-      {/* IOE header bar: title + clock + student + submit */}
-      <header className="flex items-center justify-between gap-2 border-b-4 border-amber-800/80 bg-[#132433] px-3 py-2 sm:px-5">
+    <div data-testid="exam-screen" className={EXAM_DESK}>
+      {/* Desk header: wordmark badge (no mascot - R-v5-06) | title |
+          progress ring (exam) | timer | NỘP BÀI */}
+      <header className="flex items-center justify-between gap-2 border-b-2 border-desk-line bg-desk-bar px-3 py-2 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
-          {/* kids-UX R7: the single brand element inside the exam hall -
-              a small badge + greeting mascot. Everything else keeps the
-              IOE mono look. */}
           <span data-testid="exam-brand" className={`${EXAM_HEADER_BRAND} shrink-0`}>
-            <Mascot mood="greeting" size="inline" />
             English Arena
           </span>
           <div className="min-w-0">
@@ -388,38 +493,44 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         </div>
         {isPractice ? (
           <div className="flex shrink-0 items-center gap-2">
-            <div data-testid="exam-progress" className="rounded-lg bg-[#0a1520] px-3 py-1 text-lg font-extrabold text-amber-300">
+            <div data-testid="exam-progress" className="rounded-lg bg-desk-well px-3 py-1 text-lg font-extrabold text-amber-300">
               Câu {exam.currentIndex + 1}/{exam.questions.length}
             </div>
-            <div data-testid="exam-elapsed" className="rounded-lg bg-[#0a1520] px-3 py-1 font-mono text-lg font-extrabold tabular-nums text-sky-300">
+            <div data-testid="exam-elapsed" className="rounded-lg bg-desk-well px-3 py-1 font-mono text-lg font-extrabold tabular-nums text-sky-300">
               <IconClock size={15} className="mr-1 inline-block" /> {Math.floor(Math.max(0, now - exam.startedAtMs) / 60000)}:{String(Math.floor(Math.max(0, now - exam.startedAtMs) / 1000) % 60).padStart(2, '0')}
             </div>
           </div>
         ) : (
-          <div
-            data-testid="exam-timer"
-            className={`shrink-0 rounded-lg px-3 py-1 font-mono text-xl font-extrabold tabular-nums sm:text-2xl ${
-              left <= 60 ? 'animate-pulse motion-reduce:animate-none bg-rose-600 text-white' : 'bg-[#0a1520] text-amber-300'
-            }`}
-          >
-            <IconClock size={18} className="mr-1 inline-block" /> {mm}:{ss}
+          <div className="flex shrink-0 items-center gap-2">
+            <ExamProgressRing current={exam.currentIndex} total={exam.questions.length} answered={answeredCount} />
+            <div data-testid="exam-timer" className={`${EXAM_TIMER} ${urgent ? EXAM_TIMER_URGENT : ''}`}>
+              <IconClock size={18} className="inline-block" aria-hidden="true" /> {mm}:{ss}
+            </div>
           </div>
         )}
         <button
           type="button"
           data-testid="exam-submit"
-          onClick={() => setSubmitConfirmOpen(true)}
-          className="min-h-[48px] shrink-0 rounded-lg bg-sky-700 px-4 text-base font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60"
+          onClick={openSubmit}
+          className="min-h-[48px] shrink-0 rounded-lg bg-sky-700 px-4 text-base font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-600 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 motion-reduce:transition-none"
         >
           {isPractice ? 'KẾT THÚC' : 'NỘP BÀI'}
         </button>
       </header>
 
-      {submitConfirmOpen && (
+      {/* sr-only timer announcements (spec s10.4): "Còn 5 phút" at 5:00,
+          "Còn 1 phút" at 1:00 - each once per run. */}
+      <div aria-live="polite" className="sr-only">
+        {srAnnouncement}
+      </div>
+
+      {/* Practice mode keeps the generic confirm; exam mode gets the
+          review-before-submit sheet (D-13). */}
+      {submitConfirmOpen && isPractice && (
         <ConfirmEndDialog
-          title={isPractice ? 'Kết thúc bài?' : 'Nộp bài thi?'}
-          body={isPractice ? 'Em sẽ xem điểm các câu đã làm luôn nhé.' : 'Em sẽ không sửa được câu trả lời nữa.'}
-          confirmLabel={isPractice ? 'Kết thúc' : 'Nộp bài'}
+          title="Kết thúc bài?"
+          body="Em sẽ xem điểm các câu đã làm luôn nhé."
+          confirmLabel="Kết thúc"
           onConfirm={() => {
             setSubmitConfirmOpen(false);
             setExam((c) => (c ? submitExam(c, Date.now()) : c));
@@ -427,21 +538,52 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           onCancel={() => setSubmitConfirmOpen(false)}
         />
       )}
+      {reviewOpen && !isPractice && (
+        <ExamReviewSheet
+          total={exam.questions.length}
+          unanswered={unansweredIndexes}
+          flagged={flaggedIndexes}
+          onJump={(index) => {
+            setReviewOpen(false);
+            jump(index);
+          }}
+          onBack={() => setReviewOpen(false)}
+          onSubmit={() => {
+            setReviewOpen(false);
+            setExam((c) => (c ? submitExam(c, Date.now()) : c));
+          }}
+        />
+      )}
+      {navOpen && !isPractice && (
+        <ExamNavigatorDialog
+          total={exam.questions.length}
+          currentIndex={exam.currentIndex}
+          answered={exam.answers.map((a) => a !== null && a !== undefined)}
+          flagged={flags}
+          onJump={(index) => {
+            setNavOpen(false);
+            jump(index);
+          }}
+          onClose={() => setNavOpen(false)}
+        />
+      )}
 
       {/* r5: surface an under-filled session instead of silently running
           short - a fixed form missing rows is a content defect, not a
           smaller exam. */}
       {(exam.poolShort || (exam.droppedCount ?? 0) > 0) && (
-        <div data-testid="exam-pool-warning" className="border-b border-amber-700/60 bg-amber-950/70 px-3 py-1.5 text-center text-xs font-bold text-amber-200">
+        <div data-testid="exam-pool-warning" className="border-b border-amber-200 bg-amber-100 px-3 py-1.5 text-center text-xs font-bold text-amber-900">
           {exam.poolShort
             ? 'Ngân hàng câu hỏi chưa đủ cho bài này - số câu ít hơn dự kiến. Báo cô giáo/bố mẹ kiểm tra nhé.'
             : 'Một số câu hỏi bị lỗi dữ liệu nên bị bỏ qua. Báo cô giáo/bố mẹ kiểm tra nhé.'}
         </div>
       )}
 
-      {/* Question number strip - exam only; practice is sequential. */}
+      {/* Question number strip - exam only; practice is sequential.
+          CR-82 M5: flagged cells carry the amber flag ring (desk register)
+          and the strip ends with "Tất cả câu" opening the navigator. */}
       {!isPractice && (
-        <div className="flex items-center gap-1 overflow-x-auto bg-[#132433] px-2 py-1.5">
+        <div className="flex items-center gap-1 overflow-x-auto bg-desk-bar px-2 py-1.5">
           <button
             type="button"
             aria-label="Trước"
@@ -456,10 +598,12 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               const index = stripOffset + i;
               const isCurrent = index === exam.currentIndex;
               const answered = answeredSet[index] !== null && answeredSet[index] !== undefined;
+              const isFlagged = flags.has(index);
               /* CR-73 exam.navStrip: unanswered = exam.card; answered =
                  status.success translucent + check (not color-alone);
                  current = exam.selected ring; current+answered keeps
-                 the check + aria-current. */
+                 the check + aria-current. CR-82: flagged adds the amber
+                 flag ring + icon on the desk strip (EXAM_NAV_FLAGGED). */
               return (
                 <button
                   key={q.id}
@@ -467,14 +611,18 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
                   data-testid={`exam-nav-${index}`}
                   aria-current={isCurrent ? 'step' : undefined}
                   onClick={() => jump(index)}
-                  className={`${EXAM_NAV_CELL} shrink-0 ${
+                  className={`${EXAM_NAV_CELL} relative shrink-0 ${
                     isCurrent ? EXAM_SELECTED : answered ? EXAM_NAV_ANSWERED : ''
-                  }`}
+                  } ${isFlagged ? `ring-2 ${EXAM_NAV_FLAGGED}` : ''}`}
                 >
                   {answered && (
                     <IconCheck size={12} aria-hidden="true" className="mr-0.5" />
                   )}
+                  {isFlagged && (
+                    <IconFlag size={10} aria-hidden="true" className="absolute -right-1 -top-1 text-amber-300" />
+                  )}
                   {answered && <span className="sr-only">đã trả lời</span>}
+                  {isFlagged && <span className="sr-only">đã đánh dấu</span>}
                   {index + 1}
                 </button>
               );
@@ -489,33 +637,83 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           >
             <IconChevronRight size={20} />
           </button>
+          <button
+            type="button"
+            data-testid="exam-nav-open"
+            onClick={() => setNavOpen(true)}
+            className={`${EXAM_NAV_CELL} shrink-0 w-auto px-3 text-sm`}
+          >
+            Tất cả câu
+          </button>
         </div>
       )}
 
-      {/* Chalkboard */}
-      <main className="mx-auto my-3 w-full max-w-3xl flex-1 rounded-lg border-8 border-amber-800/70 bg-[#16232e] p-4 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)] sm:p-8">
-        <ExamQuestionView question={question} answer={exam.answers[exam.currentIndex] ?? null} onAnswer={answer} />
+      {/* Paper sheet (spec s10): ruled header + navy question chip +
+          flag toggle + the question on paper inks. */}
+      <main className={EXAM_SHEET}>
+        <div className={EXAM_SHEET_HEADER}>
+          <span>
+            <span className={EXAM_QNUM}>Câu {exam.currentIndex + 1}</span>
+            <span className="text-slate-500">/ {exam.questions.length}</span>
+          </span>
+          {!isPractice && (
+            <button
+              type="button"
+              data-testid="exam-flag"
+              aria-pressed={flags.has(exam.currentIndex)}
+              onClick={toggleFlag}
+              className={`${EXAM_SHEET_BTN} !min-h-[40px] px-3 text-sm ${
+                flags.has(exam.currentIndex) ? `ring-2 ${EXAM_NAV_FLAGGED}` : ''
+              }`}
+            >
+              <IconFlag size={14} aria-hidden="true" />
+              {flags.has(exam.currentIndex) ? 'Bỏ đánh dấu' : 'Đánh dấu câu này'}
+            </button>
+          )}
+        </div>
+        <ExamQuestionView question={question} answer={exam.answers[exam.currentIndex] ?? null} onAnswer={answer} promptClass={isG12 ? TYPE_PROMPT_PAPER_G12 : TYPE_PROMPT_PAPER_G345} />
         {isPractice && verdict && (
           <div
             data-testid="practice-verdict"
-            className={`mt-6 rounded-xl border-l-4 p-4 ${
-              verdict.isCorrect ? 'border-emerald-500 bg-emerald-500/15' : 'border-rose-500 bg-rose-500/15'
-            }`}
+            className={`mt-6 ${verdict.isCorrect ? EXAM_VERDICT_CORRECT : EXAM_VERDICT_WRONG}`}
           >
-            <div className={`text-lg font-extrabold ${verdict.isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
+            <div className="text-lg font-extrabold">
               {verdict.isCorrect ? <span className="inline-flex items-center gap-1.5">Chính xác! <IconParty size={18} /></span> : 'Chưa đúng rồi.'}
             </div>
-            <div className="mt-1 text-sm font-bold text-slate-200">
-              Đáp án đúng: <span className="font-extrabold text-emerald-300"><MarkupText text={examCorrectAnswerText(question)} /></span>
+            <div className="mt-1 text-sm font-bold">
+              Đáp án đúng: <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(question)} /></span>
             </div>
-            {question.explanation && <div className="mt-1 text-sm text-slate-300"><MarkupText text={question.explanation} /></div>}
+            {question.explanation && <div className={`mt-1 text-sm ${TYPE_BODY_PAPER}`}><MarkupText text={question.explanation} /></div>}
+            {/* N1: the ONE gold action of the untimed practice sitting. */}
             <button
               type="button"
               data-testid="practice-next"
               onClick={practiceNext}
-              className="mt-3 w-full rounded-lg bg-amber-400 px-4 py-2.5 font-extrabold text-amber-950 transition hover:bg-amber-300 active:scale-95 sm:w-auto"
+              className={`mt-3 ${EXAM_PRACTICE_NEXT} ${isG12 ? '' : '!min-h-[64px]'} w-full sm:w-auto`}
             >
               <span className="inline-flex items-center gap-1.5">{isLastQuestion ? 'Xem kết quả' : 'Câu tiếp theo'} <IconArrowRight size={16} /></span>
+            </button>
+          </div>
+        )}
+        {!isPractice && (
+          <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-4">
+            <button
+              type="button"
+              data-testid="exam-prev"
+              disabled={exam.currentIndex === 0}
+              onClick={() => jump(exam.currentIndex - 1)}
+              className={`${EXAM_SHEET_BTN} disabled:opacity-40`}
+            >
+              <IconChevronLeft size={16} aria-hidden="true" /> Câu trước
+            </button>
+            <button
+              type="button"
+              data-testid="exam-next"
+              disabled={isLastQuestion}
+              onClick={() => jump(exam.currentIndex + 1)}
+              className={`${EXAM_SHEET_BTN} disabled:opacity-40`}
+            >
+              Câu sau <IconChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
         )}
@@ -528,17 +726,38 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
     : isReview ? `Ôn lại câu sai - ${gradeLabel}` : focusLabel ? `${focusLabel} - ${PROGRAM_LABEL[programId]}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
+
+  /* spec s10.4: the bank fetch keeps the desk register - a paper sheet
+     skeleton, not the navy spinner of old. */
+  if (loading) {
+    return (
+      <div className={EXAM_DESK} data-testid="exam-intro">
+        <main className={EXAM_SHEET} aria-busy="true">
+          <div className="h-6 w-2/3 rounded bg-slate-200 animate-pulse motion-reduce:animate-none" />
+          <div className="mt-6 space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl bg-slate-200 animate-pulse motion-reduce:animate-none" />
+            ))}
+          </div>
+          <p className={`mt-6 text-center ${TYPE_BODY_PAPER}`}>Đang lấy đề...</p>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0d1b26] p-4 text-white">
-      <div className="w-full max-w-lg rounded-2xl border-8 border-amber-800/70 bg-[#16232e] p-6 text-center shadow-2xl sm:p-10">
-        <div className="mb-2 flex justify-center text-amber-300">
-          {isArena ? <IconSwords size={44} /> : isReview ? <IconBook size={44} /> : isPractice ? <IconPencil size={44} /> : <IconNote size={44} />}
+    <div className={`${EXAM_DESK} items-center justify-center`} data-testid="exam-intro">
+      {/* Paper card on the desk; the ONE mascot of this screen (greeting,
+          block size) and the ONE gold action (exam-begin). */}
+      <div className={`${EXAM_SHEET} max-w-lg !flex-none text-center`}>
+        <div className="flex justify-center">
+          <Mascot mood="greeting" size="block" />
         </div>
-        <h1 className="font-display text-2xl font-extrabold text-amber-300 sm:text-3xl">
+        <h1 className={`${TYPE_PROMPT_PAPER_G345} mt-2`}>
           {title}
         </h1>
-        {!isReview && <p className="mt-1 text-lg font-bold text-sky-200">{gradeLabel}</p>}
-        <ul className="mx-auto mt-5 max-w-sm space-y-2 text-left text-sm font-semibold text-slate-200 sm:text-base">
+        {!isReview && <p className={`mt-1 text-lg font-bold ${TYPE_BODY_PAPER}`}>{gradeLabel}</p>}
+        <ul className={`mx-auto mt-5 max-w-sm space-y-2 text-left text-sm font-semibold sm:text-base ${TYPE_BODY_PAPER}`}>
           {isReview ? (
             (reviewCount ?? 0) > 0 ? (
               <>
@@ -565,16 +784,16 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             <>
               <li>• {examConfigForGrade(gradeId).examCount} câu hỏi - làm trong {Math.floor(examConfigForGrade(gradeId).examTimeSec / 60)} phút</li>
               <li>• Bấm số câu để nhảy tới câu bất kỳ, làm xong quay lại sửa được</li>
-              <li>• Không hiện đúng/sai trong lúc thi - đúng như thi thật</li>
+              <li>• Đánh dấu câu khó bằng lá cờ - phím F cũng được</li>
               <li>• Hết giờ tự động nộp bài</li>
             </>
           )}
         </ul>
         {loadError && (
-          <p className="mt-4 rounded-lg bg-red-500/15 px-4 py-2 text-sm font-bold text-red-300">
+          <p className="mt-4 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 ring-1 ring-rose-200">
             {focusLabel
               ? 'Phần này đang được bổ sung thêm câu hỏi - em thử Luyện đề nhé!'
-              : 'Không tải được đề - kiểm tra mạng rồi bấm Thử lại nhé.'}
+              : 'Chưa tải được đề - em kiểm tra mạng rồi thử lại nhé.'}
           </p>
         )}
         {(!isReview || (reviewCount ?? 0) > 0) && (
@@ -583,15 +802,15 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             data-testid="exam-begin"
             onClick={onBegin}
             disabled={loading}
-            className="mt-6 w-full rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-extrabold text-amber-950 shadow-lg transition hover:-translate-y-0.5 active:scale-95 disabled:opacity-60"
+            className={`${CTA_GOLD_XL} mt-6 w-full text-lg disabled:opacity-60`}
           >
-            {loading ? 'Đang tải đề...' : loadError ? 'Thử lại' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
+            {loadError ? 'Thử lại' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
           </button>
         )}
         <button
           type="button"
           onClick={onExit}
-          className="mt-3 w-full rounded-xl border border-slate-500/60 px-6 py-2.5 text-sm font-bold text-slate-300 transition hover:bg-white/5"
+          className={`${BTN_SECONDARY_PAPER} mt-3 w-full`}
         >
           Quay lại
         </button>
@@ -600,22 +819,30 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
   );
 }
 
-/** Exported for the real-bank render contract tests (CR-42). */
+/** Exported for the real-bank render contract tests (CR-42).
+ *  CR-82 M5: `promptClass` carries the grade-appropriate TYPE_PROMPT_PAPER
+ *  composite - a `*_NAVY` composite may never render inside EXAM_SHEET
+ *  (spec s5.3 rule 2). */
 export function ExamQuestionView({
   question,
   answer,
   onAnswer,
+  promptClass = TYPE_PROMPT_PAPER_G345,
 }: {
   question: ExamQuestion;
   answer: ExamAnswer | null;
   onAnswer: (a: ExamAnswer) => void;
+  promptClass?: string;
 }) {
   switch (question.kind) {
     case 'image-choice':
       return (
         <div>
-          <div className="mb-6 text-center text-7xl"><EmojiVisual emoji={question.emoji} /></div>
-          <div className="text-center font-mono text-xl text-slate-100">Hình này là gì?</div>
+          {/* Exhibit on paper - formal register, no tilt, no soft-3D. */}
+          <div className="mx-auto mb-6 flex max-w-xs justify-center rounded-xl bg-white p-4 text-center text-7xl shadow-none ring-1 ring-slate-200">
+            <EmojiVisual emoji={question.emoji} />
+          </div>
+          <div className={`text-center ${TYPE_BODY_PAPER}`}>Hình này là gì?</div>
           <OptionButtons options={question.options} selected={answer?.type === 'option' ? answer.index : null} onPick={(i) => onAnswer({ type: 'option', index: i })} />
         </div>
       );
@@ -629,7 +856,7 @@ export function ExamQuestionView({
           {question.kind === 'grammar-mcq' && question.passage && (
             <p
               data-testid="exam-passage"
-              className="mx-auto mb-4 max-w-xl rounded-lg bg-white/5 p-4 font-mono text-base leading-relaxed text-slate-100 sm:text-lg"
+              className={`mx-auto mb-4 max-w-xl rounded-xl bg-white p-4 font-mono text-base leading-relaxed ring-1 ring-slate-200 sm:text-lg ${TYPE_BODY_PAPER}`}
             >
               {question.passage}
             </p>
@@ -637,6 +864,7 @@ export function ExamQuestionView({
           <PromptLine
             text={question.kind === 'odd-pronunciation' ? 'Chọn từ có phát âm khác với 3 từ còn lại.' : question.prompt}
             imageUrl={question.kind === 'grammar-mcq' ? question.imageUrl : undefined}
+            className={promptClass}
           />
           <OptionButtons
             options={question.options}
@@ -650,8 +878,8 @@ export function ExamQuestionView({
     case 'true-false-reading':
       return (
         <div>
-          <p className="mx-auto mb-4 max-w-xl rounded-lg bg-white/5 p-4 font-mono text-base leading-relaxed text-slate-100 sm:text-lg">{question.passage}</p>
-          <PromptLine text={question.statement} />
+          <p className={`mx-auto mb-4 max-w-xl rounded-xl bg-white p-4 font-mono text-base leading-relaxed ring-1 ring-slate-200 sm:text-lg ${TYPE_BODY_PAPER}`}>{question.passage}</p>
+          <PromptLine text={question.statement} className={promptClass} />
           <div className="mt-6 flex justify-center gap-4">
             {[true, false].map((v) => (
               <button
@@ -659,8 +887,8 @@ export function ExamQuestionView({
                 type="button"
                 data-testid={`exam-tf-${v}`}
                 onClick={() => onAnswer({ type: 'bool', value: v })}
-                className={`${EXAM_OPTION} px-10 text-lg ${
-                  answer?.type === 'bool' && answer.value === v ? EXAM_SELECTED : ''
+                className={`${EXAM_OPTION_PAPER} w-auto px-10 text-lg ${
+                  answer?.type === 'bool' && answer.value === v ? EXAM_SELECTED_PAPER : ''
                 }`}
               >
                 {v ? 'True' : 'False'}
@@ -670,12 +898,13 @@ export function ExamQuestionView({
         </div>
       );
     case 'word-order':
-      return <WordOrderView key={question.id} question={question} onAnswer={onAnswer} />;
+      return <WordOrderView key={question.id} question={question} onAnswer={onAnswer} promptClass={promptClass} />;
     case 'missing-letter':
       return (
         <TextInputView
           key={question.id}
           prompt={question.displaySentence}
+          promptClass={promptClass}
           hint="Gõ phần chữ còn thiếu"
           ipa={WORD_IPA[question.word.toLowerCase()]}
           onSubmit={(text) => onAnswer({ type: 'text', text })}
@@ -686,6 +915,7 @@ export function ExamQuestionView({
         <TextInputView
           key={question.id}
           prompt={question.displaySentence}
+          promptClass={promptClass}
           hint="Gõ đáp án"
           imageUrl={question.imageUrl}
           onSubmit={(text) => onAnswer({ type: 'text', text })}
@@ -698,6 +928,7 @@ export function ExamQuestionView({
           <TextInputView
             key={question.id}
             prompt={question.displaySentence}
+            promptClass={promptClass}
             hint="Nghe rồi gõ từ còn thiếu"
             onSubmit={(text) => onAnswer({ type: 'text', text })}
           />
@@ -710,6 +941,7 @@ export function ExamQuestionView({
           <TextInputView
             key={question.id}
             prompt="Nghe và gõ lại từ em nghe được."
+            promptClass={promptClass}
             hint="Gõ từ em nghe được"
             onSubmit={(text) => onAnswer({ type: 'text', text })}
           />
@@ -718,7 +950,7 @@ export function ExamQuestionView({
     case 'extra-letter':
       return (
         <div>
-          <PromptLine text="Tìm chữ cái thừa." />
+          <PromptLine text="Tìm chữ cái thừa." className={promptClass} />
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {question.displayLetters.map((letter, i) => (
               <button
@@ -726,7 +958,7 @@ export function ExamQuestionView({
                 type="button"
                 data-testid={`exam-letter-${i}`}
                 onClick={() => onAnswer({ type: 'option', index: i })}
-                className="h-16 w-16 rounded-xl bg-[#16232e] text-2xl font-extrabold uppercase text-white ring-1 ring-[#22303d] shadow-md transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:scale-95"
+                className="h-16 w-16 rounded-xl bg-white text-2xl font-extrabold uppercase text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
               >
                 {letter}
               </button>
@@ -735,19 +967,19 @@ export function ExamQuestionView({
         </div>
       );
     default:
-      return <PromptLine text="Dạng câu này chưa hỗ trợ trong thi thử." />;
+      return <PromptLine text="Dạng câu này chưa hỗ trợ trong thi thử." className={promptClass} />;
   }
 }
 
-function PromptLine({ text, imageUrl }: { text: string; imageUrl?: string }) {
+function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { text: string; imageUrl?: string; className?: string }) {
   return (
-    <div className="mx-auto mb-6 max-w-xl text-center font-mono text-lg leading-relaxed text-slate-100 sm:text-2xl">
+    <div className={`mx-auto mb-6 max-w-xl text-center leading-relaxed ${className}`}>
       {imageUrl && (
         <img
           src={imageUrl}
           alt=""
           data-testid="exam-question-image"
-          className="mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain"
+          className="mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain ring-1 ring-slate-200"
         />
       )}
       <MarkupText text={text} />
@@ -777,31 +1009,35 @@ function OptionButtons({
           type="button"
           data-testid={`exam-option-${i}`}
           onClick={() => onPick(i)}
-          className={`${EXAM_OPTION} text-left font-mono text-lg ${
-            selected === i ? EXAM_SELECTED : ''
+          className={`${EXAM_OPTION_PAPER} text-lg ${
+            selected === i ? EXAM_SELECTED_PAPER : ''
           }`}
         >
-          <span className="mr-2 font-extrabold text-amber-400">{labels[i]}.</span>
+          {/* the letter key chip identifies the option boundary (s10.2) */}
+          <span className={`${EXAM_OPTION_KEY} ${selected === i ? EXAM_SELECTED_KEY_PAPER : ''}`} aria-hidden="true">
+            {labels[i]}
+          </span>
           {optionImages?.[i] ? (
-            <img src={optionImages[i]} alt={option} data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1" />
+            <img src={optionImages[i]} alt={option} data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" />
           ) : (
             <MarkupText text={option} />
           )}
           {ipa && WORD_IPA[option.toLowerCase()] && (
-            <span className="ml-2 text-sm font-normal text-sky-300">/{WORD_IPA[option.toLowerCase()]}/</span>
+            <span className="ml-2 text-sm font-normal text-sky-700">/{WORD_IPA[option.toLowerCase()]}/</span>
           )}
+          {selected === i && <IconCheckCircle size={18} aria-hidden="true" className="ml-auto text-sky-700" />}
         </button>
       ))}
     </div>
   );
 }
 
-function TextInputView({ prompt, hint, ipa, imageUrl, onSubmit }: { prompt: string; hint: string; ipa?: string; imageUrl?: string; onSubmit: (text: string) => void }) {
+function TextInputView({ prompt, promptClass, hint, ipa, imageUrl, onSubmit }: { prompt: string; promptClass?: string; hint: string; ipa?: string; imageUrl?: string; onSubmit: (text: string) => void }) {
   const [value, setValue] = useState('');
   return (
     <div>
-      <PromptLine text={prompt} imageUrl={imageUrl} />
-      {ipa && <div className="mb-2 text-center font-mono text-lg text-sky-300">/{ipa}/</div>}
+      <PromptLine text={prompt} imageUrl={imageUrl} className={promptClass} />
+      {ipa && <div className="mb-2 text-center font-mono text-lg text-sky-700">/{ipa}/</div>}
       <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
         <input
           type="text"
@@ -813,23 +1049,23 @@ function TextInputView({ prompt, hint, ipa, imageUrl, onSubmit }: { prompt: stri
           }}
           placeholder={hint}
           autoFocus
-          className="w-full rounded-lg border-2 border-amber-300/60 bg-white/10 px-4 py-3 text-center font-mono text-xl font-bold text-white outline-none placeholder:text-slate-500 focus:border-amber-300"
+          className="w-full rounded-lg border-2 border-slate-300 bg-white px-4 py-3 text-center font-mono text-xl font-bold text-slate-900 outline-none placeholder:text-slate-400 focus:border-sky-600 focus:ring-4 focus:ring-sky-600/30"
         />
         <button
           type="button"
           data-testid="exam-text-submit"
           disabled={!value.trim()}
           onClick={() => onSubmit(value)}
-          className="rounded-lg bg-amber-400 px-8 py-2.5 font-extrabold text-amber-950 shadow transition hover:bg-amber-300 disabled:opacity-40"
+          className={`${EXAM_SHEET_BTN} !bg-sky-700 !text-white !ring-sky-700 hover:!bg-sky-600 px-8 disabled:opacity-40`}
         >
-          ANSWER
+          Trả lời
         </button>
       </div>
     </div>
   );
 }
 
-export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQuestion, { kind: 'word-order' }>; onAnswer: (a: ExamAnswer) => void }) {
+export function WordOrderView({ question, onAnswer, promptClass }: { question: Extract<ExamQuestion, { kind: 'word-order' }>; onAnswer: (a: ExamAnswer) => void; promptClass?: string }) {
   const [picked, setPicked] = useState<number[]>([]);
   const remaining = question.tiles.map((_, i) => i).filter((i) => !picked.includes(i));
 
@@ -846,9 +1082,9 @@ export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQu
 
   return (
     <div>
-      <PromptLine text="Sắp xếp các từ thành câu đúng." />
-      {/* answer line */}
-      <div className="mx-auto mb-6 flex min-h-14 max-w-xl flex-wrap items-center justify-center gap-2 rounded-lg bg-white/5 p-3">
+      <PromptLine text="Sắp xếp các từ thành câu đúng." className={promptClass} />
+      {/* answer line - paper well */}
+      <div className="mx-auto mb-6 flex min-h-14 max-w-xl flex-wrap items-center justify-center gap-2 rounded-xl bg-slate-100 p-3 ring-1 ring-slate-200">
         {picked.length === 0 && <span className="text-sm text-slate-500">Bấm các từ bên dưới theo đúng thứ tự</span>}
         {picked.map((tileIndex, slot) => (
           <button
@@ -856,7 +1092,7 @@ export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQu
             type="button"
             data-testid={`exam-slot-${slot}`}
             onClick={() => setPicked((prev) => prev.filter((_, s) => s !== slot))}
-            className={`${EXAM_OPTION} !min-h-[48px] px-3 py-2 font-mono text-base ${EXAM_SELECTED}`}
+            className={`${EXAM_OPTION_PAPER} !min-h-[48px] w-auto px-3 py-2 font-mono text-base ${EXAM_SELECTED_PAPER}`}
           >
             {question.tiles[tileIndex]}
           </button>
@@ -870,14 +1106,14 @@ export function WordOrderView({ question, onAnswer }: { question: Extract<ExamQu
             type="button"
             data-testid={`exam-tile-${tileIndex}`}
             onClick={() => pick(tileIndex)}
-            className="min-h-[64px] rounded-lg bg-[#16232e] px-4 py-2.5 font-mono text-lg font-extrabold text-white ring-1 ring-[#22303d] shadow-md transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:scale-95"
+            className="min-h-[64px] rounded-lg bg-white px-4 py-2.5 font-mono text-lg font-extrabold text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
           >
             {question.tiles[tileIndex]}
           </button>
         ))}
       </div>
       {picked.length > 0 && (
-        <button type="button" onClick={() => setPicked([])} className="mx-auto mt-4 block text-sm font-bold text-slate-400 underline">
+        <button type="button" onClick={() => setPicked([])} className="mx-auto mt-4 block text-sm font-bold text-slate-500 underline">
           Xóa làm lại
         </button>
       )}
@@ -892,7 +1128,7 @@ function ListenButton({ text }: { text: string }) {
         type="button"
         data-testid="exam-listen"
         onClick={() => speakSentence(text)}
-        className={`${BTN_AUDIO} rounded-full px-5 py-3`}
+        className={`${EXAM_SHEET_BTN} rounded-full px-5 py-3`}
       >
         <IconSpeaker size={18} /> Nghe lại
       </button>

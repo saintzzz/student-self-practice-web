@@ -3,6 +3,7 @@ import { grantHomeItem, isObjectiveGranted, ownedHomeItems, type HomeItemResult 
 import { HOME_ITEMS } from '../data/homeItems';
 import { GIFT_BOX } from '../lib/ui/tokens';
 import { EmojiVisual } from './EmojiVisual';
+import { useLottieSlot } from './fx/LottieBudget';
 import { InstructionSpeaker } from './InstructionSpeaker';
 
 interface GiftBoxPickerProps {
@@ -34,6 +35,9 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
   const [result, setResult] = useState<HomeItemResult | null>(null);
   const [poolEmpty] = useState(() => ownedHomeItems().length >= HOME_ITEMS.length);
   const doneFired = useRef(false);
+  /* CR-82 (D-20): the reward illustration animates only when the screen
+     allocator grants the 'reward' slot (BatchSummary: mascot + reward = 2). */
+  const rewardSlot = useLottieSlot('reward');
 
   /* Replay path: this sticker already granted a home item - skip the offer
      and show the stored item straight away (AC-4.4). */
@@ -100,7 +104,7 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
           <span className="sr-only">Em nhận được {result.item.nameVi}!</span>
           <div className="flex items-center justify-center gap-3 rounded-3xl bg-amber-500/15 px-6 py-4 ring-1 ring-amber-400/40">
             <span className="text-5xl" aria-hidden="true">
-              <EmojiVisual emoji={result.item.emoji} animated variant="block" />
+              <EmojiVisual emoji={result.item.emoji} animated={rewardSlot} variant="block" />
             </span>
             <p className="text-xl font-bold text-amber-100">
               {result.item.nameVi} đã vào nhà của em!

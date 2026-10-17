@@ -86,7 +86,7 @@ describe('ListeningImageChoiceQuestion', () => {
     const urls = new Map(
       QUESTION.optionWordIds.map((id, i) => [
         id,
-        { emoji: QUESTION.options[i]!, imageUrl: `/images/vocab/${id}.webp` },
+        { emoji: QUESTION.options[i]!, imageUrl: `/images/vocab/${id}.webp`, word: QUESTION.options[i]! },
       ]),
     );
     mockedGetWordVisual.mockImplementation((wordId) => urls.get(wordId));

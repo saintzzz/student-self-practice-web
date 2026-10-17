@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { advanceToQuestionKind, goToNextRound, runExtraLetterRound, startBatch } from './utils/batch-flow';
-import { findExtraLetterOutcome } from './utils/mascot-flow';
+import { findExtraLetterOutcome, mascotLocator } from './utils/mascot-flow';
 import { answerExtraLetterTile, goToNextQuestion, selectGrade } from './utils/practice-flow';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -45,17 +45,27 @@ async function assertNoThirdParty(page: Page, seen: string[]): Promise<void> {
 }
 
 test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
-  test('mascot pig renders through EmojiVisual as a same-origin Twemoji SVG', async ({ page }) => {
+  test('the mascot renders through its own rig as a static SVG on the pre-round screen (CR-82 D-21)', async ({ page }) => {
+    const seen = watchRequests(page);
     await gotoApp(page);
     await selectGrade(page);
 
-    const pig = page.locator('[data-emoji-visual="🐷"]').first();
-    await expect(pig, 'expected the mascot pig to render via EmojiVisual').toBeVisible();
-    // 🐷 has no Noto animation (PRD r3 / D-2): mode must be the static svg layer.
-    await expect(pig).toHaveAttribute('data-emoji-mode', 'svg');
-    await expect(pig.locator('img')).toHaveAttribute('src', '/emoji/svg/1f437.svg');
-    // SR-only emoji text layer is preserved for semantics (design-spec 3.4).
-    await expect(pig.locator('.sr-only')).toHaveText('🐷');
+    /* CR-82: the mascot is no longer an EmojiVisual - it renders through
+       MascotRig with data-mascot-mood + data-mascot-renderer. Pre-round
+       screens always mount the static SVG poster (D-21): no player mount,
+       no mascot JSON fetch. */
+    const mascot = mascotLocator(page);
+    await expect(mascot, 'expected the mascot to render on the start screen').toBeVisible();
+    await expect(mascot).toHaveAttribute('data-mascot-renderer', 'static');
+    await expect(mascot.locator('svg').first(), 'expected the static SVG pose inside the mascot').toBeVisible();
+
+    // Only real pose-JSON traffic counts - /src/**/mascot/*.tsx dev-server
+    // module requests must not false-positive.
+    const mascotTraffic = seen.filter((u) => /\/mascot\/[\w-]+\.json/.test(u));
+    expect(
+      mascotTraffic,
+      `D-21: pre-round screens must not preload or fetch mascot Lottie JSON; got: ${mascotTraffic.join(', ')}`,
+    ).toEqual([]);
   });
 
   test('Round 1 contains image-choice questions whose prompt renders via EmojiVisual', async ({ page }) => {
@@ -103,46 +113,48 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     }
   });
 
-  test('at most one Lottie canvas during a question, at most two in feedback (AC-2.9)', async ({ page }) => {
+  test('board Lottie budget: at most one player during a question, at most two in feedback (CR-82 D-20)', async ({ page }) => {
     // Reach a state where a Lottie layer actually mounts before measuring:
-    // a correct extra-letter answer puts the happy mascot's ✨ accent into
-    // feedback, and ✨ carries a Noto Lottie asset (2728.json is vendored).
+    // a correct extra-letter answer raises the feedback sheet; at tall
+    // viewports the sheet-perch mascot is granted the first slot (the
+    // eligible feedback picture takes the second when it animates).
     // findExtraLetterOutcome leaves the page on that question with
     // answer-feedback visible.
     const { feedback } = await findExtraLetterOutcome(page, 'correct');
+    await expect(feedback).toBeVisible();
 
-    const accent = feedback.locator('[data-emoji-visual="✨"]');
+    /* GT-8 scope: count ONLY lottie player canvases, never a bare canvas
+       (M6 tracing ships a real <canvas> that must not false-positive). */
+    const playerCanvases = page.locator('[data-lottie-player] canvas');
+    const mascotCanvas = page.locator('[data-lottie-player="mascot"] canvas');
+
+    // A <canvas> inside the DotLottieReact wrapper is the real proof the
+    // player mounted - the sheet-perch mascot is always the granted slot
+    // at this viewport (max-height > 420px in the default 1280x720 config).
     await expect(
-      accent,
-      'expected the happy accent to stay in lottie mode (not an early-fallback svg)',
-    ).toHaveAttribute('data-emoji-mode', 'lottie', { timeout: 15_000 });
-    // A <canvas> element inside the DotLottieReact wrapper is the real proof
-    // the player mounted - data-emoji-ready alone can flip early via the
-    // SVG poster's staticReady, before any player exists.
-    const canvases = page.locator('canvas');
-    await expect(
-      canvases.first(),
-      'expected at least one live Lottie canvas in feedback',
+      mascotCanvas,
+      'expected the sheet-perch mascot to mount its Lottie canvas in feedback',
     ).toBeAttached({ timeout: 15_000 });
 
-    // Feedback state cap (PRD r3 A-09): the ✨ accent plus, when the word's
-    // emoji also has a Lottie asset, the correct-word picture - two players
-    // at most, never more.
-    const feedbackCanvases = await canvases.count();
-    expect(feedbackCanvases, 'AC-2.9/A-09: at most 2 Lottie players in feedback state').toBeLessThanOrEqual(2);
+    // Feedback cap (D-20): mascot + at most one eligible feedback
+    // illustration - two players at most, never more.
+    const feedbackCanvases = await playerCanvases.count();
+    expect(feedbackCanvases, 'D-20: at most 2 Lottie players in feedback state').toBeLessThanOrEqual(2);
+    // Exactly one mascot node per screen state - the perch copy only.
+    await expect(page.locator('[data-mascot-mood]'), 'one mascot node per screen state').toHaveCount(1);
 
-    // During active question presentation the cap tightens to 1
-    // (design-spec 3.9): advance to the next question, then race a 5s
-    // window against a canvas actually attaching - counting immediately
-    // would be vacuous (the lazy player needs chunk+JSON+mount latency),
-    // but the player must mount inside this window when one is coming.
+    // During active question presentation the cap tightens to 1 (D-20):
+    // an eligible prompt illustration OR the mascot - never both. Advance,
+    // then race a 5s window against a canvas actually attaching - counting
+    // immediately would be vacuous (the lazy player needs chunk+JSON+mount
+    // latency), but the player must mount inside this window when coming.
     await goToNextQuestion(page);
     await Promise.race([
-      canvases.first().waitFor({ state: 'attached', timeout: 5_000 }).catch(() => {}),
+      playerCanvases.first().waitFor({ state: 'attached', timeout: 5_000 }).catch(() => {}),
       page.waitForTimeout(5_000),
     ]);
-    const questionCanvases = await page.locator('canvas').count();
-    expect(questionCanvases, 'AC-2.9: at most 1 Lottie player during question presentation').toBeLessThanOrEqual(1);
+    const questionCanvases = await playerCanvases.count();
+    expect(questionCanvases, 'D-20: at most 1 Lottie player during question presentation').toBeLessThanOrEqual(1);
   });
 
   test('correct-word picture renders inside the answer line (AC-10.2)', async ({ page }) => {
@@ -179,14 +191,18 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     const seen = watchRequests(page);
     await gotoApp(page);
     await selectGrade(page);
-    // The start-batch screen shows a greeting mascot (static svg only -
-    // greeting/encouraging moods carry no accent). Wait for it so any
-    // deferred chunk fetch would have had time to fire.
+    // The start-batch screen shows a greeting mascot - always the static
+    // renderer pre-round (CR-82 D-21). Wait for it so any deferred chunk
+    // or mascot-JSON fetch would have had time to fire.
     await expect(page.getByTestId('start-batch-button')).toBeVisible();
-    await expect(page.locator('[data-emoji-visual="🐷"]').first()).toHaveAttribute('data-emoji-mode', 'svg');
+    await expect(mascotLocator(page)).toHaveAttribute('data-mascot-renderer', 'static');
 
     const lottieTraffic = seen.filter(
-      (u) => u.includes('/emoji/lottie/') || u.includes('.wasm') || u.toLowerCase().includes('dotlottie'),
+      (u) =>
+        u.includes('/emoji/lottie/') ||
+        /\/mascot\/[\w-]+\.json/.test(u) ||
+        u.includes('.wasm') ||
+        u.toLowerCase().includes('dotlottie'),
     );
     expect(
       lottieTraffic,
@@ -194,12 +210,12 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     ).toEqual([]);
   });
 
-  test('aborted Lottie JSON falls back to same-origin svg (AC-2.8)', async ({ page }) => {
-    // Data failure (missing/corrupt JSON) is per-mount: the accent falls
-    // back to the local SVG layer without tripping the session breaker
-    // (DS-9).
+  test('aborted mascot Lottie JSON falls back to the static SVG pose (AC-2.8 / CR-82)', async ({ page }) => {
+    // Data failure (missing/corrupt JSON) is per-mount: the mascot rig
+    // falls back to the static pose layer without tripping the session
+    // breaker (D-09 / DS-9 parity with the EmojiVisual path).
     let abortedJson = 0;
-    await page.route('**/emoji/lottie/*.json', (route) => {
+    await page.route('**/mascot/*.json', (route) => {
       abortedJson++;
       return route.abort();
     });
@@ -210,17 +226,17 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     await startBatch(page);
     await runExtraLetterRound(page);
 
-    // Round summary shows the celebrating mascot - 🎉 carries a Lottie
-    // asset (1f389) so it is a guaranteed animated mount once feedback
-    // lands. With JSON aborted it must resolve to svg.
-    const accent = page.locator('[data-emoji-visual="🎉"]').first();
-    await expect(accent, 'expected the celebrating accent to fall back to svg after JSON failure')
-      .toHaveAttribute('data-emoji-mode', 'svg', { timeout: 5_000 });
-    await expect(accent.locator('img')).toHaveAttribute('src', /^\/emoji\/svg\//);
+    // Round summary shows the celebrating mascot at block size - a
+    // guaranteed animated mount once the summary lands. With JSON aborted
+    // it must converge to the static renderer.
+    const mascot = mascotLocator(page);
+    await expect(mascot, 'expected the celebrating mascot to stay static after JSON failure')
+      .toHaveAttribute('data-mascot-renderer', 'static', { timeout: 5_000 });
+    await expect(mascot.locator('svg').first()).toBeVisible();
 
     expect(
       abortedJson,
-      'route interception never fired - the fallback path was not actually exercised',
+      'route interception never fired - the mascot fallback path was not actually exercised',
     ).toBeGreaterThan(0);
     expect(
       pageErrors.map((e) => e.message),
@@ -228,9 +244,9 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     ).toEqual([]);
   });
 
-  test('aborted dotlottie WASM falls back to svg via the runtime path (AC-2.8)', async ({ page }) => {
-    // Player-init failure (WASM unreachable) is a runtime failure: EmojiVisual
-    // must still converge to the svg layer on the affected mounts.
+  test('aborted dotlottie WASM falls back to the static SVG pose via the runtime path (AC-2.8)', async ({ page }) => {
+    // Player-init failure (WASM unreachable) is a runtime failure: the
+    // mascot rig must still converge to the static pose on affected mounts.
     let abortedWasm = 0;
     await page.route('**/*.wasm', (route) => {
       abortedWasm++;
@@ -242,9 +258,9 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     await startBatch(page);
     await runExtraLetterRound(page);
 
-    const accent = page.locator('[data-emoji-visual="🎉"]').first();
-    await expect(accent, 'expected the celebrating accent to fall back to svg after WASM failure')
-      .toHaveAttribute('data-emoji-mode', 'svg', { timeout: 5_000 });
+    const mascot = mascotLocator(page);
+    await expect(mascot, 'expected the celebrating mascot to stay static after WASM failure')
+      .toHaveAttribute('data-mascot-renderer', 'static', { timeout: 5_000 });
 
     expect(
       abortedWasm,
@@ -271,9 +287,10 @@ test.describe('EmojiVisual reduced-motion (PRD r3 / DS-10)', () => {
     await startBatch(page);
     await advanceToQuestionKind(page, 'image-choice');
 
-    // The mascot accents ✨/🎉 carry Noto Lottie assets; under reduced motion
-    // useLottie is false (renderMode.ts), so any rendered EmojiVisual must
-    // resolve to svg/image, never lottie.
+    // Under reduced motion useLottie is false (renderMode.ts) and the
+    // mascot rig stays static (D-20): every rendered EmojiVisual must
+    // resolve to svg/image, never lottie, and the mascot never animates.
+    await expect(mascotLocator(page)).toHaveAttribute('data-mascot-renderer', 'static');
     const visuals = page.locator(EMOJI_VISUAL);
     const count = await visuals.count();
     expect(count, 'expected at least one EmojiVisual on an image-choice question').toBeGreaterThan(0);
@@ -297,13 +314,20 @@ test.describe('EmojiVisual reduced-motion (PRD r3 / DS-10)', () => {
     await runExtraLetterRound(page);
 
     const lottieTraffic = seen.filter(
-      (u) => u.includes('/emoji/lottie/') || u.includes('.wasm') || u.toLowerCase().includes('dotlottie'),
+      (u) =>
+        u.includes('/emoji/lottie/') ||
+        /\/mascot\/[\w-]+\.json/.test(u) ||
+        u.includes('.wasm') ||
+        u.toLowerCase().includes('dotlottie'),
     );
     expect(
       lottieTraffic,
-      `AC-2.7: under prefers-reduced-motion zero player/WASM/lottie-JSON traffic is allowed; got: ${lottieTraffic.join(', ')}`,
+      `AC-2.7/D-20: under prefers-reduced-motion zero player/WASM/lottie-JSON traffic is allowed; got: ${lottieTraffic.join(', ')}`,
     ).toEqual([]);
-    expect(await page.locator('canvas').count(), 'expected zero Lottie canvases under reduced motion').toBe(0);
+    expect(
+      await page.locator('[data-lottie-player] canvas').count(),
+      'expected zero Lottie canvases under reduced motion',
+    ).toBe(0);
     await assertNoThirdParty(page, seen);
   });
 });

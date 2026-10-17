@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
+  answerTracingAutoStep,
   fastForwardThroughRounds1And2,
   goToNextRound,
   runExtraLetterRound,
@@ -45,11 +46,15 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
     let correctSoFar = 0;
 
     for (let q = 1; q <= questionsToSample; q++) {
-      const kind = await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
+      // CR-82 (D-01): grade-1 Round 1 also carries letter-tracing at
+      // fixed indexes; its assisted path always records correct.
+      const kind = await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice', 'letter-tracing']);
       const result =
-        kind === 'extra-letter'
-          ? await answerExtraLetterTile(page, 0)
-          : await answerOptionQuestion(page, 0);
+        kind === 'letter-tracing'
+          ? await answerTracingAutoStep(page)
+          : kind === 'extra-letter'
+            ? await answerExtraLetterTile(page, 0)
+            : await answerOptionQuestion(page, 0);
       if (result.outcome === 'correct') correctSoFar++;
       else if (result.outcome !== 'incorrect') {
         throw new Error(`Round 1 question ${q}: unrecognized answer outcome "${result.outcome}"`);

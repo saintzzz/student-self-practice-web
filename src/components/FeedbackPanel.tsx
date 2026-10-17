@@ -3,11 +3,13 @@ import type { QuestionKind } from '../types';
 import { playGentleWrong, playSfx } from '../lib/sfx';
 import { speakWord } from '../lib/speech';
 import { useViewer } from '../lib/viewer/ViewerContext';
+import { CHIP_GOLD } from '../lib/ui/tokens';
 import { WORD_IPA } from '../data/ipaMap';
 import { EmojiVisual } from './EmojiVisual';
+import { useLottieSlot } from './fx/LottieBudget';
 import Mascot from './Mascot';
 import Confetti from './celebrations/Confetti';
-import { IconSpeaker } from './icons';
+import { IconSpeaker, IconFlame } from './icons';
 
 interface FeedbackPanelProps {
   kind: QuestionKind;
@@ -29,16 +31,54 @@ interface FeedbackPanelProps {
   picture?: { emoji: string; imageUrl?: string };
   /** CR-79 A5: streak>=3 beat - mascot celebrates, confetti doubles. */
   celebrate?: boolean;
+  /**
+   * CR-82 (spec s16.2): the consecutive-correct count ending at this
+   * answer. >=3 shows the CHIP_GOLD streak chip inside the sheet; the
+   * 3/5/10 milestones also queue the 'streak' reward sfx (reward tier -
+   * 250ms behind the verdict, never overlapping it).
+   */
+  streak?: number;
+  /**
+   * CR-82 (spec s9.3, rev2 F4): 'inline' = the static 32px mascot lives in
+   * the headline (today's behaviour, and the only mascot at
+   * max-height:420px). 'none' = the sheet perch sibling layer in
+   * QuestionCard owns the single on-screen mascot; the headline keeps
+   * right-side clearance so text never runs under the hooves.
+   */
+  mascotPlacement?: 'inline' | 'none';
+  /**
+   * CR-82 (spec s12.6): optional per-kind verdict headline. Letter
+   * tracing swaps the generic pair for completion-acknowledging copy -
+   * "Chưa đúng rồi" would shame a finished trace.
+   */
+  headlines?: { correct: string; wrong: string };
 }
 
 const KINDS_WITH_ANSWER_FEEDBACK_TESTID: readonly QuestionKind[] = [
   'listening-fill-blank',
   'extra-letter',
   'listening-sentence-fill-blank',
+  /* CR-82: tracing submits through the same sheet; e2e's structural
+     answer loop reads `answer-feedback[data-correct]` for the outcome. */
+  'letter-tracing',
 ];
 
 const HEADLINE_CLASS =
   'flex items-center gap-1 text-2xl font-extrabold [@media(max-height:420px)]:text-lg';
+
+/* CR-82 (spec s16.2): milestone copy + the streak sfx fire at 3, 5, and
+   every 5 from 10 up; interim counts (4, 6-9, 11-14...) still show a
+   chip but reuse the generic line and stay silent. */
+function streakChipText(streak: number): string {
+  if (streak === 3) return '3 câu đúng liên tiếp!';
+  if (streak === 5) return '5 câu liên tiếp - siêu quá!';
+  if (streak === 10) return '10 câu liên tiếp - vô địch!';
+  return `${streak} câu đúng liên tiếp!`;
+}
+
+function isStreakMilestone(streak: number): boolean {
+  return streak === 3 || streak === 5 || (streak >= 10 && streak % 5 === 0);
+}
 // Exact class order from ebd58a5 so the no-picture DOM is byte-identical.
 const WORD_LINE_BASE_CLASS =
   'mt-2 text-xl font-semibold text-white [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base';
@@ -59,15 +99,22 @@ const WORD_LINE_BASE_CLASS =
  * <div> only when the happy accent is present (isCorrect), and the
  * correct-word line uses <div> only when a picture prop is present.
  */
-export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture, celebrate }: FeedbackPanelProps) {
-  const { density } = useViewer();
+export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture, celebrate, streak = 0, mascotPlacement = 'inline', headlines }: FeedbackPanelProps) {
+  const { density, band } = useViewer();
+  /* CR-82 (D-20): the sheet's feedback picture animates only when the
+     board allocator grants the 'feedback' slot (<=2 players post-answer). */
+  const feedbackSlot = useLottieSlot('feedback');
   // CR-20: verdict sound on mount - chime for correct. kids-UX (design
   // s3.4): the wrong verdict plays the muted gentle cue, not a penalty
   // tone.
   useEffect(() => {
-    if (isCorrect) playSfx('correct');
-    else playGentleWrong();
-  }, [isCorrect]);
+    if (isCorrect) {
+      playSfx('correct');
+      /* CR-82 (spec s16.3): streak milestones queue the reward tier -
+         playSfx schedules it 250ms after the verdict, never overlapping. */
+      if (isStreakMilestone(streak)) playSfx('streak');
+    } else playGentleWrong();
+  }, [isCorrect, streak]);
 
   // CR-24: IPA transcription next to the correct word (user request:
   // "thêm phần phiên âm đọc") - e.g. "full moon" shows /fʊl mun/.
@@ -103,11 +150,24 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
         className={`absolute inset-y-0 left-0 w-1.5 ${isCorrect ? 'bg-emerald-400' : 'bg-sky-400'}`}
       />
       {isCorrect && <Confetti big={celebrate} />}
+      {isCorrect && streak >= 3 && (
+        /* CR-82 (spec s16.2): CHIP_GOLD streak chip inside the sheet. */
+        <p data-testid="streak-chip" data-streak={streak} className={`mt-2 ${CHIP_GOLD}`}>
+          <IconFlame size={16} className="text-amber-600" />
+          {streakChipText(streak)}
+        </p>
+      )}
       <HeadlineTag
-        className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-300' : 'text-white'}`}
+        className={`${HEADLINE_CLASS} ${isCorrect ? 'text-emerald-300' : 'text-white'} ${
+          /* CR-82 s9.3: when the sheet perch owns the mascot the headline
+             keeps clearance under the hooves (72px G1-2 / 56px G3-5). */
+          mascotPlacement === 'none' ? (band === 'G12' ? 'pr-16' : 'pr-14') : ''
+        }`}
       >
-        <Mascot mood={isCorrect ? (celebrate ? 'celebrating' : 'happy') : 'encouraging'} size="inline" />
-        {isCorrect ? 'Chính xác! Giỏi quá!' : 'Chưa đúng rồi, cố lên nhé!'}
+        {mascotPlacement === 'inline' && (
+          <Mascot mood={isCorrect ? (celebrate ? 'celebrating' : 'happy') : 'encouraging'} size="inline" />
+        )}
+        {isCorrect ? (headlines?.correct ?? 'Chính xác! Giỏi quá!') : (headlines?.wrong ?? 'Chưa đúng rồi, cố lên nhé!')}
       </HeadlineTag>
       {!isCorrect && pickedAnswer && (
         /* kids-UX s3.4: no strikethrough - striking the child's pick reads
@@ -122,7 +182,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
         Từ đúng là: <span className="font-extrabold">{correctWord}</span>
         {ipa && <span className="ml-1 font-mono font-semibold text-sky-300">/{ipa}/</span>}
         {picture && (
-          <EmojiVisual emoji={picture.emoji} imageUrl={picture.imageUrl} animated className="ml-[0.3em]" />
+          <EmojiVisual emoji={picture.emoji} imageUrl={picture.imageUrl} animated={feedbackSlot} className="ml-[0.3em]" />
         )}
       </WordLineTag>
       {!isCorrect && fullSentence && (

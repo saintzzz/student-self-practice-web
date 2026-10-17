@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { TracingMeta } from '../types';
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
+import { prefetchTracingChunk } from './tracing/TracingChunkBoundary';
 import { computeLiveScore } from '../lib/liveScore';
-import { SCREEN_ENTER, scene } from '../lib/ui/tokens';
+import { material, SCREEN_ENTER, scene } from '../lib/ui/tokens';
 import { useRoundTimer } from '../hooks/useRoundTimer';
+import { useSceneJourney } from './scene/SceneJourneyContext';
 import RoundProgress from './RoundProgress';
 import LiveScore from './LiveScore';
+import { RewardFxProvider } from './fx/RewardFxContext';
 import RoundTimer from './RoundTimer';
 import ActiveRoundQuestion from './ActiveRoundQuestion';
 import RoundSummary from './RoundSummary';
@@ -19,6 +23,8 @@ interface BatchScreenProps {
   onSubmitExtraLetter: (letterIndex: number) => void;
   onSubmitPronunciation: (transcript: string) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
+  /** CR-82 (D-10): tracing submits carry TracingMeta (assisted flag). */
+  onSubmitTracing?: (isCorrect: boolean, meta: TracingMeta) => void;
   onNextQuestion: () => void;
   onNextRound: () => void;
   onStartNewBatch: () => void;
@@ -55,6 +61,7 @@ export default function BatchScreen({
   onSubmitExtraLetter,
   onSubmitPronunciation,
   onSubmitPairMatching,
+  onSubmitTracing,
   onNextQuestion,
   onNextRound,
   onStartNewBatch,
@@ -73,6 +80,27 @@ export default function BatchScreen({
      makes G1-2 instruction autoplay fire once per round (design s3.2). */
   const roundObjectiveId = `round:${batch.seed}:${batch.roundIndex}`;
   const roundSpeakerKey = `round-${batch.gradeId}-${batch.roundIndex}-${batch.seed}`;
+
+  // CR-09 header track: live question progress while playing, whole-round
+  // position on stub/summary screens. CR-82 (M2, s6.3): the same fraction
+  // also pans the hero land beneath the board via an imperative
+  // `--journey` write (D-06) - progress moves on every advance, correct
+  // or not, and resets with a crossfade on each new roundKey.
+  const progressFraction =
+    batch.phase === 'active' && batch.roundSession
+      ? computeLiveScore(batch.roundSession).answered / batch.roundSession.questions.length
+      : batch.completedRounds.length / TOTAL_ROUNDS;
+  useSceneJourney(progressFraction, roundKey);
+
+  /* CR-82 (D-22): when the active round contains a tracing item, warm
+     the lazy chunk with attempt 0 - a successful prefetch is reused by
+     the boundary, a failed one is silently reported there. */
+  const roundHasTracing =
+    batch.phase === 'active' &&
+    batch.roundSession?.questions.some((q) => q.kind === 'letter-tracing');
+  useEffect(() => {
+    if (roundHasTracing) prefetchTracingChunk();
+  }, [roundHasTracing]);
 
   if (batch.phase === 'batch-summary') {
     return (
@@ -103,14 +131,11 @@ export default function BatchScreen({
 
   const lastCompletedOutcome = batch.completedRounds[batch.completedRounds.length - 1];
 
-  // CR-09 header track: live question progress while playing, whole-round
-  // position on stub/summary screens.
-  const progressFraction =
-    batch.phase === 'active' && batch.roundSession
-      ? computeLiveScore(batch.roundSession).answered / batch.roundSession.questions.length
-      : batch.completedRounds.length / TOTAL_ROUNDS;
-
   return (
+    /* CR-82 (D-17): reward FX scope - LiveScore registers its chip as
+       the score target, QuestionCard fires the star-fly on correct
+       verdicts; the fixed fly layer renders inside the provider. */
+    <RewardFxProvider>
     <div className={`mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col px-4 pt-2 ${scene.glow} ${SCREEN_ENTER} pb-16 sm:pb-20 [@media(max-height:420px)]:pb-2`}>
       {/* CR-81: bottom padding floats the board above the moonlit land
           scene - the journey world peeks from beneath instead of a
@@ -120,7 +145,7 @@ export default function BatchScreen({
           bottom band. */}
       {/* DS-U2 single play chrome: round chip + track + score/timer chips
           in one card strip; title line drops on <=420px heights. */}
-      <div className="mb-2 flex shrink-0 flex-col gap-1.5 rounded-2xl bg-[#0B1B3A]/85 p-2 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6),0_4px_12px_-6px_rgba(0,0,0,0.4)] ring-1 ring-[#2a3a5e] backdrop-blur-md sm:flex-row sm:items-start sm:gap-2 sm:rounded-full sm:px-4 sm:py-2.5 [@media(max-height:420px)]:mb-1">
+      <div className={`mb-2 flex shrink-0 flex-col gap-1.5 ${material.chrome} p-2 sm:flex-row sm:items-start sm:gap-2 sm:px-4 sm:py-2.5 [@media(max-height:420px)]:mb-1`}>
         <RoundProgress
           roundNumber={definition.roundNumber}
           totalRounds={TOTAL_ROUNDS}
@@ -170,6 +195,7 @@ export default function BatchScreen({
           onSubmitExtraLetter={onSubmitExtraLetter}
           onSubmitPronunciation={onSubmitPronunciation}
           onSubmitPairMatching={onSubmitPairMatching}
+          onSubmitTracing={onSubmitTracing}
           onNextQuestion={onNextQuestion}
         />
       )}
@@ -188,5 +214,6 @@ export default function BatchScreen({
         />
       )}
     </div>
+    </RewardFxProvider>
   );
 }

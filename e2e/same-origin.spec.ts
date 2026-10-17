@@ -23,8 +23,6 @@ import { gotoApp } from './utils/auth-flow';
  * runtime refs, AC-2.5) is enforced by scripts/check-bundle-budget.mjs.
  */
 
-const EMOJI_VISUAL = '[data-emoji-visual]';
-
 /** Origins that are not "third-party" for C4: the app itself and the
  *  configured Supabase backend (auth REST, Storage audio/images).
  *  Supabase is the app's own backend - the gate hunts CDN leakage of
@@ -123,9 +121,17 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
     await startBatch(page);
     await runExtraLetterRound(page);
 
-    // Round summary celebratory accent is the last animated mount; give it
-    // a beat, then audit everything the round pulled.
-    await expect(page.locator(EMOJI_VISUAL).first()).toBeVisible();
+    /* Sanity: the round must actually have pulled self-hosted emoji
+       assets (an empty audit would make this vacuous). A DOM-level
+       [data-emoji-visual] on the round summary is NOT guaranteed - it
+       only renders inside sticker chips, and no Round-1 sticker is
+       unconditional (first-batch = whole batch, perfect-round = 10/10),
+       so assert on the request log like the full-journey test does. */
+    const emojiTraffic = seen.filter((u) => u.includes('/emoji/'));
+    expect(
+      emojiTraffic.length,
+      'expected Round 1 to fetch at least one self-hosted emoji asset',
+    ).toBeGreaterThan(0);
     const allowed = allowedOrigins(new URL(page.url()).origin);
     const thirdParty = seen.filter((u) => isExternal(u, allowed));
     expect(thirdParty, `C4 violation in Round 1 journey: ${thirdParty.join(', ')}`).toEqual([]);

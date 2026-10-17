@@ -9,6 +9,8 @@ import {
   type PetSpecies,
 } from '../lib/engagement/store';
 import { CARD, BTN_REWARD_EARNED } from '../lib/ui/tokens';
+import { usePressRelease } from '../hooks/usePressRelease';
+import PressableOptionButton from './PressableOptionButton';
 import { IconParty, IconPaw } from './icons';
 
 /**
@@ -19,6 +21,8 @@ import { IconParty, IconPaw } from './icons';
  */
 export default function PetCard() {
   const [pet, setPet] = useState(() => getPet());
+  /* CR-82 (spec s16.1): the evolution congrats reward button. */
+  const evolvedPress = usePressRelease();
 
   function pick(species: PetSpecies): void {
     choosePet(species);
@@ -38,7 +42,7 @@ export default function PetCard() {
     <div data-testid="pet-card" className={`mt-4 ${CARD} text-left`}>
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-extrabold text-amber-300"><IconPaw size={20} className="mr-1.5 inline-block" /> Bạn đồng hành</h2>
-        <span className="rounded-full bg-violet-500/20 px-3 py-1 text-sm font-extrabold text-violet-300 ring-1 ring-violet-400/40">
+        <span className="rounded-full bg-amber-500/20 px-3 py-1 text-sm font-extrabold text-amber-300 ring-1 ring-amber-400/40">
           {pet.xp} XP
         </span>
       </div>
@@ -56,6 +60,7 @@ export default function PetCard() {
             data-testid="pet-evolved-ok"
             onClick={dismissCongrats}
             className={`shrink-0 ${BTN_REWARD_EARNED} px-3 py-1.5 text-sm`}
+            {...evolvedPress}
           >
             Tuyệt!
           </button>
@@ -69,7 +74,7 @@ export default function PetCard() {
           </p>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {(Object.keys(PET_SPECIES) as PetSpecies[]).map((species) => (
-              <button
+              <PressableOptionButton
                 key={species}
                 type="button"
                 data-testid={`pet-pick-${species}`}
@@ -78,7 +83,7 @@ export default function PetCard() {
               >
                 <div className="text-4xl">{PET_SPECIES[species].emojis[1]}</div>
                 <div className="mt-1 text-sm font-extrabold text-white">{PET_SPECIES[species].nameVi}</div>
-              </button>
+              </PressableOptionButton>
             ))}
           </div>
         </div>
@@ -95,7 +100,7 @@ export default function PetCard() {
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/10">
               <div
                 data-testid="pet-xp-bar"
-                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400 transition-[width] motion-reduce:transition-none"
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${Math.max(4, pct)}%` }}
               />
             </div>

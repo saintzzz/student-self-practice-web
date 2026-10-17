@@ -34,18 +34,21 @@ test.describe('App-wide pig mascot (plan.md v10 AC38)', () => {
     await expectMascotVisible(page, undefined, 'on the Start Batch screen');
   });
 
-  test('pig mascot is visible in the feedback panel after a correct answer', async ({ page }) => {
+  test('pig mascot is visible in the feedback state after a correct answer', async ({ page }) => {
     const { feedback } = await findExtraLetterOutcome(page, 'correct');
     await expect(feedback, 'expected answer-feedback to be visible for the found correct outcome').toBeVisible();
 
-    await expectMascotVisible(page, feedback, 'in the feedback panel after a correct answer');
+    /* CR-82 D-16: at tall viewports the mascot sits in the SHEET PERCH - a
+       sibling layer of the feedback sheet, not inside answer-feedback.
+       Exactly one mascot node per screen state, so page scope is right. */
+    await expectMascotVisible(page, undefined, 'in the feedback state after a correct answer');
   });
 
-  test('pig mascot is visible in the feedback panel after an incorrect answer', async ({ page }) => {
+  test('pig mascot is visible in the feedback state after an incorrect answer', async ({ page }) => {
     const { feedback } = await findExtraLetterOutcome(page, 'incorrect');
     await expect(feedback, 'expected answer-feedback to be visible for the found incorrect outcome').toBeVisible();
 
-    await expectMascotVisible(page, feedback, 'in the feedback panel after an incorrect answer');
+    await expectMascotVisible(page, undefined, 'in the feedback state after an incorrect answer');
   });
 
   test('pig mascot is visible on the Round summary screen', async ({ page }) => {
@@ -68,7 +71,9 @@ test.describe('App-wide pig mascot (plan.md v10 AC38)', () => {
     await expect(startMascot.locator('svg').first()).toBeVisible();
 
     const { feedback } = await findExtraLetterOutcome(page, 'incorrect');
-    const feedbackMascot = mascotLocator(page, feedback);
+    await expect(feedback).toBeVisible();
+    // Sheet perch is a sibling layer, not inside answer-feedback (D-16).
+    const feedbackMascot = mascotLocator(page);
     await expect(feedbackMascot).toBeVisible();
     await expect(feedbackMascot.locator('svg').first()).toBeVisible();
   });

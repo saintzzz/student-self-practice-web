@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
@@ -7,7 +7,9 @@ import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
-import { EXHIBIT, EXHIBIT_TILT } from '../lib/ui/tokens';
+import PressableOptionButton from './PressableOptionButton';
+import { EXHIBIT_TILT, material } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import ListenButtons from './ListenButtons';
 import QuestionBanner from './QuestionBanner';
 
@@ -19,6 +21,9 @@ interface DescribeAndChooseImageQuestionProps {
   onSelectOption: (index: number) => void;
   /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
   speakerKey?: string;
+  /** CR-82 (D-15): reports content-audio loading to the board's
+      thinking-pose signal (child -> board). */
+  onAudioLoadingChange?: (loading: boolean) => void;
 }
 
 /**
@@ -33,12 +38,18 @@ export default function DescribeAndChooseImageQuestion({
   selectedIndex,
   onSelectOption,
   speakerKey,
+  onAudioLoadingChange,
 }: DescribeAndChooseImageQuestionProps) {
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) =>
+  const { hasPlayed, playbackFailed, isLoading, play, playSlow } = useAudioPlayback((onStatus, speed) =>
     speakSentence(question.sentence, onStatus, speed),
     question.sentence,
   );
+
+  useEffect(() => {
+    onAudioLoadingChange?.(isLoading);
+  }, [isLoading, onAudioLoadingChange]);
   const hasAnswered = selectedIndex !== null;
+  const { density } = useViewer();
   const demo = useDemoHint('describe-and-choose-image');
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -51,13 +62,13 @@ export default function DescribeAndChooseImageQuestion({
 
       <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((option, index) => (
-          <button
+          <PressableOptionButton
             key={`${option.word}-${option.count}`}
             type="button"
             data-testid={`option-${index}`}
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
-            className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            className={getOptionButtonClassName(index, selectedIndex, question.correctIndex, density.tileMinH)}
             {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
             // CR-02: announce the visible content (emoji repeated count
             // times) - every option announces equally, so nothing about
@@ -66,10 +77,10 @@ export default function DescribeAndChooseImageQuestion({
             aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + option.emoji.repeat(option.count)}
           >
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
-            <span aria-hidden="true" className={`text-4xl leading-relaxed ${EXHIBIT} ${EXHIBIT_TILT[index % 2]}`}>
+            <span aria-hidden="true" className={`text-4xl leading-relaxed ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
               <EmojiVisual emoji={option.emoji} count={option.count} />
             </span>
-          </button>
+          </PressableOptionButton>
         ))}
         {demo.showDemo && !hasAnswered ? (
           <DemoHint containerRef={gridRef} onDone={demo.dismiss} />

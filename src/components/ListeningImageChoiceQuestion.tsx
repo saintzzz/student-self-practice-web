@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import type { ListeningImageChoiceQuestion as ListeningImageChoiceQuestionType } from '../types';
@@ -8,7 +8,9 @@ import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
-import { EXHIBIT, EXHIBIT_TILT } from '../lib/ui/tokens';
+import PressableOptionButton from './PressableOptionButton';
+import { EXHIBIT_TILT, material } from '../lib/ui/tokens';
+import { useViewer } from '../lib/viewer/ViewerContext';
 import ListenButtons from './ListenButtons';
 import QuestionBanner from './QuestionBanner';
 
@@ -20,6 +22,9 @@ interface ListeningImageChoiceQuestionProps {
   onSelectOption: (index: number) => void;
   /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
   speakerKey?: string;
+  /** CR-82 (D-15): reports content-audio loading to the board's
+      thinking-pose signal (child -> board). */
+  onAudioLoadingChange?: (loading: boolean) => void;
 }
 
 /**
@@ -35,9 +40,15 @@ export default function ListeningImageChoiceQuestion({
   selectedIndex,
   onSelectOption,
   speakerKey,
+  onAudioLoadingChange,
 }: ListeningImageChoiceQuestionProps) {
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
+  const { hasPlayed, playbackFailed, isLoading, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
+
+  useEffect(() => {
+    onAudioLoadingChange?.(isLoading);
+  }, [isLoading, onAudioLoadingChange]);
   const hasAnswered = selectedIndex !== null;
+  const { density } = useViewer();
 
   // Photos are all-or-nothing across the 4 options (AC-5.2/5.4): only shown
   // when every option has an approved image, and one photo error drops the
@@ -59,13 +70,13 @@ export default function ListeningImageChoiceQuestion({
 
       <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((emoji, index) => (
-          <button
+          <PressableOptionButton
             key={`option-${index}-${emoji}`}
             type="button"
             data-testid={`option-${index}`}
             disabled={hasAnswered}
             onClick={() => onSelectOption(index)}
-            className={getOptionButtonClassName(index, selectedIndex, question.correctIndex)}
+            className={getOptionButtonClassName(index, selectedIndex, question.correctIndex, density.tileMinH)}
             {...getOptionStateAttrs(index, selectedIndex, question.correctIndex)}
             // CR-02: announce the picture content (the emoji char) so screen
             // readers get the same information sighted users see - the
@@ -77,7 +88,7 @@ export default function ListeningImageChoiceQuestion({
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
             {/* CR-81 S3: framed exhibit - emoji sits on a pinned card,
                 alternating tilt reads hand-placed (inner span only). */}
-            <span aria-hidden="true" className={`text-6xl ${EXHIBIT} ${EXHIBIT_TILT[index % 2]}`}>
+            <span aria-hidden="true" className={`text-6xl ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
               <EmojiVisual
                 // Keyed on the group state so flipping to the fallback
                 // remounts every option into svg mode - EmojiVisual derives
@@ -92,7 +103,7 @@ export default function ListeningImageChoiceQuestion({
                 variant="block"
               />
             </span>
-          </button>
+          </PressableOptionButton>
         ))}
         {demo.showDemo && !hasAnswered ? (
           <DemoHint containerRef={gridRef} onDone={demo.dismiss} />

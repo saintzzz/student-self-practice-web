@@ -8,7 +8,7 @@ import type { ListeningFillBlankQuestion, VocabWord } from '../../types';
  * against, so this generator intentionally does not multiply.
  */
 export function generateListeningFillBlankQuestions(
-  topicWords: VocabWord[],
+  topicWords: readonly VocabWord[],
 ): ListeningFillBlankQuestion[] {
   return topicWords.map((word) => ({
     id: `q-lfb-${word.id}`,

@@ -20,6 +20,12 @@
 > tiles use one uniform unanswered frame, instructions live in the
 > left-aligned `QUESTION_BANNER` speech scroll, and emoji prompts sit in
 > `EXHIBIT` light frames.
+>
+> **CR-82 (v5):** "Chân trời vàng" luxury redesign - spec
+> `docs/design/v5/DESIGN-SPEC-v5.md`, CR `docs/sdlc/CR-82-content-integrity-and-luxury-redesign.md`.
+> Full-bleed journey scenes, exam-paper surfaces, typography/material tokens,
+> the mascot perch + Lottie pose rig, tracing/drag mechanics, flashcards,
+> and the press/release + reward-FX micro-interaction layer in §15.
 
 ---
 
@@ -333,3 +339,30 @@ named token with its computed contrast noted, don't freestyle classes.
 
 If colors, typography, components, animations, cards, or image style change,
 update this file AND the token comment that introduced them in the same commit.
+
+## 15. CR-82 v5 - interaction & reward FX layer
+
+- **Press/release (`usePressRelease`):** every tactile control wires
+  `data-pressed` on pointerdown / Enter / Space keydown; release swaps it for
+  a one-shot release animation class cleared on `animationend`. Reduced
+  motion gets the static state - no animation is required for the visual to
+  resolve. Drag tiles compose the hook with `drag.*` classes; drag pointer
+  capture still owns move/up/cancel and never emits a stray click.
+- **Reward chrome is SVG:** `StarRain` and `ChestReveal` render `IconStar` /
+  `IconChest` SVGs, not `EmojiVisual` - reward art must be deterministic
+  (platform emoji rendering varies).
+- **Reward FX (`RewardFxContext`):** a registered origin (the `LiveScore`
+  chip) receives star-fly particles on scoring events; `StreakBurst` is a
+  caller-positioned overlay for streak >= 3. Under `prefers-reduced-motion`
+  all FX resolve to a final/static state instantly.
+- **SFX tiers (`src/lib/sfx.ts`):** verdict `.6` (correct) / `.35` (gentle
+  wrong), UI `.25`, reward `.5`. One cached audio element; `stopSfx()`
+  semantics preserved; reward requests queue behind an in-flight verdict.
+  **Exam surfaces keep the legacy `playSfx('correct'|'wrong')` path only -
+  no UI/reward-tier sounds on the exam route.**
+- **Audio arbitration:** `isAudioPlaying()` (`src/lib/speech.ts`) reports
+  active speech/audio so reward sounds never talk over instructions.
+- **Route code-splitting:** `ExamScreen` loads via `ExamRouteBoundary`
+  (retryable lazy + reload affordance after two failed chunk imports), the
+  same pattern as tracing/flashcards - keeps the entry chunk inside the
+  CR-82 delta budget.

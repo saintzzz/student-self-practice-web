@@ -135,18 +135,24 @@ async function main() {
 
   // Every asset subdirectory in public/ must be covered by a declared
   // collection path (reverse direction: nothing ships unattributed).
-  for (const topLevel of ['images', 'emoji', 'fonts']) {
+  // CR-82 (GT-11): mascot pose JSONs are inventoried too.
+  // `images/vocab/` is exempt - each file there is governed by the
+  // stricter per-file images[] records gate below (one approved record
+  // per file, bidirectional).
+  const COLLECTION_EXEMPT = new Set(['images/vocab/']);
+  for (const topLevel of ['images', 'emoji', 'fonts', 'mascot']) {
     for (const dir of await lsDirs(path.join(PUBLIC_DIR, topLevel))) {
       const rel = `${topLevel}/${dir}/`;
+      if (COLLECTION_EXEMPT.has(rel)) continue;
       check(
         declaredPrefixes.some((prefix) => rel.startsWith(prefix) || prefix.startsWith(rel)),
         `asset directory without attribution collection: public/${rel}`,
       );
     }
   }
-  // Top-level dirs holding files directly (e.g. public/sfx/*.mp3) must
-  // also be declared.
-  for (const topLevel of ['sfx']) {
+  // Top-level dirs holding files directly (e.g. public/sfx/*.mp3,
+  // public/mascot/*.json) must also be declared.
+  for (const topLevel of ['sfx', 'mascot']) {
     if (!existsSync(path.join(PUBLIC_DIR, topLevel))) continue;
     check(
       declaredPrefixes.some((prefix) => `${topLevel}/`.startsWith(prefix) || prefix.startsWith(`${topLevel}/`)),

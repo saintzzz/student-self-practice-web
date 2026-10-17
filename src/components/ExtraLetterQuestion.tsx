@@ -2,13 +2,12 @@ import { useRef } from 'react';
 import type { ExtraLetterQuestion as ExtraLetterQuestionType } from '../types';
 import { EmojiVisual } from './EmojiVisual';
 import {
-  OPTION_PICKED_WRONG,
-  OPTION_REVEAL_CORRECT,
+  material,
   QUESTION_BODY,
   QUESTION_BODY_CENTER,
-  toy,
 } from '../lib/ui/tokens';
 import { getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import PressableOptionButton from './PressableOptionButton';
 import QuestionBanner from './QuestionBanner';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
@@ -32,15 +31,15 @@ function getTileClassName(index: number, selectedLetterIndex: number | null, ext
      a word - flex-1 lets them share the row, max-w caps at 76px, and
      the 76px HEIGHT is preserved so the touch target stays generous
      even when narrow screens make tiles thin. */
-  /* CR-79 toy-block: base keeps structural classes only; the unanswered
-     branch takes the toy face, judged branches keep their own shadows. */
+  /* CR-82 s7.2: base keeps structural classes only (flex, radius, border
+     width, focus); each state branch owns a material.tile* token. */
   const base =
-    'relative flex h-[76px] min-w-0 flex-1 max-w-[76px] items-center justify-center rounded-2xl border-4 text-3xl ' +
-    'font-extrabold uppercase transition ' +
-    'focus:outline-none focus:ring-4 focus:ring-amber-400/60 [@media(max-width:360px)]:text-2xl';
+    'relative flex h-[76px] min-w-0 flex-1 max-w-[76px] items-center justify-center rounded-[1.25rem] border-2 text-3xl ' +
+    `font-extrabold uppercase transition ${material.tileFocus} ` +
+    '[@media(max-width:360px)]:text-2xl';
 
   if (selectedLetterIndex === null) {
-    return `${base} ${toy.face} ${toy.faceHover} ${toy.pressed} border-[#2a3a5e] text-white`;
+    return `${base} ${material.tileFace} ${material.tileHover} ${material.tilePress}`;
   }
 
   const missed = selectedLetterIndex !== extraIndex;
@@ -48,18 +47,17 @@ function getTileClassName(index: number, selectedLetterIndex: number | null, ext
   if (index === extraIndex) {
     /* kids-UX (design s3.4): on a missed pick the extra letter is the only
        emerald surface - flat token, no celebratory gradient. */
-    if (missed) return `${base} ${OPTION_REVEAL_CORRECT}`;
-    return `${base} border-emerald-400 bg-gradient-to-b from-emerald-500/25 to-emerald-600/15 text-emerald-100 ` +
-      'shadow-[inset_0_2px_0_rgba(255,255,255,0.15),inset_0_-4px_0_rgba(5,150,105,0.25),0_6px_14px_-6px_rgba(5,150,105,0.45)]';
+    if (missed) return `${base} ${material.tileRevealCorrect}`;
+    return `${base} ${material.tileCorrect}`;
   }
 
   if (index === selectedLetterIndex) {
     /* kids-UX: desaturated slate (not rose) marks "the tile em chọn" -
        keeps the tile-shake hint but drops the red shame treatment. */
-    return `${base} tile-shake ${OPTION_PICKED_WRONG} opacity-80`;
+    return `${base} tile-shake ${material.tilePickedWrong} opacity-80`;
   }
 
-  return `${base} border-[#2a3a5e] bg-gradient-to-b from-[#1d3465] to-[#162C55] text-white opacity-50`;
+  return `${base} ${material.tileFace} ${material.tileDisabled}`;
 }
 
 export default function ExtraLetterQuestion({
@@ -81,7 +79,7 @@ export default function ExtraLetterQuestion({
       <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <div ref={rowRef} className="relative mb-2 flex justify-center gap-1.5 sm:gap-3">
         {question.displayLetters.map((letter, index) => (
-          <button
+          <PressableOptionButton
             key={`${letter}-${index}`}
             type="button"
             data-testid={`letter-tile-${index}`}
@@ -108,7 +106,7 @@ export default function ExtraLetterQuestion({
                 <EmojiVisual emoji="🎯" />
               </span>
             )}
-          </button>
+          </PressableOptionButton>
         ))}
         {demo.showDemo && !hasAnswered ? (
           <DemoHint containerRef={rowRef} onDone={demo.dismiss} />

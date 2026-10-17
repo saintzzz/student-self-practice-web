@@ -6,7 +6,7 @@ import {
   readQuestionProgress,
 } from './practice-flow';
 import { answerOptionQuestion } from './option-flow';
-import { startBatch } from './batch-flow';
+import { answerTracingAutoStep, startBatch } from './batch-flow';
 
 /**
  * Mascot discovery helpers for plan.md v10 ("App-Wide Mascot"), AC38-AC39.
@@ -82,6 +82,15 @@ export async function findExtraLetterOutcome(
       if (kind !== 'extra-letter') {
         if (kind === 'image-choice') {
           await answerOptionQuestion(page, 0);
+          await goToNextQuestion(page);
+          continue;
+        }
+        if (kind === 'letter-tracing') {
+          /* CR-82 (D-01): G1-2 Round 1 carries 2 tracing items; the
+             assisted path always records correct, which cannot stand in
+             for either extra-letter outcome this helper searches - skip
+             them structurally like image-choice. */
+          await answerTracingAutoStep(page);
           await goToNextQuestion(page);
           continue;
         }

@@ -38,10 +38,12 @@ export default function PronunciationFeedbackPanel({
       className={`mt-2 rounded-2xl border-4 p-4 text-left shadow-md ${
         isCorrect
           ? 'border-emerald-400 bg-gradient-to-b from-emerald-500/25 to-emerald-600/15'
-          : 'border-rose-400 bg-gradient-to-b from-rose-500/25 to-rose-600/15'
+          : 'border-sky-400 bg-gradient-to-b from-sky-500/25 to-sky-600/15'
       }`}
     >
-      <p className={`text-2xl font-extrabold ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
+      {/* CR-82 s11: the wrong verdict reads as a sky "let's learn" tint -
+          rose is reserved for destructive/urgent status, never answer-wrong. */}
+      <p className={`text-2xl font-extrabold ${isCorrect ? 'text-emerald-300' : 'text-sky-200'}`}>
         {isCorrect ? 'Phát âm khá chuẩn rồi, giỏi quá!' : 'Chưa thật gần đúng, cố lên nhé!'}
       </p>
 

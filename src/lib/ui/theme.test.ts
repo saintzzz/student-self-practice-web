@@ -24,4 +24,22 @@ describe('theme map (AC-T2)', () => {
       expect(land.cardRing).toContain('ring-');
     }
   });
+
+  it('CR-82: every land carries a horizonGlow rgba', () => {
+    for (const land of Object.values(LANDS)) {
+      expect(land.horizonGlow).toMatch(/^rgba\(/);
+    }
+  });
+
+  it('CR-82 (OM-6): city is orange/navy, space keeps the closed violet inventory', () => {
+    expect(LANDS.city.nightRim).toBe('bg-orange-300');
+    expect(LANDS.city.cardTint).toBe('bg-orange-50/95');
+    expect(LANDS.city.accentText).toBe('text-orange-800');
+    expect(LANDS.city.pageGradient).not.toContain('indigo');
+    expect(LANDS.space.pageGradient).not.toContain('violet');
+    expect(LANDS.space.nightRim).toBe('bg-violet-400');
+    expect(LANDS.space.discBg).toBe('bg-violet-500');
+    expect(LANDS.space.cardTint).toBe('bg-violet-50/95');
+    expect(LANDS.space.accentText).toBe('text-violet-800');
+  });
 });

@@ -2,7 +2,7 @@ import { useState, type ComponentType, type ReactNode } from 'react';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import { IconChevronDown, IconChevronUp, type IconProps } from './icons';
 import { useViewer } from '../lib/viewer/ViewerContext';
-import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, HUB_PANEL, HUB_ICON_TINTS } from '../lib/ui/tokens';
+import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, TRAIL_TILE_ARENA, TRAIL_TILE_ARENA_SM, HUB_PANEL, HUB_ICON_TINTS } from '../lib/ui/tokens';
 
 /**
  * CR-73 s5.1 Mode Hub - the Kham pha sheet's replacement: labeled,
@@ -43,6 +43,10 @@ export interface HubTileDef {
    *  mounted while collapsed. Conditional sections are simply omitted
    *  from the list. Overrides `content`. */
   sections?: HubSectionDef[];
+  /** CR-82 (R-v5-12): 'arena' restyles the tile with TRAIL_TILE_ARENA
+   *  (orange identity surface) + the "vs" emblem disc instead of the
+   *  rotating icon-tint chip. */
+  variant?: 'arena';
 }
 
 export function HubGroup({
@@ -57,7 +61,8 @@ export function HubGroup({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const { density } = useViewer();
-  const tileClass = density.tileMinH >= 96 ? TRAIL_TILE : TRAIL_TILE_SM;
+  const defaultTileClass = density.tileMinH >= 96 ? TRAIL_TILE : TRAIL_TILE_SM;
+  const arenaTileClass = density.tileMinH >= 96 ? TRAIL_TILE_ARENA : TRAIL_TILE_ARENA_SM;
   const testPrefix = subtile ? 'hub-subtile' : 'hub-tile';
   const regionPrefix = subtile ? 'hub-section' : 'hub-panel';
 
@@ -65,6 +70,8 @@ export function HubGroup({
     <div className="space-y-3">
       {tiles.map((tile, index) => {
         const open = openId === tile.id;
+        const isArena = tile.variant === 'arena';
+        const tileClass = isArena ? arenaTileClass : defaultTileClass;
         const regionIds = tile.sections
           ? tile.sections.map((s) => `${regionPrefix}-${s.id}`)
           : [`${regionPrefix}-${tile.id}`];
@@ -78,11 +85,26 @@ export function HubGroup({
               onClick={() => setOpenId(open ? null : tile.id)}
               className={`${tileClass}${open ? ` ${TRAIL_TILE_EXPANDED}` : ''}`}
             >
-              {/* CR-79 B4 on paper: rotating soft icon-chip tints -
-                  tiles differentiate without changing the paper body. */}
-              <span className={`mt-0.5 shrink-0 rounded-xl p-1.5 ${HUB_ICON_TINTS[index % HUB_ICON_TINTS.length]}`}>
-                <tile.icon size={24} aria-hidden="true" />
-              </span>
+              {isArena ? (
+                /* CR-82 (R-v5-12): 48px navy disc + IconSwords + a "VS"
+                   badge on the disc edge - the arena emblem replaces the
+                   rotating icon-tint chip. */
+                <span
+                  aria-hidden="true"
+                  className="relative mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-navy-800 ring-2 ring-orange-300"
+                >
+                  <tile.icon size={24} className="text-orange-200" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 font-display text-sm font-extrabold text-orange-200">
+                    VS
+                  </span>
+                </span>
+              ) : (
+                /* CR-79 B4 on paper: rotating soft icon-chip tints -
+                    tiles differentiate without changing the paper body. */
+                <span className={`mt-0.5 shrink-0 rounded-xl p-1.5 ${HUB_ICON_TINTS[index % HUB_ICON_TINTS.length]}`}>
+                  <tile.icon size={24} aria-hidden="true" />
+                </span>
+              )}
               <span className="min-w-0 flex-1">
                 <span className="block font-extrabold text-slate-800">{tile.label}</span>
                 {tile.sub && (

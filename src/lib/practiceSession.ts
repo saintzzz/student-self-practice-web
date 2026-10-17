@@ -1,4 +1,4 @@
-import type { AnswerRecord, ListeningFillBlankQuestion, ListeningSentenceFillBlankQuestion, Question, SessionResult } from '../types';
+import type { AnswerRecord, ListeningFillBlankQuestion, ListeningSentenceFillBlankQuestion, Question, SessionResult, TracingMeta } from '../types';
 import { formatCountLabel } from './generators/countingImage';
 import { scorePronunciationAttempt } from './rounds/pronunciationScoring';
 
@@ -9,6 +9,8 @@ export interface CurrentAnswer {
   selectedLetterIndex?: number;
   pronunciationTranscript?: string;
   pronunciationScore?: number;
+  /** CR-82 (D-10): tracing telemetry - assisted flag + per-stroke attempts. */
+  tracing?: TracingMeta;
 }
 
 export interface PracticeSessionState {
@@ -74,6 +76,10 @@ export function getCorrectWord(question: Question): string {
       return question.word;
     case 'phonics-rhyme-choice':
       return question.options[question.correctIndex];
+    case 'letter-tracing':
+      /* CR-82 (spec s12.5): the feedback sheet's "correct word" is the
+         traced letter itself. */
+      return question.letter;
   }
 }
 
@@ -88,7 +94,13 @@ function recordAnswer(
   currentAnswer: CurrentAnswer,
   question: Question,
 ): PracticeSessionState {
-  const answerRecord: AnswerRecord = { question, isCorrect: currentAnswer.isCorrect };
+  const answerRecord: AnswerRecord = {
+    question,
+    isCorrect: currentAnswer.isCorrect,
+    /* CR-82 (D-10): only tracing sets the flag - every other kind's
+       record stays shape-identical. */
+    ...(currentAnswer.tracing ? { assisted: currentAnswer.tracing.assisted } : {}),
+  };
 
   return {
     ...state,
@@ -222,6 +234,30 @@ export function submitPairMatchingAnswer(
   }
 
   return recordAnswer(state, { isCorrect }, currentQuestion);
+}
+
+/**
+ * CR-82 (DESIGN-SPEC-v5 s12.5 step 5 + D-10): the tracing component is
+ * the single source of truth for completion (`isCorrect` = every stroke
+ * passed within <=2 attempts without auto-draw); `meta` lands on
+ * `CurrentAnswer.tracing` and `AnswerRecord.assisted` so RoundOutcome's
+ * skillCorrect/skillTotal can exclude assisted completions.
+ */
+export function submitTracingAnswer(
+  state: PracticeSessionState,
+  isCorrect: boolean,
+  meta: TracingMeta,
+): PracticeSessionState {
+  if (hasAnsweredCurrent(state)) {
+    return state;
+  }
+
+  const currentQuestion = getCurrentQuestion(state);
+  if (!currentQuestion || currentQuestion.kind !== 'letter-tracing') {
+    return state;
+  }
+
+  return recordAnswer(state, { isCorrect, tracing: meta }, currentQuestion);
 }
 
 export function advanceToNextQuestion(state: PracticeSessionState): PracticeSessionState {

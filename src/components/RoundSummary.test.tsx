@@ -10,6 +10,8 @@ const OUTCOME: RoundOutcome = {
   titleVi: 'Vòng 1: Bắn chữ cái thừa',
   correctCount: 7,
   totalCount: 10,
+  skillCorrect: 7,
+  skillTotal: 10,
   points: 70,
   maxPoints: 100,
   implemented: true,

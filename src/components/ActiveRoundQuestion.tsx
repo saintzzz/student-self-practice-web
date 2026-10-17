@@ -1,4 +1,5 @@
 import { getCurrentQuestion, type PracticeSessionState } from '../lib/practiceSession';
+import type { TracingMeta } from '../types';
 import QuestionCard from './QuestionCard';
 
 interface ActiveRoundQuestionProps {
@@ -8,6 +9,8 @@ interface ActiveRoundQuestionProps {
   onSubmitExtraLetter: (letterIndex: number) => void;
   onSubmitPronunciation: (transcript: string) => void;
   onSubmitPairMatching: (isCorrect: boolean) => void;
+  /** CR-82 (D-10): letter-tracing submit carries TracingMeta. */
+  onSubmitTracing?: (isCorrect: boolean, meta: TracingMeta) => void;
   onNextQuestion: () => void;
   /**
    * kids-UX (design s3.2): round-scoped key so the instruction speaker
@@ -24,6 +27,7 @@ export default function ActiveRoundQuestion({
   onSubmitExtraLetter,
   onSubmitPronunciation,
   onSubmitPairMatching,
+  onSubmitTracing,
   onNextQuestion,
   speakerKey,
 }: ActiveRoundQuestionProps) {
@@ -51,6 +55,7 @@ export default function ActiveRoundQuestion({
       onSubmitExtraLetter={onSubmitExtraLetter}
       onSubmitPronunciation={onSubmitPronunciation}
       onSubmitPairMatching={onSubmitPairMatching}
+      onSubmitTracing={onSubmitTracing}
       onNext={onNextQuestion}
       speakerKey={speakerKey}
       correctStreak={correctStreak}

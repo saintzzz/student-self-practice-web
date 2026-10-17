@@ -368,6 +368,20 @@ export function IconGift(props: IconProps) {
   );
 }
 
+/** CR-82: treasure chest - replaces the 🎁 emoji in ChestReveal. Lid +
+ *  box + lock plate on the 24px grid, 2px round strokes. */
+export function IconChest(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <path d="M4 11.5a8 8 0 0116 0v1.5H4z" />
+      <path d="M4 13h16v6a1.8 1.8 0 01-1.8 1.8H5.8A1.8 1.8 0 014 19z" />
+      <path d="M10.6 13v-1.8h2.8V13" />
+      <rect x="10.4" y="14.8" width="3.2" height="3.6" rx="0.8" />
+      <path d="M4 16.6h6.4M13.6 16.6H20" />
+    </svg>
+  );
+}
+
 export function IconClock(props: IconProps) {
   return (
     <svg {...iconProps(props)}>

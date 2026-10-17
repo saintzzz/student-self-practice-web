@@ -11,6 +11,13 @@ export interface UseAudioPlaybackResult {
    * nothing (a real gap this app had no way to surface before).
    */
   playbackFailed: boolean;
+  /**
+   * CR-82 (D-15): true between `play()`/`playSlow()` and the first
+   * `started`/`ended`/`error`/`unsupported` status - question bodies
+   * forward it to the board's thinking-pose signal via
+   * `onAudioLoadingChange`.
+   */
+  isLoading: boolean;
   play: () => void;
   /** Replays the same audio at kid-paced "slow" speed (field feedback: default rate was still too fast to catch). */
   playSlow: () => void;
@@ -31,6 +38,7 @@ export function useAudioPlayback(
 ): UseAudioPlaybackResult {
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playbackFailed, setPlaybackFailed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (preloadText) preloadAudio(preloadText);
@@ -40,8 +48,13 @@ export function useAudioPlayback(
     (speed: SpeechSpeed) => {
       setHasPlayed(true);
       setPlaybackFailed(false);
+      setIsLoading(true);
       speak(
         (status) => {
+          /* Any emitted status ends the loading window - 'started' on
+             success, 'ended'/'error'/'unsupported' on the failure and
+             already-finished paths (D-15). */
+          setIsLoading(false);
           if (status === 'unsupported' || status === 'error') {
             setPlaybackFailed(true);
           }
@@ -55,5 +68,5 @@ export function useAudioPlayback(
   const play = useCallback(() => playAt('normal'), [playAt]);
   const playSlow = useCallback(() => playAt('slow'), [playAt]);
 
-  return { hasPlayed, playbackFailed, play, playSlow };
+  return { hasPlayed, playbackFailed, isLoading, play, playSlow };
 }

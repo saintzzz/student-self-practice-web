@@ -48,7 +48,19 @@ export type QuestionKind =
   | 'phonics-word-choice'
   | 'phonics-final-choice'
   | 'phonics-blend-choice'
-  | 'phonics-rhyme-choice';
+  | 'phonics-rhyme-choice'
+  | 'letter-tracing';
+
+/**
+ * CR-82 (DESIGN-SPEC-v5 s12.5/D-10): telemetry carried with a tracing
+ * submission so skill stats can exclude assisted completions (R-v5-07 -
+ * an assisted letter is real learning exposure, never a mastery signal).
+ * `attempts[i]` = failed attempts on stroke i before it passed/auto-drew.
+ */
+export interface TracingMeta {
+  assisted: boolean;
+  attempts: number[];
+}
 
 export interface ImageChoiceQuestion {
   id: string;
@@ -62,12 +74,29 @@ export interface ImageChoiceQuestion {
   explanation: string;
 }
 
+/**
+ * CR-82 (DESIGN-SPEC-v5 s13.4, ARCHITECTURE-v5 s4.3): one letter tile in
+ * the G1-2 Spell-it bank. `id` is a per-INSTANCE id (`<letter>-<occurrence>`,
+ * distractors `<letter>-d<i>`) so repeated letters (`book` -> `o-0`/`o-1`)
+ * stay interchangeable for judging but distinct for React keys.
+ */
+export interface SpellTile {
+  id: string;
+  letter: string;
+}
+
 export interface ListeningFillBlankQuestion {
   id: string;
   topicId: string;
   kind: 'listening-fill-blank';
   word: string;
   explanation: string;
+  /**
+   * CR-82 (D-04): baked at build time by `buildSpellTiles` when
+   * `spellEligibility(word, grade)` passes. Absent = the classic typed
+   * input; components additionally require band === 'G12'.
+   */
+  spell?: { tiles: readonly SpellTile[] };
 }
 
 export type CountDirection = 'count-to-image' | 'image-to-count';
@@ -123,6 +152,16 @@ export interface ListeningSentenceFillBlankQuestion {
   sentence: string;
   displaySentence: string;
   explanation: string;
+  /**
+   * CR-82 (DESIGN-SPEC-v5 s13.5, R-v5-10): G1-2 word bank - exactly the
+   * answer plus two validator-passed distractors (never padded). Absent =
+   * typed-only item (the validator found no fair bank, the topic is not
+   * reviewed, or the grade is G3-5).
+   */
+  bank?: {
+    options: readonly [string, string, string];
+    optionWordIds: readonly [string, string, string];
+  };
 }
 
 /**
@@ -303,6 +342,27 @@ export interface PhonicsRhymeChoiceQuestion {
   explanation: string;
 }
 
+/**
+ * CR-82 (DESIGN-SPEC-v5 s12, ARCHITECTURE-v5 D-02): letter tracing for
+ * G1-2 pre-writers - the child traces a big lowercase letter on a paper
+ * slate. Stroke data is authored for the 26 lowercase letters only; the
+ * generator emits lowercase items only (uppercase stays in the type so a
+ * later addition is data-only).
+ */
+export interface LetterTracingQuestion {
+  id: string;
+  topicId: string;
+  kind: 'letter-tracing';
+  /** Single grapheme - CR-82 emits 'a'..'z' only (D-02). */
+  letter: string;
+  /** VocabWord id - picture + audio via getWordVisual / speakWord. */
+  exampleWordId: string;
+  /** D-04: baked at build time - drives scoring tolerances (G1 looser). */
+  grade: 1 | 2;
+  /** Vietnamese, e.g. 'Chữ "a" như trong "apple" - quả táo.' */
+  explanation: string;
+}
+
 export type Question =
   | ImageChoiceQuestion
   | ListeningFillBlankQuestion
@@ -317,7 +377,8 @@ export type Question =
   | PhonicsWordChoiceQuestion
   | PhonicsFinalChoiceQuestion
   | PhonicsBlendChoiceQuestion
-  | PhonicsRhymeChoiceQuestion;
+  | PhonicsRhymeChoiceQuestion
+  | LetterTracingQuestion;
 
 /**
  * The 4 fixed Round kinds of a Batch (plan.md v5 "New Interaction Model:
@@ -333,6 +394,13 @@ export type RoundType =
 export interface AnswerRecord {
   question: Question;
   isCorrect: boolean;
+  /**
+   * CR-82 (D-10): set when the answer was completed through an assisted
+   * path (tracing auto-draw / auto-step / chunk skip). Assisted answers
+   * still count for points and stars but are excluded from skill stats
+   * (R-v5-07).
+   */
+  assisted?: boolean;
 }
 
 export interface SessionResult {

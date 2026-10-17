@@ -1,6 +1,39 @@
 import '@testing-library/jest-dom/vitest';
 
 /**
+ * jsdom does not implement PointerEvent. Testing-library falls back to a
+ * plain Event for fireEvent.pointer*, which silently drops pointerId /
+ * button / clientX - breaking any hook that gates on `button === 0` or
+ * tracks `pointerId`. This minimal MouseEvent-based shim carries the
+ * pointer fields React reads (pointerId, pointerType, pressure,
+ * isPrimary, button/buttons/clientX/clientY all come through
+ * MouseEventInit). Recommended in testing-library's own jsdom notes.
+ */
+if (typeof window.PointerEvent === 'undefined') {
+  class PointerEventStub extends MouseEvent {
+    readonly pointerId: number;
+    readonly pointerType: string;
+    readonly pressure: number;
+    readonly isPrimary: boolean;
+
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+      this.pointerType = init.pointerType ?? 'mouse';
+      this.pressure = init.pressure ?? 0;
+      this.isPrimary = init.isPrimary ?? true;
+    }
+
+    getCoalescedEvents(): PointerEvent[] {
+      return [this as unknown as PointerEvent];
+    }
+  }
+
+  // @ts-expect-error jsdom does not ship this DOM type at runtime
+  window.PointerEvent = PointerEventStub;
+}
+
+/**
  * jsdom does not implement the Web Speech API. Stub the minimal surface the
  * app touches (window.speechSynthesis.speak, SpeechSynthesisUtterance) so
  * components can call the real code path in tests, and tests can spy on
@@ -153,5 +186,31 @@ vi.mock('../components/EmojiLottiePlayer', () => ({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return React.createElement('span', { 'data-testid': `lottie-${props.lottieKey}` });
+  },
+}));
+
+/**
+ * CR-82 (D-09): the mascot Lottie player gets the same jsdom stub - it
+ * only ever mounts when a test installs `window.matchMedia`, and it
+ * honours the same `__lottieMockBehavior` control seam. The wrapper keeps
+ * `data-lottie-player="mascot"` so budget tests count it like production.
+ */
+vi.mock('../components/mascot/MascotLottie', () => ({
+  default: function MockMascotLottie(props: {
+    pose: string;
+    onReady: () => void;
+    onError: (kind: 'data' | 'runtime') => void;
+  }) {
+    React.useEffect(() => {
+      const behavior = window.__lottieMockBehavior ?? 'ready';
+      if (behavior === 'ready') props.onReady();
+      else if (behavior === 'error-data') props.onError('data');
+      else if (behavior === 'error-runtime') props.onError('runtime');
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return React.createElement('span', {
+      'data-lottie-player': 'mascot',
+      'data-testid': `mascot-lottie-${props.pose}`,
+    });
   },
 }));

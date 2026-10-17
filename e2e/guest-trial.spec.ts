@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { ALL_WORDS } from '../src/data/vocabulary';
+import { answerTracingAutoStep } from './utils/batch-flow';
 import { letterTiles, questionCard } from './utils/practice-flow';
 
 /**
@@ -11,6 +14,19 @@ import { letterTiles, questionCard } from './utils/practice-flow';
  * This spec drives the REAL configured path like auth.spec.ts - it needs
  * a reachable Supabase project for the session probe.
  */
+
+/**
+ * Same env gate as auth.spec.ts: this spec drives the REAL configured
+ * boot (raw page.goto('/') then the guest-button on the login screen).
+ * Without .env.local the app boots guest-only straight to the map and
+ * there is no guest-button to press - self-skip so env-free runs stay
+ * green (AC-A6 precedent).
+ */
+function hasSupabaseEnv(): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return existsSync(join(process.cwd(), '.env.local'));
+}
+const configured = hasSupabaseEnv();
 
 const VOCAB_WORDS = new Set(ALL_WORDS.map((w) => w.word.toLowerCase()));
 const EMOJI_TO_WORDS = new Map<string, string[]>();
@@ -50,6 +66,8 @@ async function correctImageOptionIndex(page: Page): Promise<number> {
 }
 
 test.describe('Guest trial limit (CR-13)', () => {
+  test.skip(!configured, 'Supabase env absent - guest-only boot has no guest-button');
+
   test('guest sees trial hint, plays Round 1, then hits the login lock', async ({ page }) => {
     // Real configured boot: wait for the login screen (Supabase probe).
     await page.goto('/');
@@ -69,6 +87,9 @@ test.describe('Guest trial limit (CR-13)', () => {
       const kind = await questionCard(page).getAttribute('data-question-kind');
       if (kind === 'extra-letter') {
         await letterTiles(page).nth(await correctTileIndex(page)).click();
+      } else if (kind === 'letter-tracing') {
+        /* CR-82 (D-01): assisted path - always correct. */
+        await answerTracingAutoStep(page);
       } else {
         await questionCard(page)
           .locator('[data-testid^="option-"]')
@@ -103,6 +124,9 @@ test.describe('Guest trial limit (CR-13)', () => {
       const kind = await questionCard(page).getAttribute('data-question-kind');
       if (kind === 'extra-letter') {
         await letterTiles(page).nth(await correctTileIndex(page)).click();
+      } else if (kind === 'letter-tracing') {
+        /* CR-82 (D-01): assisted path - always correct. */
+        await answerTracingAutoStep(page);
       } else {
         await questionCard(page)
           .locator('[data-testid^="option-"]')

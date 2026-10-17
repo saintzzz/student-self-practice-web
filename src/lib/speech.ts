@@ -474,6 +474,27 @@ export function currentAudioGeneration(): number {
 }
 
 /**
+ * CR-82 (GT-15, spec s16.3): true while CONTENT audio is playing or
+ * queued - an mp3 (active or still loading) or a content TTS utterance.
+ * The ui sfx tier checks this so a tap/pop/flip never overlaps real
+ * speech. Mirrors `contentAudioBusy` in speakInstruction: a vi-VN
+ * INSTRUCTION utterance does not count - ui sounds are allowed under
+ * instruction speech (the instruction is UI language, not content).
+ */
+export function isAudioPlaying(): boolean {
+  if (pendingAudioRequests.size > 0) return true;
+  if (activeAudio && !activeAudio.paused && !activeAudio.ended) return true;
+  try {
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
+    if (!synth || !(synth.speaking || synth.pending || synth.paused)) return false;
+    /* An instruction utterance (vi-VN) is not content audio. */
+    return !(activeUtterance !== null && activeUtterance.lang === 'vi-VN');
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Thin wrapper around the browser-native Web Speech API. Speaks a single
  * English word aloud so a 7-year-old can practice listening (see
  * mvp-decisions.md "v2 Correction" - Audio source).

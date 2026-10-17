@@ -240,7 +240,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
             onClick={() => { setTab(t.id); setError(null); }}
             className={
               tab === t.id
-                ? 'rounded-full bg-gradient-to-b from-indigo-400 to-indigo-600 px-5 py-2 text-base font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_4px_10px_-3px_rgba(79,70,229,0.5)] transition focus:outline-none focus:ring-4 focus:ring-indigo-300'
+                ? 'rounded-full bg-gradient-to-b from-blue-400 to-blue-600 px-5 py-2 text-base font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_4px_10px_-3px_rgba(37,99,235,0.5)] transition focus:outline-none focus:ring-4 focus:ring-blue-300'
                 : `${CHIP_SKY} cursor-pointer transition hover:bg-sky-100`
             }
           >
@@ -299,7 +299,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
               >
                 <span className={`${BODY} font-bold`}>{a.display_name}</span>
                 <span className="text-sm text-sky-600">@{a.username}</span>
-                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-indigo-200">
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 ring-1 ring-blue-200">
                   {a.role === 'admin' ? 'Quản trị' : 'Học sinh'}
                 </span>
                 <span className="ml-auto flex gap-2">

@@ -1,8 +1,9 @@
 /**
- * Lazily-loaded dotLottie player chunk (ADR-6). This module is the ONLY
- * importer of @lottiefiles/*, so Rollup keeps the whole player (and its
- * WASM, imported via `?url` from the installed package - version-locked,
- * same-origin, constitution #4) inside this async chunk.
+ * Lazily-loaded dotLottie player chunk (ADR-6). One of exactly two
+ * importers of @lottiefiles/* (the other is mascot/MascotLottie, CR-82),
+ * so Rollup keeps the whole player (and its WASM, imported via `?url`
+ * from the installed package - version-locked, same-origin,
+ * constitution #4) inside the async chunks.
  */
 import { useEffect, useRef, useState } from 'react';
 import { DotLottieReact, setWasmUrl, type Data, type DotLottie } from '@lottiefiles/dotlottie-react';
@@ -80,14 +81,19 @@ export default function EmojiLottiePlayer({ lottieKey, onReady, onError }: Emoji
     return null;
   }
 
+  /* CR-82 (D-20): the wrapper marker lets budget tests count every live
+     player as `[data-lottie-player] canvas` - never bare `canvas`, which
+     M6's tracing canvas would false-positive on (GT-8). */
   return (
-    <DotLottieReact
-      data={animationData}
-      autoplay
-      loop
-      renderConfig={{ devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2) }}
-      dotLottieRefCallback={handleRef}
-      style={{ width: '100%', height: '100%', display: 'block' }}
-    />
+    <span data-lottie-player="emoji" aria-hidden="true" className="block h-full w-full">
+      <DotLottieReact
+        data={animationData}
+        autoplay
+        loop
+        renderConfig={{ devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2) }}
+        dotLottieRefCallback={handleRef}
+        style={{ width: '100%', height: '100%', display: 'block' }}
+      />
+    </span>
   );
 }

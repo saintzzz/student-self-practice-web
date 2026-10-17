@@ -12,7 +12,8 @@ import {
   questionCard,
   readQuestionProgress,
   selectGrade,
-  submitListeningAnswer,
+  submitGapAwareListeningAnswer,
+  answerSpellItTap,
 } from './practice-flow';
 import { answerOptionQuestion, optionButtons } from './option-flow';
 import { gotoApp } from './auth-flow';
@@ -97,20 +98,65 @@ export interface RoundRunResult {
  * against round-score-summary to verify scoring accuracy, never against a
  * hardcoded expected score.
  */
-export async function runExtraLetterRound(page: Page): Promise<RoundRunResult> {
+/**
+ * CR-82 (spec s12.7): answers a letter-tracing item through its keyboard
+ * path - "Tô tự động từng nét" once per stroke auto-draws the letter and
+ * submits (isCorrect=true, assisted). Structural, never content-assuming.
+ */
+export interface TracingAnswerResult {
+  outcome: AnswerOutcome;
+  /** The traced letter revealed in the feedback sheet. */
+  correctWord: string;
+}
+
+export async function answerTracingAutoStep(page: Page): Promise<TracingAnswerResult> {
+  const auto = page.getByTestId('tracing-auto-step');
+  /* The tracing body is a lazy chunk (D-22): the question card mounts
+     before the button exists - wait for it, or the loop breaks on the
+     first poll and the question is never answered. */
+  await expect(auto).toBeVisible({ timeout: 15_000 });
+  for (let i = 0; i < 8 && !(await page.getByTestId('answer-feedback').isVisible()); i += 1) {
+    if (!(await auto.isVisible()) || (await auto.isDisabled())) break;
+    await auto.click();
+  }
+  const feedback = page.getByTestId('answer-feedback');
+  await expect(feedback).toBeVisible({ timeout: 10_000 });
+  const correct = (await feedback.getAttribute('data-correct')) === 'true';
+  const text = (await feedback.textContent()) ?? '';
+  const m = text.match(/Từ đúng là:\s*([A-Za-z]+)/i);
+  return { outcome: correct ? 'correct' : 'incorrect', correctWord: m?.[1] ?? '' };
+}
+
+export interface ExtraLetterRoundOptions {
+  /**
+   * Which Round-1 composition to assert (CR-82 D-01): G1-2 carries
+   * 6 extra-letter + 2 image-choice + 2 letter-tracing at indices 3/7;
+   * G3-5 keeps the legacy 7/3 mix. All current e2e callers startBatch()
+   * at grade-1, so the default is 'G12'.
+   */
+  gradeBand?: 'G12' | 'G345';
+}
+
+export async function runExtraLetterRound(
+  page: Page,
+  { gradeBand = 'G12' }: ExtraLetterRoundOptions = {},
+): Promise<RoundRunResult> {
   const { total } = await readQuestionProgress(page);
   let correctCount = 0;
   let incorrectCount = 0;
   const revealedWords: string[] = [];
-  const kindCounts = { 'extra-letter': 0, 'image-choice': 0 };
+  const kindCounts = { 'extra-letter': 0, 'image-choice': 0, 'letter-tracing': 0 };
 
   for (let q = 1; q <= total; q++) {
     const progress = await readQuestionProgress(page);
     expect(progress.current, `expected question ${q} of Round 1`).toBe(q);
-    // PRD r3 / D-10: Round 1 shuffles 7 extra-letter + 3 image-choice.
-    const kind = (await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice'])) as
-      | 'extra-letter'
-      | 'image-choice';
+    // PRD r3 / D-10 + CR-82 D-01: Round 1 shuffles extra-letter +
+    // image-choice (+ 2 letter-tracing on G1-2).
+    const kind = (await currentQuestionKindOneOf(page, [
+      'extra-letter',
+      'image-choice',
+      'letter-tracing',
+    ])) as 'extra-letter' | 'image-choice' | 'letter-tracing';
     kindCounts[kind]++;
 
     if (kind === 'extra-letter') {
@@ -119,6 +165,13 @@ export async function runExtraLetterRound(page: Page): Promise<RoundRunResult> {
       if (result.outcome === 'correct') correctCount++;
       else if (result.outcome === 'incorrect') incorrectCount++;
       else throw new Error(`Round 1 question ${q}: unrecognized answer outcome`);
+    } else if (kind === 'letter-tracing') {
+      /* Assisted auto-step path - always records a correct (assisted)
+         verdict; the revealed "word" is the traced letter. */
+      const result = await answerTracingAutoStep(page);
+      revealedWords.push(result.correctWord);
+      if (result.outcome === 'correct') correctCount++;
+      else incorrectCount++;
     } else {
       // image-choice: structural click on option 0, then discover the real
       // outcome and the correct word from post-answer state (same technique
@@ -136,9 +189,16 @@ export async function runExtraLetterRound(page: Page): Promise<RoundRunResult> {
   }
 
   await expect(page.getByTestId('round-score-summary')).toBeVisible();
-  // AC-9.1: the mixed composition must hold for every batch seed.
-  expect(kindCounts['extra-letter'], 'Round 1 must contain exactly 7 extra-letter questions').toBe(7);
-  expect(kindCounts['image-choice'], 'Round 1 must contain exactly 3 image-choice questions').toBe(3);
+  // AC-9.1 + CR-82 D-01: the mixed composition must hold for every batch seed.
+  if (gradeBand === 'G12') {
+    expect(kindCounts['extra-letter'], 'G1-2 Round 1 must contain exactly 6 extra-letter questions').toBe(6);
+    expect(kindCounts['image-choice'], 'G1-2 Round 1 must contain exactly 2 image-choice questions').toBe(2);
+    expect(kindCounts['letter-tracing'], 'G1-2 Round 1 must contain exactly 2 letter-tracing questions').toBe(2);
+  } else {
+    expect(kindCounts['extra-letter'], 'Round 1 must contain exactly 7 extra-letter questions').toBe(7);
+    expect(kindCounts['image-choice'], 'Round 1 must contain exactly 3 image-choice questions').toBe(3);
+    expect(kindCounts['letter-tracing'], 'G3-5 never receives letter-tracing').toBe(0);
+  }
   return { totalQuestions: total, correctCount, incorrectCount, revealedWords };
 }
 
@@ -147,7 +207,10 @@ export interface ListeningRoundOptions {
   verifyAudioResilience?: boolean;
 }
 
-export type ListeningRoundKindCounts = Record<'listening-sentence-fill-blank' | 'listening-image-choice', number>;
+export type ListeningRoundKindCounts = Record<
+  'listening-sentence-fill-blank' | 'listening-image-choice' | 'listening-fill-blank',
+  number
+>;
 
 export interface ListeningRoundResult extends RoundRunResult {
   pageErrors: Error[];
@@ -188,7 +251,11 @@ export async function runListeningSentenceRound(
   const { total } = await readQuestionProgress(page);
   const revealedWords: string[] = [];
   const pageErrors: Error[] = [];
-  const kindCounts: ListeningRoundKindCounts = { 'listening-sentence-fill-blank': 0, 'listening-image-choice': 0 };
+  const kindCounts: ListeningRoundKindCounts = {
+    'listening-sentence-fill-blank': 0,
+    'listening-image-choice': 0,
+    'listening-fill-blank': 0,
+  };
   let correctCount = 0;
   let incorrectCount = 0;
   const onPageError = (error: Error) => pageErrors.push(error);
@@ -202,6 +269,8 @@ export async function runListeningSentenceRound(
       const kind = (await currentQuestionKindOneOf(page, [
         'listening-sentence-fill-blank',
         'listening-image-choice',
+        /* CR-82 (D-01): G1-2 Round 2 mixes in 3 Spell-it fill-blank. */
+        'listening-fill-blank',
       ])) as keyof ListeningRoundKindCounts;
       kindCounts[kind]++;
 
@@ -215,8 +284,24 @@ export async function runListeningSentenceRound(
       }
 
       if (kind === 'listening-sentence-fill-blank') {
-        const result = await submitListeningAnswer(page, '0000');
+        /* CR-82 (R-v5-10): G1-2 sentence items may show the word bank -
+           submitGapAwareListeningAnswer flips to typing first so '0000'
+           stays guaranteed-wrong (a bank chip could be the real answer). */
+        const result = await submitGapAwareListeningAnswer(page, '0000');
         expect(result.outcome, `Round 2 question ${q} (listening-sentence-fill-blank): guaranteed-wrong guess must be marked incorrect`).toBe(
+          'incorrect',
+        );
+        incorrectCount++;
+        revealedWords.push(result.correctWord);
+      } else if (kind === 'listening-fill-blank') {
+        /* CR-82 (s12): Spell-it items - the shuffled bank order makes the
+           tap-composed word structurally wrong. A typed fallback (no
+           spell payload) keeps the digits-only guess. */
+        const spellBank = page.getByTestId('spell-bank');
+        const result = (await spellBank.isVisible())
+          ? await answerSpellItTap(page)
+          : await submitGapAwareListeningAnswer(page, '0000');
+        expect(result.outcome, `Round 2 question ${q} (listening-fill-blank): guaranteed-wrong guess must be marked incorrect`).toBe(
           'incorrect',
         );
         incorrectCount++;
@@ -279,8 +364,22 @@ export async function advanceToQuestionKind(
       case 'listening-sentence-fill-blank':
         // Digits-only guess is structurally impossible to match any real
         // English word - always incorrect, still advances (same technique
-        // as runListeningSentenceRound above).
-        await submitListeningAnswer(page, '0000');
+        // as runListeningSentenceRound above). CR-82: bank-eligible items
+        // are flipped to typing first so '0000' stays guaranteed-wrong.
+        await submitGapAwareListeningAnswer(page, '0000');
+        break;
+      case 'listening-fill-blank':
+        // CR-82 (s12): Spell-it - tap-place the shuffled bank (structurally
+        // wrong) or fall back to the typed digits-only guess.
+        if (await page.getByTestId('spell-bank').isVisible()) {
+          await answerSpellItTap(page);
+        } else {
+          await submitGapAwareListeningAnswer(page, '0000');
+        }
+        break;
+      case 'letter-tracing':
+        // CR-82: the assisted keyboard path always advances (R-v5-07).
+        await answerTracingAutoStep(page);
         break;
       default:
         throw new Error(`advanceToQuestionKind: cannot advance past kind "${kind}"`);

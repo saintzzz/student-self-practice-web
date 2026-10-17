@@ -11,16 +11,25 @@ import Mascot from './Mascot';
 import Confetti from './celebrations/Confetti';
 import { SendResultsCard } from './SendResultsCard';
 import { ShareCard } from './ShareCard';
-import { CARD, NAV_PILL, SCORE_PILL_LG } from '../lib/ui/tokens';
+import {
+  BTN_SECONDARY_PAPER,
+  EXAM_DESK,
+  EXAM_SHEET,
+  GOLD_HAIRLINE,
+  SCORE_PILL_LG,
+  TYPE_BODY_PAPER,
+  TYPE_HERO_NUMBER_PAPER,
+  TYPE_SECTION_PAPER,
+} from '../lib/ui/tokens';
 import { IconHome, IconPlay } from './icons';
 
 /**
  * kids-UX step 9 (design-kids-ux s3.9, OM-3=C, AC-7.1): the exam results
- * screen is the "full brand celebration" half of the hybrid ruling - the
- * exam hall interior stays IOE-faithful while results get the navy/gold
- * card, mascot celebration and the "Xong rồi / Chơi tiếp" session fork.
- * Extracted verbatim from ExamScreen, then restyled; all existing
- * data-testids and the answer-review list are unchanged.
+ * screen is the "full brand celebration" half of the hybrid ruling.
+ * CR-82 M5 (spec s10.4): the celebration is a paper CERTIFICATE on the
+ * desk - EXAM_SHEET + GOLD_HAIRLINE, TYPE_HERO_NUMBER_PAPER correct
+ * count, the gold SCORE_PILL for points, mascot celebrating/encouraging.
+ * All existing data-testids and the answer-review list are unchanged.
  */
 
 /** CR-24: program display names (shared with the exam header/intro). */
@@ -100,16 +109,16 @@ export function ExamResult({
   ];
 
   return (
-    <div data-testid="exam-result" className="min-h-screen bg-[#0d1b26] p-4 text-white">
-      <div className="mx-auto max-w-2xl">
-        {/* Brand celebration: navy CARD replaces the wooden exam frame. */}
-        <div className={`${CARD} relative text-center`}>
+    <div data-testid="exam-result" className={`${EXAM_DESK} items-center`}>
+      <div className="mx-auto w-full max-w-2xl">
+        {/* Paper certificate (s10.4): EXAM_SHEET + GOLD_HAIRLINE. */}
+        <div className={`${EXAM_SHEET} ${GOLD_HAIRLINE} relative !flex-none text-center`}>
           {passed && <Confetti />}
           <div className="flex justify-center">
             <Mascot mood={passed ? 'celebrating' : 'encouraging'} />
           </div>
-          <h1 className="mt-2 font-display text-2xl font-extrabold text-amber-300">{isPractice ? 'Kết quả luyện đề' : 'Kết quả thi thử'}</h1>
-          <p className="mt-1 text-sm font-bold text-slate-400">
+          <h1 className={`mt-2 ${TYPE_SECTION_PAPER}`}>{isPractice ? 'Kết quả luyện đề' : 'Kết quả thi thử'}</h1>
+          <p className={`mt-1 text-sm font-bold ${TYPE_BODY_PAPER}`}>
             {PROGRAM_LABEL[programId]} - {gradeLabel}
           </p>
           <div className="mt-5">
@@ -117,27 +126,27 @@ export function ExamResult({
           </div>
           <div className="mt-3 flex items-center justify-center gap-2" role="img" aria-label={`Em được ${stars} trên 3 sao`}>
             {[0, 1, 2].map((slot) => (
-              <span key={slot} aria-hidden="true" className={`text-4xl ${slot < stars ? 'text-amber-300' : 'text-white/20'}`}>
+              <span key={slot} aria-hidden="true" className={`text-4xl ${slot < stars ? 'text-amber-400' : 'text-slate-300'}`}>
                 {slot < stars ? '★' : '☆'}
               </span>
             ))}
           </div>
           <div className="mt-6 grid grid-cols-3 gap-3">
-            <div className="rounded-xl bg-white/5 p-3">
-              <div data-testid="exam-score" className="text-3xl font-extrabold text-amber-300">{result.points}</div>
-              <div className="text-xs font-bold text-slate-400">điểm</div>
+            <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+              <div data-testid="exam-score" className={`${TYPE_HERO_NUMBER_PAPER} text-3xl`}>{result.points}</div>
+              <div className="text-xs font-bold text-slate-500">điểm</div>
             </div>
-            <div className="rounded-xl bg-white/5 p-3">
-              <div className="text-3xl font-extrabold text-emerald-400">
+            <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+              <div className={`${TYPE_HERO_NUMBER_PAPER} text-3xl`}>
                 {result.correctCount}/{result.totalCount}
               </div>
-              <div className="text-xs font-bold text-slate-400">câu đúng</div>
+              <div className="text-xs font-bold text-slate-500">câu đúng</div>
             </div>
-            <div className="rounded-xl bg-white/5 p-3">
-              <div className="text-3xl font-extrabold text-sky-300">
+            <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+              <div className={`${TYPE_HERO_NUMBER_PAPER} text-3xl`}>
                 {mm}:{String(ss).padStart(2, '0')}
               </div>
-              <div className="text-xs font-bold text-slate-400">thời gian</div>
+              <div className="text-xs font-bold text-slate-500">thời gian</div>
             </div>
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -145,7 +154,7 @@ export function ExamResult({
               type="button"
               data-testid="exam-review-toggle"
               onClick={() => setShowReview(!showReview)}
-              className={`${NAV_PILL} flex-1`}
+              className={`${BTN_SECONDARY_PAPER} flex-1`}
             >
               Xem đáp án ({wrong.length} câu sai)
             </button>
@@ -154,7 +163,7 @@ export function ExamResult({
                 type="button"
                 data-testid="exam-retry"
                 onClick={onRetry}
-                className={`${NAV_PILL} flex-1`}
+                className={`${BTN_SECONDARY_PAPER} flex-1`}
               >
                 {isPractice ? 'Luyện lại' : 'Thi lại'}
               </button>
@@ -164,9 +173,9 @@ export function ExamResult({
           {/* Session fork (design s3.10) replaces the old "Thoát" button:
               "Chơi tiếp" retries the same program/mode (the only gold
               element), "Xong rồi" exits to the launchpad. */}
-          <p className="mt-6 text-base font-bold text-slate-300">Em muốn làm gì tiếp?</p>
+          <p className={`mt-6 text-base font-bold ${TYPE_BODY_PAPER}`}>Em muốn làm gì tiếp?</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={onExit} className={`${NAV_PILL} flex-1`}>
+            <button type="button" onClick={onExit} className={`${BTN_SECONDARY_PAPER} flex-1`}>
               <span className="inline-flex items-center gap-2"><IconHome size={18} /> Xong rồi</span>
             </button>
             {onRetry && (
@@ -185,30 +194,30 @@ export function ExamResult({
           </div>
         </div>
 
-        {/* Answer review list - unchanged (IOE fidelity of the review). */}
+        {/* Answer review list on paper (testids unchanged). */}
         {showReview && (
           <div data-testid="exam-review" className="mt-4 space-y-3 pb-10">
             {result.review.map((item) => (
               <div
                 key={item.index}
-                className={`rounded-xl border-l-4 p-4 text-left ${
-                  item.isCorrect ? 'border-emerald-500 bg-emerald-500/10' : 'border-rose-500 bg-rose-500/10'
+                className={`rounded-xl border-l-4 bg-white p-4 text-left ring-1 ring-slate-200 ${
+                  item.isCorrect ? 'border-emerald-600' : 'border-slate-400'
                 }`}
               >
-                <div className="text-xs font-bold text-slate-400">Câu {item.index + 1}</div>
-                <div className="mt-1 font-mono text-sm text-slate-100"><MarkupText text={reviewPrompt(item.question)} /></div>
+                <div className="text-xs font-bold text-slate-500">Câu {item.index + 1}</div>
+                <div className="mt-1 font-mono text-sm text-slate-800"><MarkupText text={reviewPrompt(item.question)} /></div>
                 <div className="mt-2 text-sm">
-                  <span className="font-bold text-slate-300">Đáp án đúng: </span>
-                  <span className="font-extrabold text-emerald-300"><MarkupText text={examCorrectAnswerText(item.question)} /></span>
+                  <span className="font-bold text-slate-700">Đáp án đúng: </span>
+                  <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(item.question)} /></span>
                 </div>
                 {!item.isCorrect && (
                   <div className="mt-1 text-sm">
-                    <span className="font-bold text-slate-300">Em chọn: </span>
-                    <span className="text-rose-300"><MarkupText text={answerText(item.answer, item.question)} /></span>
+                    <span className="font-bold text-slate-700">Em chọn: </span>
+                    <span className="text-rose-700"><MarkupText text={answerText(item.answer, item.question)} /></span>
                   </div>
                 )}
                 {item.question.explanation && (
-                  <div className="mt-1 text-xs text-slate-400"><MarkupText text={item.question.explanation} /></div>
+                  <div className={`mt-1 text-xs ${TYPE_BODY_PAPER}`}><MarkupText text={item.question.explanation} /></div>
                 )}
               </div>
             ))}

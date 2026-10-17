@@ -51,7 +51,12 @@ test.describe('Batch/Round: Round 2 (mixed listening-sentence-fill-blank + liste
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(2);
       expect(roundProgress.total).toBe(4);
-      await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
+      await currentQuestionKindOneOf(page, [
+        'listening-sentence-fill-blank',
+        'listening-image-choice',
+        /* CR-82 (D-01): G1-2 Round 2 mixes in Spell-it fill-blank. */
+        'listening-fill-blank',
+      ]);
     });
 
     const round2 = await test.step(
@@ -82,7 +87,7 @@ test.describe('Batch/Round: Round 2 (mixed listening-sentence-fill-blank + liste
       expect(round2.revealedWords.every((word) => word.length > 0)).toBe(true);
     });
 
-    await test.step('both Round 2 kinds actually appeared in this pass (plan.md v8 AC30)', async () => {
+    await test.step('all three Round 2 kinds actually appeared in this pass (plan.md v8 AC30 + CR-82 D-01)', async () => {
       expect(
         round2.kindCounts['listening-sentence-fill-blank'],
         `expected at least one listening-sentence-fill-blank question in this ${round2.totalQuestions}-question Round 2 pass, got 0 -- ` +
@@ -93,9 +98,16 @@ test.describe('Batch/Round: Round 2 (mixed listening-sentence-fill-blank + liste
         `expected at least one listening-image-choice question in this ${round2.totalQuestions}-question Round 2 pass (plan.md v8 AC30), ` +
           'got 0 -- this is the expected signal if the v8 listening-image-choice addition has not landed yet, not a test bug',
       ).toBeGreaterThan(0);
-      expect(round2.kindCounts['listening-sentence-fill-blank'] + round2.kindCounts['listening-image-choice']).toBe(
-        round2.totalQuestions,
-      );
+      expect(
+        round2.kindCounts['listening-fill-blank'],
+        `expected at least one listening-fill-blank (Spell-it) question in this ${round2.totalQuestions}-question Round 2 pass (CR-82 D-01), ` +
+          'got 0 -- this is the expected signal if the CR-82 Spell-it addition has not landed yet, not a test bug',
+      ).toBeGreaterThan(0);
+      expect(
+        round2.kindCounts['listening-sentence-fill-blank'] +
+          round2.kindCounts['listening-image-choice'] +
+          round2.kindCounts['listening-fill-blank'],
+      ).toBe(round2.totalQuestions);
     });
 
     await test.step('round score summary reflects the real tally observed while answering (never a hardcoded expected score)', async () => {

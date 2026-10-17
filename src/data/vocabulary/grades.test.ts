@@ -21,6 +21,7 @@ import {
   submitOptionAnswer,
   submitPairMatchingAnswer,
   submitPronunciationAnswer,
+  submitTracingAnswer,
 } from '../../lib/practiceSession';
 import type { Question } from '../../types';
 
@@ -41,6 +42,8 @@ function questionWordIds(q: Question): string[] {
   if ('wordId' in q && q.wordId) ids.push(q.wordId);
   if ('promptWordId' in q && q.promptWordId) ids.push(q.promptWordId);
   if ('optionWordIds' in q && q.optionWordIds) ids.push(...q.optionWordIds);
+  /* CR-82: tracing questions reference their exhibit word. */
+  if (q.kind === 'letter-tracing' && q.exampleWordId) ids.push(q.exampleWordId);
   if (q.kind === 'picture-pair-matching') ids.push(...q.pairs.map((p) => p.wordId));
   return ids;
 }
@@ -57,6 +60,10 @@ function answerCurrentQuestion(state: BatchState): BatchState {
       return updateRoundSession(state, (s) => submitListeningAnswer(s, '0000'));
     case 'pronunciation-recording':
       return updateRoundSession(state, (s) => submitPronunciationAnswer(s, '0000'));
+    case 'letter-tracing':
+      return updateRoundSession(state, (s) =>
+        submitTracingAnswer(s, true, { assisted: true, attempts: [] }),
+      );
     case 'picture-pair-matching':
       return updateRoundSession(state, (s) => submitPairMatchingAnswer(s, true));
     default:

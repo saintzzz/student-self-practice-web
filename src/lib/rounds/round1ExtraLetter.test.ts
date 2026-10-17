@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   ROUND_1_EXTRA_LETTER_COUNT,
+  ROUND_1_G12_EXTRA_LETTER_COUNT,
+  ROUND_1_G12_IMAGE_CHOICE_COUNT,
+  ROUND_1_G12_TRACING_COUNT,
+  ROUND_1_G12_TRACING_INDICES,
   ROUND_1_IMAGE_CHOICE_COUNT,
   ROUND_1_QUESTION_COUNT,
   buildRound1Questions,
@@ -103,6 +107,63 @@ describe('buildRound1Questions', () => {
       // Both slices contribute at most 1 each, so a topic may appear up to 2
       // times total (once per slice) - still far from domination.
       expect(count).toBeLessThanOrEqual(2);
+    }
+  });
+
+  /* ---------- CR-82 (ARCHITECTURE-v5 D-01): G1-2 tracing composition ---------- */
+
+  it('D-01: G1-2 draws 6 extra-letter + 2 image-choice + 2 letter-tracing at indices 3 and 7', () => {
+    for (const gradeId of ['grade-1', 'grade-2']) {
+      for (const seed of ['s1', 's7', 's19']) {
+        const questions = buildRound1Questions(seed, ALL_WORDS, { gradeId });
+        expect(questions).toHaveLength(ROUND_1_QUESTION_COUNT);
+        expect(questions.filter((q) => q.kind === 'extra-letter')).toHaveLength(
+          ROUND_1_G12_EXTRA_LETTER_COUNT,
+        );
+        expect(questions.filter((q) => q.kind === 'image-choice')).toHaveLength(
+          ROUND_1_G12_IMAGE_CHOICE_COUNT,
+        );
+        const tracing = questions.filter((q) => q.kind === 'letter-tracing');
+        expect(tracing).toHaveLength(ROUND_1_G12_TRACING_COUNT);
+        /* Fixed positions after the seeded shuffle - never question 1. */
+        expect(questions[ROUND_1_G12_TRACING_INDICES[0]!]?.kind).toBe('letter-tracing');
+        expect(questions[ROUND_1_G12_TRACING_INDICES[1]!]?.kind).toBe('letter-tracing');
+      }
+    }
+  });
+
+  it('D-02/D-04: tracing items are lowercase a-z with a pool example word and the right grade baked in', () => {
+    const wordIds = new Set(ALL_WORDS.map((w) => w.id));
+    for (const [gradeId, grade] of [['grade-1', 1], ['grade-2', 2]] as const) {
+      const questions = buildRound1Questions('seed-a', ALL_WORDS, { gradeId });
+      for (const q of questions.filter((q) => q.kind === 'letter-tracing')) {
+        if (q.kind !== 'letter-tracing') continue;
+        expect(q.letter).toMatch(/^[a-z]$/);
+        expect(wordIds.has(q.exampleWordId)).toBe(true);
+        expect(q.grade).toBe(grade);
+      }
+    }
+  });
+
+  it('D-04: G3-5 and no-ctx calls keep the legacy 7/3 mix with zero tracing', () => {
+    for (const ctx of [undefined, { gradeId: 'grade-3' }, { gradeId: 'grade-5' }]) {
+      const questions = buildRound1Questions('seed-a', ALL_WORDS, ctx);
+      expect(questions.filter((q) => q.kind === 'letter-tracing')).toHaveLength(0);
+      expect(questions.filter((q) => q.kind === 'extra-letter')).toHaveLength(
+        ROUND_1_EXTRA_LETTER_COUNT,
+      );
+    }
+  });
+
+  it('D-01 backfill: a pool with fewer than 2 traceable letters still returns a full Round', () => {
+    /* Only 'a' exhibits - one tracing slot backfills with extra-letter. */
+    const thin = ALL_WORDS.filter((w) => w.word.trim().charAt(0).toLowerCase() === 'a');
+    const questions = buildRound1Questions('seed-a', thin, { gradeId: 'grade-1' });
+    const tracing = questions.filter((q) => q.kind === 'letter-tracing');
+    expect(tracing.length).toBeLessThanOrEqual(1);
+    if (tracing.length === 1) {
+      /* Its slot is index 3 and the rest is backfilled, never short. */
+      expect(questions[ROUND_1_G12_TRACING_INDICES[0]!]?.kind).toBe('letter-tracing');
     }
   });
 });

@@ -58,7 +58,12 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
         // listening-sentence-fill-blank (plan.md v8 AC30) -- the first
         // question of a given Batch attempt can legitimately be either kind,
         // so this no longer asserts one exact kind here.
-        await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
+        await currentQuestionKindOneOf(page, [
+          'listening-sentence-fill-blank',
+          'listening-image-choice',
+          /* CR-82 (D-01): G1-2 Round 2 mixes in Spell-it fill-blank. */
+          'listening-fill-blank',
+        ]);
         return runListeningSentenceRound(page, { verifyAudioResilience: false });
       });
       await goToNextRound(page);

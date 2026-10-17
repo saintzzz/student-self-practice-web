@@ -4,6 +4,7 @@ import type {
   DescribeAndChooseImageQuestion,
   ExtraLetterQuestion,
   ImageChoiceQuestion,
+  LetterTracingQuestion,
   ListeningFillBlankQuestion,
   ListeningImageChoiceQuestion,
   ListeningSentenceFillBlankQuestion,
@@ -200,11 +201,23 @@ export const PHONICS_RHYME_CHOICE_QUESTION: PhonicsRhymeChoiceQuestion = {
   explanation: '"hat" có vần giống "cat".',
 };
 
+/** CR-82 (spec s5 file map): one fixture per new v5 question shape. */
+export const LETTER_TRACING_QUESTION: LetterTracingQuestion = {
+  id: 'q15',
+  topicId: 't1',
+  kind: 'letter-tracing',
+  letter: 'a',
+  exampleWordId: 'apple',
+  grade: 1,
+  explanation: 'Chữ "a" như trong từ "apple".',
+};
+
 export const noopHandlers = {
   onSubmitOption: vi.fn(),
   onSubmitListening: vi.fn(),
   onSubmitExtraLetter: vi.fn(),
   onSubmitPronunciation: vi.fn(),
   onSubmitPairMatching: vi.fn(),
+  onSubmitTracing: vi.fn(),
   onNext: vi.fn(),
 };

@@ -4,7 +4,8 @@
  * positioned so it never shifts layout. Reduced-motion renders nothing
  * (the banner tint already carries the state).
  */
-const COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#38bdf8', '#a78bfa'];
+/* CR-82 spec s11: violet dropped from confetti (palette purge). */
+const COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#38bdf8', '#fbbf24'];
 
 interface Particle {
   dx: number;

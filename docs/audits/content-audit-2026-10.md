@@ -201,3 +201,190 @@ Question banks:
     several keys pinned to retired model gemini-2.5-flash-lite (404),
     OpenRouter 402 no credit, OpenAI no credit. One key still works but
     margin is thin - unrelated to audio content.
+
+## CR-82 - qb_questions ambiguity quarantine (2026-10-14)
+
+Trigger: user hit "My mother is working on ___ -> Tuesday" with
+Sunday/Wednesday/Monday as choices in advanced practice - a generator
+family where multiple choices are simultaneously correct.
+
+### Method
+
+`scripts/qb-ambiguity-classify.mjs` - deterministic rule classifier over
+4,000+ cloze candidates in 13 lexicon sets (animal, color, day, family,
+food, job, misc, month, prep, room, season, sport, subject). Zero-error
+doctrine: keep only when the prompt supplies a provable unique selector
+(fact, agreement, sequence arithmetic, fixed collocation, asset marker,
+or context-forced semantics); reject otherwise. False rejects accepted.
+
+Iterated ~8 fix rounds on both keep-side and reject-side samples.
+Notable correctness bugs fixed along the way:
+
+- `pl.includes(a)` substring restatement matched 'in'/'on'/'at' inside
+  "running", "watching", "badminton" -> false keeps. Now word-boundary.
+- Blank formats ("___", " ______ ", "....") normalized to `_B_` before
+  rule matching.
+- `/after/` matched inside "afternoon" -> false keeps on "on ___ afternoon"
+  items.
+- Same-lemma verb-form branch returned early `false`, masking the
+  progressive be-form agreement rule ("she ___ buying -> is").
+- Generic a/an rule: "wants ___ engineer -> an" rejected by design - `the`
+  and `some` are also grammatical completions.
+- Gerund-unique rule required all-verb choices (kills "like ___? [book,
+  flower, music, swimming]" false keeps).
+- Copula `-ing` keep guarded by `to + base` rival presence.
+
+### Results
+
+| set | keep | reject |
+|---|---|---|
+| animal | 60 | 30 |
+| color | 248 | 255 |
+| day | 180 | 90 |
+| family | 56 | 38 |
+| food | 52 | 47 |
+| job | 32 | 18 |
+| misc | 509 | 898 |
+| month | 200 | 18 |
+| prep | 255 | 628 |
+| room | 101 | 56 |
+| season | 40 | 3 |
+| sport | 23 | 7 |
+| subject | 88 | 14 |
+| **total** | **1,844** | **2,102** |
+
+### Applied quarantine
+
+Two batches, both `review_status='rejected'` + publication_policy flags
+all false, idempotent (`!= 'rejected'` guard):
+
+- Batch 1 (prep + lexical sets): 1,187 rows.
+- Batch 2 (misc delta): 915 rows.
+- Total unique rejected ids: 2,101 (reject-ids.json had 1 dup).
+
+Verification (all green):
+
+- DB rejected count = 2,101 = unique(reject-ids.json). 0 missing, 0 extra.
+- `fetch_questions_public` mode=practice g1/g2/g3/g5: 200 served each,
+  0 rejected leaked. mode=mock g3: 200 served, 0 leaked.
+- No rejected row retains any `*Eligible` flag true (policy leak = 0).
+- Workplace-prep items the user reported are in the rejected set.
+
+### Remaining known gaps
+
+- Reading/writing/reorder passages not yet run through this classifier
+  (different shape - no MC answer key to adjudicate against).
+- `g5-english-tpl-*` and `*-gs-*-cloze-*` families partially swept;
+  template-level review pending.
+- Explanation text (`explanation_vi`/`explanation_en`) not audited
+  against final answers - separate check needed.
+
+## Full-bank classifier sweep (96,910 rows)
+
+`scripts/audit-qb.mjs` (repeatable gate, `--emit-sql` for quarantine
+chunks, `--json` for the machine report) over `docs/qa/qb-export.json`:
+
+- `selector()` extended from ~1,600 to ~3,700 lines: universal
+  grammar/fact rules (agreement, tense cues, quantifiers, comparative/
+  superlative, progressive, offspring tables, taxonomy, materials,
+  job<->action/workplace/object maps, weather-wear, body-function,
+  vehicle verbs/speed, measurements, VN landmarks/translations,
+  gloss definitions, fixed collocations).
+- Set-block ordering fix: `set === 'day'/'job'/...` rules no longer
+  hard-return `false` before universal rules - decided-wrong answers
+  still reject, undecidable stems fall through.
+- All keep-rules gated on provably-unique choice (exactly-one-hit);
+  doctrine rejects preserved (multi-ability animals, multi-emotion
+  blanks, some/any, a/an/the ambiguity, image/count-dependent items).
+
+Latest run: `pending-quarantine: 3,780 unique ids` (from ~8,434 first
+count), `dup-choice: 9` (data bugs, need source fix),
+`exact-dup: 1,243` warnings. Remaining pending sample = mostly genuine
+open-cloze ambiguity (image-dependent, any-fits blanks) - correctly
+held for quarantine.
+
+### Final refinement + apply (completed)
+
+Classifier rounds continued to pending `3,780 -> 3,869` net before
+apply: batch-19 keep-rules (very-adj, coordinated adjectives,
+environmental gloss `keep X clean` -> `not litter`, location->activity,
+modal base-verbs minus irregular-past distractors) were offset by
+rival-detection fixes that REJECTED previously-kept ambiguous items:
+
+- `_B_ a game`: `watching/making/winning a game` now count as rivals
+  (was only `play*`).
+- PHYS table: `dog`/`cat` can `swim` - `My dog can ___ fast` with
+  run/swim correctly rejects (canonical doctrine case).
+- ROOM_ACT: `watch TV`/`movie` accept `bedroom` as rival - `watch TV
+  in the ___` with living-room+bedroom choices rejects.
+- Singular rule (`a _B_`): every rival must be a plural form -
+  `a ___ flower` with `reddish`/`redly` rejects.
+- Article rule now requires `a|an` ADJACENT to the blank (was firing
+  on any `a`/`an` anywhere in the prompt - `wearing a shirt ___ the
+  party` no longer keeps `for`).
+- `is/looks _B_` emotion rule: non-EMO adjective rivals (e.g. `short`
+  vs `proud`) count, so `My mom is ___` rejects.
+- Food-object rule: eat-family verbs (`eating`, `making`, ...) are
+  rivals, so `is ___ dinner` rejects.
+- Wearable rows (OBJ_CTX + verb-object table) now include singular
+  forms (`glove`, `boot`, `sandal`, ...) so `wearing a ___` rejects.
+- `_B_ and <adj>`: -ing/-ed adjectives (exciting, tired, bored, ...)
+  count as rivals.
+- School-day rules treat Saturday as a plausible school day (VN
+  context) - `go to school on ___` with Mon+Sat rejects.
+- VEH table: animate subjects removed (dog/cat/baby/birds can do many
+  generic actions - always ambiguous).
+
+Quarantine applied to live DB (`scripts/qb-quarantine-apply.mjs
+--apply`, chunk-verified, one retry-exhausted id re-patched manually):
+
+- reject-ids.json = 3,869 pending ids; applied 3,869/3,869
+  (0 missing, 1 transient patch failure re-applied: 204).
+- DB `review_status='rejected'` total: **5,970** (2,101 earlier +
+  3,869 new).
+- `fetch_questions_public`: practice g1-5 english+math 500 rows, mock
+  g1/g3/g5 180 rows - 0 rejected-id leaks. 0 rejected rows retain any
+  `*Eligible` flag.
+- The 9 dup-choice data defects fixed in DB (answer indices
+  preserved): plural rows `cars.`/`boats.`/`dogs.`/`kites.`/`dolls.`/
+  `balls.`/`planes.` trailing-dot dups replaced with possessive/`a X`
+  distractors; `salad.`/`salad!`/`salad?` replaced with
+  `salads`/`a salad`/`rice`; `although` (lowercase dup of `Although`)
+  replaced with `But`.
+
+Post-apply gate re-run on fresh export (93,041 published rows):
+`pending-quarantine: 0`, `dup-choice: 0`, `exact-dup: 1,213` warnings
+remaining (true duplicate rows - deletion is destructive and needs a
+separate decision).
+
+### Exact-dup resolution (completed)
+
+1,213 exact-dup groups (same grade+prompt+choices+answer, different
+ids) resolved by keeping one row per group (prefer `approved` status,
+then earliest id) and soft-quarantining the 1,458 extras via the same
+`qb-quarantine-apply.mjs --apply` path (reversible, no hard delete):
+
+- `docs/qa/flagged/exact-dup-keep.json` = retained ids (1,213)
+- `docs/qa/flagged/exact-dup-drop.json` = quarantined ids (1,458)
+- apply result: 1,458/1,458, 0 missing, 0 failed
+- Final audit on re-export (91,583 rows): **all checks clean** -
+  0 dup-choice, 0 exact-dup, 0 pending-quarantine, 0 policy-leak.
+
+### Sequence-rule sweep (completed during CR-82 external review)
+
+The r34-r38 external review rounds added a `seqExpected` sequence-completion
+rule to `scripts/qb-ambiguity-lib.mjs`. Re-auditing the published bank surfaced
+28 new pending ids - single-anchor relative-position cloze items the run-based
+rule could not prove. A follow-up `relExpected` pass (anchor+-1 before/after,
+next-unit, ordinal position incl. VN school-week Mon..Fri, between-count, and a
+single-category-member rule) rescued 23 with provably unique answers; the
+remaining 5 are genuinely ambiguous (image-dependent `How many ___?` counts and
+week-convention `first/last day` with both convention rivals among choices) and
+were quarantined the same way (5/5, 0 missing, 0 failed).
+
+- Re-export: 91,578 published rows - audit: **all checks clean**.
+- Kept examples: "The day before Tuesday is ___" -> Monday, "The second month"
+  -> February, "first day of the school week" -> Monday, "There are ___ days
+  between Monday and Friday" -> three.
+- Rejected (ambiguous): "The first/last day of the week" where Sunday+Monday or
+  Saturday+Sunday coexist as convention rivals; "How many ___?" without image.

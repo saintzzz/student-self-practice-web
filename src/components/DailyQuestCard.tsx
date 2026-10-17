@@ -8,6 +8,7 @@ import {
 } from '../lib/engagement/store';
 import { CARD, BTN_REWARD_EARNED } from '../lib/ui/tokens';
 import { useViewer } from '../lib/viewer/ViewerContext';
+import { usePressRelease } from '../hooks/usePressRelease';
 import { IconCheckCircle, IconFlame, IconPencil, IconTarget, IconTrophy, type IconProps } from './icons';
 
 const QUEST_META: Record<DailyQuestId, { icon: ComponentType<IconProps>; label: string }> = {
@@ -24,6 +25,9 @@ export default function DailyQuestCard() {
   const [snapshot, setSnapshot] = useState(() => getDailyQuests());
   const streak = getState().streak.count;
   const { density } = useViewer();
+  /* CR-82 (spec s16.1): the "Nhận thưởng" reward button springs on
+     release. Hook is unconditional - the button mounts conditionally. */
+  const claimPress = usePressRelease();
 
   // Refresh when the local date rolls over while the page stays open -
   // yesterday's progress/claimed state must not linger overnight.
@@ -98,6 +102,7 @@ export default function DailyQuestCard() {
           onClick={claim}
           className={`mt-3 w-full font-display text-lg ${BTN_REWARD_EARNED}`}
           style={{ minHeight: density.primaryMinH }}
+          {...claimPress}
         >
           Nhận thưởng +{DAILY_QUEST_BONUS} sao
         </button>

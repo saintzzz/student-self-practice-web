@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render } from '@testing-library/react';
-import { InstructionSpeaker, __resetInstructionAutoplay } from './InstructionSpeaker';
+import { InstructionSpeaker, __resetInstructionAutoplay, subscribeInstructionSettled } from './InstructionSpeaker';
 import { speakInstruction } from '../lib/speech';
 
 /**
@@ -259,5 +259,87 @@ describe('InstructionSpeaker - autoplay once per key (all grades)', () => {
       vi.advanceTimersByTime(1000);
     });
     expect(mockSpeak).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* CR-82 (D-15): one-shot settlement signal - the board's thinking-pose
+   idle clock starts when the instruction ends or is skipped/refused. */
+describe('InstructionSpeaker - onSettled (D-15)', () => {
+  function settleHarness(outcomes: string[]) {
+    vi.useFakeTimers();
+    const onSettled = vi.fn();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    render(<InstructionSpeaker text="A" autoplayKey="settle-key" onSettled={onSettled} />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    act(() => {
+      for (const s of outcomes) statusCb?.(s);
+    });
+    return onSettled;
+  }
+
+  beforeEach(() => {
+    __resetInstructionAutoplay();
+  });
+
+  it("'ended' playback settles as 'ended' - exactly once", () => {
+    const onSettled = settleHarness(['playing', 'ended']);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(onSettled).toHaveBeenCalledWith('ended');
+  });
+
+  it.each(['blocked', 'unavailable', 'error'] as const)(
+    "'%s' settles as 'not-played' - exactly once",
+    (status) => {
+      const onSettled = settleHarness([status, status]);
+      expect(onSettled).toHaveBeenCalledTimes(1);
+      expect(onSettled).toHaveBeenCalledWith('not-played');
+    },
+  );
+
+  it('no autoplayKey settles as not-played at mount, without speaking', () => {
+    const onSettled = vi.fn();
+    render(<InstructionSpeaker text="A" onSettled={onSettled} />);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(onSettled).toHaveBeenCalledWith('not-played');
+    expect(mockSpeak).not.toHaveBeenCalled();
+  });
+
+  it('an already-played key settles as not-played at mount (once-per-round skip)', () => {
+    vi.useFakeTimers();
+    let statusCb: ((s: string) => void) | undefined;
+    mockSpeak.mockImplementation((_t, opts) => {
+      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
+      return vi.fn();
+    });
+    const first = render(<InstructionSpeaker text="A" autoplayKey="settle-key" />);
+    act(() => {
+      vi.advanceTimersByTime(400);
+      statusCb?.('playing');
+      statusCb?.('ended');
+    });
+    first.unmount();
+
+    const onSettled = vi.fn();
+    render(<InstructionSpeaker text="A" autoplayKey="settle-key" onSettled={onSettled} />);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(onSettled).toHaveBeenCalledWith('not-played');
+  });
+
+  it('the settle channel also notifies board-level subscribers', () => {
+    vi.useFakeTimers();
+    const listener = vi.fn();
+    const unsubscribe = subscribeInstructionSettled(listener);
+    try {
+      render(<InstructionSpeaker text="A" />);
+      expect(listener).toHaveBeenCalledWith('not-played');
+    } finally {
+      unsubscribe();
+    }
   });
 });

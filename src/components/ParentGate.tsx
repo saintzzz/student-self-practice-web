@@ -217,7 +217,7 @@ export function ParentGate({ onPass, onCancel, title = 'Dành cho ba mẹ' }: Pa
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display flex items-center gap-2 text-xl font-bold text-slate-900"><IconLock size={20} className="text-indigo-500" aria-hidden="true" /> {title}</h2>
+          <h2 className="font-display flex items-center gap-2 text-xl font-bold text-slate-900"><IconLock size={20} className="text-blue-500" aria-hidden="true" /> {title}</h2>
           <button
             type="button"
             data-testid="parent-gate-cancel"

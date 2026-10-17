@@ -17,6 +17,7 @@ import {
   submitOptionAnswer,
   submitPairMatchingAnswer,
   submitPronunciationAnswer,
+  submitTracingAnswer,
 } from '../practiceSession';
 import { ROUND_1_QUESTION_COUNT } from '../rounds/round1ExtraLetter';
 import { ROUND_2_QUESTION_COUNT } from '../rounds/round2ListeningSentence';
@@ -54,6 +55,13 @@ function answerCurrentQuestion(state: BatchState): BatchState {
     question.kind === 'phonics-rhyme-choice'
   ) {
     return updateRoundSession(state, (session) => submitOptionAnswer(session, 0));
+  }
+  if (question.kind === 'letter-tracing') {
+    /* CR-82 (D-10): the keyboard/assisted path - always a correct
+       verdict, excluded from skill aggregates. */
+    return updateRoundSession(state, (session) =>
+      submitTracingAnswer(session, true, { assisted: true, attempts: [] }),
+    );
   }
   if (question.kind === 'picture-pair-matching') {
     return updateRoundSession(state, (session) => submitPairMatchingAnswer(session, true));
@@ -343,6 +351,12 @@ describe('points scoring (plan.md v10, AC34, AC36)', () => {
       const wrongIndex = (question.correctIndex + 1) % question.options.length;
       return updateRoundSession(state, (session) =>
         submitOptionAnswer(session, correct ? question.correctIndex : wrongIndex),
+      );
+    }
+    if (question.kind === 'letter-tracing') {
+      /* CR-82 (D-10): a tracing verdict is a bool, not a choice index. */
+      return updateRoundSession(state, (session) =>
+        submitTracingAnswer(session, correct, { assisted: false, attempts: [] }),
       );
     }
     throw new Error(`expected a Round 1 kind, got ${question.kind}`);

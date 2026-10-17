@@ -76,7 +76,12 @@ test.describe('Batch/Round: Round 1 (extra-letter)', () => {
       // v8 mixes listening-image-choice into Round 2's pool alongside
       // listening-sentence-fill-blank (plan.md v8 AC30), so the first
       // question can legitimately be either kind.
-      await currentQuestionKindOneOf(page, ['listening-sentence-fill-blank', 'listening-image-choice']);
+      await currentQuestionKindOneOf(page, [
+        'listening-sentence-fill-blank',
+        'listening-image-choice',
+        /* CR-82 (D-01): G1-2 Round 2 mixes in Spell-it fill-blank. */
+        'listening-fill-blank',
+      ]);
     });
   });
 });

@@ -2,53 +2,50 @@ import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Mascot, { type MascotMood } from './Mascot';
 
-const MOODS: MascotMood[] = ['greeting', 'happy', 'encouraging', 'celebrating'];
+const MOODS: MascotMood[] = ['idle', 'thinking', 'greeting', 'happy', 'encouraging', 'celebrating'];
 
 /**
- * plan.md v10 "App-Wide Mascot" (AC38-AC39), CR-72 art pass: Bé Heo is a
- * hand-drawn SVG with real per-mood expressions (open eyes / happy arcs /
- * encouraging brows / celebrate grin). Reduced-motion support is verified
- * CSS-only (every `animate-*` utility is paired with a
- * `motion-reduce:animate-none` override) - the app's test suite has no
- * precedent for mocking `matchMedia`, and Tailwind's `motion-reduce:`
- * variant is a pure CSS media-query mechanism jsdom does not evaluate.
+ * plan.md v10 "App-Wide Mascot" (AC38-AC39); CR-82 M4: the pose set grew
+ * to six (idle/thinking/greeting/happy/celebrating/encouraging) rendered
+ * by the shared pose rig. Under jsdom `window.matchMedia` is absent, so
+ * D-09 forces the static renderer - `data-mascot-renderer="static"` and
+ * the MascotStaticPose group structure (data-pose-group) are the stable
+ * assertions; tests never assert the Lottie renderer itself.
  */
-describe('Mascot (plan.md v10, AC38-AC39; CR-72)', () => {
-  it.each(MOODS)('renders the Bé Heo SVG character for the %s mood', (mood) => {
+describe('Mascot (plan.md v10, AC38-AC39; CR-82 s9.2)', () => {
+  it.each(MOODS)('renders the Bé Heo pose rig for the %s mood', (mood) => {
     render(<Mascot mood={mood} />);
 
     const mascot = screen.getByTestId('mascot');
     expect(mascot).toHaveAttribute('data-mascot-mood', mood);
-    // The illustrated pig head circle is always present.
-    expect(mascot.querySelector('svg circle[cx="48"]')).not.toBeNull();
+    expect(mascot).toHaveAttribute('data-mascot-renderer', 'static');
+    // The shared bust groups are always present.
+    expect(mascot.querySelector('[data-pose-group="head"]')).not.toBeNull();
+    expect(mascot.querySelector('[data-pose-group="eyes"]')).not.toBeNull();
+    expect(mascot.querySelector('[data-pose-group="snout"]')).not.toBeNull();
   });
 
-  it('happy and celebrating moods show closed-happy eyes; greeting and encouraging show open eyes', () => {
-    const { rerender } = render(<Mascot mood="happy" />);
-    expect(screen.getByTestId('mascot').querySelector('circle[r="4"]')).toBeNull();
+  it('thinking adds the thought bubble; celebrating adds confetti specks', () => {
+    const { rerender } = render(<Mascot mood="thinking" />);
+    expect(screen.getByTestId('mascot').querySelector('[data-pose-group="bubble"]')).not.toBeNull();
+    expect(screen.getByTestId('mascot').querySelector('[data-pose-group="confetti"]')).toBeNull();
 
     rerender(<Mascot mood="celebrating" />);
-    expect(screen.getByTestId('mascot').querySelector('circle[r="4"]')).toBeNull();
-
-    rerender(<Mascot mood="greeting" />);
-    expect(screen.getByTestId('mascot').querySelectorAll('circle[r="4"]').length).toBe(2);
-
-    rerender(<Mascot mood="encouraging" />);
-    expect(screen.getByTestId('mascot').querySelectorAll('circle[r="4"]').length).toBe(2);
+    expect(screen.getByTestId('mascot').querySelector('[data-pose-group="confetti"]')).not.toBeNull();
+    expect(screen.getByTestId('mascot').querySelector('[data-pose-group="bubble"]')).toBeNull();
   });
 
-  it('greeting shows the waving arm, celebrating shows confetti', () => {
-    const { rerender } = render(<Mascot mood="greeting" />);
-    // arm path has the M75 68 start point
-    expect(screen.getByTestId('mascot').innerHTML).toContain('M75 68');
-
-    rerender(<Mascot mood="celebrating" />);
-    expect(screen.getByTestId('mascot').innerHTML).not.toContain('M75 68');
-    // confetti rects
-    expect(screen.getByTestId('mascot').querySelectorAll('rect').length).toBeGreaterThanOrEqual(3);
+  it('greeting raises the right hoof (wave arm replaces the resting hoof)', () => {
+    render(<Mascot mood="greeting" />);
+    const mascot = screen.getByTestId('mascot');
+    // The raised hoof sits high on the artboard (cy ~196 of 512).
+    const hoof = mascot.querySelector('[data-pose-group="hoofR"] ellipse[cy="196"]');
+    expect(hoof).not.toBeNull();
   });
 
   it.each([
+    ['idle', 'Heo con đang chờ em'],
+    ['thinking', 'Heo con đang suy nghĩ'],
     ['greeting', 'Heo con vẫy chào'],
     ['happy', 'Heo con vui mừng'],
     ['encouraging', 'Heo con động viên'],
@@ -57,21 +54,24 @@ describe('Mascot (plan.md v10, AC38-AC39; CR-72)', () => {
     render(<Mascot mood={mood} />);
 
     expect(screen.getByTestId('mascot')).toHaveAttribute('aria-label', label);
+    expect(screen.getByTestId('mascot')).toHaveAttribute('role', 'img');
   });
 
-  it.each(MOODS)('gates the %s mood animation behind motion-reduce:animate-none', (mood) => {
-    render(<Mascot mood={mood} />);
+  it.each(MOODS)('size="inline" is always the static 32px pose for %s (D-09)', (mood) => {
+    render(<Mascot mood={mood} size="inline" />);
 
-    const className = screen.getByTestId('mascot').className;
-    expect(className).toMatch(/animate-mascot-\S+/);
-    expect(className).toContain('motion-reduce:animate-none');
+    const mascot = screen.getByTestId('mascot');
+    expect(mascot).toHaveAttribute('data-mascot-renderer', 'static');
+    const svg = mascot.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg).toHaveAttribute('width', '32');
+    expect(svg).toHaveAttribute('height', '32');
   });
 
-  it('renders at inline size without changing the mood mapping (FeedbackPanel usage)', () => {
+  it('keeps the mood mapping at inline size (FeedbackPanel usage)', () => {
     render(<Mascot mood="happy" size="inline" />);
 
     const mascot = screen.getByTestId('mascot');
     expect(mascot).toHaveAttribute('data-mascot-mood', 'happy');
-    expect(mascot.innerHTML).toContain('h-8 w-8');
   });
 });

@@ -1,12 +1,14 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { PhonicsSoundChoiceQuestion as PhonicsSoundChoiceQuestionType } from '../types';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
+import { useLottieSlot } from './fx/LottieBudget';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import PressableOptionButton from './PressableOptionButton';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 import QuestionBanner from './QuestionBanner';
 import { IconRefresh, IconSpeaker } from './icons';
@@ -19,6 +21,9 @@ interface PhonicsSoundChoiceQuestionProps {
   onSelectOption: (index: number) => void;
   /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
   speakerKey?: string;
+  /** CR-82 (D-15): reports content-audio loading to the board's
+      thinking-pose signal (child -> board). */
+  onAudioLoadingChange?: (loading: boolean) => void;
 }
 
 /**
@@ -32,8 +37,17 @@ export default function PhonicsSoundChoiceQuestion({
   selectedIndex,
   onSelectOption,
   speakerKey,
+  onAudioLoadingChange,
 }: PhonicsSoundChoiceQuestionProps) {
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
+  const { hasPlayed, playbackFailed, isLoading, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(question.word, onStatus, speed), question.word);
+
+  useEffect(() => {
+    onAudioLoadingChange?.(isLoading);
+  }, [isLoading, onAudioLoadingChange]);
+
+  /* CR-82 (D-20): the prompt illustration animates only when the board
+     allocator grants the 'prompt' slot. */
+  const promptSlot = useLottieSlot('prompt');
   const hasAnswered = selectedIndex !== null;
   const demo = useDemoHint('phonics-sound-choice');
   const gridRef = useRef<HTMLDivElement>(null);
@@ -43,7 +57,7 @@ export default function PhonicsSoundChoiceQuestion({
       <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <div className="mb-3 flex items-center justify-center gap-3">
         <span aria-hidden="true" className="text-6xl [@media(max-height:420px)]:text-5xl">
-          <EmojiVisual emoji={question.emoji} animated variant="block" />
+          <EmojiVisual emoji={question.emoji} animated={promptSlot} variant="block" />
         </span>
         <span className="font-display text-4xl font-extrabold text-amber-100 [@media(max-height:420px)]:text-3xl">
           {question.word}
@@ -71,7 +85,7 @@ export default function PhonicsSoundChoiceQuestion({
 
       <div ref={gridRef} className="relative grid grid-cols-2 gap-4 sm:grid-cols-4">
         {question.options.map((sound, index) => (
-          <button
+          <PressableOptionButton
             key={`option-${index}-${sound}`}
             type="button"
             data-testid={`option-${index}`}
@@ -85,7 +99,7 @@ export default function PhonicsSoundChoiceQuestion({
               {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
               {sound}
             </span>
-          </button>
+          </PressableOptionButton>
         ))}
         {demo.showDemo && !hasAnswered ? (
           <DemoHint containerRef={gridRef} onDone={demo.dismiss} />

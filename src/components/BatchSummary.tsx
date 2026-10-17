@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePressRelease } from '../hooks/usePressRelease';
 import type { BatchResult } from '../lib/batch/batchSession';
 import { getScoreStatus } from '../lib/batch/scoreStatus';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { CARD, CHIP_SKY, CTA_GOLD_XL, H1, H2, NAV_PILL, SCORE_PILL_LG, SCREEN_ENTER } from '../lib/ui/tokens';
+import { CARD, CHIP_SKY, CTA_GOLD_XL, NAV_PILL, SCORE_PILL_LG, SCREEN_ENTER, TYPE_SECTION_NAVY, TYPE_TITLE } from '../lib/ui/tokens';
 import Mascot from './Mascot';
 import ChestReveal from './celebrations/ChestReveal';
 import { InstructionSpeaker } from './InstructionSpeaker';
@@ -52,6 +53,8 @@ interface BatchSummaryProps {
  */
 export default function BatchSummary({ result, gradeId, onStartNewBatch, onChooseGrade, objectiveId, speakerKey }: BatchSummaryProps) {
   const status = getScoreStatus(result.points, result.maxPoints);
+  /* CR-82 (spec s16.1): the gold "Chơi tiếp" CTA springs on release. */
+  const againPress = usePressRelease();
   /* CR-69: ending a batch via "KẾT THÚC" before answering anything must
     not pay rewards or write a 0-question practice result. kids-UX: the
     gift, fork, share and send-results surfaces all stay behind this same
@@ -95,7 +98,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
       <div className={`${CARD} text-center`}>
       <Mascot mood={earned ? 'celebrating' : 'encouraging'} />
       <div className="mt-1 flex items-center justify-center gap-2">
-        <h1 className={H1}>{earned ? 'Hoàn thành bài luyện tập!' : 'Em chưa làm câu nào'}</h1>
+        <h1 className={TYPE_TITLE}>{earned ? 'Hoàn thành bài luyện tập!' : 'Em chưa làm câu nào'}</h1>
         {earned && (
           <InstructionSpeaker
             text={`Hoàn thành bài luyện tập! Em đúng ${result.totalCorrect} trên ${result.totalQuestions} câu.`}
@@ -158,7 +161,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
 
       {earned && (
       <div className="mt-8 text-left">
-        <h2 className={`mb-4 ${H2}`}>Kết quả từng vòng</h2>
+        <h2 className={`mb-4 ${TYPE_SECTION_NAVY}`}>Kết quả từng vòng</h2>
         <ul className="space-y-3">
           {result.rounds.map((round) => (
             <li
@@ -199,7 +202,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
           {/* kids-UX s3.10 session fork - equal-size choices, no
               auto-advance; "Chơi tiếp" keeps the gold next-step emphasis. */}
           <div className="mt-8 flex items-center justify-center gap-2">
-            <h2 className={H2}>Em muốn làm gì tiếp?</h2>
+            <h2 className={TYPE_SECTION_NAVY}>Em muốn làm gì tiếp?</h2>
             <InstructionSpeaker
               text="Em muốn nghỉ hay chơi tiếp nào?"
               lang="vi-VN"
@@ -221,6 +224,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
               data-testid="practice-again-button"
               onClick={onStartNewBatch}
               className={`w-full sm:w-auto ${CTA_GOLD_XL}`}
+              {...againPress}
             >
               <span className="inline-flex items-center gap-2"><IconPlay size={20} /> Chơi tiếp</span>
             </button>

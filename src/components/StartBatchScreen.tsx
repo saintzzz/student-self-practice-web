@@ -48,6 +48,7 @@ import {
 import { examConfigForGrade } from '../lib/exam/examSession';
 import { getLand } from '../lib/ui/theme';
 import { useViewer } from '../lib/viewer/ViewerContext';
+import { usePressRelease } from '../hooks/usePressRelease';
 import type { BankFetchFocus } from '../lib/qb/bank';
 
 interface StartBatchScreenProps {
@@ -62,6 +63,9 @@ interface StartBatchScreenProps {
   onArenaCreate?: () => void;
   onArenaAccept?: (challenge: ArenaOpenChallenge) => void;
   onArenaBot?: () => void;
+  /** CR-82 (R-v5-12): flashcards entry - 4th row of the English block.
+   *  Optional like the arena handlers: absent = the row does not mount. */
+  onStartFlashcards?: () => void;
   onBack: () => void;
   /** CR-30: guests see a lock prompt on the leaderboard card. */
   isGuest?: boolean;
@@ -152,7 +156,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
  *  - CR-46 preserved: every grade reaches every program/mode - only
  *    the container path differs per band.
  */
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onStartFlashcards, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   const examConfig = examConfigForGrade(grade.id);
   const { band, density } = useViewer();
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
@@ -163,6 +167,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
   const arenaHandlers = onArenaCreate && onArenaAccept && onArenaBot
     ? { onArenaCreate, onArenaAccept, onArenaBot }
     : null;
+
+  /* CR-82 (spec s16.1): the gold "Chơi" CTA springs on release. */
+  const startPress = usePressRelease();
 
   /** One program block: 3 mode buttons + admin FormPicker (paper card
    *  inside the hub panel). The header repeats the program name, so it
@@ -204,6 +211,19 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           >
             Nâng cao - {examConfig.drillCount} câu
           </button>
+          {/* CR-82 (R-v5-12): flashcards = the 4th row of the English
+              block only (vocabulary is English content), a BTN_DRILL-
+              family paper row at the band's standalone floor. */}
+          {program.id === 'english' && onStartFlashcards && (
+            <button
+              type="button"
+              data-testid="flashcards-start"
+              onClick={onStartFlashcards}
+              className={`${BTN_DRILL} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
+            >
+              <IconBook size={16} className="mr-1 inline-block" /> Thẻ từ vựng
+            </button>
+          )}
           <FormPicker gradeId={grade.id} programId={program.id} isAdmin={isAdmin ?? false} onStartExam={onStartExam} />
         </div>
       </div>
@@ -261,13 +281,15 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           id: 'more',
           icon: IconBook,
           label: 'Luyện thêm',
-          sub: 'Đề, đấu trường và ôn tập',
+          sub: 'Đề luyện và ôn tập',
           voiceHint: 'Chọn môn hoặc mục để luyện thêm nhé!',
           content: (
             <HubGroup
               subtile
               voiceKeyPrefix="hub-sub"
               tiles={[
+                /* CR-82 (R-v5-12): Đấu trường left this group - 3
+                   subjects + conditional Ôn tập = 3 or 4 subtiles. */
                 ...EXAM_PROGRAMS.map((program) => ({
                   id: program.id,
                   icon: program.icon,
@@ -276,20 +298,6 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   voiceHint: PROGRAM_VOICE_HINT[program.id],
                   content: programBlock(program, false),
                 })),
-                {
-                  id: 'arena',
-                  icon: IconSwords,
-                  label: 'Đấu trường',
-                  sub: 'Thi đua với bạn bè',
-                  voiceHint: 'Chọn bạn đấu nhé!',
-                  /* Spec §5.1: `hub-section-arena` exists only when its
-                     handlers do - aria-controls lists just the mounted
-                     section ids. */
-                  sections: [
-                    ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
-                    { id: 'rank', content: leaderboardEl },
-                  ],
-                },
                 ...(hasDueReview || hasCoachHints
                   ? [{
                       id: 'review',
@@ -308,6 +316,23 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               ]}
             />
           ),
+        },
+        /* CR-82 (R-v5-12, human ruling): Đấu trường is its own top-level
+           hub tile between Luyện thêm and Phần thưởng - learning first,
+           competition second, rewards last. hub-section-arena only
+           mounts when arena handlers exist; hub-section-rank always
+           does, so the tile is never empty. */
+        {
+          id: 'arena',
+          icon: IconSwords,
+          label: 'Đấu trường',
+          sub: 'Thi đua với bạn bè',
+          voiceHint: 'Chọn bạn đấu nhé!',
+          variant: 'arena',
+          sections: [
+            ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
+            { id: 'rank', content: leaderboardEl },
+          ],
         },
         {
           id: 'reward',
@@ -346,6 +371,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           label: 'Đấu trường',
           sub: 'Thử thách và bảng xếp hạng',
           voiceHint: 'Chọn bạn đấu nhé!',
+          /* CR-82 (R-v5-12): cross-band consistency - the G3-5 tile
+             adopts the same TRAIL_TILE_ARENA surface + VS emblem. */
+          variant: 'arena',
           content: (
             <>
               <div id="hub-section-arena" data-testid="hub-section-arena">{arenaCardEl}</div>
@@ -402,6 +430,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           data-testid="start-batch-button"
           onClick={onStartBatch}
           className={`mt-6 w-full ${CTA_GOLD_XL} sm:w-auto`}
+          {...startPress}
         >
           <span className="flex flex-col items-center">
             <span className="inline-flex items-center gap-2"><IconPlay size={18} /> Chơi</span>

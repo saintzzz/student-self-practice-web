@@ -10,6 +10,11 @@ export interface WordVisual {
   emoji: string;
   /** Same-origin path like '/images/vocab/{id}.webp', only present after human approval. */
   imageUrl?: string;
+  /**
+   * CR-82 (M6): the word itself - the tracing exhibit and "Nghe mẫu"
+   * copy need the text, not only its visual.
+   */
+  word: string;
 }
 
 const BASE = import.meta.env.BASE_URL ?? '/';
@@ -22,7 +27,7 @@ function withBase(url: string | undefined): string | undefined {
 }
 
 const WORD_VISUALS: ReadonlyMap<string, WordVisual> = new Map(
-  ALL_WORDS.map((w: VocabWord) => [w.id, { emoji: w.emoji, imageUrl: withBase(w.imageUrl) }]),
+  ALL_WORDS.map((w: VocabWord) => [w.id, { emoji: w.emoji, imageUrl: withBase(w.imageUrl), word: w.word }]),
 );
 
 /** Returns undefined for ids outside the bank (e.g. test fixtures). */

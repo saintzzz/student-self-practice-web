@@ -26,17 +26,19 @@ describe('GradeSelect', () => {
 
   it('personalizes the journey title with the student name (CR-41)', () => {
     render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} studentName="Sóc Xinh" />);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Sóc Xinh');
+    /* nbsp keeps "Bé {name}" on one wrapped line - normalize it before
+       comparing the copy. */
+    expect(screen.getByRole('heading', { level: 1 }).textContent.replace(/ /g, ' ')).toBe('Hành trình của Bé Sóc Xinh');
   });
 
   it('keeps the Bé Heo fallback for guests', () => {
     render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} />);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Heo');
+    expect(screen.getByRole('heading', { level: 1 }).textContent.replace(/ /g, ' ')).toBe('Hành trình của Bé Heo');
   });
 
   it('does not double the Bé prefix when the name already has it', () => {
     render(<GradeSelect grades={GRADES} onSelectGrade={vi.fn()} studentName="Bé Demo" />);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hành trình của Bé Demo');
+    expect(screen.getByRole('heading', { level: 1 }).textContent.replace(/ /g, ' ')).toBe('Hành trình của Bé Demo');
   });
 });
 

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PhonicsWordChoiceQuestion as PhonicsWordChoiceQuestionType } from '../types';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
@@ -11,6 +11,7 @@ import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
+import PressableOptionButton from './PressableOptionButton';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
 import QuestionBanner from './QuestionBanner';
 import { IconRefresh, IconSpeaker } from './icons';
@@ -23,6 +24,9 @@ interface PhonicsWordChoiceQuestionProps {
   onSelectOption: (index: number) => void;
   /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
   speakerKey?: string;
+  /** CR-82 (D-15): reports content-audio loading to the board's
+      thinking-pose signal (child -> board). */
+  onAudioLoadingChange?: (loading: boolean) => void;
 }
 
 /**
@@ -36,6 +40,7 @@ export default function PhonicsWordChoiceQuestion({
   selectedIndex,
   onSelectOption,
   speakerKey,
+  onAudioLoadingChange,
 }: PhonicsWordChoiceQuestionProps) {
   // speakWord on a bare key ("c") reads the letter name ("see"); the
   // utterance "c, as in cat" carries the actual sound via the example.
@@ -48,7 +53,11 @@ export default function PhonicsWordChoiceQuestion({
     return entry ? getWordVisual(entry.id) : undefined;
   }, [example]);
   const utterance = getSoundUtterance(question.sound, question.word);
-  const { hasPlayed, playbackFailed, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(utterance, onStatus, speed), utterance);
+  const { hasPlayed, playbackFailed, isLoading, play, playSlow } = useAudioPlayback((onStatus, speed) => speakWord(utterance, onStatus, speed), utterance);
+
+  useEffect(() => {
+    onAudioLoadingChange?.(isLoading);
+  }, [isLoading, onAudioLoadingChange]);
   const hasAnswered = selectedIndex !== null;
   const demo = useDemoHint('phonics-word-choice');
   const gridRef = useRef<HTMLDivElement>(null);
@@ -66,7 +75,7 @@ export default function PhonicsWordChoiceQuestion({
       <div className="mb-3 flex flex-wrap items-center justify-center gap-3">
         {/* CR-79 B3: the sound letter gets the display-glyph treatment -
             letterpress amber on navy, not plain white text. */}
-        <span className={`${DISPLAY_GLYPH} [@media(max-height:420px)]:text-5xl`}>
+        <span className={DISPLAY_GLYPH}>
           {question.sound}
         </span>
         {example && (
@@ -103,7 +112,7 @@ export default function PhonicsWordChoiceQuestion({
 
       <div ref={gridRef} className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
         {question.options.map((emoji, index) => (
-          <button
+          <PressableOptionButton
             key={`option-${index}-${emoji}`}
             type="button"
             data-testid={`option-${index}`}
@@ -128,7 +137,7 @@ export default function PhonicsWordChoiceQuestion({
                 variant="block"
               />
             </span>
-          </button>
+          </PressableOptionButton>
         ))}
         {demo.showDemo && !hasAnswered ? (
           <DemoHint containerRef={gridRef} onDone={demo.dismiss} />

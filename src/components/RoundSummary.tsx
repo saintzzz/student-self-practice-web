@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePressRelease } from '../hooks/usePressRelease';
 import type { RoundOutcome } from '../lib/batch/batchSession';
 import { getScoreStatus } from '../lib/batch/scoreStatus';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { CARD, CHIP_SKY, CTA_GOLD_XL, H2, NAV_PILL, SCREEN_ENTER } from '../lib/ui/tokens';
+import { CARD, CHIP_SKY, CTA_GOLD_XL, NAV_PILL, SCREEN_ENTER, TYPE_HERO_NUMBER_NAVY, TYPE_SECTION_NAVY } from '../lib/ui/tokens';
 import Mascot from './Mascot';
 import StarRain from './celebrations/StarRain';
 import { EmojiVisual } from './EmojiVisual';
@@ -77,6 +78,8 @@ export default function RoundSummary({
   const status = getScoreStatus(outcome.points, outcome.maxPoints);
   const awarded = useRef<RoundAwardResult | null>(null);
   const [award, setAward] = useState<RoundAwardResult | null>(null);
+  /* CR-82 (spec s16.1): the gold "Chơi tiếp" CTA springs on release. */
+  const nextRoundPress = usePressRelease();
 
   useEffect(() => {
     if (!awarded.current) {
@@ -94,13 +97,20 @@ export default function RoundSummary({
         // quest - a student who exits mid-batch still keeps progress.
         recordCorrectAnswers(outcome.correctCount);
         // CR-29: same granularity for the parent-report skill stats.
-        recordSkillAnswers(gradeId, skillKeyForRound(outcome.roundType), outcome.correctCount, outcome.totalCount);
+        // CR-82 (D-10): skill stats exclude assisted tracing completions -
+        // points/stars still use correctCount/totalCount (R-v5-07).
+        recordSkillAnswers(
+          gradeId,
+          skillKeyForRound(outcome.roundType),
+          outcome.skillCorrect ?? outcome.correctCount,
+          outcome.skillTotal ?? outcome.totalCount,
+        );
         const streakStickers = checkStreakStickers();
         awarded.current = { ...r, newStickers: [...r.newStickers, ...streakStickers] };
       }
       setAward(awarded.current);
     }
-  }, [gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints, outcome.correctCount, outcome.totalCount, outcome.roundType, objectiveId]);
+  }, [gradeId, outcome.roundNumber, outcome.points, outcome.maxPoints, outcome.correctCount, outcome.totalCount, outcome.skillCorrect, outcome.skillTotal, outcome.roundType, objectiveId]);
 
   const stars = award?.stars ?? 0;
   const newStickers = award?.newStickers ?? [];
@@ -118,15 +128,18 @@ export default function RoundSummary({
     <div className={`${CARD} ${SCREEN_ENTER} py-6 text-center [@media(max-height:420px)]:py-3`}>
       <Mascot mood="celebrating" />
       <StarRain stars={stars} />
-      <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-white">{outcome.titleVi}</h2>
+      <h2 className={`mt-1 ${TYPE_SECTION_NAVY}`}>{outcome.titleVi}</h2>
 
       {/* kids-UX s3.5.a: stars are the headline - "Em được N sao!" with the
-          0-star process-praise variant (never deficit framing). */}
+          0-star process-praise variant (never deficit framing). CR-82 M3:
+          the star count is the screen's hero number. */}
       <div className="mt-3 flex items-center justify-center gap-2">
         <p data-testid="round-stars-summary" className="text-2xl font-semibold text-amber-200">
-          {stars > 0
-            ? `Em được ${stars} sao!`
-            : 'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'}
+          {stars > 0 ? (
+            <>Em được <span className={TYPE_HERO_NUMBER_NAVY}>{stars}</span> sao!</>
+          ) : (
+            'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'
+          )}
         </p>
         <InstructionSpeaker
           text={
@@ -198,7 +211,7 @@ export default function RoundSummary({
               type="button"
               data-testid="guest-lock-exit"
               onClick={onExit}
-              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center text-center text-sm font-bold text-indigo-300 underline-offset-2 hover:underline sm:w-auto sm:px-2"
+              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center text-center text-sm font-bold text-blue-300 underline-offset-2 hover:underline sm:w-auto sm:px-2"
             >
               Chơi thử lớp khác
             </button>
@@ -222,7 +235,7 @@ export default function RoundSummary({
           {/* kids-UX s3.10 session fork - equal-size choices, no
               auto-advance; "Chơi tiếp" keeps the gold next-step emphasis. */}
           <div className="mt-6 flex items-center justify-center gap-2">
-            <h2 className={H2}>Em muốn làm gì tiếp?</h2>
+            <h2 className={TYPE_SECTION_NAVY}>Em muốn làm gì tiếp?</h2>
             <InstructionSpeaker
               text="Em muốn nghỉ hay chơi tiếp nào?"
               lang="vi-VN"
@@ -246,6 +259,7 @@ export default function RoundSummary({
               data-testid="next-round-button"
               onClick={onNextRound}
               className={`w-full sm:w-auto ${CTA_GOLD_XL}`}
+              {...nextRoundPress}
             >
               <span className="inline-flex items-center gap-2"><IconPlay size={20} /> Chơi tiếp</span>
             </button>

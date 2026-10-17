@@ -160,7 +160,8 @@ export function isExamAnswerCorrect(question: ExamQuestion, answer: ExamAnswer |
       return answer.type === 'option' && answer.index === question.extraIndex;
     case 'pronunciation-recording':
     case 'picture-pair-matching':
-      // Not used in exam mode.
+    case 'letter-tracing':
+      // Not used in exam mode (CR-82: tracing is batch-only, G1-2).
       return false;
   }
 }
@@ -199,6 +200,9 @@ export function examCorrectAnswerText(question: ExamQuestion): string {
       return question.word;
     case 'picture-pair-matching':
       return question.pairs.map((p) => p.word).join(', ');
+    case 'letter-tracing':
+      // Not used in exam mode (CR-82: tracing is batch-only, G1-2).
+      return question.letter;
   }
 }
 

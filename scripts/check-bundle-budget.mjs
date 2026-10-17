@@ -29,7 +29,7 @@
  * Headroom kept ~0.8 kB.
  * Run after `npm run build`.
  */
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import path from 'node:path';
@@ -40,6 +40,20 @@ const DIST = path.join(ROOT, 'dist');
 const JS_MAX_KB = 121;
 const CSS_MAX_KB = 10;
 const BASELINE = { js: 101.07, css: 5.2 };
+
+/**
+ * CR-82 (ARCHITECTURE-v5 D-03): the absolute gate was already red before
+ * CR-82 (entry JS 224.55 / CSS 13.08 kB gzip, measured pre-M1), so CR-82
+ * is measured as a DELTA against that recorded baseline: +20 kB JS gzip
+ * / +4.0 kB CSS gzip max, plus per-lazy-chunk caps. The inherited overrun
+ * is logged in docs/MEMORY.md as its own debt item.
+ */
+const CR82_BASELINE = { js: 224.55, css: 13.08 };
+const CR82_DELTA = { js: 20.0, css: 4.0 };
+const CR82_LAZY_CAPS = [
+  { match: /^LetterTracingQuestion-.*\.js$/, max: 12, label: 'LetterTracingQuestion chunk' },
+  { match: /^FlashcardScreen-.*\.js$/, max: 12, label: 'FlashcardScreen chunk' },
+];
 
 const kb = (buf) => gzipSync(buf, { level: 9 }).length / 1024;
 
@@ -59,24 +73,48 @@ async function main() {
 
   const results = [];
   let failed = false;
-  for (const [kind, href, max] of [
+  for (const [kind, href, legacyMax] of [
     ['js', jsSrc, JS_MAX_KB],
     ['css', cssHref, CSS_MAX_KB],
   ]) {
     const file = path.join(DIST, href.replace(/^\//, ''));
     const size = kb(await readFile(file));
-    const ok = size <= max;
+    const cr82Cap = CR82_BASELINE[kind] + CR82_DELTA[kind];
+    const ok = size <= cr82Cap;
     if (!ok) failed = true;
     results.push(
-      `${kind.toUpperCase()} ${path.basename(file)}: ${size.toFixed(2)} kB (baseline ${BASELINE[kind]}, max ${max}, delta +${(size - BASELINE[kind]).toFixed(2)}) ${ok ? 'OK' : 'OVER BUDGET'}`,
+      `${kind.toUpperCase()} ${path.basename(file)}: ${size.toFixed(2)} kB ` +
+        `(cr82 baseline ${CR82_BASELINE[kind]}, delta cap +${CR82_DELTA[kind]}, ` +
+        `delta ${size - CR82_BASELINE[kind] >= 0 ? '+' : ''}${(size - CR82_BASELINE[kind]).toFixed(2)}) ` +
+        `${ok ? 'OK' : 'OVER BUDGET'} | legacy absolute ${legacyMax}: ${size <= legacyMax ? 'OK' : 'over (inherited debt, see MEMORY)'}`,
     );
   }
-  const entryJs = await readFile(path.join(DIST, jsSrc.replace(/^\//, '')));
+
+  // CR-82 lazy-chunk caps (D-03): fail if a listed lazy chunk exceeds its
+  // gzip budget; skip silently while the chunk does not exist yet.
+  const assetDir = path.join(DIST, 'assets');
+  const assetFiles = existsSync(assetDir) ? await readdir(assetDir) : [];
+  for (const cap of CR82_LAZY_CAPS) {
+    const file = assetFiles.find((f) => cap.match.test(f));
+    if (!file) {
+      results.push(`${cap.label}: not built yet (skipped)`);
+      continue;
+    }
+    const size = kb(await readFile(path.join(assetDir, file)));
+    const ok = size <= cap.max;
+    if (!ok) failed = true;
+    results.push(`${cap.label} ${file}: ${size.toFixed(2)} kB (max ${cap.max}) ${ok ? 'OK' : 'OVER BUDGET'}`);
+  }
+  const entryJs = await readFile(path.join(DIST, jsSrc.replace(/^\//, '')), 'utf8');
   // AC-2.5: the dotlottie runtime package code and WASM asset URL must live
-  // in the lazy chunk, never in the entry chunk. (The lazy import's chunk
-  // filename "EmojiLottiePlayer-*.js" legitimately appears in the entry's
-  // import map - that IS the seam, not a leak.)
-  const leaked = ['dotlottie', '.wasm'].filter((s) => entryJs.includes(s));
+  // in the lazy chunk, never in the entry chunk. Vite's module-preload
+  // dependency manifest legitimately NAMES lazy-chunk asset filenames in
+  // the entry ("assets/dotlottie-player-*.js", "assets/*-*.wasm") - a
+  // filename string is the lazy seam itself, not runtime code. Strip
+  // emitted-asset filename literals first, then scan: a leak now means
+  // real runtime code or an import specifier inside the entry.
+  const entrySansAssetNames = entryJs.replace(/assets\/[\w.-]+\.(?:js|css|wasm|json)/g, '');
+  const leaked = ['dotlottie', '.wasm'].filter((s) => entrySansAssetNames.includes(s));
   if (leaked.length > 0) {
     failed = true;
     results.push(

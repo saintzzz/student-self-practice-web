@@ -41,6 +41,8 @@ export type RoundQuestionKind =
   | 'image-choice'
   | 'listening-sentence-fill-blank'
   | 'listening-image-choice'
+  /* CR-82 (D-01): G1-2 Round 2 carries 3 Spell-it fill-blank items. */
+  | 'listening-fill-blank'
   | 'counting-image'
   | 'pronunciation-recording'
   | 'describe-and-choose-image'
@@ -49,7 +51,9 @@ export type RoundQuestionKind =
   | 'phonics-word-choice'
   | 'phonics-final-choice'
   | 'phonics-blend-choice'
-  | 'phonics-rhyme-choice';
+  | 'phonics-rhyme-choice'
+  /* CR-82 (D-01): G1-2 Round 1 carries 2 tracing items at indices 3/7. */
+  | 'letter-tracing';
 
 export interface Fraction {
   current: number;
@@ -273,6 +277,62 @@ export async function submitListeningAnswer(
   } else {
     await page.getByTestId('submit-answer-button').click();
   }
+
+  const feedback = page.getByTestId('answer-feedback');
+  await expect(feedback).toBeVisible();
+  const feedbackText = (await feedback.innerText()).trim();
+  const outcome = await readElementOutcome(feedback);
+  const correctWord = extractRevealedWord(feedbackText);
+  return { outcome, correctWord, feedbackText };
+}
+
+/**
+ * CR-82 (spec s13): answers a listening-sentence-fill-blank item that may
+ * offer a G1-2 word bank. When gap-input-toggle is on screen the bank is
+ * eligible - switch to typing first so the digits-only `guess` stays
+ * guaranteed-wrong (a bank chip could be the real answer 1-in-3). Typed
+ * items fall straight through to submitListeningAnswer.
+ */
+export async function submitGapAwareListeningAnswer(
+  page: Page,
+  guess: string,
+): Promise<ListeningAnswerResult> {
+  const toggle = page.getByTestId('gap-input-toggle');
+  /* aria-pressed="true" means typing mode is already active (the choice
+     persists for the session, D-14) - clicking again would flip BACK to
+     the bank. Only click while the bank is the active mode. */
+  if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-pressed')) !== 'true') {
+    await toggle.click();
+    await expect(page.getByTestId('answer-input')).toBeVisible();
+  }
+  return submitListeningAnswer(page, guess);
+}
+
+/**
+ * CR-82 (spec s12): answers a Spell-it listening-fill-blank item through
+ * its tap path - each tap places the tile into the first empty slot and
+ * submit stays disabled until every slot is filled. A DISTRACTOR tile
+ * (data-tile-id "...-d0"/"-d1" - a letter that cannot appear in the
+ * target word) is tapped first, so the composed word is structurally
+ * wrong - same guaranteed-wrong discipline as the digits-only typed
+ * guess. Tapping bank order is NOT safe: the shuffled first N letters
+ * can legitimately spell the word (observed in a real run).
+ */
+export async function answerSpellItTap(page: Page): Promise<ListeningAnswerResult> {
+  const bank = page.getByTestId('spell-bank');
+  await expect(bank).toBeVisible();
+  const submit = page.getByTestId('submit-answer-button');
+  const distractor = bank.locator('button[data-tile-id*="-d"]').first();
+  if (await distractor.isVisible()) {
+    await distractor.click();
+  }
+  for (let i = 0; i < 12; i += 1) {
+    if (!(await submit.isDisabled())) break;
+    const tile = bank.locator('[data-testid^="spell-tile-"]').first();
+    if (!(await tile.isVisible())) break;
+    await tile.click();
+  }
+  await submit.click();
 
   const feedback = page.getByTestId('answer-feedback');
   await expect(feedback).toBeVisible();

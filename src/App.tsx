@@ -8,8 +8,10 @@ import CreditsScreen from './components/CreditsScreen';
 import PlacementScreen from './components/PlacementScreen';
 import AuthScreen from './components/AuthScreen';
 import AdminScreen from './components/AdminScreen';
-import ExamScreen from './components/ExamScreen';
+import ExamRouteBoundary from './components/exam/ExamRouteBoundary';
 import LandShell from './components/LandShell';
+import { LottieBudgetProvider, PRE_ROUND_SLOTS } from './components/fx/LottieBudget';
+import { bandForGrade } from './lib/ui/theme';
 import { isSupabaseConfigured } from './lib/supabase/client';
 import {
   fetchMyAccount,
@@ -29,6 +31,7 @@ import { ViewerProvider } from './lib/viewer/ViewerContext';
 import { clearParentVerification } from './components/ParentGate';
 import { __resetInstructionAutoplay } from './components/InstructionSpeaker';
 import type { ExamProgramId } from './types/exam';
+import FlashcardErrorBoundary from './components/flashcards/FlashcardErrorBoundary';
 import {
   advanceRoundQuestion,
   createBatch,
@@ -44,9 +47,11 @@ import {
   submitOptionAnswer,
   submitPairMatchingAnswer,
   submitPronunciationAnswer,
+  submitTracingAnswer,
 } from './lib/practiceSession';
+import type { Grade, TracingMeta } from './types';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards';
 
 // r16: StrictMode replays the mount effect - the confirm RPC consumes
 // the token on first success, so a naive second call would see
@@ -55,6 +60,26 @@ type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'cr
 const emailVerifyCache = new Map<string, Promise<boolean>>();
 /** 'off' = Supabase not configured (pre-CR-08 guest-only behavior). */
 type AuthMode = 'off' | 'loading' | 'login' | 'guest' | 'student' | 'admin';
+
+declare global {
+  interface Window {
+    /**
+     * Dev-only test hook: pin the next batch's seed so E2E can
+     * deterministically reach seed-dependent content (e.g. a G1-2 gap
+     * bank item) instead of relying on random coverage. Read once per
+     * "Chơi" press, dev builds only (r34-B6).
+     */
+    __batchSeedForTesting?: string;
+  }
+}
+
+// CR-82 (R-v5-12): the flashcards screen mounts INSIDE a retryable
+// lazy boundary so a flaky-chunk failure leaves an explicit retry /
+// skip affordance instead of a blank route (same family pattern as
+// TracingChunkBoundary). The boundary owns its lazy type + Suspense.
+function RouteFlashcards({ grade, onExit }: { grade: Grade; onExit: () => void }) {
+  return <FlashcardErrorBoundary grade={grade} onExit={onExit} />;
+}
 
 export default function App() {
   const configured = isSupabaseConfigured();
@@ -257,7 +282,8 @@ export default function App() {
   function handleStartBatch(): void {
     // r16: the finished batch's result row belongs to whoever started it.
     void bindActivityOwner();
-    setBatch(createBatch(undefined, selectedGradeId ?? 'grade-2'));
+    const seedOverride = import.meta.env.DEV ? window.__batchSeedForTesting : undefined;
+    setBatch(createBatch(seedOverride, selectedGradeId ?? 'grade-2'));
     setScreen('batch');
   }
 
@@ -332,6 +358,12 @@ export default function App() {
     setBatch(updateRoundSession(batch, (session) => submitPairMatchingAnswer(session, isCorrect)));
   }
 
+  /** CR-82 (D-10): tracing submits carry assisted/attempts telemetry. */
+  function handleSubmitTracing(isCorrect: boolean, meta: TracingMeta): void {
+    if (!batch) return;
+    setBatch(updateRoundSession(batch, (session) => submitTracingAnswer(session, isCorrect, meta)));
+  }
+
   function handleNextQuestion(): void {
     if (!batch) return;
     setBatch(advanceRoundQuestion(batch));
@@ -353,16 +385,18 @@ export default function App() {
     setBatch(endBatchEarly(batch));
   }
 
-  // CR-10 DS-T1: every screen lives inside a land shell. CR-16 + CR-81:
-  // adult surfaces ride the VieSchool navy/gold 'brand' surface; kid play
-  // surfaces (start-batch, batch) keep the deep-navy board but the real
-  // grade land renders as a moonlit journey scene beneath it - the
-  // "night board" sits inside the land the child is travelling through.
-  const shell = (node: ReactNode, gradeId?: string | null) => (
-    gradeId
-      ? <LandShell gradeId={gradeId} night>{node}</LandShell>
-      : <LandShell land="brand">{node}</LandShell>
-  );
+  // CR-10 DS-T1 + CR-82 (M2, spec s6.6): every screen lives inside a
+  // land shell. Kid play surfaces (start-batch, batch) get the v5 hero
+  // scene in the band tone (G1-2 dusk / G3-5 night); the journey map
+  // (GradeSelect) and AuthScreen ride the hero brand night; adult
+  // surfaces keep the brand strip. Exam keeps its own desk register.
+  const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean }) => {
+    if (opts?.gradeId) {
+      const tone = bandForGrade(opts.gradeId) === 'G12' ? 'dusk' : 'night';
+      return <LandShell gradeId={opts.gradeId} tone={tone} variant="hero">{node}</LandShell>;
+    }
+    return <LandShell land="brand" tone="night" variant={opts?.hero ? 'hero' : 'strip'}>{node}</LandShell>;
+  };
 
   // kids-UX (ADR KUX-5): every screen renders inside one ViewerProvider so
   // band-aware components (StartBatchScreen launchpad, Khám phá sheet,
@@ -400,8 +434,16 @@ export default function App() {
     );
   }
 
+  /* CR-82 (D-21 / AC-2.5): pre-round screens mount ZERO Lottie players -
+     the greeting mascot renders its static pose so no player chunk, WASM
+     or mascot/emoji JSON request fires before the first question. */
   if (configured && (authMode === 'login' || screen === 'login')) {
-    return shell(<AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />);
+    return shell(
+      <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
+        <AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />
+      </LottieBudgetProvider>,
+      { hero: true },
+    );
   }
 
   if (screen === 'admin' && myAccount) {
@@ -436,7 +478,8 @@ export default function App() {
 
   if (screen === 'grade-select') {
     return shell(
-      <GradeSelect
+      <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
+        <GradeSelect
         grades={GRADES}
         onSelectGrade={handleSelectGrade}
         onOpenCredits={handleOpenCredits}
@@ -448,7 +491,9 @@ export default function App() {
         studentName={myAccount?.display_name}
         joinClassSlot={joinClassSlot}
         {...authChipProps}
-      />,
+        />
+      </LottieBudgetProvider>,
+      { hero: true },
     );
   }
 
@@ -476,19 +521,37 @@ export default function App() {
 
   if (screen === 'start-batch' && selectedGrade) {
     return shell(
-      <StartBatchScreen
+      <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
+        <StartBatchScreen
         grade={selectedGrade}
         onStartBatch={handleStartBatch}
         onStartExam={handleStartExam}
         onArenaCreate={handleArenaCreate}
         onArenaAccept={handleArenaAccept}
         onArenaBot={handleArenaBot}
+        onStartFlashcards={() => setScreen('flashcards')}
         onBack={handleBackToGrades}
         isGuest={authMode !== 'student'}
         isAdmin={authMode === 'admin'}
         onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
-      />,
-      selectedGradeId,
+        />
+      </LottieBudgetProvider>,
+      { gradeId: selectedGradeId },
+    );
+  }
+
+  // CR-82 (R-v5-12): flashcards is a top-level arena route - same
+  // grade-scoped hero shell as the hub, and the PRE_ROUND_SLOTS budget
+  // keeps the screen Lottie-free outside its own perch slot.
+  if (screen === 'flashcards' && selectedGrade) {
+    return shell(
+      <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
+        <RouteFlashcards
+          grade={selectedGrade}
+          onExit={() => setScreen('start-batch')}
+        />
+      </LottieBudgetProvider>,
+      { gradeId: selectedGradeId },
     );
   }
 
@@ -497,7 +560,9 @@ export default function App() {
   // enter the exam hall" feel.
   if (screen === 'exam' && selectedGrade) {
     return (
-      <ExamScreen
+      /* CR-82 M9: the exam subtree loads as a lazy chunk behind a
+         retryable boundary (entry-bundle D-03 cap). */
+      <ExamRouteBoundary
         programId={examProgramId}
         gradeId={selectedGrade.id}
         gradeLabel={selectedGrade.name}
@@ -520,6 +585,7 @@ export default function App() {
         onSubmitExtraLetter={handleSubmitExtraLetter}
         onSubmitPronunciation={handleSubmitPronunciation}
         onSubmitPairMatching={handleSubmitPairMatching}
+        onSubmitTracing={handleSubmitTracing}
         onNextQuestion={handleNextQuestion}
         onNextRound={handleNextRound}
         onStartNewBatch={handleStartBatch}
@@ -532,22 +598,25 @@ export default function App() {
           setScreen('login');
         }}
       />,
-      batch.gradeId,
+      { gradeId: batch.gradeId },
     );
   }
 
   return shell(
-    <GradeSelect
-      grades={GRADES}
-      onSelectGrade={handleSelectGrade}
-      onOpenCredits={handleOpenCredits}
-      focusCreditsLink={focusCreditsLink}
-      allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
-      guestTrial={authMode === 'guest'}
-      studentName={myAccount?.display_name}
-      joinClassSlot={joinClassSlot}
-      {...authChipProps}
-    />,
+    <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
+      <GradeSelect
+        grades={GRADES}
+        onSelectGrade={handleSelectGrade}
+        onOpenCredits={handleOpenCredits}
+        focusCreditsLink={focusCreditsLink}
+        allowedGrades={authMode === 'student' ? (allowedGrades ?? []) : undefined}
+        guestTrial={authMode === 'guest'}
+        studentName={myAccount?.display_name}
+        joinClassSlot={joinClassSlot}
+        {...authChipProps}
+      />
+    </LottieBudgetProvider>,
+    { hero: true },
   );
   }
 

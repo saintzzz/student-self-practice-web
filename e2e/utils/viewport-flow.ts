@@ -83,8 +83,18 @@ export function describeFit(label: string, result: ViewportFitResult): string {
  * this important to catch reliably.
  */
 export async function expectFullyInViewport(page: Page, locator: Locator, label: string): Promise<void> {
+  /* "Reachable WITHOUT scrolling" is defined from the scroll-0 baseline.
+     Chromium's scroll anchoring can leave a fractional sub-pixel offset
+     (~0.03px) after the previous question's feedback/next transition -
+     normalize to scroll 0 before measuring. */
+  await page.evaluate(() => window.scrollTo(0, 0));
+  /* IntersectionObserver is authoritative for gross clipping, but on
+     fractional-DPR/compositor boundaries it can report ~0.9996 against a
+     fully-fitting element (~0.03px of sub-pixel noise). Ratio 0.999
+     keeps the regression signal (a real miss is px-scale) while the
+     exact boundingBox math below remains the strict half. */
   await expect(locator, `${label} should be within the viewport with zero scrolling (plan.md v9)`).toBeInViewport({
-    ratio: 1,
+    ratio: 0.999,
   });
   const result = await checkFitsInViewportNoScroll(page, locator);
   expect(result.fits, describeFit(label, result)).toBe(true);

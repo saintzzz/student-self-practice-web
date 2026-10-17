@@ -219,6 +219,11 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
       window.SpeechRecognition = DenyingRecognition;
       // @ts-expect-error test-only global stub, not a full SpeechRecognition type
       window.webkitSpeechRecognition = DenyingRecognition;
+      // MediaRecorder must go too - headless Chromium's fake mic would let
+      // the recorder engine take over in-place on 'not-allowed' (the real
+      // fallback path), so the denied state under test never renders.
+      // @ts-expect-error deliberately removing a browser API for this test
+      delete window.MediaRecorder;
     });
 
     await fastForwardThroughRounds1And2(page);

@@ -56,8 +56,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('ExamScreen - end confirmation (CR-69)', () => {
-  it('exam-submit opens the dialog; "Làm tiếp" cancels and keeps the exam running', () => {
+describe('ExamScreen - end confirmation (CR-69) + review-before-submit (CR-82 D-13)', () => {
+  it('practice mode: exam-submit opens ConfirmEndDialog; "Làm tiếp" cancels and keeps the drill running', () => {
     render(
       <ExamScreen programId="english" gradeId="grade-5" gradeLabel="Lớp 5" mode="practice" onExit={vi.fn()} />,
     );
@@ -65,7 +65,7 @@ describe('ExamScreen - end confirmation (CR-69)', () => {
 
     fireEvent.click(screen.getByTestId('exam-submit'));
     expect(screen.getByRole('dialog')).toBeVisible();
-    // Still on the exam - no result screen yet.
+    // Still on the drill - no result screen yet.
     expect(screen.queryByTestId('exam-result')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('end-confirm-cancel'));
@@ -73,14 +73,29 @@ describe('ExamScreen - end confirmation (CR-69)', () => {
     expect(screen.getByTestId('exam-option-0')).toBeVisible();
   });
 
-  it('confirming submits the exam and lands on the result screen', () => {
+  it('exam mode: exam-submit opens the review sheet; "Quay lại làm tiếp" cancels', () => {
     render(
       <ExamScreen programId="english" gradeId="grade-5" gradeLabel="Lớp 5" mode="exam" onExit={vi.fn()} />,
     );
     fireEvent.click(screen.getByTestId('exam-begin'));
 
     fireEvent.click(screen.getByTestId('exam-submit'));
-    fireEvent.click(screen.getByTestId('end-confirm-ok'));
+    expect(screen.getByTestId('exam-review-sheet')).toBeVisible();
+    expect(screen.queryByTestId('exam-result')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('exam-review-back'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('exam-option-0')).toBeVisible();
+  });
+
+  it('exam-review-submit submits the exam and lands on the result screen', () => {
+    render(
+      <ExamScreen programId="english" gradeId="grade-5" gradeLabel="Lớp 5" mode="exam" onExit={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByTestId('exam-begin'));
+
+    fireEvent.click(screen.getByTestId('exam-submit'));
+    fireEvent.click(screen.getByTestId('exam-review-submit'));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByTestId('exam-result')).toBeVisible();

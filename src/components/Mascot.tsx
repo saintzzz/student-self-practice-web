@@ -1,175 +1,73 @@
-import { IconParty, IconSparkles } from './icons';
+import { useState } from 'react';
+import { useViewer } from '../lib/viewer/ViewerContext';
+import type { MascotPoseName } from '../lib/mascot/poses';
+import MascotRig from './mascot/MascotRig';
+import { MascotStaticPose } from './mascot/MascotStaticPose';
 
-export type MascotMood = 'greeting' | 'happy' | 'encouraging' | 'celebrating';
+/** CR-82 (spec s9.2): the pose set is the public mood API. */
+export type MascotMood = MascotPoseName;
 
 interface MascotProps {
   mood: MascotMood;
-  /** 'inline' keeps the mascot small for tight-vertical-space contexts (FeedbackPanel);
-   *  'companion' is the CR-79 in-question size (56px). */
+  /** 'inline' = 32px static-only pose for tight-vertical-space contexts
+   *  (FeedbackPanel headline at max-height:420px); 'companion' = the
+   *  board/sheet perch size (72px G1-2 / 56px G3-5); 'block' = hero
+   *  screens (96px G1-2 / 80px G3-5). Spec s9.2 size table. */
   size?: 'inline' | 'block' | 'companion';
 }
 
-interface MoodConfig {
-  animationClassName: string;
-  ariaLabel: string;
-}
-
-/**
- * Mood-to-visual mapping. CR-72: Bé Heo is a real illustrated SVG now
- * (was a raw 🐷 emoji + accent emoji), with per-mood eyes/mouth so the
- * character actually has expressions - not one static glyph.
- */
-const MOOD_CONFIG: Record<MascotMood, MoodConfig> = {
-  greeting: {
-    animationClassName: 'animate-mascot-wave motion-reduce:animate-none',
-    ariaLabel: 'Heo con vẫy chào',
-  },
-  happy: {
-    animationClassName: 'animate-mascot-pop motion-reduce:animate-none',
-    ariaLabel: 'Heo con vui mừng',
-  },
-  encouraging: {
-    animationClassName: 'animate-mascot-calm motion-reduce:animate-none',
-    ariaLabel: 'Heo con động viên',
-  },
-  celebrating: {
-    animationClassName: 'animate-mascot-celebrate motion-reduce:animate-none',
-    ariaLabel: 'Heo con ăn mừng',
-  },
+/** Vietnamese accessible names (spec s9.2 aria-label column). */
+const ARIA_LABEL: Record<MascotMood, string> = {
+  idle: 'Heo con đang chờ em',
+  thinking: 'Heo con đang suy nghĩ',
+  greeting: 'Heo con vẫy chào',
+  happy: 'Heo con vui mừng',
+  encouraging: 'Heo con động viên',
+  celebrating: 'Heo con ăn mừng',
 };
 
-const SIZE_CLASSNAME: Record<NonNullable<MascotProps['size']>, string> = {
-  inline: 'h-8 w-8 [@media(max-height:420px)]:h-6 [@media(max-height:420px)]:w-6',
-  block: 'h-20 w-20',
-  companion: 'h-14 w-14 [@media(max-height:420px)]:h-10 [@media(max-height:420px)]:w-10',
-};
-
-/* Palette - warm pig pink with a deep-plum outline so the character reads
-   crisp on both the navy play surfaces and the light paper surfaces. */
-const OUTLINE = '#4A2E3F';
-const SKIN = '#FFB3C7';
-const EAR = '#F58BA9';
-const SNOUT = '#FF9FBD';
-const NOSTRIL = '#C2587E';
-const BLUSH = '#F2789F';
-const TONGUE = '#E76E95';
-
-function PigFace({ mood }: { mood: MascotMood }) {
-  const eyesClosedHappy = mood === 'happy' || mood === 'celebrating';
-  return (
-    <svg viewBox="0 0 96 96" className="block h-full w-full" aria-hidden="true">
-      {/* waving arm - greeting only */}
-      {mood === 'greeting' && (
-        <path
-          d="M75 68 C82 64 86 56 84 47 L78 49 C79.5 56 77 62 71 65 Z"
-          fill={SKIN}
-          stroke={OUTLINE}
-          strokeWidth="2.6"
-          strokeLinejoin="round"
-        />
-      )}
-      {/* ears */}
-      <path d="M24 28 C14 10 26 5 36 11 C42 15 42 23 38 29 Z" fill={SKIN} stroke={OUTLINE} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M72 28 C82 10 70 5 60 11 C54 15 54 23 58 29 Z" fill={SKIN} stroke={OUTLINE} strokeWidth="3" strokeLinejoin="round" />
-      <path d="M28 23 C23 14 29 11 34 14" fill="none" stroke={EAR} strokeWidth="3" strokeLinecap="round" />
-      <path d="M68 23 C73 14 67 11 62 14" fill="none" stroke={EAR} strokeWidth="3" strokeLinecap="round" />
-      {/* head */}
-      <circle cx="48" cy="55" r="33" fill={SKIN} stroke={OUTLINE} strokeWidth="3" />
-      {/* soft top-left sheen */}
-      <path d="M26 45a29 29 0 0 1 17-19" fill="none" stroke="#FFD3E0" strokeWidth="4" strokeLinecap="round" opacity="0.9" />
-      {/* blush */}
-      <ellipse cx="28" cy="63" rx="5.5" ry="3.4" fill={BLUSH} opacity="0.5" />
-      <ellipse cx="68" cy="63" rx="5.5" ry="3.4" fill={BLUSH} opacity="0.5" />
-      {/* eyes */}
-      {eyesClosedHappy ? (
-        <>
-          <path d="M32 49 q4.5 -6.5 9 0" fill="none" stroke={OUTLINE} strokeWidth="3.4" strokeLinecap="round" />
-          <path d="M55 49 q4.5 -6.5 9 0" fill="none" stroke={OUTLINE} strokeWidth="3.4" strokeLinecap="round" />
-        </>
-      ) : (
-        <>
-          <circle cx="36.5" cy="48" r="4" fill={OUTLINE} />
-          <circle cx="59.5" cy="48" r="4" fill={OUTLINE} />
-          <circle cx="38" cy="46.6" r="1.4" fill="#FFFFFF" />
-          <circle cx="61" cy="46.6" r="1.4" fill="#FFFFFF" />
-          {mood === 'encouraging' && (
-            <>
-              <path d="M31.5 40.5 q5 -3.5 10 -1.5" fill="none" stroke={OUTLINE} strokeWidth="2.4" strokeLinecap="round" />
-              <path d="M54.5 39 q5 -2 10 1.5" fill="none" stroke={OUTLINE} strokeWidth="2.4" strokeLinecap="round" />
-            </>
-          )}
-        </>
-      )}
-      {/* snout */}
-      <ellipse cx="48" cy="60.5" rx="13" ry="9.5" fill={SNOUT} stroke={OUTLINE} strokeWidth="3" />
-      <ellipse cx="43" cy="60.5" rx="2.1" ry="3.3" fill={NOSTRIL} />
-      <ellipse cx="53" cy="60.5" rx="2.1" ry="3.3" fill={NOSTRIL} />
-      {/* mouth */}
-      {mood === 'celebrating' ? (
-        <>
-          <path d="M40.5 73.5 Q48 83.5 55.5 73.5 Z" fill="#7A3552" stroke={OUTLINE} strokeWidth="2.6" strokeLinejoin="round" />
-          <ellipse cx="48" cy="77" rx="4.2" ry="2.4" fill={TONGUE} />
-        </>
-      ) : mood === 'happy' ? (
-        <path d="M41 73.5 q7 6.5 14 0" fill="none" stroke={OUTLINE} strokeWidth="3" strokeLinecap="round" />
-      ) : (
-        <path d="M42.5 73.5 q5.5 4.5 11 0" fill="none" stroke={OUTLINE} strokeWidth="3" strokeLinecap="round" />
-      )}
-      {/* celebrating confetti */}
-      {mood === 'celebrating' && (
-        <g>
-          <rect x="13" y="12" width="4" height="7" rx="1.4" fill="#FBBF24" transform="rotate(24 15 15.5)" />
-          <rect x="78" y="8" width="4" height="7" rx="1.4" fill="#34D399" transform="rotate(-20 80 11.5)" />
-          <rect x="86" y="22" width="4" height="7" rx="1.4" fill="#F472B6" transform="rotate(30 88 25.5)" />
-          <circle cx="6" cy="32" r="2.2" fill="#60A5FA" />
-          <circle cx="90" cy="34" r="2.2" fill="#FBBF24" />
-          <circle cx="18" cy="8" r="2" fill="#F472B6" />
-        </g>
-      )}
-    </svg>
-  );
-}
-
 /**
- * App-wide pig mascot (plan.md v10, AC38-AC39; CR-72 art pass).
- * `size="inline"` is required at every FeedbackPanel call site: that
- * component renders in the tight-vertical-space context the v9
- * responsive fix resolved on phone screens, so the mascot must stay
- * compact/inline there, never a large block graphic.
+ * App-wide pig mascot (plan.md v10 AC38-AC39; CR-72 art pass; CR-82 M4).
+ *
+ * Call sites keep the `mood`/`size` contract; internals are now the shared
+ * pose rig (D-08): `MascotRig` crossfades a static SVG poster into the
+ * pose's generated Lottie asset when D-09's mount conditions hold, and
+ * `size="inline"` is always the static SVG pose (spec s9.5 - a 32px
+ * Lottie adds runtime cost with no visible benefit).
+ *
+ * The wrapper is identical for both renderers: `role="img"` + the pose's
+ * Vietnamese aria-label, `data-mascot-mood` for tests, and
+ * `data-mascot-renderer="lottie|static"` for Playwright visual checks.
+ * Exactly one `data-testid="mascot"` node per screen state (spec s9.3).
  */
 export default function Mascot({ mood, size = 'block' }: MascotProps) {
-  const { animationClassName, ariaLabel } = MOOD_CONFIG[mood];
+  const { band } = useViewer();
+  const [renderer, setRenderer] = useState<'lottie' | 'static'>('static');
 
-  /* CR-12 DS-X4: block mascots get a soft radial halo + gentle float so
-     the character reads like a hero element, not a floating glyph.
-     CR-79: the companion keeps the float but drops the big halo. */
-  const block = size === 'block';
+  const sizePx =
+    size === 'inline' ? 32 : size === 'companion' ? (band === 'G12' ? 72 : 56) : band === 'G12' ? 96 : 80;
+  const staticOnly = size === 'inline';
 
   return (
     <span
       data-testid="mascot"
       data-mascot-mood={mood}
+      data-mascot-renderer={staticOnly ? 'static' : renderer}
       role="img"
-      aria-label={ariaLabel}
-      className={`relative inline-flex items-center gap-1.5 leading-none ${animationClassName}`}
+      aria-label={ARIA_LABEL[mood]}
+      className="relative inline-flex items-center leading-none"
     >
-      {block && (
+      {/* CR-12 DS-X4: hero-size mascots keep the soft radial halo. */}
+      {size === 'block' && (
         <span
           aria-hidden="true"
           className="absolute -inset-4 rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.15),rgba(255,255,255,0))]"
         />
       )}
-      <span
-        aria-hidden="true"
-        className={`relative ${SIZE_CLASSNAME[size]} ${size !== 'inline' ? 'mascot-float motion-reduce:animate-none' : ''}`}
-      >
-        <PigFace mood={mood} />
-      </span>
-      {mood === 'happy' && (
-        <IconSparkles size={block ? 22 : 14} className="relative text-amber-300" />
-      )}
-      {mood === 'celebrating' && (
-        <IconParty size={block ? 24 : 15} className="relative text-amber-300" />
+      {staticOnly ? (
+        <MascotStaticPose pose={mood} sizePx={sizePx} />
+      ) : (
+        <MascotRig mood={mood} sizePx={sizePx} onRendererChange={setRenderer} />
       )}
     </span>
   );
