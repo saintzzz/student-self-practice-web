@@ -5,13 +5,13 @@ import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import type { GameProps } from '../types';
 
 const ROUNDS = 5;
-const LOCKS = 3;
+const LOCKS = ROUNDS;
 
 /**
- * CR-84 Game 10 - Hom kho bau (Treasure Chest): a locked chest holds 3
- * padlocks. Every first/second-try correct answer cracks a lock; a miss
- * earns nothing. Open all 3 locks before the questions run out to loot
- * the chest. Scoring: first-try 2 / second-try 1 / 0 per round, max 10.
+ * CR-84 Game 10 - Hom kho bau (Treasure Chest): a locked chest holds 5
+ * padlocks - one per question. Every correct answer cracks a lock; a
+ * miss earns nothing. Answer every round correctly to loot the chest.
+ * Scoring: first-try 2 / second-try 1 / 0 per round, max 10.
  */
 export default function TreasureChest({ grade, seed, onEnd }: GameProps) {
   const rounds = useMemo(() => imageChoiceRounds(grade.id, seed, ROUNDS), [grade.id, seed]);
@@ -33,11 +33,18 @@ export default function TreasureChest({ grade, seed, onEnd }: GameProps) {
     setPoints(nextPoints);
     setLocksOpen(nextLocks);
     setWrongPicks([]);
-    const done = round + 1 >= rounds.length || nextLocks >= LOCKS;
+    const done = round + 1 >= rounds.length;
     if (done) {
       if (endedRef.current) return;
       endedRef.current = true;
-      onEnd({ points: nextPoints, maxPoints: ROUNDS * 2, correctCount: newCorrect });
+      const report = () =>
+        onEnd({ points: nextPoints, maxPoints: ROUNDS * 2, correctCount: newCorrect });
+      // Let the opened chest breathe for a beat before the end screen swaps in.
+      if (nextLocks >= LOCKS) {
+        timerRef.current = setTimeout(report, 900);
+        return;
+      }
+      report();
       return;
     }
     setRound(round + 1);
@@ -45,7 +52,7 @@ export default function TreasureChest({ grade, seed, onEnd }: GameProps) {
   };
 
   const pick = (index: number) => {
-    if (lock || !q || endedRef.current) return;
+    if (lock || !q || endedRef.current || locksOpen >= LOCKS) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
     setLock(true);

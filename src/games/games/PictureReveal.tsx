@@ -33,6 +33,7 @@ export default function PictureReveal({ grade, seed, onEnd }: GameProps) {
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(round, rounds.length - 1)];
+  const openTiles = useMemo(() => new Set(revealOrder.slice(0, revealed)), [revealOrder, revealed]);
 
   const advance = (addedReveal: number, newCorrect: number) => {
     const nextRevealed = revealed + addedReveal;
@@ -69,12 +70,12 @@ export default function PictureReveal({ grade, seed, onEnd }: GameProps) {
         data-testid="reveal-board"
         className="relative grid w-56 grid-cols-3 gap-1.5 overflow-hidden rounded-2xl border-2 border-amber-200/50 bg-gradient-to-b from-amber-50 to-orange-100 p-1.5 shadow-[0_12px_28px_-12px_rgba(0,0,0,0.6)]"
       >
-        {revealOrder.map((coverIdx, pos) => {
-          const isOpen = pos < revealed;
+        {Array.from({ length: TILES }, (_, tileIdx) => {
+          const isOpen = openTiles.has(tileIdx);
           return (
             <div
-              key={coverIdx}
-              data-testid={`reveal-tile-${coverIdx}`}
+              key={tileIdx}
+              data-testid={`reveal-tile-${tileIdx}`}
               className={`flex aspect-square items-center justify-center rounded-xl text-4xl transition-all duration-500 motion-reduce:transition-none ${
                 isOpen ? 'scale-100 bg-white/40' : 'scale-95'
               }`}

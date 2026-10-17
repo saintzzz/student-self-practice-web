@@ -97,7 +97,7 @@ export function EmojiChoiceField({
               disabled={disabled || wrong}
               onClick={() => onPick(i)}
               className={`${base} mx-auto h-24 w-24 flex-col overflow-hidden rounded-b-full rounded-t-[2rem] border-b-8 border-amber-950/60 bg-gradient-to-b from-amber-800/70 to-amber-950/80 shadow-[inset_0_10px_18px_-6px_rgba(0,0,0,0.7)] active:scale-95 disabled:opacity-40 ${wrong ? 'game-shake' : ''}`}
-              aria-label={`Lỗ ${i + 1}`}
+              aria-label={`Lỗ ${i + 1}: ${emoji}`}
             >
               <span
                 className={`game-peek flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}

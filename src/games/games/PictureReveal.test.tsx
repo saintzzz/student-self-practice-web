@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import PictureReveal from './PictureReveal';
 import { imageChoiceRounds } from '../sources';
+import { seededShuffleIndices } from '../../lib/prng';
 import type { Grade } from '../../types';
 
 const GRADE: Grade = { id: 'grade-3', name: 'Lớp 3' };
@@ -32,6 +33,11 @@ describe('PictureReveal', () => {
       screen.getByTestId(`reveal-tile-${i}`).textContent,
     ).filter((t) => t && t !== '✦');
     expect(open.length).toBe(1);
+    // The lifted cover is the first in the shuffled reveal order, not
+    // simply the top-left tile (regression: reveal positions must shuffle).
+    const order = seededShuffleIndices(TILES, `${SEED}:reveal`);
+    expect(screen.getByTestId(`reveal-tile-${order[0]!}`).textContent).not.toBe('✦');
+    expect(screen.getByTestId(`reveal-tile-${order[1]!}`).textContent).toBe('✦');
   });
 
   it('a wrong answer lifts no cover and the round still moves on', () => {
