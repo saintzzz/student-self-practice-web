@@ -61,7 +61,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
           <span className="mt-1 block font-display text-lg font-extrabold leading-tight">
             {featured.title}
           </span>
-          <span className="block text-xs font-semibold text-slate-900/90">{featured.tagline}</span>
+          <span className="block text-xs font-semibold text-slate-900">{featured.tagline}</span>
         </span>
         <Stars id={featured.id} />
         {featured.fresh && <NewBadge />}
@@ -81,7 +81,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
             <span className="font-display text-base font-extrabold leading-tight">
               {def.title}
             </span>
-            <span className="text-xs font-semibold leading-snug text-slate-900/90">{def.tagline}</span>
+            <span className="text-xs font-semibold leading-snug text-slate-900">{def.tagline}</span>
             <Stars id={def.id} />
           </button>
         ))}

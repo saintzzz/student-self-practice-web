@@ -107,7 +107,7 @@ export function HubGroup({
               <span className="z-10 min-w-0 flex-1">
                 <span className="block font-extrabold text-slate-900">{tile.label}</span>
                 {tile.sub && (
-                  <span className="block text-xs font-semibold text-slate-900/90">{tile.sub}</span>
+                  <span className="block text-xs font-semibold text-slate-900">{tile.sub}</span>
                 )}
               </span>
               {tile.emoji && (
