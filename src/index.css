@@ -347,6 +347,26 @@ textarea {
 }
 .game-peek { animation: game-peek 2.4s ease-in-out infinite; }
 
+/* CR-85 Word Worm direction pad buttons. */
+.worm-btn {
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem;
+  border: 2px solid rgb(186 230 253 / 0.5);
+  background: rgb(30 41 59 / 0.85);
+  font-size: 1.15rem;
+  transition: transform 120ms ease;
+}
+.worm-btn:hover { transform: translateY(-2px); }
+.worm-btn:active { transform: scale(0.92); }
+.worm-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgb(252 211 77 / 0.8); }
+@media (prefers-reduced-motion: reduce) {
+  .worm-btn { transition: none; }
+}
+
 @media (prefers-reduced-motion: reduce), (max-height: 420px) {
   .scene-layer { --pan: 0 !important; }
 }

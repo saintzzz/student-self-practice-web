@@ -16,6 +16,11 @@ import WhackMole from './games/WhackMole';
 import FeedThePig from './games/FeedThePig';
 import PictureReveal from './games/PictureReveal';
 import TreasureChest from './games/TreasureChest';
+import GoldQuest from './games/GoldQuest';
+import QuizShow from './games/QuizShow';
+import MazeChase from './games/MazeChase';
+import WordWorm from './games/WordWorm';
+import CastleGuard from './games/CastleGuard';
 import {
   EmojiChoiceField,
   LetterOrderField,
@@ -46,6 +51,11 @@ export const GAME_COMPONENTS: Record<GameId, GameComponent> = {
   'feed-the-pig': FeedThePig,
   'picture-reveal': PictureReveal,
   'treasure-chest': TreasureChest,
+  'gold-quest': GoldQuest,
+  'quiz-show': QuizShow,
+  'maze-chase': MazeChase,
+  'word-worm': WordWorm,
+  'castle-guard': CastleGuard,
 };
 
 export const GAME_MECHANICS = {

@@ -18,7 +18,12 @@ export type GameId =
   | 'whack-a-mole'
   | 'feed-the-pig'
   | 'picture-reveal'
-  | 'treasure-chest';
+  | 'treasure-chest'
+  | 'gold-quest'
+  | 'quiz-show'
+  | 'maze-chase'
+  | 'word-worm'
+  | 'castle-guard';
 
 export interface GameEnd {
   /** Numerator for starsForScore (normalized per game, see each shell). */

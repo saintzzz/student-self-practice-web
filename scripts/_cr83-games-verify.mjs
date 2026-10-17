@@ -14,8 +14,9 @@ if (await guest.count()) {
   await page.waitForTimeout(2500);
 }
 
-// Pick a grade (postcard trail map)
-await page.locator('[data-testid="grade-card-grade-2"]').first().click();
+// Pick a grade (postcard trail map) - grade-3 sees all 15 cards
+// (quiz-show is filtered to grades 3-5).
+await page.locator('[data-testid="grade-card-grade-3"]').first().click();
 await page.waitForTimeout(2500);
 
 // Expand the Game Zone hub tile, then the shelf shows
@@ -68,6 +69,24 @@ for (const [id, testid] of [
   await page.waitForTimeout(3200);
   console.log(`${id} screen:`, await page.locator(`[data-testid="${testid}"]`).count());
   await page.screenshot({ path: shot(`cr84-${id}.png`) });
+  await page.locator('[data-testid="game-exit"]').click();
+  await page.waitForTimeout(1200);
+  await page.locator('[data-testid="hub-tile-games"]').first().click();
+  await page.waitForTimeout(800);
+}
+
+// CR-85: the five competitor-mechanic ports - mount + smoke each
+for (const [id, testid] of [
+  ['gold-quest', 'game-gold-quest'],
+  ['quiz-show', 'game-quiz-show'],
+  ['maze-chase', 'game-maze-chase'],
+  ['word-worm', 'game-word-worm'],
+  ['castle-guard', 'game-castle-guard'],
+]) {
+  await page.locator(`[data-testid="game-card-${id}"]`).click();
+  await page.waitForTimeout(3200);
+  console.log(`${id} screen:`, await page.locator(`[data-testid="${testid}"]`).count());
+  await page.screenshot({ path: shot(`cr85-${id}.png`) });
   await page.locator('[data-testid="game-exit"]').click();
   await page.waitForTimeout(1200);
   await page.locator('[data-testid="hub-tile-games"]').first().click();

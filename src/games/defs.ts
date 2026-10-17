@@ -66,4 +66,35 @@ export const GAME_DEFS: readonly GameDef[] = [
     tagline: 'Trả lời đúng để mở ổ khóa vàng',
     emoji: '🧰',
   },
+  {
+    id: 'gold-quest',
+    title: 'Đào vàng',
+    tagline: 'Trả lời đúng rồi chọn rương may mắn',
+    emoji: '💎',
+  },
+  {
+    id: 'quiz-show',
+    title: 'Ai là triệu phú',
+    tagline: 'Lên đỉnh giải thưởng trước khi hết giờ',
+    emoji: '🎤',
+    grades: ['grade-3', 'grade-4', 'grade-5'],
+  },
+  {
+    id: 'maze-chase',
+    title: 'Đi mê cung',
+    tagline: 'Dẫn Heo tới ô đáp án, né con ma',
+    emoji: '👻',
+  },
+  {
+    id: 'word-worm',
+    title: 'Rắn đánh vầm',
+    tagline: 'Ăn chữ cái theo thứ tự đánh vần',
+    emoji: '🐛',
+  },
+  {
+    id: 'castle-guard',
+    title: 'Giữ thành',
+    tagline: 'Trả lời đúng bắn hạ quái trước cổng',
+    emoji: '🏰',
+  },
 ];
