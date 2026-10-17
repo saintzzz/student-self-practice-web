@@ -106,18 +106,19 @@ export const DISCLOSURE_BTN =
  *  illustration layer. 96px for G1-2 hands; G3-5 drops to 76px. */
 export type HubTone = 'sky' | 'orange' | 'emerald' | 'amber' | 'rose';
 
-/* Candy-bright surfaces (400->600) carry NAVY text: white on these
- * hues fails WCAG AA for small copy (~1.9-4.3:1); slate-900 keeps
- * >=5.9:1 on every tone including amber. */
+/* Candy-bright 300->500 surfaces carry NAVY text only. White fails AA
+ * on these hues (~1.9:1); slate-900 vs the darkest endpoint (rose-500)
+ * measures ~4.9:1 - AA for small copy. 600 endpoints would drop to
+ * ~3.8:1, so the palette stops at 500 and the depth edge is -600. */
 const HUB_TILE_BASE =
-  'relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border-b-4 px-4 text-left font-bold text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
+  'relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border-b-4 px-4 text-left font-bold text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
 
 const HUB_TONE_STYLES: Record<HubTone, { border: string; gradient: string }> = {
-  sky: { border: 'border-sky-700', gradient: 'bg-gradient-to-br from-sky-400 to-sky-600' },
-  orange: { border: 'border-orange-700', gradient: 'bg-gradient-to-br from-orange-400 to-orange-600' },
-  emerald: { border: 'border-emerald-700', gradient: 'bg-gradient-to-br from-emerald-400 to-emerald-600' },
-  amber: { border: 'border-amber-700', gradient: 'bg-gradient-to-br from-amber-400 to-amber-600' },
-  rose: { border: 'border-rose-700', gradient: 'bg-gradient-to-br from-rose-400 to-rose-600' },
+  sky: { border: 'border-sky-600', gradient: 'bg-gradient-to-br from-sky-300 to-sky-500' },
+  orange: { border: 'border-orange-600', gradient: 'bg-gradient-to-br from-orange-300 to-orange-500' },
+  emerald: { border: 'border-emerald-600', gradient: 'bg-gradient-to-br from-emerald-300 to-emerald-500' },
+  amber: { border: 'border-amber-600', gradient: 'bg-gradient-to-br from-amber-300 to-amber-500' },
+  rose: { border: 'border-rose-600', gradient: 'bg-gradient-to-br from-rose-300 to-rose-500' },
 };
 
 export function hubTileClass(tone: HubTone, minH: 96 | 76): string {
