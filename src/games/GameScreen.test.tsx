@@ -63,14 +63,18 @@ describe('GameScreen level flow (CR-88)', () => {
     expect(Object.keys(granted).some((k) => k.startsWith('game:memory-match:L3:'))).toBe(true);
   });
 
-  it('"Chọn màn" returns to the picker; "Chơi lại" remounts the same level with a fresh seed', () => {
+  it('"Chọn màn" returns to the picker and re-picking the same level gets a fresh seed (r39)', () => {
     render(<GameScreen grade={grade} gameId="racing-cars" onExit={vi.fn()} />);
     fireEvent.click(screen.getByTestId('game-level-1'));
     fireEvent.click(screen.getByTestId('stub-finish'));
+    const firstSeed = stubCalls[stubCalls.length - 1]!.seed;
     fireEvent.click(screen.getByTestId('game-back-to-zone'));
     expect(screen.getByTestId('game-level-picker')).toBeVisible();
-    // pick again -> finish -> replay keeps level, new seed
+    // re-picking the SAME level must seed a new run - otherwise the
+    // objective id repeats and the replay silently earns nothing
     fireEvent.click(screen.getByTestId('game-level-1'));
+    const secondSeed = stubCalls[stubCalls.length - 1]!.seed;
+    expect(secondSeed).not.toBe(firstSeed);
     fireEvent.click(screen.getByTestId('stub-finish'));
     const before = stubCalls[stubCalls.length - 1]!.seed!;
     fireEvent.click(screen.getByTestId('game-replay'));
@@ -79,6 +83,16 @@ describe('GameScreen level flow (CR-88)', () => {
     expect(last.seed).toContain('-L1');
   });
 
+  it('replay remounts the same level with a fresh seed', () => {
+    render(<GameScreen grade={grade} gameId="racing-cars" onExit={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('game-level-1'));
+    fireEvent.click(screen.getByTestId('stub-finish'));
+    const before = stubCalls[stubCalls.length - 1]!.seed!;
+    fireEvent.click(screen.getByTestId('game-replay'));
+    const last = stubCalls[stubCalls.length - 1]!;
+    expect(last.seed).not.toBe(before);
+    expect(last.seed).toContain('-L1');
+  });
   it('level best stars appear on the picker buttons', () => {
     recordGameResult('grade-2', 'whack-a-mole', 's1', 10, 10, 2);
     render(<GameScreen grade={grade} gameId="whack-a-mole" onExit={vi.fn()} />);

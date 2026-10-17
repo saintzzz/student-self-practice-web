@@ -434,8 +434,9 @@ export function recordGameResult(
     const stars = starsForScore(points, maxPoints);
     const best = state.gameBest ?? {};
     /* Track overall best plus the per-level best the level picker
-       reads (CR-88). */
-    const keys = level ? [gameId, `${gameId}:L${level}`] : [gameId];
+       reads (CR-88). level ?? 1 keeps legacy callers consistent with
+       the L1 objective id they get. */
+    const keys = [gameId, `${gameId}:L${level ?? 1}`];
     let dirty = false;
     for (const key of keys) {
       if ((best[key] ?? 0) < stars) {

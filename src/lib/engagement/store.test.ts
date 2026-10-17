@@ -214,6 +214,8 @@ describe('recordGameResult levels (CR-88)', () => {
   it('omitted level behaves like level 1 (legacy callers stay valid)', () => {
     recordGameResult('grade-2', 'fishing-catch', 'c', 10, 10);
     expect(gameBestStars('fishing-catch')).toBe(3);
+    // review r39: the L1 picker stars reflect legacy callers too
+    expect(gameLevelStars('fishing-catch', 1)).toBe(3);
     const keys = Object.keys(getState().grantedObjectives ?? {});
     expect(keys.some((k) => k.startsWith('game:fishing-catch:L1:'))).toBe(true);
   });

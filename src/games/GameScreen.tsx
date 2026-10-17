@@ -111,15 +111,20 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
     const elapsed = Date.now() - startRef.current;
     setElapsedMs(elapsed);
     const spec = specFor(level ?? 1);
-    const earnedBonus = timeBonusFor(elapsed, spec, Math.round(result.maxPoints * 0.2));
-    setBonus(earnedBonus);
+    const starCount = starsForScore(result.points, result.maxPoints);
+    /* Speed bonus only on a run worth >=1 star - a fast wipeout is not
+       a "fast win" (review r39). */
+    setBonus(starCount > 0 ? timeBonusFor(elapsed, spec, Math.round(result.maxPoints * 0.2)) : 0);
     const award = recordGameResult(grade.id, gameId, seed, result.points, result.maxPoints, level ?? 1);
     recordCorrectAnswers(result.correctCount);
-    setStars(starsForScore(result.points, result.maxPoints));
+    setStars(starCount);
     setEnd(result);
     playSfx('star');
     void award;
   };
+
+  const freshSeed = () =>
+    setSeed(`${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`);
 
   const replay = () => {
     endedRef.current = false;
@@ -127,7 +132,19 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
     setStars(0);
     setBonus(0);
     setTick(0);
-    setSeed(`${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`);
+    freshSeed();
+  };
+
+  /* Back to the level picker = a NEW run on the next pick, so the seed
+     must rotate too - otherwise the identical objective id is already
+     granted and the replay silently earns nothing (review r39). */
+  const backToPicker = () => {
+    endedRef.current = false;
+    setLevel(null);
+    setEnd(null);
+    setBonus(0);
+    setTick(0);
+    freshSeed();
   };
 
   const playing = level !== null && !end;
@@ -194,7 +211,7 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
                 <button
                   type="button"
                   data-testid="game-back-to-zone"
-                  onClick={() => { endedRef.current = false; setLevel(null); setEnd(null); setBonus(0); }}
+                  onClick={backToPicker}
                   className="inline-flex items-center gap-2 rounded-2xl border-2 border-white/20 bg-navy-800/70 px-6 py-3 text-lg font-bold text-slate-200 shadow transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-sky-400"
                 >
                   Chọn màn
