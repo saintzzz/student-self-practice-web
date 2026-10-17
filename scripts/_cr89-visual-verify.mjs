@@ -96,6 +96,14 @@ check('gem tally animates via lottie', gemLottie >= 1, `got ${gemLottie}`);
 await page.locator('[data-testid="gem-tally"] [data-emoji-ready="true"]').waitFor({ timeout: 10000 }).catch(() => {});
 const gemReady = await page.locator('[data-testid="gem-tally"] [data-emoji-mode="lottie"][data-emoji-ready="true"]').count();
 check('gem lottie actually playing', gemReady >= 1, `ready=${gemReady}`);
+// readiness is not playback - the rendered frames must advance (r47).
+// The dotlottie player draws into a same-origin canvas; two snapshots
+// a beat apart must differ if the animation is really running.
+const frameSnap = () => page.locator('[data-testid="gem-tally"] canvas').evaluate((c) => c.toDataURL());
+const f1 = await frameSnap();
+await page.waitForTimeout(700);
+const f2 = await frameSnap();
+check('gem lottie frames advance', f1.length > 100 && f1 !== f2, `frames ${f1.length}b, equal=${f1 === f2}`);
 const goldLottie = await page.locator('[data-emoji-mode="lottie"]').count();
 check('gold lottie budget <=2', goldLottie <= 2, `got ${goldLottie}`);
 await page.screenshot({ path: shot('cr89-gold.png') });
