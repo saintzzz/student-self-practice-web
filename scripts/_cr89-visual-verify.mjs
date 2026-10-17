@@ -40,7 +40,7 @@ await page.screenshot({ path: shot('cr89-balloon.png') });
 const lottieCount = await page.locator('[data-emoji-mode="lottie"]').count();
 check('lottie budget <=2', lottieCount <= 2, `got ${lottieCount}`);
 
-// WhackMole prompt visual is the animated hero
+// WhackMole: moles render EmojiVisual; prompt visual is the animated hero
 await page.locator('[data-testid="game-exit"]').click();
 await page.waitForTimeout(1200);
 await page.locator('[data-testid="hub-tile-games"]').first().click();
@@ -49,9 +49,14 @@ await page.locator('[data-testid="game-card-whack-a-mole"]').click();
 await page.waitForTimeout(1500);
 await page.locator('[data-testid="game-level-1"]').click();
 await page.waitForTimeout(2500);
+const moleVis = await page.locator('[data-testid="game-whack-a-mole"] [data-emoji-visual]').count();
+check('mole EmojiVisual options', moleVis >= 4, `got ${moleVis}`);
+const moleLottie = await page.locator('[data-emoji-mode="lottie"]').count();
+check('mole lottie budget <=2', moleLottie <= 2, `got ${moleLottie}`);
 await page.screenshot({ path: shot('cr89-mole.png') });
 
-// FeedThePig hero animates (single prompt-slot lottie)
+// FeedThePig hero renders through the visual pipeline (svg or lottie,
+// never the raw native font) and stays within the lottie budget.
 await page.locator('[data-testid="game-exit"]').click();
 await page.waitForTimeout(1200);
 await page.locator('[data-testid="hub-tile-games"]').first().click();
@@ -62,6 +67,10 @@ await page.locator('[data-testid="game-level-1"]').click();
 await page.waitForTimeout(3000);
 const pigVis = await page.locator('[data-testid="pig-face"] [data-emoji-visual]').count();
 check('pig EmojiVisual', pigVis >= 1, `got ${pigVis}`);
+const pigMode = await page.locator('[data-testid="pig-face"] [data-emoji-visual]').getAttribute('data-emoji-mode');
+check('pig rendered via pipeline (svg or lottie)', pigMode === 'svg' || pigMode === 'lottie', `mode=${pigMode}`);
+const pigLottie = await page.locator('[data-emoji-mode="lottie"]').count();
+check('pig lottie budget <=2', pigLottie <= 2, `got ${pigLottie}`);
 await page.screenshot({ path: shot('cr89-pig.png') });
 
 console.log(failures === 0 ? 'DONE - all checks passed' : `FAILED ${failures} checks`);
