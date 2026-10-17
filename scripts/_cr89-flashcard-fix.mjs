@@ -58,6 +58,12 @@ const known = page.locator('[data-testid="flashcard-known"]');
 for (const [name, el] of [['again', again], ['known', known]]) {
   const img = await el.evaluate((n) => getComputedStyle(n).backgroundImage);
   check(await el.isVisible(), `${name} button visible`);
+  const box = await el.boundingBox();
+  check(
+    !!box && box.x >= -2 && box.y >= 0 && box.x + box.width <= 392 && box.y + box.height <= 844,
+    `${name} button inside viewport`,
+    box ? `x=${box.x} y=${box.y} w=${box.width}` : 'no box',
+  );
   check(img.includes('gradient'), `${name} button is solid`, img.slice(0, 60));
 }
 
