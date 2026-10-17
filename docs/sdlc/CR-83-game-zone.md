@@ -180,3 +180,21 @@ Two pure wraps (existing mechanics, new shell) + four new mechanics:
   audio doctrine.
 - Letter Catch uses raw spellable words (no question kind) - it maps to the
   letter-order mechanic family for practice reuse via LetterOrderField.
+
+## External review r1 -> fixes applied
+
+- HIGH: all six games scheduled timeouts with no unmount cleanup (state
+  updates + onEnd firing after exit). Fixed: useEffect cleanup clears
+  timerRef on unmount in all six; LetterCatch got a dedicated
+  wrongTimerRef so overlapping timers cannot lose each other.
+- MEDIUM: MemoryMatch awarded 10/10 for a 5-move run (one mismatch) and
+  LetterCatch allowed one wrong bubble per word at full points - both
+  could mint 3-star results with errors. BA rule is "3 stars = clean
+  play". Fixed: bonus needs the flawless 4-move run; a wrong bubble
+  drops the word to 1 pt. Regression tests added for both.
+- MEDIUM: TicTacToe empty cells had no accessible name. Fixed: cells now
+  announce "O hang R cot C - trong/X/O/dang chon".
+- MEDIUM: ModelSpeaker autoplayed the prompt word on mount, violating
+  the post-CR-82 explicit-audio doctrine (app listening questions use
+  useAudioPlayback = explicit tap). Fixed: autoplay prop removed; "Nghe
+  tu" is a tap-only prompt, same contract as practice listening.

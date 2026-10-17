@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
@@ -22,6 +22,7 @@ export default function BalloonPop({ grade, seed, onEnd }: GameProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[round];
   if (!q) return null;

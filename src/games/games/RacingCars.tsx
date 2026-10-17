@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
@@ -21,6 +21,7 @@ export default function RacingCars({ grade, seed, onEnd }: GameProps) {
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lock, setLock] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[round];
   if (!q) return null;

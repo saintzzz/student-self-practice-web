@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { playSfx } from '../lib/sfx';
 import { IconSpeaker } from '../components/icons';
 import { speakWord } from '../lib/speech';
@@ -258,14 +257,7 @@ export function PairBoardField({ tiles, openIndexes, matchedIndexes, onFlip }: P
 /* ModelSpeaker - explicit "Nghe" replay chip for audio-prompt games.   */
 /* ------------------------------------------------------------------ */
 
-export function ModelSpeaker({ word, autoplay = true }: { word: string; autoplay?: boolean }) {
-  const firedRef = useRef(false);
-  useEffect(() => {
-    if (autoplay && word && !firedRef.current) {
-      firedRef.current = true;
-      speakWord(word);
-    }
-  }, [word, autoplay]);
+export function ModelSpeaker({ word }: { word: string }) {
   return (
     <button
       type="button"

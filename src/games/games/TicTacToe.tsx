@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
@@ -35,6 +35,7 @@ export default function TicTacToe({ grade, seed, onEnd }: GameProps) {
   const [lock, setLock] = useState(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(qIdx, rounds.length - 1)];
 
@@ -99,6 +100,9 @@ export default function TicTacToe({ grade, seed, onEnd }: GameProps) {
             data-testid={`ttt-cell-${i}`}
             disabled={!!cell || pendingCell !== null || lock}
             onClick={() => pickCell(i)}
+            aria-label={`Ô hàng ${Math.floor(i / 3) + 1} cột ${(i % 3) + 1}${
+              cell ? ` - đã có ${cell}` : pendingCell === i ? ' - đang chọn' : ' - trống'
+            }`}
             className={`flex aspect-square items-center justify-center rounded-2xl border-2 font-display text-3xl font-extrabold transition motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300 ${
               pendingCell === i
                 ? 'border-amber-300 bg-amber-100/90'

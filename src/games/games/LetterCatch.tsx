@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { playSfx } from '../../lib/sfx';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
@@ -45,6 +45,14 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
   const [points, setPoints] = useState(0);
   const [done, setDone] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrongTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (wrongTimerRef.current) clearTimeout(wrongTimerRef.current);
+    },
+    [],
+  );
 
   const word = words[Math.min(wordIdx, words.length - 1)];
   const target = word?.word.toLowerCase() ?? '';
@@ -58,7 +66,9 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
   const placedWord = placed.map((id) => tiles.find((t) => t.id === id)?.letter ?? '').join('');
 
   const finishWord = (missCount: number) => {
-    const earned = missCount <= 1 ? 2 : 1;
+    // Full points only for a clean word - any wrong bubble drops to 1,
+    // so 3 stars means clean play across the run (BA rule).
+    const earned = missCount === 0 ? 2 : 1;
     const nextPoints = points + earned;
     const nextDone = done + 1;
     setPoints(nextPoints);
@@ -79,7 +89,7 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
   };
 
   const tap = (tile: SpellTile) => {
-    if (placed.includes(tile.id)) return;
+    if (placed.includes(tile.id) || placed.length >= target.length) return;
     const expected = target[placed.length];
     if (tile.letter === expected) {
       playSfx('pop');
@@ -95,7 +105,7 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
     const nextMisses = misses + 1;
     setMisses(nextMisses);
     setWrongTile(tile.id);
-    timerRef.current = setTimeout(() => setWrongTile(null), 450);
+    wrongTimerRef.current = setTimeout(() => setWrongTile(null), 450);
   };
 
   const visual = getWordVisual(word.id);
@@ -109,7 +119,7 @@ export default function LetterCatch({ grade, seed, onEnd }: GameProps) {
           {target.split('').map((_, i) => placedWord[i] ?? '_').join('')}
         </span>
       </div>
-      <ModelSpeaker word={target} autoplay={false} />
+      <ModelSpeaker word={target} />
       <LetterOrderField
         tiles={tiles}
         placedIds={placed}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { playSfx } from '../../lib/sfx';
 import { pickGameWords } from '../sources';
@@ -28,12 +28,14 @@ export default function MemoryMatch({ grade, seed, onEnd }: GameProps) {
   const [lock, setLock] = useState(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const finishIfDone = (matchedCount: number, moveCount: number) => {
     if (matchedCount < tiles.length || endedRef.current) return;
     endedRef.current = true;
-    // 4 pairs found = 8 base; <=5 moves +2, <=7 +1 (perfect = 4 moves).
-    const bonus = moveCount <= 5 ? 2 : moveCount <= 7 ? 1 : 0;
+    // 4 pairs found = 8 base; flawless 4-move run +2, <=6 moves +1 -
+    // any mismatch drops below max, so 3 stars means clean play (BA rule).
+    const bonus = moveCount <= 4 ? 2 : moveCount <= 6 ? 1 : 0;
     onEnd({ points: 8 + bonus, maxPoints: 10, correctCount: PAIRS });
   };
 
