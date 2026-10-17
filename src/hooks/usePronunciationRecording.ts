@@ -35,6 +35,9 @@ export interface UsePronunciationRecordingResult {
   retry: () => void;
   /** Explicit "give up on recording, submit an empty attempt" escape hatch for the fallback messages. */
   skip: () => void;
+  /** Latest non-final transcript while recording - the UI shows it live so
+      the child sees the machine hearing them, not a dead wait. */
+  heardText: string;
 }
 
 type CaptureMode = 'sr' | 'recorder';
@@ -85,6 +88,7 @@ export function usePronunciationRecording(
     initialMode ? 'idle' : 'unsupported',
   );
   const [errorReason, setErrorReason] = useState<string | null>(null);
+  const [heardText, setHeardText] = useState('');
   const modeRef = useRef<CaptureMode | null>(initialMode);
   const controllerRef = useRef<SpeechRecognitionController | null>(null);
   const recorderRef = useRef<AudioRecordingController | null>(null);
@@ -108,6 +112,10 @@ export function usePronunciationRecording(
   // child already left.
   const unmountedRef = useRef(false);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // CR-83 latency: once an interim transcript covers the target word, a
+  // short stability window stops the recognizer early - cuts the ~1.5-3s
+  // of post-speech silence the service would otherwise wait through.
+  const interimStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // r8: React StrictMode replays mount->cleanup->mount; the cleanup sets
@@ -119,6 +127,10 @@ export function usePronunciationRecording(
       if (retryTimerRef.current !== null) {
         clearTimeout(retryTimerRef.current);
         retryTimerRef.current = null;
+      }
+      if (interimStopRef.current !== null) {
+        clearTimeout(interimStopRef.current);
+        interimStopRef.current = null;
       }
       controllerRef.current?.stop();
       recorderRef.current?.cancel();
@@ -136,14 +148,37 @@ export function usePronunciationRecording(
   const finish = useCallback(
     (finalTranscript: string) => {
       if (settledRef.current || unmountedRef.current) return;
+      /* CR-83 mishear guard: a transcript far longer than the target
+         ("i am a student" vs target "egg") is the mic capturing
+         something else - leftover app audio, TV, a sibling - not a bad
+         pronunciation of the word. Scoring that 0% punishes the child
+         for a capture failure, so route it to a retryable 'error' with
+         a tailored hint instead of submitting. settledRef stays false
+         so the retry button can bring the phase back to idle. */
+      const targetWords = Math.max(
+        1,
+        targetWord.trim().split(/\s+/).filter(Boolean).length,
+      );
+      const heardWords = finalTranscript.trim().split(/\s+/).filter(Boolean).length;
+      if (heardWords >= targetWords + 3) {
+        setMicRecording(false);
+        setErrorReason('mismatch');
+        setPhase('error');
+        return;
+      }
       settledRef.current = true;
+      if (interimStopRef.current) {
+        clearTimeout(interimStopRef.current);
+        interimStopRef.current = null;
+      }
+      setHeardText('');
       // SR success never passes through a non-'recording' phase, so the
       // phase effect cannot release suppression - the feedback screen's
       // "Nghe mẫu" would stay dead. Release here for every engine.
       setMicRecording(false);
       onAttempt(finalTranscript);
     },
-    [onAttempt],
+    [onAttempt, targetWord],
   );
 
   const launchRecorder = useCallback(async () => {
@@ -154,7 +189,7 @@ export function usePronunciationRecording(
     // tap. If it rejects, the proper error phase replaces this below.
     setPhase('recording');
     try {
-      const controller = await startAudioRecording();
+      const controller = await startAudioRecording({ silenceMs: 900 });
       if (settledRef.current || unmountedRef.current) {
         controller.cancel();
         return;
@@ -204,8 +239,28 @@ export function usePronunciationRecording(
     // SpeechRecognition's own onerror already reports permission denial via
     // the 'not-allowed' family of codes (see PERMISSION_ERROR_CODES), so
     // nothing is lost by not asking twice.
+    const targetWords = Math.max(
+      1,
+      targetWord.trim().split(/\s+/).filter(Boolean).length,
+    );
     const controller = startSpeechRecognition({
       onResult: (transcript) => finish(transcript),
+      onInterim: (text) => {
+        setHeardText(text);
+        const heard = text.trim().split(/\s+/).filter(Boolean).length;
+        if (heard > targetWords) {
+          // Past the target - every extra word is drift/noise, stop now.
+          controller?.stop();
+        } else if (heard === targetWords) {
+          // Same count may still be mid-word ('eg' -> 'egg') - wait for
+          // the transcript to be stable a beat before cutting it off.
+          if (interimStopRef.current) clearTimeout(interimStopRef.current);
+          interimStopRef.current = setTimeout(() => {
+            interimStopRef.current = null;
+            controller?.stop();
+          }, 500);
+        }
+      },
       onPermissionError: () => {
         // SR denial is about the speech *service*, not necessarily the
         // mic (iOS: 'service-not-allowed' while getUserMedia is fine) -
@@ -247,7 +302,7 @@ export function usePronunciationRecording(
 
     controllerRef.current = controller;
     setPhase('recording');
-  }, [finish, fallBackToRecorder]);
+  }, [finish, fallBackToRecorder, targetWord]);
   launchRef.current = launch;
 
   const stopRecorder = useCallback(async () => {
@@ -290,6 +345,7 @@ export function usePronunciationRecording(
     // still-ringing verdict ding - sfx uses its own elements.
     setMicRecording(true);
     stopSfx();
+    setHeardText('');
     if (modeRef.current === 'recorder') {
       void launchRecorder();
     } else {
@@ -307,9 +363,14 @@ export function usePronunciationRecording(
 
   const retry = useCallback(() => {
     if (settledRef.current) return;
+    if (interimStopRef.current) {
+      clearTimeout(interimStopRef.current);
+      interimStopRef.current = null;
+    }
     controllerRef.current = null;
     recorderRef.current = null;
     attemptsRef.current = 0;
+    setHeardText('');
     setErrorReason(null);
     setPhase('idle');
   }, []);
@@ -318,5 +379,5 @@ export function usePronunciationRecording(
     finish('');
   }, [finish]);
 
-  return { phase, errorReason, startRecording, stopRecording, retry, skip };
+  return { phase, errorReason, startRecording, stopRecording, retry, skip, heardText };
 }

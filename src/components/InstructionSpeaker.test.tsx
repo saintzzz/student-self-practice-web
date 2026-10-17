@@ -1,29 +1,30 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render } from '@testing-library/react';
-import { InstructionSpeaker, __resetInstructionAutoplay, subscribeInstructionSettled } from './InstructionSpeaker';
+import {
+  InstructionSpeaker,
+  __resetInstructionAutoplay,
+  lastInstructionSettle,
+  replayLastInstruction,
+  subscribeInstructionSettled,
+} from './InstructionSpeaker';
 import { speakInstruction } from '../lib/speech';
 
 /**
- * CR-72: the instruction speaker is headless - no button, no icon. These
- * specs cover the autoplay ledger: once per key, all grades, cancelled on
- * unmount, retired by a mic-recording generation bump.
+ * CR-83: instruction voice is disabled product-wide. The speaker is a
+ * silent settle-signaller now - these specs pin the new contract:
+ * never calls speakInstruction, settles 'not-played' exactly once per
+ * mount (the thinking-pose idle clock depends on it).
  */
-const genState = vi.hoisted(() => ({ value: 0 }));
 vi.mock('../lib/speech', () => ({
   speakInstruction: vi.fn(() => vi.fn()),
-  currentAudioGeneration: () => genState.value,
+  currentAudioGeneration: () => 0,
 }));
 
 const mockSpeak = vi.mocked(speakInstruction);
 
 beforeEach(() => {
   mockSpeak.mockClear();
-  genState.value = 0;
   __resetInstructionAutoplay();
-});
-
-afterEach(() => {
-  vi.useRealTimers();
 });
 
 describe('InstructionSpeaker - headless render', () => {
@@ -33,306 +34,49 @@ describe('InstructionSpeaker - headless render', () => {
   });
 });
 
-describe('InstructionSpeaker - autoplay once per key (all grades)', () => {
-  it('auto-speaks 400ms after mount - no grade gate, no tap needed', () => {
+describe('InstructionSpeaker - never speaks (CR-83)', () => {
+  it('does not call speakInstruction on mount - even with an autoplayKey', () => {
     vi.useFakeTimers();
     render(<InstructionSpeaker text="Chào em!" autoplayKey="screen-a" />);
-
     act(() => {
-      vi.advanceTimersByTime(399);
+      vi.advanceTimersByTime(5000);
     });
     expect(mockSpeak).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.advanceTimersByTime(1);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(1);
-    expect(mockSpeak).toHaveBeenCalledWith(
-      'Chào em!',
-      expect.objectContaining({ lang: undefined, autoplay: true }),
-    );
+    vi.useRealTimers();
   });
 
-  it('passes lang through to speakInstruction', () => {
+  it('does not call speakInstruction for en-US either', () => {
     vi.useFakeTimers();
     render(<InstructionSpeaker text="Listen!" lang="en-US" autoplayKey="screen-en" />);
     act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    expect(mockSpeak).toHaveBeenCalledWith(
-      'Listen!',
-      expect.objectContaining({ lang: 'en-US', autoplay: true }),
-    );
-  });
-
-  it('never autoplays twice for the same key across remounts', () => {
-    vi.useFakeTimers();
-    const first = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    first.unmount();
-
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(1);
-  });
-
-  it('a different autoplayKey speaks again (new screen = new instruction)', () => {
-    vi.useFakeTimers();
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    render(<InstructionSpeaker text="B" autoplayKey="screen-b" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(2);
-  });
-
-  it('mount-unmount-remount before the delay still speaks exactly once (StrictMode guard)', () => {
-    vi.useFakeTimers();
-    const first = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-    first.unmount();
-
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(1);
-  });
-
-  it('a recording session between schedule and fire permanently retires the autoplay', () => {
-    vi.useFakeTimers();
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(200);
-    });
-
-    // Mic opens and closes inside the 400ms autoplay window.
-    act(() => {
-      genState.value += 1;
-    });
-    act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(5000);
     });
     expect(mockSpeak).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
-  it('no autoplayKey means silence', () => {
-    vi.useFakeTimers();
-    render(<InstructionSpeaker text="A" />);
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
+  it('replayLastInstruction is a silent no-op', () => {
+    replayLastInstruction();
     expect(mockSpeak).not.toHaveBeenCalled();
-  });
-
-  it('cancels an in-flight instruction on unmount', () => {
-    vi.useFakeTimers();
-    const cancel = vi.fn();
-    mockSpeak.mockReturnValue(cancel);
-    const view = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    view.unmount();
-    expect(cancel).toHaveBeenCalledTimes(1);
-  });
-
-  // External-review r19-03: a blocked/error/unavailable autoplay must
-  // release the key so the instruction can retry - the buttonless UI has
-  // no other path to the instruction audio.
-  it('releases the key when the browser blocks autoplay, so a remount retries', () => {
-    vi.useFakeTimers();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
-    const first = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(1);
-    act(() => {
-      statusCb?.('blocked');
-    });
-    first.unmount();
-
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(2);
-  });
-
-  it('retries the instruction on the first user gesture after autoplay is blocked', () => {
-    vi.useFakeTimers();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    act(() => {
-      statusCb?.('blocked');
-    });
-    act(() => {
-      window.dispatchEvent(new Event('pointerdown'));
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(2);
-  });
-
-  // r20-02: keyboard / assistive-tech users trigger retry via keydown,
-  // and failures other than 'blocked' arm the gesture retry too.
-  it('retries on keydown after a non-blocked failure', () => {
-    vi.useFakeTimers();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    act(() => {
-      statusCb?.('error');
-    });
-    act(() => {
-      window.dispatchEvent(new Event('keydown'));
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(2);
-  });
-
-  // r21-01: assistive tech activates via synthesized click - a click
-  // listener covers the last gesture class pointer/keydown miss.
-  it('retries on a synthesized click after autoplay is blocked', () => {
-    vi.useFakeTimers();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    act(() => {
-      statusCb?.('blocked');
-    });
-    act(() => {
-      window.dispatchEvent(new Event('click'));
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(2);
-  });
-
-  it('keeps the key consumed when playback actually played', () => {
-    vi.useFakeTimers();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
-    const first = render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    act(() => {
-      statusCb?.('playing');
-      statusCb?.('ended');
-    });
-    first.unmount();
-
-    render(<InstructionSpeaker text="A" autoplayKey="screen-a" />);
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-    expect(mockSpeak).toHaveBeenCalledTimes(1);
   });
 });
 
-/* CR-82 (D-15): one-shot settlement signal - the board's thinking-pose
-   idle clock starts when the instruction ends or is skipped/refused. */
-describe('InstructionSpeaker - onSettled (D-15)', () => {
-  function settleHarness(outcomes: string[]) {
-    vi.useFakeTimers();
+describe('InstructionSpeaker - settle contract (D-15)', () => {
+  it("settles 'not-played' exactly once at mount", () => {
     const onSettled = vi.fn();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
     render(<InstructionSpeaker text="A" autoplayKey="settle-key" onSettled={onSettled} />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-    });
-    act(() => {
-      for (const s of outcomes) statusCb?.(s);
-    });
-    return onSettled;
-  }
-
-  beforeEach(() => {
-    __resetInstructionAutoplay();
-  });
-
-  it("'ended' playback settles as 'ended' - exactly once", () => {
-    const onSettled = settleHarness(['playing', 'ended']);
     expect(onSettled).toHaveBeenCalledTimes(1);
-    expect(onSettled).toHaveBeenCalledWith('ended');
+    expect(onSettled).toHaveBeenCalledWith('not-played');
   });
 
-  it.each(['blocked', 'unavailable', 'error'] as const)(
-    "'%s' settles as 'not-played' - exactly once",
-    (status) => {
-      const onSettled = settleHarness([status, status]);
-      expect(onSettled).toHaveBeenCalledTimes(1);
-      expect(onSettled).toHaveBeenCalledWith('not-played');
-    },
-  );
-
-  it('no autoplayKey settles as not-played at mount, without speaking', () => {
+  it("no autoplayKey also settles 'not-played' at mount", () => {
     const onSettled = vi.fn();
     render(<InstructionSpeaker text="A" onSettled={onSettled} />);
     expect(onSettled).toHaveBeenCalledTimes(1);
     expect(onSettled).toHaveBeenCalledWith('not-played');
-    expect(mockSpeak).not.toHaveBeenCalled();
   });
 
-  it('an already-played key settles as not-played at mount (once-per-round skip)', () => {
-    vi.useFakeTimers();
-    let statusCb: ((s: string) => void) | undefined;
-    mockSpeak.mockImplementation((_t, opts) => {
-      statusCb = (opts as { onStatus?: (s: string) => void }).onStatus;
-      return vi.fn();
-    });
-    const first = render(<InstructionSpeaker text="A" autoplayKey="settle-key" />);
-    act(() => {
-      vi.advanceTimersByTime(400);
-      statusCb?.('playing');
-      statusCb?.('ended');
-    });
-    first.unmount();
-
-    const onSettled = vi.fn();
-    render(<InstructionSpeaker text="A" autoplayKey="settle-key" onSettled={onSettled} />);
-    expect(onSettled).toHaveBeenCalledTimes(1);
-    expect(onSettled).toHaveBeenCalledWith('not-played');
-  });
-
-  it('the settle channel also notifies board-level subscribers', () => {
-    vi.useFakeTimers();
+  it('the settle channel notifies board-level subscribers', () => {
     const listener = vi.fn();
     const unsubscribe = subscribeInstructionSettled(listener);
     try {
@@ -341,5 +85,18 @@ describe('InstructionSpeaker - onSettled (D-15)', () => {
     } finally {
       unsubscribe();
     }
+  });
+
+  it('buffers the last settle for a subscriber that mounts after it', () => {
+    render(<InstructionSpeaker text="A" />);
+    const settled = lastInstructionSettle();
+    expect(settled?.outcome).toBe('not-played');
+    expect(settled?.epoch).toBeGreaterThan(0);
+  });
+
+  it('__resetInstructionAutoplay clears the buffered settle', () => {
+    render(<InstructionSpeaker text="A" />);
+    __resetInstructionAutoplay();
+    expect(lastInstructionSettle()).toBeNull();
   });
 });

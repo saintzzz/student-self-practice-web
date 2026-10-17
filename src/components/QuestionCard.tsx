@@ -27,7 +27,6 @@ import { useRewardFx } from './fx/RewardFxContext';
 import StreakBurst from './fx/StreakBurst';
 import {
   lastInstructionSettle,
-  replayLastInstruction,
   subscribeInstructionSettled,
 } from './InstructionSpeaker';
 import { playSfx } from '../lib/sfx';
@@ -408,10 +407,11 @@ export default function QuestionCard({
     resetKey: question.id,
     idleStartAt,
     audioLoading,
-    /* spec s9.2: thinking replays the instruction once and re-arms the
-       kind's demo hint - no text nag. */
+    /* spec s9.2 + CR-83: thinking re-arms the kind's demo hint - the
+       instruction replay is gone now that instruction voice is disabled
+       product-wide (it collided with listening audio and bled into the
+       pronunciation mic). */
     onThinking: () => {
-      replayLastInstruction();
       rearmDemoHint(question.kind);
     },
   });

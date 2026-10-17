@@ -205,6 +205,100 @@ describe('usePronunciationRecording', () => {
     testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
   });
 
+  it('routes a wildly mismatched transcript to a retryable error instead of submitting', async () => {
+    /* CR-83: the mic captured something other than the child's word
+       ("i am a student" vs target "egg") - a capture failure must not
+       be scored as a bad pronunciation. */
+    class MismatchRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+      start(): void {
+        setTimeout(() => {
+          this.onresult?.({
+            resultIndex: 0,
+            results: {
+              length: 1,
+              0: { isFinal: true, length: 1, 0: { transcript: 'i am a student', confidence: 0.9 } },
+            },
+          });
+        }, 0);
+      }
+      stop(): void {}
+      abort(): void {}
+    }
+
+    const original = { ...testWindow() };
+    testWindow().SpeechRecognition = MismatchRecognition;
+    testWindow().webkitSpeechRecognition = undefined;
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'egg'));
+
+    act(() => {
+      result.current.startRecording();
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe('error'));
+    expect(result.current.errorReason).toBe('mismatch');
+    expect(onAttempt).not.toHaveBeenCalled();
+
+    // Retry brings the phase back to idle so the child can read again.
+    act(() => {
+      result.current.retry();
+    });
+    expect(result.current.phase).toBe('idle');
+
+    testWindow().SpeechRecognition = original.SpeechRecognition;
+    testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
+  });
+
+  it('still submits a same-length-but-wrong transcript (real mispronunciation)', async () => {
+    class WrongWordRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      maxAlternatives = 1;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+      start(): void {
+        setTimeout(() => {
+          this.onresult?.({
+            resultIndex: 0,
+            results: {
+              length: 1,
+              0: { isFinal: true, length: 1, 0: { transcript: 'leg', confidence: 0.9 } },
+            },
+          });
+        }, 0);
+      }
+      stop(): void {}
+      abort(): void {}
+    }
+
+    const original = { ...testWindow() };
+    testWindow().SpeechRecognition = WrongWordRecognition;
+    testWindow().webkitSpeechRecognition = undefined;
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'egg'));
+
+    act(() => {
+      result.current.startRecording();
+    });
+
+    await waitFor(() => expect(onAttempt).toHaveBeenCalledWith('leg'));
+    expect(result.current.phase).not.toBe('error');
+
+    testWindow().SpeechRecognition = original.SpeechRecognition;
+    testWindow().webkitSpeechRecognition = original.webkitSpeechRecognition;
+  });
+
   it('skip calls onAttempt with an empty string exactly once', async () => {
     const onAttempt = vi.fn();
     const { result } = renderHook(() => usePronunciationRecording(onAttempt));

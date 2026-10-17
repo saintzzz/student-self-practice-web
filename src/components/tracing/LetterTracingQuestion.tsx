@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LetterTracingQuestion as LetterTracingQuestionType, TracingMeta } from '../../types';
 import { GLYPH_STROKES } from '../../data/tracing/strokes';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
-import { speakInstruction, speakWord } from '../../lib/speech';
+import { speakWord } from '../../lib/speech';
 import { playSfx } from '../../lib/sfx';
 import { useAudioPlayback } from '../../hooks/useAudioPlayback';
 import { useDemoHint } from '../../hooks/useDemoHint';
@@ -165,9 +165,8 @@ export default function LetterTracingQuestion({
         fails[r.index] = fails[r.index]! + 1;
         setAttempts(fails);
         setStatusLine(RETRY_LINE);
-        /* The retry line is UI language (vi-VN) and must never cut off
-           content audio - the autoplay channel drops it politely. */
-        speakInstruction(RETRY_LINE, { autoplay: true });
+        /* CR-83: no spoken retry line - instruction voice is disabled
+           product-wide; the visual status line above carries the hint. */
         if (fails[r.index]! === 2) {
           /* spec s12.5 step 3: auto-demo once + tolerance x1.5 (assisted). */
           setAssisted(true);

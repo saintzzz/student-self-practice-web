@@ -6,7 +6,8 @@ import DemoHint from './DemoHint';
 import PronunciationFeedbackPanel from './PronunciationFeedbackPanel';
 import PronunciationStatusMessage from './PronunciationStatusMessage';
 import QuestionBanner from './QuestionBanner';
-import { IconClock, IconMic, IconStop } from './icons';
+import { speakWord } from '../lib/speech';
+import { IconClock, IconMic, IconSpeaker } from './icons';
 
 const INSTRUCTION = 'Đọc to từ này lên nhé:';
 
@@ -17,7 +18,7 @@ interface PronunciationRecordingQuestionProps {
   score: number | null;
   isCorrect: boolean | null;
   onSubmit: (transcript: string) => void;
-  /** kids-UX s3.2: round-scoped autoplay key for the instruction speaker. */
+  /** kids-UX s3.2: round-scoped key for the (now silent) instruction speaker. */
   speakerKey?: string;
 }
 
@@ -37,6 +38,8 @@ function errorBodyFor(reason: string | null): string {
       return 'Micro đang gặp trục trặc - em kiểm tra micro (hoặc tai nghe) đang bật rồi thử lại nhé.';
     case 'transcription':
       return 'Đã ghi âm xong nhưng chưa nghe rõ được - mạng đang chập chờn. Em thử lại nhé.';
+    case 'mismatch':
+      return 'Máy nghe nhầm tiếng khác chứ không phải tiếng đọc của em - em ra chỗ yên tĩnh hơn, để micro gần miệng rồi đọc thật to và rõ từng chữ nhé.';
     default:
       return 'Micro chưa nhận được tiếng đọc của em - có thể do mạng chập chờn hoặc em chưa kịp đọc. Em thử lại hoặc bỏ qua câu này nhé.';
   }
@@ -58,7 +61,7 @@ export default function PronunciationRecordingQuestion({
   onSubmit,
   speakerKey,
 }: PronunciationRecordingQuestionProps) {
-  const { phase, errorReason, startRecording, stopRecording, retry, skip } = usePronunciationRecording(
+  const { phase, errorReason, startRecording, stopRecording, retry, skip, heardText } = usePronunciationRecording(
     onSubmit,
     question.word,
   );
@@ -68,7 +71,21 @@ export default function PronunciationRecordingQuestion({
   return (
     <div>
       <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
-      <p className="mb-3 text-4xl font-extrabold text-white">{question.word}</p>
+      {/* Cream reading card - the word the child reads aloud, plus a
+          "Nghe mẫu" chip so pre-readers can hear it first. speakWord is
+          suppressed automatically once the mic opens (micRecordingActive). */}
+      <div className="mb-4 inline-flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-6 py-4 shadow-[0_12px_28px_-12px_rgba(0,0,0,0.55)]">
+        <p className="font-display text-5xl font-extrabold tracking-wide text-slate-800">{question.word}</p>
+        <button
+          type="button"
+          data-testid="model-word-button"
+          onClick={() => speakWord(question.word)}
+          aria-label={`Nghe mẫu từ ${question.word}`}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_4px_10px_-3px_rgba(0,0,0,0.3)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-amber-400"
+        >
+          <IconSpeaker size={20} />
+        </button>
+      </div>
 
       {hasAnswered ? (
         <PronunciationFeedbackPanel
@@ -111,32 +128,70 @@ export default function PronunciationRecordingQuestion({
           )}
 
           {phase === 'processing' && (
-            <div>
+            <div className="flex flex-col items-center gap-3 py-2">
               <button
                 type="button"
                 disabled
                 data-testid="processing-button"
-                className="inline-flex min-h-[76px] cursor-wait items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-8 py-3 font-display text-2xl font-bold text-white opacity-90 shadow-[inset_0_-4px_0_rgba(0,0,0,0.18)]"
+                aria-label="Đang chấm giọng em"
+                className="flex h-24 w-24 cursor-wait items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 text-white opacity-95 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(245,158,11,0.5)]"
               >
-                <IconClock size={16} className="mr-1 inline-block" /> Đang chấm giọng em...
+                <IconClock size={34} className="animate-pulse motion-reduce:animate-none" />
               </button>
+              <p className="text-lg font-semibold text-amber-200">Đang chấm giọng em...</p>
             </div>
           )}
 
           {(phase === 'idle' || phase === 'recording') && (
-            <div ref={micRef} className="relative">
+            <div ref={micRef} className="relative flex flex-col items-center gap-3 py-2">
               <button
                 type="button"
                 data-testid="record-button"
                 onClick={phase === 'recording' ? stopRecording : startRecording}
-                className="inline-flex min-h-[76px] items-center justify-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 px-8 py-3 font-display text-2xl font-bold text-white shadow-[inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(244,63,94,0.45)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-rose-400"
+                aria-label={phase === 'recording' ? 'Nhấn để dừng sớm' : 'Nhấn rồi đọc to lên'}
+                className={`relative flex h-24 w-24 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-rose-400 ${
+                  phase === 'recording'
+                    ? 'bg-gradient-to-b from-rose-500 to-rose-700 shadow-[inset_0_3px_0_rgba(255,255,255,0.3),0_10px_28px_-6px_rgba(244,63,94,0.6)]'
+                    : 'bg-gradient-to-b from-rose-400 to-rose-600 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)]'
+                }`}
               >
-                <span className="inline-flex items-center gap-2">{phase === 'recording' ? <><IconStop size={16} /> Nhấn để dừng sớm</> : <><IconMic size={18} /> Nhấn rồi đọc to lên</>}</span>
+                {phase === 'recording' && (
+                  <span
+                    aria-hidden
+                    className="absolute -inset-1.5 animate-pulse rounded-full border-4 border-rose-400/50 motion-reduce:hidden"
+                  />
+                )}
+                {phase === 'recording' ? (
+                  <span className="flex items-end gap-1" aria-hidden>
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span
+                        key={i}
+                        className="audio-bars h-7 w-1.5 rounded-full bg-white/90"
+                        style={{ animationDelay: `${i * 130}ms` }}
+                      />
+                    ))}
+                  </span>
+                ) : (
+                  <IconMic size={36} />
+                )}
               </button>
+              <p className="text-base font-semibold text-slate-300">
+                {phase === 'recording' ? 'Nhấn để dừng sớm' : 'Nhấn rồi đọc to lên'}
+              </p>
               {phase === 'recording' && (
-                <p data-testid="recording-indicator" className="mt-4 text-lg font-semibold text-rose-300">
-                  <span className="inline-flex items-center gap-2"><span className="inline-block h-3 w-3 animate-pulse motion-reduce:animate-none rounded-full bg-rose-500" /> Đang lắng nghe - em đọc xong sẽ tự chấm luôn</span>
-                </p>
+                <div data-testid="recording-indicator" className="text-center">
+                  <p className="text-lg font-semibold text-rose-300">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-block h-3 w-3 animate-pulse motion-reduce:animate-none rounded-full bg-rose-500" />
+                      Đang lắng nghe - em đọc xong sẽ tự chấm luôn
+                    </span>
+                  </p>
+                  {heardText && (
+                    <p data-testid="live-transcript" className="mt-1 text-base italic text-amber-300">
+                      Nghe thấy: {heardText}
+                    </p>
+                  )}
+                </div>
               )}
               {demo.showDemo && phase === 'idle' ? (
                 <DemoHint containerRef={micRef} onDone={demo.dismiss} />

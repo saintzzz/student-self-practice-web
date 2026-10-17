@@ -89,6 +89,13 @@ export interface SpeechRecognitionHandlers {
   onPermissionError: () => void;
   /** Called with the browser's error code ('no-speech', 'network', ...) so callers can auto-retry transient failures and tailor the fallback message. */
   onOtherError: (code: string) => void;
+  /**
+   * CR-83 latency: non-final interim transcripts, forwarded as they
+   * arrive - the caller can early-stop once the whole target word is
+   * heard instead of waiting for the service's own silence endpoint
+   * (~1.5-3s of dead air after the child finishes speaking).
+   */
+  onInterim?: (transcript: string) => void;
 }
 
 export interface SpeechRecognitionController {
@@ -124,7 +131,10 @@ export function startSpeechRecognition(handlers: SpeechRecognitionHandlers): Spe
     // settle on a final transcript so a hesitant first syllable is not
     // scored as the whole attempt.
     const lastResult = event.results[event.results.length - 1];
-    if (!lastResult?.isFinal) return;
+    if (!lastResult?.isFinal) {
+      handlers.onInterim?.(lastResult?.[0]?.transcript ?? '');
+      return;
+    }
     handled = true;
     const transcript = lastResult[0]?.transcript ?? '';
     handlers.onResult(transcript);

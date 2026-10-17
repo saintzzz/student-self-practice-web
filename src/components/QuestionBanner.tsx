@@ -21,7 +21,9 @@ interface QuestionBannerProps {
  * "speech scroll" strip on the board - it reads as the narrator's line,
  * not a floating headline. Amber is reserved for reward/progress markers,
  * so instruction copy moves to slate-100 on a quiet slate strip. The
- * headless speaker keeps the once-per-key autoplay contract unchanged.
+ * headless speaker is silent (CR-83: instruction voice disabled
+ * product-wide) but still settles 'not-played' so the thinking clock
+ * arms at mount.
  *
  * CR-82 (spec s9.3): while the board-perch mascot is mounted, the strip
  * gains a 10px `white/[0.07]` speech tail pointing up at him plus band
