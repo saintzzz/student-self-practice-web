@@ -44,3 +44,28 @@ features; a game can itself be the exam - see CR-86).
 Game-as-exam/practice: let a Round/Exam section embed a registered game
 component (GameEnd -> section score), and let other EA features draw
 from the game activity set - the outward share the PO asked for.
+
+## Tester evidence
+
+- 22 new component tests + 5 registry tests; suite 200 files / 1,658.
+- Playwright real-flow on grade-3: 15 cards on shelf, all 5 new games
+  mount (gold-quest chests, quiz-show ladder+timer+50:50, maze board
+  with walls/ghost/pads, worm board+dpad, castle path+gate+hearts).
+
+## External Review Loop
+
+- r1 (reviewer-gpt, d9cef9e): REQUEST_CHANGES - 4 findings.
+  1. HIGH MazeChase soft-lock: walls could spawn on the hero cell
+     (seed review-maze-58 sealed the board). Fixed - walls exclude hero
+     + ghost spawn validated; regression test added.
+  2. HIGH WordWorm deleted future target letters on wrong-order hits
+     making words unfinishable. Fixed - only distractors are removed.
+  3. HIGH GoldQuest/CastleGuard full credit on second try broke the
+     clean-play star rule. Fixed - second-try earns 0.5 points.
+  4. MEDIUM QuizShow timeout could override a last-second correct pick.
+     Fixed - interval cleared on pick + timeout guard.
+  Fix commit 9a91395.
+- r2 (reviewer-gpt, 9a91395): APPROVE_WITH_CHANGES - all four resolved;
+  one residual MEDIUM: layout.ghost computed but unused, ghost could
+  spawn on a pad (seed review-ghost-0). Fixed via layout-wired spawn
+  effect + regression test.

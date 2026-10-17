@@ -42,6 +42,17 @@ describe('MazeChase', () => {
     expect(neighbors.some((b) => !b.disabled && b.textContent !== '🧱')).toBe(true);
   });
 
+  it('the ghost never spawns on an answer pad (r2 regression)', () => {
+    // Seed that previously spawned the ghost on pad cell 23.
+    render(<MazeChase grade={GRADE} seed="review-ghost-0" onEnd={vi.fn()} />);
+    expect(screen.getByTestId('maze-cell-23').textContent).not.toBe('👻');
+    // The ghost still renders somewhere on the board.
+    const ghostCell = Array.from({ length: COLS * ROWS }, (_, i) =>
+      screen.getByTestId(`maze-cell-${i}`),
+    ).find((c) => c.textContent === '👻');
+    expect(ghostCell).toBeTruthy();
+  });
+
   it('tapping an open adjacent cell moves Heo', () => {
     render(<MazeChase grade={GRADE} seed={SEED} onEnd={vi.fn()} />);
     const neighbors = [1, COLS].map(

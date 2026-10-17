@@ -127,6 +127,11 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
     return { walls: new Set(), pads: [...pads], ghost: CELLS - 1 };
   }, [seed, round]);
 
+  // Ghost spawns at the layout-validated cell each round (never a wall,
+  // pad or the hero) - review r2: the computed spawn was previously
+  // unused and the ghost hardcoded the last cell.
+  useEffect(() => setGhost(layout.ghost), [layout]);
+
   const finish = (finalCorrect: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
@@ -140,7 +145,6 @@ export default function MazeChase({ grade, seed, onEnd }: GameProps) {
       return;
     }
     setRound(round + 1);
-    setGhost(CELLS - 1);
     setLock(false);
   };
 
