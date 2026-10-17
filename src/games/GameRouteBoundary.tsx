@@ -44,7 +44,7 @@ class GameRouteBoundaryInner extends Component<GameScreenProps, BoundaryState> {
             type="button"
             data-testid="game-error-retry"
             onClick={() => this.setState((s) => ({ attempt: s.attempt + 1, failed: false }))}
-            className="rounded-2xl bg-gradient-to-b from-amber-400 to-amber-600 px-6 py-3 font-bold text-white"
+            className="rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 font-bold text-amber-950"
           >
             Thử lại
           </button>

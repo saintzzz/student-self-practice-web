@@ -67,7 +67,12 @@ export function EmojiChoiceField({
               className={`${base} game-bob mx-auto h-24 w-20 flex-col rounded-t-full rounded-b-[3rem] bg-gradient-to-b ${BALLOON_COLORS[i % 4]} text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.3),0_8px_18px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
               style={{ animationDelay: `${i * 220}ms` }}
             >
-              <EmojiVisual emoji={emoji} variant="block" className="text-4xl drop-shadow" />
+              {/* CR-91: light disc stage so the art reads on the balloon
+                  (was: raw emoji on a saturated fill - same value band,
+                  the picture was the least legible element). */}
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.35)]">
+                <EmojiVisual emoji={emoji} variant="block" className="text-3xl" />
+              </span>
               <span aria-hidden className="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-inherit" />
             </button>
           );
@@ -81,10 +86,13 @@ export function EmojiChoiceField({
               data-correct={i === correctIndex}
               disabled={disabled || wrong}
               onClick={() => onPick(i)}
-              className={`${base} game-drift h-20 rounded-2xl border-2 border-sky-200/50 bg-gradient-to-b from-sky-300/80 to-sky-500/80 text-3xl shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+              className={`${base} game-drift h-20 rounded-2xl border-2 border-sky-200/50 bg-gradient-to-b from-sky-400 to-sky-600 text-3xl shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
               style={{ animationDelay: `${i * 340}ms` }}
             >
-              <EmojiVisual emoji={emoji} variant="block" className="text-3xl drop-shadow" />
+              {/* CR-91: light disc stage - art pops, tile keeps its hue. */}
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.3)]">
+                <EmojiVisual emoji={emoji} variant="block" className="text-2xl" />
+              </span>
             </button>
           );
         }
@@ -223,7 +231,7 @@ export function LetterOrderField({
             className={`game-bubble flex h-14 w-14 items-center justify-center rounded-full font-display text-2xl font-extrabold transition motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-sky-300 ${
               placed
                 ? 'scale-75 bg-emerald-300 text-emerald-950 opacity-40'
-                : 'bg-gradient-to-b from-sky-300 to-sky-500 text-white shadow-[inset_0_3px_0_rgba(255,255,255,0.45),0_6px_14px_-4px_rgba(14,165,233,0.5)] hover:-translate-y-1 active:scale-90'
+                : 'bg-gradient-to-b from-sky-300 to-sky-500 text-sky-950 shadow-[inset_0_3px_0_rgba(255,255,255,0.45),0_6px_14px_-4px_rgba(14,165,233,0.5)] hover:-translate-y-1 active:scale-90'
             } ${wrong ? 'game-shake' : ''}`}
             style={{ animationDelay: `${i * 160}ms` }}
           >
@@ -303,7 +311,7 @@ export function ModelSpeaker({ word }: { word: string }) {
       data-testid="game-listen-button"
       onClick={() => speakWord(word)}
       aria-label={`Nghe từ ${word}`}
-      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 px-5 py-2.5 text-lg font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),0_4px_10px_-3px_rgba(0,0,0,0.3)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300"
+      className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-5 py-2.5 text-lg font-bold text-amber-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.45),0_4px_10px_-3px_rgba(0,0,0,0.3)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300"
     >
       <IconSpeaker size={20} /> Nghe từ
     </button>

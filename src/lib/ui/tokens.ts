@@ -285,9 +285,11 @@ export const QUESTION_BODY_CENTER = 'my-auto w-full';
 
 /** QuestionBanner: left-aligned speech-scroll strip carrying the
  *  instruction. Slate-on-slate - amber stays reserved for reward/
- *  progress markers (S10). */
+ *  progress markers (S10). CR-91: raised from white/[0.07] to /[0.12]
+ *  + ring-white/20 - at 7% the ONE guidance line on the screen read as a
+ *  scratch on the board; it is the voice of the question, make it legible. */
 export const QUESTION_BANNER =
-  'mb-3 flex w-full items-center gap-3 rounded-2xl bg-white/[0.07] px-4 py-2.5 text-left ring-1 ring-white/10';
+  'mb-3 flex w-full items-center gap-3 rounded-2xl bg-white/[0.12] px-4 py-2.5 text-left ring-1 ring-white/20 shadow-[0_4px_14px_-6px_rgba(0,0,0,0.4)]';
 
 /** Exhibit frame: the light inner panel an emoji/image prompt or option
  *  sits inside - a "polaroid pinned to the board" instead of a bare
@@ -505,12 +507,26 @@ export const GOLD_HAIRLINE =
 export const HUB_CHIP =
   'mt-0.5 shrink-0 rounded-xl bg-white/40 p-1.5 text-slate-900 ring-1 ring-white/60';
 
-/** CR-85 redesign: Game Zone cards share the destination-tone system -
- *  each game carries its own hue instead of a uniform amber grid.
- *  `hero` = the full-width "Tro choi hom nay" featured card. */
+/** CR-91 (visual-hierarchy): shelf cards are LIGHT paper faces - 15
+ *  same-value candy gradients all shouted at once, so nothing led and
+ *  the Twemoji art drowned in the saturated background. Now the card is
+ *  calm (white -> amber-50 face, slate ink) and the game's tone survives
+ *  as the bottom depth edge + the tinted chip behind the art. The daily
+ *  hero stays saturated (`gameHeroClass`) so it is the one loud card. */
+const GAME_CARD_TONE_EDGE: Record<HubTone, { edge: string; chip: string }> = {
+  sky: { edge: 'border-b-sky-500', chip: 'bg-sky-100 ring-sky-200' },
+  orange: { edge: 'border-b-orange-500', chip: 'bg-orange-100 ring-orange-200' },
+  emerald: { edge: 'border-b-emerald-500', chip: 'bg-emerald-100 ring-emerald-200' },
+  amber: { edge: 'border-b-amber-500', chip: 'bg-amber-100 ring-amber-200' },
+  rose: { edge: 'border-b-rose-500', chip: 'bg-rose-100 ring-rose-200' },
+};
+
+export function gameCardChip(tone: HubTone): string {
+  return `inline-flex items-center justify-center rounded-2xl p-1 ring-1 ${GAME_CARD_TONE_EDGE[tone].chip}`;
+}
+
 export function gameCardClass(tone: HubTone): string {
-  const s = HUB_TONE_STYLES[tone];
-  return `relative flex flex-col items-center gap-1.5 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-3 py-4 text-center text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_8px_18px_-8px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
+  return `relative flex flex-col items-center gap-1.5 overflow-hidden rounded-2xl border-b-4 ${GAME_CARD_TONE_EDGE[tone].edge} bg-gradient-to-b from-white via-amber-50 to-amber-100/80 px-3 py-4 text-center text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.9),0_8px_18px_-8px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.9),0_12px_22px_-8px_rgba(0,0,0,0.5)] active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
 }
 
 export function gameHeroClass(tone: HubTone): string {

@@ -204,7 +204,7 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
                   type="button"
                   data-testid="game-replay"
                   onClick={replay}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-600 px-6 py-3 text-lg font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.35),inset_0_-3px_0_rgba(0,0,0,0.15),0_4px_10px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 px-6 py-3 text-lg font-bold text-amber-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-3px_0_rgba(0,0,0,0.12),0_4px_10px_-3px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300"
                 >
                   <IconRefresh size={18} /> Chơi lại
                 </button>

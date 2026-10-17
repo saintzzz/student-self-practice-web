@@ -26,6 +26,17 @@
 > Full-bleed journey scenes, exam-paper surfaces, typography/material tokens,
 > the mascot perch + Lottie pose rig, tracing/drag mechanics, flashcards,
 > and the press/release + reward-FX micro-interaction layer in §15.
+>
+> **CR-91 (v6):** visual-hierarchy remediation - CR
+> `docs/sdlc/CR-91-visual-hierarchy-separation.md`. Light carries content,
+> color carries identity: Game Zone shelf cards are light paper faces
+> with the game tone kept as the bottom depth edge + a tinted chip behind
+> the art (the daily hero stays the ONE saturated candy card so it
+> leads); in-game emoji options sit on a light disc inside their colored
+> shape (balloon/fish adopt the mole-hole idiom); `QUESTION_BANNER`
+> raised to `bg-white/[0.12]` + `ring-white/20`. White text on
+> `*-300..500` candy fills is banned - candy faces take `*-950` ink
+> (already true on hub tiles).
 
 ---
 

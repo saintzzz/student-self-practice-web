@@ -1,6 +1,6 @@
 import { gameBestStars } from '../lib/engagement/store';
 import { hashString } from '../lib/prng';
-import { gameCardClass, gameHeroClass } from '../lib/ui/tokens';
+import { gameCardChip, gameCardClass, gameHeroClass } from '../lib/ui/tokens';
 import { GAME_DEFS } from './defs';
 import GameArt from './GameArt';
 import type { GameDef, GameId } from './types';
@@ -14,7 +14,7 @@ function Stars({ id }: { id: GameId }) {
       aria-label={`Thành tích tốt nhất: ${best} sao`}
     >
       {[0, 1, 2].map((i) => (
-        <span key={i} className={i < best ? 'text-slate-900' : 'text-slate-900/25'}>★</span>
+        <span key={i} className={i < best ? 'text-amber-500' : 'text-slate-300'}>★</span>
       ))}
     </span>
   );
@@ -62,7 +62,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
           <span className="mt-1 block font-display text-lg font-extrabold leading-tight">
             {featured.title}
           </span>
-          <span className="block text-xs font-semibold text-slate-900">{featured.tagline}</span>
+          <span className="block text-xs font-semibold text-slate-900/90">{featured.tagline}</span>
         </span>
         <Stars id={featured.id} />
         {featured.fresh && <NewBadge />}
@@ -78,11 +78,11 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
             className={gameCardClass(def.tone ?? 'sky')}
           >
             {def.fresh && <NewBadge />}
-            <GameArt art={def.art} emoji={def.emoji} />
+            <span className={gameCardChip(def.tone ?? 'sky')}><GameArt art={def.art} emoji={def.emoji} /></span>
             <span className="font-display text-base font-extrabold leading-tight">
               {def.title}
             </span>
-            <span className="text-xs font-semibold leading-snug text-slate-900">{def.tagline}</span>
+            <span className="text-xs font-semibold leading-snug text-slate-600">{def.tagline}</span>
             <Stars id={def.id} />
           </button>
         ))}

@@ -1,0 +1,18 @@
+import { chromium } from 'playwright';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const shot = (n) => join(tmpdir(), n);
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+const BASE = process.env.BASE ?? 'http://localhost:5199';
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(2500);
+const guest = page.locator('[data-testid="guest-button"]').first();
+if (await guest.count()) { await guest.click(); await page.waitForTimeout(2000); }
+await page.locator('[data-testid="grade-card-grade-3"]').first().click();
+await page.waitForTimeout(2500);
+await page.locator('[data-testid="hub-tile-games"]').first().click();
+await page.waitForTimeout(1500);
+await page.screenshot({ path: shot('cr91-shelf-new.png'), fullPage: true });
+console.log('DONE');
+await browser.close();
