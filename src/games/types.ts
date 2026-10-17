@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Grade, QuestionKind } from '../types';
+import type { HubTone } from '../lib/ui/tokens';
 
 /**
  * CR-83 Game Zone - shared contracts. A game is a self-contained arcade
@@ -49,6 +50,10 @@ export interface GameDef {
   emoji: string;
   /** Optional grade filter - default all grades see the card. */
   grades?: readonly string[];
+  /** Card identity hue (destination-card system, CR-85 redesign). */
+  tone?: HubTone;
+  /** Recently added game - the shelf badges it "Mới". */
+  fresh?: boolean;
 }
 
 /**

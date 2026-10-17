@@ -2,7 +2,7 @@ import { useState, type ComponentType, type ReactNode } from 'react';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import { IconChevronDown, IconChevronUp, type IconProps } from './icons';
 import { useViewer } from '../lib/viewer/ViewerContext';
-import { TRAIL_TILE, TRAIL_TILE_SM, TRAIL_TILE_EXPANDED, TRAIL_TILE_ARENA, TRAIL_TILE_ARENA_SM, HUB_PANEL, HUB_ICON_TINTS } from '../lib/ui/tokens';
+import { hubTileClass, HUB_TILE_EXPANDED, HUB_CHIP, HUB_PANEL, type HubTone } from '../lib/ui/tokens';
 
 /**
  * CR-73 s5.1 Mode Hub - the Kham pha sheet's replacement: labeled,
@@ -43,10 +43,14 @@ export interface HubTileDef {
    *  mounted while collapsed. Conditional sections are simply omitted
    *  from the list. Overrides `content`. */
   sections?: HubSectionDef[];
-  /** CR-82 (R-v5-12): 'arena' restyles the tile with TRAIL_TILE_ARENA
-   *  (orange identity surface) + the "vs" emblem disc instead of the
-   *  rotating icon-tint chip. */
+  /** CR-82 (R-v5-12): 'arena' keeps the VS emblem disc instead of the
+   *  plain frosted icon chip. CR-85: the surface itself comes from
+   *  `tone` (arena tiles pass tone='orange'). */
   variant?: 'arena';
+  /** CR-85: destination-card identity hue (default 'sky'). */
+  tone?: HubTone;
+  /** CR-85: decorative emoji watermark on the tile's right edge. */
+  emoji?: string;
 }
 
 export function HubGroup({
@@ -61,17 +65,16 @@ export function HubGroup({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const { density } = useViewer();
-  const defaultTileClass = density.tileMinH >= 96 ? TRAIL_TILE : TRAIL_TILE_SM;
-  const arenaTileClass = density.tileMinH >= 96 ? TRAIL_TILE_ARENA : TRAIL_TILE_ARENA_SM;
+  const minH = density.tileMinH >= 96 ? 96 : 76;
   const testPrefix = subtile ? 'hub-subtile' : 'hub-tile';
   const regionPrefix = subtile ? 'hub-section' : 'hub-panel';
 
   return (
     <div className="space-y-3">
-      {tiles.map((tile, index) => {
+      {tiles.map((tile) => {
         const open = openId === tile.id;
         const isArena = tile.variant === 'arena';
-        const tileClass = isArena ? arenaTileClass : defaultTileClass;
+        const tileClass = hubTileClass(tile.tone ?? (isArena ? 'orange' : 'sky'), minH);
         const regionIds = tile.sections
           ? tile.sections.map((s) => `${regionPrefix}-${s.id}`)
           : [`${regionPrefix}-${tile.id}`];
@@ -83,35 +86,36 @@ export function HubGroup({
               aria-expanded={open}
               aria-controls={regionIds.join(' ')}
               onClick={() => setOpenId(open ? null : tile.id)}
-              className={`${tileClass}${open ? ` ${TRAIL_TILE_EXPANDED}` : ''}`}
+              className={`${tileClass}${open ? ` ${HUB_TILE_EXPANDED}` : ''}`}
             >
               {isArena ? (
-                /* CR-82 (R-v5-12): 48px navy disc + IconSwords + a "VS"
-                   badge on the disc edge - the arena emblem replaces the
-                   rotating icon-tint chip. */
+                /* VS emblem disc - frosted glass on the arena gradient. */
                 <span
                   aria-hidden="true"
-                  className="relative mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-navy-800 ring-2 ring-orange-300"
+                  className="relative z-10 mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/50"
                 >
-                  <tile.icon size={24} className="text-orange-200" />
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 font-display text-sm font-extrabold text-orange-200">
+                  <tile.icon size={24} className="text-white" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 font-display text-sm font-extrabold text-white">
                     VS
                   </span>
                 </span>
               ) : (
-                /* CR-79 B4 on paper: rotating soft icon-chip tints -
-                    tiles differentiate without changing the paper body. */
-                <span className={`mt-0.5 shrink-0 rounded-xl p-1.5 ${HUB_ICON_TINTS[index % HUB_ICON_TINTS.length]}`}>
+                <span className={`z-10 ${HUB_CHIP}`}>
                   <tile.icon size={24} aria-hidden="true" />
                 </span>
               )}
-              <span className="min-w-0 flex-1">
-                <span className="block font-extrabold text-slate-800">{tile.label}</span>
+              <span className="z-10 min-w-0 flex-1">
+                <span className="block font-extrabold text-white">{tile.label}</span>
                 {tile.sub && (
-                  <span className="block text-xs font-semibold text-slate-500">{tile.sub}</span>
+                  <span className="block text-xs font-semibold text-white/85">{tile.sub}</span>
                 )}
               </span>
-              <span aria-hidden="true" className="shrink-0 text-sky-600">
+              {tile.emoji && (
+                <span aria-hidden="true" className="pointer-events-none absolute -right-1 bottom-0 select-none text-5xl opacity-25">
+                  {tile.emoji}
+                </span>
+              )}
+              <span aria-hidden="true" className="z-10 shrink-0 text-white">
                 {open ? <IconChevronUp size={22} /> : <IconChevronDown size={22} />}
               </span>
             </button>

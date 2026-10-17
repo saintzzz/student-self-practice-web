@@ -288,6 +288,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           label: 'Luyện thêm',
           sub: 'Đề luyện và ôn tập',
           voiceHint: 'Chọn môn hoặc mục để luyện thêm nhé!',
+          tone: 'sky',
+          emoji: '📚',
           content: (
             <HubGroup
               subtile
@@ -301,6 +303,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   label: program.name,
                   sub: program.desc,
                   voiceHint: PROGRAM_VOICE_HINT[program.id],
+                  tone: program.id === 'english' ? 'sky' as const : program.id === 'math' ? 'rose' as const : 'emerald' as const,
+                  emoji: program.id === 'english' ? '🔤' : program.id === 'math' ? '🔢' : '🔬',
                   content: programBlock(program, false),
                 })),
                 ...(hasDueReview || hasCoachHints
@@ -310,6 +314,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                       label: 'Ôn tập',
                       sub: 'Câu sai và điểm yếu của em',
                       voiceHint: 'Ôn lại những câu chưa chắc nhé!',
+                      tone: 'amber' as const,
+                      emoji: '💪',
                       /* Spec §5.1: aria-controls lists only the sections
                          actually rendered. */
                       sections: [
@@ -334,6 +340,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           sub: 'Thi đua với bạn bè',
           voiceHint: 'Chọn bạn đấu nhé!',
           variant: 'arena',
+          tone: 'orange',
+          emoji: '⚔️',
           sections: [
             ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
             { id: 'rank', content: leaderboardEl },
@@ -348,7 +356,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               label: 'Khu trò chơi',
               sub: 'Lật thẻ, bóng bay, đua xe, câu cá và nhiều hơn',
               voiceHint: 'Chọn một trò chơi nhé!',
-              content: <GameZoneShelf onPlay={onStartGame} />,
+              tone: 'emerald' as const,
+              emoji: '🎮',
+              content: <GameZoneShelf grade={grade.id} onPlay={onStartGame} />,
             }]
           : []),
         {
@@ -357,6 +367,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           label: 'Phần thưởng',
           sub: 'Quà, bạn đồng hành và nhà của em',
           voiceHint: 'Xem quà của em nhé!',
+          tone: 'amber',
+          emoji: '🎁',
           content: rewardCards(true),
         },
       ]
@@ -367,6 +379,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           label: 'Luyện & thi',
           sub: 'Đề luyện, thi thử và ôn tập',
           voiceHint: 'Chọn môn để luyện nhé!',
+          tone: 'sky',
+          emoji: '📚',
           content: (
             <>
               <div id="hub-section-learn" data-testid="hub-section-learn" className="space-y-3">
@@ -389,8 +403,10 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           sub: 'Thử thách và bảng xếp hạng',
           voiceHint: 'Chọn bạn đấu nhé!',
           /* CR-82 (R-v5-12): cross-band consistency - the G3-5 tile
-             adopts the same TRAIL_TILE_ARENA surface + VS emblem. */
+             adopts the same arena surface + VS emblem. */
           variant: 'arena',
+          tone: 'orange',
+          emoji: '⚔️',
           content: (
             <>
               <div id="hub-section-arena" data-testid="hub-section-arena">{arenaCardEl}</div>
@@ -406,7 +422,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               label: 'Khu trò chơi',
               sub: 'Lật thẻ, bóng bay, đua xe, câu cá và nhiều hơn',
               voiceHint: 'Chọn một trò chơi nhé!',
-              content: <GameZoneShelf onPlay={onStartGame} />,
+              tone: 'emerald' as const,
+              emoji: '🎮',
+              content: <GameZoneShelf grade={grade.id} onPlay={onStartGame} />,
             }]
           : []),
         {
@@ -415,6 +433,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           label: 'Phần thưởng',
           sub: 'Bạn đồng hành và nhà của em',
           voiceHint: 'Xem quà của em nhé!',
+          tone: 'amber',
+          emoji: '🎁',
           content: rewardCards(false),
         },
       ];

@@ -1,42 +1,91 @@
 import { gameBestStars } from '../lib/engagement/store';
+import { hashString } from '../lib/prng';
+import { gameCardClass, gameHeroClass } from '../lib/ui/tokens';
 import { GAME_DEFS } from './defs';
-import type { GameId } from './types';
+import type { GameDef, GameId } from './types';
+
+function Stars({ id }: { id: GameId }) {
+  const best = gameBestStars(id);
+  return (
+    <span
+      data-testid={`game-best-${id}`}
+      className="text-sm tracking-wider"
+      aria-label={`Thành tích tốt nhất: ${best} sao`}
+    >
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={i < best ? 'text-amber-200' : 'text-white/30'}>★</span>
+      ))}
+    </span>
+  );
+}
+
+function NewBadge() {
+  return (
+    <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-rose-600 shadow">
+      Mới
+    </span>
+  );
+}
 
 /**
  * CR-83 Game Zone shelf - the grid of game cards rendered inside the
  * "Khu tro choi" hub tile. Component-free metadata (defs.ts) keeps the
  * main bundle clean; tapping a card routes to the lazy game screen.
+ *
+ * CR-85 redesign: one daily "Tro choi hom nay" hero + a per-hue card
+ * grid. `grade` filters defs that declare a grade list (arcade shelf
+ * honors the same band split the games do).
  */
-export default function GameZoneShelf({ onPlay }: { onPlay: (gameId: GameId) => void }) {
+export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPlay: (gameId: GameId) => void }) {
+  const defs = GAME_DEFS.filter((d) => !grade || !d.grades || d.grades.includes(grade));
+  const now = new Date();
+  const featured: GameDef =
+    defs[hashString(`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`) % defs.length];
+  const rest = defs.filter((d) => d.id !== featured.id);
+
   return (
-    <div data-testid="game-zone-shelf" className="grid grid-cols-2 gap-3">
-      {GAME_DEFS.map((def) => {
-        const best = gameBestStars(def.id);
-        return (
+    <div data-testid="game-zone-shelf" className="space-y-3">
+      {/* Featured: a deterministic daily pick keeps the 15-game shelf
+          curated instead of an undifferentiated wall. */}
+      <button
+        type="button"
+        data-testid={`game-card-${featured.id}`}
+        onClick={() => onPlay(featured.id)}
+        className={gameHeroClass(featured.tone ?? 'amber')}
+      >
+        <span className="shrink-0 text-5xl" aria-hidden>{featured.emoji}</span>
+        <span className="min-w-0 flex-1">
+          <span className="inline-block rounded-full bg-white/25 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-white ring-1 ring-white/40">
+            Trò chơi hôm nay
+          </span>
+          <span className="mt-1 block font-display text-lg font-extrabold leading-tight">
+            {featured.title}
+          </span>
+          <span className="block text-xs font-semibold text-white/85">{featured.tagline}</span>
+        </span>
+        <Stars id={featured.id} />
+        {featured.fresh && <NewBadge />}
+      </button>
+
+      <div className="grid grid-cols-2 gap-3">
+        {rest.map((def) => (
           <button
             key={def.id}
             type="button"
             data-testid={`game-card-${def.id}`}
             onClick={() => onPlay(def.id)}
-            className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-amber-200/60 bg-gradient-to-b from-amber-50 to-orange-100 px-3 py-4 text-center shadow-[inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-4px_0_rgba(180,83,9,0.18),0_8px_18px_-8px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.5)] active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-amber-300"
+            className={gameCardClass(def.tone ?? 'sky')}
           >
+            {def.fresh && <NewBadge />}
             <span className="text-4xl" aria-hidden>{def.emoji}</span>
-            <span className="font-display text-base font-extrabold leading-tight text-slate-800">
+            <span className="font-display text-base font-extrabold leading-tight">
               {def.title}
             </span>
-            <span className="text-xs font-semibold leading-snug text-slate-500">{def.tagline}</span>
-            <span
-              data-testid={`game-best-${def.id}`}
-              className="mt-0.5 text-sm tracking-wider"
-              aria-label={`Thành tích tốt nhất: ${best} sao`}
-            >
-              {[0, 1, 2].map((i) => (
-                <span key={i} className={i < best ? 'text-amber-500' : 'text-slate-300'}>★</span>
-              ))}
-            </span>
+            <span className="text-xs font-semibold leading-snug text-white/85">{def.tagline}</span>
+            <Stars id={def.id} />
           </button>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }

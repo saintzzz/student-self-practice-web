@@ -99,17 +99,31 @@ export const CTA_GOLD_XL =
 export const DISCLOSURE_BTN =
   'inline-flex min-h-[44px] items-center justify-center gap-1 rounded-full bg-white/10 px-4 text-sm font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300';
 
-/** Hub section tile (CR-73 `tile.hub` contract): paper pairs - the hub
- *  is a light paper panel inside the navy launchpad card. 96px for G1-2
- *  hands; G3-5 drops to 76px via TRAIL_TILE_SM. Focus ring sky-600
- *  (4.1:1 non-text on paper - sky-400 was 2.14:1, below the 3:1 floor). */
-export const TRAIL_TILE =
-  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
-export const TRAIL_TILE_SM =
-  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-sky-200 bg-sky-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-sky-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
-/** Expanded tile visual (contract "S" state): chevron rotates via
- *  markup swap; the tile keeps the selected wash + ring. */
-export const TRAIL_TILE_EXPANDED = 'bg-sky-100 ring-1 ring-sky-400';
+/** CR-85 redesign: hub tiles are DESTINATION cards - each carries its
+ *  own gradient identity on the navy board (Lingokids zone-card idiom)
+ *  instead of identical pale-paper rows. White text + frosted icon chip
+ *  keep contrast on every hue; the per-tile emoji watermark adds the
+ *  illustration layer. 96px for G1-2 hands; G3-5 drops to 76px. */
+export type HubTone = 'sky' | 'orange' | 'emerald' | 'amber' | 'rose';
+
+const HUB_TILE_BASE =
+  'relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border-b-4 px-4 text-left font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
+
+const HUB_TONE_STYLES: Record<HubTone, { border: string; gradient: string }> = {
+  sky: { border: 'border-sky-700', gradient: 'bg-gradient-to-br from-sky-400 to-sky-600' },
+  orange: { border: 'border-orange-700', gradient: 'bg-gradient-to-br from-orange-400 to-orange-600' },
+  emerald: { border: 'border-emerald-700', gradient: 'bg-gradient-to-br from-emerald-400 to-emerald-600' },
+  amber: { border: 'border-amber-700', gradient: 'bg-gradient-to-br from-amber-400 to-amber-600' },
+  rose: { border: 'border-rose-700', gradient: 'bg-gradient-to-br from-rose-400 to-rose-600' },
+};
+
+export function hubTileClass(tone: HubTone, minH: 96 | 76): string {
+  const s = HUB_TONE_STYLES[tone];
+  return `${HUB_TILE_BASE} ${s.border} ${s.gradient} ${minH === 96 ? 'min-h-[96px] text-lg' : 'min-h-[76px] text-base'}`;
+}
+
+/** Expanded tile state on a colored surface: brighten + white ring. */
+export const HUB_TILE_EXPANDED = 'brightness-110 ring-2 ring-white/60';
 
 /** The hub's container inside the navy launchpad card. CR-81 S6:
  *  de-nested - the paper tile rows sit directly on the navy board
@@ -246,10 +260,7 @@ export const toy = {
     'shadow-[inset_0_2px_0_rgba(255,255,255,0.18),0_0_0_3px_rgba(52,211,153,0.55),0_0_18px_rgba(52,211,153,0.45)]',
 } as const;
 
-/** ModeHub icon chips: soft rotating tints on the paper hub (B4 on
- *  light surfaces - the tile body stays uniform sky paper, the icon
- *  chip carries the accent so tiles differentiate without noise).
- *  CR-82: violet entry swapped for amber (palette purge, spec s11). */
+/** @deprecated superseded by hubTileClass + HUB_CHIP (CR-85 redesign). */
 export const HUB_ICON_TINTS = [
   'bg-sky-200/80 text-sky-700',
   'bg-rose-200/80 text-rose-700',
@@ -479,9 +490,19 @@ export const CHIP_PAPER_SKY = `${CHIP_BASE} bg-sky-100 text-sky-800 ring-sky-300
 export const GOLD_HAIRLINE =
   'ring-1 ring-amber-300/60 shadow-[inset_0_0_0_1px_rgba(253,230,138,0.25)]';
 
-/** CR-82 R-v5-12: top-level Đấu trường hub tile - TRAIL_TILE geometry
- *  with orange arena identity surface (not gold - identity hue). */
-export const TRAIL_TILE_ARENA =
-  'flex min-h-[96px] w-full items-center gap-3 rounded-2xl border-b-4 border-orange-300 bg-orange-50 px-4 text-left text-lg font-bold text-slate-800 transition hover:bg-orange-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
-export const TRAIL_TILE_ARENA_SM =
-  'flex min-h-[76px] w-full items-center gap-3 rounded-2xl border-b-4 border-orange-300 bg-orange-50 px-4 text-left text-base font-bold text-slate-800 transition hover:bg-orange-100 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 motion-reduce:transition-none';
+/** Frosted icon chip on the colored hub tile (was: rotating paper tints). */
+export const HUB_CHIP =
+  'mt-0.5 shrink-0 rounded-xl bg-white/25 p-1.5 text-white ring-1 ring-white/40';
+
+/** CR-85 redesign: Game Zone cards share the destination-tone system -
+ *  each game carries its own hue instead of a uniform amber grid.
+ *  `hero` = the full-width "Tro choi hom nay" featured card. */
+export function gameCardClass(tone: HubTone): string {
+  const s = HUB_TONE_STYLES[tone];
+  return `relative flex flex-col items-center gap-1.5 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-3 py-4 text-center text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_8px_18px_-8px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
+}
+
+export function gameHeroClass(tone: HubTone): string {
+  const s = HUB_TONE_STYLES[tone];
+  return `relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-4 py-4 text-left text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
+}
