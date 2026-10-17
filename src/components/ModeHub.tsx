@@ -92,10 +92,10 @@ export function HubGroup({
                 /* VS emblem disc - frosted glass on the arena gradient. */
                 <span
                   aria-hidden="true"
-                  className="relative z-10 mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/50"
+                  className="relative z-10 mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/30 ring-2 ring-white/60"
                 >
-                  <tile.icon size={24} className="text-white" />
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 font-display text-sm font-extrabold text-white">
+                  <tile.icon size={24} className="text-slate-900" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 font-display text-sm font-extrabold text-slate-900">
                     VS
                   </span>
                 </span>
@@ -105,9 +105,9 @@ export function HubGroup({
                 </span>
               )}
               <span className="z-10 min-w-0 flex-1">
-                <span className="block font-extrabold text-white">{tile.label}</span>
+                <span className="block font-extrabold text-slate-900">{tile.label}</span>
                 {tile.sub && (
-                  <span className="block text-xs font-semibold text-white/85">{tile.sub}</span>
+                  <span className="block text-xs font-semibold text-slate-800">{tile.sub}</span>
                 )}
               </span>
               {tile.emoji && (
@@ -115,7 +115,7 @@ export function HubGroup({
                   {tile.emoji}
                 </span>
               )}
-              <span aria-hidden="true" className="z-10 shrink-0 text-white">
+              <span aria-hidden="true" className="z-10 shrink-0 text-slate-900">
                 {open ? <IconChevronUp size={22} /> : <IconChevronDown size={22} />}
               </span>
             </button>

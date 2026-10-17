@@ -106,8 +106,11 @@ export const DISCLOSURE_BTN =
  *  illustration layer. 96px for G1-2 hands; G3-5 drops to 76px. */
 export type HubTone = 'sky' | 'orange' | 'emerald' | 'amber' | 'rose';
 
+/* Candy-bright surfaces (400->600) carry NAVY text: white on these
+ * hues fails WCAG AA for small copy (~1.9-4.3:1); slate-900 keeps
+ * >=5.9:1 on every tone including amber. */
 const HUB_TILE_BASE =
-  'relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border-b-4 px-4 text-left font-bold text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
+  'relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border-b-4 px-4 text-left font-bold text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none';
 
 const HUB_TONE_STYLES: Record<HubTone, { border: string; gradient: string }> = {
   sky: { border: 'border-sky-700', gradient: 'bg-gradient-to-br from-sky-400 to-sky-600' },
@@ -492,17 +495,17 @@ export const GOLD_HAIRLINE =
 
 /** Frosted icon chip on the colored hub tile (was: rotating paper tints). */
 export const HUB_CHIP =
-  'mt-0.5 shrink-0 rounded-xl bg-white/25 p-1.5 text-white ring-1 ring-white/40';
+  'mt-0.5 shrink-0 rounded-xl bg-white/40 p-1.5 text-slate-900 ring-1 ring-white/60';
 
 /** CR-85 redesign: Game Zone cards share the destination-tone system -
  *  each game carries its own hue instead of a uniform amber grid.
  *  `hero` = the full-width "Tro choi hom nay" featured card. */
 export function gameCardClass(tone: HubTone): string {
   const s = HUB_TONE_STYLES[tone];
-  return `relative flex flex-col items-center gap-1.5 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-3 py-4 text-center text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_8px_18px_-8px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
+  return `relative flex flex-col items-center gap-1.5 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-3 py-4 text-center text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_8px_18px_-8px_rgba(0,0,0,0.45)] transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
 }
 
 export function gameHeroClass(tone: HubTone): string {
   const s = HUB_TONE_STYLES[tone];
-  return `relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-4 py-4 text-left text-white shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
+  return `relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border-b-4 ${s.border} ${s.gradient} px-4 py-4 text-left text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.3),0_10px_22px_-10px_rgba(0,0,0,0.5)] transition hover:brightness-105 active:scale-[0.99] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70`;
 }

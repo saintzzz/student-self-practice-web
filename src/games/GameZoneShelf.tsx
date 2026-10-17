@@ -13,7 +13,7 @@ function Stars({ id }: { id: GameId }) {
       aria-label={`Thành tích tốt nhất: ${best} sao`}
     >
       {[0, 1, 2].map((i) => (
-        <span key={i} className={i < best ? 'text-amber-200' : 'text-white/30'}>★</span>
+        <span key={i} className={i < best ? 'text-slate-900' : 'text-slate-900/25'}>★</span>
       ))}
     </span>
   );
@@ -55,13 +55,13 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
       >
         <span className="shrink-0 text-5xl" aria-hidden>{featured.emoji}</span>
         <span className="min-w-0 flex-1">
-          <span className="inline-block rounded-full bg-white/25 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-white ring-1 ring-white/40">
+          <span className="inline-block rounded-full bg-white/40 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-900 ring-1 ring-white/60">
             Trò chơi hôm nay
           </span>
           <span className="mt-1 block font-display text-lg font-extrabold leading-tight">
             {featured.title}
           </span>
-          <span className="block text-xs font-semibold text-white/85">{featured.tagline}</span>
+          <span className="block text-xs font-semibold text-slate-800">{featured.tagline}</span>
         </span>
         <Stars id={featured.id} />
         {featured.fresh && <NewBadge />}
@@ -81,7 +81,7 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
             <span className="font-display text-base font-extrabold leading-tight">
               {def.title}
             </span>
-            <span className="text-xs font-semibold leading-snug text-white/85">{def.tagline}</span>
+            <span className="text-xs font-semibold leading-snug text-slate-800">{def.tagline}</span>
             <Stars id={def.id} />
           </button>
         ))}
