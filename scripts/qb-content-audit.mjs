@@ -210,15 +210,18 @@ check('prompt-image-placeholder', 'P0',
 // Oct-18: statement prompts ("There is a banana.") served with yes/no
 // agreement options - no question asked and nothing to verify against.
 const YESNO_OPT = /^(yes|no)\b[.!]?\s*$|^(yes|no)\b.*\b(is|are|do|does|can|am|don'?t|isn'?t|aren'?t|can'?t)\b/i;
+const GREETING_ONLY = /^(goodbye|bye|hello|hi|good (morning|afternoon|evening|night|luck)|thank(s| you)|sorry|yes|no|ok(ay)?|please|wow|hurray|hooray|see you|welcome|great|nice|wonderful|congratulations|excuse me|come on|look out|careful|help|stop|go|sit down|stand up|listen|look|hurry up|quiet|attention|cheers|bless you|good job|well done|oh no|ouch|yum|yuck|here you are|after you|never mind|of course|sure|maybe|perhaps|really|indeed)[\s!.,'’]*$/i;
 check('statement-as-question', 'P1',
   'Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage',
   questions.filter((q) => {
     if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
     const p = (q.prompt_text ?? '').trim();
     if (q.passage || q.transcript || assetCount.get(q.id)) return false;
-    // Verb-less exclamations are greetings/commands ("Goodbye!"), not
-    // assertions; an exclaimed clause ("There is a banana!") still flags.
-    if (/!$/.test(p) && !/\b(is|are|was|were|do|does|did|can|could|have|has|had|like|want|need|will|would|should|am|be|been)\b/i.test(p)) return false;
+    // Exclamations that are pure greetings/commands/interjections
+    // ("Goodbye!", "Sit down!") are not assertions; an exclaimed clause
+    // ("She eats apples!") still flags. Whitelist, not a verb check -
+    // lexical verbs evade a denylist (r70/r71).
+    if (/!$/.test(p) && GREETING_ONLY.test(p)) return false;
     if (/[?_…]|\.{3}|\bchoose\b|\bchọn\b|\btranslate\b|\bsay\b|\bcomplete\b/i.test(p)) return false;
     const labels = q.choices.map((c) => choiceLabel(c));
     return labels.some((l) => YESNO_OPT.test(l));
