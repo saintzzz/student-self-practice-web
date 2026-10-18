@@ -332,14 +332,20 @@ describe('scorePronunciationAttempt', () => {
       expect(result.isCorrect).toBe(false);
     });
 
-    it('rejects accuracy in the ambiguous 70-84 band (strict audio bar)', () => {
+    it('rejects accuracy in the ambiguous band below the assess bar', () => {
       // big-for-pig graded 80 by the provider - recognizable but not clean.
       const result = scorePronunciationAttempt('pig', 'big', { serverScore: 80 });
       expect(result.isCorrect).toBe(false);
     });
 
+    it('rejects a minimal-pair accuracy at 85 (human-corpus calibration)', () => {
+      // dish/big/lice/sheep/elegant all graded exactly 85 on real audio -
+      // the bar sits above the wrong-word cluster.
+      expect(scorePronunciationAttempt('fish', 'dish', { serverScore: 85 }).isCorrect).toBe(false);
+    });
+
     it('passes accuracy at the assess bar', () => {
-      expect(scorePronunciationAttempt('pig', 'pig', { serverScore: 85 }).isCorrect).toBe(true);
+      expect(scorePronunciationAttempt('pig', 'pig', { serverScore: 90 }).isCorrect).toBe(true);
     });
 
     it('ignores the transcript entirely when serverScore is present', () => {
@@ -384,8 +390,14 @@ describe('scorePronunciationAttempt', () => {
     });
 
     it('never fires at or above the assess pass bar', () => {
-      expect(assessAmbiguousRetry('hen', 85, ['hen'])).toBe(false);
       expect(assessAmbiguousRetry('hen', 90, ['hen'])).toBe(false);
+      expect(assessAmbiguousRetry('hen', 95, ['hen'])).toBe(false);
+    });
+
+    it('fires inside the wrong-word 85 cluster (human-corpus band)', () => {
+      // Real wrong-word reads grade at exactly 85 - the retry affordance
+      // catches them instead of a hard fail.
+      expect(assessAmbiguousRetry('pig', 85, ['pig'])).toBe(true);
     });
 
     it('never fires on a garbage verdict - score below the floor means noise', () => {

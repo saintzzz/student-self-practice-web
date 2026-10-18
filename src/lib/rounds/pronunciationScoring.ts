@@ -60,11 +60,16 @@ import { WORD_IPA } from '../../data/ipaMap';
 export const PRONUNCIATION_CORRECT_THRESHOLD = 70;
 /**
  * Pass bar for a server 'assess' accuracy verdict. Stricter than the
- * transcript threshold: the provider heard the audio, and the CR-90
- * corpus shows correct speech clusters at 95-100 while wrong words and
- * distorted attempts cluster at 40-80. 85 splits the bands cleanly.
+ * transcript threshold: the provider heard the audio. Calibrated on the
+ * CR-90 human corpus (_pron_eval/human, 30 real clips): correct adult
+ * reads cluster at 95-100 and genuine Vietnamese-accent reads at >=90,
+ * while minimal-pair wrong words pile up at exactly 85 (dish/big/lice/
+ * sheep/elegant) - the 85 bar let them all pass. 90 splits the bands:
+ * everything a child should get credit for sits at >=90, wrong words
+ * sit <=85 and land in the ambiguous-retry band (a free re-read) rather
+ * than a hard fail.
  */
-export const ASSESS_PASS_MIN = 85;
+export const ASSESS_PASS_MIN = 90;
 
 /** Text similarity carries most of the weight; phonetic similarity is a fairness boost, not a dominant signal. */
 const TEXT_SIMILARITY_WEIGHT = 0.7;

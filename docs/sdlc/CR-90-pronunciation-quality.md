@@ -35,6 +35,24 @@ Assess path (server grades audio directly): **43/47** at threshold 85 -
 correct speech 95-100, wrong/distorted 40-80. Residual: hen->heard"pen"
 provider mishear; Kate@60 synthetic-TTS artifact.
 
+### Human-corpus calibration (post-CR-90, `_pron_eval/human/`)
+
+30 real recorded clips (recorded via `scripts/_pron-recorder.mjs`,
+graded by the same `practice-transcribe` assess endpoint):
+
+- `good_adult` (12): 95-100 - clean separation.
+- `accent_vi` (10): >=90 for genuine accents; the only sub-90s are real
+  distortions (bed->"bet" 85, pen->"fan" 70) that SHOULD fail.
+- `wrong_word` (8): reads heard as a different word grade at <=85
+  (dish/big 85); reads the recognizer normalized back to the target
+  (cat/ship/three -> 95-100) are unfixable by any threshold.
+
+`ASSESS_PASS_MIN` raised 85 -> **90**: the whole wrong-word cluster sat
+at exactly 85 and leaked through. At 90 the wrong-word fail rate goes
+7/12 -> 11/12 (TTS) and 3/8 -> 5/8 (human), human-good stays 12/12, and
+the sub-90 borderline reads land in `assessAmbiguousRetry`'s 50-90 band
+- a free re-read instead of a hard fail.
+
 ## Changes
 
 **Scorer** (`pronunciationScoring.ts`):
@@ -49,7 +67,7 @@ provider mishear; Kate@60 synthetic-TTS artifact.
   score at 95 x confidenceFactor - recognizer respelling is not a
   pronunciation error.
 - `options.serverScore`: an assess verdict short-circuits text scoring;
-  pass bar `ASSESS_PASS_MIN = 85` (corpus-calibrated).
+  pass bar `ASSESS_PASS_MIN = 90` (human-corpus calibrated, see below).
 
 **Pipeline**: `maxAlternatives` raised; `onResult` emits
 `{transcript, alternatives, confidence}`; the hook forwards them as
@@ -70,7 +88,7 @@ no-env/no-MediaRecorder browsers.
 
 - Provider mishearings survive both paths (hen->pen 100). An
   alternatives-bearing assess (top-3 heard guesses) could rescue it.
-- Corpus is synthetic TTS - a real human/child recording set would
-  sharpen calibration further.
+- Human adult corpus landed (30 clips, `_pron_eval/human/`); a real
+  CHILD voice set would sharpen it further still.
 - Vault hygiene: gemini_model updated to a live model, but key quota
   rotation is operational, not code.

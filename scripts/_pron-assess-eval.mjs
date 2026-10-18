@@ -3,6 +3,8 @@ const KEY = 'sb_publishable_dHxiF6xvVWSbbbEdrnZWSg_TgzAgXpB';
 const BASE = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 /* Human clips from scripts/_pron-recorder.mjs live in _pron_eval/human/
    and are labeled src=human; synthetic TTS stays at the dir root. */
+// Threshold mirrors ASSESS_PASS_MIN in src/lib/rounds/pronunciationScoring.ts
+const PASS_MIN = 90;
 const files = readdirSync('_pron_eval').filter(f => f.endsWith('.webm'))
   .map((f) => ({ f, dir: '_pron_eval', src: 'tts' }));
 if (existsSync('_pron_eval/human')) {
@@ -30,14 +32,13 @@ const buckets = {};
 let okN=0, badN=0, errN=0;
 for (const r of rows) {
   const caze = `${r.src}:${r.f.match(/(good_child|good_adult|accent_vi|wrong_word)/)[1]}`;
-  const expectPass = caze !== 'wrong_word';
+  const expectPass = !caze.endsWith('wrong_word');
   if (r.status !== 200 || r.accuracy === undefined) { errN++; buckets[caze]=(buckets[caze]||[0,0]); continue; }
-  // r49: production floor is ASSESS_PASS_MIN=85 in pronunciationScoring.ts
-  const pass = r.accuracy >= 85;
+  const pass = r.accuracy >= PASS_MIN;
   const behaved = pass === expectPass;
   buckets[caze] = buckets[caze]||[0,0]; buckets[caze][behaved?0:1]++;
   if (behaved) okN++; else badN++;
 }
-console.log('\n--- summary (assess mode, threshold 85 = ASSESS_PASS_MIN) ---');
+console.log(`\n--- summary (assess mode, threshold ${PASS_MIN} = ASSESS_PASS_MIN) ---`);
 for (const [c,[g,b]] of Object.entries(buckets)) console.log(`${c.padEnd(14)} ${g}/${g+b} behaved as expected`);
 console.log(`overall ${okN}/${okN+badN}  (errors excluded: ${errN})`);
