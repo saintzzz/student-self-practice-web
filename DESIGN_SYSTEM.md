@@ -37,6 +37,12 @@
 > raised to `bg-white/[0.12]` + `ring-white/20`. White text on
 > `*-300..500` candy fills is banned - candy faces take `*-950` ink
 > (already true on hub tiles).
+>
+> **CR-92 (v6.1):** hub drawer model - expanded sections render inside
+> `hubTrayClass(tone)` (recessed navy tray + top edge in the parent
+> tone); subtiles are light `subTileClass` rows (76px G1-2 / 64px G3-5)
+> with `subTileChip` tone chips. Parent candy tile = destination, light
+> row = item inside it, white card = actions - never sibling-candy.
 
 ---
 

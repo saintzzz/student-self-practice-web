@@ -274,8 +274,10 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
     </div>
   );
 
+  /* CR-92: the note sits inside the dark hub tray - slate-600 was the
+     paper-pairing value; on the tray it needs light ink. */
   const learnNote = (
-    <p className="text-sm font-semibold text-slate-600">
+    <p className="text-sm font-semibold text-slate-200">
       Luyện đề: {examConfig.drillCount} câu, chữa ngay. Thi thử: {examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút, giống thi thật.
     </p>
   );

@@ -2,7 +2,7 @@ import { useState, type ComponentType, type ReactNode } from 'react';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import { IconChevronDown, IconChevronUp, type IconProps } from './icons';
 import { useViewer } from '../lib/viewer/ViewerContext';
-import { hubTileClass, HUB_TILE_EXPANDED, HUB_CHIP, HUB_PANEL, type HubTone } from '../lib/ui/tokens';
+import { hubTileClass, HUB_TILE_EXPANDED, HUB_CHIP, HUB_PANEL, hubTrayClass, subTileChip, subTileClass, type HubTone } from '../lib/ui/tokens';
 
 /**
  * CR-73 s5.1 Mode Hub - the Kham pha sheet's replacement: labeled,
@@ -74,7 +74,10 @@ export function HubGroup({
       {tiles.map((tile) => {
         const open = openId === tile.id;
         const isArena = tile.variant === 'arena';
-        const tileClass = hubTileClass(tile.tone ?? (isArena ? 'orange' : 'sky'), minH);
+        const tone = tile.tone ?? (isArena ? 'orange' : 'sky');
+        /* CR-92: subtiles are light drawer rows, never top-level candy
+           tiles - parent/child hierarchy must read at a glance. */
+        const tileClass = subtile ? subTileClass(tone, minH) : hubTileClass(tone, minH);
         const regionIds = tile.sections
           ? tile.sections.map((s) => `${regionPrefix}-${s.id}`)
           : [`${regionPrefix}-${tile.id}`];
@@ -100,14 +103,14 @@ export function HubGroup({
                   </span>
                 </span>
               ) : (
-                <span className={`z-10 ${HUB_CHIP}`}>
-                  <tile.icon size={24} aria-hidden="true" />
+                <span className={`z-10 ${subtile ? subTileChip(tone) : HUB_CHIP}`}>
+                  <tile.icon size={subtile ? 20 : 24} aria-hidden="true" />
                 </span>
               )}
               <span className="z-10 min-w-0 flex-1">
                 <span className="block font-extrabold text-slate-900">{tile.label}</span>
                 {tile.sub && (
-                  <span className="block text-xs font-semibold text-slate-900">{tile.sub}</span>
+                  <span className={`block text-xs font-semibold ${subtile ? 'text-slate-600' : 'text-slate-900'}`}>{tile.sub}</span>
                 )}
               </span>
               {tile.emoji && (
@@ -125,7 +128,7 @@ export function HubGroup({
               const id = `${regionPrefix}-${s.id}`;
               return (
                 <div key={id} id={id} data-testid={id}>
-                  {open ? <div className="mt-2 space-y-3 pb-1">{s.content}</div> : null}
+                  {open ? <div className={hubTrayClass(tone)}>{s.content}</div> : null}
                 </div>
               );
             })}

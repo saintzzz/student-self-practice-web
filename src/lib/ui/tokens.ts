@@ -129,6 +129,45 @@ export function hubTileClass(tone: HubTone, minH: 96 | 76): string {
 /** Expanded tile state on a colored surface: brighten + white ring. */
 export const HUB_TILE_EXPANDED = 'brightness-110 ring-2 ring-white/60';
 
+/** CR-92 (hub hierarchy): expanded content is a DRAWER - a recessed
+ *  dark tray topped by a strip in the parent tile's tone. Before this,
+ *  expanded children rendered as identical candy tiles in the same
+ *  column, so an open accordion read as one flat rainbow strip with no
+ *  parent/child structure. The tone top-edge ties the drawer to its
+ *  parent; light sub-rows inside pop on the dark tray. */
+const HUB_TRAY_EDGE: Record<HubTone, string> = {
+  sky: 'border-t-sky-400',
+  orange: 'border-t-orange-400',
+  emerald: 'border-t-emerald-400',
+  amber: 'border-t-amber-400',
+  rose: 'border-t-rose-400',
+};
+
+export function hubTrayClass(tone: HubTone): string {
+  return `mt-2 space-y-3 rounded-2xl border-t-4 ${HUB_TRAY_EDGE[tone]} bg-[#0c1830]/85 p-2.5 ring-1 ring-white/15 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]`;
+}
+
+/** Subtile rows inside a drawer: light paper face + tone chip + tone
+ *  depth edge - reads as an item INSIDE the parent, never as a sibling
+ *  top-level tile. Heights: 76px on G1-2 hands, 64px G3-5 (non-
+ *  standalone floor per the density table). */
+const SUB_TILE_STYLES: Record<HubTone, { edge: string; chip: string }> = {
+  sky: { edge: 'border-b-sky-500', chip: 'bg-sky-100 ring-sky-300' },
+  orange: { edge: 'border-b-orange-500', chip: 'bg-orange-100 ring-orange-300' },
+  emerald: { edge: 'border-b-emerald-500', chip: 'bg-emerald-100 ring-emerald-300' },
+  amber: { edge: 'border-b-amber-500', chip: 'bg-amber-100 ring-amber-300' },
+  rose: { edge: 'border-b-rose-500', chip: 'bg-rose-100 ring-rose-300' },
+};
+
+export function subTileChip(tone: HubTone): string {
+  return `mt-0.5 shrink-0 rounded-xl p-1.5 text-slate-900 ring-1 ${SUB_TILE_STYLES[tone].chip}`;
+}
+
+export function subTileClass(tone: HubTone, minH: 96 | 76): string {
+  const s = SUB_TILE_STYLES[tone];
+  return `relative flex w-full items-center gap-3 overflow-hidden rounded-xl border-b-4 ${s.edge} bg-gradient-to-b from-white to-slate-100 px-3 text-left font-bold text-slate-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.85),0_6px_14px_-8px_rgba(0,0,0,0.55)] transition hover:brightness-[1.03] active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 motion-reduce:transition-none ${minH === 96 ? 'min-h-[76px] text-base' : 'min-h-[64px] text-sm'}`;
+}
+
 /** The hub's container inside the navy launchpad card. CR-81 S6:
  *  de-nested - the paper tile rows sit directly on the navy board
  *  instead of a card-in-card panel. */
