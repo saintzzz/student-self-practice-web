@@ -187,6 +187,40 @@ check('prompt-answer-leak', 'P0',
     return m && m[1].trim().toLowerCase() === ans.trim().toLowerCase();
   }));
 
+// Oct-18 user reports: the answer printed inside the prompt WITHOUT quotes -
+// "Which is number 4?" -> "4" (english bank). For ENGLISH items a bare-digit
+// answer reprinted in the prompt exercises no English skill; math/science
+// select-compare-compute prompts legitimately contain operands, and
+// digit->word exercises ("What is '8' in English?" -> "eight") do not leak
+// the word - so this check is scoped to the english subject only.
+check('prompt-answer-leak-unquoted', 'P0',
+  'English item whose bare-digit correct answer is reprinted inside the prompt',
+  questions.filter((q) => {
+    if (!eligible(q) || q.subject !== 'english' || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
+    const ans = correctLabel(q).trim();
+    if (!/^\d+$/.test(ans)) return false;
+    return new RegExp(`\\b${ans}\\b`).test(q.prompt_text ?? '');
+  }));
+
+const IMG_PLACEHOLDER = /[([]\s*(image|picture)\s*[:of]/i;
+check('prompt-image-placeholder', 'P0',
+  'Prompt describes an image in text "(Image of X)" - no real asset and the description leaks the answer',
+  questions.filter((q) => eligible(q) && IMG_PLACEHOLDER.test(q.prompt_text ?? '')));
+
+// Oct-18: statement prompts ("There is a banana.") served with yes/no
+// agreement options - no question asked and nothing to verify against.
+const YESNO_OPT = /^(yes|no)\b.*\b(is|are|do|does|can|am|don'?t|isn'?t|aren'?t|can'?t)\b/i;
+check('statement-as-question', 'P1',
+  'Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage',
+  questions.filter((q) => {
+    if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
+    const p = (q.prompt_text ?? '').trim();
+    if (q.passage || q.transcript || assetCount.get(q.id)) return false;
+    if (/[?_…]|\.{3}|\bchoose\b|\bchọn\b|\btranslate\b|\bsay\b|\bcomplete\b/i.test(p)) return false;
+    const labels = q.choices.map((c) => choiceLabel(c));
+    return labels.some((l) => YESNO_OPT.test(l));
+  }));
+
 /* ---------- C. explanation quality ---------- */
 
 check('explanation-missing', 'P0',

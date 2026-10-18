@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-18T08:27:16.004Z · rows: 110726 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-18T08:38:34.327Z · rows: 110726 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -11,6 +11,8 @@ Generated: 2026-10-18T08:27:16.004Z · rows: 110726 · regenerate: `node scripts
 | `choices-too-few` | P0 | **0** | MCQ-type with fewer than 3 choices |
 | `option-placeholder` | P0 | **0** | A choice is a literal generator placeholder like "option-4" |
 | `prompt-answer-leak` | P0 | **0** | Prompt literally contains the quoted correct answer (guessable without skill) |
+| `prompt-answer-leak-unquoted` | P0 | **0** | English item whose bare-digit correct answer is reprinted inside the prompt |
+| `prompt-image-placeholder` | P0 | **0** | Prompt describes an image in text "(Image of X)" - no real asset and the description leaks the answer |
 | `explanation-missing` | P0 | **0** | No explanation at all |
 | `explanation-template-residue` | P0 | **0** | Leftover generator template text |
 | `wrong-answer-math` | P0 | **0** | Marked answer contradicts the computed value of the prompt |
@@ -29,6 +31,7 @@ Generated: 2026-10-18T08:27:16.004Z · rows: 110726 · regenerate: `node scripts
 | `explanation-mentions-other-answer` | P1 | **474** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
 | `duplicate-choices` | P1 | **0** | Two identical choices in one question |
 | `ambiguous-open-prompt` | P1 | **0** | Open-ended prompt where more than one choice is a plausible true answer - review for quarantine |
+| `statement-as-question` | P1 | **0** | Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage |
 | `explanation-tautology` | P1 | **0** | Explanation only restates "answer fits the theme" without a reason or contrast |
 | `reorder-trivial` | P1 | **0** | Reorder answer is a single word - nothing to arrange |
 | `heard-word-not-in-transcript` | P1 | **0** | "Which word did you hear" answer is not spoken in the transcript |
