@@ -357,6 +357,52 @@ describe('scorePronunciationAttempt', () => {
       expect(scorePronunciationAttempt('cat', 'cat', { serverScore: NaN }).score).toBe(100);
       expect(scorePronunciationAttempt('cat', 'cat', {}).score).toBe(100);
     });
+
+    describe('assess alternatives rescue (CR-90 follow-up)', () => {
+      it('rescues a buried correct attempt the grader heard as a confusable', () => {
+        // Child said "hen" correctly; provider top-1 misheard "pen" and
+        // graded it against the target (low accuracy) but listed "hen"
+        // as an alternative reading.
+        const result = scorePronunciationAttempt('hen', 'pen', {
+          serverScore: 60,
+          alternatives: ['hen', 'when'],
+        });
+        expect(result.isCorrect).toBe(true);
+        expect(result.score).toBe(85);
+      });
+
+      it('keeps the provider score when alternatives do not match the target', () => {
+        const result = scorePronunciationAttempt('cat', 'cut', {
+          serverScore: 60,
+          alternatives: ['cut', 'cot'],
+        });
+        expect(result.score).toBe(60);
+        expect(result.isCorrect).toBe(false);
+      });
+
+      it('does not rescue a garbage attempt even with a matching alternative', () => {
+        // score < 50 means silence/noise - never trust alternatives.
+        const result = scorePronunciationAttempt('hen', 'zzz', {
+          serverScore: 30,
+          alternatives: ['hen'],
+        });
+        expect(result.isCorrect).toBe(false);
+      });
+
+      it('does not touch a verdict already above the assess bar', () => {
+        const result = scorePronunciationAttempt('hen', 'pen', {
+          serverScore: 90,
+          alternatives: ['hen'],
+        });
+        expect(result.score).toBe(90);
+      });
+
+      it('ignores empty/missing alternatives safely', () => {
+        expect(
+          scorePronunciationAttempt('cat', 'cut', { serverScore: 60, alternatives: [] }).isCorrect,
+        ).toBe(false);
+      });
+    });
   });
 });
 

@@ -343,7 +343,13 @@ export function usePronunciationRecording(
       }
       // CR-90: a present score = the provider graded the audio itself;
       // absent = plain transcript, the local scorer still applies.
-      finish(result.transcript, result.score !== undefined ? { serverScore: result.score } : undefined);
+      // alternatives lets the scorer rescue a buried correct attempt.
+      finish(
+        result.transcript,
+        result.score !== undefined || result.alternatives !== undefined
+          ? { serverScore: result.score, alternatives: result.alternatives }
+          : undefined,
+      );
     } catch {
       setErrorReason('audio-capture');
       setPhase('error');

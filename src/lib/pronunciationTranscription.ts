@@ -24,6 +24,10 @@ export interface PronunciationServerResult {
   /** Server-side pronunciation accuracy (0-100) when an assess-capable
       provider graded the audio; absent on the plain-transcript path. */
   score?: number;
+  /** CR-90 follow-up: other plausible readings the grader offered when
+      the audio was ambiguous - the scorer can rescue a buried correct
+      attempt (heard "pen" top-1 while the child really said "hen"). */
+  alternatives?: string[];
 }
 
 /** True when the build carries the Supabase URL+key the edge call needs -
@@ -62,7 +66,11 @@ export async function transcribePronunciationAudio(
       }),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { transcript?: string; accuracy?: number };
+    const data = (await res.json()) as {
+      transcript?: string;
+      accuracy?: number;
+      alternatives?: unknown;
+    };
     if (typeof data.transcript !== 'string') return null;
     return {
       transcript: data.transcript,
@@ -70,6 +78,9 @@ export async function transcribePronunciationAudio(
         typeof data.accuracy === 'number' && Number.isFinite(data.accuracy)
           ? Math.max(0, Math.min(100, Math.round(data.accuracy)))
           : undefined,
+      alternatives: Array.isArray(data.alternatives)
+        ? data.alternatives.filter((a): a is string => typeof a === 'string' && a.trim().length > 0)
+        : undefined,
     };
   } catch {
     return null;

@@ -445,7 +445,28 @@ export function scorePronunciationAttempt(
   // transcript path's 70.
   const server = options?.serverScore;
   if (typeof server === 'number' && Number.isFinite(server)) {
-    const score = Math.round(Math.min(100, Math.max(0, server)));
+    let score = Math.round(Math.min(100, Math.max(0, server)));
+    /* CR-90 follow-up: the assess grader returns top-3 "heard" guesses.
+       A provider mishear ("hen" said correctly, heard as "pen") puts the
+       real attempt in the alternatives while accuracy grades the wrong
+       word. When an alternative scores like the target through the same
+       phoneme-gated path AND the audio was clearly speech (score >= 50,
+       not silence/garbage), the attempt plausibly WAS the target -
+       rescue it to the assess pass bar. This only fires on genuinely
+       confusable minimal pairs where the multimodal grader itself was
+       unsure; for kids' practice, passing a correct-but-misheard
+       attempt beats failing it. */
+    if (score < ASSESS_PASS_MIN && score >= 50 && options?.alternatives?.length) {
+      const normalizedTarget = normalizeForPronunciationComparison(targetWord);
+      const altBest = Math.max(
+        0,
+        ...options.alternatives
+          .map((alt) => normalizeForPronunciationComparison(alt))
+          .filter((alt) => alt.length > 0)
+          .map((alt) => scoreCandidate(normalizedTarget, alt, options.confidence)),
+      );
+      if (altBest >= PRONUNCIATION_CORRECT_THRESHOLD) score = ASSESS_PASS_MIN;
+    }
     return { score, isCorrect: score >= ASSESS_PASS_MIN };
   }
 

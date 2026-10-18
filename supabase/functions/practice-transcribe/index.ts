@@ -88,13 +88,19 @@ function json(body: unknown, status = 200, req?: Request) {
 interface AssessResult {
   heard: string;
   accuracy: number;
+  /* CR-90 follow-up: other plausible readings when the audio was
+     ambiguous (minimal pairs like hen/pen). The client rescues an
+     attempt whose true word the grader buried at rank 2. */
+  heardAlt: string[];
 }
 
 const ASSESS_PROMPT =
   'You are grading an English pronunciation attempt by a Vietnamese primary-school child. ' +
   'The child was asked to say this word or phrase: "__TARGET__". ' +
   'Listen to the audio carefully. Reply with ONLY a JSON object, no markdown: ' +
-  '{"heard": "<the closest English words the child actually said>", "accuracy": <0-100>}. ' +
+  '{"heard": "<the closest English words the child actually said>", ' +
+  '"heard_alt": ["<up to 2 other plausible English words if the audio was ambiguous, else empty>"], ' +
+  '"accuracy": <0-100>}. ' +
   'accuracy scores how close the sounds are to the target pronunciation: ' +
   '90-100 clearly correct (a child accent is fine), 70-89 recognizable as the target ' +
   'with minor distortion, 40-69 badly distorted or a different-sounding attempt, ' +
@@ -106,12 +112,19 @@ function parseAssessJson(text: string | null): AssessResult | null {
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) return null;
   try {
-    const j = JSON.parse(m[0]) as { heard?: unknown; accuracy?: unknown };
+    const j = JSON.parse(m[0]) as { heard?: unknown; heard_alt?: unknown; accuracy?: unknown };
     const heard = typeof j.heard === 'string' ? j.heard.trim() : '';
+    const heardAlt = Array.isArray(j.heard_alt)
+      ? j.heard_alt
+          .filter((a): a is string => typeof a === 'string')
+          .map((a) => a.trim())
+          .filter((a) => a.length > 0 && a.toLowerCase() !== heard.toLowerCase())
+          .slice(0, 2)
+      : [];
     const accuracy =
       typeof j.accuracy === 'number' ? Math.max(0, Math.min(100, Math.round(j.accuracy))) : NaN;
     if (Number.isNaN(accuracy)) return null;
-    return { heard, accuracy };
+    return { heard, accuracy, heardAlt };
   } catch {
     return null;
   }
@@ -424,7 +437,7 @@ Deno.serve(async (req: Request) => {
                 )
               : await assessGemini(String(ai.api_key), model, audioB64, mimeType, targetWord);
           if (r !== null && !(typeof r === 'string' && r.startsWith('__ERR_'))) {
-            return json({ transcript: r.heard, accuracy: r.accuracy }, 200, req);
+            return json({ transcript: r.heard, accuracy: r.accuracy, alternatives: r.heardAlt }, 200, req);
           }
           details.push(typeof r === 'string' ? r.slice(0, 160) : `${provider}:no-json`);
         } catch {
