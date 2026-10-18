@@ -53,6 +53,7 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
         <img
           src={src}
           alt=""
+          decoding="async"
           onError={() => setFailedFile(src)}
           className="scene-layer scene-layer-mid absolute bottom-0 left-[-7%] h-full w-[114%] max-w-none object-cover object-[center_bottom]"
           style={{ filter: TONE_FILTER[resolvedTone] }}
@@ -78,6 +79,8 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
       <img
         src={src}
         alt=""
+        loading="lazy"
+        decoding="async"
         onError={() => setFailedFile(src)}
         className="h-full w-full object-cover object-[center_bottom]"
         style={{ filter: TONE_FILTER[resolvedTone] }}

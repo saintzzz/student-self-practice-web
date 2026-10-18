@@ -180,6 +180,8 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
               aria-hidden="true"
               width={56}
               height={56}
+              loading="lazy"
+              decoding="async"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="h-14 w-14 shrink-0 rounded-xl bg-amber-50 object-contain p-0.5 ring-1 ring-amber-200/70 shadow-sm"
             />

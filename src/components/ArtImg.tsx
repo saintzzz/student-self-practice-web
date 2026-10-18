@@ -35,6 +35,7 @@ export function ArtImg({
       width={size}
       height={size}
       loading="lazy"
+      decoding="async"
       draggable={false}
       onError={() => setFailed(true)}
       className={`select-none rounded-lg bg-amber-50/95 object-contain p-0.5 ring-1 ring-amber-200/60 ${grayscale ? 'grayscale' : ''}`}

@@ -216,7 +216,7 @@ export default function ReviewQueueCard() {
             {r.assets && r.assets.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {r.assets.map((p) => (
-                  <img key={p} src={p} alt="minh họa câu hỏi" className="h-16 w-16 rounded-lg object-cover ring-1 ring-slate-200" />
+                  <img key={p} src={p} alt="minh họa câu hỏi" loading="lazy" decoding="async" className="h-16 w-16 rounded-lg object-cover ring-1 ring-slate-200" />
                 ))}
               </div>
             )}

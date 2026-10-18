@@ -54,6 +54,8 @@ export function MascotArt({ mood, sizePx }: { mood: MascotPoseName; sizePx: numb
       aria-hidden="true"
       width={sizePx}
       height={sizePx}
+      loading="lazy"
+      decoding="async"
       draggable={false}
       onError={() => setFailedFile(file)}
       className={`select-none object-contain ${MOOD_MOTION[mood]} ${

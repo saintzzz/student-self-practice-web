@@ -981,6 +981,7 @@ function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { te
         <img
           src={imageUrl}
           alt=""
+          decoding="async"
           data-testid="exam-question-image"
           className="mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain ring-1 ring-slate-200"
         />
@@ -1021,7 +1022,7 @@ function OptionButtons({
             {labels[i]}
           </span>
           {optionImages?.[i] ? (
-            <img src={optionImages[i]} alt={option} data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" />
+            <img src={optionImages[i]} alt={option} decoding="async" data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" />
           ) : (
             <MarkupText text={option} />
           )}
