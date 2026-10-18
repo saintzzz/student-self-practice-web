@@ -27,8 +27,10 @@ const H = {
   'Content-Type': 'application/json',
 };
 
-const ids = JSON.parse(readFileSync(REJECT_FILE, 'utf8'));
-console.log(`${APPLY ? 'APPLYING' : 'DRY-RUN'} quarantine for ${ids.length} ids`);
+let manual = [];
+try { manual = JSON.parse(readFileSync('docs/qa/flagged/reject-ids-manual.json', 'utf8')); } catch {}
+const ids = [...new Set([...JSON.parse(readFileSync(REJECT_FILE, 'utf8')), ...manual])];
+console.log(`${APPLY ? 'APPLYING' : 'DRY-RUN'} quarantine for ${ids.length} ids (${manual.length} manual)`);
 
 let done = 0, skipped = 0, failed = 0, repaired = 0;
 const CHUNK = 50;
