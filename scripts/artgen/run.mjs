@@ -22,13 +22,40 @@ const OUT = join(HERE, '..', '..', 'artgen-out');
 const URL_CHAT = 'https://chatgpt.com/';
 mkdirSync(OUT, { recursive: true });
 
-const COMPOSER = '#prompt-textarea';
+const COMPOSER = '#prompt-textarea, div[contenteditable="true"], textarea[placeholder*="Ask"], form textarea';
 const IMG_WAIT_MS = 240_000;
+
+async function isLoggedIn(page) {
+  // Anonymous users also get a composer - the real signal is the absence of
+  // a "Log in" CTA plus a profile/avatar control.
+  const loginCta = await page.evaluate(() =>
+    [...document.querySelectorAll('button, a')].some((e) => /log\s*in/i.test(e.textContent ?? '')));
+  return !loginCta;
+}
+
+async function dismissCookies(page) {
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')].find((e) => /accept/i.test(e.textContent ?? ''))?.click();
+    [...document.querySelectorAll('div')].filter((e) => e.id.includes('cookie') || e.className.includes('cookie'))
+      .forEach((e) => { e.style.display = 'none'; });
+  });
+}
 
 async function waitLoggedIn(page, timeoutMs = 20 * 60_000) {
   const t0 = Date.now();
+  let dumped = false;
   while (Date.now() - t0 < timeoutMs) {
-    if (await page.locator(COMPOSER).count()) return true;
+    await dismissCookies(page).catch(() => {});
+    if ((await page.locator(COMPOSER).count()) && (await isLoggedIn(page))) return true;
+    if (!dumped && Date.now() - t0 > 60_000) {
+      dumped = true;
+      const snap = await page.evaluate(() => ({
+        url: location.href,
+        title: document.title,
+        bodyText: document.body.innerText.slice(0, 300),
+      }));
+      console.log('[artgen] 60s snapshot:', JSON.stringify(snap, null, 1));
+    }
     await page.waitForTimeout(1500);
   }
   return false;

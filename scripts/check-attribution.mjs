@@ -80,11 +80,20 @@ async function lsDirs(dir) {
   return entries.filter((e) => e.isDirectory()).map((e) => e.name).sort();
 }
 
+async function collectTsFiles(dir) {
+  const out = [];
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...await collectTsFiles(p));
+    else if (e.name.endsWith('.ts')) out.push(p);
+  }
+  return out;
+}
+
 async function collectWordIds() {
   const ids = new Set();
-  for (const file of await ls(VOCAB_DIR)) {
-    if (!file.endsWith('.ts')) continue;
-    const source = await readFile(path.join(VOCAB_DIR, file), 'utf8');
+  for (const file of await collectTsFiles(VOCAB_DIR)) {
+    const source = await readFile(file, 'utf8');
     for (const match of source.matchAll(/\bid:\s*'([^']+)'/g)) {
       ids.add(match[1]);
     }
