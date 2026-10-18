@@ -1,5 +1,268 @@
-{
- "rows": 88445,
- "checks": {},
- "pending_quarantine": []
-}
+[
+  {
+    "name": "listen-no-transcript",
+    "severity": "P0",
+    "desc": "Listening item has no transcript/audio - unanswerable",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "read-no-passage",
+    "severity": "P0",
+    "desc": "Prompt references a passage/text but none stored - unanswerable",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "visual-no-assets",
+    "severity": "P0",
+    "desc": "Image question type with no linked assets",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "answer-out-of-range",
+    "severity": "P0",
+    "desc": "answer.index points outside choices array",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "choices-too-few",
+    "severity": "P0",
+    "desc": "MCQ-type with fewer than 3 choices",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "option-placeholder",
+    "severity": "P0",
+    "desc": "A choice is a literal generator placeholder like \"option-4\"",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "prompt-answer-leak",
+    "severity": "P0",
+    "desc": "Prompt literally contains the quoted correct answer (guessable without skill)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "prompt-answer-leak-unquoted",
+    "severity": "P0",
+    "desc": "English item whose bare-digit correct answer is reprinted inside the prompt",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "prompt-image-placeholder",
+    "severity": "P0",
+    "desc": "Prompt describes an image in text \"(Image of X)\" - no real asset and the description leaks the answer",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "explanation-missing",
+    "severity": "P0",
+    "desc": "No explanation at all",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "explanation-template-residue",
+    "severity": "P0",
+    "desc": "Leftover generator template text",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "wrong-answer-math",
+    "severity": "P0",
+    "desc": "Marked answer contradicts the computed value of the prompt",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "wrong-comparison-answer",
+    "severity": "P0",
+    "desc": "Compare X and Y items: marked answer wrong for the numbers",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "reorder-bank-mismatch",
+    "severity": "P0",
+    "desc": "Reorder prompt word bank is not a permutation of the answer sentence",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "text-answer-empty",
+    "severity": "P0",
+    "desc": "text-answer item has no usable answer text or accepted list",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "dup-option-assets",
+    "severity": "P0",
+    "desc": "Two options reference the same image asset (visually identical choices)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "prompt-placeholder",
+    "severity": "P0",
+    "desc": "Prompt contains placeholder tokens (undefined/null/TODO)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-missing-question",
+    "severity": "P0",
+    "desc": "Form references a question id that does not exist",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-ineligible-question",
+    "severity": "P0",
+    "desc": "Form includes a question not eligible for serving (flagged/excluded)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-missing-answerkey",
+    "severity": "P0",
+    "desc": "Form question has no entry in answerKey",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-answerkey-mismatch",
+    "severity": "P0",
+    "desc": "Form answerKey disagrees with the question stored answer",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-duplicate-variant",
+    "severity": "P0",
+    "desc": "Two questions in the same form share a variant group or identical content",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "duplicate-choices",
+    "severity": "P1",
+    "desc": "Two identical choices in one question",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "ambiguous-open-prompt",
+    "severity": "P1",
+    "desc": "Open-ended prompt where more than one choice is a plausible true answer - review for quarantine",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "statement-as-question",
+    "severity": "P1",
+    "desc": "Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "explanation-too-short",
+    "severity": "P1",
+    "desc": "Explanation under 20 chars - teaches nothing",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "explanation-mentions-other-answer",
+    "severity": "P1",
+    "desc": "Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "explanation-not-vietnamese",
+    "severity": "P1",
+    "desc": "Explanation has no Vietnamese characters (untranslated?)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "explanation-tautology",
+    "severity": "P1",
+    "desc": "Explanation only restates \"answer fits the theme\" without a reason or contrast",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "reorder-trivial",
+    "severity": "P1",
+    "desc": "Reorder answer is a single word - nothing to arrange",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "heard-word-not-in-transcript",
+    "severity": "P1",
+    "desc": "\"Which word did you hear\" answer is not spoken in the transcript",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-near-dup-content",
+    "severity": "P1",
+    "desc": "Same form contains two questions identical modulo names/numbers (same template)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-grade-subject-mismatch",
+    "severity": "P1",
+    "desc": "Question grade/subject differs from its form",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-blueprint-size",
+    "severity": "P1",
+    "desc": "Form question count differs from blueprint targetQuestions",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "form-blueprint-missing",
+    "severity": "P1",
+    "desc": "Form references a blueprint that does not exist",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "dup-prompt-same-grade",
+    "severity": "P2",
+    "desc": "Identical prompt+answer that can co-appear in one exam (no shared variant_group_id)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "ambiguous-country-name",
+    "severity": "P2",
+    "desc": "Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...)",
+    "count": 0,
+    "samples": []
+  },
+  {
+    "name": "accented-text",
+    "severity": "P2",
+    "desc": "Foreign accent marks (never legal in Vietnamese) in served prompt or choices",
+    "count": 0,
+    "samples": []
+  }
+]

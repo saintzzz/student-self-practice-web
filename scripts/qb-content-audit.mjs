@@ -484,11 +484,13 @@ check('ambiguous-country-name', 'P2',
   }));
 
 check('accented-text', 'P2',
-  'Non-ASCII beyond punctuation/math in served prompt or choices',
+  'Foreign accent marks (never legal in Vietnamese) in served prompt or choices',
   questions.filter((q) => {
     if (!eligible(q)) return false;
     const t = (q.prompt_text ?? '') + JSON.stringify(q.choices ?? []);
-    return /[ñçãõÅéíüî]/i.test(t);
+    // ã/õ/é/í are legitimate Vietnamese diacritics (ngã/sắc tones); only flag
+    // characters that cannot appear in Vietnamese OR ASCII English text.
+    return /[ñçåüî]/i.test(t);
   }));
 
 /* ---------- E. exam-form bundle integrity ---------- */

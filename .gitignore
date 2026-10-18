@@ -26,3 +26,6 @@ shots/
 scripts/artgen/profile/
 artgen-out/
 _shots/
+docs/qa/flagged/_qb-*.json
+scripts/_qb-*.mjs
+audit-err.log
