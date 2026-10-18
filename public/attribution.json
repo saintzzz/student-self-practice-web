@@ -154,7 +154,8 @@
       "paths": [
         "/images/v6/",
         "/sfx/",
-        "/images/games/"
+        "/images/games/",
+        "/images/mascot/"
       ],
       "modified": false
     },

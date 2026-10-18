@@ -15,6 +15,8 @@ JOBS = {  # stem -> (dir, size, quality)
         'tic-tac-toe','whack-a-mole','feed-the-pig','picture-reveal',
         'treasure-chest','gold-quest','quiz-show','maze-chase','word-worm','castle-guard']},
     **{v: ('vocab', 256, 85) for v in ['festival','apricot-blossom','dragon-dance']},
+    'be-heo-portrait': ('mascot', 512, 88),
+    'be-heo-face': ('mascot', 512, 88),
 }
 
 CONCEPT_OVERWRITE = {  # wrong-art concept files replaced in place
