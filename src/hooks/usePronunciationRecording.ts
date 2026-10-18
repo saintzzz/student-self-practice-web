@@ -18,6 +18,7 @@ import {
 import {
   isPronunciationServerConfigured,
   transcribePronunciationAudio,
+  warmPronunciationService,
 } from '../lib/pronunciationTranscription';
 import { setMicRecording } from '../lib/speech';
 import { stopSfx } from '../lib/sfx';
@@ -200,6 +201,9 @@ export function usePronunciationRecording(
     // dialog while we await - showing idle mid-flight invites a double
     // tap. If it rejects, the proper error phase replaces this below.
     setPhase('recording');
+    // Warm the edge isolate + TLS while the mic permission/opens -
+    // that takes a few hundred ms anyway, so the grade POST starts hot.
+    warmPronunciationService();
     try {
       const controller = await startAudioRecording({ silenceMs: 900 });
       if (settledRef.current || unmountedRef.current) {

@@ -88,11 +88,22 @@ export async function startAudioRecording(
     initialSilenceMs = 6000,
     rmsThreshold = 0.015,
   } = options;
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  // Mono is all a spoken-word take needs - halves the encoded bitrate
+  // before we even cap it below, which directly shortens the upload
+  // leg of the grade request on slow mobile connections.
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { channelCount: 1 },
+  });
   const mimeType = pickAudioMimeType();
   let recorder: MediaRecorder;
   try {
-    recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    // 32kbps mono opus/AAC is transparent for child speech and keeps a
+    // 3s take ~12KB (base64 ~16KB) instead of ~4x that at the browser
+    // default - faster upload AND faster provider audio ingest.
+    recorder = new MediaRecorder(
+      stream,
+      { ...(mimeType ? { mimeType } : {}), audioBitsPerSecond: 32000 },
+    );
   } catch (err) {
     // r8: getUserMedia succeeded but recorder construction failed - the
     // caller never receives a controller, so nothing else would ever

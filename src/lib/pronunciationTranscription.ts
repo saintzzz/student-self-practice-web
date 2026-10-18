@@ -37,6 +37,21 @@ export function isPronunciationServerConfigured(): boolean {
   return Boolean(env?.VITE_SUPABASE_URL && env?.VITE_SUPABASE_PUBLISHABLE_KEY);
 }
 
+/** Fire-and-forget HEAD that wakes the edge isolate and warms DNS/TLS
+    so the real POST skips cold-start. The caller fires this when the
+    mic opens - getUserMedia takes a few hundred ms anyway, so the
+    overlap is free. no-cors HEAD never touches the response. */
+export function warmPronunciationService(): void {
+  const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  if (env?.MODE === 'test') return;
+  const base = env?.VITE_SUPABASE_URL;
+  if (!base) return;
+  void fetch(`${base}/functions/v1/practice-transcribe`, {
+    method: 'HEAD',
+    mode: 'no-cors',
+  }).catch(() => {});
+}
+
 export async function transcribePronunciationAudio(
   blob: Blob,
   targetWord: string,

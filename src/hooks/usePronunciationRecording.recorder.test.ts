@@ -20,6 +20,7 @@ const transcribeMock = vi.hoisted(() => vi.fn());
 vi.mock('../lib/pronunciationTranscription', () => ({
   isPronunciationServerConfigured: () => true,
   transcribePronunciationAudio: (...args: unknown[]) => transcribeMock(...args),
+  warmPronunciationService: () => {},
 }));
 
 // Speaker-bleed fix: the hook owns the mic-suppression flag - verify it

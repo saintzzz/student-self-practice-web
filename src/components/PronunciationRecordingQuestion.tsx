@@ -150,7 +150,7 @@ export default function PronunciationRecordingQuestion({
                 type="button"
                 data-testid="record-button"
                 onClick={phase === 'recording' ? stopRecording : startRecording}
-                aria-label={phase === 'recording' ? 'Nhấn để dừng sớm' : 'Nhấn rồi đọc to lên'}
+                aria-label={phase === 'recording' ? 'Đọc xong nhấn lại để chấm luôn' : 'Nhấn rồi đọc to lên'}
                 className={`relative flex h-24 w-24 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-rose-400 ${
                   phase === 'recording'
                     ? 'bg-gradient-to-b from-rose-500 to-rose-700 shadow-[inset_0_3px_0_rgba(255,255,255,0.3),0_10px_28px_-6px_rgba(244,63,94,0.6)]'
@@ -178,14 +178,14 @@ export default function PronunciationRecordingQuestion({
                 )}
               </button>
               <p className="text-base font-semibold text-slate-300">
-                {phase === 'recording' ? 'Nhấn để dừng sớm' : 'Nhấn rồi đọc to lên'}
+                {phase === 'recording' ? 'Đọc xong nhấn lại để chấm luôn' : 'Nhấn rồi đọc to lên'}
               </p>
               {phase === 'recording' && (
                 <div data-testid="recording-indicator" className="text-center">
                   <p className="text-lg font-semibold text-rose-300">
                     <span className="inline-flex items-center gap-2">
                       <span className="inline-block h-3 w-3 animate-pulse motion-reduce:animate-none rounded-full bg-rose-500" />
-                      Đang lắng nghe - em đọc xong sẽ tự chấm luôn
+                      Đang lắng nghe - đọc xong nhấn lại cho nhanh nhé
                     </span>
                   </p>
                   {heardText && (
