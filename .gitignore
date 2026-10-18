@@ -22,5 +22,6 @@ scripts/gen-bulk-out/
 
 # review screenshots + temp capture scripts
 .review-shots/
+shots/
 scripts/artgen/profile/
 artgen-out/

@@ -147,12 +147,16 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
     Object.values(mockTrends).some((r) => r.status === 'error');
 
   return (
-    /* kids-UX s3.7: the parent corner is a light "paper" register - a
-       parent glancing over the child's shoulder instantly reads it as
-       "for me", distinct from the navy play chrome. */
-    <div className={`min-h-screen bg-sky-50 ${SCREEN_ENTER}`}>
+    /* kids-UX s3.7 revised: the parent corner is a light "report sheet"
+       resting on the navy land shell - paper-on-desk like the exam
+       surface (the old full-page sky-50 read as a different app). A slim
+       brand letterhead strip marks it as an official document. */
+    <div className={`min-h-screen ${SCREEN_ENTER}`}>
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
-        <div className={`${PAPER_PANEL} text-left`}>
+        <div className={`${PAPER_PANEL} relative overflow-hidden text-left shadow-[0_24px_60px_-24px_rgba(0,0,0,0.6)]`}>
+        {/* Letterhead strip - brand indigo -> sky -> gold, the "printed
+            report" mark at the sheet's top edge. */}
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-500 via-sky-400 to-amber-400" />
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-extrabold text-sky-800"><IconChart size={22} className="mr-1.5 inline-block" /> Góc ba mẹ</h1>
           <button type="button" data-testid="report-back" onClick={onBack} className={`${NAV_PILL} !text-sky-800 !bg-sky-100 !ring-sky-300`}>
