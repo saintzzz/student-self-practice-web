@@ -235,12 +235,16 @@ textarea {
   40% { transform: translateY(-14px) scale(1.05) rotate(-3deg); }
   70% { transform: translateY(0) scale(0.97); }
 }
+/* Loop policy mirrors spec s9.2 (was the Lottie pose rig): idle breathes
+   forever; thinking/greeting/encouraging play twice then rest;
+   happy/celebrating are one-shots - all keyframes end at the rest pose,
+   so finite counts settle cleanly with no hold state needed. */
 .mascot-idle { animation: mascot-idle 3.2s ease-in-out infinite; }
-.mascot-rock { animation: mascot-rock 2.8s ease-in-out infinite; }
-.mascot-wave { animation: mascot-wave 2.4s ease-in-out infinite; }
-.mascot-bounce { animation: mascot-bounce 1.8s ease-in-out infinite; }
-.mascot-nod { animation: mascot-nod 2.2s ease-in-out infinite; }
-.mascot-hop { animation: mascot-hop 1.2s ease-in-out infinite; }
+.mascot-rock { animation: mascot-rock 2.8s ease-in-out 2; }
+.mascot-wave { animation: mascot-wave 2.4s ease-in-out 2; }
+.mascot-bounce { animation: mascot-bounce 1.8s ease-in-out 1; }
+.mascot-nod { animation: mascot-nod 2.2s ease-in-out 2; }
+.mascot-hop { animation: mascot-hop 1.2s ease-in-out 1; }
 
 /* Progress shimmer: a light band sliding across the gradient fill -
    transform only. */

@@ -36,9 +36,12 @@ const MOOD_MOTION: Record<MascotPoseName, string> = {
 };
 
 export function MascotArt({ mood, sizePx }: { mood: MascotPoseName; sizePx: number }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return <MascotStaticPose pose={mood} sizePx={sizePx} />;
+  /* Failure is tracked PER ASSET, not per mount - a mood or size change
+     resolves to a different file and must retry instead of inheriting
+     the previous asset's 404 (same class as the r80 PetImg fix). */
+  const [failedFile, setFailedFile] = useState<string | null>(null);
   const file = sizePx <= 32 ? 'be-heo-face' : MOOD_ART[mood];
+  if (failedFile === file) return <MascotStaticPose pose={mood} sizePx={sizePx} />;
   /* The generated art ships on white - at inline size the head art
      reads fine bare; larger poses get a mini exhibit-paper frame so the
      pose reads as a postcard pinned to the surface, not a white box. */
@@ -52,7 +55,7 @@ export function MascotArt({ mood, sizePx }: { mood: MascotPoseName; sizePx: numb
       width={sizePx}
       height={sizePx}
       draggable={false}
-      onError={() => setFailed(true)}
+      onError={() => setFailedFile(file)}
       className={`select-none object-contain ${MOOD_MOTION[mood]} ${
         framed ? 'rounded-xl bg-amber-50 p-0.5 ring-1 ring-amber-200/70 shadow-md' : ''
       }`}
