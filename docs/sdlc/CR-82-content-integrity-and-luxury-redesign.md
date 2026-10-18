@@ -1,6 +1,22 @@
 # CR-82: Content Integrity Pipeline + Luxury Redesign + Mechanics Expansion
 
-Status: APPROVED (user directive 2025-.. — "thay đổi lại toàn bộ design UIUX... luxury nhất có thể... nội dung phải được validate, verify kỹ càng trước khi public")
+Status: DONE (close-out audit 2026-.. — all three workstreams verified live)
+
+**Close-out verdict (full-app visual + mechanics audit):**
+- A content integrity: 3,869 defective bulk rows quarantined server-side; audit
+  scripts committed (`scripts/audit-qb.mjs`, `scripts/qb-content-audit.mjs`).
+- B luxury visual language: navy/gold shell + paper-surface content system in
+  `tokens.ts`/`DESIGN_SYSTEM.md`; verified across grade map (winding trail),
+  hub drawers (parent candy → dark tray → paper children), game shelf (paper
+  cards + one saturated hero), exam paper (light sheet on dark desk), Arena,
+  Rewards. Subsequent polish: CR-87 hub, CR-88 levels, CR-89 emoji pipeline,
+  CR-91/92 visual hierarchy.
+- C mechanics breadth: letter tracing (G1-2 canvas), three drag surfaces
+  (`GapBankDrag` word-into-gap, `SpellItDrag` letters-to-spell, pair-matching
+  drag-connect — all G1-2 with tap fallback), flashcard mode (Thẻ từ vựng),
+  exam navigator + flag-for-review, SFX/streak micro-interactions.
+- Deferred to follow-ups: bespoke illustrated art (CR-95), game-as-exam embed
+  (CR-86 phase 2, pending `fetch_form` schema).
 
 ## Driver
 

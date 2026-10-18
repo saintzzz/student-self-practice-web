@@ -66,6 +66,9 @@ export interface GameDef {
   /** CR-88: composed card art - the emoji that make up the game's mini
    *  scene (hero emoji first, then scenery). */
   art?: readonly string[];
+  /** CR-95: bespoke illustrated card art - same-origin webp; when set it
+   *  replaces the emoji diorama on the shelf card. Emoji stays as fallback. */
+  artImage?: string;
 }
 
 /**

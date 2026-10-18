@@ -8,6 +8,7 @@ import type { GameDef } from './types';
 export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'memory-match',
+    artImage: '/images/games/memory-match.webp',
     title: 'Lật thẻ nhớ',
     tagline: 'Ghép hình với từ giống nhau',
     emoji: '🃏',
@@ -16,6 +17,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'balloon-pop',
+    artImage: '/images/games/balloon-pop.webp',
     title: 'Bóng bay',
     tagline: 'Nghe từ rồi chạm đúng bóng',
     emoji: '🎈',
@@ -24,6 +26,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'racing-cars',
+    artImage: '/images/games/racing-cars.webp',
     title: 'Đua xe',
     tagline: 'Trả lời đúng để xe Heo về đích',
     emoji: '🏎️',
@@ -32,6 +35,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'fishing-catch',
+    artImage: '/images/games/fishing-catch.webp',
     title: 'Câu cá',
     tagline: 'Chạm con cá mang hình đúng',
     emoji: '🎣',
@@ -40,6 +44,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'letter-catch',
+    artImage: '/images/games/letter-catch.webp',
     title: 'Bắt chữ',
     tagline: 'Chạm bóng chữ theo thứ tự đánh vần',
     emoji: '🫧',
@@ -48,6 +53,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'tic-tac-toe',
+    artImage: '/images/games/tic-tac-toe.webp',
     title: 'Caro',
     tagline: 'Trả lời để đặt X thắng máy',
     emoji: '⭕',
@@ -56,6 +62,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'whack-a-mole',
+    artImage: '/images/games/whack-a-mole.webp',
     title: 'Đập chuột',
     tagline: 'Nghe từ rồi đập con chuột đúng',
     emoji: '🔨',
@@ -64,6 +71,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'feed-the-pig',
+    artImage: '/images/games/feed-the-pig.webp',
     title: 'Cho Heo ăn',
     tagline: 'Chọn đúng đĩa để cho Heo ăn',
     emoji: '🐷',
@@ -72,6 +80,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'picture-reveal',
+    artImage: '/images/games/picture-reveal.webp',
     title: 'Lật tranh',
     tagline: 'Trả lời đúng để lật mở bức tranh',
     emoji: '🖼️',
@@ -80,6 +89,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'treasure-chest',
+    artImage: '/images/games/treasure-chest.webp',
     title: 'Hòm kho báu',
     tagline: 'Trả lời đúng để mở ổ khóa vàng',
     emoji: '🧰',
@@ -88,6 +98,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'gold-quest',
+    artImage: '/images/games/gold-quest.webp',
     title: 'Đào vàng',
     tagline: 'Trả lời đúng rồi chọn rương may mắn',
     emoji: '💎',
@@ -97,6 +108,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'quiz-show',
+    artImage: '/images/games/quiz-show.webp',
     title: 'Ai là triệu phú',
     tagline: 'Lên đỉnh giải thưởng trước khi hết giờ',
     emoji: '🎤',
@@ -107,6 +119,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'maze-chase',
+    artImage: '/images/games/maze-chase.webp',
     title: 'Đi mê cung',
     tagline: 'Dẫn Heo tới ô đáp án, né con ma',
     emoji: '👻',
@@ -116,6 +129,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'word-worm',
+    artImage: '/images/games/word-worm.webp',
     title: 'Rắn đánh vần',
     tagline: 'Ăn chữ cái theo thứ tự đánh vần',
     emoji: '🐛',
@@ -125,6 +139,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'castle-guard',
+    artImage: '/images/games/castle-guard.webp',
     title: 'Giữ thành',
     tagline: 'Trả lời đúng bắn hạ quái trước cổng',
     emoji: '🏰',

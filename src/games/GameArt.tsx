@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { EmojiVisual } from '../components/EmojiVisual';
 
 /**
@@ -12,11 +13,14 @@ import { EmojiVisual } from '../components/EmojiVisual';
 export default function GameArt({
   art,
   emoji,
+  artImage,
   size = 'card',
   animated = false,
 }: {
   art?: readonly string[];
   emoji: string;
+  /** CR-95: bespoke illustration - replaces the emoji diorama when set. */
+  artImage?: string;
   size?: 'card' | 'hero';
   animated?: boolean;
 }) {
@@ -24,6 +28,22 @@ export default function GameArt({
   const heroIdx = Math.floor(scene.length / 2);
   const heroCls = size === 'hero' ? 'text-6xl -translate-y-1' : 'text-4xl -translate-y-0.5';
   const sideCls = size === 'hero' ? 'text-2xl' : 'text-lg';
+  const [imgFailed, setImgFailed] = useState(false);
+  if (artImage && !imgFailed) {
+    return (
+      <span className={`relative flex items-center justify-center ${size === 'hero' ? 'h-20 w-20' : 'h-14 w-14'}`} aria-hidden>
+        <img
+          src={artImage}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          decoding="async"
+          onError={() => setImgFailed(true)}
+          className="block h-full w-full object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.25)] select-none"
+        />
+      </span>
+    );
+  }
   return (
     <span className="relative flex items-end justify-center gap-1" aria-hidden>
       {scene.map((e, i) => (
