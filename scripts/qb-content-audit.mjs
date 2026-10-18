@@ -134,6 +134,49 @@ check('duplicate-choices', 'P1',
     return new Set(labels).size !== labels.length;
   }));
 
+// Open-ended prompts ("What about you?", "your favorite X?", "Do you like X?")
+// where more than one well-formed choice is a plausible TRUE answer are open
+// clozes - the keyed answer is not uniquely correct (user-reported class,
+// batch quarantined Oct-18). Flag for review, not auto-reject.
+const OPEN_PROMPT =
+  /\bwhat about you\b|\bhow about you\b|\byour favorite\b|\bwhat do you like\b|\bwhat do you want\b|\bdo you like doing\b/i;
+const BROKEN_CHOICE =
+  /\blike (cook|watch|read|brush|play|ride|swim|sing|danc|eat|draw|jump|shop|sleep|driv|fly|walk|run|listen)\b(?!ing)|\bi am\b|\bi not\b|\bi like\b\.?$/i;
+const IS_EN = (l) => /^[a-zA-Z'’.,!\s-]+$/.test(l);
+check('ambiguous-open-prompt', 'P1',
+  'Open-ended prompt where more than one choice is a plausible true answer - review for quarantine',
+  questions.filter((q) => {
+    if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
+    const p = q.prompt_text ?? '';
+    const labels = q.choices.map((c) => choiceLabel(c));
+    const ok = labels.filter((l) => IS_EN(l) && !BROKEN_CHOICE.test(l));
+    if (ok.length < 2) return false;
+    const yesNoPrompt = /^(is|are|do|does|can|did|will|would|have|has)\b/i.test(p.trim());
+    // 'Do you like X?' where a well-formed Yes AND a well-formed No both
+    // appear: either is a true answer, so the key is not unique. A "No"
+    // only counts when it is coherent - "don't/do not" forms, or a real
+    // deflection (like <gerund-phrase different from the asked one>);
+    // "No, I like brushing" asked about brushing is self-contradictory.
+    if (/\bdo you like\b/i.test(p)) {
+      const promptGerund = (p.match(/like\s+(\w+ing\b[^?.]*)/i)?.[1] ?? '').toLowerCase();
+      const goodYes = ok.some((l) => /^yes\b/i.test(l) && /\b(do|like \w+ing)\b/i.test(l));
+      const goodNo = ok.some((l) => {
+        if (!/^no\b/i.test(l)) return false;
+        if (/don't|do not/i.test(l) && !/\bi like\b/i.test(l)) return true;
+        const om = l.match(/like\s+(\w+ing\b[^.]*)/i);
+        return !!om && !promptGerund.startsWith(om[1].toLowerCase().trim());
+      });
+      if (goodYes && goodNo) return true;
+    }
+    if (yesNoPrompt || !OPEN_PROMPT.test(p)) return false;
+    const frame = (l) => l.toLowerCase().replace(/[^a-z ]/g, '').trim().split(/\s+/).slice(0, 2).join(' ');
+    const ansFrame = frame(correctLabel(q));
+    const sameFrame = ok.filter((l) => frame(l) === ansFrame);
+    const allShort = ok.length === labels.length && ok.length >= 3
+      && ok.every((l) => l.trim().split(/\s+/).length <= 3 && !/^(yes|no)\b/i.test(l));
+    return (ansFrame && sameFrame.length >= 2) || allShort;
+  }));
+
 check('prompt-answer-leak', 'P0',
   'Prompt literally contains the quoted correct answer (guessable without skill)',
   questions.filter((q) => {

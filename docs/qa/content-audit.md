@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-18T07:38:25.640Z · rows: 110726 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-18T08:27:16.004Z · rows: 110726 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -28,6 +28,7 @@ Generated: 2026-10-18T07:38:25.640Z · rows: 110726 · regenerate: `node scripts
 | `explanation-not-vietnamese` | P1 | **4441** | Explanation has no Vietnamese characters (untranslated?) |
 | `explanation-mentions-other-answer` | P1 | **474** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
 | `duplicate-choices` | P1 | **0** | Two identical choices in one question |
+| `ambiguous-open-prompt` | P1 | **0** | Open-ended prompt where more than one choice is a plausible true answer - review for quarantine |
 | `explanation-tautology` | P1 | **0** | Explanation only restates "answer fits the theme" without a reason or contrast |
 | `reorder-trivial` | P1 | **0** | Reorder answer is a single word - nothing to arrange |
 | `heard-word-not-in-transcript` | P1 | **0** | "Which word did you hear" answer is not spoken in the transcript |
@@ -37,7 +38,7 @@ Generated: 2026-10-18T07:38:25.640Z · rows: 110726 · regenerate: `node scripts
 | `form-blueprint-missing` | P1 | **0** | Form references a blueprint that does not exist |
 | `dup-prompt-same-grade` | P2 | **16546** | Identical prompt+answer that can co-appear in one exam (no shared variant_group_id) |
 | `accented-text` | P2 | **187** | Non-ASCII beyond punctuation/math in served prompt or choices |
-| `ambiguous-country-name` | P2 | **12** | Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...) |
+| `ambiguous-country-name` | P2 | **0** | Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...) |
 
 ## explanation-too-short (P1) - 13163 rows
 
@@ -118,19 +119,3 @@ Generated: 2026-10-18T07:38:25.640Z · rows: 110726 · regenerate: `node scripts
 - `g1-english-bulk-913b40dfe61b` — One, two, three. → **Một, hai, ba.**
 - `g1-english-bulk-a80a05e79662` — They are catching a ball. What is 'catching'? → **bắt**
 - _…and 175 more (see --json)_
-
-## ambiguous-country-name (P2) - 12 rows
-
-- `g1-cr67-i2w-0416-a5ec7c` — Look at the picture. Choose the correct English word. → **congo**
-- `g1-cr67-i2w-1070-25a11c` — Look at the picture. Choose the correct English word. → **korea**
-- `g1-cr67-w2i-0417-a5ec7c` — Which picture shows "congo"? → **congo**
-- `g1-cr67-w2i-1071-25a11c` — Which picture shows "korea"? → **korea**
-- `g2-cr67-i2w-0416-a5ec7c` — Look at the picture. Choose the correct English word. → **congo**
-- `g2-cr67-i2w-1070-25a11c` — Look at the picture. Choose the correct English word. → **korea**
-- `g2-cr67-w2i-0417-a5ec7c` — Which picture shows "congo"? → **congo**
-- `g2-cr67-w2i-1071-25a11c` — Which picture shows "korea"? → **korea**
-- `g3-cr67-i2w-0020-1b6d6b` — Look at the picture. Choose the correct English word. → **america**
-- `g3-cr67-i2w-0218-f8c38f` — Look at the picture. Choose the correct English word. → **bosnia**
-- `g3-cr67-w2i-0021-1b6d6b` — Which picture shows "america"? → **america**
-- `g3-cr67-w2i-0219-f8c38f` — Which picture shows "bosnia"? → **bosnia**
-
