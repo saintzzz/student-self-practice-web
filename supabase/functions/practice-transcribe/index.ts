@@ -367,21 +367,20 @@ Deno.serve(async (req: Request) => {
   const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     db: { schema: 'practice' },
   });
-  // Config + body are independent of the rate-limit verdict - fire them
-  // alongside it so the three reads overlap instead of serializing two
-  // DB round-trips behind each other (a full RTT off the grade path).
-  // Promise.resolve assimilates the PostgrestBuilder thenable - rpc()
-  // does not expose .catch on every client version.
-  const cfgPromise = Promise.resolve(svc.rpc('get_ai_configs')).catch(
-    (e: unknown) => ({ data: null, error: e }),
-  );
-  const bodyPromise = req.json().catch(() => ({}));
   if (await rateLimited(svc, ip)) {
     return json({ error: 'rate limited' }, 429, req);
   }
 
   try {
-    const body = await bodyPromise;
+    // Config + body parse overlap each other (one RTT saved) but only
+    // AFTER the limiter passed - firing them earlier let rate-limited
+    // callers still burn an RPC + a large-payload parse (r87).
+    // Promise.resolve assimilates the PostgrestBuilder thenable - rpc()
+    // does not expose .catch on every client version.
+    const cfgPromise = Promise.resolve(svc.rpc('get_ai_configs')).catch(
+      (e: unknown) => ({ data: null, error: e }),
+    );
+    const body = await req.json().catch(() => ({}));
     const audioB64 = String(body?.audio ?? '');
     const mimeType = String(body?.mimeType ?? 'audio/webm');
     const targetWord = String(body?.targetWord ?? '').slice(0, 200);
