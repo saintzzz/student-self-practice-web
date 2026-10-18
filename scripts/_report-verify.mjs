@@ -35,18 +35,39 @@ try {
   await page.getByTestId('report-back').waitFor({ state: 'visible', timeout: 15000 });
   await page.waitForTimeout(800);
 
-  /* The navy shell must show around the sheet: the page background is
-     the LandShell gradient, not a solid light surface. */
-  const bgProbe = await page.evaluate(() => {
-    const el = document.elementFromPoint(8, 8);
-    if (!el) return 'none';
-    const c = getComputedStyle(el).backgroundColor;
-    return c;
+  /* The navy shell must show around the sheet. Walk up from the hit
+     element to the first OPAQUE background - a transparent wrapper must
+     not read as rgba(0,0,0,0)->black (r75). */
+  const probe = await page.evaluate(() => {
+    const rgbLum = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+    let el = document.elementFromPoint(8, Math.floor(window.innerHeight / 2));
+    while (el) {
+      const cs = getComputedStyle(el);
+      /* LandShell paints navy as a background-image gradient over the
+         bg-color - image wins the painted surface, check it first. */
+      const gi = cs.backgroundImage;
+      if (gi && gi !== 'none') {
+        const s = gi.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/) ?? gi.match(/#([0-9a-f]{6})/i);
+        if (s) {
+          const [r, g, b] = s[0][0] === '#'
+            ? [parseInt(s[1].slice(0, 2), 16), parseInt(s[1].slice(2, 4), 16), parseInt(s[1].slice(4, 6), 16)]
+            : [+s[1], +s[2], +s[3]];
+          return { lum: rgbLum(r, g, b), hit: `${el.tagName}.${String(el.className).slice(0, 60)} (gradient)` };
+        }
+      }
+      const m = cs.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (m && Number(m[4] ?? 1) > 0) {
+        return {
+          lum: rgbLum(+m[1], +m[2], +m[3]),
+          hit: `${el.tagName}.${String(el.className).slice(0, 60)}`,
+        };
+      }
+      el = el.parentElement;
+    }
+    return { lum: 255, hit: 'none' };
   });
-  const m2 = bgProbe.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  const lum = m2 ? 0.299 * +m2[1] + 0.587 * +m2[2] + 0.114 * +m2[3] : 255;
-  ok = lum < 120;
-  console.log(`${ok ? 'ok' : 'FAIL'} page-edge luminance ${lum.toFixed(0)} (navy shell visible)`);
+  ok = probe.lum < 120;
+  console.log(`${ok ? 'ok' : 'FAIL'} page-edge luminance ${probe.lum.toFixed(0)} @ ${probe.hit} (navy shell visible)`);
   await page.screenshot({ path: 'shots/_report-after.png', fullPage: false });
 } finally {
   await browser.close();
