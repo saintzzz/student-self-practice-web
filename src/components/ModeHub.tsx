@@ -57,13 +57,17 @@ export function HubGroup({
   tiles,
   subtile = false,
   voiceKeyPrefix,
+  initialOpenId,
 }: {
   tiles: HubTileDef[];
   /** G1-2 `more` internals render `hub-subtile-*`/`hub-section-*` ids. */
   subtile?: boolean;
   voiceKeyPrefix: string;
+  /** Mount with this tile already expanded (e.g. returning from a game
+   *  to its shelf). Read once - the group is uncontrolled after mount. */
+  initialOpenId?: string | null;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
   const { density } = useViewer();
   const minH = density.tileMinH >= 96 ? 96 : 76;
   const testPrefix = subtile ? 'hub-subtile' : 'hub-tile';
@@ -149,13 +153,15 @@ export function HubGroup({
 export default function ModeHub({
   tiles,
   voiceKeyPrefix,
+  initialOpenId,
 }: {
   tiles: HubTileDef[];
   voiceKeyPrefix: string;
+  initialOpenId?: string | null;
 }) {
   return (
     <div className={HUB_PANEL} data-testid="mode-hub">
-      <HubGroup tiles={tiles} voiceKeyPrefix={voiceKeyPrefix} />
+      <HubGroup tiles={tiles} voiceKeyPrefix={voiceKeyPrefix} initialOpenId={initialOpenId} />
     </div>
   );
 }

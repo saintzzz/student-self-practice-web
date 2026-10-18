@@ -53,6 +53,15 @@ describe('ModeHub', () => {
     expect(screen.getByTestId('arena-content')).toBeInTheDocument();
   });
 
+  it('initialOpenId mounts that tile expanded (game-exit returns to the shelf)', () => {
+    render(<ModeHub tiles={TILES} voiceKeyPrefix="hub-test" initialOpenId="arena" />);
+
+    expect(screen.getByTestId('hub-tile-arena')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('arena-content')).toBeInTheDocument();
+    expect(screen.getByTestId('hub-tile-learn')).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('learn-content')).not.toBeInTheDocument();
+  });
+
   it('subtile mode maps ids to hub-subtile-*/hub-section-*', async () => {
     const user = userEvent.setup();
     render(<HubGroup tiles={TILES} subtile voiceKeyPrefix="hub-sub" />);

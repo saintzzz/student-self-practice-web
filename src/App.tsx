@@ -105,6 +105,10 @@ export default function App() {
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
   /** CR-83: which Game Zone title the 'game' screen is playing. */
   const [activeGame, setActiveGame] = useState<import('./games/types').GameId | null>(null);
+  /** Hub tile expanded on the next start-batch mount - set by whichever
+   *  sub-screen the kid returns from (game exit -> 'games'), reset on
+   *  every other hub entry so a stale tile can't reopen. */
+  const [hubOpenTile, setHubOpenTile] = useState<string | null>(null);
   /** r6: parent-email confirm-link outcome, rendered as its own screen. */
   const [verifyNotice, setVerifyNotice] = useState<'ok' | 'fail' | null>(null);
   /** r17: the auth uid this tab has loaded state for. Compared against
@@ -261,6 +265,7 @@ export default function App() {
     // the gate token is revoked so reports/pricing re-gate.
     if (gradeId !== selectedGradeId) clearParentVerification();
     setSelectedGradeId(gradeId);
+    setHubOpenTile(null);
     setScreen('start-batch');
   }
 
@@ -547,6 +552,7 @@ export default function App() {
           setScreen('game');
         }}
         onBack={handleBackToGrades}
+        initialHubTile={hubOpenTile}
         isGuest={authMode !== 'student'}
         isAdmin={authMode === 'admin'}
         onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
@@ -564,7 +570,10 @@ export default function App() {
       <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
         <RouteFlashcards
           grade={selectedGrade}
-          onExit={() => setScreen('start-batch')}
+          onExit={() => {
+            setHubOpenTile(null);
+            setScreen('start-batch');
+          }}
         />
       </LottieBudgetProvider>,
       { gradeId: selectedGradeId },
@@ -581,6 +590,10 @@ export default function App() {
           gameId={activeGame}
           onExit={() => {
             setActiveGame(null);
+            /* "Quay lai khu tro choi" must reopen the games tile - the
+               hub remounts collapsed without it (bug: exit landed on the
+               bare launchpad instead of the shelf). */
+            setHubOpenTile('games');
             setScreen('start-batch');
           }}
         />
@@ -605,7 +618,10 @@ export default function App() {
         arena={arenaRun ?? undefined}
         formId={examFormId ?? undefined}
         focus={examFocus ?? undefined}
-        onExit={() => setScreen('start-batch')}
+        onExit={() => {
+          setHubOpenTile(null);
+          setScreen('start-batch');
+        }}
       />
     );
   }

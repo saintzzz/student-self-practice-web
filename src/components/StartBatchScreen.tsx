@@ -71,6 +71,10 @@ interface StartBatchScreenProps {
   onStartFlashcards?: () => void;
   /** CR-83: Game Zone entry - opens the arcade run for a game id. */
   onStartGame?: (gameId: GameId) => void;
+  /** Mount the hub with this tile already expanded - used when a
+   *  sub-screen returns the kid to where they came from (e.g. 'games'
+   *  after an arcade run). */
+  initialHubTile?: string | null;
   onBack: () => void;
   /** CR-30: guests see a lock prompt on the leaderboard card. */
   isGuest?: boolean;
@@ -161,7 +165,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
  *  - CR-46 preserved: every grade reaches every program/mode - only
  *    the container path differs per band.
  */
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onStartFlashcards, onStartGame, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onStartFlashcards, onStartGame, initialHubTile, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   const examConfig = examConfigForGrade(grade.id);
   const { band, density } = useViewer();
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
@@ -522,7 +526,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         {/* CR-73: the hub lives inside the launchpad card as a light
             paper panel - labeled tiles, inline expansion, no sheet. */}
         <div className="mt-5 text-left">
-          <ModeHub tiles={tiles} voiceKeyPrefix={`hub-${grade.id}`} />
+          <ModeHub tiles={tiles} voiceKeyPrefix={`hub-${grade.id}`} initialOpenId={initialHubTile} />
         </div>
       </div>
     </div>
