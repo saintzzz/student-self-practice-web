@@ -21,14 +21,14 @@ import { IconParty, IconPaw } from './icons';
  * congrats shows until marked seen.
  */
 /** Pet art with emoji fallback driven by state (outerHTML swaps detach
- *  the node from React, so a later src change would revive the stale
- *  fallback - the flag resets via key={src} instead). */
+ *  the node from React). Callers pass key={src} so an evolution swaps in
+ *  a fresh PetImg whose failure flag starts clean - otherwise a missing
+ *  stage image would pin the emoji forever. */
 function PetImg({ src, alt, size, emoji }: { src: string; alt: string; size: number; emoji: string }) {
   const [failed, setFailed] = useState(false);
   if (failed) return <span className="text-4xl">{emoji}</span>;
   return (
     <img
-      key={src}
       src={src}
       alt={alt}
       width={size}
@@ -104,7 +104,7 @@ export default function PetCard() {
                 onClick={() => pick(species)}
                 className="rounded-2xl bg-[#16232e] p-3 text-center ring-1 ring-white/10 transition hover:bg-[#1d3040] hover:ring-amber-400/50 active:scale-95"
               >
-                <PetImg src={petArtUrl(species, 2)} alt={PET_SPECIES[species].nameVi} size={64} emoji={PET_SPECIES[species].emojis[1]} />
+                <PetImg key={species} src={petArtUrl(species, 2)} alt={PET_SPECIES[species].nameVi} size={64} emoji={PET_SPECIES[species].emojis[1]} />
                 <div className="mt-1 text-sm font-extrabold text-white">{PET_SPECIES[species].nameVi}</div>
               </PressableOptionButton>
             ))}
@@ -114,7 +114,7 @@ export default function PetCard() {
         <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#16232e] p-4 ring-1 ring-white/10">
           <div data-testid="pet-emoji">
             {pet.art ? (
-              <PetImg src={pet.art} alt={pet.nameVi ?? ''} size={72} emoji={pet.emoji} />
+              <PetImg key={pet.art} src={pet.art} alt={pet.nameVi ?? ''} size={72} emoji={pet.emoji} />
             ) : (
               <span className="text-6xl">{pet.emoji}</span>
             )}
