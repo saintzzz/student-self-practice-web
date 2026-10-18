@@ -202,20 +202,22 @@ check('prompt-answer-leak-unquoted', 'P0',
     return new RegExp(`\\b${ans}\\b`).test(q.prompt_text ?? '');
   }));
 
-const IMG_PLACEHOLDER = /[([]\s*(image|picture)\s*[:of]/i;
+const IMG_PLACEHOLDER = /[([]\s*(image|picture)(?:\s*:\s*|\s+of\b)/i;
 check('prompt-image-placeholder', 'P0',
   'Prompt describes an image in text "(Image of X)" - no real asset and the description leaks the answer',
   questions.filter((q) => eligible(q) && IMG_PLACEHOLDER.test(q.prompt_text ?? '')));
 
 // Oct-18: statement prompts ("There is a banana.") served with yes/no
 // agreement options - no question asked and nothing to verify against.
-const YESNO_OPT = /^(yes|no)\b.*\b(is|are|do|does|can|am|don'?t|isn'?t|aren'?t|can'?t)\b/i;
+const YESNO_OPT = /^(yes|no)\b[.!]?\s*$|^(yes|no)\b.*\b(is|are|do|does|can|am|don'?t|isn'?t|aren'?t|can'?t)\b/i;
 check('statement-as-question', 'P1',
   'Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage',
   questions.filter((q) => {
     if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
     const p = (q.prompt_text ?? '').trim();
     if (q.passage || q.transcript || assetCount.get(q.id)) return false;
+    // Exclamations are greetings/commands ("Goodbye!"), not assertions.
+    if (/!$/.test(p)) return false;
     if (/[?_…]|\.{3}|\bchoose\b|\bchọn\b|\btranslate\b|\bsay\b|\bcomplete\b/i.test(p)) return false;
     const labels = q.choices.map((c) => choiceLabel(c));
     return labels.some((l) => YESNO_OPT.test(l));
