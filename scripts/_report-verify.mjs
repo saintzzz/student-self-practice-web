@@ -2,7 +2,8 @@
  * the navy shell (no more full-page sky-50). Solves the real ParentGate
  * arithmetic challenge to get in. */
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:5199';
 mkdirSync('shots', { recursive: true });
@@ -35,39 +36,20 @@ try {
   await page.getByTestId('report-back').waitFor({ state: 'visible', timeout: 15000 });
   await page.waitForTimeout(800);
 
-  /* The navy shell must show around the sheet. Walk up from the hit
-     element to the first OPAQUE background - a transparent wrapper must
-     not read as rgba(0,0,0,0)->black (r75). */
-  const probe = await page.evaluate(() => {
-    const rgbLum = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
-    let el = document.elementFromPoint(8, Math.floor(window.innerHeight / 2));
-    while (el) {
-      const cs = getComputedStyle(el);
-      /* LandShell paints navy as a background-image gradient over the
-         bg-color - image wins the painted surface, check it first. */
-      const gi = cs.backgroundImage;
-      if (gi && gi !== 'none') {
-        const s = gi.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/) ?? gi.match(/#([0-9a-f]{6})/i);
-        if (s) {
-          const [r, g, b] = s[0][0] === '#'
-            ? [parseInt(s[1].slice(0, 2), 16), parseInt(s[1].slice(2, 4), 16), parseInt(s[1].slice(4, 6), 16)]
-            : [+s[1], +s[2], +s[3]];
-          return { lum: rgbLum(r, g, b), hit: `${el.tagName}.${String(el.className).slice(0, 60)} (gradient)` };
-        }
-      }
-      const m = cs.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-      if (m && Number(m[4] ?? 1) > 0) {
-        return {
-          lum: rgbLum(+m[1], +m[2], +m[3]),
-          hit: `${el.tagName}.${String(el.className).slice(0, 60)}`,
-        };
-      }
-      el = el.parentElement;
-    }
-    return { lum: 255, hit: 'none' };
+  /* The navy shell must show around the sheet: sample the RENDERED
+     pixel at the left page edge (r75/r76 - CSS walking can't decide
+     translucent layers or gradient stops). */
+  const edge = await page.screenshot({
+    clip: { x: 0, y: Math.floor((await page.viewportSize()).height / 2) - 4, width: 10, height: 8 },
   });
-  ok = probe.lum < 120;
-  console.log(`${ok ? 'ok' : 'FAIL'} page-edge luminance ${probe.lum.toFixed(0)} @ ${probe.hit} (navy shell visible)`);
+  writeFileSync('shots/_report-edge.png', edge);
+  const out = execFileSync('python', [
+    '-c',
+    "from PIL import Image; im=Image.open('shots/_report-edge.png').convert('RGB'); px=[im.getpixel((x,y)) for x in range(10) for y in range(8)]; print(round(sum(0.299*p[0]+0.587*p[1]+0.114*p[2] for p in px)/len(px),1))",
+  ], { encoding: 'utf8' }).trim();
+  const lum = Number(out);
+  ok = Number.isFinite(lum) && lum < 120;
+  console.log(`${ok ? 'ok' : 'FAIL'} page-edge luminance ${lum} (navy shell visible)`);
   await page.screenshot({ path: 'shots/_report-after.png', fullPage: false });
 } finally {
   await browser.close();
