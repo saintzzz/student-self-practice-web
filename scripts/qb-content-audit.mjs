@@ -216,8 +216,9 @@ check('statement-as-question', 'P1',
     if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
     const p = (q.prompt_text ?? '').trim();
     if (q.passage || q.transcript || assetCount.get(q.id)) return false;
-    // Exclamations are greetings/commands ("Goodbye!"), not assertions.
-    if (/!$/.test(p)) return false;
+    // Verb-less exclamations are greetings/commands ("Goodbye!"), not
+    // assertions; an exclaimed clause ("There is a banana!") still flags.
+    if (/!$/.test(p) && !/\b(is|are|was|were|do|does|did|can|could|have|has|had|like|want|need|will|would|should|am|be|been)\b/i.test(p)) return false;
     if (/[?_…]|\.{3}|\bchoose\b|\bchọn\b|\btranslate\b|\bsay\b|\bcomplete\b/i.test(p)) return false;
     const labels = q.choices.map((c) => choiceLabel(c));
     return labels.some((l) => YESNO_OPT.test(l));
