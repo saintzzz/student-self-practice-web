@@ -87,10 +87,10 @@ export async function goToNextRound(page: Page): Promise<void> {
  * share the mechanics option shell, so clicking every visible
  * [data-correct] option plays any of them perfectly. DOM .click() is
  * used instead of locator.click() because moving options (drifting
- * fish, moles) never satisfy actionability stability. If the game chunk
- * fails to load, game-section-skip ends the round with a zero outcome -
- * the driver takes that path rather than stalling (same resilience the
- * boundary itself guarantees a real batch).
+ * fish, moles) never satisfy actionability stability. A boundary
+ * fallback (game-section-skip/error) is a HARD failure here - r62:
+ * skipping would let a broken game deploy sail through the journey
+ * suite; skip recovery itself is covered by GameSection unit tests.
  */
 export async function runGameRound(page: Page): Promise<void> {
   await expect(page.getByTestId('game-section-banner')).toBeVisible({ timeout: 15_000 });
@@ -101,15 +101,20 @@ export async function runGameRound(page: Page): Promise<void> {
      few seconds while the game still has questions to serve. 120 x ~400ms
      covers the longest pool game (picture-reveal lifts 9 tiles). */
   for (let i = 0; i < 120 && !(await summary.isVisible()); i += 1) {
-    const skip = page.getByTestId('game-section-skip');
-    if (await skip.isVisible()) {
-      await skip.click();
-    } else {
-      await page.evaluate(() => {
-        const el = document.querySelector<HTMLElement>('[data-correct="true"]:not([disabled])');
-        if (el && el.getBoundingClientRect().width > 0) el.click();
-      });
+    if (
+      (await page.getByTestId('game-section-error').isVisible()) ||
+      (await page.getByTestId('game-section-skip').isVisible())
+    ) {
+      const title = await page.evaluate(() => document.body.innerText.match(/Vòng \d+: (.+)/)?.[1] ?? 'unknown');
+      throw new Error(
+        `runGameRound: game round boundary rendered instead of the game (${title}) - ` +
+          'a real chunk/asset failure, not a recoverable test condition',
+      );
     }
+    await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>('[data-correct="true"]:not([disabled])');
+      if (el && el.getBoundingClientRect().width > 0) el.click();
+    });
     await page.waitForTimeout(350);
   }
   await expect(summary).toBeVisible({ timeout: 15_000 });
