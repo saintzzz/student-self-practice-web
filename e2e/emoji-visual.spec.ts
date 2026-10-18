@@ -45,19 +45,22 @@ async function assertNoThirdParty(page: Page, seen: string[]): Promise<void> {
 }
 
 test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
-  test('the mascot renders through its own rig as a static SVG on the pre-round screen (CR-82 D-21)', async ({ page }) => {
+  test('the mascot renders its generated art on the pre-round screen (CR-82 D-21)', async ({ page }) => {
     const seen = watchRequests(page);
     await gotoApp(page);
     await selectGrade(page);
 
-    /* CR-82: the mascot is no longer an EmojiVisual - it renders through
-       MascotRig with data-mascot-mood + data-mascot-renderer. Pre-round
-       screens always mount the static SVG poster (D-21): no player mount,
-       no mascot JSON fetch. */
+    /* CR-82 + CR-96: the mascot is no longer an EmojiVisual - it renders
+       MascotArt (generated webp + CSS motion) with data-mascot-mood +
+       data-mascot-renderer="art". Pre-round screens never mount a player
+       and never fetch mascot JSON (D-21). */
     const mascot = mascotLocator(page);
     await expect(mascot, 'expected the mascot to render on the start screen').toBeVisible();
-    await expect(mascot).toHaveAttribute('data-mascot-renderer', 'static');
-    await expect(mascot.locator('svg').first(), 'expected the static SVG pose inside the mascot').toBeVisible();
+    await expect(mascot).toHaveAttribute('data-mascot-renderer', 'art');
+    await expect(
+      mascot.locator('img').first(),
+      'expected the generated art img inside the mascot',
+    ).toHaveAttribute('src', /\/images\/mascot\/be-heo-[\w-]+\.webp/);
 
     // Only real pose-JSON traffic counts - /src/**/mascot/*.tsx dev-server
     // module requests must not false-positive.
@@ -113,11 +116,11 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     }
   });
 
-  test('board Lottie budget: at most one player during a question, at most two in feedback (CR-82 D-20)', async ({ page }) => {
-    // Reach a state where a Lottie layer actually mounts before measuring:
+  test('board Lottie budget: the mascot never mounts a player; at most one emoji player per state (CR-82 D-20)', async ({ page }) => {
+    // Reach a state where a Lottie layer could mount before measuring:
     // a correct extra-letter answer raises the feedback sheet; at tall
-    // viewports the sheet-perch mascot is granted the first slot (the
-    // eligible feedback picture takes the second when it animates).
+    // viewports the sheet-perch mascot sits there as generated art - the
+    // only remaining player candidate is an eligible feedback picture.
     // findExtraLetterOutcome leaves the page on that question with
     // answer-feedback visible.
     const { feedback } = await findExtraLetterOutcome(page, 'correct');
@@ -128,18 +131,18 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     const playerCanvases = page.locator('[data-lottie-player] canvas');
     const mascotCanvas = page.locator('[data-lottie-player="mascot"] canvas');
 
-    // A <canvas> inside the DotLottieReact wrapper is the real proof the
-    // player mounted - the sheet-perch mascot is always the granted slot
-    // at this viewport (max-height > 420px in the default 1280x720 config).
+    // The mascot is webp art now - it must never mount a player canvas.
+    const mascot = mascotLocator(page);
+    await expect(mascot).toHaveAttribute('data-mascot-renderer', 'art');
     await expect(
       mascotCanvas,
-      'expected the sheet-perch mascot to mount its Lottie canvas in feedback',
-    ).toBeAttached({ timeout: 15_000 });
+      'the mascot must never mount a Lottie canvas (art era)',
+    ).toHaveCount(0);
 
-    // Feedback cap (D-20): mascot + at most one eligible feedback
-    // illustration - two players at most, never more.
+    // Feedback cap (D-20): the mascot no longer takes a slot - at most
+    // one eligible feedback illustration may animate.
     const feedbackCanvases = await playerCanvases.count();
-    expect(feedbackCanvases, 'D-20: at most 2 Lottie players in feedback state').toBeLessThanOrEqual(2);
+    expect(feedbackCanvases, 'D-20: at most 1 Lottie player in feedback state').toBeLessThanOrEqual(1);
     // Exactly one mascot node per screen state - the perch copy only.
     await expect(page.locator('[data-mascot-mood]'), 'one mascot node per screen state').toHaveCount(1);
 
@@ -191,11 +194,11 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     const seen = watchRequests(page);
     await gotoApp(page);
     await selectGrade(page);
-    // The start-batch screen shows a greeting mascot - always the static
-    // renderer pre-round (CR-82 D-21). Wait for it so any deferred chunk
-    // or mascot-JSON fetch would have had time to fire.
+    // The start-batch screen shows a greeting mascot - always the art
+    // renderer pre-round (CR-82 D-21 / CR-96). Wait for it so any
+    // deferred chunk or mascot-JSON fetch would have had time to fire.
     await expect(page.getByTestId('start-batch-button')).toBeVisible();
-    await expect(mascotLocator(page)).toHaveAttribute('data-mascot-renderer', 'static');
+    await expect(mascotLocator(page)).toHaveAttribute('data-mascot-renderer', 'art');
 
     const lottieTraffic = seen.filter(
       (u) =>
@@ -210,13 +213,12 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     ).toEqual([]);
   });
 
-  test('aborted mascot Lottie JSON falls back to the static SVG pose (AC-2.8 / CR-82)', async ({ page }) => {
-    // Data failure (missing/corrupt JSON) is per-mount: the mascot rig
-    // falls back to the static pose layer without tripping the session
-    // breaker (D-09 / DS-9 parity with the EmojiVisual path).
-    let abortedJson = 0;
-    await page.route('**/mascot/*.json', (route) => {
-      abortedJson++;
+  test('aborted mascot art webp falls back to the static SVG pose (AC-2.8 / CR-96)', async ({ page }) => {
+    // Art failure (missing/corrupt webp) is per-mount: MascotArt swaps to
+    // MascotStaticPose - the slot never renders broken.
+    let abortedArt = 0;
+    await page.route('**/images/mascot/*.webp', (route) => {
+      abortedArt++;
       return route.abort();
     });
     // AC-2.8 requires no uncaught error or unhandled rejection on fallback.
@@ -226,16 +228,19 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     await startBatch(page);
     await runExtraLetterRound(page);
 
-    // Round summary shows the celebrating mascot at block size - a
-    // guaranteed animated mount once the summary lands. With JSON aborted
-    // it must converge to the static renderer.
+    // Round summary shows the celebrating mascot at block size. With the
+    // webp aborted the img errors and the static pose SVG takes over -
+    // the renderer attribute stays 'art' (the chosen renderer); the DOM
+    // proof is the SVG child.
     const mascot = mascotLocator(page);
-    await expect(mascot, 'expected the celebrating mascot to stay static after JSON failure')
-      .toHaveAttribute('data-mascot-renderer', 'static', { timeout: 5_000 });
-    await expect(mascot.locator('svg').first()).toBeVisible();
+    await expect(mascot).toHaveAttribute('data-mascot-renderer', 'art');
+    await expect(
+      mascot.locator('svg').first(),
+      'expected the static SVG fallback inside the mascot after art failure',
+    ).toBeVisible({ timeout: 5_000 });
 
     expect(
-      abortedJson,
+      abortedArt,
       'route interception never fired - the mascot fallback path was not actually exercised',
     ).toBeGreaterThan(0);
     expect(
@@ -244,14 +249,11 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     ).toEqual([]);
   });
 
-  test('aborted dotlottie WASM falls back to the static SVG pose via the runtime path (AC-2.8)', async ({ page }) => {
-    // Player-init failure (WASM unreachable) is a runtime failure: the
-    // mascot rig must still converge to the static pose on affected mounts.
-    let abortedWasm = 0;
-    await page.route('**/*.wasm', (route) => {
-      abortedWasm++;
-      return route.abort();
-    });
+  test('aborted dotlottie WASM never touches the mascot art (AC-2.8)', async ({ page }) => {
+    // The mascot has no WASM dependency - aborting every WASM request may
+    // degrade eligible emoji Lottie layers but the mascot must keep its
+    // generated art mounted.
+    await page.route('**/*.wasm', (route) => route.abort());
     const pageErrors: Error[] = [];
     page.on('pageerror', (err) => pageErrors.push(err));
 
@@ -259,16 +261,19 @@ test.describe('EmojiVisual self-hosted rendering (PRD r3)', () => {
     await runExtraLetterRound(page);
 
     const mascot = mascotLocator(page);
-    await expect(mascot, 'expected the celebrating mascot to stay static after WASM failure')
-      .toHaveAttribute('data-mascot-renderer', 'static', { timeout: 5_000 });
+    await expect(mascot).toHaveAttribute('data-mascot-renderer', 'art');
+    await expect(
+      mascot.locator('img').first(),
+      'expected the mascot art img to stay mounted with WASM unavailable',
+    ).toBeVisible();
 
     expect(
-      abortedWasm,
-      'WASM interception never fired - the runtime-failure path was not actually exercised',
-    ).toBeGreaterThan(0);
+      await page.locator('[data-lottie-player="mascot"] canvas').count(),
+      'the mascot must never mount a player canvas',
+    ).toBe(0);
     expect(
       pageErrors.map((e) => e.message),
-      'AC-2.8: WASM fallback must not produce uncaught errors or unhandled rejections',
+      'AC-2.8: WASM failure must not produce uncaught errors or unhandled rejections',
     ).toEqual([]);
   });
 
@@ -288,9 +293,10 @@ test.describe('EmojiVisual reduced-motion (PRD r3 / DS-10)', () => {
     await advanceToQuestionKind(page, 'image-choice');
 
     // Under reduced motion useLottie is false (renderMode.ts) and the
-    // mascot rig stays static (D-20): every rendered EmojiVisual must
-    // resolve to svg/image, never lottie, and the mascot never animates.
-    await expect(mascotLocator(page)).toHaveAttribute('data-mascot-renderer', 'static');
+    // mascot art sits still (its CSS motion classes are gated by
+    // motion-reduce): every rendered EmojiVisual must resolve to
+    // svg/image, never lottie.
+    await expect(mascotLocator(page)).toHaveAttribute('data-mascot-renderer', 'art');
     const visuals = page.locator(EMOJI_VISUAL);
     const count = await visuals.count();
     expect(count, 'expected at least one EmojiVisual on an image-choice question').toBeGreaterThan(0);

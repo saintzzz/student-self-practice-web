@@ -156,21 +156,9 @@
         "/sfx/",
         "/images/games/",
         "/images/mascot/",
-        "/images/pets/"
-      ],
-      "modified": false
-    },
-    {
-      "id": "be-heo-mascot",
-      "title": "Be Heo mascot poses (generated Lottie)",
-      "author": "VieSchool",
-      "license": "proprietary",
-      "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
-      "licenseUrl": "",
-      "sourceUrl": "",
-      "version": "2026-10-17",
-      "paths": [
-        "/mascot/"
+        "/images/pets/",
+        "/images/stickers/",
+        "/images/home/"
       ],
       "modified": false
     },

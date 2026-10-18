@@ -16,7 +16,12 @@ import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
-import { ASSETS } from './manifest.mjs';
+import { ASSETS as ASSETS_DEFAULT } from './manifest.mjs';
+
+const manifestArg = process.argv.find((a) => a.startsWith('--manifest='));
+const ASSETS = manifestArg
+  ? (await import(`./${manifestArg.split('=')[1]}`)).ASSETS
+  : ASSETS_DEFAULT;
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PROFILE = join(homedir(), '.vieschool-artgen', 'profile');

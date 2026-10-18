@@ -3,7 +3,7 @@ import { grantHomeItem, isObjectiveGranted, ownedHomeItems, type HomeItemResult 
 import { HOME_ITEMS } from '../data/homeItems';
 import { GIFT_BOX } from '../lib/ui/tokens';
 import { EmojiVisual } from './EmojiVisual';
-import { useLottieSlot } from './fx/LottieBudget';
+import { ArtImg } from './ArtImg';
 import { InstructionSpeaker } from './InstructionSpeaker';
 
 interface GiftBoxPickerProps {
@@ -35,9 +35,8 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
   const [result, setResult] = useState<HomeItemResult | null>(null);
   const [poolEmpty] = useState(() => ownedHomeItems().length >= HOME_ITEMS.length);
   const doneFired = useRef(false);
-  /* CR-82 (D-20): the reward illustration animates only when the screen
-     allocator grants the 'reward' slot (BatchSummary: mascot + reward = 2). */
-  const rewardSlot = useLottieSlot('reward');
+  /* CR-82 (D-20): the reveal used to gate a Lottie slot - the bespoke
+     art image needs no player, so the budget no longer applies here. */
 
   /* Replay path: this sticker already granted a home item - skip the offer
      and show the stored item straight away (AC-4.4). */
@@ -94,7 +93,11 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
             >
               {/* Only the PICKED box ever reveals its item - the other two
                   stay sealed so there is no "you missed X" moment (R-04). */}
-              <EmojiVisual emoji={picked && result ? result.item.emoji : '🎁'} />
+              {picked && result ? (
+                <ArtImg key={result.item.art} src={result.item.art} emoji={result.item.emoji} size={44} />
+              ) : (
+                <EmojiVisual emoji="🎁" />
+              )}
             </button>
           );
         })}
@@ -104,7 +107,7 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
           <span className="sr-only">Em nhận được {result.item.nameVi}!</span>
           <div className="flex items-center justify-center gap-3 rounded-3xl bg-amber-500/15 px-6 py-4 ring-1 ring-amber-400/40">
             <span className="text-5xl" aria-hidden="true">
-              <EmojiVisual emoji={result.item.emoji} animated={rewardSlot} variant="block" />
+              <ArtImg key={result.item.art} src={result.item.art} emoji={result.item.emoji} size={56} />
             </span>
             <p className="text-xl font-bold text-amber-100">
               {result.item.nameVi} đã vào nhà của em!

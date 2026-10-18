@@ -3,9 +3,8 @@ import { MASCOT_PALETTE } from '../ui/theme';
 /**
  * CR-82 (DESIGN-SPEC-v5 s9, ARCHITECTURE D-08): Bé Heo's half-body bust as
  * DATA. Every pose is authored once here - named shape groups on a 512x512
- * artboard using palette KEYS only. `MascotStaticPose` renders this to SVG;
- * `lottieFromPoses` emits the same groups as Lottie shape layers, so frame 0
- * of every generated asset IS the static pose by construction.
+ * artboard using palette KEYS only. `MascotStaticPose` renders this to SVG
+ * as the always-available fallback beneath the generated webp art.
  *
  * Art layout (512x512, half-body bust per spec s9.2): shoulders at the
  * bottom edge, head above, two hooves - the perch poses rest the hooves on

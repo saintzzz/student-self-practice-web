@@ -1,6 +1,6 @@
 // Run after resize.py: adds the 3 vocab image records + /images/games/
 // collection path to public/attribution.json, then verifies the gate.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
@@ -40,6 +40,11 @@ const orig = d.collections.find((c) => c.id === 'vieschool-original-assets');
 if (orig && !orig.paths.includes('/images/games/')) orig.paths.push('/images/games/');
 if (orig && !orig.paths.includes('/images/mascot/')) orig.paths.push('/images/mascot/');
 if (orig && !orig.paths.includes('/images/pets/')) orig.paths.push('/images/pets/');
+// New collectible dirs only declare once the first generated file lands
+// (the gate requires declared paths to exist).
+for (const dir of ['/images/stickers/', '/images/home/']) {
+  if (existsSync(join(ROOT, 'public', dir)) && !orig.paths.includes(dir)) orig.paths.push(dir);
+}
 if (orig && !orig.title.includes('game card art')) orig.title += ' + CR-95 game card art';
 
 // 55 concepts regenerated as bespoke art IN PLACE (same filename keeps

@@ -20,6 +20,8 @@ export interface Sticker {
   id: string;
   nameVi: string;
   emoji: string;
+  /** Bespoke badge art (ChatGPT gen); emoji stays the fallback glyph. */
+  art?: string;
   /** CR-37: album grouping. */
   category: 'luyen' | 'skill' | 'streak' | 'arena' | 'quest' | 'pet';
 }
@@ -126,31 +128,31 @@ const BATCH_CHEST_STARS = 2;
 
 export const STICKERS: readonly Sticker[] = [
   // Luyện tập - milestones from batches, rounds and raw effort.
-  { id: 'first-batch', nameVi: 'Bài luyện đầu tiên', emoji: '🏅', category: 'luyen' },
-  { id: 'perfect-round', nameVi: 'Vòng 3 sao', emoji: '🌟', category: 'luyen' },
-  { id: 'explorer', nameVi: 'Khám phá 5 vùng đất', emoji: '🗺️', category: 'luyen' },
-  { id: 'star-hoard', nameVi: 'Kho báu 50 sao', emoji: '💎', category: 'luyen' },
-  { id: 'correct-100', nameVi: '100 câu đúng', emoji: '💯', category: 'luyen' },
-  { id: 'correct-500', nameVi: '500 câu đúng', emoji: '🚀', category: 'luyen' },
-  { id: 'review-10', nameVi: 'Chữa xong 10 câu sai', emoji: '📚', category: 'luyen' },
+  { id: 'first-batch', nameVi: 'Bài luyện đầu tiên', emoji: '🏅', art: `/images/stickers/sticker-first-batch.webp`, category: 'luyen' },
+  { id: 'perfect-round', nameVi: 'Vòng 3 sao', emoji: '🌟', art: `/images/stickers/sticker-perfect-round.webp`, category: 'luyen' },
+  { id: 'explorer', nameVi: 'Khám phá 5 vùng đất', emoji: '🗺️', art: `/images/stickers/sticker-explorer.webp`, category: 'luyen' },
+  { id: 'star-hoard', nameVi: 'Kho báu 50 sao', emoji: '💎', art: `/images/stickers/sticker-star-hoard.webp`, category: 'luyen' },
+  { id: 'correct-100', nameVi: '100 câu đúng', emoji: '💯', art: `/images/stickers/sticker-correct-100.webp`, category: 'luyen' },
+  { id: 'correct-500', nameVi: '500 câu đúng', emoji: '🚀', art: `/images/stickers/sticker-correct-500.webp`, category: 'luyen' },
+  { id: 'review-10', nameVi: 'Chữa xong 10 câu sai', emoji: '📚', art: `/images/stickers/sticker-review-10.webp`, category: 'luyen' },
   // Kỹ năng - >= 20 câu và đúng >= 80% trong một nhóm kỹ năng.
-  { id: 'skill-grammar', nameVi: 'Vua ngữ pháp', emoji: '🧠', category: 'skill' },
-  { id: 'skill-listening', nameVi: 'Tai vàng', emoji: '🎧', category: 'skill' },
-  { id: 'skill-spelling', nameVi: 'Ong chính tả', emoji: '🐝', category: 'skill' },
-  { id: 'skill-reading', nameVi: 'Cú đọc hiểu', emoji: '📖', category: 'skill' },
+  { id: 'skill-grammar', nameVi: 'Vua ngữ pháp', emoji: '🧠', art: `/images/stickers/sticker-skill-grammar.webp`, category: 'skill' },
+  { id: 'skill-listening', nameVi: 'Tai vàng', emoji: '🎧', art: `/images/stickers/sticker-skill-listening.webp`, category: 'skill' },
+  { id: 'skill-spelling', nameVi: 'Ong chính tả', emoji: '🐝', art: `/images/stickers/sticker-skill-spelling.webp`, category: 'skill' },
+  { id: 'skill-reading', nameVi: 'Cú đọc hiểu', emoji: '📖', art: `/images/stickers/sticker-skill-reading.webp`, category: 'skill' },
   // Streak.
-  { id: 'streak-3', nameVi: '3 ngày liên tiếp', emoji: '🔥', category: 'streak' },
-  { id: 'streak-7', nameVi: '7 ngày liên tiếp', emoji: '☄️', category: 'streak' },
+  { id: 'streak-3', nameVi: '3 ngày liên tiếp', emoji: '🔥', art: `/images/stickers/sticker-streak-3.webp`, category: 'streak' },
+  { id: 'streak-7', nameVi: '7 ngày liên tiếp', emoji: '☄️', art: `/images/stickers/sticker-streak-7.webp`, category: 'streak' },
   // Đấu trường.
-  { id: 'arena-first', nameVi: 'Trận đấu đầu tiên', emoji: '⚔️', category: 'arena' },
-  { id: 'arena-win', nameVi: 'Chiến thắng Arena', emoji: '🏆', category: 'arena' },
-  { id: 'arena-5', nameVi: '5 trận đấu trường', emoji: '🎖️', category: 'arena' },
+  { id: 'arena-first', nameVi: 'Trận đấu đầu tiên', emoji: '⚔️', art: `/images/stickers/sticker-arena-first.webp`, category: 'arena' },
+  { id: 'arena-win', nameVi: 'Chiến thắng Arena', emoji: '🏆', art: `/images/stickers/sticker-arena-win.webp`, category: 'arena' },
+  { id: 'arena-5', nameVi: '5 trận đấu trường', emoji: '🎖️', art: `/images/stickers/sticker-arena-5.webp`, category: 'arena' },
   // Nhiệm vụ ngày.
-  { id: 'quest-perfect', nameVi: 'Hết nhiệm vụ ngày', emoji: '✨', category: 'quest' },
-  { id: 'quest-3', nameVi: '3 ngày hoàn thành nhiệm vụ', emoji: '🌈', category: 'quest' },
+  { id: 'quest-perfect', nameVi: 'Hết nhiệm vụ ngày', emoji: '✨', art: `/images/stickers/sticker-quest-perfect.webp`, category: 'quest' },
+  { id: 'quest-3', nameVi: '3 ngày hoàn thành nhiệm vụ', emoji: '🌈', art: `/images/stickers/sticker-quest-3.webp`, category: 'quest' },
   // Pet.
-  { id: 'pet-baby', nameVi: 'Pet nở ra', emoji: '🐣', category: 'pet' },
-  { id: 'pet-adult', nameVi: 'Pet trưởng thành', emoji: '👑', category: 'pet' },
+  { id: 'pet-baby', nameVi: 'Pet nở ra', emoji: '🐣', art: `/images/stickers/sticker-pet-baby.webp`, category: 'pet' },
+  { id: 'pet-adult', nameVi: 'Pet trưởng thành', emoji: '👑', art: `/images/stickers/sticker-pet-adult.webp`, category: 'pet' },
 ] as const;
 
 const EMPTY_STATE: EngagementState = {

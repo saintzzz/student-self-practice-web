@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ownedHomeItems } from '../lib/engagement/store';
 import { CARD } from '../lib/ui/tokens';
-import { EmojiVisual } from './EmojiVisual';
+import { ArtImg } from './ArtImg';
 import { IconHome } from './icons';
 
 /**
@@ -30,7 +30,7 @@ export default function HomeShelf() {
                 title={item.nameVi}
                 className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-2xl ring-1 ring-white/15"
               >
-                <EmojiVisual emoji={item.emoji} />
+                <ArtImg key={item.art} src={item.art} emoji={item.emoji} size={36} />
               </li>
             ))}
           </ul>

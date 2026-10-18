@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EmojiVisual } from '../EmojiVisual';
+import { ArtImg } from '../ArtImg';
 import { IconChest } from '../icons';
 import type { Sticker } from '../../lib/engagement/store';
 
@@ -57,7 +57,7 @@ export default function ChestReveal({ chestStars, totalStars, newStickers }: Che
               className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-4 py-2 text-base font-bold text-amber-900 ring-2 ring-amber-300"
               style={{ animationDelay: `${300 + i * 160}ms` }}
             >
-              <EmojiVisual emoji={s.emoji} /> Huy hiệu mới: {s.nameVi}
+              <ArtImg key={s.art} src={s.art} emoji={s.emoji} size={22} /> Huy hiệu mới: {s.nameVi}
             </span>
           ))}
         </div>

@@ -283,15 +283,21 @@ exception surface (paper reports). No theme switch.
   unicode `←`/`→`/`➜` chrome), speaker/audio, trophy, medal, star, flame,
   clock, compass, refresh, flag, check, gift, flask, muscle, handshake.
   Always `aria-hidden` + paired with text labels.
-- **Content illustration:** `EmojiVisual`/Twemoji renders emoji (🐷⭐🔥🏅🍎🐱)
-  as the pedagogical illustration language - intentional for a kids product.
-- **Rule:** emoji = content/illustration, SVG icons = UI chrome. Neither is
-  the sole carrier of state (earned vs locked stickers also differ by
+- **Content illustration:** bespoke ChatGPT art is the primary language -
+  concept/bank webp, game card art, pet arc, sticker badges, home items,
+  and the Bé Heo mascot set (`/images/mascot/be-heo-*.webp`). `EmojiVisual`/
+  Twemoji remains the pedagogical fallback + decorative watermark layer
+  (intentional for a kids product), never chrome.
+- **Rule:** emoji = content/illustration fallback, SVG icons = UI chrome,
+  generated art = hero/mascot/collectible/bank visuals. Neither is the
+  sole carrier of state (earned vs locked stickers also differ by
   `???`/name + dimming; exam answered cells carry a check icon + text).
 
 ## 9. Image & asset rules
 
-- **Logo:** text wordmark + pig mascot emoji.
+- **Logo:** text wordmark + the Bé Heo generated portrait
+  (`be-heo-portrait.webp` medallion); favicon derives from
+  `be-heo-face.webp` (indigo + white medallion + piglet face).
 - **Content images:** self-hosted (`public/images/vio/`, `public/images/...`)
   with provenance tracked in the image-source credits footer + `docs/` source
   registry. Never hotlink third-party images.
@@ -304,7 +310,10 @@ exception surface (paper reports). No theme switch.
   Animations are **transform/opacity only**, always paired with
   `motion-reduce:` static fallback.
 - **Signatures:** `screen-enter` (fade + 8px rise), `chest-wiggle`, `stars-pop`,
-  `land-drift`, `sticker-chip` slide-in.
+  `land-drift`, `sticker-chip` slide-in, plus the `mascot-*` mood set
+  (idle bob, rock, wave, bounce, nod, hop) that animates the generated
+  Bé Heo poses - the Lottie pose rig is retired in favor of generated
+  art + CSS motion (`data-mascot-renderer="art"`).
 - **States:** every interactive element ships hover (lift/lighten),
   `:focus-visible` ring (`focus:ring-4 focus:ring-amber-300/60` family),
   active (`scale-95` press), disabled (opacity). Pointer cursor on all controls.

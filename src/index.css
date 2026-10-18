@@ -206,6 +206,42 @@ textarea {
 }
 .mascot-float { animation: mascot-float 3.6s ease-in-out infinite; }
 
+/* Bé Heo art moods (MascotArt) - transform-only CSS motion replacing
+   the Lottie pose rig: same feedback channel, generated art instead of
+   the flat pig. Reduced-motion disables all six below. */
+@keyframes mascot-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes mascot-rock {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes mascot-wave {
+  0%, 100% { transform: rotate(-6deg) translateY(0); }
+  50% { transform: rotate(6deg) translateY(-3px); }
+}
+@keyframes mascot-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.04); }
+}
+@keyframes mascot-nod {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  30% { transform: rotate(5deg) translateY(2px); }
+  60% { transform: rotate(-3deg); }
+}
+@keyframes mascot-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-14px) scale(1.05) rotate(-3deg); }
+  70% { transform: translateY(0) scale(0.97); }
+}
+.mascot-idle { animation: mascot-idle 3.2s ease-in-out infinite; }
+.mascot-rock { animation: mascot-rock 2.8s ease-in-out infinite; }
+.mascot-wave { animation: mascot-wave 2.4s ease-in-out infinite; }
+.mascot-bounce { animation: mascot-bounce 1.8s ease-in-out infinite; }
+.mascot-nod { animation: mascot-nod 2.2s ease-in-out infinite; }
+.mascot-hop { animation: mascot-hop 1.2s ease-in-out infinite; }
+
 /* Progress shimmer: a light band sliding across the gradient fill -
    transform only. */
 @keyframes progress-shimmer {
@@ -220,6 +256,7 @@ textarea {
   .land-drift, .land-drift-slow, .land-sway, .land-twinkle, .land-float,
   .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip,
   .ambient-sparkle, .mascot-float, .progress-shimmer,
+  .mascot-idle, .mascot-rock, .mascot-wave, .mascot-bounce, .mascot-nod, .mascot-hop,
   .demo-dot-pulse, .demo-dot-travel {
     animation: none;
   }

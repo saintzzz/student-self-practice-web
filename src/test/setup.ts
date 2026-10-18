@@ -188,29 +188,3 @@ vi.mock('../components/EmojiLottiePlayer', () => ({
     return React.createElement('span', { 'data-testid': `lottie-${props.lottieKey}` });
   },
 }));
-
-/**
- * CR-82 (D-09): the mascot Lottie player gets the same jsdom stub - it
- * only ever mounts when a test installs `window.matchMedia`, and it
- * honours the same `__lottieMockBehavior` control seam. The wrapper keeps
- * `data-lottie-player="mascot"` so budget tests count it like production.
- */
-vi.mock('../components/mascot/MascotLottie', () => ({
-  default: function MockMascotLottie(props: {
-    pose: string;
-    onReady: () => void;
-    onError: (kind: 'data' | 'runtime') => void;
-  }) {
-    React.useEffect(() => {
-      const behavior = window.__lottieMockBehavior ?? 'ready';
-      if (behavior === 'ready') props.onReady();
-      else if (behavior === 'error-data') props.onError('data');
-      else if (behavior === 'error-runtime') props.onError('runtime');
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    return React.createElement('span', {
-      'data-lottie-player': 'mascot',
-      'data-testid': `mascot-lottie-${props.pose}`,
-    });
-  },
-}));

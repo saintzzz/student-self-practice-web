@@ -6,6 +6,10 @@ const STYLE = 'Flat vector children\'s illustration sticker, bold rounded shapes
 
 const TET_STYLE = 'Flat vector children\'s illustration sticker, bold rounded shapes, soft inner highlight, bright festive colors, centered single composition on a pure white background, no text, no watermark. Authentic VIETNAMESE Tet Lunar New Year style (NOT Japanese, NOT Chinese generic).';
 
+/* Shared Bé Heo character description so every pose renders the SAME
+   piglet (matches be-heo-portrait). */
+const PIG = 'the same chubby pink piglet mascot: round body, big friendly eyes, tiny snout, floppy ears, wearing a small blue backpack,';
+
 export const ASSETS = [
   // ---- Game card art (public/images/games/{id}.webp, 320x320) ----
   { id: 'memory-match', dir: 'games', prompt: `${STYLE} A cute face-down playing card pair with a star on the back, one card flipped showing a smiling sun, small sparkles around.` },
@@ -115,4 +119,65 @@ export const ASSETS = [
   { id: 'festival', dir: 'vocab', prompt: `${TET_STYLE} Vietnamese Tet festival scene icon: colorful five-color festival flags (co ngu sac, triangular flags in red yellow green purple) strung above a small temple gate silhouette with curved roof, red lanterns.` },
   { id: 'apricot-blossom', dir: 'vocab', prompt: `${TET_STYLE} Vietnamese hoa mai - a branch of YELLOW apricot blossoms with five round petals each, brown branch, the traditional Tet flower of southern Vietnam.` },
   { id: 'dragon-dance', dir: 'vocab', prompt: `${TET_STYLE} Vietnamese lion-dragon dance head (mua lan su rong) - a colorful paper-mache costume head in red green and gold with big eyes and open mouth.` },
+
+  // ---- Bé Heo mood poses (public/images/mascot/be-heo-{mood}.webp) ----
+  // Same piglet as be-heo-portrait (shared character description). The
+  // flat Lottie/SVG pig becomes generated art + CSS mood motion.
+  { id: 'be-heo-idle', dir: 'mascot', prompt: `${STYLE} ${PIG} standing calmly with a gentle content smile, arms relaxed at sides, full body.` },
+  { id: 'be-heo-thinking', dir: 'mascot', prompt: `${STYLE} ${PIG} in a thinking pose, one hoof on chin, eyes looking up and to the side, a small thought bubble with a question mark shape (no text), full body.` },
+  { id: 'be-heo-happy', dir: 'mascot', prompt: `${STYLE} ${PIG} beaming a huge joyful smile with closed happy eyes, rosy cheeks, arms raised slightly, full body.` },
+  { id: 'be-heo-celebrating', dir: 'mascot', prompt: `${STYLE} ${PIG} jumping for joy mid-air with both arms up, confetti stars around, biggest excited grin, full body.` },
+  { id: 'be-heo-encouraging', dir: 'mascot', prompt: `${STYLE} ${PIG} cheering supportively, one hoof giving a big thumbs up, warm encouraging smile, leaning slightly forward, full body.` },
+
+  // ---- Sticker badges (public/images/stickers/sticker-{id}.webp) ----
+  // Album collectible art replacing emoji glyphs - badge/medal idiom
+  // matching the reward visual language.
+  { id: 'sticker-first-batch', dir: 'stickers', prompt: `${STYLE} A golden medal sticker badge with a red ribbon and a tiny open book embossed, celebratory.` },
+  { id: 'sticker-perfect-round', dir: 'stickers', prompt: `${STYLE} A golden badge with three bright stars in a row and tiny sparkles.` },
+  { id: 'sticker-explorer', dir: 'stickers', prompt: `${STYLE} A treasure map badge with a dotted path, red X mark and tiny compass.` },
+  { id: 'sticker-star-hoard', dir: 'stickers', prompt: `${STYLE} A sparkling treasure badge overflowing with golden stars and one big diamond.` },
+  { id: 'sticker-correct-100', dir: 'stickers', prompt: `${STYLE} A golden rosette badge with a big bold check mark and confetti.` },
+  { id: 'sticker-correct-500', dir: 'stickers', prompt: `${STYLE} A rocket ship badge launching upward with golden stars trailing.` },
+  { id: 'sticker-review-10', dir: 'stickers', prompt: `${STYLE} A badge showing a stack of colorful books with a green check mark ribbon.` },
+  { id: 'sticker-skill-grammar', dir: 'stickers', prompt: `${STYLE} A smart owl badge wearing round glasses, holding a tiny ABC book.` },
+  { id: 'sticker-skill-listening', dir: 'stickers', prompt: `${STYLE} A golden ear badge wearing cozy blue headphones with sound waves.` },
+  { id: 'sticker-skill-spelling', dir: 'stickers', prompt: `${STYLE} A busy bee badge holding a pencil, spelling letters trail behind.` },
+  { id: 'sticker-skill-reading', dir: 'stickers', prompt: `${STYLE} A cute owl badge reading a big open book, tiny stars above.` },
+  { id: 'sticker-streak-3', dir: 'stickers', prompt: `${STYLE} A flaming fire badge with a bold number-free flame and sparks.` },
+  { id: 'sticker-streak-7', dir: 'stickers', prompt: `${STYLE} A blazing comet badge streaking across with a fiery tail.` },
+  { id: 'sticker-arena-first', dir: 'stickers', prompt: `${STYLE} A crossed-swords badge on a small shield, friendly cartoon style.` },
+  { id: 'sticker-arena-win', dir: 'stickers', prompt: `${STYLE} A golden trophy cup badge with a star on the cup and confetti.` },
+  { id: 'sticker-arena-5', dir: 'stickers', prompt: `${STYLE} A military-style medal badge with red white ribbon and five tiny stars.` },
+  { id: 'sticker-quest-perfect', dir: 'stickers', prompt: `${STYLE} A sparkling golden badge with a magic wand and shimmer stars.` },
+  { id: 'sticker-quest-3', dir: 'stickers', prompt: `${STYLE} A rainbow arc badge with a golden sun and tiny cloud.` },
+  { id: 'sticker-pet-baby', dir: 'stickers', prompt: `${STYLE} A badge with a cute baby chick hatching from a speckled egg.` },
+  { id: 'sticker-pet-adult', dir: 'stickers', prompt: `${STYLE} A golden crown badge with jewels, regal but cute.` },
+
+  // ---- Home items (public/images/home/home-{id}.webp, 256x256) ----
+  // Collectible furniture/toys for the pet home shelf - bespoke art
+  // replacing emoji glyphs.
+  { id: 'home-ball', dir: 'home', prompt: `${STYLE} A colorful striped beach ball.` },
+  { id: 'home-balloon', dir: 'home', prompt: `${STYLE} A bunch of three glossy party balloons red yellow blue.` },
+  { id: 'home-kite', dir: 'home', prompt: `${STYLE} A diamond-shaped rainbow kite with a long ribbon tail.` },
+  { id: 'home-teddy', dir: 'home', prompt: `${STYLE} A cuddly brown teddy bear sitting.` },
+  { id: 'home-sunflower', dir: 'home', prompt: `${STYLE} A cheerful sunflower in a small terracotta pot.` },
+  { id: 'home-cactus', dir: 'home', prompt: `${STYLE} A cute round cactus in a tiny pot with a pink flower on top.` },
+  { id: 'home-mushroom', dir: 'home', prompt: `${STYLE} A red spotted mushroom with white dots.` },
+  { id: 'home-castle', dir: 'home', prompt: `${STYLE} A little fairy-tale sandcastle with a flag.` },
+  { id: 'home-tent', dir: 'home', prompt: `${STYLE} A cozy orange camping tent.` },
+  { id: 'home-carousel', dir: 'home', prompt: `${STYLE} A mini merry-go-round carousel horse, pastel colors.` },
+  { id: 'home-slide', dir: 'home', prompt: `${STYLE} A small yellow playground slide.` },
+  { id: 'home-yoyo', dir: 'home', prompt: `${STYLE} A glossy red yo-yo with a star and a curled string.` },
+  { id: 'home-palette', dir: 'home', prompt: `${STYLE} A wooden artist palette with colorful paint dabs and a brush.` },
+  { id: 'home-guitar', dir: 'home', prompt: `${STYLE} A small acoustic guitar leaning at an angle.` },
+  { id: 'home-drum', dir: 'home', prompt: `${STYLE} A red toy drum with two drumsticks.` },
+  { id: 'home-bike', dir: 'home', prompt: `${STYLE} A cute little red kids bicycle with a basket.` },
+  { id: 'home-canoe', dir: 'home', prompt: `${STYLE} A small wooden canoe with a paddle.` },
+  { id: 'home-star-lamp', dir: 'home', prompt: `${STYLE} A glowing star-shaped night lamp, warm yellow light.` },
+  { id: 'home-rainbow', dir: 'home', prompt: `${STYLE} A bright rainbow arc with two fluffy clouds at its ends.` },
+  { id: 'home-moon', dir: 'home', prompt: `${STYLE} A sleepy crescent moon with a gentle smiling face.` },
+  { id: 'home-sun', dir: 'home', prompt: `${STYLE} A cheerful smiling sun with soft rounded rays.` },
+  { id: 'home-tree', dir: 'home', prompt: `${STYLE} A small green leafy tree in a tiny patch of grass.` },
+  { id: 'home-fish', dir: 'home', prompt: `${STYLE} A round glass fishbowl with a cute orange goldfish inside.` },
+  { id: 'home-butterfly', dir: 'home', prompt: `${STYLE} A colorful butterfly with orange and purple wings, perched.` },
 ];

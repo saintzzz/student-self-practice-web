@@ -34,6 +34,7 @@ import { createExamFromBank, gradeNumber } from '../lib/qb/bank';
 import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
+import { ArtImg } from './ArtImg';
 import ConfirmEndDialog from './ConfirmEndDialog';
 import { WORD_IPA } from '../data/ipaMap';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
@@ -1293,7 +1294,11 @@ function ArenaResult({
 
           {newBadges.length > 0 && (
             <div data-testid="arena-new-badges" className="mt-4 rounded-xl bg-amber-400/15 p-3 text-sm font-extrabold text-amber-200 ring-1 ring-amber-400/40">
-              <span className="mr-1 inline-flex items-center"><IconMedal size={16} /></span> Huy hiệu mới: {newBadges.map((b) => `${b.emoji} ${b.nameVi}`).join(' - ')}
+              <span className="mr-1 inline-flex items-center"><IconMedal size={16} /></span> Huy hiệu mới: {newBadges.map((b) => (
+                <span key={b.id} className="mx-1 inline-flex items-center gap-1 align-middle">
+                  <ArtImg key={b.art} src={b.art} emoji={b.emoji} size={18} /> {b.nameVi}
+                </span>
+              )).flatMap((el, i) => (i === 0 ? [el] : [' - ', el]))}
             </div>
           )}
 

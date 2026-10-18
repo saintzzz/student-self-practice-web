@@ -6,13 +6,13 @@ import type { CurrentAnswer } from '../lib/practiceSession';
 
 /**
  * CR-82 (spec s9.3 one-mascot matrix, D-20 FF-19): the board owns both
- * perches and the whole-screen Lottie budget.
+ * perches; mascot visuals are the generated art + CSS motion now
+ * (MascotArt), so the renderer reads 'art' everywhere - the Lottie
+ * budget assertions are gone with the rig.
  *
  * jsdom has no `window.matchMedia`, so `useMediaQuery('(max-height:
- * 420px)')` reads false (tall viewport) and `MascotRig` reads static -
- * the perch structure and mascot count are assertable DOM facts, while
- * the Lottie mounts are covered by the allocator unit test +
- * data-mascot-renderer.
+ * 420px)')` reads false (tall viewport) unless stubbed - the perch
+ * structure and mascot count stay assertable DOM facts.
  */
 
 const CORRECT_ANSWER: CurrentAnswer = { selectedIndex: 0, isCorrect: true };
@@ -63,7 +63,7 @@ describe('QuestionCard mascot perches + Lottie budget (CR-82 s9.3, D-20)', () =>
     const mascots = screen.getAllByTestId('mascot');
     expect(mascots).toHaveLength(1);
     expect(mascots[0]).toHaveAttribute('data-mascot-mood', 'idle');
-    expect(mascots[0]).toHaveAttribute('data-mascot-renderer', 'static');
+    expect(mascots[0]).toHaveAttribute('data-mascot-renderer', 'art');
     expect(screen.queryByTestId('sheet-perch')).toBeNull();
     expect(screen.queryByTestId('feedback-sheet')).toBeNull();
   });
@@ -136,7 +136,7 @@ describe('QuestionCard mascot perches + Lottie budget (CR-82 s9.3, D-20)', () =>
     const mascots = screen.getAllByTestId('mascot');
     expect(mascots).toHaveLength(1);
     expect(mascots[0]).toHaveAttribute('data-mascot-mood', 'happy');
-    expect(mascots[0]).toHaveAttribute('data-mascot-renderer', 'static');
+    expect(mascots[0]).toHaveAttribute('data-mascot-renderer', 'art');
   });
 
   it('reserves the 2.75rem perch overhang under the sheet, not for the inline variant', () => {
@@ -165,7 +165,7 @@ describe('QuestionCard mascot perches + Lottie budget (CR-82 s9.3, D-20)', () =>
     expect(screen.getByTestId('question-card').style.paddingBottom).toContain('5.5rem');
   });
 
-  it('unanswered: no mascot Lottie mounts under jsdom (no matchMedia -> static per D-09)', () => {
+  it('unanswered: the board perch renders the generated art img (no flat pig, no Lottie)', () => {
     render(
       <QuestionCard
         question={IMAGE_QUESTION}
@@ -175,25 +175,23 @@ describe('QuestionCard mascot perches + Lottie budget (CR-82 s9.3, D-20)', () =>
         {...noopHandlers}
       />,
     );
-    expect(screen.queryByTestId('mascot-lottie-idle')).toBeNull();
+    const img = screen.getByTestId('mascot').querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img!.getAttribute('src')).toBe('/images/mascot/be-heo-idle.webp');
   });
 
-  it('mounts the mascot Lottie for the idle slot when matchMedia exists and the prompt is ineligible', async () => {
-    /* D-20 row 2: 🐱 has no Noto animation, so the unanswered board gives
-       the single player slot to the mascot. With matchMedia stubbed the
-       jsdom rig mounts the mocked player (lazy chunk - await it). */
+  it('answered: the verdict mood swaps the art src to the matching pose', () => {
     installMatchMedia({ '(max-height: 420px)': false });
     render(
       <QuestionCard
         question={IMAGE_QUESTION}
         questionNumber={1}
         totalQuestions={8}
-        currentAnswer={null}
+        currentAnswer={CORRECT_ANSWER}
         {...noopHandlers}
       />,
     );
-    expect(await screen.findByTestId('mascot-lottie-idle')).toBeInTheDocument();
-    // The poster stays mounted underneath the player in the same box.
-    expect(screen.getByTestId('mascot').querySelector('svg')).not.toBeNull();
+    const img = screen.getByTestId('mascot').querySelector('img');
+    expect(img!.getAttribute('src')).toBe('/images/mascot/be-heo-happy.webp');
   });
 });

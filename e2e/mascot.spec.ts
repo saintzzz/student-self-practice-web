@@ -59,22 +59,28 @@ test.describe('App-wide pig mascot (plan.md v10 AC38)', () => {
     await expectMascotVisible(page, undefined, 'on the Round summary screen');
   });
 
-  test('the same Bé Heo SVG character appears on the Start Batch screen and in the feedback panel (character consistency)', async ({
+  test('the same Bé Heo art character appears on the Start Batch screen and in the feedback panel (character consistency)', async ({
     page,
   }) => {
     await gotoApp(page);
     await selectGrade(page);
-    // CR-72: character consistency is structural now - both screens
-    // render the same Bé Heo SVG component, located by data-mascot-mood.
+    // CR-96: character consistency is structural now - both screens
+    // render the same generated Bé Heo art, located by data-mascot-mood.
     const startMascot = mascotLocator(page);
     await expect(startMascot).toBeVisible();
-    await expect(startMascot.locator('svg').first()).toBeVisible();
+    await expect(
+      startMascot.locator('img').first(),
+      'expected the generated art img inside the start mascot',
+    ).toHaveAttribute('src', /\/images\/mascot\/be-heo-[\w-]+\.webp/);
 
     const { feedback } = await findExtraLetterOutcome(page, 'incorrect');
     await expect(feedback).toBeVisible();
     // Sheet perch is a sibling layer, not inside answer-feedback (D-16).
     const feedbackMascot = mascotLocator(page);
     await expect(feedbackMascot).toBeVisible();
-    await expect(feedbackMascot.locator('svg').first()).toBeVisible();
+    await expect(
+      feedbackMascot.locator('img').first(),
+      'expected the generated art img inside the feedback mascot',
+    ).toHaveAttribute('src', /\/images\/mascot\/be-heo-[\w-]+\.webp/);
   });
 });

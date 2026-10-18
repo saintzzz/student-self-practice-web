@@ -17,6 +17,24 @@ JOBS = {  # stem -> (dir, size, quality)
     **{v: ('vocab', 256, 85) for v in ['festival','apricot-blossom','dragon-dance']},
     'be-heo-portrait': ('mascot', 512, 88),
     'be-heo-face': ('mascot', 512, 88),
+    # Bé Heo mood poses (feedback rig art).
+    'be-heo-idle': ('mascot', 512, 88),
+    'be-heo-thinking': ('mascot', 512, 88),
+    'be-heo-happy': ('mascot', 512, 88),
+    'be-heo-celebrating': ('mascot', 512, 88),
+    'be-heo-encouraging': ('mascot', 512, 88),
+    # Sticker album badges + pet-home collectibles.
+    **{s: ('stickers', 256, 85) for s in [
+        'sticker-first-batch','sticker-perfect-round','sticker-explorer','sticker-star-hoard',
+        'sticker-correct-100','sticker-correct-500','sticker-review-10','sticker-skill-grammar',
+        'sticker-skill-listening','sticker-skill-spelling','sticker-skill-reading','sticker-streak-3',
+        'sticker-streak-7','sticker-arena-first','sticker-arena-win','sticker-arena-5',
+        'sticker-quest-perfect','sticker-quest-3','sticker-pet-baby','sticker-pet-adult']},
+    **{h: ('home', 256, 85) for h in [
+        'home-ball','home-balloon','home-kite','home-teddy','home-sunflower','home-cactus',
+        'home-mushroom','home-castle','home-tent','home-carousel','home-slide','home-yoyo',
+        'home-palette','home-guitar','home-drum','home-bike','home-canoe','home-star-lamp',
+        'home-rainbow','home-moon','home-sun','home-tree','home-fish','home-butterfly']},
     # Companion pets (CR-36 egg->baby->kid->adult arc).
     'pet-egg': ('pets', 256, 85),
     'pet-cat-1': ('pets', 256, 85),

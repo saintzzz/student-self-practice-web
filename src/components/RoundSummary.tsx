@@ -6,7 +6,7 @@ import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { CARD, CHIP_SKY, CTA_GOLD_XL, NAV_PILL, SCREEN_ENTER, TYPE_HERO_NUMBER_NAVY, TYPE_SECTION_NAVY } from '../lib/ui/tokens';
 import Mascot from './Mascot';
 import StarRain from './celebrations/StarRain';
-import { EmojiVisual } from './EmojiVisual';
+import { ArtImg } from './ArtImg';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import GiftBoxPicker from './GiftBoxPicker';
 import { SendResultsCard } from './SendResultsCard';
@@ -173,7 +173,7 @@ export default function RoundSummary({
               key={s.id}
               className="sticker-chip inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-900 ring-2 ring-amber-300"
             >
-              <EmojiVisual emoji={s.emoji} /> Huy hiệu mới: {s.nameVi}
+              <ArtImg key={s.art} src={s.art} emoji={s.emoji} size={20} /> Huy hiệu mới: {s.nameVi}
             </span>
           ))}
         </p>

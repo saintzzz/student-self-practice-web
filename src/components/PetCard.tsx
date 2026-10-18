@@ -36,7 +36,7 @@ function PetImg({ src, alt, size, emoji }: { src: string; alt: string; size: num
       loading="lazy"
       draggable={false}
       onError={() => setFailed(true)}
-      className="mx-auto select-none object-contain"
+      className="mx-auto select-none rounded-xl bg-amber-50 object-contain p-0.5 ring-1 ring-amber-200/60"
       style={{ width: size, height: size }}
     />
   );

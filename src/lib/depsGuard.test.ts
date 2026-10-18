@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url';
  * - package.json `dependencies` key set equals the CR-82 baseline (no
  *   new runtime dependency - motion stays CSS + the already-present
  *   dotlottie player);
- * - `@lottiefiles/*` may be imported only by EmojiLottiePlayer.tsx and
- *   mascot/MascotLottie.tsx so the player runtime never leaks into the
- *   entry chunk or a second import site.
+ * - `@lottiefiles/*` may be imported only by EmojiLottiePlayer.tsx so
+ *   the player runtime never leaks into the entry chunk or a second
+ *   import site. (The mascot rig is gone - MascotArt is CSS + webp.)
  */
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SRC_DIR = path.join(REPO_ROOT, 'src');
@@ -25,7 +25,6 @@ const DEPENDENCY_BASELINE = [
 
 const LOTTIE_IMPORTERS = new Set([
   path.join('src', 'components', 'EmojiLottiePlayer.tsx'),
-  path.join('src', 'components', 'mascot', 'MascotLottie.tsx'),
 ]);
 
 function collectSource(dir: string, out: string[] = []): string[] {

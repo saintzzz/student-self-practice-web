@@ -1,126 +1,97 @@
 #!/usr/bin/env node
 /**
- * check-mascot-assets - CR-82 FF-11 mascot asset contract gate
- * (ARCHITECTURE-v5 s9.3, spec s9.5). Run via `code:reliability`.
+ * check-mascot-assets - mascot art contract gate (bespoke-art era).
+ * Run via `code:reliability`.
  *
- *   - exactly the six be-heo-<pose>.json files for poses whose
- *     src/lib/mascot/assets.ts source is not 'missing';
- *   - <= 40 kB gzip each (level 9);
- *   - w = h = 512, fr = 30, ip = 0;
- *   - no text layers (ty:5), no image assets (assets[].p), no expressions
- *     (string-valued `x` props);
- *   - every fill/stroke color resolves inside MASCOT_PALETTE (theme.ts);
- *   - a provenance row in public/attribution.json covers /mascot/.
+ *   - for every pose not 'missing' in src/lib/mascot/assets.ts, the
+ *     MOOD_FILE webp exists under public/images/mascot/, plus
+ *     be-heo-face.webp (the inline/avatar face art);
+ *   - each file is a valid RIFF/WebP image, 512x512, <= 80 kB;
+ *   - a provenance row in public/attribution.json covers /images/mascot/.
  *
  * Exit non-zero listing every violation.
  */
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
-import { gzipSync } from 'node:zlib';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MASCOT_DIR = path.join(ROOT, 'public', 'mascot');
+const MASCOT_DIR = path.join(ROOT, 'public', 'images', 'mascot');
 const ASSETS_TS = path.join(ROOT, 'src', 'lib', 'mascot', 'assets.ts');
-const THEME_TS = path.join(ROOT, 'src', 'lib', 'ui', 'theme.ts');
 const ATTRIBUTION = path.join(ROOT, 'public', 'attribution.json');
-const GZIP_BUDGET = 40 * 1024;
+const SIZE_BUDGET = 80 * 1024;
 
 const violations = [];
 const check = (ok, message) => {
   if (!ok) violations.push(message);
 };
 
-/* Parse `MASCOT_ASSET_SOURCE` entries (pose: 'generated'|'commissioned'|'missing'). */
-async function assetSources() {
+/* Parse MASCOT_ASSET_SOURCE + MOOD_FILE entries from assets.ts. */
+async function expectedFiles() {
   const src = await readFile(ASSETS_TS, 'utf8');
-  const block = src.match(/MASCOT_ASSET_SOURCE[^=]*=\s*\{([\s\S]*?)\}/);
-  check(!!block, 'assets.ts: MASCOT_ASSET_SOURCE not found');
-  const map = new Map();
-  for (const m of (block?.[1] ?? '').matchAll(/(\w+):\s*'(generated|commissioned|missing)'/g)) {
-    map.set(m[1], m[2]);
-  }
-  return map;
-}
+  const sources = src.match(/MASCOT_ASSET_SOURCE[^=]*=\s*\{([\s\S]*?)\}/);
+  check(!!sources, 'assets.ts: MASCOT_ASSET_SOURCE not found');
+  const moodFile = src.match(/MOOD_FILE[^=]*=\s*\{([\s\S]*?)\}/);
+  check(!!moodFile, 'assets.ts: MOOD_FILE not found');
 
-/* Palette hexes allowed in generated assets. */
-async function paletteHexes() {
-  const src = await readFile(THEME_TS, 'utf8');
-  const block = src.match(/MASCOT_PALETTE[^=]*=\s*\{([\s\S]*?)\}/);
-  check(!!block, 'theme.ts: MASCOT_PALETTE not found');
-  return new Set(
-    [...(block?.[1] ?? '').matchAll(/'#[0-9A-Fa-f]{6}'/g)].map((m) => m[0].slice(1, -1).toLowerCase()),
+  const live = new Set(
+    [...(sources?.[1] ?? '').matchAll(/(\w+):\s*'(generated|commissioned)'/g)].map((m) => m[1]),
   );
+  const files = new Set(['be-heo-face']);
+  for (const m of (moodFile?.[1] ?? '').matchAll(/(\w+):\s*'(be-heo-[\w-]+)'/g)) {
+    if (live.has(m[1])) files.add(m[2]);
+  }
+  return [...files];
 }
 
-/* Walk a Lottie JSON, collecting {fl,st} colors + flagging banned nodes. */
-function auditLayers(node, file, palette) {
-  if (Array.isArray(node)) {
-    for (const item of node) auditLayers(item, file, palette);
-    return;
+/* Read image dimensions from a WebP buffer (VP8, VP8L and VP8X). */
+function webpDims(buf) {
+  if (buf.length < 30 || buf.toString('latin1', 0, 4) !== 'RIFF' || buf.toString('latin1', 8, 12) !== 'WEBP') {
+    return null;
   }
-  if (!node || typeof node !== 'object') return;
-  check(node.ty !== 5, `${file}: text layer not allowed`);
-  if ((node.ty === 'fl' || node.ty === 'st') && node.c?.k) {
-    const [r, g, b] = node.c.k;
-    const hex = `#${[r, g, b]
-      .map((v) => Math.round(v * 255).toString(16).padStart(2, '0'))
-      .join('')}`;
-    check(palette.has(hex), `${file}: color ${hex} outside MASCOT_PALETTE`);
+  const fourCC = buf.toString('latin1', 12, 16);
+  if (fourCC === 'VP8X') {
+    return { w: 1 + buf.readUIntLE(24, 3), h: 1 + buf.readUIntLE(27, 3) };
   }
-  check(typeof node.x !== 'string', `${file}: expression not allowed on "${node.nm ?? 'prop'}"`);
-  for (const value of Object.values(node)) {
-    if (value && typeof value === 'object') auditLayers(value, file, palette);
+  if (fourCC === 'VP8 ') {
+    return { w: buf.readUInt16LE(26) & 0x3fff, h: buf.readUInt16LE(28) & 0x3fff };
   }
+  if (fourCC === 'VP8L') {
+    const b0 = buf[21], b1 = buf[22], b2 = buf[23], b3 = buf[24];
+    return {
+      w: 1 + (((b1 & 0x3f) << 8) | b0),
+      h: 1 + (((b3 & 0x0f) << 10) | (b2 << 2) | ((b1 & 0xc0) >> 6)),
+    };
+  }
+  return null;
 }
 
 async function main() {
-  const sources = await assetSources();
-  const palette = await paletteHexes();
-  const expected = [...sources.entries()].filter(([, s]) => s !== 'missing').map(([p]) => `be-heo-${p}.json`);
-
-  const files = existsSync(MASCOT_DIR) ? (await readdir(MASCOT_DIR)).filter((f) => f.endsWith('.json')) : [];
-  for (const f of expected) {
-    check(files.includes(f), `missing pose asset: public/mascot/${f}`);
-  }
-  for (const f of files) {
-    check(expected.includes(f), `untracked pose asset on disk: public/mascot/${f}`);
-  }
-
-  for (const f of files) {
-    const raw = await readFile(path.join(MASCOT_DIR, f));
-    const gz = gzipSync(raw, 9).byteLength;
-    check(gz <= GZIP_BUDGET, `${f}: ${(gz / 1024).toFixed(1)}kB gz exceeds the 40kB budget`);
-    let json;
-    try {
-      json = JSON.parse(raw.toString('utf8'));
-    } catch {
-      check(false, `${f}: invalid JSON`);
-      continue;
-    }
-    check(json.w === 512 && json.h === 512, `${f}: artboard must be 512x512 (w=${json.w} h=${json.h})`);
-    check(json.fr === 30, `${f}: frame rate must be 30 (fr=${json.fr})`);
-    check(json.ip === 0, `${f}: ip must be 0`);
-    check(typeof json.op === 'number' && json.op > 0, `${f}: op must be the pose duration in frames`);
-    for (const asset of json.assets ?? []) {
-      check(!asset.p, `${f}: image assets are not allowed`);
-    }
-    auditLayers(json.layers ?? [], f, palette);
+  const expected = expectedFiles();
+  for (const stem of await expected) {
+    const file = path.join(MASCOT_DIR, `${stem}.webp`);
+    check(existsSync(file), `missing pose art: public/images/mascot/${stem}.webp`);
+    if (!existsSync(file)) continue;
+    const buf = await readFile(file);
+    check(buf.byteLength <= SIZE_BUDGET, `${stem}.webp: ${(buf.byteLength / 1024).toFixed(1)}kB exceeds the 80kB budget`);
+    const dims = webpDims(buf);
+    check(!!dims, `${stem}.webp: not a valid WebP image`);
+    if (dims) check(dims.w === 512 && dims.h === 512, `${stem}.webp: must be 512x512 (got ${dims.w}x${dims.h})`);
   }
 
   const attribution = JSON.parse(await readFile(ATTRIBUTION, 'utf8'));
   const covered = (attribution.collections ?? []).some((c) =>
-    (c.paths ?? []).some((p) => 'mascot/'.startsWith(p.replace(/^\//, ''))),
+    (c.paths ?? []).some((p) => 'images/mascot/'.startsWith(p.replace(/^\//, ''))),
   );
-  check(covered, 'attribution.json: no collection covers /mascot/');
+  check(covered, 'attribution.json: no collection covers /images/mascot/');
 
   if (violations.length) {
     console.error(`check-mascot-assets: ${violations.length} violation(s)`);
     for (const v of violations) console.error(`  - ${v}`);
     process.exit(1);
   }
-  console.log(`check-mascot-assets OK: ${files.length} pose assets`);
+  console.log(`check-mascot-assets OK: ${(await expected).length} art files`);
 }
 
 main().catch((err) => {

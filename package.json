@@ -13,7 +13,7 @@
     "assets:emoji": "node scripts/fetch-emoji-assets.mjs",
     "assets:images": "node scripts/fetch-vocab-images.mjs",
     "assets:images:publish": "node scripts/publish-vocab-images.mjs",
-    "assets:mascot": "vite-node scripts/gen-mascot-lottie.ts",
+    "assets:mascot": "node scripts/artgen/run.mjs be-heo-idle be-heo-thinking be-heo-happy be-heo-celebrating be-heo-encouraging be-heo-portrait be-heo-face",
     "audit:qb": "node scripts/qb-content-audit.mjs",
     "audit:perf": "node scripts/perf-check.mjs",
     "audit:attribution": "node scripts/check-attribution.mjs",

@@ -21,6 +21,7 @@ import {
 } from '../lib/ui/tokens';
 import type { Grade } from '../types';
 import { IconArrowLeft, IconBook, IconBulb, IconChart, IconFlame, IconMail, IconStar, IconTrendingUp } from './icons';
+import { ArtImg } from './ArtImg';
 
 interface ParentReportScreenProps {
   grades: readonly Grade[];
@@ -156,7 +157,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
         <div className={`${PAPER_PANEL} relative overflow-hidden text-left shadow-[0_24px_60px_-24px_rgba(0,0,0,0.6)]`}>
         {/* Letterhead strip - brand indigo -> sky -> gold, the "printed
             report" mark at the sheet's top edge. */}
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-indigo-500 via-sky-400 to-amber-400" />
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-sky-500 via-sky-300 to-amber-400" />
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl font-extrabold text-sky-800"><IconChart size={22} className="mr-1.5 inline-block" /> Góc ba mẹ</h1>
           <button type="button" data-testid="report-back" onClick={onBack} className={`${NAV_PILL} !text-sky-800 !bg-sky-100 !ring-sky-300`}>
@@ -188,8 +189,8 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
             engagement.stickerIds.map((id) => {
               const sticker = STICKERS.find((s) => s.id === id);
               return sticker ? (
-                <span key={id} className="rounded-full bg-amber-100 px-3 py-1 text-xs font-extrabold text-amber-800 ring-1 ring-amber-300">
-                  {sticker.emoji} {sticker.nameVi}
+                <span key={id} className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-extrabold text-amber-800 ring-1 ring-amber-300">
+                  <ArtImg key={sticker.art} src={sticker.art} emoji={sticker.emoji} size={18} /> {sticker.nameVi}
                 </span>
               ) : null;
             })

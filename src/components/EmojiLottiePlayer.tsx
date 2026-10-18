@@ -1,6 +1,6 @@
 /**
- * Lazily-loaded dotLottie player chunk (ADR-6). One of exactly two
- * importers of @lottiefiles/* (the other is mascot/MascotLottie, CR-82),
+ * Lazily-loaded dotLottie player chunk (ADR-6). The sole importer of
+ * @lottiefiles/* (the mascot rig is gone - MascotArt is CSS + webp),
  * so Rollup keeps the whole player (and its WASM, imported via `?url`
  * from the installed package - version-locked, same-origin,
  * constitution #4) inside the async chunks.

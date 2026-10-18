@@ -1,5 +1,5 @@
 import { STICKERS } from '../lib/engagement/store';
-import { EmojiVisual } from './EmojiVisual';
+import { ArtImg } from './ArtImg';
 
 interface StickerAlbumProps {
   earnedIds: readonly string[];
@@ -50,8 +50,8 @@ export default function StickerAlbum({ earnedIds, onClose }: StickerAlbumProps) 
                         earned ? 'bg-amber-500/15 ring-1 ring-amber-400/40' : 'opacity-50'
                       }`}
                     >
-                      <span className={`text-2xl ${earned ? '' : 'grayscale'}`}>
-                        <EmojiVisual emoji={s.emoji} />
+                      <span className={earned ? '' : 'grayscale'}>
+                        <ArtImg key={s.art} src={s.art} emoji={s.emoji} size={40} />
                       </span>
                       <span className={`text-base font-bold ${earned ? 'text-amber-100' : 'text-slate-400'}`}>
                         {earned ? s.nameVi : '???'}
