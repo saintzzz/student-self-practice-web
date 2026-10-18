@@ -28,7 +28,13 @@ const H = {
 };
 
 let manual = [];
-try { manual = JSON.parse(readFileSync('docs/qa/flagged/reject-ids-manual.json', 'utf8')); } catch {}
+try {
+  manual = JSON.parse(readFileSync('docs/qa/flagged/reject-ids-manual.json', 'utf8'));
+} catch (e) {
+  // Missing manual file is fine; a malformed one must abort - silently
+  // dropping all manual quarantines would leak rejected ids (r65).
+  if (e.code !== 'ENOENT') throw e;
+}
 const ids = [...new Set([...JSON.parse(readFileSync(REJECT_FILE, 'utf8')), ...manual])];
 console.log(`${APPLY ? 'APPLYING' : 'DRY-RUN'} quarantine for ${ids.length} ids (${manual.length} manual)`);
 
