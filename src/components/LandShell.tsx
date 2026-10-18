@@ -1,6 +1,6 @@
 import { useRef, type ReactNode } from 'react';
 import { bandForGrade, getLand, LANDS, type Land, type LandKey, type SceneTone } from '../lib/ui/theme';
-import LandScene from './scene/LandScene';
+import LandArt from './scene/LandArt';
 import { SceneJourneyProvider } from './scene/SceneJourneyContext';
 
 interface LandShellProps {
@@ -35,7 +35,7 @@ export default function LandShell({ gradeId, land, night = false, tone, variant 
       className={`relative min-h-screen ${resolvedTone === 'day' ? resolved.pageGradient : LANDS.brand.pageGradient}`}
       data-band={bandForGrade(gradeId)}
     >
-      <LandScene ref={sceneRef} land={resolved.key} variant={variant} tone={resolvedTone} />
+      <LandArt ref={sceneRef} land={resolved.key} variant={variant} tone={resolvedTone} />
       <SceneJourneyProvider rootRef={sceneRef}>
         <div className="relative z-10">{children}</div>
       </SceneJourneyProvider>

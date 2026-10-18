@@ -158,7 +158,9 @@
         "/images/mascot/",
         "/images/pets/",
         "/images/stickers/",
-        "/images/home/"
+        "/images/home/",
+        "/images/lands/",
+        "/images/emblems/"
       ],
       "modified": false
     },

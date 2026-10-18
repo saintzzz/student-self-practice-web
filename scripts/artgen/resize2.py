@@ -1,18 +1,28 @@
 # Mass-regen post-process: artgen-out/{id}.png -> the `out` path carried
 # inside each manifest2 entry (exact same path -> bank rows stay valid).
-import sys, io, json
+import sys, io, json, re
 from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'artgen-out'
 PUB = ROOT / 'public' / 'images'
-MANIFEST = Path(__file__).parent / 'manifest2.mjs'
+MANIFESTS = [Path(__file__).parent / 'manifest2.mjs']
+# Non-JSON manifests (JS literal entries) handled by stem glob below.
+GLOBS = [('land-', 'lands', 1024, 88), ('emblem-', 'emblems', 512, 85)]
 
 def entries():
     # Cheap parse: manifest2.mjs is `export const ASSETS = [...]` (JSON).
-    txt = MANIFEST.read_text(encoding='utf-8')
-    return json.loads(txt[txt.index('['):txt.rindex(']') + 1])
+    out = []
+    for m in MANIFESTS:
+        txt = m.read_text(encoding='utf-8')
+        out.extend(json.loads(txt[txt.index('['):txt.rindex(']') + 1]))
+    # manifest-lands entries are JS literals (template prompts) - derive
+    # the same record from the id stem + GLOBS table instead.
+    for prefix, sub, size, q in GLOBS:
+        for png in sorted(OUT.glob(f'{prefix}*.png')):
+            out.append({'id': png.stem, 'out': f'{sub}/{png.stem}.webp', 'size': size, 'q': q})
+    return out
 
 def main():
     done = []

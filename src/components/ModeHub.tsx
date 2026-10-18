@@ -1,5 +1,6 @@
 import { useState, type ComponentType, type ReactNode } from 'react';
 import { InstructionSpeaker } from './InstructionSpeaker';
+import { ArtImg } from './ArtImg';
 import { IconChevronDown, IconChevronUp, type IconProps } from './icons';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { hubTileClass, HUB_TILE_EXPANDED, HUB_CHIP, HUB_PANEL, hubTrayClass, subTileChip, subTileClass, type HubTone } from '../lib/ui/tokens';
@@ -51,6 +52,10 @@ export interface HubTileDef {
   tone?: HubTone;
   /** CR-85: decorative emoji watermark on the tile's right edge. */
   emoji?: string;
+  /** Bespoke emblem art for the tile's right edge (land-art pass) -
+   *  upgrades the emoji watermark to a rendered illustration; falls
+   *  back to the emoji when the file is missing. */
+  art?: string;
 }
 
 export function HubGroup({
@@ -117,11 +122,15 @@ export function HubGroup({
                   <span className={`block text-xs font-semibold ${subtile ? 'text-slate-600' : 'text-slate-900'}`}>{tile.sub}</span>
                 )}
               </span>
-              {tile.emoji && (
+              {tile.art ? (
+                <span aria-hidden="true" className="pointer-events-none absolute -right-1 bottom-1 select-none opacity-90">
+                  <ArtImg key={tile.art} src={tile.art} emoji={tile.emoji ?? ''} size={subtile ? 48 : 60} />
+                </span>
+              ) : tile.emoji ? (
                 <span aria-hidden="true" className="pointer-events-none absolute -right-1 bottom-0 select-none text-5xl opacity-25">
                   {tile.emoji}
                 </span>
-              )}
+              ) : null}
               <span aria-hidden="true" className="z-10 shrink-0 text-slate-900">
                 {open ? <IconChevronUp size={22} /> : <IconChevronDown size={22} />}
               </span>

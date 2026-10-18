@@ -4,7 +4,7 @@ import { MascotAvatar } from './mascot/MascotAvatar';
 import EngagementBar from './EngagementBar';
 import ChangePinDialog from './ChangePinDialog';
 import { getLand } from '../lib/ui/theme';
-import LandScene from './scene/LandScene';
+import LandArt from './scene/LandArt';
 import { getState } from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
 import { ParentGate, isParentVerified } from './ParentGate';
@@ -305,7 +305,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
                 data-testid={`grade-postcard-${grade.id}`}
                 className="pointer-events-none absolute inset-x-0 top-0 block h-24 overflow-hidden"
               >
-                <LandScene land={land.key} variant="strip" tone="day" />
+                <LandArt land={land.key} variant="strip" tone="day" />
               </span>
               <span className="relative z-10 flex min-w-0 flex-1 flex-col">
                 <span className={`font-display text-2xl font-extrabold leading-tight ${land.accentText}`}>

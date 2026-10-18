@@ -48,7 +48,7 @@ import {
 } from '../lib/ui/tokens';
 import { examConfigForGrade } from '../lib/exam/examSession';
 import { getLand } from '../lib/ui/theme';
-import LandScene from './scene/LandScene';
+import LandArt from './scene/LandArt';
 import { EmojiVisual } from './EmojiVisual';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { usePressRelease } from '../hooks/usePressRelease';
@@ -296,6 +296,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           voiceHint: 'Chọn môn hoặc mục để luyện thêm nhé!',
           tone: 'sky',
           emoji: '📚',
+          art: '/images/emblems/emblem-learn.webp',
           content: (
             <HubGroup
               subtile
@@ -311,6 +312,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   voiceHint: PROGRAM_VOICE_HINT[program.id],
                   tone: program.id === 'english' ? 'sky' as const : program.id === 'math' ? 'rose' as const : 'emerald' as const,
                   emoji: program.id === 'english' ? '🔤' : program.id === 'math' ? '🔢' : '🔬',
+                  art: program.id === 'english' ? '/images/emblems/emblem-learn.webp' : program.id === 'math' ? '/images/emblems/emblem-math.webp' : '/images/emblems/emblem-science.webp',
                   content: programBlock(program, false),
                 })),
                 ...(hasDueReview || hasCoachHints
@@ -322,6 +324,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                       voiceHint: 'Ôn lại những câu chưa chắc nhé!',
                       tone: 'amber' as const,
                       emoji: '💪',
+                      art: '/images/emblems/emblem-review.webp',
                       /* Spec §5.1: aria-controls lists only the sections
                          actually rendered. */
                       sections: [
@@ -348,6 +351,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           variant: 'arena',
           tone: 'orange',
           emoji: '⚔️',
+          art: '/images/emblems/emblem-arena.webp',
           sections: [
             ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
             { id: 'rank', content: leaderboardEl },
@@ -364,6 +368,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               voiceHint: 'Chọn một trò chơi nhé!',
               tone: 'emerald' as const,
               emoji: '🎮',
+              art: '/images/emblems/emblem-games.webp',
               content: <GameZoneShelf grade={grade.id} onPlay={onStartGame} />,
             }]
           : []),
@@ -375,6 +380,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           voiceHint: 'Xem quà của em nhé!',
           tone: 'amber',
           emoji: '🎁',
+          art: '/images/emblems/emblem-reward.webp',
           content: rewardCards(true),
         },
       ]
@@ -387,6 +393,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           voiceHint: 'Chọn môn để luyện nhé!',
           tone: 'sky',
           emoji: '📚',
+          art: '/images/emblems/emblem-learn.webp',
           content: (
             <>
               <div id="hub-section-learn" data-testid="hub-section-learn" className="space-y-3">
@@ -413,6 +420,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           variant: 'arena',
           tone: 'orange',
           emoji: '⚔️',
+          art: '/images/emblems/emblem-arena.webp',
           content: (
             <>
               <div id="hub-section-arena" data-testid="hub-section-arena">{arenaCardEl}</div>
@@ -430,6 +438,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               voiceHint: 'Chọn một trò chơi nhé!',
               tone: 'emerald' as const,
               emoji: '🎮',
+              art: '/images/emblems/emblem-games.webp',
               content: <GameZoneShelf grade={grade.id} onPlay={onStartGame} />,
             }]
           : []),
@@ -441,6 +450,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           voiceHint: 'Xem quà của em nhé!',
           tone: 'amber',
           emoji: '🎁',
+          art: '/images/emblems/emblem-reward.webp',
           content: rewardCards(false),
         },
       ];
@@ -466,7 +476,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             scene over the land's page gradient) instead of floating on
             navy - each grade's home screen wears its land identity. */}
         <div className={`relative mx-auto h-40 max-w-sm overflow-hidden rounded-2xl ring-1 ring-white/20 shadow-[inset_0_2px_0_rgba(255,255,255,0.15)] ${land.pageGradient}`}>
-          <LandScene land={land.key} variant="strip" tone="day" />
+          <LandArt land={land.key} variant="strip" tone="day" />
           <div className="absolute inset-x-0 bottom-1 flex justify-center">
             <Mascot mood="greeting" />
           </div>
