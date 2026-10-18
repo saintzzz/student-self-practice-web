@@ -17,6 +17,17 @@ JOBS = {  # stem -> (dir, size, quality)
     **{v: ('vocab', 256, 85) for v in ['festival','apricot-blossom','dragon-dance']},
     'be-heo-portrait': ('mascot', 512, 88),
     'be-heo-face': ('mascot', 512, 88),
+    # Companion pets (CR-36 egg->baby->kid->adult arc).
+    'pet-egg': ('pets', 256, 85),
+    'pet-cat-1': ('pets', 256, 85),
+    'pet-cat-2': ('pets', 256, 85),
+    'pet-cat-3': ('pets', 256, 85),
+    'pet-dragon-1': ('pets', 256, 85),
+    'pet-dragon-2': ('pets', 256, 85),
+    'pet-dragon-3': ('pets', 256, 85),
+    'pet-bunny-1': ('pets', 256, 85),
+    'pet-bunny-2': ('pets', 256, 85),
+    'pet-bunny-3': ('pets', 256, 85),
     # Concept regen: stem only routes through CONCEPT_OVERWRITE below -
     # the real filename carries the bank's hash suffix.
     **{c: ('concepts', 512, 85) for c in [

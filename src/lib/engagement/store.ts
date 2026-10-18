@@ -1020,6 +1020,12 @@ export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly 
   bunny: { nameVi: 'Thỏ Trắng', emojis: ['🥚', '🐰', '🐇', '🐇👑'] },
 };
 
+/** Bespoke art path per stage - generated pet arc (public/images/pets).
+ *  Stage 0 egg is shared across species. */
+export function petArtUrl(species: PetSpecies, stage: number): string {
+  return stage === 0 ? '/images/pets/pet-egg.webp' : `/images/pets/pet-${species}-${stage}.webp`;
+}
+
 export function petStageForXp(xp: number): number {
   let stage = 0;
   for (let i = PET_STAGE_XP.length - 1; i >= 0; i--) {
@@ -1042,6 +1048,8 @@ export interface PetSnapshot {
   species: PetSpecies | null;
   nameVi: string | null;
   emoji: string;
+  /** Bespoke art for the current stage; null until a species is picked. */
+  art: string | null;
   xp: number;
   stage: number;
   stageName: string;
@@ -1060,6 +1068,7 @@ export function getPet(): PetSnapshot {
     species,
     nameVi: species ? PET_SPECIES[species].nameVi : null,
     emoji: species ? PET_SPECIES[species].emojis[stage]! : '🥚',
+    art: species ? petArtUrl(species, stage) : null,
     xp: pet.xp,
     stage,
     stageName: PET_STAGE_NAMES[stage]!,

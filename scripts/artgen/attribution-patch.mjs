@@ -39,6 +39,7 @@ for (const [wordId, word, title] of vocab) {
 const orig = d.collections.find((c) => c.id === 'vieschool-original-assets');
 if (orig && !orig.paths.includes('/images/games/')) orig.paths.push('/images/games/');
 if (orig && !orig.paths.includes('/images/mascot/')) orig.paths.push('/images/mascot/');
+if (orig && !orig.paths.includes('/images/pets/')) orig.paths.push('/images/pets/');
 if (orig && !orig.title.includes('game card art')) orig.title += ' + CR-95 game card art';
 
 writeFileSync(FILE, JSON.stringify(d, null, 2) + '\n');

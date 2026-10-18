@@ -97,6 +97,20 @@ export const ASSETS = [
   { id: 'mouth', dir: 'concepts', prompt: `${STYLE} A cute cartoon mouth smiling showing a happy curve.` },
   { id: 'nose', dir: 'concepts', prompt: `${STYLE} A cute cartoon nose in profile.` },
 
+  // ---- Companion pets (public/images/pets/{id}.webp, 256x256) ----
+  // CR-36 bạn đồng hành evolves egg -> baby -> kid -> adult; the emoji
+  // chain becomes a bespoke character arc (same character aging up).
+  { id: 'pet-egg', dir: 'pets', prompt: `${STYLE} A cute mysterious speckled egg with a tiny crack and soft glow, sitting in a small nest.` },
+  { id: 'pet-cat-1', dir: 'pets', prompt: `${STYLE} A tiny newborn black kitten with huge eyes, curled tail, sitting.` },
+  { id: 'pet-cat-2', dir: 'pets', prompt: `${STYLE} A playful black kitten with huge eyes and a raised paw, standing.` },
+  { id: 'pet-cat-3', dir: 'pets', prompt: `${STYLE} A majestic friendly black panther-cat with bright amber eyes, sitting proudly.` },
+  { id: 'pet-dragon-1', dir: 'pets', prompt: `${STYLE} A tiny baby green dragon with stubby wings and a curious face, sitting.` },
+  { id: 'pet-dragon-2', dir: 'pets', prompt: `${STYLE} A cheerful young green dragon with small wings and a friendly grin.` },
+  { id: 'pet-dragon-3', dir: 'pets', prompt: `${STYLE} A proud friendly Vietnamese-style dragon, jade green with golden horns and whiskers, coiled.` },
+  { id: 'pet-bunny-1', dir: 'pets', prompt: `${STYLE} A tiny white baby bunny with pink inner ears and huge eyes, sitting.` },
+  { id: 'pet-bunny-2', dir: 'pets', prompt: `${STYLE} A cheerful white bunny standing on hind legs, holding a small carrot.` },
+  { id: 'pet-bunny-3', dir: 'pets', prompt: `${STYLE} A regal white rabbit wearing a tiny golden crown, sitting proudly.` },
+
   // ---- Tet vocab art (public/images/vocab/{id}.webp, 256x256) ----
   { id: 'festival', dir: 'vocab', prompt: `${TET_STYLE} Vietnamese Tet festival scene icon: colorful five-color festival flags (co ngu sac, triangular flags in red yellow green purple) strung above a small temple gate silhouette with curved roof, red lanterns.` },
   { id: 'apricot-blossom', dir: 'vocab', prompt: `${TET_STYLE} Vietnamese hoa mai - a branch of YELLOW apricot blossoms with five round petals each, brown branch, the traditional Tet flower of southern Vietnam.` },

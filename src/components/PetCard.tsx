@@ -3,6 +3,7 @@ import {
   choosePet,
   getPet,
   markPetStageSeen,
+  petArtUrl,
   PET_SPECIES,
   PET_STAGE_XP,
   PET_XP_PER_CORRECT,
@@ -81,7 +82,18 @@ export default function PetCard() {
                 onClick={() => pick(species)}
                 className="rounded-2xl bg-[#16232e] p-3 text-center ring-1 ring-white/10 transition hover:bg-[#1d3040] hover:ring-amber-400/50 active:scale-95"
               >
-                <div className="text-4xl">{PET_SPECIES[species].emojis[1]}</div>
+                <img
+                  src={petArtUrl(species, 2)}
+                  alt={PET_SPECIES[species].nameVi}
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  draggable={false}
+                  className="mx-auto h-16 w-16 select-none object-contain"
+                  onError={(e) => {
+                    e.currentTarget.outerHTML = `<div class="text-4xl">${PET_SPECIES[species].emojis[1]}</div>`;
+                  }}
+                />
                 <div className="mt-1 text-sm font-extrabold text-white">{PET_SPECIES[species].nameVi}</div>
               </PressableOptionButton>
             ))}
@@ -89,7 +101,23 @@ export default function PetCard() {
         </div>
       ) : (
         <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#16232e] p-4 ring-1 ring-white/10">
-          <div data-testid="pet-emoji" className="text-6xl">{pet.emoji}</div>
+          <div data-testid="pet-emoji">
+            {pet.art ? (
+              <img
+                src={pet.art}
+                alt={pet.nameVi ?? ''}
+                width={72}
+                height={72}
+                draggable={false}
+                className="h-[4.5rem] w-[4.5rem] select-none object-contain"
+                onError={(e) => {
+                  e.currentTarget.outerHTML = `<div class="text-6xl">${pet.emoji}</div>`;
+                }}
+              />
+            ) : (
+              <span className="text-6xl">{pet.emoji}</span>
+            )}
+          </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-extrabold text-white">{pet.nameVi} - {pet.stageName}</span>
