@@ -2,8 +2,7 @@
  * the navy shell (no more full-page sky-50). Solves the real ParentGate
  * arithmetic challenge to get in. */
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://localhost:5199';
 mkdirSync('shots', { recursive: true });
@@ -38,18 +37,27 @@ try {
 
   /* The navy shell must show around the sheet: sample the RENDERED
      pixel at the left page edge (r75/r76 - CSS walking can't decide
-     translucent layers or gradient stops). */
+     translucent layers or gradient stops). The screenshot decodes on a
+     canvas inside the page - no host-side image dep needed (r77). */
   const edge = await page.screenshot({
     clip: { x: 0, y: Math.floor((await page.viewportSize()).height / 2) - 4, width: 10, height: 8 },
   });
-  writeFileSync('shots/_report-edge.png', edge);
-  const out = execFileSync('python', [
-    '-c',
-    "from PIL import Image; im=Image.open('shots/_report-edge.png').convert('RGB'); px=[im.getpixel((x,y)) for x in range(10) for y in range(8)]; print(round(sum(0.299*p[0]+0.587*p[1]+0.114*p[2] for p in px)/len(px),1))",
-  ], { encoding: 'utf8' }).trim();
-  const lum = Number(out);
+  const lum = await page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const cv = document.createElement('canvas');
+    cv.width = img.width;
+    cv.height = img.height;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+    let s = 0;
+    for (let i = 0; i < d.length; i += 4) s += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    return s / (d.length / 4);
+  }, edge.toString('base64'));
   ok = Number.isFinite(lum) && lum < 120;
-  console.log(`${ok ? 'ok' : 'FAIL'} page-edge luminance ${lum} (navy shell visible)`);
+  console.log(`${ok ? 'ok' : 'FAIL'} page-edge luminance ${lum.toFixed(1)} (navy shell visible)`);
   await page.screenshot({ path: 'shots/_report-after.png', fullPage: false });
 } finally {
   await browser.close();
