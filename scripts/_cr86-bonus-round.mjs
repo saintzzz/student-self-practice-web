@@ -76,6 +76,8 @@ async function answerQuestion() {
 }
 
 let gameRoundSeen = false;
+let sawSummary = false;
+let stalled = false;
 let lastSig = '';
 let stall = 0;
 for (let step = 0; step < 160; step++) {
@@ -87,11 +89,12 @@ for (let step = 0; step < 160; step++) {
   ).catch(() => '');
   if (ids === lastSig) { stall++; } else { stall = 0; lastSig = ids; }
   if (stall === 12) {
+    stalled = true;
     log('STALLED. visible testids:', ids);
     await page.screenshot({ path: shot('cr86-stall.png'), fullPage: true });
     break;
   }
-  if (await page.locator('[data-testid="batch-score-summary"]').count()) { log('batch summary'); break; }
+  if (await page.locator('[data-testid="batch-score-summary"]').count()) { sawSummary = true; log('batch summary'); break; }
 
   // Bonus game Round surface
   if (await page.locator('[data-testid="game-section-banner"]').count()) {
@@ -130,6 +133,8 @@ for (let step = 0; step < 160; step++) {
 
 await page.screenshot({ path: shot('cr86-2-batch-summary.png'), fullPage: true });
 const progress = await page.locator('[data-testid="round-progress"]').textContent().catch(() => 'n/a');
-log('final progress:', progress, '| game round seen:', gameRoundSeen);
-log(gameRoundSeen ? 'PASS' : 'FAIL - never reached the game round');
+log('final progress:', progress, '| game round seen:', gameRoundSeen, '| summary:', sawSummary, '| stalled:', stalled);
+const pass = gameRoundSeen && sawSummary && !stalled;
+log(pass ? 'PASS' : 'FAIL');
 await browser.close();
+process.exit(pass ? 0 : 1);
