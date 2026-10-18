@@ -203,3 +203,36 @@ Generated: 2026-10-12T16:29:48.195Z · rows: 110726 · regenerate: `node scripts
 - `g3-cr67-w2i-0021-1b6d6b` — Which picture shows "america"? → **america**
 - `g3-cr67-w2i-0219-f8c38f` — Which picture shows "bosnia"? → **bosnia**
 
+---
+
+## Addendum 2026-10-18 - MCP SQL spot-check (no service key on this machine)
+
+Partial re-run of the P0 classes via `execute_sql` (postgres role) on the
+live DB. Eligible pool = publication_policy practice/exam/mockEligible.
+
+| Check | Oct-12 | 2026-10-18 |
+|---|---|---|
+| listen-no-transcript (eligible) | 22 | **0** |
+| read-no-passage | 0 | 0 |
+| visual-no-assets | 0 | 0 |
+| answer-out-of-range | 0 | 0 |
+| choices-too-few | 0 | 0 |
+| option-placeholder | 0 | 0 |
+| explanation-missing | 0 | 0 |
+| prompt-placeholder | 0 | 0 |
+| prompt-answer-leak | 15 | **0** |
+| form-missing-question | 486 | **486** (unchanged - stale payload refs) |
+| form-ineligible-question | 0 | **373** (NEW - forms reference quarantined ids) |
+| form-missing-answerkey | 0 | 0 |
+
+Scope note: `fetch_form`/`list_assessment_forms` are `is_admin()`-gated
+and the FormPicker UI is admin-only (`StartBatchScreen` line ~112), so the
+two non-zero form findings are **admin-tooling staleness**, not a
+student-facing leak - `fetch_questions_public` filters eligibility per
+mode correctly. Follow-up: regenerate form payloads (or filter at
+`fetch_form`) when the admin exam-form surface is next touched.
+Not re-run: wrong-answer-math, wrong-comparison-answer,
+reorder-bank-mismatch, text-answer-empty, dup-option-assets,
+explanation heuristics, dup-prompt (need row-level eval, keep the
+Oct-12 baseline for those).
+

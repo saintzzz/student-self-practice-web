@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EA corpus recorder</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, sans-serif; background: #0b1220; color: #e2e8f0;
+    display: flex; flex-direction: column; min-height: 100vh; padding: 16px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .hint { color: #94a3b8; font-size: 13px; margin: 0 0 16px; line-height: 1.5; }
+  .hint b { color: #fbbf24; }
+  #bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .btn {
+    border: 0; border-radius: 14px; padding: 12px 20px; font-weight: 800; font-size: 15px;
+    cursor: pointer; min-height: 48px;
+  }
+  .btn-gold { background: #fbbf24; color: #451a03; }
+  .btn-slate { background: #1e293b; color: #e2e8f0; border: 2px solid #334155; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  #progress { font-size: 14px; color: #7dd3fc; align-self: center; font-weight: 700; }
+  #list { display: flex; flex-direction: column; gap: 10px; }
+  .item {
+    display: flex; align-items: center; gap: 12px; background: #111a2e;
+    border: 2px solid #1e293b; border-radius: 16px; padding: 10px 14px;
+  }
+  .item.done { border-color: #22c55e55; }
+  .item.active { border-color: #fbbf24; }
+  .say { flex: 1; }
+  .say .target { font-size: 19px; font-weight: 800; }
+  .say .how { font-size: 13px; color: #94a3b8; margin-top: 2px; }
+  .say .how.wrong { color: #fca5a5; }
+  .rec {
+    width: 56px; height: 56px; border-radius: 999px; border: 3px solid #475569;
+    background: #1e293b; font-size: 24px; cursor: pointer; flex-shrink: 0;
+  }
+  .item.rec-on .rec { border-color: #ef4444; background: #ef4444; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { transform: scale(1.08); } }
+  .play { width: 40px; height: 40px; border-radius: 999px; border: 2px solid #334155;
+    background: #0f172a; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+  .fname { font-size: 11px; color: #475569; font-family: monospace; }
+  .live { position: fixed; inset: auto 0 0 0; background: #7f1d1d; color: #fecaca;
+    text-align: center; padding: 8px; font-weight: 700; display: none; }
+</style>
+</head>
+<body>
+<h1>EA pronunciation corpus</h1>
+<p class="hint">
+  Phòng yên tĩnh, cách mic <b>15-20cm</b>, đọc <b>rõ ràng 1 lần</b> mỗi mục.
+  Nhấn nút tròn để ghi (nói xong nhấn lại để dừng). Nghe lại bằng ▶, ghi lại thoải mái.
+  Xong hết nhấn <b>Tải tất cả</b> - mỗi file tự có tên đúng, zip lại gửi là xong.
+</p>
+<div id="bar">
+  <button id="dl" class="btn btn-gold" disabled>Tải tất cả (.webm)</button>
+  <button id="clear" class="btn btn-slate">Xóa hết ghi lại</button>
+  <span id="progress">0/30</span>
+</div>
+<div id="list"></div>
+<div id="live" class="live">ĐANG GHI… nói xong nhấn nút lần nữa</div>
+<script>
+// item: [file-key, display target, instruction, isWrongRead]
+const ITEMS = [
+  // Nhóm 1 - đọc đúng (20)
+  ['cat-correct','cat','Đọc đúng: "cat"'],
+  ['dog-correct','dog','Đọc đúng: "dog"'],
+  ['pig-correct','pig','Đọc đúng: "pig"'],
+  ['fish-correct','fish','Đọc đúng: "fish"'],
+  ['bird-correct','bird','Đọc đúng: "bird"'],
+  ['milk-correct','milk','Đọc đúng: "milk"'],
+  ['water-correct','water','Đọc đúng: "water"'],
+  ['apple-correct','apple','Đọc đúng: "apple"'],
+  ['banana-correct','banana','Đọc đúng: "banana"'],
+  ['orange-correct','orange','Đọc đúng: "orange"'],
+  ['sheep-correct','sheep','Đọc đúng: "sheep"'],
+  ['tree-correct','tree','Đọc đúng: "tree"'],
+  ['three-correct','three','Đọc đúng: "three"'],
+  ['red-correct','red','Đọc đúng: "red"'],
+  ['green-correct','green','Đọc đúng: "green"'],
+  ['blue-correct','blue','Đọc đúng: "blue"'],
+  ['pen-correct','pen','Đọc đúng: "pen"'],
+  ['book-correct','book','Đọc đúng: "book"'],
+  ['door-correct','door','Đọc đúng: "door"'],
+  ['sun-correct','sun','Đọc đúng: "sun"'],
+  // Nhóm 2 - đọc SAI có chủ đích (10) - đọc đúng như chữ trong ngoặc đỏ
+  ['cat-wrong-cut','cat','Cố ý đọc SAI thành "cut" (đổi æ → ʌ)',true],
+  ['pig-wrong-big','pig','Cố ý đọc SAI thành "big" (đổi p → b)',true],
+  ['ship-wrong-sheep','ship','Cố ý đọc SAI thành "sheep" (đổi ɪ → iː)',true],
+  ['bad-wrong-bed','bad','Cố ý đọc SAI thành "bed" (đổi æ → e)',true],
+  ['fish-wrong-fit','fish','Cố ý đọc SAI thành "fit" (bỏ -sh cuối)',true],
+  ['three-wrong-tree','three','Cố ý đọc SAI thành "tree" (bỏ âm θ)',true],
+  ['rice-wrong-lice','rice','Cố ý đọc SAI thành "lice" (đổi r → l)',true],
+  ['door-wrong-doll','door','Cố ý đọc SAI thành "doll"',true],
+  ['elephant-wrong-effen','elephant','Cố ý đọc SAI thành "effen" (lướt âm)',true],
+  ['hen-wrong-pen','hen','Cố ý đọc SAI thành "pen" (bỏ h)',true],
+];
+
+const list = document.getElementById('list');
+const live = document.getElementById('live');
+const progressEl = document.getElementById('progress');
+const dlBtn = document.getElementById('dl');
+const clips = new Map(); // key -> {blob, audio}
+let rec = null, chunks = [], recItem = null;
+
+ITEMS.forEach(([key, target, how, wrong], i) => {
+  const row = document.createElement('div');
+  row.className = 'item'; row.id = 'it-' + key;
+  row.innerHTML =
+    `<div class="say"><div class="target">${target}</div>` +
+    `<div class="how ${wrong ? 'wrong' : ''}">${how}</div>` +
+    `<div class="fname">${key}.webm</div></div>` +
+    `<button class="play" title="Nghe lại" disabled>▶</button>` +
+    `<button class="rec" title="Ghi">⏺</button>`;
+  row.querySelector('.rec').onclick = () => toggleRec(key, row);
+  row.querySelector('.play').onclick = () => clips.get(key)?.audio.play();
+  list.appendChild(row);
+});
+
+async function toggleRec(key, row) {
+  if (rec) { rec.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    rec = new MediaRecorder(stream);
+    chunks = [];
+    rec.ondataavailable = (e) => chunks.push(e.data);
+    rec.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      clips.set(key, { blob, audio: new Audio(URL.createObjectURL(blob)) });
+      row.classList.remove('rec-on');
+      row.classList.add('done');
+      row.querySelector('.play').disabled = false;
+      live.style.display = 'none';
+      rec = null; recItem = null;
+      updateProgress();
+      // auto-advance highlight to first undone item
+      const next = ITEMS.map(([k]) => k).find((k) => !clips.has(k));
+      document.querySelectorAll('.item').forEach((el) => el.classList.remove('active'));
+      if (next) document.getElementById('it-' + next).classList.add('active');
+    };
+    recItem = key;
+    document.querySelectorAll('.item').forEach((el) => el.classList.remove('rec-on'));
+    row.classList.add('rec-on');
+    live.style.display = 'block';
+    rec.start();
+  } catch (e) {
+    alert('Không mở được mic: ' + e.message);
+  }
+}
+
+function updateProgress() {
+  progressEl.textContent = clips.size + '/' + ITEMS.length;
+  dlBtn.disabled = clips.size === 0;
+}
+
+document.getElementById('clear').onclick = () => {
+  clips.clear();
+  document.querySelectorAll('.item').forEach((el) => el.classList.remove('done'));
+  document.querySelectorAll('.play').forEach((el) => (el.disabled = true));
+  updateProgress();
+};
+
+dlBtn.onclick = () => {
+  let i = 0;
+  for (const [key, { blob }] of clips) {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = key + '.webm';
+      a.click();
+    }, i * 400); // stagger so Chrome's multi-download doesn't choke
+    i++;
+  }
+};
+
+document.getElementById('it-' + ITEMS[0][0]).classList.add('active');
+</script>
+</body>
+</html>
