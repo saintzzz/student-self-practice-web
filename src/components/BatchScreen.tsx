@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { TracingMeta } from '../types';
+import { GRADES } from '../data/vocabulary';
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
+import { TOTAL_ROUNDS } from '../lib/rounds/roundDefinitions';
+import type { GameEnd } from '../games/types';
+import GameSection from './GameSection';
 import { prefetchTracingChunk } from './tracing/TracingChunkBoundary';
 import { computeLiveScore } from '../lib/liveScore';
 import { material, SCREEN_ENTER, scene } from '../lib/ui/tokens';
@@ -33,12 +37,15 @@ interface BatchScreenProps {
   onEndBatch: () => void;
   /** Called exactly once when the active Round's 5:00 timer expires (plan.md v7 AC28). */
   onRoundTimeExpired: () => void;
+  /** CR-86: the bonus game Round's run finished - GameEnd becomes the RoundOutcome. */
+  onCompleteGameRound: (end: GameEnd) => void;
   /** CR-13: guest trial - lock rounds after the free Round 1 behind login. */
   guestLocked?: boolean;
   onRequestLogin?: () => void;
 }
 
-const TOTAL_ROUNDS = 4;
+/* CR-86: TOTAL_ROUNDS comes from the round registry (4 question rounds +
+   the seeded bonus game Round 5). */
 
 /**
  * Routes among a Batch's phases (plan.md v5 "New Interaction Model: Batch /
@@ -68,6 +75,7 @@ export default function BatchScreen({
   onChooseGrade,
   onEndBatch,
   onRoundTimeExpired,
+  onCompleteGameRound,
   guestLocked = false,
   onRequestLogin,
 }: BatchScreenProps) {
@@ -185,6 +193,20 @@ export default function BatchScreen({
       )}
 
       {batch.phase === 'stub' && <RoundStub titleVi={definition.titleVi} onNextRound={onNextRound} />}
+
+      {/* CR-86: the seeded bonus game Round mounts the registered game
+          inside GameSection - its GameEnd becomes the RoundOutcome via
+          onCompleteGameRound. Deterministic seed per Batch run keeps the
+          engagement grants idempotent. */}
+      {batch.phase === 'game' && definition.game && (
+        <GameSection
+          grade={GRADES.find((g) => g.id === batch.gradeId) ?? { id: batch.gradeId, name: batch.gradeId }}
+          gameId={definition.game.gameId}
+          seed={`batch:${batch.seed}:r${batch.roundIndex}`}
+          level={definition.game.level}
+          onComplete={onCompleteGameRound}
+        />
+      )}
 
       {batch.phase === 'active' && batch.roundSession && (
         <ActiveRoundQuestion

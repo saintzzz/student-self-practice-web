@@ -32,7 +32,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
 
   const nextRound = (newCorrect: number) => {
     if (round + 1 >= rounds.length) {
-      onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect });
+      onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect , attempted: rounds.length});
       return;
     }
     setRound(round + 1);

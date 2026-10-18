@@ -48,7 +48,7 @@ describe('GoldQuest', () => {
       fireEvent.click(screen.getByTestId('chest-0'));
       act(() => vi.advanceTimersByTime(1400));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS });
   });
 
   it('a second-try answer earns half a point - a miss caps below 3 stars', () => {
@@ -67,7 +67,7 @@ describe('GoldQuest', () => {
       fireEvent.click(screen.getByTestId('chest-0'));
       act(() => vi.advanceTimersByTime(1400));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS - 0.5, maxPoints: ROUNDS, correctCount: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS - 0.5, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS });
   });
 
   it('a double-miss skips the chest and consumes the round', () => {

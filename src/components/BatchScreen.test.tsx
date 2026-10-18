@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import BatchScreen from './BatchScreen';
 import {
   advanceRoundQuestion,
+  completeGameRound,
   createBatch,
   goToNextRound,
   updateRoundSession,
@@ -32,6 +33,7 @@ function buildNoopHandlers() {
     onChooseGrade: vi.fn(),
     onEndBatch: vi.fn(),
     onRoundTimeExpired: vi.fn(),
+    onCompleteGameRound: vi.fn(),
   };
 }
 
@@ -90,7 +92,8 @@ describe('BatchScreen', () => {
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);
 
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
+    /* CR-86: TOTAL_ROUNDS is now 5 (4 question rounds + bonus game). */
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/5');
     expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'extra-letter');
   });
 
@@ -113,7 +116,7 @@ describe('BatchScreen', () => {
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);
 
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('3/4');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('3/5');
     expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'pronunciation-recording');
     expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
   });
@@ -129,7 +132,7 @@ describe('BatchScreen', () => {
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);
 
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('4/5');
     expect(screen.getByTestId('question-card')).toHaveAttribute(
       'data-question-kind',
       'describe-and-choose-image',
@@ -182,7 +185,9 @@ describe('BatchScreen', () => {
     expect(handlers.onEndBatch).toHaveBeenCalledTimes(1);
   });
 
-  it('renders batch-score-summary after Round 4, with no round-progress', () => {
+  /* CR-86: after Round 4 the Batch enters the seeded bonus game Round
+     ('game' phase) - its GameEnd closes it before the Batch summary. */
+  it('enters the bonus game Round after Round 4, then renders batch-score-summary', () => {
     let batch = createBatch('fixed-seed');
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch);
@@ -191,6 +196,11 @@ describe('BatchScreen', () => {
     batch = completeActiveRound(batch);
     batch = goToNextRound(batch); // Round 4 active
     batch = completeActiveRound(batch);
+    batch = goToNextRound(batch); // bonus game Round ('game' phase)
+
+    expect(batch.phase).toBe('game');
+    batch = completeGameRound(batch, { points: 5, maxPoints: 10, correctCount: 5, attempted: 10 });
+    expect(batch.phase).toBe('round-summary');
     batch = goToNextRound(batch); // batch summary
 
     render(<BatchScreen batch={batch} {...noopHandlers} />);

@@ -33,6 +33,7 @@ describe('WhackMole', () => {
       points: ROUNDS * 2,
       maxPoints: ROUNDS * 2,
       correctCount: ROUNDS,
+      attempted: ROUNDS,
     });
   });
 });

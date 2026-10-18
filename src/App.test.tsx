@@ -119,6 +119,31 @@ async function completeActiveRound(user: ReturnType<typeof userEvent.setup>): Pr
   return seenKinds;
 }
 
+/**
+ * CR-86: drives the seeded bonus game Round. Every pool game exposes
+ * `data-correct` on the right option, so a pick per round ends the run;
+ * the lazy game chunk and per-round transitions are absorbed by waitFor.
+ */
+async function completeBonusGameRound(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  for (let guard = 0; guard < 40; guard += 1) {
+    /* Either the next pickable correct option appears, or the run ends
+       and the round summary lands - the wait accepts both so the last
+       pick can't strand the driver inside a dead waitFor. */
+    const outcome = await waitFor(
+      () => {
+        if (screen.queryByTestId('round-score-summary')) return 'summary' as const;
+        const el = document.querySelector<HTMLElement>('[data-correct="true"]:not([disabled])');
+        expect(el, 'a pickable correct option in the game Round').toBeTruthy();
+        return el!;
+      },
+      { timeout: 15000 },
+    );
+    if (outcome === 'summary') return;
+    await user.click(outcome);
+  }
+  throw new Error('bonus game Round did not finish within 40 picks');
+}
+
 describe('App (v5/v6 Batch/Round flow)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -146,7 +171,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('grade-card-grade-2'));
     await user.click(screen.getByTestId('start-batch-button'));
 
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('1/5');
     // Round 1 is a seeded shuffle of extra-letter + image-choice (D-10): the
     // batch seed is random here, so the first question may be either kind.
     expect(['extra-letter', 'image-choice']).toContain(
@@ -167,7 +192,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
 
     await user.click(screen.getByTestId('next-round-button'));
 
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('2/4');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('2/5');
     const round2FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
     /* CR-82 (D-01): G1-2 Round 2 adds listening-fill-blank (Spell-it). */
     expect(['listening-sentence-fill-blank', 'listening-image-choice', 'listening-fill-blank']).toContain(round2FirstKind);
@@ -192,7 +217,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await user.click(screen.getByTestId('next-round-button'));
 
     // Round 3 - real content now (AC24), not a stub.
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('3/4');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('3/5');
     expect(screen.getByTestId('question-card')).toHaveAttribute('data-question-kind', 'pronunciation-recording');
     const round3Kinds = await completeActiveRound(user);
     expect(round3Kinds).toEqual(new Set(['pronunciation-recording']));
@@ -202,7 +227,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     // Round 4 - real content now (AC25), not a stub. Mixes describe-and-choose-image
     // with picture-pair-matching (plan.md v8 AC31), so the first question may be
     // either kind.
-    expect(screen.getByTestId('round-progress')).toHaveTextContent('4/4');
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('4/5');
     const round4FirstKind = screen.getByTestId('question-card').getAttribute('data-question-kind');
     expect([
       'describe-and-choose-image',
@@ -232,18 +257,26 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     expect(screen.getByTestId('round-score-summary')).toBeVisible();
     await user.click(screen.getByTestId('next-round-button'));
 
+    /* CR-86: Round 5 is the seeded bonus game Round - drive it to its
+       own score summary, then the Batch summary opens. */
+    expect(screen.getByTestId('round-progress')).toHaveTextContent('5/5');
+    await completeBonusGameRound(user);
+    expect(screen.getByTestId('round-score-summary')).toBeVisible();
+    await user.click(screen.getByTestId('next-round-button'));
+
     expect(screen.getByTestId('batch-score-summary')).toBeVisible();
     expect(screen.getByTestId('round-breakdown-1')).toBeVisible();
     expect(screen.getByTestId('round-breakdown-2')).toBeVisible();
     expect(screen.getByTestId('round-breakdown-3')).not.toHaveTextContent('Chưa có nội dung');
     expect(screen.getByTestId('round-breakdown-4')).not.toHaveTextContent('Chưa có nội dung');
+    expect(screen.getByTestId('round-breakdown-5')).not.toHaveTextContent('Chưa có nội dung');
     },
     // EmojiVisual lazy-loads the Lottie player per animated question, so a
     // full batch drive is slower than the v5-era default allowed.
     90000,
   );
 
-  /** Drives a full Batch (all 4 real Rounds) from a freshly rendered App to the Batch summary. */
+  /** Drives a full Batch (4 question Rounds + the CR-86 bonus game Round) to the Batch summary. */
   async function driveFullBatchToSummary(user: ReturnType<typeof userEvent.setup>): Promise<void> {
     await startBatch(user);
     await completeActiveRound(user);
@@ -253,6 +286,8 @@ describe('App (v5/v6 Batch/Round flow)', () => {
     await completeActiveRound(user);
     await user.click(screen.getByTestId('next-round-button'));
     await completeActiveRound(user);
+    await user.click(screen.getByTestId('next-round-button'));
+    await completeBonusGameRound(user);
     await user.click(screen.getByTestId('next-round-button'));
   }
 
@@ -267,7 +302,7 @@ describe('App (v5/v6 Batch/Round flow)', () => {
 
       await user.click(screen.getByTestId('practice-again-button'));
 
-      expect(screen.getByTestId('round-progress')).toHaveTextContent('1/4');
+      expect(screen.getByTestId('round-progress')).toHaveTextContent('1/5');
       expect(['extra-letter', 'image-choice']).toContain(
         screen.getByTestId('question-card').getAttribute('data-question-kind'),
       );

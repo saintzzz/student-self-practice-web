@@ -32,6 +32,13 @@ export interface GameEnd {
   maxPoints: number;
   /** Correct answers in the run - feeds daily quest/pet/badges. */
   correctCount: number;
+  /**
+   * CR-86: question items the run actually presented (denominator for
+   * honest scoring when the game is embedded as a Round/exam section).
+   * Undefined falls back to correctCount in the mapper - only games with
+   * an unambiguous item count set it.
+   */
+  attempted?: number;
 }
 
 export interface GameProps {

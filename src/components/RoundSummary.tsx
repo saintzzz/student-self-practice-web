@@ -196,7 +196,7 @@ export default function RoundSummary({
             Hết vòng chơi thử miễn phí
           </p>
           <p className="mt-2 text-base font-semibold text-slate-300">
-            Đăng nhập để mở đủ 4 vòng mỗi bài, lưu sao và huy hiệu vĩnh viễn.
+            Đăng nhập để mở đủ 5 vòng mỗi bài, lưu sao và huy hiệu vĩnh viễn.
           </p>
           <button
             type="button"

@@ -47,7 +47,7 @@ describe('WordWorm', () => {
     fireEvent.click(up); // wall -> 2 hearts
     fireEvent.click(up); // wall -> 1 heart
     fireEvent.click(up); // wall -> 0 hearts -> end
-    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: total, correctCount: 0 });
+    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: total, correctCount: 0, attempted: total });
   });
 
   it('eating a future target letter out of order keeps it on the board (r1 soft-lock regression)', () => {

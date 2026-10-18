@@ -1,7 +1,8 @@
 import type { RoundType } from '../../types';
 import { getWordsByGrade } from '../../data/vocabulary';
-import { ROUND_DEFINITIONS } from '../rounds/roundDefinitions';
+import { TOTAL_ROUNDS, roundDefinitionAt } from '../rounds/roundDefinitions';
 import type { RoundContentDefinition } from '../rounds/types';
+import type { GameEnd } from '../../games/types';
 import { POINTS_PER_CORRECT_ANSWER } from './points';
 import {
   advanceToNextQuestion,
@@ -45,7 +46,10 @@ export interface BatchResult {
   rounds: RoundOutcome[];
 }
 
-export type BatchPhase = 'active' | 'round-summary' | 'stub' | 'batch-summary';
+/* CR-86: 'game' = the current Round is a registered game run (bonus
+   Round 5) - no roundSession, the game's own loop owns the screen until
+   it reports one GameEnd via completeGameRound. */
+export type BatchPhase = 'active' | 'game' | 'round-summary' | 'stub' | 'batch-summary';
 
 export interface BatchState {
   seed: string;
@@ -107,9 +111,15 @@ function startRound(
   gradeId: string,
   startedAtMs: number,
 ): BatchState {
-  const definition = ROUND_DEFINITIONS[roundIndex];
+  const definition = roundDefinitionAt(roundIndex, seed, gradeId);
   if (!definition) {
     return { seed, gradeId, roundIndex, phase: 'batch-summary', roundSession: null, completedRounds, startedAtMs };
+  }
+
+  /* CR-86: a game Round enters 'game' phase - the GameSection runs the
+     registered component and completeGameRound writes the outcome. */
+  if (definition.game) {
+    return { seed, gradeId, roundIndex, phase: 'game', roundSession: null, completedRounds, startedAtMs };
   }
 
   if (!definition.buildQuestions) {
@@ -138,7 +148,7 @@ function startRound(
 }
 
 /**
- * Starts a brand-new Batch: Round 1 of 4, freshly seeded unless a seed is
+ * Starts a brand-new Batch: Round 1 of TOTAL_ROUNDS, freshly seeded unless a seed is
  * given (tests). `gradeId` selects the vocabulary pool every Round draws
  * from (CR-07); it defaults to 'grade-2' so the pre-existing suite keeps
  * running on the G2 bank it was written against.
@@ -148,7 +158,7 @@ export function createBatch(seed: string = randomSeed(), gradeId = 'grade-2', st
 }
 
 export function currentRoundDefinition(state: BatchState): RoundContentDefinition | null {
-  return ROUND_DEFINITIONS[state.roundIndex] ?? null;
+  return roundDefinitionAt(state.roundIndex, state.seed, state.gradeId);
 }
 
 /** Applies a per-round answer reducer (e.g. submitExtraLetterAnswer) to the active Round's session. */
@@ -178,7 +188,7 @@ export function advanceRoundQuestion(state: BatchState): BatchState {
     return { ...state, roundSession: advanced };
   }
 
-  const definition = ROUND_DEFINITIONS[state.roundIndex];
+  const definition = roundDefinitionAt(state.roundIndex, state.seed, state.gradeId);
   if (!definition) {
     return { ...state, roundSession: advanced, phase: 'batch-summary' };
   }
@@ -207,7 +217,7 @@ export function endRoundEarly(state: BatchState): BatchState {
     return state;
   }
 
-  const definition = ROUND_DEFINITIONS[state.roundIndex];
+  const definition = roundDefinitionAt(state.roundIndex, state.seed, state.gradeId);
   if (!definition) {
     return { ...state, phase: 'batch-summary', roundSession: null };
   }
@@ -232,7 +242,7 @@ export function endBatchEarly(state: BatchState): BatchState {
     return state;
   }
   if (state.phase === 'active' && state.roundSession) {
-    const definition = ROUND_DEFINITIONS[state.roundIndex];
+    const definition = roundDefinitionAt(state.roundIndex, state.seed, state.gradeId);
     const rounds = definition
       ? [...state.completedRounds, buildRoundOutcome(definition, state.roundSession)]
       : state.completedRounds;
@@ -241,10 +251,43 @@ export function endBatchEarly(state: BatchState): BatchState {
   return { ...state, phase: 'batch-summary', roundSession: null };
 }
 
-/** Moves from the current Round's summary/stub to the next Round, or to the Batch summary after Round 4. */
+/**
+ * CR-86: the game's GameEnd becomes this Round's outcome - the run IS the
+ * assessment. `attempted` (items the game presented, CR-86 GameEnd field)
+ * is the honest denominator; a game that leaves it unset falls back to
+ * correctCount. Points stay on the Batch's uniform scale
+ * (POINTS_PER_CORRECT_ANSWER), not the game's own point table, so the
+ * Batch summary stays comparable across rounds. No-op outside 'game'
+ * phase - an unmounted/stray onEnd can never corrupt the Batch.
+ */
+export function completeGameRound(state: BatchState, end: GameEnd): BatchState {
+  if (state.phase !== 'game') {
+    return state;
+  }
+  const definition = roundDefinitionAt(state.roundIndex, state.seed, state.gradeId);
+  if (!definition?.game) {
+    return { ...state, phase: 'batch-summary' };
+  }
+  const attempted = Math.max(end.attempted ?? end.correctCount, end.correctCount);
+  const outcome: RoundOutcome = {
+    roundNumber: definition.roundNumber,
+    roundType: definition.roundType,
+    titleVi: definition.titleVi,
+    correctCount: end.correctCount,
+    totalCount: attempted,
+    skillCorrect: end.correctCount,
+    skillTotal: attempted,
+    points: end.correctCount * POINTS_PER_CORRECT_ANSWER,
+    maxPoints: attempted * POINTS_PER_CORRECT_ANSWER,
+    implemented: true,
+  };
+  return { ...state, phase: 'round-summary', completedRounds: [...state.completedRounds, outcome] };
+}
+
+/** Moves from the current Round's summary/stub to the next Round, or to the Batch summary after the last Round. */
 export function goToNextRound(state: BatchState): BatchState {
   const nextIndex = state.roundIndex + 1;
-  if (nextIndex >= ROUND_DEFINITIONS.length) {
+  if (nextIndex >= TOTAL_ROUNDS) {
     return { ...state, roundIndex: nextIndex, phase: 'batch-summary', roundSession: null };
   }
   return startRound(nextIndex, state.completedRounds, state.seed, state.gradeId, state.startedAtMs);

@@ -35,6 +35,7 @@ import FlashcardErrorBoundary from './components/flashcards/FlashcardErrorBounda
 import GameRouteBoundary from './games/GameRouteBoundary';
 import {
   advanceRoundQuestion,
+  completeGameRound,
   createBatch,
   endBatchEarly,
   endRoundEarly,
@@ -52,6 +53,7 @@ import {
 } from './lib/practiceSession';
 import type { PronunciationScoringOptions } from './lib/rounds/pronunciationScoring';
 import type { Grade, TracingMeta } from './types';
+import type { GameEnd } from './games/types';
 
 type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game';
 
@@ -389,6 +391,12 @@ export default function App() {
     setBatch(endBatchEarly(batch));
   }
 
+  /** CR-86: the bonus game Round's run ended - GameEnd becomes the RoundOutcome. */
+  function handleCompleteGameRound(end: GameEnd): void {
+    if (!batch) return;
+    setBatch(completeGameRound(batch, end));
+  }
+
   // CR-10 DS-T1 + CR-82 (M2, spec s6.6): every screen lives inside a
   // land shell. Kid play surfaces (start-batch, batch) get the v5 hero
   // scene in the band tone (G1-2 dusk / G3-5 night); the journey map
@@ -618,6 +626,7 @@ export default function App() {
         onChooseGrade={handleBackToGrades}
         onEndBatch={handleEndBatchEarly}
         onRoundTimeExpired={handleRoundTimeExpired}
+        onCompleteGameRound={handleCompleteGameRound}
         guestLocked={authMode === 'guest'}
         onRequestLogin={() => {
           setAuthMode('login');

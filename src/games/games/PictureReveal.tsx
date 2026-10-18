@@ -49,7 +49,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
     if (round + 1 >= rounds.length || nextRevealed >= tiles) {
       if (endedRef.current) return;
       endedRef.current = true;
-      onEnd({ points: nextRevealed, maxPoints: tiles, correctCount: newCorrect });
+      onEnd({ points: nextRevealed, maxPoints: tiles, correctCount: newCorrect , attempted: tiles});
       return;
     }
     setRound(round + 1);

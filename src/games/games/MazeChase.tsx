@@ -139,7 +139,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect });
+    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
   };
 
   const advanceRound = (newCorrect: number) => {

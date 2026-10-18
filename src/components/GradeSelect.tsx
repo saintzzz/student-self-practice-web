@@ -219,7 +219,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
             data-testid="guest-trial-hint"
             className="inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-4 py-1.5 text-sm font-bold text-sky-200 backdrop-blur"
           >
-            Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 4 vòng
+            Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 5 vòng
           </p>
         )}
         {onReport && (

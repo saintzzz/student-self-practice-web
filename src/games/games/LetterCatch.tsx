@@ -78,7 +78,7 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
     setDone(nextDone);
     if (nextDone >= words.length) {
       timerRef.current = setTimeout(
-        () => onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextDone }),
+        () => onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextDone , attempted: spec.rounds}),
         650,
       );
       return;

@@ -474,7 +474,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             <div className="relative mx-auto mt-3 inline-block max-w-xs rounded-2xl bg-white/95 px-5 py-2.5 shadow-md">
               <span aria-hidden="true" className="absolute -top-1.5 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 rounded-sm bg-white/95" />
               <p className="text-lg font-bold text-slate-700">
-                Mình cùng chơi 4 trò nhỏ nhé! Bấm Chơi nào!
+                Mình cùng chơi 5 trò nhỏ nhé! Bấm Chơi nào!
               </p>
             </div>
             {/* Ruling R-14: non-interactive orientation label - now a
@@ -496,7 +496,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               </span>
             </p>
             <p className={`mt-3 ${PROMPT}`}>
-              Luyện tập Tiếng Anh: 4 vòng game nhỏ, mỗi vòng khoảng 10 câu hỏi.
+              Luyện tập Tiếng Anh: 4 vòng câu hỏi + 1 vòng trò chơi thưởng.
             </p>
           </>
         )}
@@ -510,7 +510,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           <span className="flex flex-col items-center">
             <span className="inline-flex items-center gap-2"><IconPlay size={18} /> Chơi</span>
             {!isG12 && (
-              <span className="text-base font-bold">4 trò nhỏ - khoảng 10 câu mỗi trò</span>
+              <span className="text-base font-bold">4 vòng câu hỏi + 1 trò chơi thưởng</span>
             )}
           </span>
         </button>

@@ -49,6 +49,7 @@ describe('MemoryMatch', () => {
       points: 10,
       maxPoints: 10,
       correctCount: 4,
+      attempted: 4,
     });
   });
 
@@ -65,6 +66,7 @@ describe('MemoryMatch', () => {
       points: 9, // 5 moves -> +1 bonus only
       maxPoints: 10,
       correctCount: 4,
+      attempted: 4,
     });
   });
 });

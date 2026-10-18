@@ -56,7 +56,7 @@ describe('CastleGuard', () => {
       fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
       act(() => vi.advanceTimersByTime(800));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS - 0.5, maxPoints: ROUNDS, correctCount: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS - 0.5, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS });
   });
 
   it('a flawless run reports max points with all hearts', () => {
@@ -67,6 +67,6 @@ describe('CastleGuard', () => {
       fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
       act(() => vi.advanceTimersByTime(800));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS });
   });
 });

@@ -36,7 +36,7 @@ export default function BalloonPop({ grade, seed, level, onEnd }: GameProps) {
     setCorrectCount(nextCorrect);
     setWrongPicks([]);
     if (round + 1 >= rounds.length) {
-      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect });
+      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect , attempted: spec.rounds});
       return;
     }
     setRound(round + 1);

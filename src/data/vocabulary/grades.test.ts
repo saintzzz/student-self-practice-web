@@ -9,6 +9,7 @@ import {
 } from './index';
 import {
   advanceRoundQuestion,
+  completeGameRound,
   createBatch,
   goToNextRound,
   updateRoundSession,
@@ -197,6 +198,10 @@ describe('no cross-grade leakage (AC-G6)', () => {
         }
         batch = goToNextRound(completeActiveRound(batch));
       }
+      /* CR-86: after the 4 question rounds the Batch sits on the seeded
+         bonus game Round - close it, then the summary opens. */
+      expect(batch.phase).toBe('game');
+      batch = goToNextRound(completeGameRound(batch, { points: 0, maxPoints: 0, correctCount: 0, attempted: 0 }));
       expect(batch.phase).toBe('batch-summary');
     },
   );

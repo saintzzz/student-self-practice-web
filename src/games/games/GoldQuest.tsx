@@ -54,7 +54,7 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect });
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
   };
 
   const advance = (newCorrect: number) => {

@@ -389,7 +389,10 @@ export type RoundType =
   | 'extra-letter'
   | 'listening-sentence-fill-blank'
   | 'pronunciation-recording'
-  | 'describe-and-choose-image';
+  | 'describe-and-choose-image'
+  /* CR-86: a Batch's bonus Round hosts a registered Game Zone game - the
+     run IS the assessment, GameEnd maps onto the RoundOutcome. */
+  | 'game-round';
 
 export interface AnswerRecord {
   question: Question;

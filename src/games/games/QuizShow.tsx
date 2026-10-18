@@ -33,7 +33,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
     if (endedRef.current) return;
     endedRef.current = true;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect });
+    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
   };
 
   useEffect(() => () => {

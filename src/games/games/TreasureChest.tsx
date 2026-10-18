@@ -41,7 +41,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
       if (endedRef.current) return;
       endedRef.current = true;
       const report = () =>
-        onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: newCorrect });
+        onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: newCorrect , attempted: spec.rounds});
       // Let the opened chest breathe for a beat before the end screen swaps in.
       if (nextLocks >= LOCKS) {
         timerRef.current = setTimeout(report, 900);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceRoundQuestion,
+  completeGameRound,
   computeBatchResult,
   createBatch,
   currentRoundDefinition,
@@ -24,6 +25,7 @@ import { ROUND_2_QUESTION_COUNT } from '../rounds/round2ListeningSentence';
 import { ROUND_3_QUESTION_COUNT } from '../rounds/round3Pronunciation';
 import { ROUND_4_QUESTION_COUNT } from '../rounds/round4DescribeAndChooseImage';
 import { POINTS_PER_CORRECT_ANSWER } from './points';
+import { gameRoundDefinition, TOTAL_ROUNDS } from '../rounds/roundDefinitions';
 
 /**
  * Answers whichever question is current using the same "guaranteed
@@ -143,13 +145,21 @@ describe('full Batch flow (AC17, AC21, AC24, AC25)', () => {
     expect(batch.completedRounds[3]?.implemented).toBe(true);
 
     batch = goToNextRound(batch);
+    /* CR-86: Round 5 is the seeded bonus game Round - close it with a
+       GameEnd before the Batch summary. */
+    expect(batch.phase).toBe('game');
+    batch = completeGameRound(batch, { points: 4, maxPoints: 8, correctCount: 4, attempted: 4 });
+    expect(batch.phase).toBe('round-summary');
+    expect(batch.completedRounds[4]?.roundType).toBe('game-round');
+    batch = goToNextRound(batch);
     expect(batch.phase).toBe('batch-summary');
     expect(currentRoundDefinition(batch)).toBeNull();
 
     const result = computeBatchResult(batch);
-    expect(result.rounds).toHaveLength(4);
+    expect(result.rounds).toHaveLength(5);
+    /* CR-86: the game Round's attempted count joins the Batch total. */
     expect(result.totalQuestions).toBe(
-      ROUND_1_QUESTION_COUNT + ROUND_2_QUESTION_COUNT + ROUND_3_QUESTION_COUNT + ROUND_4_QUESTION_COUNT,
+      ROUND_1_QUESTION_COUNT + ROUND_2_QUESTION_COUNT + ROUND_3_QUESTION_COUNT + ROUND_4_QUESTION_COUNT + 4,
     );
     expect(result.totalCorrect).toBeGreaterThanOrEqual(0);
     expect(result.totalCorrect).toBeLessThanOrEqual(result.totalQuestions);
@@ -253,9 +263,15 @@ describe('endRoundEarly (plan.md v7 "Round Timer", AC28)', () => {
     batch = endRoundEarly(batch); // Round 4
     batch = goToNextRound(batch);
 
+    /* CR-86: the bonus game Round has no question timer - it still closes
+       via its GameEnd (here a zero-answer run). */
+    expect(batch.phase).toBe('game');
+    batch = completeGameRound(batch, { points: 0, maxPoints: 0, correctCount: 0, attempted: 0 });
+    batch = goToNextRound(batch);
+
     expect(batch.phase).toBe('batch-summary');
     const result = computeBatchResult(batch);
-    expect(result.rounds).toHaveLength(4);
+    expect(result.rounds).toHaveLength(5);
     expect(result.totalQuestions).toBe(0);
     expect(result.totalCorrect).toBe(0);
   });
@@ -268,6 +284,9 @@ describe('endBatchEarly (CR-55 "Kết thúc giữa chừng")', () => {
       batch = completeActiveRound(batch);
       batch = goToNextRound(batch);
     }
+    /* CR-86: close the bonus game Round before the summary. */
+    batch = completeGameRound(batch, { points: 0, maxPoints: 0, correctCount: 0, attempted: 0 });
+    batch = goToNextRound(batch);
     expect(batch.phase).toBe('batch-summary');
 
     expect(endBatchEarly(batch)).toBe(batch);
@@ -434,5 +453,85 @@ describe('points scoring (plan.md v10, AC34, AC36)', () => {
 
     expect(result.points).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER + 0);
     expect(result.maxPoints).toBe(ROUND_1_QUESTION_COUNT * POINTS_PER_CORRECT_ANSWER + 0);
+  });
+});
+
+describe('CR-86 bonus game Round (game-as-exam)', () => {
+  function walkToGameRound(): BatchState {
+    let batch = createBatch('fixed-seed');
+    for (let i = 0; i < 4; i++) {
+      batch = completeActiveRound(batch);
+      batch = goToNextRound(batch);
+    }
+    return batch;
+  }
+
+  it('TOTAL_ROUNDS is 5 and Round 5 is a seeded game Round', () => {
+    expect(TOTAL_ROUNDS).toBe(5);
+    const batch = walkToGameRound();
+
+    expect(batch.phase).toBe('game');
+    expect(batch.roundSession).toBeNull();
+    const def = currentRoundDefinition(batch);
+    expect(def?.roundNumber).toBe(5);
+    expect(def?.roundType).toBe('game-round');
+    expect(def?.game?.gameId).toBeTruthy();
+    expect(def?.titleVi).toContain('Vòng 5');
+  });
+
+  it('the seeded game pick is deterministic per batch seed', () => {
+    const a = gameRoundDefinition('seed-a', 'grade-2');
+    const a2 = gameRoundDefinition('seed-a', 'grade-2');
+    expect(a.game?.gameId).toBe(a2.game?.gameId);
+    const b = gameRoundDefinition('seed-b', 'grade-2');
+    expect(b.game?.gameId).toBeTruthy();
+  });
+
+  it('completeGameRound maps GameEnd onto a uniform-scale RoundOutcome', () => {
+    let batch = walkToGameRound();
+    batch = completeGameRound(batch, { points: 12, maxPoints: 16, correctCount: 6, attempted: 8 });
+
+    expect(batch.phase).toBe('round-summary');
+    const outcome = batch.completedRounds[4];
+    expect(outcome?.roundType).toBe('game-round');
+    expect(outcome?.correctCount).toBe(6);
+    expect(outcome?.totalCount).toBe(8);
+    expect(outcome?.points).toBe(6 * POINTS_PER_CORRECT_ANSWER);
+    expect(outcome?.maxPoints).toBe(8 * POINTS_PER_CORRECT_ANSWER);
+    expect(outcome?.implemented).toBe(true);
+  });
+
+  it('completeGameRound falls back to correctCount when a game omits attempted', () => {
+    let batch = walkToGameRound();
+    batch = completeGameRound(batch, { points: 3, maxPoints: 6, correctCount: 3 });
+
+    expect(batch.completedRounds[4]?.totalCount).toBe(3);
+  });
+
+  it('completeGameRound is a no-op outside the game phase - a stray onEnd cannot double-credit', () => {
+    let batch = walkToGameRound();
+    batch = completeGameRound(batch, { points: 5, maxPoints: 10, correctCount: 5, attempted: 10 });
+    const rounds = batch.completedRounds.length;
+    const again = completeGameRound(batch, { points: 99, maxPoints: 99, correctCount: 99 });
+
+    expect(again).toBe(batch);
+    expect(again.completedRounds).toHaveLength(rounds);
+  });
+
+  it('the batch summary only opens after the game Round closes', () => {
+    let batch = walkToGameRound();
+    batch = completeGameRound(batch, { points: 5, maxPoints: 10, correctCount: 5, attempted: 10 });
+    batch = goToNextRound(batch);
+
+    expect(batch.phase).toBe('batch-summary');
+    expect(batch.completedRounds).toHaveLength(5);
+  });
+
+  it('endBatchEarly during the game Round lands on the summary without a phantom outcome', () => {
+    let batch = walkToGameRound();
+    batch = endBatchEarly(batch);
+
+    expect(batch.phase).toBe('batch-summary');
+    expect(batch.completedRounds).toHaveLength(4);
   });
 });

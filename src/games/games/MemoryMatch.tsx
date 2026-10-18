@@ -38,7 +38,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
     // 4 pairs found = 8 base; flawless 4-move run +2, <=6 moves +1 -
     // any mismatch drops below max, so 3 stars means clean play (BA rule).
     const bonus = moveCount <= spec.rounds ? 2 : moveCount <= spec.rounds + 2 ? 1 : 0;
-    onEnd({ points: spec.rounds * 2 + bonus, maxPoints: spec.rounds * 2 + 2, correctCount: spec.rounds });
+    onEnd({ points: spec.rounds * 2 + bonus, maxPoints: spec.rounds * 2 + 2, correctCount: spec.rounds , attempted: spec.rounds});
   };
 
   const tap = (idx: number) => {

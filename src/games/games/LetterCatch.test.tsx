@@ -47,6 +47,7 @@ describe('LetterCatch', () => {
       points: WORDS_PER_RUN * 2,
       maxPoints: WORDS_PER_RUN * 2,
       correctCount: WORDS_PER_RUN,
+      attempted: WORDS_PER_RUN,
     });
   });
 
@@ -74,6 +75,7 @@ describe('LetterCatch', () => {
       points: WORDS_PER_RUN * 2 - 1,
       maxPoints: WORDS_PER_RUN * 2,
       correctCount: WORDS_PER_RUN,
+      attempted: WORDS_PER_RUN,
     });
   });
 });

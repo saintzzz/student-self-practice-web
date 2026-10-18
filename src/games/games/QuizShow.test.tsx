@@ -44,14 +44,14 @@ describe('QuizShow', () => {
     render(<QuizShow grade={GRADE} seed={SEED} onEnd={onEnd} />);
     fireEvent.click(screen.getByTestId(`option-${wrong}`));
     act(() => vi.advanceTimersByTime(1000));
-    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0 });
+    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS });
   });
 
   it('timing out ends the run', () => {
     const onEnd = vi.fn();
     render(<QuizShow grade={GRADE} seed={SEED} onEnd={onEnd} />);
     act(() => vi.advanceTimersByTime(21000));
-    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0 });
+    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS });
   });
 
   it('an accepted last-second answer does not race the timeout', () => {
@@ -75,6 +75,6 @@ describe('QuizShow', () => {
       fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
       act(() => vi.advanceTimersByTime(700));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS });
   });
 });

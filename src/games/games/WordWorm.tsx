@@ -66,7 +66,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalEaten: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalEaten, maxPoints: totalLetters, correctCount: finalEaten });
+    onEnd({ points: finalEaten, maxPoints: totalLetters, correctCount: finalEaten , attempted: totalLetters});
   };
 
   const hurt = (newHearts: number) => {

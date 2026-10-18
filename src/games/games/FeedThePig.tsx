@@ -40,7 +40,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
     setWrongPicks([]);
     setFed(false);
     if (round + 1 >= rounds.length) {
-      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect });
+      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect , attempted: spec.rounds});
       return;
     }
     setRound(round + 1);
