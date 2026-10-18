@@ -20,6 +20,28 @@ import { IconParty, IconPaw } from './icons';
  * egg -> baby -> kid -> adult on XP thresholds. The one-time evolution
  * congrats shows until marked seen.
  */
+/** Pet art with emoji fallback driven by state (outerHTML swaps detach
+ *  the node from React, so a later src change would revive the stale
+ *  fallback - the flag resets via key={src} instead). */
+function PetImg({ src, alt, size, emoji }: { src: string; alt: string; size: number; emoji: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <span className="text-4xl">{emoji}</span>;
+  return (
+    <img
+      key={src}
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      loading="lazy"
+      draggable={false}
+      onError={() => setFailed(true)}
+      className="mx-auto select-none object-contain"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 export default function PetCard() {
   const [pet, setPet] = useState(() => getPet());
   /* CR-82 (spec s16.1): the evolution congrats reward button. */
@@ -82,18 +104,7 @@ export default function PetCard() {
                 onClick={() => pick(species)}
                 className="rounded-2xl bg-[#16232e] p-3 text-center ring-1 ring-white/10 transition hover:bg-[#1d3040] hover:ring-amber-400/50 active:scale-95"
               >
-                <img
-                  src={petArtUrl(species, 2)}
-                  alt={PET_SPECIES[species].nameVi}
-                  width={64}
-                  height={64}
-                  loading="lazy"
-                  draggable={false}
-                  className="mx-auto h-16 w-16 select-none object-contain"
-                  onError={(e) => {
-                    e.currentTarget.outerHTML = `<div class="text-4xl">${PET_SPECIES[species].emojis[1]}</div>`;
-                  }}
-                />
+                <PetImg src={petArtUrl(species, 2)} alt={PET_SPECIES[species].nameVi} size={64} emoji={PET_SPECIES[species].emojis[1]} />
                 <div className="mt-1 text-sm font-extrabold text-white">{PET_SPECIES[species].nameVi}</div>
               </PressableOptionButton>
             ))}
@@ -103,17 +114,7 @@ export default function PetCard() {
         <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#16232e] p-4 ring-1 ring-white/10">
           <div data-testid="pet-emoji">
             {pet.art ? (
-              <img
-                src={pet.art}
-                alt={pet.nameVi ?? ''}
-                width={72}
-                height={72}
-                draggable={false}
-                className="h-[4.5rem] w-[4.5rem] select-none object-contain"
-                onError={(e) => {
-                  e.currentTarget.outerHTML = `<div class="text-6xl">${pet.emoji}</div>`;
-                }}
-              />
+              <PetImg src={pet.art} alt={pet.nameVi ?? ''} size={72} emoji={pet.emoji} />
             ) : (
               <span className="text-6xl">{pet.emoji}</span>
             )}
