@@ -24,8 +24,20 @@ function formatClock(ms: number): string {
 
 /** CR-88: level pick - 3 difficulty rungs, per-level best stars. */
 function LevelPicker({ gameId, onPick }: { gameId: GameId; onPick: (level: GameLevel) => void }) {
+  const def = GAME_DEFS.find((d) => d.id === gameId);
+  const totalStars = GAME_LEVELS.reduce((n, l) => n + gameLevelStars(gameId, l), 0);
   return (
-    <div data-testid="game-level-picker" className="flex flex-1 flex-col items-center justify-center gap-3">
+    <div data-testid="game-level-picker" className="flex flex-1 flex-col items-center justify-center gap-4">
+      {/* Hero block: the game's bespoke art + identity inside the panel -
+          without it the picker is three floating buttons on empty navy. */}
+      {def && (
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <GameArt art={def.art} emoji={def.emoji} artImage={def.artImage} size="hero" animated />
+          <p className="font-display text-2xl font-extrabold text-white">{def.title}</p>
+          <p className="text-sm font-semibold text-slate-300">{def.tagline}</p>
+        </div>
+      )}
+      <div aria-hidden className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <p className="text-sm font-bold text-slate-300">Chọn màn chơi</p>
       {GAME_LEVELS.map((level) => {
         const meta = LEVEL_META[level];
@@ -44,6 +56,14 @@ function LevelPicker({ gameId, onPick }: { gameId: GameId; onPick: (level: GameL
             <span className="min-w-0 flex-1">
               <span className="block font-extrabold text-slate-900">{meta.label}</span>
               <span className="block text-xs font-semibold text-slate-900/90">{meta.hint}</span>
+              <span aria-hidden className="mt-0.5 flex gap-0.5">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-3 rounded-full ${i < level ? 'bg-slate-900/60' : 'bg-slate-900/15'}`}
+                  />
+                ))}
+              </span>
             </span>
             <span aria-label={`Màn ${level}: ${best} sao`} className="text-sm tracking-wider">
               {[0, 1, 2].map((i) => (
@@ -53,6 +73,11 @@ function LevelPicker({ gameId, onPick }: { gameId: GameId; onPick: (level: GameL
           </button>
         );
       })}
+      {totalStars > 0 && (
+        <p className="text-xs font-semibold text-amber-200/90">
+          ⭐ {totalStars}/9 sao - cố lên, lấy hết nào!
+        </p>
+      )}
     </div>
   );
 }
