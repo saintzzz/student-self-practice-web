@@ -37,7 +37,7 @@ import { EmojiVisual } from './EmojiVisual';
 import ConfirmEndDialog from './ConfirmEndDialog';
 import { WORD_IPA } from '../data/ipaMap';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
-import Mascot from './Mascot';
+import { MascotAvatar } from './mascot/MascotAvatar';
 import { ExamProgressRing } from './exam/ExamProgressRing';
 import { ExamNavigatorDialog } from './exam/ExamNavigatorDialog';
 import { ExamReviewSheet } from './exam/ExamReviewSheet';
@@ -751,7 +751,7 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
           block size) and the ONE gold action (exam-begin). */}
       <div className={`${EXAM_SHEET} max-w-lg !flex-none text-center`}>
         <div className="flex justify-center">
-          <Mascot mood="greeting" size="block" />
+          <MascotAvatar sizePx={80} />
         </div>
         <h1 className={`${TYPE_PROMPT_PAPER_G345} mt-2`}>
           {title}

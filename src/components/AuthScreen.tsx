@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Mascot from './Mascot';
+import { MascotAvatar } from './mascot/MascotAvatar';
 import { CARD_DARK, NAV_PILL_DARK, SCREEN_ENTER } from '../lib/ui/tokens';
 import { login, USERNAME_RE } from '../lib/auth/practiceAuth';
 import { IconEye, IconEyeOff } from './icons';
@@ -41,7 +41,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
     <div className={`mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10 ${SCREEN_ENTER}`}>
       <div className={CARD_DARK}>
         <div className="mb-4 flex justify-center">
-          <Mascot mood="greeting" />
+          <MascotAvatar sizePx={80} />
         </div>
         <p className="mb-1 text-center font-display text-sm font-extrabold uppercase tracking-[0.2em] text-amber-300">
           English Arena

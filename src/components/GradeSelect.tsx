@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Grade } from '../types';
-import Mascot from './Mascot';
+import { MascotAvatar } from './mascot/MascotAvatar';
 import EngagementBar from './EngagementBar';
 import ChangePinDialog from './ChangePinDialog';
 import { getLand } from '../lib/ui/theme';
@@ -175,7 +175,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               the pig sits IN an artifact, not on the navy. */}
           <div className="rounded-full bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 p-[5px] shadow-[0_0_30px_rgba(251,191,36,0.35),0_10px_24px_-10px_rgba(0,0,0,0.7)]">
             <div className="rounded-full bg-gradient-to-b from-navy-700 to-navy-850 p-1.5 ring-1 ring-inset ring-white/15">
-              <Mascot mood="greeting" />
+              <MascotAvatar sizePx={80} />
             </div>
           </div>
           {/* Star charm dangling off the ring - the badge's pendant. */}
