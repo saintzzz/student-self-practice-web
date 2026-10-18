@@ -5,7 +5,10 @@ import {
   type SpeechRecognitionController,
   type SpeechRecognitionSettle,
 } from '../lib/speechRecognition';
-import type { PronunciationScoringOptions } from '../lib/rounds/pronunciationScoring';
+import {
+  assessAmbiguousRetry,
+  type PronunciationScoringOptions,
+} from '../lib/rounds/pronunciationScoring';
 import {
   isAudioRecordingSupported,
   isIOSOrIPadOS,
@@ -341,9 +344,21 @@ export function usePronunciationRecording(
         setPhase('error');
         return;
       }
+      /* CR-90 follow-up (r60): the grader's accuracy is in the grey band
+         AND it listed a target-sounding alternative = the verdict itself
+         was ambiguous (provider mishear or a genuinely confusable pair).
+         That is not evidence enough to pass OR to fail - route to the
+         retryable 'ambiguous' surface so the child gets a free re-read.
+         A second attempt usually resolves the ambiguity; "bo qua" still
+         lands a scored fail. */
+      if (assessAmbiguousRetry(targetWord, result.score, result.alternatives)) {
+        setMicRecording(false);
+        setErrorReason('ambiguous');
+        setPhase('error');
+        return;
+      }
       // CR-90: a present score = the provider graded the audio itself;
       // absent = plain transcript, the local scorer still applies.
-      // alternatives lets the scorer rescue a buried correct attempt.
       finish(
         result.transcript,
         result.score !== undefined || result.alternatives !== undefined

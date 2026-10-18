@@ -212,6 +212,48 @@ describe('usePronunciationRecording - recorder path (CR-62)', () => {
     await waitFor(() => expect(setMicRecordingMock).toHaveBeenCalledWith(false));
   });
 
+  it('r60: an ambiguous assess verdict (grey band + target-sounding alt) buys a retry, not a submission', async () => {
+    mocks.isIOS = true;
+    mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
+    // Provider heard "pen" at 60 for target "hen" and offered "hen" as
+    // another reading - too ambiguous to pass OR fail.
+    transcribeMock.mockResolvedValue({ transcript: 'pen', score: 60, alternatives: ['hen'] });
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'hen'));
+
+    act(() => {
+      result.current.startRecording();
+    });
+    await waitFor(() => expect(result.current.phase).toBe('recording'));
+    await act(async () => {
+      result.current.stopRecording();
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe('error'));
+    expect(result.current.errorReason).toBe('ambiguous');
+    expect(onAttempt).not.toHaveBeenCalled();
+  });
+
+  it('r60: a grey-band verdict WITHOUT a matching alternative still submits', async () => {
+    mocks.isIOS = true;
+    mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));
+    transcribeMock.mockResolvedValue({ transcript: 'pen', score: 60, alternatives: ['pin'] });
+
+    const onAttempt = vi.fn();
+    const { result } = renderHook(() => usePronunciationRecording(onAttempt, 'hen'));
+
+    act(() => {
+      result.current.startRecording();
+    });
+    await waitFor(() => expect(result.current.phase).toBe('recording'));
+    await act(async () => {
+      result.current.stopRecording();
+    });
+
+    expect(onAttempt).toHaveBeenCalledWith('pen', { serverScore: 60, alternatives: ['pin'] });
+  });
+
   it('releases the suppression flag when the hook unmounts mid-recording', async () => {
     mocks.isIOS = true;
     mocks.startAudioRecording.mockResolvedValue(makeController(new Blob(['a'])));

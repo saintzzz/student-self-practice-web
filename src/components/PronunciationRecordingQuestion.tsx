@@ -40,6 +40,8 @@ function errorBodyFor(reason: string | null): string {
       return 'Đã ghi âm xong nhưng chưa nghe rõ được - mạng đang chập chờn. Em thử lại nhé.';
     case 'mismatch':
       return 'Máy nghe nhầm tiếng khác chứ không phải tiếng đọc của em - em ra chỗ yên tĩnh hơn, để micro gần miệng rồi đọc thật to và rõ từng chữ nhé.';
+    case 'ambiguous':
+      return 'Máy nghe chưa rõ giữa hai từ gần giống nhau - em đọc lại thật rõ từng âm nhé.';
     default:
       return 'Micro chưa nhận được tiếng đọc của em - có thể do mạng chập chờn hoặc em chưa kịp đọc. Em thử lại hoặc bỏ qua câu này nhé.';
   }

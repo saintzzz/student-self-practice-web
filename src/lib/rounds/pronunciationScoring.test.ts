@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   PRONUNCIATION_CORRECT_THRESHOLD,
+  assessAmbiguousRetry,
   levenshteinDistance,
   normalizeForPronunciationComparison,
   phoneticSimilarity,
@@ -358,50 +359,45 @@ describe('scorePronunciationAttempt', () => {
       expect(scorePronunciationAttempt('cat', 'cat', {}).score).toBe(100);
     });
 
-    describe('assess alternatives rescue (CR-90 follow-up)', () => {
-      it('rescues a buried correct attempt the grader heard as a confusable', () => {
-        // Child said "hen" correctly; provider top-1 misheard "pen" and
-        // graded it against the target (low accuracy) but listed "hen"
-        // as an alternative reading.
-        const result = scorePronunciationAttempt('hen', 'pen', {
-          serverScore: 60,
-          alternatives: ['hen', 'when'],
-        });
-        expect(result.isCorrect).toBe(true);
-        expect(result.score).toBe(85);
+    it('never inflates a below-bar verdict on alternatives alone (r60)', () => {
+      // The same target-aware model emits heard_alt - not independent
+      // evidence. Ambiguity buys a retry, not a pass.
+      const result = scorePronunciationAttempt('hen', 'pen', {
+        serverScore: 60,
+        alternatives: ['hen'],
       });
+      expect(result.score).toBe(60);
+      expect(result.isCorrect).toBe(false);
+    });
+  });
 
-      it('keeps the provider score when alternatives do not match the target', () => {
-        const result = scorePronunciationAttempt('cat', 'cut', {
-          serverScore: 60,
-          alternatives: ['cut', 'cot'],
-        });
-        expect(result.score).toBe(60);
-        expect(result.isCorrect).toBe(false);
-      });
+  describe('assessAmbiguousRetry (CR-90 follow-up, r60)', () => {
+    it('flags a grey-band verdict whose alternatives contain the target sound', () => {
+      // Provider heard "pen" top-1 at 60 for target "hen" but offered
+      // "hen" as another reading - ambiguous enough for a free retry.
+      expect(assessAmbiguousRetry('hen', 60, ['hen', 'when'])).toBe(true);
+    });
 
-      it('does not rescue a garbage attempt even with a matching alternative', () => {
-        // score < 50 means silence/noise - never trust alternatives.
-        const result = scorePronunciationAttempt('hen', 'zzz', {
-          serverScore: 30,
-          alternatives: ['hen'],
-        });
-        expect(result.isCorrect).toBe(false);
-      });
+    it('requires the phoneme-complete match - a merely similar word is not ambiguity', () => {
+      expect(assessAmbiguousRetry('elephant', 60, ['effen'])).toBe(false);
+      expect(assessAmbiguousRetry('cat', 60, ['cut', 'cot'])).toBe(false);
+    });
 
-      it('does not touch a verdict already above the assess bar', () => {
-        const result = scorePronunciationAttempt('hen', 'pen', {
-          serverScore: 90,
-          alternatives: ['hen'],
-        });
-        expect(result.score).toBe(90);
-      });
+    it('never fires at or above the assess pass bar', () => {
+      expect(assessAmbiguousRetry('hen', 85, ['hen'])).toBe(false);
+      expect(assessAmbiguousRetry('hen', 90, ['hen'])).toBe(false);
+    });
 
-      it('ignores empty/missing alternatives safely', () => {
-        expect(
-          scorePronunciationAttempt('cat', 'cut', { serverScore: 60, alternatives: [] }).isCorrect,
-        ).toBe(false);
-      });
+    it('never fires on a garbage verdict - score below the floor means noise', () => {
+      expect(assessAmbiguousRetry('hen', 30, ['hen'])).toBe(false);
+      expect(assessAmbiguousRetry('hen', 49, ['hen'])).toBe(false);
+    });
+
+    it('never fires without alternatives or a score', () => {
+      expect(assessAmbiguousRetry('hen', 60, [])).toBe(false);
+      expect(assessAmbiguousRetry('hen', 60, undefined)).toBe(false);
+      expect(assessAmbiguousRetry('hen', undefined, ['hen'])).toBe(false);
+      expect(assessAmbiguousRetry('hen', NaN, ['hen'])).toBe(false);
     });
   });
 });
