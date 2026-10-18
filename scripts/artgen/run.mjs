@@ -64,28 +64,39 @@ async function waitLoggedIn(page, timeoutMs = 20 * 60_000) {
 }
 
 async function newChat(page) {
-  const btn = page.locator('a[href="/"], button:has-text("New chat"), [data-testid="create-new-chat-button"]').first();
-  if (await btn.count()) await btn.click().catch(() => {});
-  await page.waitForTimeout(1200);
+  // Hard navigation - sidebar "New chat" clicks proved flaky: failed
+  // navigation stacked prompts into one chat and ChatGPT answered them
+  // with merged collage images. goto guarantees a clean composer.
+  await page.goto('https://chatgpt.com/', { waitUntil: 'domcontentloaded' });
   await page.locator(COMPOSER).first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(1200);
 }
 
 async function generate(page, prompt) {
+  // Snapshot existing image srcs so a stale img from a previous chat can
+  // never satisfy the wait (root cause of the 7-file duplicate bug).
+  const preSrcs = await page.evaluate(
+    () => [...document.querySelectorAll('img')].map((i) => i.src));
   const box = page.locator(COMPOSER).first();
   await box.click();
   await page.keyboard.type(prompt, { delay: 4 });
   await page.keyboard.press('Enter');
-  // Wait for an <img> inside the latest assistant turn that is fully loaded.
+  // Wait for a NEW generated <img>: blob: src, not in the pre-prompt
+  // snapshot, naturalWidth >= 256, stable across two polls. Prefer the
+  // LAST blob img in the document (newest assistant message).
   const deadline = Date.now() + IMG_WAIT_MS;
   let lastSrc = '';
   while (Date.now() < deadline) {
-    const info = await page.evaluate(() => {
-      const imgs = [...document.querySelectorAll('[data-message-author-role="assistant"] img, article img')];
-      const img = imgs.at(-1);
-      if (!img) return null;
-      return { src: img.src, ok: img.complete && img.naturalWidth > 0, w: img.naturalWidth };
-    });
-    if (info?.ok && info.w >= 256 && info.src === lastSrc) return info.src; // src stable = final
+    const info = await page.evaluate((pre) => {
+      const imgs = [...document.querySelectorAll('img')];
+      const fresh = imgs.filter(
+        (i) => i.src.startsWith('blob:') && !pre.includes(i.src)
+          && i.complete && i.naturalWidth >= 256);
+      const pick = fresh.at(-1);
+      if (!pick) return null;
+      return { idx: imgs.indexOf(pick), src: pick.src, w: pick.naturalWidth };
+    }, preSrcs);
+    if (info && info.src === lastSrc) return info.idx;
     if (info?.src) lastSrc = info.src;
     await page.waitForTimeout(2500);
   }
@@ -121,10 +132,20 @@ async function main() {
     console.log(`[artgen] ${a.id}: prompting...`);
     try {
       await newChat(page);
-      const src = await generate(page, a.prompt);
-      const res = await ctx.request.get(src);
-      if (!res.ok()) throw new Error(`download ${res.status()}`);
-      writeFileSync(join(OUT, `${a.id}.png`), Buffer.from(await res.body()));
+      const imgIdx = await generate(page, a.prompt);
+      // blob: URLs are page-scoped - pull the bytes via <img> inside the
+      // page (canvas readback would be cleaner but images may be cross-
+      // origin-tainted in some UI states; fetch on the blob URL is
+      // same-origin and preserves the file as generated).
+      const b64 = await page.evaluate(async (idx) => {
+        const img = [...document.querySelectorAll('img')][idx];
+        const res = await fetch(img.src);
+        const buf = await res.arrayBuffer();
+        let bin = '';
+        new Uint8Array(buf).forEach((b) => (bin += String.fromCharCode(b)));
+        return btoa(bin);
+      }, imgIdx);
+      writeFileSync(join(OUT, `${a.id}.png`), Buffer.from(b64, 'base64'));
       console.log(`[artgen] ${a.id}: saved`);
     } catch (e) {
       console.log(`[artgen] ${a.id}: FAIL ${e.message}`);

@@ -98,8 +98,11 @@ function check(name, severity, desc, rows) {
 /* ---------- A. context integrity ---------- */
 
 check('listen-no-transcript', 'P0',
-  'Prompt says Listen but no transcript/audio - unanswerable',
-  questions.filter((q) => eligible(q) && SERVED_TYPES.has(q.question_type) && LISTEN_PROMPT.test(q.prompt_text ?? '') && !q.transcript));
+  'Listening item has no transcript/audio - unanswerable',
+  // Gate on skill='listen' - prompts that merely *mention* listening
+  // ("You wear ___ to listen to music") are grammar/vocab items, not
+  // audio-dependent questions. (r64: all 16 prior flags were FP.)
+  questions.filter((q) => eligible(q) && q.skill === 'listen' && SERVED_TYPES.has(q.question_type) && !q.transcript));
 
 check('read-no-passage', 'P0',
   'Prompt references a passage/text but none stored - unanswerable',
@@ -193,8 +196,31 @@ check('explanation-tautology', 'P1',
 // answer actually is correct - catches wrong-answer generator bugs.
 // Left-assoc with * / precedence for multi-operand chains (7 + 3 + 5,
 // 100 - 45 - 20, 6 x 7 + 8) that the two-operand regexes below miss.
+// English number words used by early-grade banks ("six", "twenty one").
+const NUMWORDS = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+  fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+  nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60,
+  seventy: 70, eighty: 80, ninety: 90, hundred: 100, thousand: 1000,
+};
+function toNum(label) {
+  const s = String(label).replace(/,/g, '').trim().toLowerCase();
+  const n = Number(s);
+  if (Number.isFinite(n)) return n;
+  const parts = s.replace(/-/g, ' ').split(/\s+/).filter(Boolean);
+  if (!parts.length || parts.some((w) => !(w in NUMWORDS))) return NaN;
+  let total = 0, cur = 0;
+  for (const w of parts) {
+    const v = NUMWORDS[w];
+    if (v >= 100) cur = (cur || 1) * v;
+    else cur += v;
+  }
+  return total + cur;
+}
+
 function evalChain(expr) {
-  const toks = String(expr).match(/\d+|[+\-×x*÷/]/g);
+  const toks = String(expr).match(/\d+\.?\d*|[+\-×x*÷/]/g);
   if (!toks || toks.length < 3) return undefined;
   const out = [+toks[0]];
   const ops = [];
@@ -216,35 +242,46 @@ function evalChain(expr) {
 function expectedMath(prompt) {
   const p = prompt.replace(/,/g, '');
   let m;
+  // Missing-addend equations: "A + B = ___ + C" / "___ + C = A + B" etc.
+  // These must run BEFORE the simple "A op B = _" patterns, which would
+  // otherwise match the "= ___" fragment and mis-score the blank.
+  if ((m = p.match(/(\d+\.?\d*)\s*([+\-×x*÷])\s*(\d+\.?\d*)\s*=\s*_+\s*([+\-])\s*(\d+\.?\d*)/))) {
+    const left = evalChain(`${m[1]}${m[2]}${m[3]}`);
+    if (left !== undefined) return m[4] === '+' ? left - +m[5] : left + +m[5];
+  }
+  if ((m = p.match(/_+\s*([+\-])\s*(\d+\.?\d*)\s*=\s*(\d+\.?\d*)\s*([+\-×x*÷])\s*(\d+\.?\d*)/))) {
+    const right = evalChain(`${m[3]}${m[4]}${m[5]}`);
+    if (right !== undefined) return m[1] === '+' ? right - +m[2] : right + +m[2];
+  }
   // Multi-operand chains first - the two-operand patterns below would
   // otherwise match only the first pair and report a false wrong answer.
-  if ((m = p.match(/What is ([\d\s+\-×x*÷]+?)\s*[?=]/i)) ||
-      (m = p.match(/What is ((?:\d+\s*[+\-×x*÷]\s*){2,}\d+)/i))) {
+  if ((m = p.match(/What is ([\d.\s+\-×x*÷]+?)\s*[?=]/i)) ||
+      (m = p.match(/What is ((?:\d+\.?\d*\s*[+\-×x*÷]\s*){2,}\d+\.?\d*)/i))) {
     const v = evalChain(m[1]);
     if (v !== undefined) return v;
   }
-  if ((m = p.match(/Solve[^?\d]*((?:\d+\s*[+\-×x*÷]\s*){2,}\d+)/i))) {
+  if ((m = p.match(/Solve[^?\d]*((?:\d+\.?\d*\s*[+\-×x*÷]\s*){2,}\d+\.?\d*)/i))) {
     const v = evalChain(m[1]);
     if (v !== undefined) return v;
   }
-  if ((m = p.match(/What is (\d+)\s*plus\s*(\d+)/i))) return +m[1] + +m[2];
-  if ((m = p.match(/What is (\d+)\s*minus\s*(\d+)/i))) return +m[1] - +m[2];
-  if ((m = p.match(/What is (\d+)\s*(?:times|multiplied by)\s*(\d+)/i))) return +m[1] * +m[2];
-  if ((m = p.match(/What is (\d+)\s*divided by\s*(\d+)/i))) return +m[1] / +m[2];
-  if ((m = p.match(/What is (\d+)\s*[+]\s*(\d+)/i))) return +m[1] + +m[2];
-  if ((m = p.match(/What is (\d+)\s*-\s*(\d+)/i))) return +m[1] - +m[2];
-  if ((m = p.match(/What is (\d+)\s*[×x*]\s*(\d+)/i))) return +m[1] * +m[2];
-  if ((m = p.match(/What is (\d+)\s*÷\s*(\d+)/i))) return +m[1] / +m[2];
-  if ((m = p.match(/Compute (\d+)\s*÷\s*(\d+)/i))) return +m[1] / +m[2];
-  if ((m = p.match(/Compute (\d+)\s*[×x*]\s*(\d+)/i))) return +m[1] * +m[2];
-  if ((m = p.match(/Solve[^\d]*(\d+)\s*[+]\s*(\d+)/i))) return +m[1] + +m[2];
-  if ((m = p.match(/Solve[^\d]*(\d+)\s*-\s*(\d+)/i))) return +m[1] - +m[2];
-  if ((m = p.match(/Solve[^\d]*(\d+)\s*[×x*]\s*(\d+)/i))) return +m[1] * +m[2];
-  if ((m = p.match(/Solve[^\d]*(\d+)\s*÷\s*(\d+)/i))) return +m[1] / +m[2];
-  if ((m = p.match(/(\d+)\s*[+]\s*(\d+)\s*=\s*[_?]/))) return +m[1] + +m[2];
-  if ((m = p.match(/(\d+)\s*-\s*(\d+)\s*=\s*[_?]/))) return +m[1] - +m[2];
-  if ((m = p.match(/(\d+)\s*[×x]\s*(\d+)\s*=\s*[_?]/))) return +m[1] * +m[2];
-  if ((m = p.match(/(\d+)\s*÷\s*(\d+)\s*=\s*[_?]/))) return +m[1] / +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*plus\s*(\d+\.?\d*)/i))) return +m[1] + +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*minus\s*(\d+\.?\d*)/i))) return +m[1] - +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*(?:times|multiplied by)\s*(\d+\.?\d*)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*divided by\s*(\d+\.?\d*)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*[+]\s*(\d+\.?\d*)/i))) return +m[1] + +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*-\s*(\d+\.?\d*)/i))) return +m[1] - +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*[×x*]\s*(\d+\.?\d*)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/What is (\d+\.?\d*)\s*÷\s*(\d+\.?\d*)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/Compute (\d+\.?\d*)\s*÷\s*(\d+\.?\d*)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/Compute (\d+\.?\d*)\s*[×x*]\s*(\d+\.?\d*)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+\.?\d*)\s*[+]\s*(\d+\.?\d*)/i))) return +m[1] + +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/i))) return +m[1] - +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+\.?\d*)\s*[×x*]\s*(\d+\.?\d*)/i))) return +m[1] * +m[2];
+  if ((m = p.match(/Solve[^\d]*(\d+\.?\d*)\s*÷\s*(\d+\.?\d*)/i))) return +m[1] / +m[2];
+  if ((m = p.match(/(\d+\.?\d*)\s*[+]\s*(\d+\.?\d*)\s*=\s*[_?]/))) return +m[1] + +m[2];
+  if ((m = p.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)\s*=\s*[_?]/))) return +m[1] - +m[2];
+  if ((m = p.match(/(\d+\.?\d*)\s*[×x]\s*(\d+\.?\d*)\s*=\s*[_?]/))) return +m[1] * +m[2];
+  if ((m = p.match(/(\d+\.?\d*)\s*÷\s*(\d+\.?\d*)\s*=\s*[_?]/))) return +m[1] / +m[2];
   if ((m = p.match(/one more than (\d+)/i))) return +m[1] + 1;
   if ((m = p.match(/one less than (\d+)/i))) return +m[1] - 1;
   if ((m = p.match(/comes immediately after (\d+)/i))) return +m[1] + 1;
@@ -265,7 +302,7 @@ check('wrong-answer-math', 'P0',
     if (!eligible(q)) return false;
     const exp = expectedMath(q.prompt_text ?? '');
     if (exp === undefined || !Number.isFinite(exp)) return false;
-    const ans = Number(String(correctLabel(q)).replace(/,/g, ''));
+    const ans = toNum(correctLabel(q));
     return !Number.isFinite(ans) || Math.abs(ans - exp) > 1e-9;
   }));
 
