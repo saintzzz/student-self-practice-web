@@ -38,7 +38,9 @@ for (const [s, c] of Object.entries(bySet).sort()) console.log(`  ${s}: keep=${c
 const rej = verdicts.filter((v) => v.verdict === 'reject');
 console.log('\nREJECT ids:', rej.length);
 writeFileSync(join(DIR, 'verdicts.json'), JSON.stringify(verdicts, null, 0));
-writeFileSync(join(DIR, 'reject-ids.json'), JSON.stringify(rej.map((v) => v.id)));
+let prior = [];
+try { prior = JSON.parse(readFileSync(join(DIR, 'reject-ids.json'), 'utf8')); } catch {}
+writeFileSync(join(DIR, 'reject-ids.json'), JSON.stringify([...new Set([...prior, ...rej.map((v) => v.id)])]));
 // samples per set for eyeball check
 for (const s of Object.keys(bySet).sort()) {
   console.log(`\n--- ${s} REJECT samples ---`);

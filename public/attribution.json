@@ -1,5 +1,60 @@
 {
-  "images": [],
+  "images": [
+    {
+      "wordId": "festival",
+      "word": "festival",
+      "file": "/images/vocab/festival.webp",
+      "title": "Vietnamese Tet festival flags and temple gate",
+      "creator": "VieSchool",
+      "creatorUrl": "",
+      "license": "by",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "",
+      "provider": "openai-chatgpt-image",
+      "openverseId": "",
+      "modified": true,
+      "reviewStatus": "approved",
+      "reviewedBy": "devin-cr95",
+      "reviewedAt": "2026-10-18"
+    },
+    {
+      "wordId": "apricot-blossom",
+      "word": "apricot blossom",
+      "file": "/images/vocab/apricot-blossom.webp",
+      "title": "Hoa mai - yellow apricot blossom branch",
+      "creator": "VieSchool",
+      "creatorUrl": "",
+      "license": "by",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "",
+      "provider": "openai-chatgpt-image",
+      "openverseId": "",
+      "modified": true,
+      "reviewStatus": "approved",
+      "reviewedBy": "devin-cr95",
+      "reviewedAt": "2026-10-18"
+    },
+    {
+      "wordId": "dragon-dance",
+      "word": "dragon dance",
+      "file": "/images/vocab/dragon-dance.webp",
+      "title": "Vietnamese lion-dragon dance costume head",
+      "creator": "VieSchool",
+      "creatorUrl": "",
+      "license": "by",
+      "licenseVersion": "4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceUrl": "",
+      "provider": "openai-chatgpt-image",
+      "openverseId": "",
+      "modified": true,
+      "reviewStatus": "approved",
+      "reviewedBy": "devin-cr95",
+      "reviewedAt": "2026-10-18"
+    }
+  ],
   "collections": [
     {
       "id": "twemoji",
@@ -89,7 +144,7 @@
     },
     {
       "id": "vieschool-original-assets",
-      "title": "VieSchool original diagrams and sound effects (incl. CR-82 synthesized tap/pop/flip/streak/star ui sfx)",
+      "title": "VieSchool original diagrams and sound effects (incl. CR-82 synthesized tap/pop/flip/streak/star ui sfx) + CR-95 game card art",
       "author": "VieSchool",
       "license": "proprietary",
       "licenseLabel": "Bản quyền VieSchool - nội dung tự sản xuất",
@@ -98,7 +153,8 @@
       "version": "2026-10-17",
       "paths": [
         "/images/v6/",
-        "/sfx/"
+        "/sfx/",
+        "/images/games/"
       ],
       "modified": false
     },
