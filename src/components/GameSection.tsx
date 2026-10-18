@@ -53,13 +53,17 @@ class GameSectionBoundary extends Component<BoundaryProps, BoundaryState> {
   render(): ReactNode {
     if (this.state.failed) {
       return (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        /* r58: role=alert announces the crash + autoFocus lands keyboard/
+           SR users on the retry affordance (the focused control just
+           unmounted with the game). */
+        <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
           <p data-testid="game-section-error" className="font-semibold text-slate-200">
             Trò chơi chưa tải được - em thử lại nhé.
           </p>
           <button
             type="button"
             data-testid="game-section-retry"
+            autoFocus
             onClick={() => this.setState((s) => ({ attempt: s.attempt + 1, failed: false }))}
             className="min-h-[44px] rounded-2xl bg-amber-400 px-6 py-2 font-extrabold text-amber-950 transition hover:bg-amber-300 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
           >
