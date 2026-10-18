@@ -4,6 +4,7 @@ import {
   fastForwardThroughRounds1And2,
   goToNextRound,
   runExtraLetterRound,
+  runGameRound,
   startBatch,
 } from './utils/batch-flow';
 import { answerExtraLetterTile, currentQuestionKindOneOf, goToNextQuestion, readQuestionProgress } from './utils/practice-flow';
@@ -96,6 +97,8 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
   test('batch summary headline points figure equals the sum of every real per-round points figure observed (AC36)', async ({
     page,
   }) => {
+    // Full 5-round journey incl. the CR-86 game round - >90s under load.
+    test.setTimeout(150_000);
     await page.addInitScript(() => {
       // Round 3 is not under test here -- forced through its
       // speech-recognition-unsupported fallback path deterministically,
@@ -116,6 +119,10 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
     await goToNextRound(page);
     await runDescribeAndChooseImageRound(page);
     await goToNextRound(page);
+    // CR-86: the seeded bonus game Round 5 sits between Round 4's summary
+    // and the Batch summary - play it through like a real round.
+    await runGameRound(page);
+    await goToNextRound(page);
 
     await expect(page.getByTestId('batch-score-summary')).toBeVisible();
 
@@ -126,7 +133,7 @@ test.describe('Points scoring (plan.md v10 AC34-AC36)', () => {
     // scoping the text-pattern search to it is safe and precise.
     let summedPoints = 0;
     let summedMaxPoints = 0;
-    for (const roundNumber of [1, 2, 3, 4] as const) {
+    for (const roundNumber of [1, 2, 3, 4, 5] as const) {
       const breakdown = page.getByTestId(`round-breakdown-${roundNumber}`);
       await expect(breakdown, `expected round-breakdown-${roundNumber} to be visible on the Batch summary`).toBeVisible();
       const roundPoints = await findPointsFraction(page, breakdown);

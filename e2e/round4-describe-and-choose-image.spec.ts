@@ -62,10 +62,10 @@ test.describe('Batch/Round: Round 4 (describe-and-choose-image)', () => {
   }) => {
     await reachRound4(page);
 
-    await test.step('Round 4 begins at round 4 of 4 (v8: either describe-and-choose-image or picture-pair-matching, both are real content, never RoundStub)', async () => {
+    await test.step('Round 4 begins at round 4 of 5 (v8: either describe-and-choose-image or picture-pair-matching, both are real content, never RoundStub)', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(4);
-      expect(roundProgress.total).toBe(4);
+      expect(roundProgress.total).toBe(5);
       await currentQuestionKindOneOf(page, ROUND4_KINDS);
     });
 

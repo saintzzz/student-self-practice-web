@@ -38,7 +38,7 @@ test.describe('kids-UX: launchpad (CR-73)', () => {
     await expect(page.getByTestId('hub-tile-more')).toBeVisible();
     await expect(page.getByTestId('hub-tile-reward')).toBeVisible();
     await expect(page.getByTestId('instruction-speaker')).toHaveCount(0);
-    await expect(page.getByText('Mình cùng chơi 4 trò nhỏ nhé!', { exact: false })).toBeVisible();
+    await expect(page.getByText('Mình cùng chơi 5 trò nhỏ nhé!', { exact: false })).toBeVisible();
     await expect(page.getByTestId('drill-english')).toHaveCount(0);
 
     // Luyện thêm expands inline (no dialog), subtiles appear, program

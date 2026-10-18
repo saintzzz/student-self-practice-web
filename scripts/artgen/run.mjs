@@ -5,19 +5,21 @@
  *   node scripts/artgen/run.mjs --login        open browser, log in once (manual)
  *   node scripts/artgen/run.mjs --gen [id...]  generate manifest assets
  *
- * Uses a persistent Chromium profile (scripts/artgen/profile/) so the login
- * survives between runs. For each asset: new chat -> prompt -> wait for the
- * generated image -> download via signed URL -> artgen-out/{id}.png.
+ * Uses a persistent Chromium profile OUTSIDE the repo (~/.vieschool-artgen/)
+ * so Vite's file watcher never trips on locked Chrome profile files.
+ * For each asset: new chat -> prompt -> wait for the generated image ->
+ * download via signed URL -> artgen-out/{id}.png.
  * Resize/convert to webp happens in resize.py (PIL).
  */
 import { chromium } from 'playwright';
 import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 import { ASSETS } from './manifest.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const PROFILE = join(HERE, 'profile');
+const PROFILE = join(homedir(), '.vieschool-artgen', 'profile');
 const OUT = join(HERE, '..', '..', 'artgen-out');
 const URL_CHAT = 'https://chatgpt.com/';
 mkdirSync(OUT, { recursive: true });

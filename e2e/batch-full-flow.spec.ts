@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { goToNextRound, readBatchScoreSummary, readRoundProgress, runExtraLetterRound, runListeningSentenceRound, startBatch } from './utils/batch-flow';
+import { goToNextRound, readBatchScoreSummary, readRoundProgress, runExtraLetterRound, runGameRound, runListeningSentenceRound, startBatch } from './utils/batch-flow';
 import { type Fraction, currentQuestionKindOneOf, parseFraction, questionCard } from './utils/practice-flow';
 import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback } from './utils/round34-flow';
 
@@ -9,7 +9,7 @@ import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback 
  * Round 2 -> Round 3 -> Round 4 -> Batch summary, confirming a real
  * question-card renders for every round (never RoundStub's "coming soon"
  * placeholder -- src/components/RoundStub.tsx) and the Batch summary's
- * per-round breakdown reflects real scored totals for all 4 rounds, not the
+ * per-round breakdown reflects real scored totals for all 5 rounds, not the
  * "Chưa có nội dung ở bản này" (no content in this build) placeholder text
  * that src/components/BatchSummary.tsx renders for round.implemented ===
  * false.
@@ -24,7 +24,11 @@ import { runDescribeAndChooseImageRound, runPronunciationRecordingRoundFallback 
  * summary, unlike a stub.
  */
 test.describe('Batch/Round: full flow reaches the Batch summary with no stub rounds remaining', () => {
-  test('Grade -> Start Batch -> Round 1..4 -> Batch summary, with real content in every round', async ({ page }) => {
+  test('Grade -> Start Batch -> Round 1..5 -> Batch summary, with real content in every round', async ({ page }) => {
+    /* The full 5-round journey needs >90s under 3-worker CPU contention
+       (46s isolated; the CR-86 game round alone can take ~15-30s of
+       throttled picks). */
+    test.setTimeout(150_000);
     const pageErrors: Error[] = [];
     const onPageError = (error: Error) => pageErrors.push(error);
     page.on('pageerror', onPageError);
@@ -103,12 +107,23 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
       // the v5 round3-round4-stubs.spec.ts off-by-one).
       await goToNextRound(page);
 
-      await test.step('the Batch summary shows a per-round breakdown with real, parseable scores for all 4 rounds -- no "Chưa có nội dung ở bản này" placeholder left for any round (AC21/AC24/AC25)', async () => {
+      // CR-86: after Round 4's summary the Batch lands on the seeded bonus
+      // game Round 5 - play it through like a real round before the Batch
+      // summary exists.
+      await test.step('Round 5 (bonus game round) plays through to its own round-score-summary', async () => {
+        const roundProgress = await readRoundProgress(page);
+        expect(roundProgress.current).toBe(5);
+        expect(roundProgress.total).toBe(5);
+        await runGameRound(page);
+      });
+      await goToNextRound(page);
+
+      await test.step('the Batch summary shows a per-round breakdown with real, parseable scores for all 5 rounds -- no "Chưa có nội dung ở bản này" placeholder left for any round (AC21/AC24/AC25)', async () => {
         await expect(page.getByTestId('batch-score-summary')).toBeVisible();
         const batchScore = await readBatchScoreSummary(page);
 
-        const roundBreakdownFractions: Partial<Record<1 | 2 | 3 | 4, Fraction>> = {};
-        for (const roundNumber of [1, 2, 3, 4] as const) {
+        const roundBreakdownFractions: Partial<Record<1 | 2 | 3 | 4 | 5, Fraction>> = {};
+        for (const roundNumber of [1, 2, 3, 4, 5] as const) {
           const breakdown = page.getByTestId(`round-breakdown-${roundNumber}`);
           await expect(breakdown, `expected round-breakdown-${roundNumber} to be visible on the Batch summary`).toBeVisible();
           const breakdownText = (await breakdown.innerText()).trim();
@@ -126,17 +141,18 @@ test.describe('Batch/Round: full flow reaches the Batch summary with no stub rou
         }
 
         const round3Fraction = roundBreakdownFractions[3]!;
-        const expectedTotalQuestions = round1.totalQuestions + round2.totalQuestions + round3Fraction.total + round4.totalQuestions;
-        expect(batchScore.total, 'batch-score-summary total question count must sum all 4 real rounds').toBe(expectedTotalQuestions);
+        const round5Fraction = roundBreakdownFractions[5]!;
+        const expectedTotalQuestions = round1.totalQuestions + round2.totalQuestions + round3Fraction.total + round4.totalQuestions + round5Fraction.total;
+        expect(batchScore.total, 'batch-score-summary total question count must sum all 5 real rounds').toBe(expectedTotalQuestions);
 
-        const expectedTotalCorrect = round1.correctCount + round2.correctCount + round3Fraction.current + round4.correctCount;
-        expect(batchScore.current, 'batch-score-summary correct count must sum all 4 real rounds').toBe(expectedTotalCorrect);
+        const expectedTotalCorrect = round1.correctCount + round2.correctCount + round3Fraction.current + round4.correctCount + round5Fraction.current;
+        expect(batchScore.current, 'batch-score-summary correct count must sum all 5 real rounds').toBe(expectedTotalCorrect);
       });
     } finally {
       page.off('pageerror', onPageError);
     }
 
-    await test.step('no uncaught page errors occurred anywhere across the full Grade -> Batch -> Round 1-4 -> Batch summary flow', async () => {
+    await test.step('no uncaught page errors occurred anywhere across the full Grade -> Batch -> Round 1-5 -> Batch summary flow', async () => {
       expect(
         pageErrors,
         `page threw uncaught error(s) during the full Batch flow: ${pageErrors.map((error) => error.message).join('; ')}`,

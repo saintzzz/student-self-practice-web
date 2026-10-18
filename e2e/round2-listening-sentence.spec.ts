@@ -21,7 +21,7 @@ import { currentQuestionKindOneOf } from './utils/practice-flow';
  * mixes kind values, not literally one exact kind string").
  *
  * This test runs its own independent Round 1 pass first (Round 2 cannot be
- * reached any other way in the fixed 4-round Batch order) but does not
+ * reached any other way in the fixed 5-round Batch order) but does not
  * assert on Round 1's own behavior in depth -- that is round1-extra-letter
  * .spec.ts's job. This test is independent of that spec and of
  * round2-listening-image-choice.spec.ts (item 2's deeper listening-
@@ -47,10 +47,10 @@ test.describe('Batch/Round: Round 2 (mixed listening-sentence-fill-blank + liste
     await runExtraLetterRound(page);
     await goToNextRound(page);
 
-    await test.step('Round 2 begins at round 2 of 4 with a listening question (either kind)', async () => {
+    await test.step('Round 2 begins at round 2 of 5 with a listening question (either kind)', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(2);
-      expect(roundProgress.total).toBe(4);
+      expect(roundProgress.total).toBe(5);
       await currentQuestionKindOneOf(page, [
         'listening-sentence-fill-blank',
         'listening-image-choice',

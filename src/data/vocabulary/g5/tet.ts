@@ -14,9 +14,9 @@ const t = G5_TET_TOPIC.id;
 export const G5_TET_WORDS: VocabWord[] = [
   { id: 'firecracker', topicId: t, word: 'firecracker', plural: 'firecrackers', emoji: '🧨', countable: true, explanation: 'Pháo Tết tiếng Anh là "firecracker".' },
   { id: 'red-envelope', topicId: t, word: 'red envelope', plural: 'red envelopes', emoji: '🧧', countable: true, explanation: 'Bao lì xì tiếng Anh là "red envelope".' },
-  { id: 'dragon-dance', topicId: t, imageUrl: '/images/vocab/dragon-dance.webp', word: 'dragon dance', plural: 'dragon dances', emoji: '🐲', countable: true, explanation: 'Điệu múa rồng tiếng Anh là "dragon dance".' },
-  { id: 'apricot-blossom', topicId: t, imageUrl: '/images/vocab/apricot-blossom.webp', word: 'apricot blossom', plural: 'apricot blossoms', emoji: '🏵️', countable: true, explanation: 'Hoa mai tiếng Anh là "apricot blossom".' },
-  { id: 'festival', topicId: t, imageUrl: '/images/vocab/festival.webp', word: 'festival', plural: 'festivals', emoji: '🎏', countable: true, explanation: 'Lễ hội tiếng Anh là "festival".' },
+  { id: 'dragon-dance', topicId: t, word: 'dragon dance', plural: 'dragon dances', emoji: '🐲', countable: true, explanation: 'Điệu múa rồng tiếng Anh là "dragon dance".' },
+  { id: 'apricot-blossom', topicId: t, word: 'apricot blossom', plural: 'apricot blossoms', emoji: '🏵️', countable: true, explanation: 'Hoa mai tiếng Anh là "apricot blossom".' },
+  { id: 'festival', topicId: t, word: 'festival', plural: 'festivals', emoji: '🎏', countable: true, explanation: 'Lễ hội tiếng Anh là "festival".' },
   { id: 'mooncake', topicId: t, word: 'mooncake', plural: 'mooncakes', emoji: '🥮', countable: true, explanation: 'Bánh trung thu tiếng Anh là "mooncake".' },
   ...pick(CAMPING_WORDS, 'lantern'),
   ...pick(G4_BIRTHDAY_WORDS, 'firework'),

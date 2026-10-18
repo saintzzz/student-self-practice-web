@@ -1,10 +1,11 @@
 // Probe the artgen profile's ChatGPT state: logged-in? composer? banners?
 import { chromium } from 'playwright';
 import { join, dirname } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ctx = await chromium.launchPersistentContext(join(HERE, 'profile'), {
+const ctx = await chromium.launchPersistentContext(join(homedir(), '.vieschool-artgen', 'profile'), {
   headless: false, viewport: { width: 1280, height: 800 },
   args: ['--disable-blink-features=AutomationControlled'],
 });

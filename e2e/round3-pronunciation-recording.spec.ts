@@ -75,10 +75,10 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
     try {
       await fastForwardThroughRounds1And2(page);
 
-      await test.step('Round 3 begins at round 3 of 4 with pronunciation-recording questions', async () => {
+      await test.step('Round 3 begins at round 3 of 5 with pronunciation-recording questions', async () => {
         const roundProgress = await readRoundProgress(page);
         expect(roundProgress.current).toBe(3);
-        expect(roundProgress.total).toBe(4);
+        expect(roundProgress.total).toBe(5);
         await currentQuestionKind(page, 'pronunciation-recording');
       });
 
@@ -181,7 +181,7 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
     await test.step('the Batch reaches Round 4 after the unsupported-browser fallback, never getting stuck', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(4);
-      expect(roundProgress.total).toBe(4);
+      expect(roundProgress.total).toBe(5);
       await currentQuestionKindOneOf(page, [...ROUND4_KINDS]);
     });
   });
@@ -235,7 +235,7 @@ test.describe('Batch/Round: Round 3 (pronunciation-recording)', () => {
     await test.step('the Batch reaches Round 4 after the permission-denied fallback, never getting stuck', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(4);
-      expect(roundProgress.total).toBe(4);
+      expect(roundProgress.total).toBe(5);
       await currentQuestionKindOneOf(page, [...ROUND4_KINDS]);
     });
   });

@@ -30,10 +30,10 @@ test.describe('Batch/Round: Round 1 (extra-letter)', () => {
   }) => {
     await startBatch(page);
 
-    await test.step('Round 1 begins at round 1 of 4 with extra-letter questions', async () => {
+    await test.step('Round 1 begins at round 1 of 5 with extra-letter questions', async () => {
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(1);
-      expect(roundProgress.total).toBe(4);
+      expect(roundProgress.total).toBe(5);
       await currentQuestionKindOneOf(page, ['extra-letter', 'image-choice']);
     });
 
@@ -72,7 +72,7 @@ test.describe('Batch/Round: Round 1 (extra-letter)', () => {
       await goToNextRound(page);
       const roundProgress = await readRoundProgress(page);
       expect(roundProgress.current).toBe(2);
-      expect(roundProgress.total).toBe(4);
+      expect(roundProgress.total).toBe(5);
       // v8 mixes listening-image-choice into Round 2's pool alongside
       // listening-sentence-fill-blank (plan.md v8 AC30), so the first
       // question can legitimately be either kind.

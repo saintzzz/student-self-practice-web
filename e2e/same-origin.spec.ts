@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   goToNextRound,
   runExtraLetterRound,
+  runGameRound,
   runListeningSentenceRound,
   startBatch,
 } from './utils/batch-flow';
@@ -15,7 +16,7 @@ import { gotoApp } from './utils/auth-flow';
  * C4 runtime gate (PRD r3 AC-2.6 / constitution constraint C4): at runtime
  * the app must never reach a third-party origin. This spec records EVERY
  * request through the full user journey - Grade select -> Credits -> back
- * -> a complete 4-round Batch -> batch summary - and asserts all URLs are
+ * -> a complete 5-round Batch -> batch summary - and asserts all URLs are
  * same-origin. That means emoji SVGs, Lottie JSON, the dotlottie WASM, any
  * approved photos, and attribution.json are all self-hosted.
  *
@@ -40,6 +41,8 @@ const isExternal = (u: string, allowed: string[]) =>
 
 test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
   test('every request across a full Grade->Credits->Batch journey is same-origin', async ({ page }) => {
+    // Full 5-round journey incl. the CR-86 game round - >90s under load.
+    test.setTimeout(150_000);
     // Round 3 must run through its deterministic fallback path: remove
     // SpeechRecognition before any app code runs (same technique as
     // batch-full-flow.spec.ts / round3-pronunciation-recording.spec.ts).
@@ -72,9 +75,10 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
     await page.getByTestId('credits-back').click();
     await expect(page.getByTestId('grade-card-grade-2')).toBeVisible();
 
-    // 2. Full 4-round batch, exercising every EmojiVisual surface
-    //    (image-choice prompts, feedback accents + pictures, listening
-    //    option visuals, describe options, pair tiles, summary accents).
+    // 2. Full 5-round batch (4 question rounds + CR-86 bonus game round),
+    //    exercising every EmojiVisual surface (image-choice prompts,
+    //    feedback accents + pictures, listening option visuals, describe
+    //    options, pair tiles, summary accents, game art).
     await startBatch(page);
     await runExtraLetterRound(page);
     await goToNextRound(page);
@@ -83,6 +87,8 @@ test.describe('Same-origin asset gate (PRD r3 AC-2.6, C4)', () => {
     await runPronunciationRecordingRoundFallback(page, 'speech-recognition-unsupported');
     await goToNextRound(page);
     await runDescribeAndChooseImageRound(page);
+    await goToNextRound(page);
+    await runGameRound(page);
     await goToNextRound(page);
     await expect(page.getByTestId('batch-score-summary')).toBeVisible();
 

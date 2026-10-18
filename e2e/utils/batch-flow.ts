@@ -27,9 +27,10 @@ import { gotoApp } from './auth-flow';
  * topic selection step, the flow is
  * Grade -> Start a Batch -> Round 1..4 -> Batch summary.
  *
- * A Batch is exactly 4 fixed-order Rounds (AC17): extra-letter,
- * listening-sentence-fill-blank, pronunciation-recording,
- * describe-and-choose-image. Round 3/Round 4's own runners
+ * A Batch is 4 fixed-order question Rounds (AC17) + the CR-86 bonus game
+ * Round 5: extra-letter, listening-sentence-fill-blank,
+ * pronunciation-recording, describe-and-choose-image, then a seeded
+ * Game Zone pick game. Round 3/Round 4's own runners
  * (runPronunciationRecordingRoundFallback, runDescribeAndChooseImageRound)
  * live in ./round34-flow.ts, split out to keep this file under the
  * project's ~200-line file-size guideline.
@@ -78,6 +79,40 @@ export async function readBatchScoreSummary(page: Page): Promise<Fraction> {
 
 export async function goToNextRound(page: Page): Promise<void> {
   await page.getByTestId('next-round-button').click();
+}
+
+/**
+ * CR-86: drives the bonus game Round 5 (game-section-banner + a seeded
+ * pick game) through to round-score-summary. All GAME_ROUND_POOL games
+ * share the mechanics option shell, so clicking every visible
+ * [data-correct] option plays any of them perfectly. DOM .click() is
+ * used instead of locator.click() because moving options (drifting
+ * fish, moles) never satisfy actionability stability. If the game chunk
+ * fails to load, game-section-skip ends the round with a zero outcome -
+ * the driver takes that path rather than stalling (same resilience the
+ * boundary itself guarantees a real batch).
+ */
+export async function runGameRound(page: Page): Promise<void> {
+  await expect(page.getByTestId('game-section-banner')).toBeVisible({ timeout: 15_000 });
+  const summary = page.getByTestId('round-score-summary');
+  /* Throttled loop: games keep the answered [data-correct] element in the
+     DOM through their ~700ms feedback lock, so every iteration must wait
+     whether or not a click landed - otherwise the budget burns out in a
+     few seconds while the game still has questions to serve. 120 x ~400ms
+     covers the longest pool game (picture-reveal lifts 9 tiles). */
+  for (let i = 0; i < 120 && !(await summary.isVisible()); i += 1) {
+    const skip = page.getByTestId('game-section-skip');
+    if (await skip.isVisible()) {
+      await skip.click();
+    } else {
+      await page.evaluate(() => {
+        const el = document.querySelector<HTMLElement>('[data-correct="true"]:not([disabled])');
+        if (el && el.getBoundingClientRect().width > 0) el.click();
+      });
+    }
+    await page.waitForTimeout(350);
+  }
+  await expect(summary).toBeVisible({ timeout: 15_000 });
 }
 
 export interface RoundRunResult {

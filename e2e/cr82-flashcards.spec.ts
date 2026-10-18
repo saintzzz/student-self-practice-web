@@ -18,7 +18,9 @@ async function openFlashcards(page: Page): Promise<void> {
   await page.getByTestId('hub-tile-more').click();
   await page.getByTestId('hub-subtile-english').click();
   await page.getByTestId('flashcards-start').click();
-  await expect(page.getByTestId('flashcard-card')).toBeVisible();
+  /* FlashcardScreen is a lazy chunk - the default 5s is not enough under
+     3-worker CPU contention (observed flake at 44s into the run). */
+  await expect(page.getByTestId('flashcard-card')).toBeVisible({ timeout: 15_000 });
 }
 
 async function rateCurrent(page: Page, kind: 'known' | 'again'): Promise<void> {
