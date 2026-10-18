@@ -141,7 +141,7 @@ check('duplicate-choices', 'P1',
 const OPEN_PROMPT =
   /\bwhat about you\b|\bhow about you\b|\byour favorite\b|\bwhat do you like\b|\bwhat do you want\b|\bdo you like doing\b/i;
 const BROKEN_CHOICE =
-  /\blike (cook|watch|read|brush|play|ride|swim|sing|danc|eat|draw|jump|shop|sleep|driv|fly|walk|run|listen)\b(?!ing)|\bi am\b|\bi not\b|\bi like\b\.?$/i;
+  /\blike (cook|watch|read|brush|play|ride|swim|sing|dance?|eat|draw|jump|shop|sleep|drive?|fly|walk|run|listen)\b(?!ing)|\bi am\b|\bi not\b|\bi like\b\.?$/i;
 const IS_EN = (l) => /^[a-zA-Z'’.,!\s-]+$/.test(l);
 check('ambiguous-open-prompt', 'P1',
   'Open-ended prompt where more than one choice is a plausible true answer - review for quarantine',
