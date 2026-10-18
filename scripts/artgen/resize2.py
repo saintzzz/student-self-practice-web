@@ -32,12 +32,16 @@ def main():
         if not src.exists():
             missing += 1
             continue
+        dst = PUB / e['out']
+        # Incremental: skip webp newer than its png so the script can run
+        # alongside the gen loop and only encode fresh arrivals.
+        if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
+            continue
         im = Image.open(src).convert('RGB')
         w, h = im.size
         s = min(w, h)
         size = e.get('size', 512)
         im = im.crop(((w - s)//2, (h - s)//2, (w + s)//2, (h + s)//2)).resize((size, size), Image.LANCZOS)
-        dst = PUB / e['out']
         dst.parent.mkdir(parents=True, exist_ok=True)
         im.save(dst, 'WEBP', quality=e.get('q', 85), method=6)
         done.append(dst)
