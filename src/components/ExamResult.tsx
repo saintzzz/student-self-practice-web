@@ -44,6 +44,12 @@ export const PROGRAM_LABEL: Record<ExamProgramId, string> = {
 const FORK_GOLD =
   'inline-flex min-h-[76px] flex-1 items-center justify-center rounded-full bg-gradient-to-b from-amber-300 to-amber-500 px-6 text-xl font-extrabold text-amber-950 shadow-md transition hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 motion-reduce:transition-none';
 
+/** Certificate stat tile - the report-sheet depth idiom (gradient face +
+ *  inset highlight + soft bottom edge) so the tiles read as printed
+ *  boxes on the certificate, not floating flat cards. */
+const STAT_TILE =
+  'rounded-xl bg-gradient-to-b from-white to-slate-50 p-3 ring-1 ring-slate-200 shadow-[inset_0_1px_0_white,0_3px_0_rgba(15,23,42,0.08)]';
+
 /**
  * CR-40: IOE bank strings carry literal `<u>underline</u>` markup for the
  * "underlined part" pronunciation questions. Render it as real underlines
@@ -132,17 +138,17 @@ export function ExamResult({
             ))}
           </div>
           <div className="mt-6 grid grid-cols-3 gap-3">
-            <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <div className={STAT_TILE}>
               <div data-testid="exam-score" className={`${TYPE_HERO_NUMBER_PAPER} text-3xl`}>{result.points}</div>
               <div className="text-xs font-bold text-slate-500">điểm</div>
             </div>
-            <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <div className={STAT_TILE}>
               <div className={`${TYPE_HERO_NUMBER_PAPER} text-3xl`}>
                 {result.correctCount}/{result.totalCount}
               </div>
               <div className="text-xs font-bold text-slate-500">câu đúng</div>
             </div>
-            <div className="rounded-xl bg-white p-3 ring-1 ring-slate-200">
+            <div className={STAT_TILE}>
               <div className={`${TYPE_HERO_NUMBER_PAPER} text-3xl`}>
                 {mm}:{String(ss).padStart(2, '0')}
               </div>
@@ -185,12 +191,12 @@ export function ExamResult({
             )}
           </div>
 
-          <SendResultsCard />
+          <SendResultsCard surface="paper" />
           {/* Dev-review #1/#2: ShareCard owns its own privacy - null for
               guests, ParentGate + live-token re-check for signed-in
               viewers. No wrapper state needed here. */}
           <div className="mt-4">
-            <ShareCard title={shareTitle} lines={shareLines} label="Chia sẻ thành tích" />
+            <ShareCard title={shareTitle} lines={shareLines} label="Chia sẻ thành tích" surface="paper" />
           </div>
         </div>
 
@@ -205,7 +211,7 @@ export function ExamResult({
                 }`}
               >
                 <div className="text-xs font-bold text-slate-500">Câu {item.index + 1}</div>
-                <div className="mt-1 font-mono text-sm text-slate-800"><MarkupText text={reviewPrompt(item.question)} /></div>
+                <div className="mt-1 text-sm font-semibold text-slate-800"><MarkupText text={reviewPrompt(item.question)} /></div>
                 <div className="mt-2 text-sm">
                   <span className="font-bold text-slate-700">Đáp án đúng: </span>
                   <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(item.question)} /></span>

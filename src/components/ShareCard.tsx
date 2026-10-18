@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NAV_PILL_SM } from '../lib/ui/tokens';
+import { BTN_SECONDARY_PAPER, NAV_PILL_SM } from '../lib/ui/tokens';
 import { trackFunnel } from '../lib/funnel';
 import { isParentVerified, ParentGate } from './ParentGate';
 import { useLoggedIn } from './SendResultsCard';
@@ -13,6 +13,9 @@ export interface ShareCardProps {
   lines: string[];
   /** Button label - defaults to "Chia sẻ". */
   label?: string;
+  /** Surface the button sits on - 'navy' glass (default) or 'paper'
+   *  ink-safe chrome inside a white sheet (ExamResult certificate). */
+  surface?: 'navy' | 'paper';
 }
 
 type ShareState = 'idle' | 'working' | 'done' | 'error';
@@ -29,7 +32,7 @@ type ShareState = 'idle' | 'working' | 'done' | 'error';
  * handleShare so a latched `unlocked` flag or an expired pass can never
  * generate/export an image.
  */
-export function ShareCard({ title, lines, label = 'Chia sẻ' }: ShareCardProps) {
+export function ShareCard({ title, lines, label = 'Chia sẻ', surface = 'navy' }: ShareCardProps) {
   const loggedIn = useLoggedIn();
   const [state, setState] = useState<ShareState>('idle');
   const [gateOpen, setGateOpen] = useState(false);
@@ -105,11 +108,11 @@ export function ShareCard({ title, lines, label = 'Chia sẻ' }: ShareCardProps)
         data-testid="share-card"
         disabled={state === 'working'}
         onClick={() => (unlocked ? void handleShare() : setGateOpen(true))}
-        className={`${NAV_PILL_SM} disabled:opacity-60`}
+        className={`${surface === 'paper' ? BTN_SECONDARY_PAPER : NAV_PILL_SM} disabled:opacity-60`}
       >
         {state === 'working' ? 'Đang tạo ảnh...' : <span className="inline-flex items-center gap-2">{unlocked ? <IconImage size={18} /> : <IconLock size={18} />} {label}</span>}
       </button>
-      <span role="status" aria-live="polite" className="text-xs font-semibold text-slate-400">
+      <span role="status" aria-live="polite" className={`text-xs font-semibold ${surface === 'paper' ? 'text-slate-500' : 'text-slate-400'}`}>
         {state === 'done' ? 'Ảnh đã sẵn sàng!' : state === 'error' ? 'Chưa tạo được ảnh - thử lại nhé.' : ''}
       </span>
       {gateOpen && (

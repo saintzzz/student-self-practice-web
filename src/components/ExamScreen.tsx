@@ -494,9 +494,6 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         </div>
         {isPractice ? (
           <div className="flex shrink-0 items-center gap-2">
-            <div data-testid="exam-progress" className="rounded-lg bg-desk-well px-3 py-1 text-lg font-extrabold text-amber-300">
-              Câu {exam.currentIndex + 1}/{exam.questions.length}
-            </div>
             <div data-testid="exam-elapsed" className="rounded-lg bg-desk-well px-3 py-1 font-mono text-lg font-extrabold tabular-nums text-sky-300">
               <IconClock size={15} className="mr-1 inline-block" /> {Math.floor(Math.max(0, now - exam.startedAtMs) / 60000)}:{String(Math.floor(Math.max(0, now - exam.startedAtMs) / 1000) % 60).padStart(2, '0')}
             </div>
@@ -651,7 +648,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
 
       {/* Paper sheet (spec s10): ruled header + navy question chip +
           flag toggle + the question on paper inks. */}
-      <main className={EXAM_SHEET}>
+      <main className={`${EXAM_SHEET} flex flex-col`}>
         <div className={EXAM_SHEET_HEADER}>
           <span>
             <span className={EXAM_QNUM}>Câu {exam.currentIndex + 1}</span>
@@ -672,6 +669,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             </button>
           )}
         </div>
+        {/* my-auto centres the question vertically on the sheet (auto
+            margins absorb leftover space) and collapses to top-flow the
+            moment a long passage needs the room - no clipping. */}
+        <div className="my-auto">
         <ExamQuestionView question={question} answer={exam.answers[exam.currentIndex] ?? null} onAnswer={answer} promptClass={isG12 ? TYPE_PROMPT_PAPER_G12 : TYPE_PROMPT_PAPER_G345} />
         {isPractice && verdict && (
           <div
@@ -696,6 +697,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             </button>
           </div>
         )}
+        </div>
         {!isPractice && (
           <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-4">
             <button
@@ -857,7 +859,7 @@ export function ExamQuestionView({
           {question.kind === 'grammar-mcq' && question.passage && (
             <p
               data-testid="exam-passage"
-              className={`mx-auto mb-4 max-w-xl rounded-xl bg-white p-4 font-mono text-base leading-relaxed ring-1 ring-slate-200 sm:text-lg ${TYPE_BODY_PAPER}`}
+              className={`mx-auto mb-4 max-w-xl rounded-xl bg-white p-4 text-base leading-relaxed ring-1 ring-slate-200 sm:text-lg ${TYPE_BODY_PAPER}`}
             >
               {question.passage}
             </p>
@@ -879,7 +881,7 @@ export function ExamQuestionView({
     case 'true-false-reading':
       return (
         <div>
-          <p className={`mx-auto mb-4 max-w-xl rounded-xl bg-white p-4 font-mono text-base leading-relaxed ring-1 ring-slate-200 sm:text-lg ${TYPE_BODY_PAPER}`}>{question.passage}</p>
+          <p className={`mx-auto mb-4 max-w-xl rounded-xl bg-white p-4 text-base leading-relaxed ring-1 ring-slate-200 sm:text-lg ${TYPE_BODY_PAPER}`}>{question.passage}</p>
           <PromptLine text={question.statement} className={promptClass} />
           <div className="mt-6 flex justify-center gap-4">
             {[true, false].map((v) => (
@@ -959,7 +961,7 @@ export function ExamQuestionView({
                 type="button"
                 data-testid={`exam-letter-${i}`}
                 onClick={() => onAnswer({ type: 'option', index: i })}
-                className="h-16 w-16 rounded-xl bg-white text-2xl font-extrabold uppercase text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
+                className="h-16 w-16 rounded-xl bg-white font-letter text-2xl font-bold uppercase text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
               >
                 {letter}
               </button>
@@ -1093,7 +1095,7 @@ export function WordOrderView({ question, onAnswer, promptClass }: { question: E
             type="button"
             data-testid={`exam-slot-${slot}`}
             onClick={() => setPicked((prev) => prev.filter((_, s) => s !== slot))}
-            className={`${EXAM_OPTION_PAPER} !min-h-[48px] w-auto px-3 py-2 font-mono text-base ${EXAM_SELECTED_PAPER}`}
+            className={`${EXAM_OPTION_PAPER} !min-h-[48px] w-auto px-3 py-2 text-base ${EXAM_SELECTED_PAPER}`}
           >
             {question.tiles[tileIndex]}
           </button>
@@ -1107,7 +1109,7 @@ export function WordOrderView({ question, onAnswer, promptClass }: { question: E
             type="button"
             data-testid={`exam-tile-${tileIndex}`}
             onClick={() => pick(tileIndex)}
-            className="min-h-[64px] rounded-lg bg-white px-4 py-2.5 font-mono text-lg font-extrabold text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
+            className="min-h-[64px] rounded-lg bg-white px-4 py-2.5 text-lg font-extrabold text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
           >
             {question.tiles[tileIndex]}
           </button>

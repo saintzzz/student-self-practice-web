@@ -9,7 +9,7 @@ import {
   type ParentContact,
 } from '../lib/parentContact';
 import { isParentVerified, ParentGate } from './ParentGate';
-import { BTN_PAPER_SECONDARY, CARD_TINT, NAV_PILL, PAPER_PANEL } from '../lib/ui/tokens';
+import { BTN_PAPER_SECONDARY, CARD_TINT, CARD_TINT_PAPER, NAV_PILL, PAPER_PANEL } from '../lib/ui/tokens';
 import { trackFunnel } from '../lib/funnel';
 import { IconLock, IconMail } from './icons';
 
@@ -62,7 +62,7 @@ type SaveState =
   | 'throttled'
   | 'failed';
 
-export function SendResultsCard(): JSX.Element | null {
+export function SendResultsCard({ surface = 'navy' }: { surface?: 'navy' | 'paper' }): JSX.Element | null {
   const loggedIn = useLoggedIn();
   const [contact, setContact] = useState<ParentContact | null>(null);
   const [contactLoaded, setContactLoaded] = useState(false);
@@ -146,10 +146,12 @@ export function SendResultsCard(): JSX.Element | null {
 
   const busy = state === 'saving';
 
+  const onPaper = surface === 'paper';
+
   return (
-    <section data-testid="send-results-card" className={`${CARD_TINT.sky} mt-4 text-left`} aria-label="Gửi kết quả cho ba mẹ">
-      <h3 className="font-display text-lg font-extrabold text-white"><IconMail size={18} className="mr-1.5 inline-block" /> Gửi kết quả cho ba mẹ</h3>
-      <p className="mt-1 text-sm font-semibold text-slate-300">
+    <section data-testid="send-results-card" className={`${onPaper ? CARD_TINT_PAPER.sky : CARD_TINT.sky} mt-4 text-left`} aria-label="Gửi kết quả cho ba mẹ">
+      <h3 className={`font-display text-lg font-extrabold ${onPaper ? 'text-sky-900' : 'text-white'}`}><IconMail size={18} className="mr-1.5 inline-block" /> Gửi kết quả cho ba mẹ</h3>
+      <p className={`mt-1 text-sm font-semibold ${onPaper ? 'text-slate-600' : 'text-slate-300'}`}>
         Nhờ ba mẹ nhập email để nhận kết quả mỗi Chủ nhật nhé!
       </p>
 
@@ -158,7 +160,7 @@ export function SendResultsCard(): JSX.Element | null {
           type="button"
           data-testid="send-results-unlock"
           onClick={() => setGateOpen(true)}
-          className={`${NAV_PILL} mt-3`}
+          className={`${onPaper ? `${BTN_PAPER_SECONDARY} px-5` : NAV_PILL} mt-3`}
         >
           <span className="inline-flex items-center gap-2"><IconLock size={16} /> Nhờ ba mẹ mở</span>
         </button>

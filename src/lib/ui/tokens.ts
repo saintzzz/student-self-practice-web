@@ -43,6 +43,14 @@ export const CARD_TINT = {
   sky: 'rounded-3xl bg-sky-500/15 p-5 ring-1 ring-sky-400/40',
 } as const;
 
+/** Paper-surface counterparts of CARD_TINT - printed-section cards that
+ *  sit ON a white sheet (navy glass over paper washed out: white ink +
+ *  amber NAV_PILL ink were unreadable). Depth idiom matches the report
+ *  stat tiles: gradient face + inset highlight + soft bottom edge. */
+export const CARD_TINT_PAPER = {
+  sky: 'rounded-3xl bg-gradient-to-b from-white to-sky-50 p-5 ring-1 ring-sky-200/80 shadow-[inset_0_1px_0_white,0_4px_0_rgba(2,132,199,0.10)]',
+} as const;
+
 /** Type tokens - display font on headings/numbers, system for body. */
 export const H1 = 'font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl';
 export const H2 = 'font-display text-xl font-bold tracking-tight text-white';
@@ -233,14 +241,16 @@ export const EXAM_HEADER_BRAND =
  *  word-order tiles): non-gold exam.card fill, focus ring, 64px floor. */
 export const EXAM_OPTION =
   'min-h-[64px] rounded-xl bg-[#16232e] px-4 py-3 font-bold text-white ring-1 ring-[#22303d] transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 active:translate-y-0.5 motion-reduce:active:translate-y-0 motion-reduce:transition-none';
-/** exam.selected state - apply alongside EXAM_OPTION when picked. */
-export const EXAM_SELECTED = 'ring-2 ring-orange-500 text-orange-200';
+/** exam.selected state - apply alongside EXAM_OPTION when picked.
+ *  `!`: appended after the base's text-white + ring-[#22303d] so the
+ *  state color must win (same overlay-conflict class as r86 paper). */
+export const EXAM_SELECTED = '!ring-2 !ring-orange-500 !text-orange-200';
 /** exam.navStrip cell (question strip `exam-nav-*`): 48px floor. */
 export const EXAM_NAV_CELL =
   'flex h-12 w-12 items-center justify-center rounded-lg bg-[#16232e] text-sm font-bold text-white ring-1 ring-[#22303d] transition hover:bg-[#132433] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60';
 /** answered strip cell - status.success translucent + check icon in
  *  markup (8.11:1 on exam.card, never color-alone). */
-export const EXAM_NAV_ANSWERED = 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/40';
+export const EXAM_NAV_ANSWERED = '!bg-emerald-500/15 !text-emerald-300 !ring-emerald-400/40';
 
 /** action.audio on navy - quiet board-blue face, amber ring hint.
  *  `exam-listen` and every Nghe-mẫu control maps here. CR-81: indigo
@@ -395,8 +405,8 @@ export const TYPE_HERO_NUMBER_GEO =
   'font-display text-6xl font-extrabold leading-none tabular-nums';
 export const TYPE_SECTION_GEO =
   'font-display text-2xl font-bold leading-tight tracking-tight';
-export const TYPE_PROMPT_GEO_G12 = 'text-2xl font-bold leading-snug';
-export const TYPE_PROMPT_GEO_G345 = 'text-xl font-bold leading-snug';
+export const TYPE_PROMPT_GEO_G12 = 'font-display text-2xl font-bold leading-snug';
+export const TYPE_PROMPT_GEO_G345 = 'font-display text-xl font-bold leading-snug';
 export const TYPE_INSTRUCTION_GEO = 'text-base font-medium leading-normal sm:text-lg';
 export const TYPE_BODY_GEO = 'text-base font-normal leading-relaxed';
 export const TYPE_CAPTION_GEO = 'text-sm font-medium leading-snug';
@@ -456,17 +466,22 @@ export const EXAM_QNUM =
 export const EXAM_OPTION_PAPER =
   'flex min-h-[64px] w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left font-medium text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 motion-reduce:transition-none';
 export const EXAM_OPTION_KEY =
-  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700';
-export const EXAM_SELECTED_PAPER = 'bg-sky-100 text-sky-900 ring-2 ring-sky-600';
-export const EXAM_SELECTED_KEY_PAPER = 'bg-sky-700 text-white';
-export const EXAM_NAV_FLAGGED = 'bg-amber-100 text-amber-900 ring-amber-400';
+  'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-display font-bold text-slate-700';
+/* `!` needed on state overlays: these tokens are appended AFTER a base
+ *  that already carries bg/ring/text (EXAM_OPTION_PAPER's bg-white +
+ *  slate inks, EXAM_NAV_CELL_PAPER's white cell). Without `!`,
+ *  stylesheet order decides and the state color can silently lose -
+ *  the selected option key rendered white-on-white until r86. */
+export const EXAM_SELECTED_PAPER = '!bg-sky-100 !text-sky-900 !ring-2 !ring-sky-600';
+export const EXAM_SELECTED_KEY_PAPER = '!bg-sky-700 !text-white';
+export const EXAM_NAV_FLAGGED = '!bg-amber-100 !text-amber-900 !ring-amber-400';
 export const EXAM_NAV_CELL_PAPER =
   'h-12 w-12 rounded-lg bg-white text-slate-700 ring-1 ring-slate-300';
 export const EXAM_NAV_ANSWERED_PAPER =
-  'bg-emerald-50 text-emerald-800 ring-emerald-400';
+  '!bg-emerald-50 !text-emerald-800 !ring-emerald-400';
 export const EXAM_TIMER =
   'inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-desk-well px-3 font-mono text-xl font-extrabold tabular-nums text-amber-300 sm:text-2xl';
-export const EXAM_TIMER_URGENT = 'bg-rose-600 text-white';
+export const EXAM_TIMER_URGENT = '!bg-rose-600 !text-white';
 export const EXAM_VERDICT_CORRECT =
   'rounded-xl border-l-4 border-emerald-600 bg-emerald-50 p-4 text-emerald-800';
 export const EXAM_VERDICT_WRONG =
@@ -487,8 +502,8 @@ export const EXAM_SHEET_BTN =
 export const SPELL_SLOT =
   'flex h-[76px] min-w-[48px] max-w-[64px] flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-sky-300/70 bg-navy-900/60';
 export const SPELL_SLOT_TARGET =
-  'border-solid border-amber-300 ring-4 ring-amber-300/40';
-export const SPELL_SLOT_FILLED = 'border-solid';
+  '!border-solid !border-amber-300 ring-4 ring-amber-300/40';
+export const SPELL_SLOT_FILLED = '!border-solid';
 export const SPELL_TILE = `${material.tileFace} h-[76px] w-[64px] ${TYPE_LETTER_TILE_PAPER}`;
 export const WORD_CHIP = `${material.tileFace} min-h-[76px] px-5 text-xl font-bold`;
 export const GAP_INPUT_TOGGLE = `${BTN_SECONDARY_NAVY} min-h-[48px]`;

@@ -148,4 +148,21 @@ describe('SendResultsCard', () => {
     fireEvent.click(screen.getByTestId('parent-email-retry'));
     await waitFor(() => expect(screen.getByTestId('parent-verify-sent')).toBeInTheDocument());
   });
+
+  /* surface='paper' (ExamResult certificate): navy glass over a white
+     sheet washed out - white ink + amber NAV_PILL ink were unreadable.
+     The paper variant must use printed-section chrome + paper inks. */
+  it('paper surface swaps navy glass for printed-section chrome', async () => {
+    render(<SendResultsCard surface="paper" />);
+    const card = await screen.findByTestId('send-results-card');
+    expect(card.className).toContain('to-sky-50');
+    expect(card.className).not.toContain('bg-sky-500/15');
+    const title = card.querySelector('h3')!;
+    expect(title.className).toContain('text-sky-900');
+    expect(title.className).not.toContain('text-white');
+    const unlock = await screen.findByTestId('send-results-unlock');
+    expect(unlock.className).toContain('bg-sky-100');
+    expect(unlock.className).not.toContain('bg-white/10');
+    expect(unlock.className).not.toContain('text-amber-200');
+  });
 });

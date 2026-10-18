@@ -171,7 +171,7 @@ export default function SpellItDrag({ tiles, slotCount, disabled, onSubmit }: Sp
               onPointerCancel={slotDrag.onPointerCancel}
               onLostPointerCapture={slotDrag.onLostPointerCapture}
               className={`${SPELL_SLOT} ${targeted ? SPELL_SLOT_TARGET : ''} ${
-                filled ? `border-solid ${material.tileFocus} ${enabled ? 'touch-none' : ''}` : ''
+                filled ? `!border-solid ${material.tileFocus} ${enabled ? 'touch-none' : ''}` : ''
               }`}
             >
               {letter ? (
