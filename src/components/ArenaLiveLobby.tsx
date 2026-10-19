@@ -25,7 +25,7 @@ export default function ArenaLiveLobby({
 }: {
   gradeId: string;
   me: { id: string; name: string };
-  onStart: (ctx: { roomId: string; code: string; seed: string }) => void;
+  onStart: (ctx: { roomId: string; code: string; seed: string; gradeId: string }) => void;
   onClose: () => void;
 }) {
   const [mode, setMode] = useState<'menu' | 'lobby'>('menu');
@@ -37,6 +37,9 @@ export default function ArenaLiveLobby({
   const channelRef = useRef<LiveChannel | null>(null);
   const isHostRef = useRef(false);
   const roomRef = useRef<LiveRoom | null>(null);
+  /** Dedupes the launch path - broadcast 'start' and the reconciliation
+   *  poll below can both observe 'racing'. */
+  const launchedRef = useRef(false);
 
   // Cleanup subscription on unmount; leaving a waiting room also drops
   // the membership row so stale lobbies do not linger.
@@ -64,24 +67,32 @@ export default function ArenaLiveLobby({
           channelRef.current = null;
         }
       },
-      onStart: () => {
-        // Mark the room racing BEFORE the parent unmounts us, or the
-        // cleanup would run arena_live_leave and mark this joiner
-        // "bỏ cuộc" the moment the race starts.
-        roomRef.current = { ...r, status: 'racing' };
-        // A broadcast 'start' is unverified (public channel) - confirm
-        // the room really flipped to racing before launching the run.
-        void liveRoomState(r.id).then((st) => {
-          if (st?.status === 'racing') onStart({ roomId: r.id, code: r.code, seed: r.seed });
-        });
-      },
+      onStart: () => void launchIfRacing(r),
       onLeave: (id) => setRoster((cur) => cur.filter((p) => p.id !== id)),
     });
-    if (!ch) return false;
+    if (!ch) {
+      // Membership was already persisted by create/join - release it so
+      // a failed realtime connect never occupies a seat in the room.
+      void liveRoomLeave(r.id);
+      return false;
+    }
     channelRef.current = ch;
     isHostRef.current = asHost;
     roomRef.current = r;
     return true;
+  }
+
+  /** Broadcast 'start' is a hint, not the mechanism: always confirm the
+   *  room flipped to 'racing' server-side before launching, and only
+   *  mark the room racing on success - otherwise the unmount cleanup
+   *  would skip the waiting-room leave after a forged broadcast. */
+  async function launchIfRacing(r: LiveRoom): Promise<void> {
+    if (launchedRef.current) return;
+    const st = await liveRoomState(r.id);
+    if (st?.status !== 'racing' || launchedRef.current) return;
+    launchedRef.current = true;
+    roomRef.current = { ...r, status: 'racing' };
+    onStart({ roomId: r.id, code: r.code, seed: r.seed, gradeId: r.gradeId });
   }
 
   async function handleCreate(): Promise<void> {
@@ -127,6 +138,16 @@ export default function ArenaLiveLobby({
     setBusy(false);
   }
 
+  // Reconciliation: if the start broadcast is lost (school wifi, brief
+  // disconnect), a joiner still launches - the room row is authoritative.
+  const isHostNow = room ? room.hostId === me.id || isHostRef.current : false;
+  useEffect(() => {
+    if (mode !== 'lobby' || !room || isHostNow) return;
+    const timer = setInterval(() => void launchIfRacing(room), 4_000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, room?.id, isHostNow]);
+
   async function handleStart(): Promise<void> {
     if (!room) return;
     setBusy(true);
@@ -137,11 +158,12 @@ export default function ArenaLiveLobby({
       return;
     }
     channelRef.current?.send({ type: 'start' });
+    launchedRef.current = true;
     roomRef.current = { ...room, status: 'racing' };
-    onStart({ roomId: room.id, code: room.code, seed });
+    onStart({ roomId: room.id, code: room.code, seed, gradeId: room.gradeId });
   }
 
-  const isHost = room ? room.hostId === me.id || isHostRef.current : false;
+  const isHost = isHostNow;
 
   return (
     <div

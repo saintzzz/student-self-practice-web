@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase/client';
 import { getSession } from './auth/practiceAuth';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /** CR-97: Arena live race - real-time N-player duels on one seed.
  *  RPCs persist room membership + final results; the lobby roster rides
@@ -23,6 +24,10 @@ export interface LiveRoom {
   hostName: string;
   /** auth.users id of the host - names collide, ids do not. */
   hostId: string;
+  /** Authoritative exam config - joiners race the HOST's grade/program,
+   *  not whatever hub tile they happened to open the lobby from. */
+  gradeId: string;
+  programId: string;
 }
 
 type LiveEvent =
@@ -50,7 +55,7 @@ export async function liveRoomCreate(gradeId: string, programId: string): Promis
     if (error || !data?.length) return null;
     // The creator IS the host - joiners get host_id from the join RPC.
     const uid = (await getSession())?.user?.id ?? '';
-    return { id: data[0].room_id, code: data[0].code, seed: data[0].seed, status: 'waiting', hostName: '', hostId: uid };
+    return { id: data[0].room_id, code: data[0].code, seed: data[0].seed, status: 'waiting', hostName: '', hostId: uid, gradeId, programId };
   } catch {
     return null;
   }
@@ -68,6 +73,8 @@ export async function liveRoomJoin(code: string): Promise<LiveRoom | null> {
       status: data[0].status,
       hostName: data[0].host_name ?? '',
       hostId: data[0].host_id ?? '',
+      gradeId: data[0].grade_id ?? 'grade-2',
+      programId: data[0].program_id ?? 'english',
     };
   } catch {
     return null;
@@ -143,20 +150,21 @@ export async function subscribeLiveRoom(
   me: { id: string; name: string },
   handlers: LiveHandlers,
 ): Promise<LiveChannel | null> {
+  let channel: RealtimeChannel | null = null;
   try {
     if (!(await getSession())) return null;
     const supabase = await getSupabase();
-    const channel = supabase.channel(`arena-live:${roomId}`, {
+    channel = supabase.channel(`arena-live:${roomId}`, {
       config: { presence: { key: me.id }, broadcast: { self: false } },
     });
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState() as Record<string, { id: string; name: string }[]>;
-        const roster = Object.values(state)
-          .flat()
-          .map((p) => ({ id: p.id, name: p.name, score: null, timeMs: null, finished: false }));
-        handlers.onRoster?.(roster);
-      })
+    const ch = channel;
+    ch.on('presence', { event: 'sync' }, () => {
+      const state = ch.presenceState() as Record<string, { id: string; name: string }[]>;
+      const roster = Object.values(state)
+        .flat()
+        .map((p) => ({ id: p.id, name: p.name, score: null, timeMs: null, finished: false }));
+      handlers.onRoster?.(roster);
+    })
       .on('broadcast', { event: 'live' }, ({ payload }: { payload: LiveEvent }) => {
         if (payload.type === 'start') handlers.onStart?.();
         else if (payload.type === 'progress') handlers.onProgress?.(payload);
@@ -169,7 +177,7 @@ export async function subscribeLiveRoom(
       // can sit without ever reaching SUBSCRIBED. TIMED_OUT/CLOSED plus a
       // hard timeout keep callers out of that limbo.
       const timer = setTimeout(() => reject(new Error('subscribe timeout')), 10_000);
-      channel.subscribe((status: string) => {
+      ch.subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           clearTimeout(timer);
           resolve();
@@ -179,9 +187,9 @@ export async function subscribeLiveRoom(
         }
       });
     });
-    await channel.track({ id: me.id, name: me.name });
+    await ch.track({ id: me.id, name: me.name });
     const send = (evt: LiveEvent) => {
-      void channel.send({ type: 'broadcast', event: 'live', payload: evt });
+      void ch.send({ type: 'broadcast', event: 'live', payload: evt });
     };
     return {
       send,
@@ -191,9 +199,12 @@ export async function subscribeLiveRoom(
       // leaves the stale channel cached under the same topic, and the next
       // subscribe on that topic would hang waiting for an ack that the
       // socket already consumed.
-      unsubscribe: () => void supabase.removeChannel(channel),
+      unsubscribe: () => void supabase.removeChannel(ch),
     };
   } catch {
+    // A failed subscribe must not leave the half-joined channel cached
+    // under its topic - the next attempt would inherit its dead state.
+    if (channel) void getSupabase().then((sb) => sb.removeChannel(channel!)).catch(() => {});
     return null;
   }
 }

@@ -86,8 +86,11 @@ begin
 end;
 $$;
 
+-- The join result carries grade_id/program_id so every racer generates
+-- the room's authoritative question set, not their local hub context.
+drop function if exists practice.arena_live_join(text);
 create or replace function practice.arena_live_join(p_code text)
-returns table (room_id uuid, seed text, status text, host_name text, host_id uuid)
+returns table (room_id uuid, seed text, status text, host_name text, host_id uuid, grade_id text, program_id text)
 language plpgsql
 security definer
 set search_path = ''
@@ -132,7 +135,7 @@ begin
   return query
     select v_room.id, v_room.seed, v_room.status::text,
            (select a.display_name from practice.accounts a where a.id = v_room.host_id),
-           v_room.host_id;
+           v_room.host_id, v_room.grade_id, v_room.program_id;
 end;
 $$;
 

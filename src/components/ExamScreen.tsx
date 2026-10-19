@@ -29,7 +29,7 @@ import { bankSkillOf, skillKeyFor } from '../lib/engagement/skills';
 import { saveExamResult, bindActivityOwner, activityOwnerMatches } from '../lib/practiceResults';
 import { getSession } from '../lib/auth/practiceAuth';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
-import { liveRoomFinish, liveRoomState, subscribeLiveRoom, type LiveChannel, type LivePlayer } from '../lib/arenaLive';
+import { liveRoomFinish, liveRoomLeave, liveRoomState, subscribeLiveRoom, type LiveChannel, type LivePlayer } from '../lib/arenaLive';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { createExamFromBank, gradeNumber } from '../lib/qb/bank';
@@ -166,13 +166,29 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const isLiveArena = isArena && arena?.kind === 'live' && !!arena.liveRoomId;
   const liveChannelRef = useRef<LiveChannel | null>(null);
   const livePointsRef = useRef(0);
+  /** True once the exam itself is over - a pagehide after that must NOT
+   *  mark the player "left", or the finish RPC in ArenaResult would find
+   *  finished_at already set and drop the score. */
+  const liveFinishedRef = useRef(false);
+  liveFinishedRef.current = exam?.finishedAtMs != null;
   const [liveOpponents, setLiveOpponents] = useState<Map<string, LivePlayer & { q?: number }>>(new Map());
   useEffect(() => {
     if (!isLiveArena || !arena?.liveRoomId) return;
     let cancelled = false;
+    const meIdRef = { current: 'me' };
+    const onHide = () => {
+      if (liveFinishedRef.current) return;
+      // Unfinished player abandoning the race: mark them left so the
+      // room can still settle for everyone else instead of waiting on
+      // the 30-minute stale cleanup.
+      liveChannelRef.current?.send({ type: 'leave', id: meIdRef.current });
+      void liveRoomLeave(arena.liveRoomId!);
+    };
+    window.addEventListener('pagehide', onHide);
     void (async () => {
       const session = await getSession();
       const meId = session?.user?.id ?? 'me';
+      meIdRef.current = meId;
       const meName = studentName ?? 'Bạn';
       const ch = await subscribeLiveRoom(arena.liveRoomId!, { id: meId, name: meName }, {
         onRoster: (players) =>
@@ -208,6 +224,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     })();
     return () => {
       cancelled = true;
+      window.removeEventListener('pagehide', onHide);
       liveChannelRef.current?.unsubscribe();
       liveChannelRef.current = null;
     };
@@ -1289,6 +1306,8 @@ function ArenaResult({
   const [failed, setFailed] = useState(false);
   const [newBadges, setNewBadges] = useState<Sticker[]>([]);
   const [livePodium, setLivePodium] = useState<LivePlayer[] | null>(null);
+  /** True while the room is still 'racing' - standings show, no verdict. */
+  const [livePending, setLivePending] = useState(false);
   const settled = useRef(false);
   /** Cancels the live settle poll when the result unmounts. */
   const settleCancelled = useRef(false);
@@ -1315,22 +1334,46 @@ function ArenaResult({
         const session = await getSession();
         const myId = session?.user?.id ?? '';
         liveChannel?.sendFinish(myScore, myTimeMs);
-        await liveRoomFinish(arena.liveRoomId!, myScore);
-        // Races between kids can differ by well over 30s - keep polling
-        // with backoff and bail out cleanly if the result unmounts.
-        const deadline = Date.now() + 90_000;
+        // The finish write must land before any podium maths - retry a
+        // flaky connection, then surface a retryable error, never a
+        // podium built on a result that was never persisted.
+        let posted = await liveRoomFinish(arena.liveRoomId!, myScore);
+        for (let i = 0; !posted && i < 2 && !settleCancelled.current; i++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          posted = await liveRoomFinish(arena.liveRoomId!, myScore);
+        }
+        if (!posted) {
+          if (!settleCancelled.current) setFailed(true);
+          return;
+        }
+        // Standings refresh live while kids finish at their own pace;
+        // the WIN only settles once the room is 'done' - provisional
+        // standings never declare a victor.
+        const deadline = Date.now() + 240_000;
         let players: LivePlayer[] = [];
-        while (Date.now() < deadline && !settleCancelled.current) {
+        let done = false;
+        while (!settleCancelled.current) {
           const st = await liveRoomState(arena.liveRoomId!);
           if (st) {
             players = st.players;
-            if (st.status === 'done' || st.players.every((p) => p.finished)) break;
+            setLivePodium(players);
+            if (st.status === 'done') {
+              done = true;
+              break;
+            }
           }
+          if (Date.now() > deadline) break;
           await new Promise((r) => setTimeout(r, 2500));
         }
         if (settleCancelled.current) return;
-        setLivePodium(players);
-        settle(players[0]?.id === myId && players.length > 1);
+        if (done) {
+          settle(players[0]?.id === myId && players.length > 1);
+          setLivePending(false);
+        } else {
+          // Everyone else's result is still pending - standings stay
+          // visible, the verdict honestly waits.
+          setLivePending(true);
+        }
       })();
       return;
     }
@@ -1487,6 +1530,11 @@ function ArenaResult({
                       </span>
                     </div>
                   ))}
+                  {livePending && (
+                    <p data-testid="arena-live-pending" className="pt-1 text-xs font-bold text-amber-200">
+                      Đang chờ bạn bè làm xong - kết quả sẽ chốt khi cả phòng nộp bài.
+                    </p>
+                  )}
                   <p className="pt-1 text-xs font-bold text-slate-400">
                     Điểm của bạn: {myScore} - hòa điểm thì ai nhanh hơn xếp trên.
                   </p>

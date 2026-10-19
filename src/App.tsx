@@ -350,8 +350,11 @@ export default function App() {
   /** CR-97: live race - the lobby opens as an overlay; when the host
    *  starts, every client launches the same seeded arena run and the
    *  room id rides along for the standings broadcast. */
-  function handleLiveStart(ctx: { roomId: string; code: string; seed: string }): void {
+  function handleLiveStart(ctx: { roomId: string; code: string; seed: string; gradeId: string }): void {
     setLiveLobbyOpen(false);
+    // The room's grade is authoritative - a joiner who opened the lobby
+    // from a different grade hub still races the host's question set.
+    if (GRADES.some((g) => g.id === ctx.gradeId)) setSelectedGradeId(ctx.gradeId);
     setExamProgramId('english');
     setExamMode('arena');
     setExamFocus(null);

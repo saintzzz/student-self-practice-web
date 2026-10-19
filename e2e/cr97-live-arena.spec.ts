@@ -87,25 +87,32 @@ async function page_waitForGrades(page: Page): Promise<void> {
 /** Click through every question of the seeded arena run, then submit. */
 async function raceToFinish(page: Page): Promise<void> {
   const begin = page.getByTestId('exam-begin');
-  if (await begin.isVisible({ timeout: 5_000 }).catch(() => false)) await begin.click();
+  if (await begin.isVisible().catch(() => false)) await begin.click();
   for (let i = 0; i < 15; i++) {
+    // An answered question shows feedback + exam-next (practice-style);
+    // advance past it before looking for the next unanswered one.
+    const next = page.getByTestId('exam-next');
+    if (await next.isVisible().catch(() => false)) {
+      await next.click();
+      continue;
+    }
     const opt = page.locator('[data-testid^="exam-option-"], [data-testid^="exam-tf-"]').first();
     const textIn = page.getByTestId('exam-text-input');
-    if (await opt.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    if (await opt.isVisible().catch(() => false)) {
       await opt.click();
-    } else if (await textIn.isVisible({ timeout: 1_000 }).catch(() => false)) {
+      if (await next.isVisible().catch(() => false)) await next.click();
+    } else if (await textIn.isVisible().catch(() => false)) {
       await textIn.fill('a');
       await page.getByTestId('exam-text-submit').click();
+      if (await next.isVisible().catch(() => false)) await next.click();
     } else {
       break;
     }
-    const next = page.getByTestId('exam-next');
-    if (await next.isVisible({ timeout: 1_500 }).catch(() => false)) await next.click();
   }
   const submit = page.getByTestId('exam-submit');
   if (await submit.isVisible().catch(() => false)) await submit.click();
   const ok = page.getByTestId('end-confirm-ok');
-  if (await ok.isVisible({ timeout: 3_000 }).catch(() => false)) await ok.click();
+  if (await ok.isVisible().catch(() => false)) await ok.click();
 }
 
 test.describe('CR-97 live Arena race (real backend, 2 players)', () => {
@@ -160,9 +167,11 @@ test.describe('CR-97 live Arena race (real backend, 2 players)', () => {
       await expect(optB).toBeVisible({ timeout: 15_000 });
       expect(await optA.textContent()).toBe(await optB.textContent());
 
-      // B answers -> A's standings strip reflects live progress.
+      // B answers -> A's standings strip shows B at c1 via broadcast.
       await optB.click();
-      await expect(pageA.getByTestId('arena-live-standings')).toBeVisible({ timeout: 15_000 });
+      await expect(pageA.getByTestId('arena-live-standings')).toContainText('c1/10', { timeout: 15_000 });
+      const nextB = pageB.getByTestId('exam-next');
+      if (await nextB.isVisible().catch(() => false)) await nextB.click();
 
       // Race both to the podium; order must agree on both screens.
       await Promise.all([raceToFinish(pageA), raceToFinish(pageB)]);

@@ -28,6 +28,8 @@ const ROOM: LiveRoom = {
   status: 'waiting',
   hostName: '',
   hostId: 'me-id',
+  gradeId: 'grade-3',
+  programId: 'english',
 };
 
 type Handlers = Parameters<typeof subscribeLiveRoom>[2];
@@ -41,7 +43,9 @@ beforeEach(() => {
     handlers = h;
     return fakeChannel;
   });
-  vi.mocked(liveRoomState).mockResolvedValue({ status: 'racing', hostId: 'me-id', players: [] });
+  // Default 'waiting' - the joiner reconciliation poll is always ticking,
+  // so a racing default would launch onStart mid-test.
+  vi.mocked(liveRoomState).mockResolvedValue({ status: 'waiting', hostId: 'me-id', players: [] });
 });
 
 describe('ArenaLiveLobby (CR-97)', () => {
@@ -89,7 +93,7 @@ describe('ArenaLiveLobby (CR-97)', () => {
     ]);
     await waitFor(() => expect(screen.getByTestId('arena-live-start')).toBeEnabled());
     fireEvent.click(screen.getByTestId('arena-live-start'));
-    await waitFor(() => expect(onStart).toHaveBeenCalledWith({ roomId: 'room-1', code: 'ABC123', seed: ROOM.seed }));
+    await waitFor(() => expect(onStart).toHaveBeenCalledWith({ roomId: 'room-1', code: 'ABC123', seed: ROOM.seed, gradeId: 'grade-3' }));
     expect(liveRoomStart).toHaveBeenCalledWith('room-1');
     expect(fakeChannel.send).toHaveBeenCalledWith({ type: 'start' });
   });
@@ -98,13 +102,42 @@ describe('ArenaLiveLobby (CR-97)', () => {
     vi.mocked(liveRoomJoin).mockResolvedValue({ ...ROOM, hostId: 'host-id', hostName: 'An' });
     vi.mocked(liveRoomState).mockResolvedValue({ status: 'waiting', hostId: 'host-id', players: [] });
     const onStart = vi.fn();
-    render(<ArenaLiveLobby gradeId="grade-3" me={ME} onStart={onStart} onClose={vi.fn()} />);
+    const { unmount } = render(<ArenaLiveLobby gradeId="grade-3" me={ME} onStart={onStart} onClose={vi.fn()} />);
     fireEvent.change(screen.getByTestId('arena-live-code-input'), { target: { value: 'ABC123' } });
     fireEvent.click(screen.getByTestId('arena-live-join'));
     await waitFor(() => expect(screen.getByTestId('arena-live-waiting')).toBeInTheDocument());
     handlers?.onStart?.();
     await waitFor(() => expect(liveRoomState).toHaveBeenCalledWith('room-1'));
     expect(onStart).not.toHaveBeenCalled();
+    // A forged start must NOT have flipped roomRef to 'racing' - closing
+    // the lobby still releases the waiting-room membership.
+    unmount();
+    expect(liveRoomLeave).toHaveBeenCalledWith('room-1');
+  });
+
+  it('joiner launches from the reconciliation poll even if the broadcast is lost', { timeout: 15_000 }, async () => {
+    vi.mocked(liveRoomJoin).mockResolvedValue({ ...ROOM, hostId: 'host-id', hostName: 'An' });
+    const onStart = vi.fn();
+    render(<ArenaLiveLobby gradeId="grade-3" me={ME} onStart={onStart} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByTestId('arena-live-code-input'), { target: { value: 'ABC123' } });
+    fireEvent.click(screen.getByTestId('arena-live-join'));
+    await waitFor(() => expect(screen.getByTestId('arena-live-waiting')).toBeInTheDocument());
+    // No broadcast arrives; the poll (4s interval, real timers) alone
+    // must find 'racing' and launch.
+    vi.mocked(liveRoomState).mockResolvedValue({ status: 'racing', hostId: 'host-id', players: [] });
+    await waitFor(
+      () => expect(onStart).toHaveBeenCalledWith({ roomId: 'room-1', code: 'ABC123', seed: ROOM.seed, gradeId: 'grade-3' }),
+      { timeout: 10_000 },
+    );
+  });
+
+  it('a failed channel subscribe releases the persisted membership', async () => {
+    vi.mocked(liveRoomCreate).mockResolvedValue({ ...ROOM });
+    vi.mocked(subscribeLiveRoom).mockResolvedValue(null);
+    render(<ArenaLiveLobby gradeId="grade-3" me={ME} onStart={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('arena-live-create'));
+    await waitFor(() => expect(liveRoomLeave).toHaveBeenCalledWith('room-1'));
+    expect(screen.getByText(/Không kết nối được/)).toBeInTheDocument();
   });
 
   it('host leaving the waiting room bounces the joiner to the menu', async () => {
