@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ExamProgramId, ExamQuestion } from '../types/exam';
 import {
   answerCurrent,
@@ -166,29 +166,33 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const isLiveArena = isArena && arena?.kind === 'live' && !!arena.liveRoomId;
   const liveChannelRef = useRef<LiveChannel | null>(null);
   const livePointsRef = useRef(0);
-  /** True once the exam itself is over - a pagehide after that must NOT
-   *  mark the player "left", or the finish RPC in ArenaResult would find
-   *  finished_at already set and drop the score. */
+  /** True once the exam is over or the player abandoned - a later exit
+   *  must NOT mark them "left" again (a finisher already has a row with
+   *  a score; leave's finished_at update is also idempotent-guarded).
+   *  Sticky: once set it stays set - the live-room contract, not just
+   *  the exam clock. */
   const liveFinishedRef = useRef(false);
-  liveFinishedRef.current = exam?.finishedAtMs != null;
+  liveFinishedRef.current = liveFinishedRef.current || exam?.finishedAtMs != null;
+  const liveMeIdRef = useRef('me');
+  /** Idempotent abandonment: tell the room we left so it can settle
+   *  without waiting on the 30-minute stale cleanup. Covers BOTH exit
+   *  kinds - the in-app "Quay lại" (no pagehide fires) and tab close. */
+  const liveAbandon = useCallback(() => {
+    if (!isLiveArena || liveFinishedRef.current || !arena?.liveRoomId) return;
+    liveFinishedRef.current = true;
+    liveChannelRef.current?.send({ type: 'leave', id: liveMeIdRef.current });
+    void liveRoomLeave(arena.liveRoomId);
+  }, [isLiveArena, arena?.liveRoomId]);
   const [liveOpponents, setLiveOpponents] = useState<Map<string, LivePlayer & { q?: number }>>(new Map());
   useEffect(() => {
     if (!isLiveArena || !arena?.liveRoomId) return;
     let cancelled = false;
-    const meIdRef = { current: 'me' };
-    const onHide = () => {
-      if (liveFinishedRef.current) return;
-      // Unfinished player abandoning the race: mark them left so the
-      // room can still settle for everyone else instead of waiting on
-      // the 30-minute stale cleanup.
-      liveChannelRef.current?.send({ type: 'leave', id: meIdRef.current });
-      void liveRoomLeave(arena.liveRoomId!);
-    };
+    const onHide = () => liveAbandon();
     window.addEventListener('pagehide', onHide);
     void (async () => {
       const session = await getSession();
       const meId = session?.user?.id ?? 'me';
-      meIdRef.current = meId;
+      liveMeIdRef.current = meId;
       const meName = studentName ?? 'Bạn';
       const ch = await subscribeLiveRoom(arena.liveRoomId!, { id: meId, name: meName }, {
         onRoster: (players) =>
@@ -228,7 +232,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       liveChannelRef.current?.unsubscribe();
       liveChannelRef.current = null;
     };
-  }, [isLiveArena, arena?.liveRoomId, studentName]);
+  }, [isLiveArena, arena?.liveRoomId, studentName, liveAbandon]);
 
   // r16: bind the result owner to the identity at activity start - a
   // mid-exam account switch must not attribute the run to the new user.
@@ -522,7 +526,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} focusLabel={focus?.label} onBegin={begin} onExit={onExit} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} focusLabel={focus?.label} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
   }
 
   if (result) {
@@ -1346,34 +1350,27 @@ function ArenaResult({
           if (!settleCancelled.current) setFailed(true);
           return;
         }
-        // Standings refresh live while kids finish at their own pace;
-        // the WIN only settles once the room is 'done' - provisional
+        // Standings refresh live while kids finish at their own pace -
+        // 2.5s cadence for the first 4min, then 10s until the room is
+        // 'done' (a never-finishing room still ends via the 30min stale
+        // cleanup, so this loop cannot outlive the result screen).
+        // The WIN only settles once the room is 'done' - provisional
         // standings never declare a victor.
-        const deadline = Date.now() + 240_000;
+        const fastUntil = Date.now() + 240_000;
         let players: LivePlayer[] = [];
-        let done = false;
         while (!settleCancelled.current) {
           const st = await liveRoomState(arena.liveRoomId!);
           if (st) {
             players = st.players;
             setLivePodium(players);
-            if (st.status === 'done') {
-              done = true;
-              break;
-            }
+            if (st.status === 'done') break;
+            setLivePending(true);
           }
-          if (Date.now() > deadline) break;
-          await new Promise((r) => setTimeout(r, 2500));
+          await new Promise((r) => setTimeout(r, Date.now() < fastUntil ? 2500 : 10_000));
         }
         if (settleCancelled.current) return;
-        if (done) {
-          settle(players[0]?.id === myId && players.length > 1);
-          setLivePending(false);
-        } else {
-          // Everyone else's result is still pending - standings stay
-          // visible, the verdict honestly waits.
-          setLivePending(true);
-        }
+        settle(players[0]?.id === myId && players.length > 1);
+        setLivePending(false);
       })();
       return;
     }
