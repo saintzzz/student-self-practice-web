@@ -102,7 +102,7 @@ check('listen-no-transcript', 'P0',
   // Gate on skill='listen' - prompts that merely *mention* listening
   // ("You wear ___ to listen to music") are grammar/vocab items, not
   // audio-dependent questions. (r64: all 16 prior flags were FP.)
-  questions.filter((q) => eligible(q) && q.skill === 'listen' && SERVED_TYPES.has(q.question_type) && !q.transcript));
+  questions.filter((q) => eligible(q) && (q.skill === 'listen' || q.skill === 'listening') && SERVED_TYPES.has(q.question_type) && !q.transcript));
 
 check('read-no-passage', 'P0',
   'Prompt references a passage/text but none stored - unanswerable',
