@@ -136,6 +136,21 @@ try {
   ok('server-measured time', (st?.[0]?.time_ms ?? 0) > 0 && (st?.[0]?.time_ms ?? 0) < 120000, `time=${st?.[0]?.time_ms}ms`);
   ok('finish broadcast delivered', bEv.some((e) => e.type === 'finish' && e.score === 80));
 
+  // 12. stale-race settlement on the READ path: a second room goes
+  // 'racing', gets backdated past the 30min cap via service role, and a
+  // member's state poll must close it ('done') without anyone finishing.
+  const { data: c2 } = await a.rpc('arena_live_create', { p_grade_id: 'grade-3', p_program_id: 'english', p_question_count: 10 });
+  const room2 = c2?.[0]?.room_id;
+  await b.rpc('arena_live_join', { p_code: c2?.[0]?.code });
+  const { error: s2 } = await a.rpc('arena_live_start', { p_room_id: room2 });
+  ok('stale test room racing', !s2, s2?.message ?? '');
+  const { error: bd } = await admin.from('arena_rooms')
+    .update({ started_at: new Date(Date.now() - 31 * 60_000).toISOString() })
+    .eq('id', room2);
+  ok('backdate started_at', !bd, bd?.message ?? '');
+  const { data: st2 } = await b.rpc('arena_live_state', { p_room_id: room2 });
+  ok('stale room settles via state poll', st2?.[0]?.status === 'done', st2?.[0]?.status);
+
   await aCh.unsubscribe(); await bCh.unsubscribe();
 } catch (e) {
   ok('smoke crashed', false, e.message);

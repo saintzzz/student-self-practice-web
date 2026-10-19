@@ -233,6 +233,14 @@ begin
   ) then
     raise exception 'not a room member';
   end if;
+  -- Stale safety net on the READ path: a race abandoned by everyone
+  -- (killed tabs, lost networks - no leave write lands) must still
+  -- settle. Any member's poll closes a race stuck past 30min so the
+  -- other clients' podiums finalize instead of polling forever.
+  update practice.arena_rooms r
+     set status = 'done', finished_at = now()
+   where r.id = p_room_id and r.status = 'racing'
+     and r.started_at < now() - interval '30 minutes';
   return query
     select r.status::text, r.host_id, p.player_id, p.player_name, p.score, p.time_ms, p.finished_at
       from practice.arena_rooms r
@@ -304,3 +312,9 @@ grant execute on function practice.arena_live_start(uuid) to authenticated;
 grant execute on function practice.arena_live_finish(uuid, int) to authenticated;
 grant execute on function practice.arena_live_state(uuid) to authenticated;
 grant execute on function practice.arena_live_leave(uuid) to authenticated;
+
+-- service_role keeps direct table DML for admin/maintenance (backdating
+-- stale rooms, ops cleanup) - it bypasses RLS anyway, but PostgREST
+-- still needs the table grants. anon/authenticated stay RPC-only.
+grant select, insert, update, delete on practice.arena_rooms to service_role;
+grant select, insert, update, delete on practice.arena_room_players to service_role;
