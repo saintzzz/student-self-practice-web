@@ -61,18 +61,26 @@ or art regen already landed in this window.
 ## Verification status
 
 - `tsc -b` + `vite build`: green.
-- Vitest: 204 files / 1,710 tests pass, incl. `ArenaLiveLobby.test.tsx`
-  (7 tests: menu gating, create/join, host-only start, fake-start
-  shield, host-leave bounce, waiting-room cleanup on unmount).
+- Vitest: `ArenaLiveLobby.test.tsx` 9/9 (menu gating, create/join,
+  host-only start, fake-start shield, reconciliation poll launches
+  without broadcast, host-leave bounce, failed-subscribe membership
+  release, waiting-room cleanup on unmount).
 - Integration smoke `scripts/_arena-live-smoke.mjs` against the deployed
-  project: **19/19** (room lifecycle, host-only start, 2-player minimum,
+  project: **22/22** (room lifecycle, host-only start, 2-player minimum,
   RLS blocking direct reads, anon RPC rejection, presence roster,
   start/progress/finish broadcast, score cap, server-measured timing,
-  standings order, room settlement, stale-room cleanup).
+  standings order, settlement, and stale-race settle via a member's
+  state poll after the 30min cap).
 - E2E `e2e/cr97-live-arena.spec.ts`: two real browser contexts
   (admin-provisioned students), self-skips without Supabase env/admin
   creds - same convention as `auth.spec.ts`.
-- Hardening applied after lead review: server-side finish timing,
-  `FOR UPDATE` settle locking, stale-race cleanup (30 min), one open
-  room per host, joiner "left" bug fix, host-id identity (not name),
-  PUBLIC/anon/service-role revokes.
+- Lead review: 4 rounds to APPROVE. Hardened: server-side finish timing,
+  `FOR UPDATE` settle locking, stale-race cleanup on both create AND
+  the state-read path (30 min), one open room per host, room-authoritative
+  grade/program propagation to joiners, host-id identity (not name),
+  fake-start verification before launch, reconcile poll so a lost start
+  broadcast cannot strand joiners, idempotent abandonment on pagehide +
+  in-app exit, win only settles from a 'done' room (provisional
+  standings never declare a victor), finish-write retry + failed state,
+  failed-subscribe channel/membership cleanup, PUBLIC/anon/service-role
+  revokes.
