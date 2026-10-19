@@ -38,6 +38,7 @@ export default function GameArt({
           aria-hidden="true"
           draggable={false}
           decoding="async"
+          fetchPriority={size === 'hero' ? 'high' : undefined}
           onError={() => setImgFailed(true)}
           className="block h-full w-full object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,0.25)] select-none"
         />
