@@ -21,6 +21,8 @@ export interface LiveRoom {
   seed: string;
   status: 'waiting' | 'racing' | 'done';
   hostName: string;
+  /** auth.users id of the host - names collide, ids do not. */
+  hostId: string;
 }
 
 type LiveEvent =
@@ -46,7 +48,9 @@ export async function liveRoomCreate(gradeId: string, programId: string): Promis
       p_question_count: 10,
     });
     if (error || !data?.length) return null;
-    return { id: data[0].room_id, code: data[0].code, seed: data[0].seed, status: 'waiting', hostName: '' };
+    // The creator IS the host - joiners get host_id from the join RPC.
+    const uid = (await getSession())?.user?.id ?? '';
+    return { id: data[0].room_id, code: data[0].code, seed: data[0].seed, status: 'waiting', hostName: '', hostId: uid };
   } catch {
     return null;
   }
@@ -63,6 +67,7 @@ export async function liveRoomJoin(code: string): Promise<LiveRoom | null> {
       seed: data[0].seed,
       status: data[0].status,
       hostName: data[0].host_name ?? '',
+      hostId: data[0].host_id ?? '',
     };
   } catch {
     return null;
@@ -80,13 +85,14 @@ export async function liveRoomStart(roomId: string): Promise<string | null> {
   }
 }
 
-export async function liveRoomFinish(roomId: string, score: number, timeMs: number): Promise<boolean> {
+export async function liveRoomFinish(roomId: string, score: number): Promise<boolean> {
   try {
     if (!(await getSession())) return false;
+    // Time is measured server-side from started_at - clients cannot
+    // claim a faster finish, and score is capped at the room max.
     const { error } = await (await getSupabase()).rpc('arena_live_finish', {
       p_room_id: roomId,
       p_score: score,
-      p_time_ms: timeMs,
     });
     return !error;
   } catch {
@@ -158,7 +164,20 @@ export async function subscribeLiveRoom(
         else if (payload.type === 'leave') handlers.onLeave?.(payload.id);
       });
     await new Promise<void>((resolve, reject) => {
-      channel.subscribe((status: string) => (status === 'SUBSCRIBED' ? resolve() : status === 'CHANNEL_ERROR' ? reject(new Error(status)) : undefined));
+      // realtime-js resolves a same-topic channel() call with the EXISTING
+      // channel object - if a previous channel is mid-teardown, subscribe()
+      // can sit without ever reaching SUBSCRIBED. TIMED_OUT/CLOSED plus a
+      // hard timeout keep callers out of that limbo.
+      const timer = setTimeout(() => reject(new Error('subscribe timeout')), 10_000);
+      channel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(timer);
+          resolve();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          clearTimeout(timer);
+          reject(new Error(status));
+        }
+      });
     });
     await channel.track({ id: me.id, name: me.name });
     const send = (evt: LiveEvent) => {
@@ -168,7 +187,11 @@ export async function subscribeLiveRoom(
       send,
       sendProgress: (q, score) => send({ type: 'progress', id: me.id, name: me.name, q, score }),
       sendFinish: (score, timeMs) => send({ type: 'finish', id: me.id, name: me.name, score, timeMs }),
-      unsubscribe: () => void channel.unsubscribe(),
+      // removeChannel forces a full teardown+rejoin - plain unsubscribe()
+      // leaves the stale channel cached under the same topic, and the next
+      // subscribe on that topic would hang waiting for an ack that the
+      // socket already consumed.
+      unsubscribe: () => void supabase.removeChannel(channel),
     };
   } catch {
     return null;

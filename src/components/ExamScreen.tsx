@@ -384,9 +384,11 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       playSfx(isCorrect ? 'correct' : 'wrong');
       // CR-97: live race - broadcast this answer's progress so the
       // standings strip on every player's screen updates immediately.
-      if (isLiveArena && liveChannelRef.current) {
+      // The score ref tracks even before the channel is ready, so the
+      // strip and the finish RPC always see the real tally.
+      if (isLiveArena) {
         if (isCorrect) livePointsRef.current += EXAM_POINTS_PER_QUESTION;
-        liveChannelRef.current.sendProgress(exam.currentIndex + 1, livePointsRef.current);
+        liveChannelRef.current?.sendProgress(exam.currentIndex + 1, livePointsRef.current);
       }
       // CR-34: arena answers never feed engagement - a duel is not
       // practice progress.
@@ -1288,6 +1290,11 @@ function ArenaResult({
   const [newBadges, setNewBadges] = useState<Sticker[]>([]);
   const [livePodium, setLivePodium] = useState<LivePlayer[] | null>(null);
   const settled = useRef(false);
+  /** Cancels the live settle poll when the result unmounts. */
+  const settleCancelled = useRef(false);
+  useEffect(() => () => {
+    settleCancelled.current = true;
+  }, []);
 
   useEffect(() => {
     if (settled.current) return;
@@ -1296,15 +1303,24 @@ function ArenaResult({
     // guests earn them too, the counters are localStorage-based.
     const settle = (won: boolean) => setNewBadges(recordArenaDuel(won));
     if (arena.kind === 'live' && arena.liveRoomId) {
-      // CR-97: announce my finish, mark the room row, then poll the
-      // settled leaderboard. The RPC flips the room to 'finished' once
-      // every joined player has a score row.
+      // CR-97: announce my finish, post the result (server measures the
+      // time itself), then poll the settled leaderboard until 'done'.
+      // Same identity guard as create/accept: an account switch mid-run
+      // must not post under the new user.
       void (async () => {
+        if (!(await activityOwnerMatches())) {
+          setFailed(true);
+          return;
+        }
+        const session = await getSession();
+        const myId = session?.user?.id ?? '';
         liveChannel?.sendFinish(myScore, myTimeMs);
-        await liveRoomFinish(arena.liveRoomId!, myScore, myTimeMs);
-        const deadline = Date.now() + 30_000;
+        await liveRoomFinish(arena.liveRoomId!, myScore);
+        // Races between kids can differ by well over 30s - keep polling
+        // with backoff and bail out cleanly if the result unmounts.
+        const deadline = Date.now() + 90_000;
         let players: LivePlayer[] = [];
-        while (Date.now() < deadline) {
+        while (Date.now() < deadline && !settleCancelled.current) {
           const st = await liveRoomState(arena.liveRoomId!);
           if (st) {
             players = st.players;
@@ -1312,9 +1328,10 @@ function ArenaResult({
           }
           await new Promise((r) => setTimeout(r, 2500));
         }
+        if (settleCancelled.current) return;
         setLivePodium(players);
+        settle(players[0]?.id === myId && players.length > 1);
       })();
-      settle(false);
       return;
     }
     if (arena.kind === 'bot') {
@@ -1437,7 +1454,9 @@ function ArenaResult({
 
           {arena.kind === 'live' && (
             <div data-testid="arena-live-podium" className="mt-6">
-              {!livePodium ? (
+              {failed ? (
+                <p className="font-bold text-rose-300">Không lưu được kết quả phòng đấu - kiểm tra đăng nhập nhé.</p>
+              ) : !livePodium ? (
                 <p className="font-bold text-slate-300">Đang tổng kết trận đấu...</p>
               ) : (
                 <div className="space-y-2">
@@ -1454,7 +1473,11 @@ function ArenaResult({
                       <span className="flex items-center gap-2 font-extrabold text-slate-200">
                         {i === 0 ? <IconTrophy size={18} className="text-amber-300" /> : <span className="w-5 text-center text-slate-400">{i + 1}</span>}
                         <span className="max-w-40 truncate">{p.name}</span>
-                        {p.score === null && <span className="text-xs font-bold text-slate-500">(bỏ cuộc)</span>}
+                        {p.score === null && (
+                          <span className="text-xs font-bold text-slate-500">
+                            {p.finished ? '(bỏ cuộc)' : '(đang làm...)'}
+                          </span>
+                        )}
                       </span>
                       <span className="text-right">
                         <span className="font-extrabold tabular-nums text-amber-300">{p.score ?? 0}đ</span>

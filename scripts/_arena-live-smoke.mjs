@@ -13,6 +13,9 @@ const KEYS = [
 if (!KEYS) { console.log('SKIP: no supabase keys file'); process.exit(0); }
 const { url, keys } = JSON.parse(readFileSync(KEYS, 'utf8'));
 
+// The realtime socket holds the event loop open after the checks - the
+// summary prints, then this unref'd timer forces a clean exit.
+setTimeout(() => process.exit(0), 120_000).unref();
 const admin = createClient(url, keys.service_role, { db: { schema: 'practice' }, auth: { persistSession: false } });
 const stamp = Date.now().toString(36);
 const USERS = [
@@ -58,8 +61,9 @@ try {
 
   const { data: joined, error: jErr } = await b.rpc('arena_live_join', { p_code: code });
   ok('join by code', !jErr && joined?.[0]?.room_id === roomId && joined?.[0]?.seed === seed, jErr?.message ?? '');
+  ok('join returns host_id', joined?.[0]?.host_id === userIds[0]);
 
-  // 4. duplicate join is idempotent; a third party without code cannot see room (no direct table read)
+  // 4. tables not directly readable (RLS, RPC-only access)
   const { error: directErr } = await b.from('arena_rooms').select('*').limit(1);
   ok('tables not readable via RLS', !!directErr || true, directErr?.message ?? 'empty result (no rows visible)');
 
@@ -83,42 +87,63 @@ try {
   for (let i = 0; i < 12 && bRosterSize < 2; i++) await sleep(500);
   ok('presence sync sees both', bRosterSize === 2, `roster=${bRosterSize}`);
 
-  // 6. start (host) + broadcast 'start' reaches the joiner
+  // 6. finish before start is rejected (room not racing yet)
+  const { error: fEarly } = await a.rpc('arena_live_finish', { p_room_id: roomId, p_score: 50 });
+  ok('finish before start rejected', !!fEarly, fEarly?.message ?? '');
+
+  // 7. start (host) + broadcast 'start' reaches the joiner
   const { data: startSeed, error: sErr } = await a.rpc('arena_live_start', { p_room_id: roomId });
   ok('host start returns seed', !sErr && startSeed === seed, sErr?.message ?? '');
   await aCh.send({ type: 'broadcast', event: 'live', payload: { type: 'start' } });
   await sleep(1200);
   ok('joiner receives start broadcast', bEv.some((e) => e.type === 'start'), `bEv=${JSON.stringify(bEv)}`);
 
-  // 7. progress broadcast (b -> a)
+  // 8. progress broadcast (b -> a)
   await bCh.send({ type: 'broadcast', event: 'live', payload: { type: 'progress', id: userIds[1], name: USERS[1].name, q: 3, score: 30 } });
   await sleep(1200);
   ok('progress broadcast delivered', aEv.some((e) => e.type === 'progress' && e.q === 3 && e.score === 30));
 
-  // 8. non-host cannot start; guest cannot call RPCs
+  // 9. non-host cannot start; anon/guest cannot call RPCs at all
   const { error: startB } = await b.rpc('arena_live_start', { p_room_id: roomId });
   ok('non-host start rejected', !!startB, startB?.message ?? '');
   const anon = createClient(url, keys.anon, { db: { schema: 'practice' }, auth: { persistSession: false } });
   const { error: gErr } = await anon.rpc('arena_live_create', { p_grade_id: 'grade-3', p_program_id: 'english' });
   ok('anon create rejected', !!gErr, gErr?.message ?? '');
 
-  // 9. both finish -> room settles 'done', standings sorted by score then time
+  // 10. state is member-only: a third signed-in student gets denied
+  const { data: c3 } = await admin.auth.admin.createUser({
+    email: `lv${stamp}c@students.ioe-practice.example`, password: '123456', email_confirm: true,
+  });
+  userIds.push(c3.user.id);
+  await admin.from('accounts').insert({ id: c3.user.id, username: `lv${stamp}c`, display_name: 'Outsider', role: 'student' });
+  const out = createClient(url, keys.anon, { db: { schema: 'practice' }, auth: { persistSession: false } });
+  await out.auth.signInWithPassword({ email: `lv${stamp}c@students.ioe-practice.example`, password: '123456' });
+  const { error: stErr } = await out.rpc('arena_live_state', { p_room_id: roomId });
+  ok('non-member state rejected', !!stErr, stErr?.message ?? '');
+
+  // 11. both finish -> room settles 'done', standings sorted by score
+  //     then time; oversized score claims get capped at question_count*10.
   await aCh.send({ type: 'broadcast', event: 'live', payload: { type: 'finish', id: userIds[0], name: USERS[0].name, score: 80, timeMs: 61000 } });
-  const { error: fA } = await a.rpc('arena_live_finish', { p_room_id: roomId, p_score: 80, p_time_ms: 61000 });
-  const { error: fB } = await b.rpc('arena_live_finish', { p_room_id: roomId, p_score: 90, p_time_ms: 72000 });
+  const { error: fA } = await a.rpc('arena_live_finish', { p_room_id: roomId, p_score: 80 });
+  const { error: fB } = await b.rpc('arena_live_finish', { p_room_id: roomId, p_score: 999999 });
   ok('finish writes', !fA && !fB, `${fA?.message ?? ''} ${fB?.message ?? ''}`);
   await sleep(500);
   const { data: st } = await a.rpc('arena_live_state', { p_room_id: roomId });
   ok('room settled done', st?.[0]?.status === 'done', st?.[0]?.status);
-  ok('standings order (90>80)', st?.[0]?.player_name === USERS[1].name && st?.[1]?.player_name === USERS[0].name,
+  ok('score capped at max', st?.[0]?.score === 100, `top score=${st?.[0]?.score}`);
+  ok('standings order (100>80)', st?.[0]?.player_name === USERS[1].name && st?.[1]?.player_name === USERS[0].name,
      st?.map((r) => `${r.player_name}:${r.score}`).join('|'));
+  ok('server-measured time', (st?.[0]?.time_ms ?? 0) > 0 && (st?.[0]?.time_ms ?? 0) < 120000, `time=${st?.[0]?.time_ms}ms`);
   ok('finish broadcast delivered', bEv.some((e) => e.type === 'finish' && e.score === 80));
 
   await aCh.unsubscribe(); await bCh.unsubscribe();
 } catch (e) {
   ok('smoke crashed', false, e.message);
 } finally {
-  for (const id of userIds) await admin.auth.admin.deleteUser(id).catch(() => {});
+  await Promise.all(userIds.map((id) => Promise.race([
+    admin.auth.admin.deleteUser(id),
+    sleep(8000),
+  ])).map((p) => p.catch(() => {})));
   const fails = results.filter((r) => !r.cond).length;
   console.log(`\n=== ${results.length - fails}/${results.length} checks passed ===`);
   process.exit(fails ? 1 : 0);

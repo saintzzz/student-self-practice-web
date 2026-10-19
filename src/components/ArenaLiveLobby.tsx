@@ -6,6 +6,7 @@ import {
   liveRoomJoin,
   liveRoomLeave,
   liveRoomStart,
+  liveRoomState,
   subscribeLiveRoom,
   type LiveChannel,
   type LivePlayer,
@@ -53,8 +54,9 @@ export default function ArenaLiveLobby({
       onRoster: (players) => {
         setRoster(players);
         // Host leaving a waiting room deletes it server-side - bounce
-        // joiners back to the menu instead of a dead lobby.
-        if (!asHost && r.hostName && !players.some((p) => p.name === r.hostName)) {
+        // joiners back to the menu instead of a dead lobby. Compare by
+        // host_id: display names collide.
+        if (!asHost && r.hostId && !players.some((p) => p.id === r.hostId)) {
           setError('Chủ phòng đã rời - phòng đã đóng.');
           setRoom(null);
           setMode('menu');
@@ -62,7 +64,17 @@ export default function ArenaLiveLobby({
           channelRef.current = null;
         }
       },
-      onStart: () => onStart({ roomId: r.id, code: r.code, seed: r.seed }),
+      onStart: () => {
+        // Mark the room racing BEFORE the parent unmounts us, or the
+        // cleanup would run arena_live_leave and mark this joiner
+        // "bỏ cuộc" the moment the race starts.
+        roomRef.current = { ...r, status: 'racing' };
+        // A broadcast 'start' is unverified (public channel) - confirm
+        // the room really flipped to racing before launching the run.
+        void liveRoomState(r.id).then((st) => {
+          if (st?.status === 'racing') onStart({ roomId: r.id, code: r.code, seed: r.seed });
+        });
+      },
       onLeave: (id) => setRoster((cur) => cur.filter((p) => p.id !== id)),
     });
     if (!ch) return false;
@@ -129,7 +141,7 @@ export default function ArenaLiveLobby({
     onStart({ roomId: room.id, code: room.code, seed });
   }
 
-  const isHost = room ? me.name === room.hostName || isHostRef.current : false;
+  const isHost = room ? room.hostId === me.id || isHostRef.current : false;
 
   return (
     <div
@@ -201,7 +213,7 @@ export default function ArenaLiveLobby({
                   <li key={p.id} className="flex items-center justify-between rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-white/10">
                     <span className="truncate text-sm font-extrabold text-white">{p.name}</span>
                     {p.id === me.id && <span className="text-xs font-bold text-sky-300">Em</span>}
-                    {room.hostName && p.name === room.hostName && (
+                    {room.hostId && p.id === room.hostId && (
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-300"><IconTrophy size={12} /> Chủ phòng</span>
                     )}
                   </li>

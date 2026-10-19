@@ -57,3 +57,22 @@ question imagery gains gentle animation so art feels alive for kids.
 New feature work: migration + client lib + 2 UI surfaces + tests.
 Separate estimate per CR rules; not bundled with the audio coverage fix
 or art regen already landed in this window.
+
+## Verification status
+
+- `tsc -b` + `vite build`: green.
+- Vitest: 204 files / 1,710 tests pass, incl. `ArenaLiveLobby.test.tsx`
+  (7 tests: menu gating, create/join, host-only start, fake-start
+  shield, host-leave bounce, waiting-room cleanup on unmount).
+- Integration smoke `scripts/_arena-live-smoke.mjs` against the deployed
+  project: **19/19** (room lifecycle, host-only start, 2-player minimum,
+  RLS blocking direct reads, anon RPC rejection, presence roster,
+  start/progress/finish broadcast, score cap, server-measured timing,
+  standings order, room settlement, stale-room cleanup).
+- E2E `e2e/cr97-live-arena.spec.ts`: two real browser contexts
+  (admin-provisioned students), self-skips without Supabase env/admin
+  creds - same convention as `auth.spec.ts`.
+- Hardening applied after lead review: server-side finish timing,
+  `FOR UPDATE` settle locking, stale-race cleanup (30 min), one open
+  room per host, joiner "left" bug fix, host-id identity (not name),
+  PUBLIC/anon/service-role revokes.
