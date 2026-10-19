@@ -1089,6 +1089,14 @@ function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { te
   );
 }
 
+// Option image with a text fallback - a missing/broken asset must never
+// leave an answerable question showing only an empty broken-image icon.
+function OptionImg({ src, alt, delay, testId }: { src: string; alt: string; delay: number; testId: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <MarkupText text={alt} />;
+  return <img src={src} alt={alt} decoding="async" data-testid={testId} onError={() => setFailed(true)} className="art-breathe inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" style={{ animationDelay: `${delay}s` }} />;
+}
+
 function OptionButtons({
   options,
   selected,
@@ -1120,7 +1128,7 @@ function OptionButtons({
             {labels[i]}
           </span>
           {optionImages?.[i] ? (
-            <img src={optionImages[i]} alt={option} decoding="async" data-testid={`exam-option-image-${i}`} className="art-breathe inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" style={{ animationDelay: `${(i % 4) * 0.7}s` }} />
+            <OptionImg src={optionImages[i]} alt={option} delay={(i % 4) * 0.7} testId={`exam-option-image-${i}`} />
           ) : (
             <MarkupText text={option} />
           )}
