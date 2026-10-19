@@ -62,10 +62,12 @@ interface StartBatchScreenProps {
    *  CR-34: 'arena' = 10-question 1v1 duel on a shared seed.
    *  CR-58/59: focus = skill drill (coach) or advanced tier filter. */
   onStartExam: (programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string, focus?: BankFetchFocus & { label?: string }) => void;
-  /** CR-34: arena entry points - create / accept / guest bot run. */
+  /** CR-34: arena entry points - create / accept / guest bot run.
+   *  CR-97: 'live' opens the real-time race lobby (logged-in only). */
   onArenaCreate?: () => void;
   onArenaAccept?: (challenge: ArenaOpenChallenge) => void;
   onArenaBot?: () => void;
+  onArenaLive?: () => void;
   /** CR-82 (R-v5-12): flashcards entry - 4th row of the English block.
    *  Optional like the arena handlers: absent = the row does not mount. */
   onStartFlashcards?: () => void;
@@ -165,7 +167,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
  *  - CR-46 preserved: every grade reaches every program/mode - only
  *    the container path differs per band.
  */
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onStartFlashcards, onStartGame, initialHubTile, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onArenaLive, onStartFlashcards, onStartGame, initialHubTile, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   const examConfig = examConfigForGrade(grade.id);
   const { band, density } = useViewer();
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
@@ -174,7 +176,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
   const [hasCoachHints] = useState(() => weakSkillsFor(grade.id).length > 0);
 
   const arenaHandlers = onArenaCreate && onArenaAccept && onArenaBot
-    ? { onArenaCreate, onArenaAccept, onArenaBot }
+    ? { onArenaCreate, onArenaAccept, onArenaBot, onArenaLive }
     : null;
 
   /* CR-82 (spec s16.1): the gold "Chơi" CTA springs on release. */
@@ -262,6 +264,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
       onCreate={arenaHandlers.onArenaCreate}
       onAccept={arenaHandlers.onArenaAccept}
       onBot={arenaHandlers.onArenaBot}
+      onLive={arenaHandlers.onArenaLive}
       onLogin={onLogin}
     />
   ) : null;

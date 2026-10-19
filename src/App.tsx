@@ -3,6 +3,7 @@ import GradeSelect from './components/GradeSelect';
 import JoinClassCard from './components/JoinClassCard';
 import ParentReportScreen from './components/ParentReportScreen';
 import StartBatchScreen from './components/StartBatchScreen';
+import ArenaLiveLobby from './components/ArenaLiveLobby';
 import BatchScreen from './components/BatchScreen';
 import CreditsScreen from './components/CreditsScreen';
 import PlacementScreen from './components/PlacementScreen';
@@ -96,6 +97,8 @@ export default function App() {
   const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review' | 'arena'>('exam');
   /** CR-34: pending arena duel context for the exam screen. */
   const [arenaRun, setArenaRun] = useState<import('./components/ExamScreen').ArenaRun | null>(null);
+  /** CR-97: live-race lobby overlay over the hub screen. */
+  const [liveLobbyOpen, setLiveLobbyOpen] = useState(false);
   /** CR-48 phase 5: pinned V6 assessment form for the current exam run. */
   const [examFormId, setExamFormId] = useState<string | null>(null);
   /** CR-58/59: drill focus for the current run - coach skill drill or
@@ -344,6 +347,18 @@ export default function App() {
     setScreen('exam');
   }
 
+  /** CR-97: live race - the lobby opens as an overlay; when the host
+   *  starts, every client launches the same seeded arena run and the
+   *  room id rides along for the standings broadcast. */
+  function handleLiveStart(ctx: { roomId: string; code: string; seed: string }): void {
+    setLiveLobbyOpen(false);
+    setExamProgramId('english');
+    setExamMode('arena');
+    setExamFocus(null);
+    setArenaRun({ kind: 'live', seed: ctx.seed, liveRoomId: ctx.roomId });
+    setScreen('exam');
+  }
+
   function handleSubmitOption(index: number): void {
     if (!batch) return;
     setBatch(updateRoundSession(batch, (session) => submitOptionAnswer(session, index)));
@@ -546,6 +561,7 @@ export default function App() {
         onArenaCreate={handleArenaCreate}
         onArenaAccept={handleArenaAccept}
         onArenaBot={handleArenaBot}
+        onArenaLive={myAccount ? () => setLiveLobbyOpen(true) : undefined}
         onStartFlashcards={() => setScreen('flashcards')}
         onStartGame={(gameId) => {
           setActiveGame(gameId);
@@ -557,6 +573,14 @@ export default function App() {
         isAdmin={authMode === 'admin'}
         onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
         />
+        {liveLobbyOpen && myAccount && (
+          <ArenaLiveLobby
+            gradeId={selectedGrade.id}
+            me={{ id: myAccount.id, name: myAccount.display_name }}
+            onStart={handleLiveStart}
+            onClose={() => setLiveLobbyOpen(false)}
+          />
+        )}
       </LottieBudgetProvider>,
       { gradeId: selectedGradeId },
     );

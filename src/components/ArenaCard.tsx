@@ -13,6 +13,7 @@ export default function ArenaCard({
   onCreate,
   onAccept,
   onBot,
+  onLive,
   onLogin,
 }: {
   gradeId: string;
@@ -20,6 +21,8 @@ export default function ArenaCard({
   onCreate: () => void;
   onAccept: (challenge: ArenaOpenChallenge) => void;
   onBot: () => void;
+  /** CR-97: real-time N-player race lobby - logged-in only. */
+  onLive?: () => void;
   onLogin?: () => void;
 }) {
   const [open, setOpen] = useState<ArenaOpenChallenge[] | null>(null);
@@ -65,6 +68,17 @@ export default function ArenaCard({
         >
           <span className="inline-flex items-center gap-2"><IconSwords size={18} /> {isGuest ? "Đấu với máy" : "Tạo thử thách"}</span>
         </button>
+        {!isGuest && onLive && (
+          <button
+            type="button"
+            data-testid="arena-live-open"
+            onClick={onLive}
+            className={`flex-1 ${BTN_SECONDARY_NAVY}`}
+            style={{ minHeight: density.primaryMinH }}
+          >
+            <span className="inline-flex items-center gap-2"><IconTrophy size={18} /> Đấu trực tiếp</span>
+          </button>
+        )}
         {isGuest && onLogin && (
           <button
             type="button"

@@ -27,7 +27,9 @@ import {
 } from '../lib/engagement/store';
 import { bankSkillOf, skillKeyFor } from '../lib/engagement/skills';
 import { saveExamResult, bindActivityOwner, activityOwnerMatches } from '../lib/practiceResults';
+import { getSession } from '../lib/auth/practiceAuth';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
+import { liveRoomFinish, liveRoomState, subscribeLiveRoom, type LiveChannel, type LivePlayer } from '../lib/arenaLive';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
 import { createExamFromBank, gradeNumber } from '../lib/qb/bank';
@@ -95,9 +97,12 @@ const ARENA_QUESTION_COUNT = 10;
  *  'accept' plays the challenge's seed and submits to arena_accept;
  *  'bot' races a deterministic local ghost (guest mode, no RPC). */
 export interface ArenaRun {
-  kind: 'create' | 'accept' | 'bot';
+  /** 'live' = CR-97 real-time N-player race: same seed, broadcast
+   *  progress; result renders a podium once the room settles. */
+  kind: 'create' | 'accept' | 'bot' | 'live';
   seed: string;
   challengeId?: string;
+  liveRoomId?: string;
 }
 
 interface ExamScreenProps {
@@ -155,6 +160,58 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   /** sr-only timer announcements - each fires once per run. */
   const announced5Ref = useRef(false);
   const announced1Ref = useRef(false);
+
+  // CR-97: live arena race - broadcast progress per answer, render the
+  // standings strip from broadcast events, settle via RPC at the end.
+  const isLiveArena = isArena && arena?.kind === 'live' && !!arena.liveRoomId;
+  const liveChannelRef = useRef<LiveChannel | null>(null);
+  const livePointsRef = useRef(0);
+  const [liveOpponents, setLiveOpponents] = useState<Map<string, LivePlayer & { q?: number }>>(new Map());
+  useEffect(() => {
+    if (!isLiveArena || !arena?.liveRoomId) return;
+    let cancelled = false;
+    void (async () => {
+      const session = await getSession();
+      const meId = session?.user?.id ?? 'me';
+      const meName = studentName ?? 'Bạn';
+      const ch = await subscribeLiveRoom(arena.liveRoomId!, { id: meId, name: meName }, {
+        onRoster: (players) =>
+          setLiveOpponents((cur) => {
+            const next = new Map(cur);
+            for (const p of players) if (p.id !== meId && !next.has(p.id)) next.set(p.id, { ...p, q: 0 });
+            return next;
+          }),
+        onProgress: (p) =>
+          setLiveOpponents((cur) => {
+            const next = new Map(cur);
+            next.set(p.id, { id: p.id, name: p.name, q: p.q, score: p.score, timeMs: null, finished: false });
+            return next;
+          }),
+        onFinish: (p) =>
+          setLiveOpponents((cur) => {
+            const next = new Map(cur);
+            next.set(p.id, { id: p.id, name: p.name, q: 999, score: p.score, timeMs: p.timeMs, finished: true });
+            return next;
+          }),
+        onLeave: (id) =>
+          setLiveOpponents((cur) => {
+            const next = new Map(cur);
+            next.delete(id);
+            return next;
+          }),
+      });
+      if (cancelled) {
+        ch?.unsubscribe();
+        return;
+      }
+      liveChannelRef.current = ch;
+    })();
+    return () => {
+      cancelled = true;
+      liveChannelRef.current?.unsubscribe();
+      liveChannelRef.current = null;
+    };
+  }, [isLiveArena, arena?.liveRoomId, studentName]);
 
   // r16: bind the result owner to the identity at activity start - a
   // mid-exam account switch must not attribute the run to the new user.
@@ -325,6 +382,12 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       setExam(answerCurrent(exam, answer));
       setVerdict({ isCorrect });
       playSfx(isCorrect ? 'correct' : 'wrong');
+      // CR-97: live race - broadcast this answer's progress so the
+      // standings strip on every player's screen updates immediately.
+      if (isLiveArena && liveChannelRef.current) {
+        if (isCorrect) livePointsRef.current += EXAM_POINTS_PER_QUESTION;
+        liveChannelRef.current.sendProgress(exam.currentIndex + 1, livePointsRef.current);
+      }
       // CR-34: arena answers never feed engagement - a duel is not
       // practice progress.
       if (!isArena) {
@@ -445,7 +508,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
 
   if (result) {
     if (isArena && arena) {
-      return <ArenaResult exam={exam} result={result} arena={arena} gradeId={gradeId} gradeLabel={gradeLabel} programId={programId} studentName={studentName} onExit={onExit} />;
+      return <ArenaResult exam={exam} result={result} arena={arena} gradeId={gradeId} gradeLabel={gradeLabel} programId={programId} studentName={studentName} onExit={onExit} liveChannel={liveChannelRef.current} />;
     }
     // CR-28: after a review session the queue may be fully rescheduled -
     // a retry with zero due items would have nothing to render.
@@ -515,6 +578,18 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           {isPractice ? 'KẾT THÚC' : 'NỘP BÀI'}
         </button>
       </header>
+
+      {/* CR-97: live race standings - every player's progress streams in
+          via broadcast; sorted live by score then progress. */}
+      {isLiveArena && exam.finishedAtMs === null && (
+        <LiveStandingsStrip
+          opponents={liveOpponents}
+          meName={studentName ?? 'Bạn'}
+          meQ={answeredCount}
+          meScore={livePointsRef.current}
+          total={exam.questions.length}
+        />
+      )}
 
       {/* sr-only timer announcements (spec s10.4): "Còn 5 phút" at 5:00,
           "Còn 1 phút" at 1:00 - each once per run. */}
@@ -983,7 +1058,7 @@ function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { te
           alt=""
           decoding="async"
           data-testid="exam-question-image"
-          className="mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain ring-1 ring-slate-200"
+          className="art-breathe mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain ring-1 ring-slate-200"
         />
       )}
       <MarkupText text={text} />
@@ -1022,7 +1097,7 @@ function OptionButtons({
             {labels[i]}
           </span>
           {optionImages?.[i] ? (
-            <img src={optionImages[i]} alt={option} decoding="async" data-testid={`exam-option-image-${i}`} className="inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" />
+            <img src={optionImages[i]} alt={option} decoding="async" data-testid={`exam-option-image-${i}`} className="art-breathe inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" style={{ animationDelay: `${(i % 4) * 0.7}s` }} />
           ) : (
             <MarkupText text={option} />
           )}
@@ -1140,6 +1215,45 @@ function ListenButton({ text }: { text: string }) {
   );
 }
 
+/** CR-97: live standings strip during a race - one chip per racer,
+ *  sorted by score then progress; finished racers pin to the top. */
+function LiveStandingsStrip({
+  opponents,
+  meName,
+  meQ,
+  meScore,
+  total,
+}: {
+  opponents: Map<string, LivePlayer & { q?: number }>;
+  meName: string;
+  meQ: number;
+  meScore: number;
+  total: number;
+}) {
+  const racers = [
+    { id: '__me__', name: meName, q: meQ, score: meScore, finished: false, me: true },
+    ...[...opponents.values()].map((p) => ({ ...p, q: p.q ?? 0, me: false })),
+  ].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || (b.q ?? 0) - (a.q ?? 0));
+  return (
+    <div data-testid="arena-live-standings" className="flex flex-wrap items-center gap-1.5 border-b border-desk-line bg-desk-well px-3 py-2">
+      {racers.map((r, i) => (
+        <span
+          key={r.id}
+          data-testid={`live-standing-${r.id}`}
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-extrabold ring-1 ${
+            r.me ? 'bg-sky-500/25 text-sky-200 ring-sky-400/50' : 'bg-white/5 text-slate-200 ring-white/10'
+          }`}
+        >
+          {i === 0 && <IconTrophy size={12} className="text-amber-300" />}
+          <span className="max-w-24 truncate">{r.name}</span>
+          <span className="tabular-nums text-slate-400">{r.finished ? '🏁' : `c${r.q}/${total}`}</span>
+          <span className="tabular-nums text-amber-300">{r.score ?? 0}đ</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /** CR-34: arena duel result. Settles the challenge exactly once per
  *  finished run (ref guard) then shows the two-sided scoreboard. */
 function ArenaResult({
@@ -1151,6 +1265,7 @@ function ArenaResult({
   programId,
   studentName,
   onExit,
+  liveChannel,
 }: {
   exam: ExamState;
   result: ReturnType<typeof computeExamResult>;
@@ -1160,6 +1275,8 @@ function ArenaResult({
   programId: ExamProgramId;
   studentName?: string;
   onExit: () => void;
+  /** CR-97: the ExamScreen's live channel - broadcasts my finish. */
+  liveChannel?: LiveChannel | null;
 }) {
   const myScore = result.points;
   // Arena has no time limit so result.timeUsedSec clamps to 0 - the
@@ -1169,6 +1286,7 @@ function ArenaResult({
   const [created, setCreated] = useState(false);
   const [failed, setFailed] = useState(false);
   const [newBadges, setNewBadges] = useState<Sticker[]>([]);
+  const [livePodium, setLivePodium] = useState<LivePlayer[] | null>(null);
   const settled = useRef(false);
 
   useEffect(() => {
@@ -1177,6 +1295,28 @@ function ArenaResult({
     // CR-37: a finished duel (win or loss) feeds the arena badges -
     // guests earn them too, the counters are localStorage-based.
     const settle = (won: boolean) => setNewBadges(recordArenaDuel(won));
+    if (arena.kind === 'live' && arena.liveRoomId) {
+      // CR-97: announce my finish, mark the room row, then poll the
+      // settled leaderboard. The RPC flips the room to 'finished' once
+      // every joined player has a score row.
+      void (async () => {
+        liveChannel?.sendFinish(myScore, myTimeMs);
+        await liveRoomFinish(arena.liveRoomId!, myScore, myTimeMs);
+        const deadline = Date.now() + 30_000;
+        let players: LivePlayer[] = [];
+        while (Date.now() < deadline) {
+          const st = await liveRoomState(arena.liveRoomId!);
+          if (st) {
+            players = st.players;
+            if (st.status === 'done' || st.players.every((p) => p.finished)) break;
+          }
+          await new Promise((r) => setTimeout(r, 2500));
+        }
+        setLivePodium(players);
+      })();
+      settle(false);
+      return;
+    }
     if (arena.kind === 'bot') {
       const ghost = botGhost(arena.seed, result.totalCount * EXAM_POINTS_PER_QUESTION);
       const iWon = myScore > ghost.score || (myScore === ghost.score && myTimeMs < ghost.timeMs);
@@ -1291,6 +1431,43 @@ function ArenaResult({
                     {result.correctCount}/{result.totalCount} câu đúng - hòa điểm thì ai nhanh hơn sẽ thắng.
                   </p>
                 </>
+              )}
+            </div>
+          )}
+
+          {arena.kind === 'live' && (
+            <div data-testid="arena-live-podium" className="mt-6">
+              {!livePodium ? (
+                <p className="font-bold text-slate-300">Đang tổng kết trận đấu...</p>
+              ) : (
+                <div className="space-y-2">
+                  {livePodium.map((p, i) => (
+                    <div
+                      key={p.id}
+                      data-testid={`live-podium-${i}`}
+                      className={`flex items-center justify-between rounded-xl px-4 py-3 ring-1 ${
+                        i === 0
+                          ? 'bg-amber-400/15 ring-amber-400/50'
+                          : 'bg-white/5 ring-white/10'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 font-extrabold text-slate-200">
+                        {i === 0 ? <IconTrophy size={18} className="text-amber-300" /> : <span className="w-5 text-center text-slate-400">{i + 1}</span>}
+                        <span className="max-w-40 truncate">{p.name}</span>
+                        {p.score === null && <span className="text-xs font-bold text-slate-500">(bỏ cuộc)</span>}
+                      </span>
+                      <span className="text-right">
+                        <span className="font-extrabold tabular-nums text-amber-300">{p.score ?? 0}đ</span>
+                        <span className="ml-2 text-xs font-bold tabular-nums text-slate-400">
+                          {Math.floor((p.timeMs ?? 0) / 60000)}:{String(Math.floor((p.timeMs ?? 0) / 1000) % 60).padStart(2, '0')}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                  <p className="pt-1 text-xs font-bold text-slate-400">
+                    Điểm của bạn: {myScore} - hòa điểm thì ai nhanh hơn xếp trên.
+                  </p>
+                </div>
               )}
             </div>
           )}

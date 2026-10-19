@@ -256,10 +256,20 @@ textarea {
   animation: progress-shimmer 2.4s ease-in-out infinite;
 }
 
+/* CR-97: gentle breathe on question art - transform/scale only so it
+   never shifts layout; killed entirely under reduced-motion. */
+@keyframes art-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.018); }
+}
+.art-breathe {
+  animation: art-breathe 5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .land-drift, .land-drift-slow, .land-sway, .land-twinkle, .land-float,
   .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip,
-  .ambient-sparkle, .mascot-float, .progress-shimmer,
+  .ambient-sparkle, .mascot-float, .progress-shimmer, .art-breathe,
   .mascot-idle, .mascot-rock, .mascot-wave, .mascot-bounce, .mascot-nod, .mascot-hop,
   .demo-dot-pulse, .demo-dot-travel {
     animation: none;
