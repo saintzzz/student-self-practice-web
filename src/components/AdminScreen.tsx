@@ -655,9 +655,11 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
   const reloadGen = useRef(0);
   const classIdRef = useRef(classId);
   const reload = useCallback(async (cid: string) => {
+    // Identity guard first: a stale-class reload must not even bump the
+    // generation, or it cancels the selected class's in-flight request.
+    if (cid !== classIdRef.current) return;
     const gen = ++reloadGen.current;
     if (!cid) { setRows(null); setListError(null); return; }
-    if (cid !== classIdRef.current) return;
     const { rows: list, error } = await assignmentList(cid);
     if (gen === reloadGen.current && cid === classIdRef.current) {
       setRows(error ? null : list);
