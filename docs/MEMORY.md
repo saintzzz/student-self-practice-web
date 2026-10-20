@@ -84,10 +84,12 @@
 - Per-machine state that does NOT transfer: running background jobs (restart on other machine - DB progress is shared in Supabase), gemini-web Chromium profile (re-login per machine), playwright browsers.
 - `Session state` block below is rewritten at each machine switch / session end - always read it first on the receiving machine.
 
-### Session state - 2026-10-20 (HANDOFF Windows PC -> iMac)
-- User left this machine; background jobs may still run if machine stays on - their progress is in Supabase regardless.
-- llm-core run: ~367 batches core G2-5 (target 7k/grade) via gemini-web fallback; polish run: ~10k pending.
-- codex supervisor parked -> auto-resumes when ChatGPT quota returns; scripts self-fallback to gemini.
+### Session state - 2026-10-20 (Windows PC STOPPED -> resume on iMac)
+- All background jobs STOPPED by user request. Resume on iMac (scripts are idempotent; DB progress shared):
+  - llm-core STOPPED at 210/367 batches (3,962 rows in). Resume: `node scripts/gen-codex-bank.mjs --tier core --target 7000 --grades 2,3,4,5 --workers 3 --batch 25`
+  - polish STOPPED at 210/678 batches (2,533 polished / 121 dropped). Resume: `node scripts/polish-codex.mjs --grades 1,2,3,4,5 --workers 3 --batch 15`
+  - verify sweep NOT started. Next after gen lands: `node scripts/verify-codex.mjs --grades 1,2,3,4,5 --workers 3 --batch 12`
+  - codex supervisor killed - relaunch if wanted: `node scripts/_codex-resume.mjs` (or run the three scripts manually - they self-fallback codex->gemini).
 - artgen: 38 webp modified in public/images/concepts/ - UNCOMMITTED, needs eye-review before commit.
-- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (transferred via bundle).
-- Next on iMac: git pull, re-login gemini via `node scripts/gemini-login.mjs`, restart gen/polish/verify as needed; verify sweep after gen lands; exam-ready needs exam pool >=800/grade + 5% human spot-check.
+- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (in machine-transfer bundle).
+- exam-ready gate: exam pool >=800/grade + 5% human spot-check.
