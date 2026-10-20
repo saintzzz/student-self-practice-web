@@ -38,10 +38,12 @@ export default function AssignmentsInbox({ isGuest, onTake, error }: {
   error?: string | null;
 }) {
   const [items, setItems] = useState<InboxItem[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     if (isGuest) return;
-    void assignmentInbox().then(setItems);
+    setLoadError(null);
+    void assignmentInbox().then((r) => { setItems(r.items); setLoadError(r.error); });
   }, [isGuest]);
 
   useEffect(() => {
@@ -49,7 +51,29 @@ export default function AssignmentsInbox({ isGuest, onTake, error }: {
     reload();
   }, [reload]);
 
-  if (isGuest || !items || items.length === 0) return null;
+  if (isGuest) return null;
+  // Fail-closed: a real RPC error is not "no assignments" - show a retry.
+  if (loadError) {
+    return (
+      <div data-testid="assignments-inbox" className={`mt-4 ${CARD}`}>
+        <h2 className="font-display text-xl font-extrabold text-amber-300">
+          <IconMail size={20} className="mr-1.5 inline-block" /> Bài tập cô giao
+        </h2>
+        <p data-testid="assignment-load-error" className="mt-2 text-sm font-semibold text-rose-300">
+          Chưa tải được danh sách bài tập.
+        </p>
+        <button
+          type="button"
+          data-testid="assignment-load-retry"
+          onClick={reload}
+          className="mt-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-emerald-500 active:scale-95"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+  if (!items || items.length === 0) return null;
 
   const actionable = (s: InboxItem['state']) => s === 'open' || s === 'in_progress' || s === 'late-open';
 

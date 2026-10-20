@@ -641,6 +641,7 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
 }) {
   const [classId, setClassId] = useState('');
   const [rows, setRows] = useState<ListRow[] | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', gradeId: '', programId: 'english', count: 10, due: '' });
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState<{ id: string; data: AssignmentReport } | null>(null);
@@ -648,19 +649,27 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
 
   const classGrades = scopes[classId] ?? [];
 
-  // Generation guard: switching class while a list call is in flight must
-  // not paint class A's rows under class B (stale response discarded).
+  // Generation + identity guards: a reload for a class that is no longer
+  // selected (e.g. a mutation finishing after the teacher switched away)
+  // must not paint that class's rows under the current selection.
   const reloadGen = useRef(0);
+  const classIdRef = useRef(classId);
   const reload = useCallback(async (cid: string) => {
     const gen = ++reloadGen.current;
-    if (!cid) { setRows(null); return; }
-    const list = await assignmentList(cid);
-    if (gen === reloadGen.current) setRows(list);
+    if (!cid) { setRows(null); setListError(null); return; }
+    if (cid !== classIdRef.current) return;
+    const { rows: list, error } = await assignmentList(cid);
+    if (gen === reloadGen.current && cid === classIdRef.current) {
+      setRows(error ? null : list);
+      setListError(error);
+    }
   }, []);
 
   useEffect(() => {
+    classIdRef.current = classId;
     setReport(null);
     setRows(null);
+    setListError(null);
     void reload(classId);
   }, [classId, reload]);
 
@@ -695,8 +704,8 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
 
   async function handleReport(id: string): Promise<void> {
     if (report?.id === id) { setReport(null); return; }
-    const data = await assignmentReport(id);
-    if (!data) { setError('Chưa tải được báo cáo.'); return; }
+    const { data, error } = await assignmentReport(id);
+    if (!data) { setError(error ? `Chưa tải được báo cáo (${error}).` : 'Chưa tải được báo cáo.'); return; }
     setReport({ id, data });
   }
 
@@ -802,6 +811,19 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
         </form>
       )}
 
+      {classId && listError && (
+        <div data-testid="assign-list-error" className="flex items-center justify-between gap-3 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 ring-1 ring-rose-200">
+          <span>Chưa tải được danh sách bài của lớp.</span>
+          <button
+            type="button"
+            data-testid="assign-list-retry"
+            onClick={() => void reload(classId)}
+            className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-white transition hover:bg-rose-500 active:scale-95"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
       {classId && (
         <ul data-testid="assign-list" className="flex flex-col gap-2">
           {(rows ?? []).map((r) => (

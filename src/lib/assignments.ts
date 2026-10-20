@@ -95,52 +95,74 @@ export async function assignmentCreate(
   }
 }
 
-export async function assignmentList(classId: string): Promise<ListRow[]> {
-  let data: unknown, error: { message?: string } | null = null;
+/** Resolve the client; null = unconfigured/guest (a legitimate empty
+ *  result, not an error). The `rpc` typeof check also keeps older test
+ *  mocks that return a bare undefined client safe. */
+async function tryClient(): Promise<{ rpc: (fn: string, args?: Record<string, unknown>) => Promise<unknown> } | null> {
   try {
-    ({ data, error } = await (await getSupabase()).rpc('assignment_list', { p_class_id: classId }));
+    const supa = (await getSupabase()) as { rpc?: unknown } | null | undefined;
+    return supa && typeof supa.rpc === 'function' ? (supa as never) : null;
   } catch {
-    return [];
+    return null;
   }
-  if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map((r) => ({
-    id: String(r.id),
-    title: String(r.title),
-    formId: String(r.form_id),
-    gradeId: String(r.grade_id),
-    programId: String(r.program_id),
-    opensAt: String(r.opens_at),
-    dueAt: String(r.due_at),
-    status: String(r.status),
-    submitted: Number(r.submitted),
-    started: Number(r.started),
-    roster: Number(r.roster),
-  }));
 }
 
-export async function assignmentInbox(): Promise<InboxItem[]> {
-  let data: unknown, error: { message?: string } | null = null;
+/** Fail-closed list reads: RPC errors surface as `error`, while
+ *  unconfigured/guest returns empty with error null. */
+export async function assignmentList(classId: string): Promise<{ rows: ListRow[]; error: string | null }> {
+  const supa = await tryClient();
+  if (!supa) return { rows: [], error: null };
   try {
-    ({ data, error } = await (await getSupabase()).rpc('assignment_inbox'));
-  } catch {
-    return [];
+    const { data, error } = (await supa.rpc('assignment_list', { p_class_id: classId })) as { data: unknown; error: { message?: string } | null };
+    if (error) return { rows: [], error: msg(error) };
+    return {
+      rows: ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+        id: String(r.id),
+        title: String(r.title),
+        formId: String(r.form_id),
+        gradeId: String(r.grade_id),
+        programId: String(r.program_id),
+        opensAt: String(r.opens_at),
+        dueAt: String(r.due_at),
+        status: String(r.status),
+        submitted: Number(r.submitted),
+        started: Number(r.started),
+        roster: Number(r.roster),
+      })),
+      error: null,
+    };
+  } catch (e) {
+    return { rows: [], error: msg(e) };
   }
-  if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map((r) => ({
-    assignmentId: String(r.assignment_id),
-    title: String(r.title),
-    className: String(r.class_name),
-    formId: String(r.form_id),
-    gradeId: String(r.grade_id),
-    programId: String(r.program_id),
-    opensAt: String(r.opens_at),
-    dueAt: String(r.due_at),
-    state: String(r.state) as AssignmentState,
-    score: r.score === null ? null : Number(r.score),
-    total: r.total === null ? null : Number(r.total),
-    late: r.late === null ? null : Boolean(r.late),
-    submittedAt: r.submitted_at === null ? null : String(r.submitted_at),
-  }));
+}
+
+export async function assignmentInbox(): Promise<{ items: InboxItem[]; error: string | null }> {
+  const supa = await tryClient();
+  if (!supa) return { items: [], error: null };
+  try {
+    const { data, error } = (await supa.rpc('assignment_inbox')) as { data: unknown; error: { message?: string } | null };
+    if (error) return { items: [], error: msg(error) };
+    return {
+      items: ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+        assignmentId: String(r.assignment_id),
+        title: String(r.title),
+        className: String(r.class_name),
+        formId: String(r.form_id),
+        gradeId: String(r.grade_id),
+        programId: String(r.program_id),
+        opensAt: String(r.opens_at),
+        dueAt: String(r.due_at),
+        state: String(r.state) as AssignmentState,
+        score: r.score === null ? null : Number(r.score),
+        total: r.total === null ? null : Number(r.total),
+        late: r.late === null ? null : Boolean(r.late),
+        submittedAt: r.submitted_at === null ? null : String(r.submitted_at),
+      })),
+      error: null,
+    };
+  } catch (e) {
+    return { items: [], error: msg(e) };
+  }
 }
 
 export async function assignmentTake(assignmentId: string): Promise<TakeResult | { error: string }> {
@@ -184,17 +206,18 @@ export async function assignmentSubmit(
   }
 }
 
-export async function assignmentReport(assignmentId: string): Promise<AssignmentReport | null> {
-  let data: unknown, error: { message?: string } | null = null;
+export async function assignmentReport(assignmentId: string): Promise<{ data: AssignmentReport | null; error: string | null }> {
+  const supa = await tryClient();
+  if (!supa) return { data: null, error: null };
   try {
-    ({ data, error } = await (await getSupabase()).rpc('assignment_report', {
+    const { data, error } = (await supa.rpc('assignment_report', {
       p_assignment_id: assignmentId,
-    }));
-  } catch {
-    return null;
+    })) as { data: unknown; error: { message?: string } | null };
+    if (error) return { data: null, error: msg(error) };
+    return { data: (data ?? null) as AssignmentReport | null, error: null };
+  } catch (e) {
+    return { data: null, error: msg(e) };
   }
-  if (error || !data) return null;
-  return data as AssignmentReport;
 }
 
 export async function assignmentClose(assignmentId: string): Promise<{ ok: boolean; error?: string }> {
