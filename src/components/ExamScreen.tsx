@@ -333,16 +333,20 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
         snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
       };
-      // r-ext4: resolve the owner before persisting - a payload without
-      // forUser can never be safely attributed on replay. Persist before
-      // submitting so a fast success can't removeItem before the tag lands.
+      // r-ext4/r-ext5: resolve the owner before persisting - a payload
+      // without forUser can never be safely attributed on replay, so it
+      // is never written to storage. Submit still runs (the RPC uses
+      // server-side auth, not forUser): if the client session lookup
+      // fails but the server session is valid, the result still lands.
       void (async () => {
-        if (!assignUserRef.current) {
+        let uid = assignUserRef.current;
+        if (!uid) {
           const s = await getSession().catch(() => null);
-          assignUserRef.current = s?.user?.id ?? '';
+          uid = s?.user?.id ?? '';
+          assignUserRef.current = uid;
         }
-        if (assignPayloadRef.current) {
-          assignPayloadRef.current.forUser = assignUserRef.current;
+        if (assignPayloadRef.current && uid) {
+          assignPayloadRef.current.forUser = uid;
           sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
         }
         void submitAssignment(0);
