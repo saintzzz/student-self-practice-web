@@ -65,6 +65,19 @@ node scripts/gen-codex-bank.mjs --tier advanced --grades 2 --batch 5 --dry
 - Devin CLI tren iMac: summaries nam o `~/Library/Application Support/devin/cli/summaries`
   (script import tu detect; neu khong dung, tim bang `mdfind history_*.md`).
 
+## 4b. Repo GitLab cong ty (code.eastgatesoftware.com - can VPN)
+
+Neu iMac khong co VPN, khoi phuc tu git bundles trong bundle:
+```bash
+git clone machine-transfer/repo-bundles/EGS-Engineering-Kit.bundle EGS-Engineering-Kit
+git clone machine-transfer/repo-bundles/egs-platform.bundle egs-platform
+# cong viec dang do nam trong nhanh wip/handoff-2026-10-20
+```
+
+WIP tren GitHub: moi repo co nhanh `wip/handoff-2026-10-20*` -
+`git fetch && git checkout wip/handoff-2026-10-20` de tiep tuc cong viec
+dang do cua may Windows.
+
 ## 5. Khong duoc commit
 
 - `machine-transfer/` (secrets!), `.env.local`, `scripts/gemini-web-profile*/`
