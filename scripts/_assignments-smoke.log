@@ -1,6 +1,6 @@
 PASS provision 5 users 
-PASS provision classes code=RHBR67
-PASS student joins via code "Lop mvfy3oiz"
+PASS provision classes code=GCJR3P
+PASS student joins via code "Lop mvfz3f6g"
 PASS teacher creates assignment 
 PASS student create rejected not-owner
 PASS other teacher rejected not-owner
@@ -8,17 +8,18 @@ PASS out-of-scope grade rejected grade-out-of-scope
 PASS outsider inbox excludes it 
 PASS outsider take denied not-enrolled
 PASS outsider form denied forbidden
-PASS student sees inbox row {"assignment_id":"7762b71b-9f9f-4084-9716-61bb32d6d53e","title":"Bai test khoi 2","class_name":"Lop mvfy3oiz","form_id":"asg-0b8b8459-f149-490d-9acc-4bfaba821cda","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T00:28:59.257729+00:00","due_at":"2026-10-21T00:28:58.219+00:00","state":"open","score":null,"total":null,"late":null,"submitted_at":null}
-PASS take returns form+meta {"form_id":"asg-0b8b8459-f149-490d-9acc-4bfaba821cda","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
+PASS student sees inbox row {"assignment_id":"e76d0bd3-b52d-4618-8425-7f21df33f50f","title":"Bai test khoi 2","class_name":"Lop mvfz3f6g","form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T00:56:59.135226+00:00","due_at":"2026-10-21T00:56:57.762+00:00","state":"open","score":null,"total":null,"late":null,"submitted_at":null}
+PASS take returns form+meta {"form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
 PASS form returns 10 questions 10 rows 
 PASS dupe answers rejected bad-answers
 PASS partial answers rejected bad-answers
 PASS non-boolean correct rejected bad-answers
+PASS missing correct key rejected bad-answers
 PASS valid submit returns result id 
 PASS second submit rejected already-submitted
-PASS results row written {"id":"625b8bb7-fc6b-47a1-ba31-2f82f61c4b36","points":50,"correct_count":5,"form_id":"assignment:7762b71b-9f9f-4084-9716-61bb32d6d53e","rounds_completed":1}
-PASS take after submit -> done {"form_id":"asg-0b8b8459-f149-490d-9acc-4bfaba821cda","grade_id":"grade-2","program_id":"english","question_count":0,"state":"done"}
-PASS list counts {"id":"7762b71b-9f9f-4084-9716-61bb32d6d53e","title":"Bai test khoi 2","form_id":"asg-0b8b8459-f149-490d-9acc-4bfaba821cda","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T00:28:59.257729+00:00","due_at":"2026-10-21T00:28:58.219+00:00","status":"open","submitted":1,"started":0,"roster":2}
+PASS results row written {"id":"f7230775-7d33-4755-b391-c9224857d9ea","points":50,"correct_count":5,"form_id":"assignment:e76d0bd3-b52d-4618-8425-7f21df33f50f","rounds_completed":1}
+PASS take after submit -> done {"form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","question_count":0,"state":"done"}
+PASS list counts {"id":"e76d0bd3-b52d-4618-8425-7f21df33f50f","title":"Bai test khoi 2","form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T00:56:59.135226+00:00","due_at":"2026-10-21T00:56:57.762+00:00","status":"open","submitted":1,"started":0,"roster":2}
 PASS report roster HS An,HS Binh q=10
 PASS remediate mints follow-up 
 PASS cross-teacher report/close/remediate denied forbidden forbidden forbidden
@@ -28,6 +29,9 @@ PASS upcoming form denied forbidden
 PASS upcoming inbox state 
 PASS close works 
 PASS closed take denied closed
+PASS B takes in-flight {"form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
+PASS close main assignment 
+PASS submit after close denied closed
 PASS anon inbox denied permission denied for function assignment_inbox
 
-=== 31/31 checks passed ===
+=== 35/35 checks passed ===

@@ -412,19 +412,30 @@ begin
   select * into a from practice.assignments where id = p_assignment_id for update;
   if not found then raise exception 'not-found'; end if;
   if not practice.enrolled_in_class(a.class_id) then raise exception 'not-enrolled'; end if;
+  -- Spec: window checks on take AND submit - a closed assignment stops
+  -- accepting even in-flight attempts.
+  if a.status <> 'open' then raise exception 'closed'; end if;
 
   -- answers contract: unique q_ids + exact set equality with the form.
+  -- `is distinct from` catches missing keys: jsonb_typeof(missing) is
+  -- NULL and NULL <> 'boolean' is NULL, which a plain <> filter misses.
   select array_agg(x.value->>'q_id'),
-         count(*) filter (where jsonb_typeof(x.value->'correct') <> 'boolean'),
-         count(*) filter (where (x.value->>'correct')::boolean) into v_ans_ids, v_count, v_correct
+         count(*) filter (where
+           jsonb_typeof(x.value) <> 'object'
+           or x.value->>'q_id' is null
+           or jsonb_typeof(x.value->'correct') is distinct from 'boolean'),
+         count(*) filter (where
+           case when jsonb_typeof(x.value->'correct') = 'boolean'
+                then (x.value->>'correct')::boolean else false end)
+      into v_ans_ids, v_count, v_correct
     from jsonb_array_elements(p_answers) x;
-  if v_count > 0 then raise exception 'bad-answers'; end if;
+  if v_count is null or v_count > 0 then raise exception 'bad-answers'; end if;
   select array_agg(t) into v_form_ids
     from jsonb_array_elements_text(
       (select payload->'questionIds' from practice.qb_exam_forms where id = a.form_id)) t;
   if v_ans_ids is null
      or (select count(distinct x) from unnest(v_ans_ids) x) <> coalesce(array_length(v_ans_ids, 1), 0)
-     or not (v_ans_ids <@ v_form_ids and v_form_ids <@ v_ans_ids) then
+     or not (coalesce(v_ans_ids <@ v_form_ids, false) and coalesce(v_form_ids <@ v_ans_ids, false)) then
     raise exception 'bad-answers';
   end if;
 

@@ -564,7 +564,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     }
     // CR-28: after a review session the queue may be fully rescheduled -
     // a retry with zero due items would have nothing to render.
-    const canRetry = !isReview || getDueReviewItems(gradeId).length > 0;
+    // CR-98: assignments are single-attempt - the submit already landed,
+    // a replay would only confuse (the RPC rejects a second submit).
+    const canRetry = !isAssignment && (!isReview || getDueReviewItems(gradeId).length > 0);
     return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} onExit={onExit} onRetry={canRetry ? begin : undefined} />;
   }
 

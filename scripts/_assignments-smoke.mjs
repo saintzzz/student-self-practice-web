@@ -132,6 +132,12 @@ try {
     p_answers: qids.map((q_id) => ({ q_id, correct: 'yes' })),
   });
   ok('non-boolean correct rejected', !!bad3 && bad3.message.includes('bad-answers'), bad3?.message ?? '');
+  // r1: missing `correct` key - jsonb_typeof(NULL) is NULL, must still reject
+  const { error: bad4 } = await stA.rpc('assignment_submit', {
+    p_assignment_id: asgId, p_score: 0, p_total: 100, p_time_sec: 60,
+    p_answers: qids.map((q_id) => ({ q_id })),
+  });
+  ok('missing correct key rejected', !!bad4 && bad4.message.includes('bad-answers'), bad4?.message ?? '');
 
   // 10. valid submit (half correct -> weak skills exist) + idempotency
   const { data: rid, error: subErr } = await stA.rpc('assignment_submit', {
@@ -197,6 +203,17 @@ try {
   const { error: clTake } = await stA.rpc('assignment_take', { p_assignment_id: remId });
   ok('closed take denied', !!clTake && clTake.message.includes('closed'), clTake?.message ?? '');
 
+  // 17b. r1: B takes (open attempt), teacher closes -> B's submit denied
+  const { data: takeB } = await stB.rpc('assignment_take', { p_assignment_id: asgId });
+  ok('B takes in-flight', takeB?.[0]?.state === 'open', JSON.stringify(takeB?.[0]));
+  const { error: closeMain } = await teacher.rpc('assignment_close', { p_assignment_id: asgId });
+  ok('close main assignment', !closeMain, closeMain?.message ?? '');
+  const { error: lateB } = await stB.rpc('assignment_submit', {
+    p_assignment_id: asgId, p_score: 50, p_total: 100, p_time_sec: 200,
+    p_answers: mkAns(qids, true),
+  });
+  ok('submit after close denied', !!lateB && lateB.message.includes('closed'), lateB?.message ?? '');
+
   // 18. anon role: RPC execute revoked for anon
   const anon = createClient(url, keys.anon, { db: { schema: 'practice' }, auth: { persistSession: false } });
   const { error: anErr } = await anon.rpc('assignment_inbox');
@@ -213,6 +230,7 @@ try {
   ])).map((p) => p.catch(() => {})));
   const fails = results.filter((r) => !r.cond).length;
   console.log(`\n=== ${results.length - fails}/${results.length} checks passed ===`);
-  await sleep(200); // let stdout flush before the hard exit
+  await new Promise((r) => process.stdout.write('', r)); // drain pipe before hard exit
+  await sleep(500);
   process.exit(fails ? 1 : 0);
 }
