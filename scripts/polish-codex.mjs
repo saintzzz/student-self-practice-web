@@ -1,11 +1,12 @@
-// Codex polish pass: re-words + fine-tunes items previously drafted by
-// weaker free models. For each batch of pending rows, codex returns either
+// LLM polish pass: re-words + fine-tunes items previously drafted by
+// weaker free models. For each batch of pending rows, the model returns either
 // a polished item (same type/intent) or {"drop":true} when unfixable.
+// Uses the shared channel (codex primary, gemini-web fallback).
 // Usage: node scripts/polish-codex.mjs [--grades 1] [--workers 3] [--limit 500] [--dry]
 import { readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { spawn } from 'child_process';
+import { createLlmChannel } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -75,19 +76,7 @@ ITEMS:
 ${JSON.stringify(items, null, 0)}`;
 }
 
-function codexRun(prompt) {
-  return new Promise((resolve, reject) => {
-    const p = spawn('codex.cmd', ['exec', '--skip-git-repo-check'], { cwd: process.cwd(), shell: true, windowsHide: true });
-    let out = '', err = '';
-    const kill = setTimeout(() => { p.kill(); reject(new Error('codex-timeout')); }, 300000);
-    p.stdout.on('data', (d) => { out += d; });
-    p.stderr.on('data', (d) => { err += d; });
-    p.on('error', (e) => { clearTimeout(kill); reject(e); });
-    p.on('close', (code) => { clearTimeout(kill); code === 0 ? resolve(out) : reject(new Error(`exit-${code}: ${err.slice(0, 160)}`)); });
-    p.stdin.write(prompt);
-    p.stdin.end();
-  });
-}
+const channel = createLlmChannel({ workers: WORKERS });
 
 function parseOut(stdout) {
   const m = stdout.match(/\[[\s\S]*\]/g);
@@ -108,7 +97,7 @@ async function patch(row, fix) {
   if (typeof fix.passage === 'string') body.passage = fix.passage;
   if (typeof fix.statement === 'string') body.statement = fix.statement;
   if (Array.isArray(fix.tokens)) body.tokens = fix.tokens;
-  body.review_status = 'codex-polished-human-signoff-required';
+  body.review_status = 'llm-polished-human-signoff-required';
   if (!Object.keys(body).length) return 'noop';
   const res = await fetch(`${URL}/rest/v1/qb_questions?id=eq.${row.id}`, { method: 'PATCH', headers: HW, body: JSON.stringify(body) });
   return res.ok ? 'ok' : 'err-' + res.status;
@@ -125,8 +114,9 @@ const pending = await fetchPending();
 console.log(`pending to polish: ${pending.length}`);
 if (DRY && pending.length) {
   const batch = pending.slice(0, BATCH);
-  const out = parseOut(await codexRun(promptFor(batch[0].grade, batch.map(slim))));
+  const out = parseOut((await channel.call(promptFor(batch[0].grade, batch.map(slim)))).text);
   console.log(JSON.stringify(out.slice(0, 4), null, 1));
+  await channel.close();
   process.exit(0);
 }
 
@@ -137,7 +127,7 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
   while (queue.length) {
     const batch = queue.shift();
     try {
-      const out = parseOut(await codexRun(promptFor(batch[0].grade, batch.map(slim))));
+      const out = parseOut((await channel.call(promptFor(batch[0].grade, batch.map(slim)))).text);
       const byId = new Map(out.map((o) => [o.i, o]));
       for (const row of batch) {
         const fix = byId.get(row.id);
@@ -154,4 +144,5 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
     if (done % 5 === 0) console.log(`  ${done}/${queue.length + done} batches | polished=${polished} dropped=${dropped} failed=${failed}`);
   }
 }));
-console.log(`DONE polish: ${polished} polished, ${dropped} dropped, ${failed} failed`);
+await channel.close();
+console.log(`DONE polish: ${polished} polished, ${dropped} dropped, ${failed} failed (codex=${channel.counts.codex} gemini=${channel.counts.gemini})`);

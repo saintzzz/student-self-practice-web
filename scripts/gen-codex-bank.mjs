@@ -1,12 +1,11 @@
-// Advanced-tier (difficulty 4-5) question generator via `codex exec`.
-// Uses the local ChatGPT subscription login - zero API credits.
-// Runs alongside gen-bulk-bank.mjs; same row shape + insert path.
-// Usage: node scripts/gen-codex-bank.mjs [--grades 3,4,5] [--per-topic 40] [--workers 3] [--dry]
+// Question generator via the shared LLM channel (codex primary, gemini-web
+// fallback - see scripts/llm-channel.mjs). Zero API credits either way.
+// Usage: node scripts/gen-codex-bank.mjs [--grades 3,4,5] [--per-topic 40] [--workers 3] [--provider auto|codex|gemini] [--dry]
 import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { spawn } from 'child_process';
+import { createLlmChannel } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -16,6 +15,7 @@ const WORKERS = Number(arg('--workers', '3'));
 const TIER = arg('--tier', 'advanced'); // advanced=d4-5 niche topics | core=full bank d1-5 curriculum topics
 const TARGET = Number(arg('--target', '0')); // core mode: top-up each grade to this eligible count
 const BATCH = Number(arg('--batch', '15'));
+const PROVIDER = arg('--provider', 'auto'); // auto = codex first, gemini-web fallback
 
 const KEYS = JSON.parse(readFileSync(join(homedir(), '.config', 'devin', 'secrets', 'supabase_new_keys.json'), 'utf8'));
 const URL = KEYS.url, SVC = KEYS.keys.service_role;
@@ -96,11 +96,11 @@ function validItem(it) {
     typeof it.ex === 'string' && it.ex.length > 5;
 }
 
-function toRow(it, grade) {
+function toRow(it, grade, provider) {
   const questionType = it.tf ? 'true-false' : it.ro ? 'reorder' : 'mcq';
   const promptText = it.tf ? 'Read the passage. True or False?' : it.ro ? 'Rearrange the words to make a correct sentence.' : it.q;
   const idKey = it.q ?? it.statement ?? it.text;
-  const id = `g${grade}-english-codex-${createHash('sha1').update(`${grade}|${idKey}`).digest('hex').slice(0, 12)}`;
+  const id = `g${grade}-english-${provider}-${createHash('sha1').update(`${grade}|${idKey}`).digest('hex').slice(0, 12)}`;
   let choices = it.ro ? null : it.tf ? ['True', 'False'] : [...it.c];
   let answer;
   if (it.tf) answer = { boolean: it.bool };
@@ -123,24 +123,12 @@ function toRow(it, grade) {
     review_status: 'machine-editorial-reviewed-human-academic-signoff-required',
     publication_policy: { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: true, requiresHumanApprovalForCommercialRelease: true },
     content_hash: contentHash,
-    source: { kind: 'generated-v6', method: `codex-cli-${TIER}`, provenance: 'AI-drafted via codex exec (ChatGPT subscription); schema-validated; original.' },
+    source: { kind: 'generated-v6', method: `${provider}-${TIER}`, provenance: `AI-drafted via ${provider} (subscription); schema-validated; original.` },
     schema_version: '6.0', passage: it.passage ?? null, statement: it.statement ?? null, tokens: it.ro ? it.tokens : null,
   };
 }
 
-function codexGen(grade, topic) {
-  return new Promise((resolve, reject) => {
-    const p = spawn('codex.cmd', ['exec', '--skip-git-repo-check'], { cwd: process.cwd(), shell: true, windowsHide: true });
-    let out = '', err = '';
-    const kill = setTimeout(() => { p.kill(); reject(new Error('codex-timeout')); }, 300000);
-    p.stdout.on('data', (d) => { out += d; });
-    p.stderr.on('data', (d) => { err += d; });
-    p.on('error', (e) => { clearTimeout(kill); reject(e); });
-    p.on('close', (code) => { clearTimeout(kill); code === 0 ? resolve(out) : reject(new Error(`codex-exit-${code}: ${err.slice(0, 200)}`)); });
-    p.stdin.write(promptFor(grade, topic, BATCH));
-    p.stdin.end();
-  });
-}
+const channel = createLlmChannel({ workers: WORKERS, provider: PROVIDER });
 
 function parseOut(stdout) {
   const m = stdout.match(/\[[\s\S]*\]/g);
@@ -197,8 +185,13 @@ if (TIER === 'core' && TARGET > 0) {
     for (let b = 0; b < n; b++) tasks.push({ g, t, b });
   }
 }
-console.log(`codex-bank: ${tasks.length} batches x~${BATCH} across grades ${GRADES}`);
-if (DRY) { const r = parseOut(await codexGen(GRADES[0], (TIER === 'core' ? CORE_TOPICS : ADV_TOPICS)[GRADES[0]][0])); console.log(JSON.stringify(r.slice(0, 3), null, 1)); process.exit(0); }
+console.log(`llm-bank: ${tasks.length} batches x~${BATCH} across grades ${GRADES} (provider=${PROVIDER})`);
+if (DRY) {
+  const { text } = await channel.call(promptFor(GRADES[0], (TIER === 'core' ? CORE_TOPICS : ADV_TOPICS)[GRADES[0]][0], BATCH));
+  console.log(JSON.stringify(parseOut(text).slice(0, 3), null, 1));
+  await channel.close();
+  process.exit(0);
+}
 
 let done = 0, inserted = 0;
 const queue = [...tasks];
@@ -206,15 +199,19 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
   while (queue.length) {
     const job = queue.shift();
     try {
-      const items = parseOut(await codexGen(job.g, job.t)).filter(validItem);
-      const rows = items.map((it) => toRow(it, job.g));
+      const { text, provider } = await channel.call(promptFor(job.g, job.t, BATCH));
+      const items = parseOut(text).filter(validItem);
+      const rows = items.map((it) => toRow(it, job.g, provider));
       if (rows.length && !DRY) { await push(rows); inserted += rows.length; }
       done++;
       if (done % 5 === 0) console.log(`  ${done}/${tasks.length} batches, ${inserted} rows`);
     } catch (e) {
       done++;
-      console.log(`  [g${job.g} ${job.t}] fail: ${String(e.message ?? e).slice(0, 80)}`);
+      const msg = String(e.message ?? e).slice(0, 80);
+      console.log(`  [g${job.g} ${job.t}] fail: ${msg}`);
+      if (/rate-limited|usage limit/i.test(msg)) { queue.unshift(job); await new Promise((r) => setTimeout(r, 300_000)); }
     }
   }
 }));
-console.log(`DONE codex-bank: ${inserted} rows inserted`);
+await channel.close();
+console.log(`DONE llm-bank: ${inserted} rows inserted (codex=${channel.counts.codex} gemini=${channel.counts.gemini})`);

@@ -1,13 +1,14 @@
-// Codex exam-signoff verifier - semantic review via ChatGPT (no free models).
+// LLM exam-signoff verifier - semantic review via the shared channel
+// (codex primary, gemini-web fallback - no free models).
 // Structural checks run in code; the semantic pass (answer correctness,
-// ambiguity, grade fit) asks codex to solve + judge each item.
+// ambiguity, grade fit) asks the model to solve + judge each item.
 // Verdicts apply directly: approve -> examEligible; unfixable -> rejected;
 // uncertain -> left pending.
 // Usage: node scripts/verify-codex.mjs [--grades 1,2,3,4,5] [--workers 3] [--limit 0] [--dry]
 import { readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { spawn } from 'child_process';
+import { createLlmChannel } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -107,19 +108,7 @@ ITEMS:
 ${JSON.stringify(items)}`;
 }
 
-function codexRun(prompt) {
-  return new Promise((resolve, reject) => {
-    const p = spawn('codex.cmd', ['exec', '--skip-git-repo-check'], { cwd: process.cwd(), shell: true, windowsHide: true });
-    let out = '', err = '';
-    const kill = setTimeout(() => { p.kill(); reject(new Error('codex-timeout')); }, 300000);
-    p.stdout.on('data', (d) => { out += d; });
-    p.stderr.on('data', (d) => { err += d; });
-    p.on('error', (e) => { clearTimeout(kill); reject(e); });
-    p.on('close', (code) => { clearTimeout(kill); code === 0 ? resolve(out) : reject(new Error(`exit-${code}: ${err.slice(0, 160)}`)); });
-    p.stdin.write(prompt);
-    p.stdin.end();
-  });
-}
+const channel = createLlmChannel({ workers: WORKERS });
 
 function parseOut(stdout) {
   const m = stdout.match(/\[[\s\S]*\]/g);
@@ -148,7 +137,8 @@ for (const r of cands) (structuralFail(r) ? structDrops : llmItems).push(r);
 console.log(`structural drop: ${structDrops.length} | semantic-check: ${llmItems.length}`);
 if (DRY) {
   const s = llmItems.slice(0, BATCH);
-  console.log(JSON.stringify(parseOut(await codexRun(promptFor(s[0].grade, s.map(slim)))).slice(0, 5), null, 1));
+  console.log(JSON.stringify(parseOut((await channel.call(promptFor(s[0].grade, s.map(slim)))).text).slice(0, 5), null, 1));
+  await channel.close();
   process.exit(0);
 }
 
@@ -164,7 +154,7 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
   while (queue.length) {
     const batch = queue.shift();
     try {
-      const out = parseOut(await codexRun(promptFor(batch[0].grade, batch.map(slim))));
+      const out = parseOut((await channel.call(promptFor(batch[0].grade, batch.map(slim)))).text);
       const byId = new Map(out.map((o) => [o.i, o]));
       for (const r of batch) {
         const v = byId.get(r.id);
@@ -174,7 +164,7 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
       }
     } catch (e) {
       errBatches++;
-      if (/usage limit/i.test(String(e))) throw e; // quota: abort whole run, supervisor retries
+      if (/usage limit|rate-limited/i.test(String(e))) throw e; // all channels quota-bound: abort, supervisor retries
       console.log(`  batch fail: ${String(e.message ?? e).slice(0, 100)}`);
     }
     done++;
@@ -185,6 +175,7 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
 // apply: approve ok, reject bad (codex judged them wrong - out of all pools)
 await patchIds(okIds, { review_status: 'approved', publication_policy: APPROVE_POL });
 await patchIds(badIds, { review_status: 'rejected', publication_policy: REJECT_POL });
+await channel.close();
 writeFileSync(`${OUT}/codex-verify-approve.json`, JSON.stringify(okIds));
 writeFileSync(`${OUT}/codex-verify-drop.json`, JSON.stringify(dropReasons));
-console.log(`DONE verify: approved=${okIds.length} rejected=${badIds.length} structural=${structDrops.length} err-batches=${errBatches}`);
+console.log(`DONE verify: approved=${okIds.length} rejected=${badIds.length} structural=${structDrops.length} err-batches=${errBatches} (codex=${channel.counts.codex} gemini=${channel.counts.gemini})`);

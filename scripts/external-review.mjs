@@ -9,10 +9,12 @@
  *   node scripts/external-review.mjs --uncommitted      review working tree
  *   node scripts/external-review.mjs                    review last commit
  *
- * Requires: `codex` on PATH and `codex login` done once (ChatGPT account).
+ * Requires: `codex` on PATH and `codex login` done once (ChatGPT account),
+ * or a logged-in gemini-web profile (scripts/_gemini-login.mjs) as fallback.
  * Output is appended to docs/reviews/EXTERNAL-REVIEW-rNN.md.
  */
 import { execSync } from 'node:child_process';
+import { createLlmChannel } from './llm-channel.mjs';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -30,15 +32,14 @@ function sh(cmd) {
   }
 }
 
-// Preflight: codex installed + logged in.
+// Preflight: warn only - the channel falls back to the gemini-web profile.
 if (!sh('codex --version')) {
-  console.error('codex CLI not found - install: npm i -g @openai/codex');
-  process.exit(1);
-}
-const loginStatus = sh('codex login status') ?? '';
-if (!/logged in/i.test(loginStatus)) {
-  console.error('codex not logged in - run `codex login` once (opens ChatGPT auth in browser).');
-  process.exit(1);
+  console.warn('codex CLI not found - will use gemini-web fallback only');
+} else {
+  const loginStatus = sh('codex login status') ?? '';
+  if (!/logged in/i.test(loginStatus)) {
+    console.warn('codex not logged in - will use gemini-web fallback only');
+  }
 }
 
 // `codex review` shells out to `git diff` itself - blocked by the exec
@@ -72,20 +73,18 @@ const prompt =
   `If nothing actionable, say CLEAN explicitly. Terse, high signal.\n\n` +
   `DIFF (${label}):\n${diff}`;
 
-console.log(`Running codex exec on ${label}...`);
-let output;
+console.log(`Running external review on ${label} (codex primary, gemini-web fallback)...`);
+const channel = createLlmChannel({ workers: 1 });
+let output, provider;
 try {
-  output = execSync('codex exec -', {
-    input: prompt,
-    encoding: 'utf8',
-    stdio: ['pipe', 'pipe', 'inherit'],
-    timeout: 20 * 60 * 1000,
-    maxBuffer: 16 * 1024 * 1024,
-  });
+  ({ text: output, provider } = await channel.call(prompt));
 } catch (e) {
-  console.error(`codex exec failed: ${e.message}`);
+  console.error(`review failed on all channels: ${e.message}`);
+  await channel.close();
   process.exit(1);
 }
+await channel.close();
+console.log(`reviewer: ${provider}`);
 
 mkdirSync(REVIEWS_DIR, { recursive: true });
 const rounds = readdirSync(REVIEWS_DIR)
@@ -97,8 +96,8 @@ const head = sh('git rev-parse --short HEAD');
 const file = join(REVIEWS_DIR, `EXTERNAL-REVIEW-r${next}.md`);
 writeFileSync(
   file,
-  `# External Review - Round ${next} (Codex CLI)\n\n` +
-    `Reviewer: codex-cli (real external run). Scope: ${label}, HEAD=${head}.\n\n` +
+  `# External Review - Round ${next} (${provider})\n\n` +
+    `Reviewer: ${provider} (real external run). Scope: ${label}, HEAD=${head}.\n\n` +
     output +
     '\n',
 );
