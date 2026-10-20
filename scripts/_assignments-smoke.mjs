@@ -32,12 +32,13 @@ let userIds = [];
 let classId = null;
 let otherClassId = null;
 const clientOf = {};
+const TEST_PW = process.env.SMOKE_TEST_PASSWORD ?? 'change_me';
 try {
   // 1. provision teacher x2, students x3
   for (const u of USERS) {
     const { data, error } = await admin.auth.admin.createUser({
       email: `${u.username}@students.ioe-practice.example`,
-      password: '123456', email_confirm: true,
+      password: TEST_PW, email_confirm: true,
     });
     if (error) throw new Error('createUser: ' + error.message);
     userIds.push(data.user.id);
@@ -46,7 +47,7 @@ try {
     });
     if (insErr) throw new Error('accounts insert: ' + insErr.message);
     const c = createClient(url, keys.anon, { db: { schema: 'practice' }, auth: { persistSession: false } });
-    await c.auth.signInWithPassword({ email: `${u.username}@students.ioe-practice.example`, password: '123456' });
+    await c.auth.signInWithPassword({ email: `${u.username}@students.ioe-practice.example`, password: TEST_PW });
     clientOf[u.role === 'teacher' ? (clientOf.t ? 't2' : 't') : u.username.slice(-1)] = c;
   }
   ok('provision 5 users', true);

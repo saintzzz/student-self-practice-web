@@ -142,7 +142,7 @@ function parseOut(stdout) {
 async function push(rows) {
   for (let i = 0; i < rows.length; i += 200) {
     const res = await fetch(`${URL}/rest/v1/qb_questions`, { method: 'POST', headers: HW, body: JSON.stringify(rows.slice(i, i + 200)) });
-    if (!res.ok) { console.log('insert err', res.status, (await res.text()).slice(0, 160)); return; }
+    if (!res.ok) { console.log('insert err', res.status, (await res.text()).slice(0, 160)); process.exitCode = 1; return; }
   }
 }
 

@@ -26,13 +26,14 @@ const results = [];
 const ok = (name, cond, extra = '') => { results.push({ name, cond, extra }); console.log(`${cond ? 'PASS' : 'FAIL'} ${name} ${extra}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const TEST_PW = process.env.SMOKE_TEST_PASSWORD ?? 'change_me';
 let userIds = [];
 try {
   // 1. provision two students (auth user + accounts row)
   for (const u of USERS) {
     const { data, error } = await admin.auth.admin.createUser({
       email: `${u.username}@students.ioe-practice.example`,
-      password: '123456', email_confirm: true,
+      password: TEST_PW, email_confirm: true,
     });
     if (error) throw new Error('createUser: ' + error.message);
     userIds.push(data.user.id);
@@ -47,7 +48,7 @@ try {
   const mk = async (i) => {
     const c = createClient(url, keys.anon, { db: { schema: 'practice' }, auth: { persistSession: false } });
     const { error } = await c.auth.signInWithPassword({
-      email: `${USERS[i].username}@students.ioe-practice.example`, password: '123456',
+      email: `${USERS[i].username}@students.ioe-practice.example`, password: TEST_PW,
     });
     if (error) throw new Error('signIn ' + i + ': ' + error.message);
     return c;
@@ -112,12 +113,12 @@ try {
 
   // 10. state is member-only: a third signed-in student gets denied
   const { data: c3 } = await admin.auth.admin.createUser({
-    email: `lv${stamp}c@students.ioe-practice.example`, password: '123456', email_confirm: true,
+    email: `lv${stamp}c@students.ioe-practice.example`, password: TEST_PW, email_confirm: true,
   });
   userIds.push(c3.user.id);
   await admin.from('accounts').insert({ id: c3.user.id, username: `lv${stamp}c`, display_name: 'Outsider', role: 'student' });
   const out = createClient(url, keys.anon, { db: { schema: 'practice' }, auth: { persistSession: false } });
-  await out.auth.signInWithPassword({ email: `lv${stamp}c@students.ioe-practice.example`, password: '123456' });
+  await out.auth.signInWithPassword({ email: `lv${stamp}c@students.ioe-practice.example`, password: TEST_PW });
   const { error: stErr } = await out.rpc('arena_live_state', { p_room_id: roomId });
   ok('non-member state rejected', !!stErr, stErr?.message ?? '');
 

@@ -17,11 +17,12 @@ const sha1 = (t) => createHash('sha1').update(t).digest('hex');
 
 const rows = [];
 for (let off = 0; ; off += 1000) {
-  const r = await fetch(
+  const res = await fetch(
     `https://cxjpgfhqchjoernfmcra.supabase.co/rest/v1/qb_questions?select=id,transcript&transcript=not.is.null&limit=1000&offset=${off}`,
     { headers: H },
   );
-  const b = await r.json();
+  if (!res.ok) { console.error('read err', res.status, (await res.text()).slice(0, 200)); process.exit(1); }
+  const b = await res.json();
   if (!b.length) break;
   rows.push(...b);
   if (b.length < 1000) break;

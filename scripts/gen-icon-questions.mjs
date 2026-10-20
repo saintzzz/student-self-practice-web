@@ -124,12 +124,12 @@ if (DRY) { console.log(rows.slice(0, 3)); process.exit(0); }
 let ok = 0;
 for (let i = 0; i < rows.length; i += 200) {
   const res = await fetch(`${URL}/rest/v1/qb_questions`, { method: 'POST', headers: HW, body: JSON.stringify(rows.slice(i, i + 200)) });
-  if (!res.ok) { console.log('insert err', res.status, (await res.text()).slice(0, 200)); break; }
+  if (!res.ok) { console.log('insert err', res.status, (await res.text()).slice(0, 200)); process.exitCode = 1; break; }
   ok += rows.slice(i, i + 200).length;
 }
 console.log('questions inserted:', ok);
 for (let i = 0; i < links.length; i += 500) {
   const res = await fetch(`${URL}/rest/v1/qb_question_assets`, { method: 'POST', headers: HW, body: JSON.stringify(links.slice(i, i + 500)) });
-  if (!res.ok) { console.log('link err', res.status, (await res.text()).slice(0, 200)); break; }
+  if (!res.ok) { console.log('link err', res.status, (await res.text()).slice(0, 200)); process.exitCode = 1; break; }
 }
 console.log('links inserted:', links.length);
