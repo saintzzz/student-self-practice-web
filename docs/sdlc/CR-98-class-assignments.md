@@ -347,3 +347,16 @@ deferred).
 Applied migrations: 0043 (base) + 0044 submit-hardening + 0045 form-guard + 0046 submit-events + 0047 service_role grants on qb_attempt_events.
 
 Final verification: `tsc -b` clean; `vite build` green; Vitest 205 files / 1,719 tests; live smoke `scripts/_assignments-smoke.mjs` 37/37 (provisions 5 users, full lifecycle + denials); Playwright e2e/cr98-assignments.spec.ts self-skips without env creds.
+
+Post-deploy external review (Codex CLI, EXTERNAL-REVIEW-r89.md):
+- r-ext1 [major] result-screen exit could orphan an unacknowledged
+  submit -> payload now persists in sessionStorage until the server
+  acks; re-entering the assignment flushes it before a new sitting.
+- r-ext1 [major] createExamFromAssignment silently dropped unrenderable
+  rows -> submit would reject 'bad-answers' permanently; load now fails
+  loudly (regression test: bank.test.ts).
+- r-ext1 [minor] migration 0010 edited in place without grants for the
+  new SECURITY DEFINER function -> added the missing EXECUTE grants so
+  file replay matches the live DB.
+- r-ext1 [minor] AssignPanel selects/datetime lacked accessible names
+  -> aria-labels added.

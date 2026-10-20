@@ -69,6 +69,10 @@ end;
 $$;
 
 revoke all on function practice.gen_join_code() from public, anon, authenticated, service_role;
+-- SECURITY DEFINER above still requires EXECUTE to call it as a column
+-- default: class inserts run as the authenticated teacher/admin (or as
+-- service_role when provisioning) - grant the invokers back.
+grant execute on function practice.gen_join_code() to authenticated, service_role;
 revoke all on function practice.join_class_by_code(text) from public, anon;
 revoke execute on function practice.join_class_by_code(text) from service_role;
 grant execute on function practice.join_class_by_code(text) to authenticated;

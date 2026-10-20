@@ -437,7 +437,11 @@ export async function createExamFromAssignment(
   const config = examConfigForGrade(gradeId);
   const rows = await fetchAssignmentForm(assignmentId);
   const questions = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
-  if (questions.length === 0) return null;
+  // CR-98 r-ext1: assignment_submit enforces exact question-set equality.
+  // A form row that cannot render would shrink the sitting and doom the
+  // submit to 'bad-answers' forever - fail the load instead so the
+  // student sees a retryable error, not a broken exam.
+  if (questions.length !== rows.length) return null;
   return {
     programId,
     gradeId,

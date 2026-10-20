@@ -738,6 +738,7 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
       <h2 className={`mb-4 ${H2}`}>Giao bài cho lớp</h2>
       <select
         data-testid="assign-class-select"
+        aria-label="Chọn lớp để giao bài"
         className={`mb-4 ${INPUT}`}
         value={classId}
         onChange={(e) => setClassId(e.target.value)}
@@ -758,6 +759,7 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
         <form data-testid="assign-create-form" onSubmit={handleCreate} className="mb-6 grid gap-3">
           <input
             data-testid="assign-title"
+            aria-label="Tên bài tập"
             className={INPUT}
             placeholder="tên bài (vd: Kiểm tra từ vựng Unit 5)"
             value={form.title}
@@ -766,6 +768,7 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
           <div className="grid gap-3 sm:grid-cols-2">
             <select
               data-testid="assign-grade"
+              aria-label="Khối lớp"
               className={INPUT}
               value={form.gradeId}
               onChange={(e) => setForm({ ...form, gradeId: e.target.value })}
@@ -776,6 +779,7 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
             </select>
             <select
               data-testid="assign-program"
+              aria-label="Môn học"
               className={INPUT}
               value={form.programId}
               onChange={(e) => setForm({ ...form, programId: e.target.value })}
@@ -786,6 +790,7 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
             </select>
             <select
               data-testid="assign-count"
+              aria-label="Số câu hỏi"
               className={INPUT}
               value={form.count}
               onChange={(e) => setForm({ ...form, count: Number(e.target.value) })}
@@ -796,6 +801,8 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
             </select>
             <input
               data-testid="assign-due"
+              aria-label="Hạn nộp bài"
+              title="Hạn nộp bài"
               type="datetime-local"
               className={INPUT}
               value={form.due}

@@ -285,6 +285,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     snapshot: { questionIds: string[] };
   } | null>(null);
   const [assignSubmitState, setAssignSubmitState] = useState<'idle' | 'pending' | 'ok' | 'failed'>('idle');
+  // CR-98 r-ext1: the submit payload also lives in sessionStorage until
+  // the server acknowledges. If the student exits or the tab dies mid-
+  // retry, re-entering the assignment flushes it before a new sitting.
+  const assignStoreKey = assignment ? `assign-submit:${assignment.id}` : '';
   const submitAssignment = useCallback(async (attempt: number): Promise<void> => {
     const payload = assignPayloadRef.current;
     if (!assignment || !payload) return;
@@ -299,9 +303,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         setAssignSubmitState('failed');
       }
     } else {
+      sessionStorage.removeItem(assignStoreKey);
       setAssignSubmitState('ok');
     }
-  }, [assignment]);
+  }, [assignment, assignStoreKey]);
   useEffect(() => {
     if (!exam || !result || questRecordedFor.current === exam) return;
     questRecordedFor.current = exam;
@@ -317,6 +322,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
         snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
       };
+      sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
       void submitAssignment(0);
     } else if (!isArena) {
       if (isPractice) recordDrillComplete();
@@ -393,6 +399,25 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       if (!isArena && isSupabaseConfigured()) {
         setLoadingBank(true);
         setLoadError(false);
+        // CR-98 r-ext1: an earlier submit may have failed after the
+        // student left - flush the stored payload first; if it lands the
+        // assignment is already done and the inbox will show 'đã nộp'.
+        if (isAssignment && assignment) {
+          const stale = sessionStorage.getItem(assignStoreKey);
+          if (stale) {
+            try {
+              const res = await assignmentSubmit(assignment.id, JSON.parse(stale));
+              if (!('error' in res) || res.error === 'already-submitted') {
+                sessionStorage.removeItem(assignStoreKey);
+                setLoadingBank(false);
+                onExit();
+                return;
+              }
+            } catch {
+              // fall through - a fresh sitting overwrites the stored payload
+            }
+          }
+        }
         // CR-98 r4: no client telemetry for assignments - submit writes
         // qb_attempt_events server-side from the authoritative answer set,
         // keeping a single writer so item stats never double-count.

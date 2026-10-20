@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createExamFromBank, gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
+import { createExamFromAssignment, createExamFromBank, gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
 import { isExamAnswerCorrect } from '../exam/examSession';
 
 const { rpcMock, getSessionMock } = vi.hoisted(() => ({
@@ -286,5 +286,37 @@ describe('createExamFromBank - r14', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('createExamFromAssignment - CR-98 r-ext1', () => {
+  const mcq = (id: string) => row({
+    id,
+    choices: ['a', 'b', 'c', 'd'],
+    answer: { index: 0 },
+  });
+
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset().mockResolvedValue({ user: { id: 'u1' } });
+  });
+
+  it('fails the load when any form row cannot render', async () => {
+    // submit enforces exact question-set equality - silently dropping an
+    // unrenderable row would doom the submit to 'bad-answers' forever.
+    rpcMock.mockResolvedValueOnce({
+      data: [mcq('a'), row({ id: 'bad', choices: ['a', 'b', 'c', 'd'], answer: { index: 7 } })],
+      error: null,
+    });
+    const st = await createExamFromAssignment('asg-1', 'english', 'grade-3');
+    expect(st).toBeNull();
+  });
+
+  it('returns the full fixed form when every row renders', async () => {
+    rpcMock.mockResolvedValueOnce({ data: [mcq('a'), mcq('b'), mcq('c')], error: null });
+    const st = await createExamFromAssignment('asg-1', 'english', 'grade-3');
+    expect(st).not.toBeNull();
+    expect(st!.questions.map((q) => String(q.id))).toEqual(['a', 'b', 'c']);
+    expect(st!.droppedCount).toBe(0);
   });
 });
