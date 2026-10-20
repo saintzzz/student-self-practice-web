@@ -49,4 +49,12 @@ export const ASSETS = [
   e('concept-peace-sign-fa6877', 'A hand showing the two-finger V peace sign, fingers apart in a V.', 'crossed fingers'),
   e('concept-drama-055725', 'Theater drama: two classic comedy and tragedy masks with a small stage curtain.', 'a dragon costume'),
   e('concept-swimming-92d0c8', 'A kid swimming freestyle in blue water with arm forward and splash - the sport swimming.', 'a single standing swimmer'),
+  e('concept-mid-autumn-festival-9566c7', 'Vietnamese Mid-Autumn Festival (Tet Trung thu): a bright full moon, red star-shaped paper lantern, round mooncakes on a plate, lion-dance vibe, festive night.', 'a microphone'),
+  // -- countries shown as generic scenes; force flag+map like siblings --
+  e('concept-romania-4c5f6a', 'The country Romania: map outline with the Romania flag (blue yellow red vertical stripes).', 'only a girl in folk dress'),
+  e('concept-russia-66146c', 'The country Russia: map outline with the Russia flag (white blue red stripes).', 'only a girl in folk dress'),
+  e('concept-rwanda-3acbe0', 'The country Rwanda: map outline with the Rwanda flag (blue yellow green with a sun).', 'only a gorilla'),
+  e('concept-senegal-82ea0d', 'The country Senegal: map outline with the Senegal flag (green yellow red with a star).', 'only a parrot'),
+  e('concept-serbia-f646d0', 'The country Serbia: map outline with the Serbia flag (red blue white with crest).', 'only a girl holding a flag'),
+  e('concept-s-o-tom-and-pr-ncipe-5286a2', 'The country Sao Tome and Principe: two-island map with its flag (green yellow with black stars).', 'generic kids in a garden'),
 ];
