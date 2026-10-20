@@ -386,3 +386,10 @@ External review round 4 (EXTERNAL-REVIEW-r92.md):
   (ordered before submit so a fast ack can't removeItem first), and
   replay keeps+blocks the payload while auth is unresolved instead of
   deleting it.
+
+External review round 5 (EXTERNAL-REVIEW-r93.md):
+- r-ext5 [major] failed session lookup still persisted forUser:'' ->
+  never write an ownerless payload; submit proceeds regardless (server
+  auth is authoritative) so a transient client-session failure cannot
+  orphan a result.
+External review round 6 (EXTERNAL-REVIEW-r94.md): **CLEAN** - loop closed.
