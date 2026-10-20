@@ -23,13 +23,25 @@ const arg = (n, d) => { const i = ARGS.indexOf(n); return i >= 0 ? ARGS[i + 1] :
 const SUBJECT = arg('--subject', 'english');
 const TARGET = Number(arg('--target', 5000));         // total per grade including existing
 const DRY = ARGS.includes('--dry');
-const CONCURRENCY = 3;
-const BATCH = 30;                                    // items per AI call
+const CONCURRENCY = Number(arg('--concurrency', 2)); // free tier rate limits
+const BATCH = Number(arg('--batch', 20));           // items per AI call                                    // items per AI call
 
 // ---------- secrets ----------
-const envFile = readFileSync(join(HERE, '../../so-chu-nhiem/.env.local'), 'utf8');
-const env = Object.fromEntries(envFile.split('\n').filter((l) => l.includes('=')).map((l) => l.split('=')));
-const OR_KEY = (env.OPENAI_API_KEY || '').trim();
+let env = {};
+try {
+  const envFile = readFileSync(join(HERE, '../../so-chu-nhiem/.env.local'), 'utf8');
+  env = Object.fromEntries(envFile.split('\n').filter((l) => l.includes('=')).map((l) => l.split('=')));
+} catch { /* sibling env optional */ }
+let OR_KEY = (env.OPENAI_API_KEY || '').trim();
+if (!OR_KEY) {
+  // openrouter key stored in devin secrets dir (%APPDATA%/devin/secrets)
+  for (const p of [
+    join(process.env.APPDATA ?? '', 'devin/secrets/openrouter_api_key'),
+    join(homedir(), '.config/devin/secrets/openrouter_api_key'),
+  ]) {
+    try { OR_KEY = readFileSync(p, 'utf8').trim(); if (OR_KEY) break; } catch { /* next */ }
+  }
+}
 const OR_BASE = (env.OPENAI_BASE_URL || 'https://openrouter.ai/api/v1').trim();
 const GEM_KEY = (env.GEMINI_API_KEY || '').trim();
 const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supabase_new_keys.json'), 'utf8'));
@@ -71,7 +83,11 @@ ${tf}${ro}
 Rules:
 - Every explanation (ex) and objective (lo) MUST be in Vietnamese, friendly tone for kids, use hyphen '-' not em-dash.
 - Choices must be 4 DISTINCT strings; exactly one clearly correct.
+- THE CRITICAL RULE: the correct answer must be the ONLY defensible option. Three distractors must be provably wrong, not just less likely. Never write prompts where fit is subjective or adjective-dependent (e.g. "A big ___" - giraffe and elephant both fit). Every question must have a verifiable single answer.
+- Cloze/gap items: the missing word must be the only word that completes the sentence correctly, both grammatically and semantically.
 - No two items ask the same thing. Vary vocabulary within the topic.
+- Question text must be self-contained and unambiguous without pictures. FORBIDDEN prompt shapes: "What is this?", "Look! ...", "Point to...", "Which picture..." - anything needing an image to resolve. Questions must name or describe the target in words (e.g. "What do you write with?", "Which animal says 'meow'?").
+- Vary the position of the correct answer across items - do not always put it first.
 - No markdown fences, no commentary - raw JSON array only.`;
 }
 
@@ -84,8 +100,11 @@ function validItem(it) {
     return norm(it.tokens.join(' ')) === norm(it.text);
   }
   // mcq
-  return typeof it.q === 'string' && it.q.length > 5 &&
-    Array.isArray(it.c) && it.c.length === 4 && new Set(it.c).size === 4 &&
+  if (typeof it.q !== 'string' || it.q.length < 10) return false;
+  // image-dependent prompts are unanswerable in text form (audit reject class)
+  if (/what is this|look!?|point to|which picture|in the picture|nhìn hình/i.test(it.q)) return false;
+  return Array.isArray(it.c) && it.c.length === 4 && new Set(it.c).size === 4 &&
+    new Set(it.c.map((x) => String(x).toLowerCase().trim())).size === 4 &&
     Number.isInteger(it.a) && it.a >= 0 && it.a <= 3 &&
     typeof it.ex === 'string' && it.ex.length > 5 && typeof it.lo === 'string';
 }
@@ -95,8 +114,17 @@ function toRow(it, grade) {
   const promptText = it.tf ? 'Read the passage. True or False?' : it.ro ? 'Rearrange the words to make a correct sentence.' : it.q;
   const idKey = it.q ?? it.statement ?? it.text;
   const id = `g${grade}-${SUBJECT}-bulk-${createHash('sha1').update(`${grade}|${SUBJECT}|${idKey}`).digest('hex').slice(0, 12)}`;
-  const choices = it.ro ? null : it.tf ? ['True', 'False'] : it.c;
-  const answer = it.tf ? { boolean: it.bool } : it.ro ? { text: it.text } : { text: it.c[it.a], index: it.a };
+  // deterministic choice shuffle - models default to answer index 0 which is a
+  // positional tell; rotate options by hash so the correct slot spreads evenly.
+  let choices = it.ro ? null : it.tf ? ['True', 'False'] : [...it.c];
+  let answer;
+  if (it.tf) answer = { boolean: it.bool };
+  else if (it.ro) answer = { text: it.text };
+  else {
+    const shift = parseInt(createHash('sha1').update(id).digest('hex').slice(0, 2), 16) % 4;
+    choices = choices.map((_, i) => it.c[(i + shift) % 4]);
+    answer = { text: it.c[it.a], index: (it.a - shift + 4) % 4 };
+  }
   const contentHash = createHash('sha1').update(JSON.stringify([promptText, choices, answer, it.passage ?? null])).digest('hex').slice(0, 16);
   return {
     id, grade, subject: SUBJECT, domain: it.tf ? 'reading' : it.ro ? 'writing' : 'vocabulary',
@@ -121,7 +149,7 @@ function toRow(it, grade) {
 async function callGemini(prompt) {
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEM_KEY}`, {
     method: 'POST',
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(150000),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
@@ -133,29 +161,41 @@ async function callGemini(prompt) {
   return data.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '';
 }
 
+// free OpenRouter models first (rate-limited but zero-cost), paid flash-lite
+// last as credit may be thin. A failing model falls through to the next.
+const MODELS = (arg('--models', 'minimax/minimax-m3.1-flash:free,nvidia/nemotron-3-super-120b-a12b:free,google/gemini-2.5-flash-lite')).split(',');
+const CHECK_MODEL = arg('--check-model', 'minimax/minimax-m3.1-flash:free');
+
 async function callOpenRouter(grade, topic, batchIdx, attempt) {
-  const res = await fetch(`${OR_BASE}/chat/completions`, {
-    method: 'POST',
-    signal: AbortSignal.timeout(60000),
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OR_KEY}` },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash-lite',
-      messages: [
-        { role: 'system', content: 'You output only valid JSON arrays. No markdown, no commentary.' },
-        { role: 'user', content: promptFor(grade, topic, batchIdx) + (attempt > 0 ? `\n\nIMPORTANT: output must be a raw JSON array, nothing else.` : '') },
-      ],
-      temperature: 0.9,
-      max_tokens: 12000,
-    }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    if (res.status === 429 || res.status >= 500) return { retry: true, text: '' };
-    console.error(`  HTTP ${res.status} ${t.slice(0, 120)}`);
-    return { retry: false, text: '', fallback: res.status === 402 };
+  for (const model of MODELS) {
+    const res = await fetch(`${OR_BASE}/chat/completions`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(150000),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OR_KEY}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: 'You output only valid strict JSON arrays - double-quoted keys, no comments, no trailing commas, no markdown fences.' },
+          { role: 'user', content: promptFor(grade, topic, batchIdx) + (attempt > 0 ? `\n\nIMPORTANT: output must be a raw JSON array, nothing else.` : '') },
+        ],
+        temperature: 0.9,
+        max_tokens: 12000,
+        reasoning: { effort: 'low' }, // reasoning models burn the token budget otherwise
+      }),
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      if (res.status === 429 || res.status >= 500) continue; // rate-limited -> next model
+      console.error(`  HTTP ${res.status} [${model}] ${t.slice(0, 100)}`);
+      if (res.status === 402 && GEM_KEY) return { retry: false, text: '', fallback: true };
+      continue;
+    }
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content ?? '';
+    if (parseItems(text).length) return { retry: false, text };
+    // empty parse -> try next model rather than return nothing
   }
-  const data = await res.json();
-  return { retry: false, text: data.choices?.[0]?.message?.content ?? '' };
+  return { retry: true, text: '' }; // all models busy -> caller backs off
 }
 
 function parseItems(text) {
@@ -166,19 +206,68 @@ function parseItems(text) {
   catch { return []; }
 }
 
+/**
+ * Second-pass self-solve: the model re-answers each MCQ without seeing the
+ * declared answer. Items whose self-solve disagrees with the declared `a`
+ * are dropped - this is the same ambiguity check the audit pipeline applied
+ * when it rejected ~50% of the earlier bulk wave.
+ */
+async function selfCheck(items) {
+  const mcqs = items.filter((it) => !it.tf && !it.ro);
+  if (!mcqs.length) return items;
+  const qs = mcqs.map((it, i) => `${i}. ${it.q}\n   A.${it.c[0]} B.${it.c[1]} C.${it.c[2]} D.${it.c[3]}`).join('\n');
+  const res = await fetch(`${OR_BASE}/chat/completions`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(150000),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OR_KEY}` },
+    body: JSON.stringify({
+      model: CHECK_MODEL,
+      messages: [
+        { role: 'system', content: 'You answer multiple-choice questions. Output ONLY a JSON array of integers (0-3), the index of the single correct answer per item, in order.' },
+        { role: 'user', content: `Answer each question. If a question has no single clear answer, output -1 for it.\n\n${qs}` },
+      ],
+      temperature: 0,
+      max_tokens: 2000,
+      reasoning: { effort: 'low' },
+    }),
+  });
+  if (!res.ok) return items; // self-check offline -> keep, server audit still gates
+  const m = (await res.json()).choices?.[0]?.message?.content ?? '';
+  let picks = [];
+  const s = m.indexOf('['); const e = m.lastIndexOf(']');
+  if (s >= 0 && e > s) { try { picks = JSON.parse(m.slice(s, e + 1)); } catch { picks = []; } }
+  if (!picks.length) {
+    // tolerant parse: "1. A" / "2. B" style lines -> indices (undefined = unparsed)
+    picks = mcqs.map((_, i) => {
+      const mm = m.match(new RegExp(`${i + 1}[.\\)]\\s*([A-D])`));
+      return mm ? mm[1].charCodeAt(0) - 65 : undefined;
+    });
+  }
+  if (picks.every((v) => v === undefined)) return items; // checker output unusable
+  if (!Array.isArray(picks) || picks.length !== mcqs.length) return items;
+  const drop = new Set();
+  // drop on declared-answer mismatch or checker-flagged ambiguity (-1);
+  // keep on unparsed checker output (undefined) - don't punish parse noise.
+  mcqs.forEach((it, i) => { if (picks[i] !== undefined && picks[i] !== it.a) drop.add(it); });
+  return items.filter((it) => !drop.has(it));
+}
+
 async function genBatch(grade, topic, batchIdx) {
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const r = await callOpenRouter(grade, topic, batchIdx, attempt);
-      if (r.retry) { await new Promise((x) => setTimeout(x, 3000 * (attempt + 1))); continue; }
+      if (r.retry) { process.stdout.write(`  [${topic}] attempt${attempt} all-models-busy\n`); await new Promise((x) => setTimeout(x, 3000 * (attempt + 1))); continue; }
       if (r.fallback && GEM_KEY) {
         const items = parseItems(await callGemini(promptFor(grade, topic, batchIdx)));
         if (items.length) return items;
         continue;
       }
-      return parseItems(r.text);
+      const parsed = parseItems(r.text);
+      const kept = await selfCheck(parsed);
+      process.stdout.write(`  [${topic}] gen ${parsed.length} -> selfcheck ${kept.length}\n`);
+      return kept;
     } catch (e) {
-      if (attempt === 3) console.error(`  call fail: ${String(e).slice(0, 80)}`);
+      console.error(`  [${topic}] call fail a${attempt}: ${String(e).slice(0, 80)}`);
       await new Promise((x) => setTimeout(x, 2000 * (attempt + 1)));
     }
   }
@@ -211,7 +300,11 @@ async function push(rows) {
 
 // ---------- existing count ----------
 async function countGrade(grade) {
-  const res = await fetch(`${SUPA}/rest/v1/qb_questions?select=id&canonical=eq.true&subject=eq.${SUBJECT}&grade=eq.${grade}`,
+  // count only rows that actually SERVE (practice or mock eligible) - rejected
+  // quarantine rows must not eat into the regen target.
+  const res = await fetch(
+    `${SUPA}/rest/v1/qb_questions?select=id&canonical=eq.true&subject=eq.${SUBJECT}&grade=eq.${grade}` +
+      `&or=(publication_policy->>practiceEligible.eq.true,publication_policy->>mockEligible.eq.true)`,
     { headers: { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'practice', Prefer: 'count=exact' }, method: 'HEAD' });
   const range = res.headers.get('content-range'); // '0-999/6083'
   return range ? Number(range.split('/')[1]) : 0;
@@ -275,7 +368,8 @@ async function runGrade(grade) {
   }
 }
 
-for (const g of [1, 2, 3, 4, 5]) {
+const GRADES = (arg('--grades', '1,2,3,4,5')).split(',').map(Number);
+for (const g of GRADES) {
   await runGrade(g);
 }
 console.log(`DONE ${SUBJECT}: pushed ${totalPushed} new items${DRY ? ' (dry run)' : ''}`);

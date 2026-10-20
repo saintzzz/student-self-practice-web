@@ -1,16 +1,20 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
 import JoinClassCard from './components/JoinClassCard';
 import AssignmentsInbox from './components/AssignmentsInbox';
 import { assignmentTake, type InboxItem } from './lib/assignments';
-import ParentReportScreen from './components/ParentReportScreen';
 import StartBatchScreen from './components/StartBatchScreen';
-import ArenaLiveLobby from './components/ArenaLiveLobby';
+// BatchScreen stays eager: it is the primary kid play surface - every session
+// reaches it, so lazy-loading would only delay the main flow.
 import BatchScreen from './components/BatchScreen';
-import CreditsScreen from './components/CreditsScreen';
-import PlacementScreen from './components/PlacementScreen';
 import AuthScreen from './components/AuthScreen';
-import AdminScreen from './components/AdminScreen';
+// Route-level code splitting: adult/secondary surfaces load on demand so the
+// kid first-paint bundle stays light (low-end school devices).
+const ParentReportScreen = lazy(() => import('./components/ParentReportScreen'));
+const ArenaLiveLobby = lazy(() => import('./components/ArenaLiveLobby'));
+const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
+const PlacementScreen = lazy(() => import('./components/PlacementScreen'));
+const AdminScreen = lazy(() => import('./components/AdminScreen'));
 import ExamRouteBoundary from './components/exam/ExamRouteBoundary';
 import LandShell from './components/LandShell';
 import { LottieBudgetProvider, PRE_ROUND_SLOTS } from './components/fx/LottieBudget';
@@ -87,6 +91,16 @@ declare global {
 function RouteFlashcards({ grade, onExit }: { grade: Grade; onExit: () => void }) {
   return <FlashcardErrorBoundary grade={grade} onExit={onExit} />;
 }
+
+/** Suspense fallback for lazy route chunks - matches the auth-loading state. */
+function RouteFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center text-lg font-bold text-sky-700">
+      Đang tải...
+    </div>
+  );
+}
+const suspense = (node: ReactNode) => <Suspense fallback={<RouteFallback />}>{node}</Suspense>;
 
 export default function App() {
   const configured = isSupabaseConfigured();
@@ -527,16 +541,18 @@ export default function App() {
 
   if (screen === 'admin' && myAccount) {
     return shell(
-      <AdminScreen
-        account={myAccount}
-        onSignOut={handleSignOut}
-        onPractice={() => setScreen('grade-select')}
-      />,
+      suspense(
+        <AdminScreen
+          account={myAccount}
+          onSignOut={handleSignOut}
+          onPractice={() => setScreen('grade-select')}
+        />,
+      ),
     );
   }
 
   if (screen === 'credits') {
-    return shell(<CreditsScreen onBack={handleCreditsBack} />);
+    return shell(suspense(<CreditsScreen onBack={handleCreditsBack} />));
   }
 
   const authChipProps =
@@ -585,21 +601,25 @@ export default function App() {
 
   if (screen === 'report') {
     return shell(
-      <ParentReportScreen
-        grades={GRADES}
-        onBack={handleBackToGrades}
-        isLoggedIn={authMode === 'student'}
-      />,
+      suspense(
+        <ParentReportScreen
+          grades={GRADES}
+          onBack={handleBackToGrades}
+          isLoggedIn={authMode === 'student'}
+        />,
+      ),
     );
   }
 
   if (screen === 'placement') {
     return shell(
-      <PlacementScreen
-        isLoggedIn={authMode === 'student'}
-        onStartGrade={(gradeId) => handleSelectGrade(gradeId)}
-        onBack={handleBackToGrades}
-      />,
+      suspense(
+        <PlacementScreen
+          isLoggedIn={authMode === 'student'}
+          onStartGrade={(gradeId) => handleSelectGrade(gradeId)}
+          onBack={handleBackToGrades}
+        />,
+      ),
     );
   }
 
@@ -627,13 +647,13 @@ export default function App() {
         isAdmin={authMode === 'admin'}
         onLogin={authMode === 'guest' ? () => { setAuthMode('login'); setScreen('login'); } : undefined}
         />
-        {liveLobbyOpen && myAccount && (
+        {liveLobbyOpen && myAccount && suspense(
           <ArenaLiveLobby
             gradeId={selectedGrade.id}
             me={{ id: myAccount.id, name: myAccount.display_name }}
             onStart={handleLiveStart}
             onClose={() => setLiveLobbyOpen(false)}
-          />
+          />,
         )}
       </LottieBudgetProvider>,
       { gradeId: selectedGradeId },
