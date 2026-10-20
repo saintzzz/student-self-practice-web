@@ -124,6 +124,18 @@ export async function fetchBankForm(formId: string): Promise<QbRow[]> {
   return (data ?? []) as QbRow[];
 }
 
+/**
+ * CR-98: assignment questions come through the assignment-scoped RPC
+ * (enrolled + open), never the admin-only fetch_form.
+ */
+export async function fetchAssignmentForm(assignmentId: string): Promise<QbRow[]> {
+  const { data, error } = await (await getSupabase()).rpc('assignment_form', {
+    p_assignment_id: assignmentId,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as QbRow[];
+}
+
 function assetUrl(path: string): string {
   return `/${path.replace(/^\/+/, '')}`;
 }
@@ -407,5 +419,36 @@ export async function createExamFromBank(
     finishedAtMs: null,
     droppedCount,
     poolShort,
+  };
+}
+
+/**
+ * CR-98: build an exam from an assignment's fixed form. The FULL form
+ * always loads (question_count comes from the take RPC) - unlike
+ * createExamFromBank there is no count slicing, no seen-tracking and
+ * no pool top-up: the đề is authoritative and identical for the class.
+ */
+export async function createExamFromAssignment(
+  assignmentId: string,
+  programId: ExamProgramId,
+  gradeId: string,
+): Promise<ExamState | null> {
+  if (!isSupabaseConfigured()) return null;
+  const config = examConfigForGrade(gradeId);
+  const rows = await fetchAssignmentForm(assignmentId);
+  const questions = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
+  if (questions.length === 0) return null;
+  return {
+    programId,
+    gradeId,
+    questions,
+    answers: questions.map(() => null),
+    currentIndex: 0,
+    startedAtMs: Date.now(),
+    timeLimitSec: config.examTimeSec,
+    untimed: false,
+    finishedAtMs: null,
+    droppedCount: rows.length - questions.length,
+    poolShort: false,
   };
 }

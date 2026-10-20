@@ -8,7 +8,7 @@ import { getSupabase } from '../supabase/client';
 export const EMAIL_DOMAIN = 'students.ioe-practice.example';
 export const USERNAME_RE = /^[a-z0-9_-]{3,20}$/;
 
-export type PracticeRole = 'admin' | 'student';
+export type PracticeRole = 'admin' | 'student' | 'teacher';
 
 export interface PracticeAccount {
   id: string;

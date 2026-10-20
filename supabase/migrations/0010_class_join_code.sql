@@ -7,6 +7,7 @@ create or replace function practice.gen_join_code()
 returns text
 language plpgsql
 volatile
+security definer
 set search_path = ''
 as $$
 declare

@@ -30,8 +30,9 @@ interface ExamRouteProps {
   gradeId: string;
   gradeLabel: string;
   studentName?: string;
-  mode: 'exam' | 'practice' | 'review' | 'arena';
+  mode: 'exam' | 'practice' | 'review' | 'arena' | 'assignment';
   arena?: ArenaRun;
+  assignment?: { id: string; title: string };
   formId?: string;
   focus?: { skills?: string[]; minDifficulty?: number; label?: string };
   onExit: () => void;
@@ -143,6 +144,7 @@ class ExamRouteBoundaryInner extends Component<BoundaryProps, BoundaryState> {
       studentName,
       mode,
       arena,
+      assignment,
       formId,
       focus,
       onExit,
@@ -167,6 +169,7 @@ class ExamRouteBoundaryInner extends Component<BoundaryProps, BoundaryState> {
           studentName={studentName}
           mode={mode}
           arena={arena}
+          assignment={assignment}
           formId={formId}
           focus={focus}
           onExit={onExit}

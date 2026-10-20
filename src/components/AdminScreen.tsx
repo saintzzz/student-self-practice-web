@@ -3,6 +3,15 @@ import { getSupabase } from '../lib/supabase/client';
 import { fetchAllRows } from '../lib/supabase/fetch-all';
 import type { PracticeAccount } from '../lib/auth/practiceAuth';
 import { fetchRecentResults, type ResultWithStudent } from '../lib/practiceResults';
+import {
+  assignmentClose,
+  assignmentCreate,
+  assignmentList,
+  assignmentRemediate,
+  assignmentReport,
+  type AssignmentReport,
+  type ListRow,
+} from '../lib/assignments';
 import ReviewQueueCard from './ReviewQueueCard';
 import { GRADES } from '../data/vocabulary';
 import {
@@ -26,7 +35,7 @@ const BTN_SECONDARY =
 const BTN_DANGER =
   'rounded-2xl bg-white px-4 py-2 text-sm font-bold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 focus:outline-none focus:ring-4 focus:ring-rose-300';
 
-type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'progress' | 'review';
+type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'assign' | 'progress' | 'review';
 
 interface PracticeClass {
   id: string;
@@ -44,7 +53,10 @@ interface AdminScreenProps {
 }
 
 export default function AdminScreen({ account, onSignOut, onPractice }: AdminScreenProps) {
-  const [tab, setTab] = useState<Tab>('accounts');
+  // CR-98: teachers land here too - account creation and question review
+  // stay admin-only; class/assignment surfaces are already RLS-scoped.
+  const isAdmin = account.role === 'admin';
+  const [tab, setTab] = useState<Tab>(isAdmin ? 'accounts' : 'classes');
   const [toast, setToast] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<PracticeAccount[]>([]);
   const [classes, setClasses] = useState<PracticeClass[]>([]);
@@ -201,12 +213,13 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'accounts', label: 'Tài khoản' },
+    ...(isAdmin ? [{ id: 'accounts' as Tab, label: 'Tài khoản' }] : []),
     { id: 'classes', label: 'Lớp học' },
     { id: 'enroll', label: 'Gán học sinh' },
     { id: 'scope', label: 'Nội dung' },
+    { id: 'assign', label: 'Giao bài' },
     { id: 'progress', label: 'Tiến độ' },
-    { id: 'review', label: 'Duyệt câu hỏi' },
+    ...(isAdmin ? [{ id: 'review' as Tab, label: 'Duyệt câu hỏi' }] : []),
   ];
   const students = accounts.filter((a) => a.role === 'student');
 
@@ -459,6 +472,10 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
         </div>
       )}
 
+      {tab === 'assign' && (
+        <AssignmentsPanel classes={classes} scopes={scopes} say={say} setError={setError} />
+      )}
+
       {tab === 'review' && (
         <div className={CARD}>
           <ReviewQueueCard />
@@ -596,6 +613,291 @@ function WeeklyReport({
               </span>
             </li>
           ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const PROGRAM_LABELS: Record<string, string> = {
+  english: 'Tiếng Anh',
+  math: 'Toán tiếng Anh',
+  science: 'Khoa học tiếng Anh',
+};
+
+/**
+ * CR-98: teacher assigns a fixed đề to a class - everyone sits the SAME
+ * question set, once. List shows completion at a glance; the report
+ * drills into per-student scores and per-question accuracy, and the
+ * "luyện lại" action mints a remediation assignment on the weak skills.
+ */
+function AssignmentsPanel({ classes, scopes, say, setError }: {
+  classes: PracticeClass[];
+  scopes: Record<string, string[]>;
+  say: (msg: string) => void;
+  setError: (msg: string | null) => void;
+}) {
+  const [classId, setClassId] = useState('');
+  const [rows, setRows] = useState<ListRow[] | null>(null);
+  const [form, setForm] = useState({ title: '', gradeId: '', programId: 'english', count: 10, due: '' });
+  const [busy, setBusy] = useState(false);
+  const [report, setReport] = useState<{ id: string; data: AssignmentReport } | null>(null);
+  const [remediateDue, setRemediateDue] = useState('');
+
+  const classGrades = scopes[classId] ?? [];
+
+  const reload = useCallback(async (cid: string) => {
+    if (!cid) { setRows(null); return; }
+    setRows(await assignmentList(cid));
+  }, []);
+
+  useEffect(() => {
+    setReport(null);
+    void reload(classId);
+  }, [classId, reload]);
+
+  // default grade = first scope the class allows (RPC enforces it anyway)
+  useEffect(() => {
+    setForm((f) => ({ ...f, gradeId: classGrades.includes(f.gradeId) ? f.gradeId : (classGrades[0] ?? '') }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId]);
+
+  async function handleCreate(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!classId || !form.gradeId || !form.due || busy) return;
+    setBusy(true);
+    setError(null);
+    const res = await assignmentCreate(
+      classId, form.title.trim(), form.gradeId, form.programId,
+      form.count, new Date(form.due).toISOString(),
+    );
+    setBusy(false);
+    if ('error' in res) {
+      setError(res.error === 'grade-out-of-scope'
+        ? 'Lớp này chưa được mở nội dung cho khối đó - kiểm tra tab Nội dung.'
+        : res.error === 'no-eligible-questions'
+          ? 'Ngân hàng chưa có đủ câu hỏi cho lựa chọn này.'
+          : `Chưa tạo được bài (${res.error}).`);
+      return;
+    }
+    say('Đã giao bài cho lớp.');
+    setForm((f) => ({ ...f, title: '' }));
+    void reload(classId);
+  }
+
+  async function handleReport(id: string): Promise<void> {
+    if (report?.id === id) { setReport(null); return; }
+    const data = await assignmentReport(id);
+    if (!data) { setError('Chưa tải được báo cáo.'); return; }
+    setReport({ id, data });
+  }
+
+  async function handleClose(id: string): Promise<void> {
+    const res = await assignmentClose(id);
+    if (!res.ok) { setError('Chưa đóng được bài.'); return; }
+    say('Đã đóng bài.');
+    setReport(null);
+    void reload(classId);
+  }
+
+  async function handleRemediate(id: string): Promise<void> {
+    if (!remediateDue) { setError('Chọn hạn nộp cho bài luyện lại.'); return; }
+    const res = await assignmentRemediate(id, new Date(remediateDue).toISOString());
+    if ('error' in res) {
+      setError(res.error === 'no-weak-skills'
+        ? 'Lớp làm tốt cả rồi - chưa cần bài luyện lại.'
+        : `Chưa tạo được bài luyện lại (${res.error}).`);
+      return;
+    }
+    say('Đã giao bài luyện lại cho lớp.');
+    setReport(null);
+    void reload(classId);
+  }
+
+  return (
+    <div className={CARD}>
+      <h2 className={`mb-4 ${H2}`}>Giao bài cho lớp</h2>
+      <select
+        data-testid="assign-class-select"
+        className={`mb-4 ${INPUT}`}
+        value={classId}
+        onChange={(e) => setClassId(e.target.value)}
+      >
+        <option value="">- chọn lớp -</option>
+        {classes.map((c) => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+
+      {classId && classGrades.length === 0 && (
+        <p className={`mb-4 ${CARD_TINT.amber} py-3 text-center font-bold`}>
+          Lớp chưa được mở nội dung - sang tab Nội dung để bật khối trước khi giao bài.
+        </p>
+      )}
+
+      {classId && classGrades.length > 0 && (
+        <form data-testid="assign-create-form" onSubmit={handleCreate} className="mb-6 grid gap-3">
+          <input
+            data-testid="assign-title"
+            className={INPUT}
+            placeholder="tên bài (vd: Kiểm tra từ vựng Unit 5)"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <select
+              data-testid="assign-grade"
+              className={INPUT}
+              value={form.gradeId}
+              onChange={(e) => setForm({ ...form, gradeId: e.target.value })}
+            >
+              {classGrades.map((g) => (
+                <option key={g} value={g}>{GRADE_NAME.get(g) ?? g}</option>
+              ))}
+            </select>
+            <select
+              data-testid="assign-program"
+              className={INPUT}
+              value={form.programId}
+              onChange={(e) => setForm({ ...form, programId: e.target.value })}
+            >
+              {Object.entries(PROGRAM_LABELS).map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
+            </select>
+            <select
+              data-testid="assign-count"
+              className={INPUT}
+              value={form.count}
+              onChange={(e) => setForm({ ...form, count: Number(e.target.value) })}
+            >
+              {[5, 10, 15, 20].map((n) => (
+                <option key={n} value={n}>{n} câu</option>
+              ))}
+            </select>
+            <input
+              data-testid="assign-due"
+              type="datetime-local"
+              className={INPUT}
+              value={form.due}
+              onChange={(e) => setForm({ ...form, due: e.target.value })}
+            />
+          </div>
+          <button
+            data-testid="assign-create-submit"
+            className={BTN}
+            disabled={busy || !form.title.trim() || !form.due}
+            type="submit"
+          >
+            Giao bài
+          </button>
+        </form>
+      )}
+
+      {classId && (
+        <ul data-testid="assign-list" className="flex flex-col gap-2">
+          {(rows ?? []).map((r) => (
+            <li key={r.id} className="rounded-2xl bg-gradient-to-r from-sky-50 to-white px-4 py-3 shadow-sm ring-1 ring-sky-100">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`${BODY} font-bold`}>{r.title}</span>
+                <span className="text-sm text-sky-600">
+                  {PROGRAM_LABELS[r.programId] ?? r.programId} · {GRADE_NAME.get(r.gradeId) ?? r.gradeId}
+                </span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ring-1 ${
+                  r.status === 'closed' ? 'bg-slate-100 text-slate-600 ring-slate-300' : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                }`}>
+                  {r.status === 'closed' ? 'Đã đóng' : 'Đang mở'}
+                </span>
+                <span className="ml-auto text-sm font-bold text-sky-800" data-testid={`assign-progress-${r.id}`}>
+                  {r.submitted}/{r.roster} nộp{r.started > 0 ? ` · ${r.started} đang làm` : ''}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                <span>hạn {new Date(r.dueAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</span>
+                <span className="ml-auto flex gap-2">
+                  <button type="button" className={BTN_SECONDARY} data-testid={`assign-report-${r.id}`} onClick={() => void handleReport(r.id)}>
+                    {report?.id === r.id ? 'Ẩn báo cáo' : 'Báo cáo'}
+                  </button>
+                  {r.status !== 'closed' && (
+                    <button type="button" className={BTN_DANGER} onClick={() => void handleClose(r.id)}>
+                      Đóng bài
+                    </button>
+                  )}
+                </span>
+              </div>
+              {report?.id === r.id && (
+                <div className="mt-3 rounded-2xl bg-white/70 p-3 ring-1 ring-sky-100" data-testid={`assign-report-panel-${r.id}`}>
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-sky-100 text-sky-700">
+                        <th className="py-1.5 pr-3">Học sinh</th>
+                        <th className="py-1.5 pr-3">Trạng thái</th>
+                        <th className="py-1.5 pr-3">Điểm</th>
+                        <th className="py-1.5">Thời gian</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-sky-50">
+                      {report.data.roster.map((s) => (
+                        <tr key={s.student_id}>
+                          <td className="py-1.5 pr-3 font-bold text-sky-900">{s.student_name}</td>
+                          <td className="py-1.5 pr-3">
+                            {s.submitted_at
+                              ? (s.late ? 'Nộp muộn' : 'Đã nộp')
+                              : s.started_at ? 'Đang làm' : 'Chưa làm'}
+                          </td>
+                          <td className="py-1.5 pr-3 font-bold">
+                            {s.submitted_at ? `${s.score}/${s.total}` : '-'}
+                          </td>
+                          <td className="py-1.5 text-slate-500">
+                            {s.time_sec ? `${Math.round(s.time_sec / 60)}p` : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {report.data.questions.length > 0 && (
+                    <div className="mt-3">
+                      <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-sky-700">Câu sai nhiều nhất</p>
+                      <ul className="flex flex-col gap-1">
+                        {report.data.questions.slice(0, 5).map((q) => (
+                          <li key={q.q_id} className="flex items-center gap-2 text-sm">
+                            <span className={`inline-block w-14 rounded-full px-2 py-0.5 text-center text-xs font-bold ${
+                              q.accuracy >= 0.8 ? 'bg-emerald-100 text-emerald-700' : q.accuracy >= 0.5 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+                            }`}>
+                              {Math.round(q.accuracy * 100)}%
+                            </span>
+                            <span className="text-sky-800">{q.skill ?? q.q_id}</span>
+                            <span className="text-xs text-slate-400">({q.attempts} lượt)</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-sky-100 pt-3">
+                    <input
+                      type="datetime-local"
+                      className="rounded-xl border-2 border-sky-200 bg-white px-3 py-1.5 text-sm font-bold text-sky-900 focus:border-sky-400 focus:outline-none"
+                      value={remediateDue}
+                      onChange={(e) => setRemediateDue(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className={BTN_SECONDARY}
+                      data-testid={`assign-remediate-${r.id}`}
+                      onClick={() => void handleRemediate(r.id)}
+                    >
+                      Giao bài luyện lại phần yếu
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+          {rows !== null && rows.length === 0 && (
+            <li className="py-4 text-center text-slate-500" data-testid="assign-empty">
+              Chưa giao bài nào - tạo bài ở form phía trên.
+            </li>
+          )}
         </ul>
       )}
     </div>

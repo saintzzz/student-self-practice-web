@@ -11,7 +11,7 @@ const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
 const EMAIL_DOMAIN = 'students.ioe-practice.example';
 const USERNAME_RE = /^[a-z0-9_-]{3,20}$/;
-const ROLES = new Set(['admin', 'student']);
+const ROLES = new Set(['admin', 'student', 'teacher']);
 
 const ALLOWED_ORIGINS = new Set([
   'https://ea.vieschool.com',

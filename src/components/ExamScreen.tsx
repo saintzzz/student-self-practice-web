@@ -32,7 +32,8 @@ import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib
 import { liveRoomFinish, liveRoomLeave, liveRoomState, subscribeLiveRoom, type LiveChannel, type LivePlayer } from '../lib/arenaLive';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
 import { captureExamWrongAnswers } from '../lib/exam/examSession';
-import { createExamFromBank, gradeNumber } from '../lib/qb/bank';
+import { createExamFromAssignment, createExamFromBank, gradeNumber } from '../lib/qb/bank';
+import { assignmentSubmit } from '../lib/assignments';
 import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
@@ -114,8 +115,11 @@ interface ExamScreenProps {
    *  verdicts). CR-28: 'review' = practice-style session over the due
    *  spaced-repetition queue (pulled fresh at begin()). CR-34: 'arena' =
    *  10-question duel run on a shared seed (practice pacing). */
-  mode: 'exam' | 'practice' | 'review' | 'arena';
+  mode: 'exam' | 'practice' | 'review' | 'arena' | 'assignment';
   arena?: ArenaRun;
+  /** CR-98: assignment run - fixed form, results land via assignment_submit
+   *  (not saveExamResult). id/title come from assignment_take. */
+  assignment?: { id: string; title: string };
   /** CR-48 phase 5: pinned V6 assessment form (unit test/diagnostic/
    *  midterm/final). When set, questions come from fetch_form in form
    *  order instead of a random mock sample. */
@@ -126,9 +130,11 @@ interface ExamScreenProps {
   onExit: () => void;
 }
 
-export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, formId, focus, onExit }: ExamScreenProps) {
+export default function ExamScreen({ programId, gradeId, gradeLabel, studentName, mode, arena, assignment, formId, focus, onExit }: ExamScreenProps) {
   const isArena = mode === 'arena';
-  const isPractice = mode !== 'exam';
+  const isAssignment = mode === 'assignment';
+  // CR-98: assignments run exam-style - countdown, no instant verdicts.
+  const isPractice = mode !== 'exam' && mode !== 'assignment';
   const isReview = mode === 'review';
   const [exam, setExam] = useState<ExamState | null>(null);
   const [stripOffset, setStripOffset] = useState(0);
@@ -285,7 +291,27 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // CR-30: persist drill/exam completions - the weekly leaderboard
       // counts all results rows, not only 4-round batches. Review sessions
       // replay already-earned points, so they don't insert again.
-      if (!isReview) {
+      // CR-98: assignments persist via assignment_submit (server validates
+      // the answer set and writes the results row itself).
+      if (isAssignment && assignment) {
+        const payload = {
+          score: result.points,
+          total: result.totalCount * EXAM_POINTS_PER_QUESTION,
+          timeSec: result.timeUsedSec,
+          answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
+          snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
+        };
+        // A lost submit means the teacher never sees the score - one retry
+        // after a short delay; 'already-submitted' is success-by-absence.
+        const submit = () => assignmentSubmit(assignment.id, payload).then((res) => {
+          if ('error' in res && res.error !== 'already-submitted') {
+            setTimeout(() => void assignmentSubmit(assignment.id, payload).then((r2) => {
+              if ('error' in r2) console.warn('[assignment] submit retry:', r2.error);
+            }), 3000);
+          }
+        });
+        void submit();
+      } else if (!isReview) {
         void saveExamResult(gradeId, programId, {
           points: result.points,
           totalCount: result.totalCount,
@@ -297,7 +323,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         });
       }
     }
-  }, [exam, result, isPractice, isReview, isArena, gradeId, programId]);
+  }, [exam, result, isPractice, isReview, isArena, isAssignment, assignment, gradeId, programId]);
 
   /* CR-69 + CR-82 M5: if the timer expired while the submit confirmation
      or the review sheet was open, the flags survive into the next exam's
@@ -354,16 +380,19 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         telemetryRef.current = createExamTelemetry({
           programId,
           grade: gradeNumber(gradeId),
-          mode: formId ? 'form' : isPractice ? (isReview ? 'review' : 'practice') : 'mock',
+          mode: isAssignment ? 'form' : formId ? 'form' : isPractice ? (isReview ? 'review' : 'practice') : 'mock',
           formId,
         });
         try {
-          const bankExam = await createExamFromBank(programId, gradeId, {
-            count,
-            mode: isPractice ? 'practice' : 'mock',
-            formId,
-            focus,
-          });
+          const bankExam = isAssignment && assignment
+            // CR-98: the class đề is a fixed form - full load, no sampling.
+            ? await createExamFromAssignment(assignment.id, programId, gradeId)
+            : await createExamFromBank(programId, gradeId, {
+              count,
+              mode: isPractice ? 'practice' : 'mock',
+              formId,
+              focus,
+            });
           if (bankExam) {
             setExam(bankExam);
             setNow(Date.now());

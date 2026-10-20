@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
 import JoinClassCard from './components/JoinClassCard';
+import AssignmentsInbox from './components/AssignmentsInbox';
+import { assignmentTake, type InboxItem } from './lib/assignments';
 import ParentReportScreen from './components/ParentReportScreen';
 import StartBatchScreen from './components/StartBatchScreen';
 import ArenaLiveLobby from './components/ArenaLiveLobby';
@@ -94,9 +96,13 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('grade-select');
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null);
   const [examProgramId, setExamProgramId] = useState<ExamProgramId>('english');
-  const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review' | 'arena'>('exam');
+  const [examMode, setExamMode] = useState<'practice' | 'exam' | 'review' | 'arena' | 'assignment'>('exam');
   /** CR-34: pending arena duel context for the exam screen. */
   const [arenaRun, setArenaRun] = useState<import('./components/ExamScreen').ArenaRun | null>(null);
+  /** CR-98: assignment the student is about to sit - id+title from
+   *  assignment_take; cleared whenever another exam path launches. */
+  const [assignmentRun, setAssignmentRun] = useState<{ id: string; title: string } | null>(null);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
   /** CR-97: live-race lobby overlay over the hub screen. */
   const [liveLobbyOpen, setLiveLobbyOpen] = useState(false);
   /** CR-48 phase 5: pinned V6 assessment form for the current exam run. */
@@ -156,7 +162,9 @@ export default function App() {
       }
       setMyAccount(account);
       boundUidRef.current = account.id;
-      if (account.role === 'admin') {
+      // CR-98: teachers land on the same admin surface - RLS scopes every
+      // class/enrollment/assignment query to what they own.
+      if (account.role === 'admin' || account.role === 'teacher') {
         setAuthMode('admin');
         setScreen('admin');
       } else {
@@ -202,7 +210,7 @@ export default function App() {
        viewer session - a new account must hear the voice-first intro
        again. */
     __resetInstructionAutoplay();
-    if (account.role === 'admin') {
+    if (account.role === 'admin' || account.role === 'teacher') {
       setAuthMode('admin');
       setScreen('admin');
     } else {
@@ -310,6 +318,38 @@ export default function App() {
     setExamFormId(formId ?? null);
     setExamFocus(focus ?? null);
     setArenaRun(null);
+    setAssignmentRun(null);
+    setScreen('exam');
+  }
+
+  /** CR-98: take an assignment - the take RPC creates/resumes the single
+   *  attempt and returns the authoritative grade/program, then the exam
+   *  route loads the fixed form via assignment_form. */
+  async function handleTakeAssignment(item: InboxItem): Promise<void> {
+    setAssignmentError(null);
+    const res = await assignmentTake(item.assignmentId);
+    if ('error' in res) {
+      setAssignmentError(
+        res.error === 'upcoming' ? 'Bài này chưa mở - em chờ cô nhé.'
+        : res.error === 'closed' ? 'Bài này đã đóng rồi.'
+        : res.error === 'not-enrolled' ? 'Em chưa vào lớp của bài này.'
+        : 'Chưa mở được bài - em thử lại nhé.',
+      );
+      return;
+    }
+    if (res.state === 'done') {
+      setAssignmentError('Bài này em đã nộp rồi.');
+      return;
+    }
+    if (GRADES.some((g) => g.id === res.gradeId)) setSelectedGradeId(res.gradeId);
+    const pid: ExamProgramId =
+      res.programId === 'math' || res.programId === 'science' ? res.programId : 'english';
+    setExamProgramId(pid);
+    setExamMode('assignment');
+    setExamFormId(null);
+    setExamFocus(null);
+    setArenaRun(null);
+    setAssignmentRun({ id: item.assignmentId, title: item.title });
     setScreen('exam');
   }
 
@@ -324,6 +364,7 @@ export default function App() {
     setExamMode('arena');
     setExamFocus(null);
     setArenaRun({ kind: 'create', seed: newSeed() });
+    setAssignmentRun(null);
     setScreen('exam');
   }
 
@@ -336,6 +377,7 @@ export default function App() {
     setExamMode('arena');
     setExamFocus(null);
     setArenaRun({ kind: 'accept', seed: challenge.seed, challengeId: challenge.id });
+    setAssignmentRun(null);
     setScreen('exam');
   }
 
@@ -344,6 +386,7 @@ export default function App() {
     setExamMode('arena');
     setExamFocus(null);
     setArenaRun({ kind: 'bot', seed: newSeed() });
+    setAssignmentRun(null);
     setScreen('exam');
   }
 
@@ -359,6 +402,7 @@ export default function App() {
     setExamMode('arena');
     setExamFocus(null);
     setArenaRun({ kind: 'live', seed: ctx.seed, liveRoomId: ctx.roomId });
+    setAssignmentRun(null);
     setScreen('exam');
   }
 
@@ -505,10 +549,17 @@ export default function App() {
   // CR-47: joining a class can open new grade scopes - refetch them so
   // the newly unlocked lands show without a reload.
   const joinClassSlot = (
-    <JoinClassCard
-      isGuest={authMode !== 'student'}
-      onJoined={() => void fetchMyAllowedGrades().then(setAllowedGrades).catch(() => {})}
-    />
+    <>
+      <JoinClassCard
+        isGuest={authMode !== 'student'}
+        onJoined={() => void fetchMyAllowedGrades().then(setAllowedGrades).catch(() => {})}
+      />
+      <AssignmentsInbox
+        isGuest={authMode !== 'student'}
+        error={assignmentError}
+        onTake={(item) => void handleTakeAssignment(item)}
+      />
+    </>
   );
 
   if (screen === 'grade-select') {
@@ -643,10 +694,12 @@ export default function App() {
         studentName={myAccount?.display_name}
         mode={examMode}
         arena={arenaRun ?? undefined}
+        assignment={assignmentRun ?? undefined}
         formId={examFormId ?? undefined}
         focus={examFocus ?? undefined}
         onExit={() => {
           setHubOpenTile(null);
+          setAssignmentRun(null);
           setScreen('start-batch');
         }}
       />
