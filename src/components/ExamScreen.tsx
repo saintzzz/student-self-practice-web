@@ -332,10 +332,21 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         timeSec: result.timeUsedSec,
         answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
         snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
-        forUser: assignUserRef.current,
       };
-      sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
-      void submitAssignment(0);
+      // r-ext4: resolve the owner before persisting - a payload without
+      // forUser can never be safely attributed on replay. Persist before
+      // submitting so a fast success can't removeItem before the tag lands.
+      void (async () => {
+        if (!assignUserRef.current) {
+          const s = await getSession().catch(() => null);
+          assignUserRef.current = s?.user?.id ?? '';
+        }
+        if (assignPayloadRef.current) {
+          assignPayloadRef.current.forUser = assignUserRef.current;
+          sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
+        }
+        void submitAssignment(0);
+      })();
     } else if (!isArena) {
       if (isPractice) recordDrillComplete();
       else recordBigModeComplete();
@@ -428,10 +439,18 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               sessionStorage.removeItem(assignStoreKey);
             }
             if (stored) {
-              const session = await getSession();
+              const session = await getSession().catch(() => null);
+              const uid = session?.user?.id ?? '';
+              if (!uid) {
+                // auth unresolved - keep the pending payload and block;
+                // discarding now could orphan a legitimate submission.
+                setFlushBlocked(true);
+                setLoadingBank(false);
+                return;
+              }
               // exact owner match only - an ownerless or foreign payload
-              // is discarded, never replayed (r-ext3).
-              if (!stored.forUser || stored.forUser !== (session?.user?.id ?? '')) {
+              // is discarded, never replayed (r-ext3/r-ext4).
+              if (stored.forUser !== uid) {
                 sessionStorage.removeItem(assignStoreKey);
               } else {
                 try {

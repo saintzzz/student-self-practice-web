@@ -378,3 +378,11 @@ External review round 3 (EXTERNAL-REVIEW-r91.md):
   tagging (or never tagged) could be replayed by another account ->
   owner id captured once at mount; payloads are tagged synchronously
   before persisting and replay requires an exact owner match.
+
+External review round 4 (EXTERNAL-REVIEW-r92.md):
+- r-ext4 [major] mount-time owner resolve still left a window: a finish
+  before getSession returned persisted forUser:'' which the strict
+  replay guard then discarded -> persist now awaits owner resolution
+  (ordered before submit so a fast ack can't removeItem first), and
+  replay keeps+blocks the payload while auth is unresolved instead of
+  deleting it.
