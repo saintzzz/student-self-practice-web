@@ -26,9 +26,12 @@ const RESPONSE = 'message-content';
 const RATE_RE = /reached your (usage |)limit|try again (later|tomorrow)|rate.?limit|quota exceeded|too many requests/i;
 const CODEX_QUOTA_RE = /usage limit|hit your|quota|insufficient/i;
 
+// codex ships as a .cmd shim on Windows, a plain node bin elsewhere.
+const CODEX_BIN = process.platform === 'win32' ? 'codex.cmd' : 'codex';
+
 function codexRun(prompt, timeoutMs = 300_000) {
   return new Promise((resolve, reject) => {
-    const p = spawn('codex.cmd', ['exec', '--skip-git-repo-check'], { cwd: process.cwd(), shell: true, windowsHide: true });
+    const p = spawn(CODEX_BIN, ['exec', '--skip-git-repo-check'], { cwd: process.cwd(), shell: true, windowsHide: true });
     let out = '', err = '';
     const kill = setTimeout(() => { p.kill(); reject(new Error('codex-timeout')); }, timeoutMs);
     p.stdout.on('data', (d) => { out += d; });
