@@ -110,6 +110,7 @@ export async function liveRoomFinish(roomId: string, score: number): Promise<boo
 export async function liveRoomLeave(roomId: string): Promise<void> {
   try {
     if (!(await getSession())) return;
+    // discarded-ok: leave la fire-and-forget, loi duoc bo qua co y
     await (await getSupabase()).rpc('arena_live_leave', { p_room_id: roomId });
   } catch {
     /* best-effort */
