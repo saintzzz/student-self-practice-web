@@ -34,7 +34,7 @@ powershell -File scripts/machine-export.ps1     # -> machine-transfer/
 bash scripts/machine-import.sh <path>/machine-transfer
 
 # 5. login lai Gemini web profile (khuyen nghi tao moi thay vi copy Chromium profile)
-node scripts/_gemini-login.mjs    # mo cua so, login tai khoan Gemini Plus
+node scripts/gemini-login.mjs    # mo cua so, login tai khoan Gemini Plus
 
 # 6. verify
 codex login status
@@ -59,7 +59,7 @@ node scripts/gen-codex-bank.mjs --tier advanced --grades 2 --batch 5 --dry
 ## 4. Luu y platform
 
 - `scripts/llm-channel.mjs` tu chon `codex.cmd` (win) / `codex` (posix) — da fix.
-- gemini-web profile: khong copy giua 2 OS; moi may `node scripts/_gemini-login.mjs` 1 lan.
+- gemini-web profile: khong copy giua 2 OS; moi may `node scripts/gemini-login.mjs` 1 lan.
 - Muon 2 process LLM-channel song song tren 1 may: copy profile + `LLM_GEMINI_PROFILE=...`
 - Duong dan Windows `C:\Users\linhl\...` = `~/...` tren macOS cho secrets/summaries.
 - Devin CLI tren iMac: summaries nam o `~/Library/Application Support/devin/cli/summaries`

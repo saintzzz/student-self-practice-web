@@ -10,7 +10,7 @@
  *   node scripts/external-review.mjs                    review last commit
  *
  * Requires: `codex` on PATH and `codex login` done once (ChatGPT account),
- * or a logged-in gemini-web profile (scripts/_gemini-login.mjs) as fallback.
+ * or a logged-in gemini-web profile (scripts/gemini-login.mjs) as fallback.
  * Output is appended to docs/reviews/EXTERNAL-REVIEW-rNN.md.
  */
 import { execSync } from 'node:child_process';

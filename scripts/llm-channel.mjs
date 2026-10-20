@@ -1,7 +1,7 @@
 // Shared LLM channel for repo pipelines (gen / polish / verify / review).
 // Primary: codex CLI (ChatGPT subscription via `codex exec`, stdin prompt).
 // Fallback: gemini.google.com web (Gemini Plus subscription) driven through a
-// persistent Playwright profile - requires one-time `node scripts/_gemini-login.mjs`.
+// persistent Playwright profile - requires one-time `node scripts/gemini-login.mjs`.
 //
 // Usage:
 //   const channel = createLlmChannel({ workers: 3 });

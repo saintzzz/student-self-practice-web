@@ -80,14 +80,14 @@
 
 ## Machine handoff (2-machine workflow: Windows PC <-> iMac)
 - Protocol doc: `docs/setup-second-machine.md`. Secrets/state bundle via `scripts/machine-export.ps1` -> `machine-transfer/` -> `scripts/machine-import.sh` on the other machine. Bundle is gitignored.
-- LLM channel `scripts/llm-channel.mjs`: codex CLI primary -> gemini.google.com web profile fallback (`_gemini-login.mjs` one-time per machine). Cross-platform (`codex.cmd` win / `codex` posix).
+- LLM channel `scripts/llm-channel.mjs`: codex CLI primary -> gemini.google.com web profile fallback (`gemini-login.mjs` one-time per machine). Cross-platform (`codex.cmd` win / `codex` posix).
 - Per-machine state that does NOT transfer: running background jobs (restart on other machine - DB progress is shared in Supabase), gemini-web Chromium profile (re-login per machine), playwright browsers.
 - `Session state` block below is rewritten at each machine switch / session end - always read it first on the receiving machine.
 
-### Session state - 2026-10-20 (Windows PC)
-- llm-core run PID 49406: 367 batches x25 core G2-5 (target 7k/grade), running via gemini-web fallback (codex quota till ~19:05).
-- polish run: 10,189 pending, via gemini profile-2.
-- codex supervisor `_codex-resume.mjs` parked -> auto-resumes ~19:08, launches core+polish+verify on codex when quota returns.
-- artgen: ChatGPT manifest-fixes wave resumed, 38 webp modified in public/images/concepts/ - UNCOMMITTED, needs eye-review before commit.
-- Demo PINs rotated: see `~/.config/devin/secrets/ea_demo_creds.json` (also in machine-transfer bundle).
-- Pending: verify-codex sweep after gen lands; exam-ready needs per-grade exam pool >= 800 + 5% human spot-check.
+### Session state - 2026-10-20 (HANDOFF Windows PC -> iMac)
+- User left this machine; background jobs may still run if machine stays on - their progress is in Supabase regardless.
+- llm-core run: ~367 batches core G2-5 (target 7k/grade) via gemini-web fallback; polish run: ~10k pending.
+- codex supervisor parked -> auto-resumes when ChatGPT quota returns; scripts self-fallback to gemini.
+- artgen: 38 webp modified in public/images/concepts/ - UNCOMMITTED, needs eye-review before commit.
+- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (transferred via bundle).
+- Next on iMac: git pull, re-login gemini via `node scripts/gemini-login.mjs`, restart gen/polish/verify as needed; verify sweep after gen lands; exam-ready needs exam pool >=800/grade + 5% human spot-check.
