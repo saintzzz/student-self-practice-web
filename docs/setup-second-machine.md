@@ -1,7 +1,8 @@
 # Lam viec tren 2 may (Windows PC + iMac) - Machine Handoff
 
 Muc tieu: viec dang lam tren may A chuyen sang may B voi day du context,
-va nguoc lai. Kenh chinh la git + MEMORY.md; secrets di qua bundle mot lan.
+va nguoc lai. Kenh chinh la git + MEMORY.md; secrets di qua private repo
+`saintzzz/handoff-vault` (encrypted) - khong can USB.
 
 ## 1. Ba lop du lieu
 
@@ -9,7 +10,7 @@ va nguoc lai. Kenh chinh la git + MEMORY.md; secrets di qua bundle mot lan.
 |---|---|---|
 | Code, docs, scripts (llm-channel, gen/polish/verify) | git push/pull | moi lan doi may |
 | Context phien lam viec | `docs/MEMORY.md` + Devin `cli/summaries` | moi lan doi may |
-| Secrets + CLI auth | `machine-transfer` bundle (khong git) | 1 lan moi may |
+| Secrets + CLI auth | private repo `saintzzz/handoff-vault` (`secrets-context.tar.enc`, AES-256) | 1 lan moi may |
 
 Tien trinh pipeline (so cau hoi, pool counts, review status) nam trong
 **Supabase** - share san giua 2 may, khong can chuyen.
@@ -19,29 +20,39 @@ Tien trinh pipeline (so cau hoi, pool counts, review status) nam trong
 ```bash
 # 1. prerequisites
 brew install node git        # node >= 20
-npm i -g @openai/codex       # codex CLI (login oauth: codex login)
-npm i -g @google/gemini-cli  # tuy chon - pipeline dung web profile, khong can
+npm i -g @openai/codex       # codex CLI
 
 # 2. clone + deps
-git clone <repo> student-self-practice-web && cd student-self-practice-web
+git clone https://github.com/saintzzz/student-self-practice-web
+cd student-self-practice-web
 npm i
 npx playwright install chromium
 
-# 3. tren may Windows: dong goi state
-powershell -File scripts/machine-export.ps1     # -> machine-transfer/
+# 3. lay secrets + context tu private repo (THAY cho USB)
+git clone https://github.com/saintzzz/handoff-vault
+bash scripts/machine-import.sh handoff-vault   # nhap passphrase khi duoc hoi
 
-# 4. chuyen machine-transfer/ sang iMac (USB/AirDrop/LAN), roi import
-bash scripts/machine-import.sh <path>/machine-transfer
+# 4. login lai - BAT BUOC tren may moi
+codex login                  # auth.json da duoc restore, nhung login lai neu het han
+node scripts/gemini-login.mjs  # gemini-web profile LA MAY-CU-THE - phai login lai
 
-# 5. login lai Gemini web profile (khuyen nghi tao moi thay vi copy Chromium profile)
-node scripts/gemini-login.mjs    # mo cua so, login tai khoan Gemini Plus
-
-# 6. verify
+# 5. verify
 codex login status
 node scripts/gen-codex-bank.mjs --tier advanced --grades 2 --batch 5 --dry
 ```
 
-## 3. Quy trinh chuyen may hang ngay
+## 3. Nhung gi PHAI login/cai lai tren may moi (khong chuyen duoc qua file)
+
+| Thứ | Lenh | Ghi chu |
+|---|---|---|
+| Gemini web profile | `node scripts/gemini-login.mjs` | Chromium profile lock theo OS - bat buoc login lai |
+| Codex CLI | `codex login` | auth.json restore san, login lai neu token het han |
+| gh CLI | `gh auth login` | chi can neu muon dung gh tren iMac |
+| Node/git/playwright | brew + npm i + playwright install | cai lai, khong chuyen |
+| Devin CLI secrets | restore tu vault qua import script | neu thieu, dung `upload-secrets` skill hoac nhap lai |
+| Passphrase vault | hoi lai may Windows | khong commit, hien 1 lan trong chat 2026-10-20 |
+
+## 4. Quy trinh chuyen may hang ngay
 
 **Truoc khi roi may A:**
 1. `git add -A && git commit` moi thu co nghia (code + docs + scripts)
@@ -52,11 +63,11 @@ node scripts/gen-codex-bank.mjs --tier advanced --grades 2 --batch 5 --dry
    script idempotent — chay lai tren may B tiep tuc duoc
 
 **Tren may B (bat dau lam):**
-1. `git pull`
+1. `git pull` (+ `git fetch && git checkout wip/handoff-*` neu co WIP branch)
 2. Doc `docs/MEMORY.md` muc Session state + Devin summary moi nhat
 3. Chay lai cac pipeline can thiet (vi du `node scripts/gen-codex-bank.mjs ...`)
 
-## 4. Luu y platform
+## 5. Luu y platform
 
 - `scripts/llm-channel.mjs` tu chon `codex.cmd` (win) / `codex` (posix) — da fix.
 - gemini-web profile: khong copy giua 2 OS; moi may `node scripts/gemini-login.mjs` 1 lan.
@@ -65,20 +76,10 @@ node scripts/gen-codex-bank.mjs --tier advanced --grades 2 --batch 5 --dry
 - Devin CLI tren iMac: summaries nam o `~/Library/Application Support/devin/cli/summaries`
   (script import tu detect; neu khong dung, tim bang `mdfind history_*.md`).
 
-## 4b. Repo GitLab cong ty (code.eastgatesoftware.com - can VPN)
+## 6. Khong duoc commit vao repo public
 
-Neu iMac khong co VPN, khoi phuc tu git bundles trong bundle:
-```bash
-git clone machine-transfer/repo-bundles/EGS-Engineering-Kit.bundle EGS-Engineering-Kit
-git clone machine-transfer/repo-bundles/egs-platform.bundle egs-platform
-# cong viec dang do nam trong nhanh wip/handoff-2026-10-20
-```
-
-WIP tren GitHub: moi repo co nhanh `wip/handoff-2026-10-20*` -
-`git fetch && git checkout wip/handoff-2026-10-20` de tiep tuc cong viec
-dang do cua may Windows.
-
-## 5. Khong duoc commit
-
-- `machine-transfer/` (secrets!), `.env.local`, `scripts/gemini-web-profile*/`
+- `machine-transfer/`, `.env.local`, `scripts/gemini-web-profile*/`
 - PIN demo nam trong `~/.config/devin/secrets/ea_demo_creds.json`
+- Secrets chi di qua `secrets-context.tar.enc` (AES-256) trong repo PRIVATE
+  `saintzzz/handoff-vault` - GitHub secret-scanning quet ca repo private va se
+  revoke key neu day plaintext len.

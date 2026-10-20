@@ -79,7 +79,7 @@
 - 2026-10 | CR-82 milestone table | M1 tokens/config/guards DONE | M2 hero scene (LandScene/variants/LandShell/postcards) DONE | M3 materials+typography+board+trail DONE | M4 mascot rig (poses/Lottie/perches/D-20/D-21) DONE | M5 exam paper (EXAM_*/ring/navigator/review/shortcuts/flags/result) DONE | M6 letter tracing (strokes/score/canvas/lazy/telemetry/R1) DONE | M7 spell-it+gap-bank+dual-input (R2) DONE | M8 hub IA+flashcards DONE | M9 micro-interactions+rewards+sfx (+lazy exam boundary) DONE | M10 final gate+review loop CLEAN DONE | Deployer phase | CR-82 B+C complete - worktree uncommitted per instruction
 
 ## Machine handoff (2-machine workflow: Windows PC <-> iMac)
-- Protocol doc: `docs/setup-second-machine.md`. Secrets/state bundle via `scripts/machine-export.ps1` -> `machine-transfer/` -> `scripts/machine-import.sh` on the other machine. Bundle is gitignored.
+- Protocol doc: `docs/setup-second-machine.md`. Secrets/state chuyen qua private repo `saintzzz/handoff-vault` (`secrets-context.tar.enc`, AES-256 - passphrase hoi lai may Windows, khong commit); `scripts/machine-import.sh` tu decrypt. `scripts/machine-export.ps1` + local `machine-transfer/` van dung duoc cho LAN/USB nhung GitHub la kenh chinh.
 - LLM channel `scripts/llm-channel.mjs`: codex CLI primary -> gemini.google.com web profile fallback (`gemini-login.mjs` one-time per machine). Cross-platform (`codex.cmd` win / `codex` posix).
 - Per-machine state that does NOT transfer: running background jobs (restart on other machine - DB progress is shared in Supabase), gemini-web Chromium profile (re-login per machine), playwright browsers.
 - `Session state` block below is rewritten at each machine switch / session end - always read it first on the receiving machine.
@@ -90,6 +90,7 @@
   - polish STOPPED at 210/678 batches (2,533 polished / 121 dropped). Resume: `node scripts/polish-codex.mjs --grades 1,2,3,4,5 --workers 3 --batch 15`
   - verify sweep NOT started. Next after gen lands: `node scripts/verify-codex.mjs --grades 1,2,3,4,5 --workers 3 --batch 12`
   - codex supervisor killed - relaunch if wanted: `node scripts/_codex-resume.mjs` (or run the three scripts manually - they self-fallback codex->gemini).
-- artgen: 38 webp modified in public/images/concepts/ - UNCOMMITTED, needs eye-review before commit.
-- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (in machine-transfer bundle).
+- artgen: 38 webp pushed to branch `wip/handoff-2026-10-20-artgen` - needs eye-review before merge to main.
+- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside handoff-vault encrypted bundle).
+- Eastgate GitLab repos (code.eastgatesoftware.com): removed from handoff scope per user request; local clones kept but remote tokens scrubbed. Not transferred - needs VPN + re-auth if ever resumed.
 - exam-ready gate: exam pool >=800/grade + 5% human spot-check.
