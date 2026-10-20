@@ -1,6 +1,6 @@
 PASS provision 5 users 
-PASS provision classes code=GCJR3P
-PASS student joins via code "Lop mvfz3f6g"
+PASS provision classes code=S6MS6W
+PASS student joins via code "Lop mvfzj86v"
 PASS teacher creates assignment 
 PASS student create rejected not-owner
 PASS other teacher rejected not-owner
@@ -8,8 +8,8 @@ PASS out-of-scope grade rejected grade-out-of-scope
 PASS outsider inbox excludes it 
 PASS outsider take denied not-enrolled
 PASS outsider form denied forbidden
-PASS student sees inbox row {"assignment_id":"e76d0bd3-b52d-4618-8425-7f21df33f50f","title":"Bai test khoi 2","class_name":"Lop mvfz3f6g","form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T00:56:59.135226+00:00","due_at":"2026-10-21T00:56:57.762+00:00","state":"open","score":null,"total":null,"late":null,"submitted_at":null}
-PASS take returns form+meta {"form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
+PASS student sees inbox row {"assignment_id":"2e969f34-6c7c-4702-94cd-bb461018390f","title":"Bai test khoi 2","class_name":"Lop mvfzj86v","form_id":"asg-d8de6661-a78a-4215-8904-d3010e89ca2f","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T01:09:07.503986+00:00","due_at":"2026-10-21T01:09:06.489+00:00","state":"open","score":null,"total":null,"late":null,"submitted_at":null}
+PASS take returns form+meta {"form_id":"asg-d8de6661-a78a-4215-8904-d3010e89ca2f","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
 PASS form returns 10 questions 10 rows 
 PASS dupe answers rejected bad-answers
 PASS partial answers rejected bad-answers
@@ -17,9 +17,10 @@ PASS non-boolean correct rejected bad-answers
 PASS missing correct key rejected bad-answers
 PASS valid submit returns result id 
 PASS second submit rejected already-submitted
-PASS results row written {"id":"f7230775-7d33-4755-b391-c9224857d9ea","points":50,"correct_count":5,"form_id":"assignment:e76d0bd3-b52d-4618-8425-7f21df33f50f","rounds_completed":1}
-PASS take after submit -> done {"form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","question_count":0,"state":"done"}
-PASS list counts {"id":"e76d0bd3-b52d-4618-8425-7f21df33f50f","title":"Bai test khoi 2","form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T00:56:59.135226+00:00","due_at":"2026-10-21T00:56:57.762+00:00","status":"open","submitted":1,"started":0,"roster":2}
+PASS results row written {"id":"960409c2-a27c-43a6-816e-6c07d2152567","points":50,"correct_count":5,"form_id":"assignment:2e969f34-6c7c-4702-94cd-bb461018390f","rounds_completed":1}
+PASS take after submit -> done {"form_id":"asg-d8de6661-a78a-4215-8904-d3010e89ca2f","grade_id":"grade-2","program_id":"english","question_count":0,"state":"done"}
+PASS form denied after submit forbidden
+PASS list counts {"id":"2e969f34-6c7c-4702-94cd-bb461018390f","title":"Bai test khoi 2","form_id":"asg-d8de6661-a78a-4215-8904-d3010e89ca2f","grade_id":"grade-2","program_id":"english","opens_at":"2026-10-20T01:09:07.503986+00:00","due_at":"2026-10-21T01:09:06.489+00:00","status":"open","submitted":1,"started":0,"roster":2}
 PASS report roster HS An,HS Binh q=10
 PASS remediate mints follow-up 
 PASS cross-teacher report/close/remediate denied forbidden forbidden forbidden
@@ -29,9 +30,9 @@ PASS upcoming form denied forbidden
 PASS upcoming inbox state 
 PASS close works 
 PASS closed take denied closed
-PASS B takes in-flight {"form_id":"asg-5241ac1c-060d-42ea-81be-d07e68b08b33","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
+PASS B takes in-flight {"form_id":"asg-d8de6661-a78a-4215-8904-d3010e89ca2f","grade_id":"grade-2","program_id":"english","question_count":10,"state":"open"}
 PASS close main assignment 
 PASS submit after close denied closed
 PASS anon inbox denied permission denied for function assignment_inbox
 
-=== 35/35 checks passed ===
+=== 36/36 checks passed ===

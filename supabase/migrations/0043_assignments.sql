@@ -360,8 +360,13 @@ begin
   elsif practice.is_student()
         and practice.enrolled_in_class(a.class_id)
         and a.status = 'open'
-        and now() >= a.opens_at then
-    null; -- enrolled student during the window
+        and now() >= a.opens_at
+        and not exists (
+          select 1 from practice.assignment_attempts att
+           where att.assignment_id = a.id
+             and att.student_id = (select auth.uid())
+             and att.submitted_at is not null) then
+    null; -- enrolled student during the window, not yet submitted
   else
     raise exception 'forbidden';
   end if;

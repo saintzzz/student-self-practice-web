@@ -155,9 +155,11 @@ try {
     .eq('id', rid).maybeSingle();
   ok('results row written', resRow?.correct_count === 5 && resRow?.form_id === `assignment:${asgId}` && resRow?.rounds_completed === 1, JSON.stringify(resRow));
 
-  // 11. take after submit returns 'done' (no retry)
+  // 11. take after submit returns 'done' (no retry) + form re-fetch denied
   const { data: take2 } = await stA.rpc('assignment_take', { p_assignment_id: asgId });
   ok('take after submit -> done', take2?.[0]?.state === 'done', JSON.stringify(take2?.[0]));
+  const { error: formAfter } = await stA.rpc('assignment_form', { p_assignment_id: asgId });
+  ok('form denied after submit', !!formAfter && formAfter.message.includes('forbidden'), formAfter?.message ?? '');
 
   // 12. teacher list + report
   const { data: list } = await teacher.rpc('assignment_list', { p_class_id: classId });
