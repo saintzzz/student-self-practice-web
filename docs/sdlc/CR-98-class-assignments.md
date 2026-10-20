@@ -329,3 +329,21 @@ list_assessment_forms picker results which filters kind='unit-test');
 residual risk = guessing uuid ids - accepted for v1, noted. Score
 submission is client-trusted (same as every results write today -
 deferred).
+
+---
+
+## Implementation review log (post-commit, cross-model lead reviews)
+
+| Round | Findings | Fixed in |
+|---|---|---|
+| r1 | submit lacked closed-check; answers missing `correct` slipped past NULL-vs-boolean; replay CTA shown | `4e047c9` |
+| r2 | `assignment_form` allowed re-entry after submit (AC-4.1) | `8644095` |
+| r3 | assignment leaked quest/skill/review side-effects; submit failure silent; teacher saw admin-only enroll tab | `66479d1` |
+| r4 | no per-question attempt events (FR-5); AssignPanel stale-class paint; no assignment identity/receipt | `ff6dc40` |
+| r5 | stale reload invalidated selected class's read; list reads failed-open (error looked like empty) | `93fd76a` |
+| r6 | stale reload still bumped generation before identity check | `ec6d70e` |
+| r7 | **APPROVE** | - |
+
+Applied migrations: 0043 (base) + 0044 submit-hardening + 0045 form-guard + 0046 submit-events + 0047 service_role grants on qb_attempt_events.
+
+Final verification: `tsc -b` clean; `vite build` green; Vitest 205 files / 1,719 tests; live smoke `scripts/_assignments-smoke.mjs` 37/37 (provisions 5 users, full lifecycle + denials); Playwright e2e/cr98-assignments.spec.ts self-skips without env creds.
