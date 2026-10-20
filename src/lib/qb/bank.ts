@@ -441,7 +441,7 @@ export async function createExamFromAssignment(
   // A form row that cannot render would shrink the sitting and doom the
   // submit to 'bad-answers' forever - fail the load instead so the
   // student sees a retryable error, not a broken exam.
-  if (questions.length !== rows.length) return null;
+  if (rows.length === 0 || questions.length !== rows.length) return null;
   return {
     programId,
     gradeId,

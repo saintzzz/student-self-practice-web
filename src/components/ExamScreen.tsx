@@ -283,8 +283,12 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     score: number; total: number; timeSec: number;
     answers: { q_id: string; correct: boolean }[];
     snapshot: { questionIds: string[] };
+    forUser?: string;
   } | null>(null);
   const [assignSubmitState, setAssignSubmitState] = useState<'idle' | 'pending' | 'ok' | 'failed'>('idle');
+  // CR-98 r-ext2: a stored submit blocks re-entry until the server acks
+  // it - re-sitting a form the student already saw would inflate scores.
+  const [flushBlocked, setFlushBlocked] = useState(false);
   // CR-98 r-ext1: the submit payload also lives in sessionStorage until
   // the server acknowledges. If the student exits or the tab dies mid-
   // retry, re-entering the assignment flushes it before a new sitting.
@@ -323,6 +327,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
       };
       sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
+      // CR-98 r-ext2: tag the owner so a different account in the same
+      // tab can never replay this payload as their own submission.
+      void getSession().then((s) => {
+        const uid = s?.user?.id;
+        if (uid && assignPayloadRef.current) {
+          assignPayloadRef.current.forUser = uid;
+          sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
+        }
+      });
       void submitAssignment(0);
     } else if (!isArena) {
       if (isPractice) recordDrillComplete();
@@ -399,22 +412,42 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       if (!isArena && isSupabaseConfigured()) {
         setLoadingBank(true);
         setLoadError(false);
-        // CR-98 r-ext1: an earlier submit may have failed after the
-        // student left - flush the stored payload first; if it lands the
-        // assignment is already done and the inbox will show 'đã nộp'.
+        // CR-98 r-ext1/r-ext2: an earlier submit may have failed after
+        // the student left - flush the stored payload first. If it lands
+        // the assignment is done and the inbox shows 'đã nộp'. If it
+        // fails, BLOCK the new sitting: re-doing a form the student has
+        // already seen would inflate the score, and the stored payload
+        // must stay until the server acks it. A payload tagged for a
+        // different account is discarded without replay.
         if (isAssignment && assignment) {
           const stale = sessionStorage.getItem(assignStoreKey);
           if (stale) {
+            let stored: { forUser?: string } | null = null;
             try {
-              const res = await assignmentSubmit(assignment.id, JSON.parse(stale));
-              if (!('error' in res) || res.error === 'already-submitted') {
+              stored = JSON.parse(stale) as { forUser?: string };
+            } catch {
+              sessionStorage.removeItem(assignStoreKey);
+            }
+            if (stored) {
+              const session = await getSession();
+              if (stored.forUser && stored.forUser !== (session?.user?.id ?? '')) {
                 sessionStorage.removeItem(assignStoreKey);
+              } else {
+                try {
+                  const res = await assignmentSubmit(assignment.id, stored as never);
+                  if (!('error' in res) || res.error === 'already-submitted') {
+                    sessionStorage.removeItem(assignStoreKey);
+                    setLoadingBank(false);
+                    onExit();
+                    return;
+                  }
+                } catch {
+                  // network failure - block below
+                }
+                setFlushBlocked(true);
                 setLoadingBank(false);
-                onExit();
                 return;
               }
-            } catch {
-              // fall through - a fresh sitting overwrites the stored payload
             }
           }
         }
@@ -601,7 +634,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} assignment={assignment} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} focusLabel={focus?.label} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} assignment={assignment} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} submitBlocked={flushBlocked} focusLabel={focus?.label} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
   }
 
   if (result) {
@@ -944,7 +977,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, assignment, reviewCount, loading, loadError, focusLabel, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; assignment?: { id: string; title: string; dueAt: string }; reviewCount?: number; loading?: boolean; loadError?: boolean; focusLabel?: string; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, assignment, reviewCount, loading, loadError, submitBlocked, focusLabel, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; assignment?: { id: string; title: string; dueAt: string }; reviewCount?: number; loading?: boolean; loadError?: boolean; submitBlocked?: boolean; focusLabel?: string; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
     : assignment ? assignment.title
@@ -1019,6 +1052,11 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             </>
           )}
         </ul>
+        {submitBlocked && (
+          <p data-testid="assignment-submit-blocked" className="mt-4 rounded-xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 ring-1 ring-amber-200">
+            Bài lần trước của em chưa nộp được - em bấm thử lại để nộp nhé.
+          </p>
+        )}
         {loadError && (
           <p className="mt-4 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 ring-1 ring-rose-200">
             {focusLabel
@@ -1034,7 +1072,7 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             disabled={loading}
             className={`${CTA_GOLD_XL} mt-6 w-full text-lg disabled:opacity-60`}
           >
-            {loadError ? 'Thử lại' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
+            {(loadError || submitBlocked) ? 'Thử lại' : isReview ? 'Bắt đầu ôn' : isArena ? 'Vào đấu trường' : isPractice ? 'Bắt đầu luyện' : 'Bắt đầu làm bài'}
           </button>
         )}
         <button

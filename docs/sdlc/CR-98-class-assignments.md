@@ -360,3 +360,15 @@ Post-deploy external review (Codex CLI, EXTERNAL-REVIEW-r89.md):
   file replay matches the live DB.
 - r-ext1 [minor] AssignPanel selects/datetime lacked accessible names
   -> aria-labels added.
+
+External review round 2 (EXTERNAL-REVIEW-r90.md):
+- r-ext2 [major] stored payload keyed only by assignment id - an account
+  switch in the same tab could replay student A's answers as student B's
+  submission -> payload now carries forUser; mismatched payloads are
+  discarded without replay.
+- r-ext2 [major] failed flush fell through to a fresh sitting that
+  overwrites the unacknowledged payload AND lets the student re-sit a
+  form they already saw -> flush failure now BLOCKS re-entry with a
+  visible retry until the server acks (or the payload is foreign-owned).
+- r-ext2 [minor] drop-guard let an empty form through (0===0) -> rejects
+  both empty and partially-unrenderable forms (regression test added).

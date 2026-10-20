@@ -312,6 +312,12 @@ describe('createExamFromAssignment - CR-98 r-ext1', () => {
     expect(st).toBeNull();
   });
 
+  it('rejects an empty form too', async () => {
+    rpcMock.mockResolvedValueOnce({ data: [], error: null });
+    const st = await createExamFromAssignment('asg-1', 'english', 'grade-3');
+    expect(st).toBeNull();
+  });
+
   it('returns the full fixed form when every row renders', async () => {
     rpcMock.mockResolvedValueOnce({ data: [mcq('a'), mcq('b'), mcq('c')], error: null });
     const st = await createExamFromAssignment('asg-1', 'english', 'grade-3');
