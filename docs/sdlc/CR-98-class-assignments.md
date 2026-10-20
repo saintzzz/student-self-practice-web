@@ -372,3 +372,9 @@ External review round 2 (EXTERNAL-REVIEW-r90.md):
   visible retry until the server acks (or the payload is foreign-owned).
 - r-ext2 [minor] drop-guard let an empty form through (0===0) -> rejects
   both empty and partially-unrenderable forms (regression test added).
+
+External review round 3 (EXTERNAL-REVIEW-r91.md):
+- r-ext3 [major] owner tagging was async - a payload persisted before
+  tagging (or never tagged) could be replayed by another account ->
+  owner id captured once at mount; payloads are tagged synchronously
+  before persisting and replay requires an exact owner match.

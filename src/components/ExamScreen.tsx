@@ -293,6 +293,13 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   // the server acknowledges. If the student exits or the tab dies mid-
   // retry, re-entering the assignment flushes it before a new sitting.
   const assignStoreKey = assignment ? `assign-submit:${assignment.id}` : '';
+  // CR-98 r-ext3: owner id is resolved once at mount so the finish-time
+  // payload can be tagged synchronously - no unowned-payload window.
+  const assignUserRef = useRef<string>('');
+  useEffect(() => {
+    if (!isAssignment) return;
+    void getSession().then((s) => { assignUserRef.current = s?.user?.id ?? ''; });
+  }, [isAssignment]);
   const submitAssignment = useCallback(async (attempt: number): Promise<void> => {
     const payload = assignPayloadRef.current;
     if (!assignment || !payload) return;
@@ -325,17 +332,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         timeSec: result.timeUsedSec,
         answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
         snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
+        forUser: assignUserRef.current,
       };
       sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
-      // CR-98 r-ext2: tag the owner so a different account in the same
-      // tab can never replay this payload as their own submission.
-      void getSession().then((s) => {
-        const uid = s?.user?.id;
-        if (uid && assignPayloadRef.current) {
-          assignPayloadRef.current.forUser = uid;
-          sessionStorage.setItem(assignStoreKey, JSON.stringify(assignPayloadRef.current));
-        }
-      });
       void submitAssignment(0);
     } else if (!isArena) {
       if (isPractice) recordDrillComplete();
@@ -430,7 +429,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             }
             if (stored) {
               const session = await getSession();
-              if (stored.forUser && stored.forUser !== (session?.user?.id ?? '')) {
+              // exact owner match only - an ownerless or foreign payload
+              // is discarded, never replayed (r-ext3).
+              if (!stored.forUser || stored.forUser !== (session?.user?.id ?? '')) {
                 sessionStorage.removeItem(assignStoreKey);
               } else {
                 try {
