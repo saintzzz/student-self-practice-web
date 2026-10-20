@@ -277,12 +277,47 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   // CR-27: record the mode-complete quest once per finished exam instance
   // (ref guard keeps StrictMode double-effects from double-marking).
   const questRecordedFor = useRef<ExamState | null>(null);
+  // CR-98: assignment payload is kept in a ref so the result-screen
+  // banner can retry the RPC after a persistent failure.
+  const assignPayloadRef = useRef<{
+    score: number; total: number; timeSec: number;
+    answers: { q_id: string; correct: boolean }[];
+    snapshot: { questionIds: string[] };
+  } | null>(null);
+  const [assignSubmitFailed, setAssignSubmitFailed] = useState(false);
+  const submitAssignment = useCallback(async (attempt: number): Promise<void> => {
+    const payload = assignPayloadRef.current;
+    if (!assignment || !payload) return;
+    const res = await assignmentSubmit(assignment.id, payload);
+    // 'already-submitted' is success-by-absence (first call landed but
+    // the response was lost) - anything else retries once, then flags.
+    if ('error' in res && res.error !== 'already-submitted') {
+      if (attempt === 0) {
+        setTimeout(() => void submitAssignment(1), 3000);
+      } else {
+        setAssignSubmitFailed(true);
+      }
+    } else {
+      setAssignSubmitFailed(false);
+    }
+  }, [assignment]);
   useEffect(() => {
     if (!exam || !result || questRecordedFor.current === exam) return;
     questRecordedFor.current = exam;
-    // CR-34: arena runs are a duel, not practice - they must not feed
-    // quests, stats, the review queue, or the weekly leaderboard.
-    if (!isArena) {
+    // CR-34/CR-98: arena runs and teacher assignments are assessments,
+    // not practice - they must not feed quests, stats, the review queue,
+    // or the weekly leaderboard. Assignments persist via assignment_submit
+    // (server validates the answer set and writes the results row itself).
+    if (isAssignment && assignment) {
+      assignPayloadRef.current = {
+        score: result.points,
+        total: result.totalCount * EXAM_POINTS_PER_QUESTION,
+        timeSec: result.timeUsedSec,
+        answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
+        snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
+      };
+      void submitAssignment(0);
+    } else if (!isArena) {
       if (isPractice) recordDrillComplete();
       else recordBigModeComplete();
       // CR-28: exam-mode wrongs are only known after submit - capture
@@ -291,27 +326,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // CR-30: persist drill/exam completions - the weekly leaderboard
       // counts all results rows, not only 4-round batches. Review sessions
       // replay already-earned points, so they don't insert again.
-      // CR-98: assignments persist via assignment_submit (server validates
-      // the answer set and writes the results row itself).
-      if (isAssignment && assignment) {
-        const payload = {
-          score: result.points,
-          total: result.totalCount * EXAM_POINTS_PER_QUESTION,
-          timeSec: result.timeUsedSec,
-          answers: result.review.map((r) => ({ q_id: String(r.question.id), correct: r.isCorrect })),
-          snapshot: { questionIds: exam.questions.map((q) => String(q.id)) },
-        };
-        // A lost submit means the teacher never sees the score - one retry
-        // after a short delay; 'already-submitted' is success-by-absence.
-        const submit = () => assignmentSubmit(assignment.id, payload).then((res) => {
-          if ('error' in res && res.error !== 'already-submitted') {
-            setTimeout(() => void assignmentSubmit(assignment.id, payload).then((r2) => {
-              if ('error' in r2) console.warn('[assignment] submit retry:', r2.error);
-            }), 3000);
-          }
-        });
-        void submit();
-      } else if (!isReview) {
+      if (!isReview) {
         void saveExamResult(gradeId, programId, {
           points: result.points,
           totalCount: result.totalCount,
@@ -323,7 +338,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         });
       }
     }
-  }, [exam, result, isPractice, isReview, isArena, isAssignment, assignment, gradeId, programId]);
+  }, [exam, result, isPractice, isReview, isArena, isAssignment, assignment, gradeId, programId, submitAssignment]);
 
   /* CR-69 + CR-82 M5: if the timer expired while the submit confirmation
      or the review sheet was open, the flags survive into the next exam's
@@ -440,9 +455,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         if (isCorrect) livePointsRef.current += EXAM_POINTS_PER_QUESTION;
         liveChannelRef.current?.sendProgress(exam.currentIndex + 1, livePointsRef.current);
       }
-      // CR-34: arena answers never feed engagement - a duel is not
-      // practice progress.
-      if (!isArena) {
+      // CR-34/CR-98: arena answers and teacher-assigned exams never feed
+      // engagement - neither is self-practice progress.
+      if (!isArena && !isAssignment) {
         // CR-27: count at answer time - correct answers land on the day
         // they were earned even if the session crosses midnight.
         if (isCorrect && !creditedRef.current.has(exam.currentIndex)) {
@@ -468,14 +483,16 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // but the quest still credits the correct answer immediately).
     const examCorrect = isExamAnswerCorrect(currentQuestion, answer);
     telemetryRef.current?.record(currentQuestion, answer, Date.now() - questionShownAtRef.current);
+    // CR-98: teacher assignments are assessment, not practice - no quest
+    // credit or skill-stat writes (the report reads the server attempt).
     if (examCorrect && !creditedRef.current.has(exam.currentIndex)) {
       creditedRef.current.add(exam.currentIndex);
-      recordCorrectAnswers(1);
+      if (!isAssignment) recordCorrectAnswers(1);
     }
     // CR-29: skill stats per answer; a re-answer during review does not
     // double-count - the stats reflect the FIRST answer, matching what
     // a real exam score sheet records.
-    if (!creditedRef.current.has(`s${exam.currentIndex}`)) {
+    if (!isAssignment && !creditedRef.current.has(`s${exam.currentIndex}`)) {
       creditedRef.current.add(`s${exam.currentIndex}`);
       recordSkillAnswer(gradeId, bankSkillOf(currentQuestion) ?? skillKeyFor(currentQuestion), examCorrect);
     }
@@ -567,7 +584,28 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // CR-98: assignments are single-attempt - the submit already landed,
     // a replay would only confuse (the RPC rejects a second submit).
     const canRetry = !isAssignment && (!isReview || getDueReviewItems(gradeId).length > 0);
-    return <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} onExit={onExit} onRetry={canRetry ? begin : undefined} />;
+    return (
+      <div>
+        {isAssignment && assignSubmitFailed && (
+          <div
+            role="alert"
+            data-testid="assignment-submit-failed"
+            className="mx-auto mb-3 flex max-w-3xl items-center justify-between gap-3 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 ring-1 ring-rose-200"
+          >
+            <span>Chưa nộp được bài lên lớp - em thử lại nhé.</span>
+            <button
+              type="button"
+              data-testid="assignment-submit-retry"
+              onClick={() => { setAssignSubmitFailed(false); void submitAssignment(0); }}
+              className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-white transition hover:bg-rose-500 active:scale-95"
+            >
+              Nộp lại
+            </button>
+          </div>
+        )}
+        <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} onExit={onExit} onRetry={canRetry ? begin : undefined} />
+      </div>
+    );
   }
 
   const question = exam.questions[exam.currentIndex]!;

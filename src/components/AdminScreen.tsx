@@ -215,7 +215,9 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   const tabs: { id: Tab; label: string }[] = [
     ...(isAdmin ? [{ id: 'accounts' as Tab, label: 'Tài khoản' }] : []),
     { id: 'classes', label: 'Lớp học' },
-    { id: 'enroll', label: 'Gán học sinh' },
+    // CR-98: enrollment is self-service via join codes - direct roster
+    // assignment stays admin-only.
+    ...(isAdmin ? [{ id: 'enroll' as Tab, label: 'Gán học sinh' }] : []),
     { id: 'scope', label: 'Nội dung' },
     { id: 'assign', label: 'Giao bài' },
     { id: 'progress', label: 'Tiến độ' },
@@ -389,7 +391,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
         </div>
       )}
 
-      {tab === 'enroll' && (
+      {tab === 'enroll' && isAdmin && (
         <div className={CARD}>
           <h2 className={`mb-4 ${H2}`}>Gán học sinh vào lớp</h2>
           <select
