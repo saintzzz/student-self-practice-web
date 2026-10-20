@@ -29,3 +29,9 @@ _shots/
 docs/qa/flagged/_qb-*.json
 scripts/_qb-*.mjs
 audit-err.log
+
+# scratch audit helpers + windows nul artifact
+nul
+scripts/_*.mjs
+scripts/_*.log
+scripts/_*.json
