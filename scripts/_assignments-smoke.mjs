@@ -154,6 +154,16 @@ try {
   const { data: resRow } = await admin.from('results').select('id, points, correct_count, form_id, rounds_completed')
     .eq('id', rid).maybeSingle();
   ok('results row written', resRow?.correct_count === 5 && resRow?.form_id === `assignment:${asgId}` && resRow?.rounds_completed === 1, JSON.stringify(resRow));
+  // r4: submit also writes qb_attempt_events for every form question
+  const { data: evts, error: evErr } = await admin.from('qb_attempt_events')
+    .select('question_id, form_id, is_correct, session_id')
+    .eq('form_id', take?.[0]?.form_id ?? '');
+  const { data: evAny } = await admin.from('qb_attempt_events')
+    .select('session_id').like('session_id', `asg:${asgId}%`);
+  ok('attempt events written', (evts ?? []).length === 10
+    && (evts ?? []).every((e) => e.form_id === take?.[0]?.form_id)
+    && (evts ?? []).filter((e) => e.is_correct).length === 5,
+    `${(evts ?? []).length} events, asg-sessions=${(evAny ?? []).length} ${evErr?.message ?? ''}`);
 
   // 11. take after submit returns 'done' (no retry) + form re-fetch denied
   const { data: take2 } = await stA.rpc('assignment_take', { p_assignment_id: asgId });
@@ -223,7 +233,11 @@ try {
 } catch (e) {
   ok('smoke crashed', false, e.message);
 } finally {
-  // cleanup: assignments cascade via class delete; attempts/results via users
+  // cleanup: events/results FK into auth.users - delete those rows first,
+  // then classes (assignments cascade), then the auth users themselves.
+  for (const t of ['qb_attempt_events', 'results']) {
+    await admin.from(t).delete().in(t === 'qb_attempt_events' ? 'learner_id' : 'account_id', userIds).then(() => {});
+  }
   for (const cid of [classId, otherClassId].filter(Boolean)) {
     await admin.from('classes').delete().eq('id', cid).then(() => {});
   }

@@ -32,7 +32,7 @@ interface ExamRouteProps {
   studentName?: string;
   mode: 'exam' | 'practice' | 'review' | 'arena' | 'assignment';
   arena?: ArenaRun;
-  assignment?: { id: string; title: string };
+  assignment?: { id: string; title: string; dueAt: string };
   formId?: string;
   focus?: { skills?: string[]; minDifficulty?: number; label?: string };
   onExit: () => void;

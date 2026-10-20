@@ -118,8 +118,8 @@ interface ExamScreenProps {
   mode: 'exam' | 'practice' | 'review' | 'arena' | 'assignment';
   arena?: ArenaRun;
   /** CR-98: assignment run - fixed form, results land via assignment_submit
-   *  (not saveExamResult). id/title come from assignment_take. */
-  assignment?: { id: string; title: string };
+   *  (not saveExamResult). id/title/dueAt come from the inbox item. */
+  assignment?: { id: string; title: string; dueAt: string };
   /** CR-48 phase 5: pinned V6 assessment form (unit test/diagnostic/
    *  midterm/final). When set, questions come from fetch_form in form
    *  order instead of a random mock sample. */
@@ -284,10 +284,11 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     answers: { q_id: string; correct: boolean }[];
     snapshot: { questionIds: string[] };
   } | null>(null);
-  const [assignSubmitFailed, setAssignSubmitFailed] = useState(false);
+  const [assignSubmitState, setAssignSubmitState] = useState<'idle' | 'pending' | 'ok' | 'failed'>('idle');
   const submitAssignment = useCallback(async (attempt: number): Promise<void> => {
     const payload = assignPayloadRef.current;
     if (!assignment || !payload) return;
+    setAssignSubmitState('pending');
     const res = await assignmentSubmit(assignment.id, payload);
     // 'already-submitted' is success-by-absence (first call landed but
     // the response was lost) - anything else retries once, then flags.
@@ -295,10 +296,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       if (attempt === 0) {
         setTimeout(() => void submitAssignment(1), 3000);
       } else {
-        setAssignSubmitFailed(true);
+        setAssignSubmitState('failed');
       }
     } else {
-      setAssignSubmitFailed(false);
+      setAssignSubmitState('ok');
     }
   }, [assignment]);
   useEffect(() => {
@@ -392,10 +393,13 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       if (!isArena && isSupabaseConfigured()) {
         setLoadingBank(true);
         setLoadError(false);
-        telemetryRef.current = createExamTelemetry({
+        // CR-98 r4: no client telemetry for assignments - submit writes
+        // qb_attempt_events server-side from the authoritative answer set,
+        // keeping a single writer so item stats never double-count.
+        telemetryRef.current = isAssignment ? null : createExamTelemetry({
           programId,
           grade: gradeNumber(gradeId),
-          mode: isAssignment ? 'form' : formId ? 'form' : isPractice ? (isReview ? 'review' : 'practice') : 'mock',
+          mode: formId ? 'form' : isPractice ? (isReview ? 'review' : 'practice') : 'mock',
           formId,
         });
         try {
@@ -572,7 +576,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} focusLabel={focus?.label} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} assignment={assignment} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} focusLabel={focus?.label} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
   }
 
   if (result) {
@@ -586,7 +590,23 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     const canRetry = !isAssignment && (!isReview || getDueReviewItems(gradeId).length > 0);
     return (
       <div>
-        {isAssignment && assignSubmitFailed && (
+        {isAssignment && assignSubmitState === 'ok' && (
+          <div
+            data-testid="assignment-submit-ok"
+            className="mx-auto mb-3 max-w-3xl rounded-xl bg-emerald-50 px-4 py-2 text-center text-sm font-bold text-emerald-700 ring-1 ring-emerald-200"
+          >
+            Cô đã nhận bài của em.
+          </div>
+        )}
+        {isAssignment && assignSubmitState === 'pending' && (
+          <div
+            data-testid="assignment-submit-pending"
+            className="mx-auto mb-3 max-w-3xl rounded-xl bg-sky-50 px-4 py-2 text-center text-sm font-bold text-sky-700 ring-1 ring-sky-200"
+          >
+            Đang nộp bài lên lớp...
+          </div>
+        )}
+        {isAssignment && assignSubmitState === 'failed' && (
           <div
             role="alert"
             data-testid="assignment-submit-failed"
@@ -596,7 +616,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             <button
               type="button"
               data-testid="assignment-submit-retry"
-              onClick={() => { setAssignSubmitFailed(false); void submitAssignment(0); }}
+              onClick={() => void submitAssignment(0)}
               className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-white transition hover:bg-rose-500 active:scale-95"
             >
               Nộp lại
@@ -642,8 +662,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           </span>
           <div className="min-w-0">
           <div className="truncate text-sm font-extrabold tracking-wide text-sky-200 sm:text-lg">
-            {isReview ? 'Ôn lại câu sai' : isPractice ? 'Luyện đề' : 'Thi thử'} - {isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}
+            {isAssignment && assignment
+              ? assignment.title
+              : `${isReview ? 'Ôn lại câu sai' : isPractice ? 'Luyện đề' : 'Thi thử'} - ${isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}`}
           </div>
+          {isAssignment && assignment?.dueAt && (
+            <div data-testid="assignment-due" className="truncate text-xs font-bold text-amber-300">
+              Bài cô giao - hạn {new Date(assignment.dueAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
+            </div>
+          )}
           {studentName && <div className="truncate text-xs font-bold text-slate-400">{studentName}</div>}
           </div>
         </div>
@@ -892,9 +919,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, reviewCount, loading, loadError, focusLabel, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; reviewCount?: number; loading?: boolean; loadError?: boolean; focusLabel?: string; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, assignment, reviewCount, loading, loadError, focusLabel, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; assignment?: { id: string; title: string; dueAt: string }; reviewCount?: number; loading?: boolean; loadError?: boolean; focusLabel?: string; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
+    : assignment ? assignment.title
     : isReview ? `Ôn lại câu sai - ${gradeLabel}` : focusLabel ? `${focusLabel} - ${PROGRAM_LABEL[programId]}` : `${isPractice ? 'Luyện đề' : 'Thi thử'} - ${PROGRAM_LABEL[programId]}`;
 
   /* spec s10.4: the bank fetch keeps the desk register - a paper sheet
@@ -943,6 +971,13 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
               <li>• {ARENA_QUESTION_COUNT} câu hỏi - cả hai chơi đúng cùng một đề</li>
               <li>• Ai nhiều điểm hơn thắng - hòa điểm thì ai nhanh hơn thắng</li>
               <li>• Biết đúng/sai ngay sau mỗi câu - làm nhanh nhưng đừng vội nhé</li>
+            </>
+          ) : assignment ? (
+            <>
+              <li>• Cô giao bài cho lớp - em chỉ làm được 1 lần</li>
+              <li>• Hạn nộp: {new Date(assignment.dueAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</li>
+              <li>• Bấm số câu để nhảy tới câu bất kỳ, làm xong quay lại sửa được</li>
+              <li>• Hết giờ tự động nộp bài</li>
             </>
           ) : isPractice ? (
             <>

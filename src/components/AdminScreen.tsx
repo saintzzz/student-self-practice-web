@@ -648,13 +648,19 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
 
   const classGrades = scopes[classId] ?? [];
 
+  // Generation guard: switching class while a list call is in flight must
+  // not paint class A's rows under class B (stale response discarded).
+  const reloadGen = useRef(0);
   const reload = useCallback(async (cid: string) => {
+    const gen = ++reloadGen.current;
     if (!cid) { setRows(null); return; }
-    setRows(await assignmentList(cid));
+    const list = await assignmentList(cid);
+    if (gen === reloadGen.current) setRows(list);
   }, []);
 
   useEffect(() => {
     setReport(null);
+    setRows(null);
     void reload(classId);
   }, [classId, reload]);
 

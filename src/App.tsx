@@ -101,7 +101,7 @@ export default function App() {
   const [arenaRun, setArenaRun] = useState<import('./components/ExamScreen').ArenaRun | null>(null);
   /** CR-98: assignment the student is about to sit - id+title from
    *  assignment_take; cleared whenever another exam path launches. */
-  const [assignmentRun, setAssignmentRun] = useState<{ id: string; title: string } | null>(null);
+  const [assignmentRun, setAssignmentRun] = useState<{ id: string; title: string; dueAt: string } | null>(null);
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   /** CR-97: live-race lobby overlay over the hub screen. */
   const [liveLobbyOpen, setLiveLobbyOpen] = useState(false);
@@ -349,7 +349,7 @@ export default function App() {
     setExamFormId(null);
     setExamFocus(null);
     setArenaRun(null);
-    setAssignmentRun({ id: item.assignmentId, title: item.title });
+    setAssignmentRun({ id: item.assignmentId, title: item.title, dueAt: item.dueAt });
     setScreen('exam');
   }
 

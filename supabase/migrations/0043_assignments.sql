@@ -460,6 +460,21 @@ begin
     coalesce(p_snapshot, '{}'::jsonb))
   returning id into v_rid;
 
+  -- Per-question telemetry lands atomically with the submission: every
+  -- form question gets an event (unanswered count as wrong in p_answers),
+  -- linked via the assignment's own form_id. The client disables its
+  -- telemetry for assignment mode so events have a single writer.
+  insert into practice.qb_attempt_events
+    (client_event_id, learner_id, question_id, program_id, grade, mode,
+     form_id, is_correct, latency_ms, session_id, answered_at)
+  select gen_random_uuid(), (select auth.uid()), x.value->>'q_id',
+         a.program_id,
+         nullif(regexp_replace(a.grade_id, '\D', '', 'g'), '')::smallint,
+         'form', a.form_id, (x.value->>'correct')::boolean, null,
+         'asg:' || a.id::text || ':' || (select auth.uid())::text, now()
+    from jsonb_array_elements(p_answers) x
+  on conflict (client_event_id) do nothing;
+
   update practice.assignment_attempts t set results_id = v_rid
    where t.assignment_id = a.id and t.student_id = (select auth.uid());
   return v_rid;
