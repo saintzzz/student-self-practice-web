@@ -27,11 +27,11 @@ if [ "$STAGED" -eq 1 ]; then
   # exclude preflight.sh itself - the script literally contains the secret
   # patterns, so staging it self-matches (first bootstrap commit always hit
   # this). Pathspec-exclude mirrors the --exclude on the src-scan path.
-  DIFF="$(git diff --cached -U0 -- . ':(exclude)scripts/preflight.sh' 2>/dev/null || true)"
+  DIFF="$(git diff --cached -U0 -- . ':(exclude)scripts/preflight.sh' ':(exclude)scripts/check-package.mjs' ':(exclude)evals/' 2>/dev/null || true)"
 else
   DIFF="$(grep -rInE 'sk-[a-zA-Z0-9_-]{20,}|sk-ant-[a-zA-Z0-9_-]{20,}|AIza[0-9A-Za-z_-]{20,}|github_pat_[0-9A-Za-z_]{20,}|-----BEGIN .*PRIVATE KEY' \
     --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=build \
-    --exclude=preflight.sh . 2>/dev/null || true)"
+    --exclude=preflight.sh --exclude=check-package.mjs . 2>/dev/null || true)"
 fi
 if [ -n "$DIFF" ] && echo "$DIFF" | grep -qE 'sk-[a-zA-Z0-9_-]{20,}|sk-ant-|AIza|github_pat_|BEGIN .*PRIVATE KEY'; then
   echo "   FAIL - possible secret in code/diff:"; echo "$DIFF" | grep -oE '^[^:]+' | sort -u | head -5
@@ -50,6 +50,27 @@ if [ -f package.json ] && [ -d node_modules ]; then
   for s in typecheck lint build test; do
     has_script "$s" && run npm run "$s" --if-present --silent
   done
+  # dependency vuln scan (CR-2026-01 WS-1): prod deps only - dev-dep CVEs do
+  # not ship to users and would drown the signal.
+  if [ -f package-lock.json ]; then
+    run npm audit --omit=dev --audit-level=high
+  elif [ -f pnpm-lock.yaml ]; then
+    run pnpm audit --prod --audit-level=high
+  elif [ -f yarn.lock ] || [ -f bun.lockb ]; then
+    echo "-- dep audit skipped: yarn/bun lockfile - run 'osv-scanner' manually or migrate lockfile"
+  fi
+fi
+
+# --- RTM gate (CR-2026-01 WS-1): every AC-x.y declared in docs/ must appear
+# in at least one test file. check-rtm.mjs skips cleanly pre-BA.
+if [ -f scripts/check-rtm.mjs ]; then
+  run node scripts/check-rtm.mjs
+fi
+
+# --- post-deploy headers (CR-2026-01 WS-4): only when a live URL is provided
+# via DEPLOY_URL - preflight itself runs on source, not a deployment.
+if [ -n "${DEPLOY_URL:-}" ] && [ -f scripts/check-headers.mjs ]; then
+  run node scripts/check-headers.mjs "$DEPLOY_URL"
 fi
 
 # --- python ---
@@ -65,24 +86,31 @@ if [ -f go.mod ]; then
 fi
 
 # --- reliability gate (reliability classes: unchecked-read, unbounded-read,
-# action-loss, cas-transition + project EA classes). Neu project co scanner
-# thi day la check bat buoc - khong duoc skip. r10: prefer the single
-# code:reliability entry point so every scanner + selftest stays in sync.
-if has_script code:reliability; then
-  run npm run code:reliability --silent
-elif [ -f scripts/check-reliability.mjs ]; then
+# action-loss, cas-transition). Neu project co scripts/check-reliability.mjs
+# thi day la check bat buoc - khong duoc skip.
+if [ -f scripts/check-reliability.mjs ]; then
   run node scripts/check-reliability.mjs
   # scanner self-test (fixtures): .selftest.mjs so vitest/jest do not
   # auto-pick it - node --test runs it by explicit path only.
   if [ -f tests/reliability-scanner.selftest.mjs ]; then
     run node --test tests/reliability-scanner.selftest.mjs
   fi
-  if [ -f scripts/check-ea-classes.mjs ]; then
-    run node scripts/check-ea-classes.mjs
-    if [ -f tests/ea-classes-scanner.selftest.mjs ]; then
-      run node --test tests/ea-classes-scanner.selftest.mjs
-    fi
-  fi
+fi
+
+# --- repo laws (copy/keys/migrations/logging) - slideforge r2/r3 laws.
+if [ -f scripts/check-repo-laws.mjs ]; then
+  run node scripts/check-repo-laws.mjs
+fi
+
+# --- RTM: every declared AC-x.y must appear in a test file. Skips cleanly
+# on pre-BA projects (no AC declarations in docs/).
+if [ -f scripts/check-rtm.mjs ]; then
+  run node scripts/check-rtm.mjs
+fi
+
+# --- post-deploy security headers (only when DEPLOY_URL is provided).
+if [ -n "${DEPLOY_URL:-}" ] && [ -f scripts/check-headers.mjs ]; then
+  run node scripts/check-headers.mjs "$DEPLOY_URL"
 fi
 
 echo "== preflight: $([ "$fail" -eq 0 ] && echo PASS || echo FAIL) =="

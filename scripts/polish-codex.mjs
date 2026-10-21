@@ -6,7 +6,7 @@
 import { readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { createLlmChannel } from './llm-channel.mjs';
+import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -76,15 +76,10 @@ ITEMS:
 ${JSON.stringify(items, null, 0)}`;
 }
 
-const channel = createLlmChannel({ workers: WORKERS });
+const channel = createLlmChannel({ workers: WORKERS, codexModel: 'gpt-6.1-sol', codexEffort: 'high' }); // bulk rewording - workhorse at high effort
 
 function parseOut(stdout) {
-  const m = stdout.match(/\[[\s\S]*\]/g);
-  if (!m) throw new Error('no-json');
-  for (let i = m.length - 1; i >= 0; i--) {
-    try { const arr = JSON.parse(m[i]); if (Array.isArray(arr) && arr.length) return arr; } catch { }
-  }
-  throw new Error('parse-fail');
+  return parseJsonArray(stdout); // tolerant: fence, bracket match, inner-quote repair
 }
 
 async function patch(row, fix) {

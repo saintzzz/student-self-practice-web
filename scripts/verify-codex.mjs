@@ -8,7 +8,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
-import { createLlmChannel } from './llm-channel.mjs';
+import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -108,15 +108,10 @@ ITEMS:
 ${JSON.stringify(items)}`;
 }
 
-const channel = createLlmChannel({ workers: WORKERS });
+const channel = createLlmChannel({ workers: WORKERS, codexModel: 'gpt-6-astra', codexEffort: 'high' }); // judgment gate - frontier reasoning
 
 function parseOut(stdout) {
-  const m = stdout.match(/\[[\s\S]*\]/g);
-  if (!m) throw new Error('no-json');
-  for (let i = m.length - 1; i >= 0; i--) {
-    try { const arr = JSON.parse(m[i]); if (Array.isArray(arr) && arr.length) return arr; } catch { }
-  }
-  throw new Error('parse-fail');
+  return parseJsonArray(stdout); // tolerant: fence, bracket match, inner-quote repair
 }
 
 const APPROVE_POL = { examEligible: true, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: false, requiresHumanApprovalForCommercialRelease: false };
@@ -156,12 +151,17 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
     try {
       const out = parseOut((await channel.call(promptFor(batch[0].grade, batch.map(slim)))).text);
       const byId = new Map(out.map((o) => [o.i, o]));
+      const batchOk = [], batchBad = [];
       for (const r of batch) {
         const v = byId.get(r.id);
-        if (v?.ok === true) okIds.push(r.id);
-        else if (v?.ok === false) { badIds.push(r.id); dropReasons.push({ id: r.id, why: v.why }); }
+        if (v?.ok === true) batchOk.push(r.id);
+        else if (v?.ok === false) { batchBad.push(r.id); dropReasons.push({ id: r.id, why: v.why }); }
         // missing verdict -> leave pending (conservative)
       }
+      // apply per-batch so a kill mid-run doesn't lose verdicts
+      await patchIds(batchOk, { review_status: 'approved', publication_policy: APPROVE_POL });
+      await patchIds(batchBad, { review_status: 'rejected', publication_policy: REJECT_POL });
+      okIds.push(...batchOk); badIds.push(...batchBad);
     } catch (e) {
       errBatches++;
       if (/usage limit|rate-limited/i.test(String(e))) throw e; // all channels quota-bound: abort, supervisor retries

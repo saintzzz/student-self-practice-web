@@ -128,7 +128,7 @@ function toRow(it, grade, provider) {
   };
 }
 
-const channel = createLlmChannel({ workers: WORKERS, provider: PROVIDER });
+const channel = createLlmChannel({ workers: WORKERS, provider: PROVIDER, codexModel: 'gpt-6.1-sol', codexEffort: 'high' });
 
 function parseOut(stdout) {
   const m = stdout.match(/\[[\s\S]*\]/g);

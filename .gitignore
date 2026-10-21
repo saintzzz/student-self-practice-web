@@ -40,3 +40,8 @@ scripts/gemini-web-ready.flag
 scripts/_gemini-web-response.txt
 scripts/gemini-web-profile-2/
 machine-transfer/
+
+# harness scratch + auth artifacts (never commit)
+scripts/.tmp-cdp/
+scripts/gemini-auth.json
+scripts/_*.sh
