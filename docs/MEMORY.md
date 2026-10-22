@@ -84,29 +84,45 @@
 - Per-machine state that does NOT transfer: running background jobs (restart on other machine - DB progress is shared in Supabase), gemini-web Chromium profile (re-login per machine), playwright browsers.
 - `Session state` block below is rewritten at each machine switch / session end - always read it first on the receiving machine.
 
-### Session state - 2026-10-22 (Windows PC, work committed + pushed)
+### Session state - 2026-10-22 late (Windows PC -> iMac handoff, HEAD 917d257 + WIP commit)
 
-- CR-99 gamification quick wins: SHIPPED (commit 26fe4d3, CI green). Manual
-  read-aloud speaker, wrong-streak headline ladder, combo chip, shelf stars +
-  locked "Sap ra mat" card, LevelPicker easter egg. External review r96 done
-  (gemini; codex hit quota) - 1 fixed, 2 not-confirmed.
-- CR-100 engagement economy wave 2: SHIPPED same session - streak freeze
-  (1 missed day/ISO week), player XP ladder (Tan binh->Ngoi sao->Anh hung->
-  Huyen thoai) + LevelRing on EngagementBar, B5 hearts via shared
-  `src/games/lives.tsx` adopted in MemoryMatch/WhackMole/QuizShow (sudden-death
-  replaced by 3 hearts). e2e/cr100-hearts.spec.ts added.
-- `scripts/machine-sync.ps1`: one-command handoff - exports secrets, re-encrypts
-  vault bundle, commits+pushes handoff-vault. Passphrase at
-  `%USERPROFILE%\.devin-vault-pass` (local only, never committed).
-- Codex CLI on Windows: auth FIXED (was 401), but usage quota exhausted until
-  2026-10-27 - LLM work routes to gemini-web fallback automatically.
-- Content pipeline: pending=0 everywhere. Remaining gap: G5 eligible 6,691/7,000
-  and G5 exam pool 539/800 - needs a G5 wave biased to exam-scorable kinds
-  (MCQ/TF/fill). iMac was running the pipeline; check DB counts first.
-- Prior state (2026-10-20): llm-core stopped 210/367, polish 210/678 - those
-  resume commands still valid if DB shows pending work:
-  `node scripts/gen-codex-bank.mjs --tier core --target 7000 --grades 2,3,4,5 --workers 3 --batch 25`
-- artgen: `wip/handoff-2026-10-20-artgen` merged by iMac + round 2 done.
-- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside handoff-vault encrypted bundle).
-- Eastgate GitLab repos (code.eastgatesoftware.com): removed from handoff scope per user request; local clones kept but remote tokens scrubbed. Not transferred - needs VPN + re-auth if ever resumed.
+- CR-101 moat wave 1: SHIPPED. Per-IP+per-uid+global rate limits on
+  fetch/score RPCs (migrations 0044-0045, remote-applied + verified).
+  50:50 hint adopted in 11 games (12/15 total incl. QuizShow lifeline).
+- CR-102 server-side scoring: SHIPPED (0a75341). strip_bank_row removes
+  answer+explanation_vi from all fetch surfaces; score_bank_attempts
+  oracle grades in Postgres; bank questions render keyless (pending
+  until server verdict; reorder keeps key by design). Review r99 2
+  rounds -> APPROVE.
+- CR-103 deferred sweep: SHIPPED (48a89ec). Per-IP XFF caps (0049);
+  vocab/IPA/common-word lazy split via src/lib/content/contentBank.ts
+  (index 623->437.8KB eager). r100 caught a strip regression, fixed.
+- CR-104 bank integrity + quality wave: SHIPPED (917d257). Answer-option
+  display shuffle (bankOptionOrder, uniform via mulberry32 - the old
+  hash-per-position only reached 12/24 perms, r102 major caught it);
+  migration 0050 do/does repair (155 rows); e2e/a11y.spec.ts axe gate
+  (3 real violations fixed); combo meter in all 15 games; landscape
+  next-button fold fix; reloadPageOnce bounds bank-fail reload loops;
+  .perf-budgets.json + rebased budget anchors.
+- Local verify at push: tsc clean, 208 files / 1750 tests, e2e 79
+  pass + 7 env-skips, all preflight gates PASS, CI 39768300333 green.
+- WIP committed separately: scripts/check-rtm.mjs stub-aware AC
+  tracking (todo/skip ACs no longer count as covered; rtm still PASS).
+- Codex CLI on Windows: auth fixed but usage quota out until 2026-10-27
+  - `npm run review:external` routes to gemini-web fallback; reviewer
+  subagents (reviewer-gpt) used for second rounds.
+- Content pipeline: G5 eligible ~6.6-6.9k/7000 and G5 exam pool ~540-560/800
+  still the gap - needs G5 wave biased to exam-scorable kinds (MCQ/TF/fill).
+  iMac runs the pipeline; check DB counts first.
+- Next designed items (CR-104 deferred section): "Teach me" pre-answer
+  lesson (needs teach_bank_question RPC - disclosure must mark the
+  attempt taught/not-scored or it re-opens the moat); adaptive
+  difficulty fetch variant (bank rows carry difficulty; learning_events
+  has outcomes - ZPD-biased pick is the design); Turnstile needs a
+  Cloudflare account (manual signup, not provisionable).
+- `scripts/machine-sync.ps1`: one-command handoff - exports secrets,
+  re-encrypts vault bundle, commits+pushes handoff-vault.
+- Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside
+  handoff-vault encrypted bundle).
+- Eastgate GitLab repos: removed from handoff scope per user request.
 - exam-ready gate: exam pool >=800/grade + 5% human spot-check.
