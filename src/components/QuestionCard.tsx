@@ -38,7 +38,7 @@ import { useThinkingPose } from '../hooks/useThinkingPose';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { material, QUESTION_BODY, QUESTION_BODY_CENTER } from '../lib/ui/tokens';
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
-import { IconArrowRight } from './icons';
+import { IconArrowRight, IconFlame } from './icons';
 
 interface QuestionCardProps {
   question: Question;
@@ -67,6 +67,9 @@ interface QuestionCardProps {
   /** CR-79 A5: consecutive-correct run ending at the current answer -
    *  >=3 upgrades the feedback celebration to the bigger beat. */
   correctStreak?: number;
+  /** CR-99 M4: consecutive-wrong run ending at the current answer -
+   *  escalates the wrong-verdict headline + mascot mood (attempt ladder). */
+  wrongStreak?: number;
 }
 
 function renderQuestionBody(
@@ -350,6 +353,7 @@ export default function QuestionCard({
   onNext,
   speakerKey,
   correctStreak = 0,
+  wrongStreak = 0,
 }: QuestionCardProps) {
   const hasAnswered = currentAnswer !== null;
   const { band, land } = useViewer();
@@ -434,11 +438,15 @@ export default function QuestionCard({
     reducedMotion,
   });
 
+  /* CR-99 M4: on a wrong run the mascot shifts encouraging -> thinking
+     ("cùng nghĩ cách khác") from the 2nd miss up. */
   const verdictMood = currentAnswer?.isCorrect
     ? correctStreak >= 3
       ? 'celebrating'
       : 'happy'
-    : 'encouraging';
+    : wrongStreak >= 2
+      ? 'thinking'
+      : 'encouraging';
 
   /* CR-82 (spec s16.2): correct verdict fires the star-fly toward the
      LiveScore chip. Origin = the answered tile's rect when the active
@@ -517,6 +525,18 @@ export default function QuestionCard({
         <p data-testid="question-progress" className="text-sm font-bold text-amber-200">
           Câu {questionNumber}/{totalQuestions}
         </p>
+        {/* CR-99 B1: persistent combo chip - the streak chip inside the
+            feedback sheet only shows post-answer; this keeps the run
+            visible while the kid is still answering. */}
+        {correctStreak >= 2 && (
+          <span
+            data-testid="combo-chip"
+            className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-extrabold text-amber-300 ring-1 ring-amber-300/40"
+            aria-label={`Chuỗi đúng: ${correctStreak} câu liên tiếp`}
+          >
+            <IconFlame size={12} /> x{correctStreak}
+          </span>
+        )}
       </div>
 
       {/* CR-82 (spec s9.3): board perch - Bé Heo sits on the board rim
@@ -601,6 +621,7 @@ export default function QuestionCard({
             }
             celebrate={correctStreak >= 3}
             streak={currentAnswer.isCorrect ? correctStreak : 0}
+            wrongStreak={currentAnswer.isCorrect ? 0 : wrongStreak}
             mascotPlacement={sheetPerch ? 'none' : 'inline'}
             headlines={KIND_HEADLINES[question.kind]}
           />

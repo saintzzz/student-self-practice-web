@@ -74,7 +74,9 @@ const prompt =
   `DIFF (${label}):\n${diff}`;
 
 console.log(`Running external review on ${label} (codex primary, gemini-web fallback)...`);
-const channel = createLlmChannel({ workers: 1 });
+const llmProvider = ['auto', 'codex', 'gemini'].includes(process.env.LLM_PROVIDER)
+  ? process.env.LLM_PROVIDER : 'auto';
+const channel = createLlmChannel({ workers: 1, provider: llmProvider });
 let output, provider;
 try {
   ({ text: output, provider } = await channel.call(prompt));

@@ -26,13 +26,26 @@ function formatClock(ms: number): string {
 function LevelPicker({ gameId, onPick }: { gameId: GameId; onPick: (level: GameLevel) => void }) {
   const def = GAME_DEFS.find((d) => d.id === gameId);
   const totalStars = GAME_LEVELS.reduce((n, l) => n + gameLevelStars(gameId, l), 0);
+  /* CR-99 M7: pet-the-art easter egg - tapping the hero art wiggles it
+     (re-arms on each tap). Pure delight, no game effect. */
+  const [wiggle, setWiggle] = useState(0);
   return (
     <div data-testid="game-level-picker" className="flex flex-1 flex-col items-center justify-center gap-4">
       {/* Hero block: the game's bespoke art + identity inside the panel -
           without it the picker is three floating buttons on empty navy. */}
       {def && (
         <div className="flex flex-col items-center gap-1.5 text-center">
-          <GameArt art={def.art} emoji={def.emoji} artImage={def.artImage} size="hero" animated />
+          <button
+            type="button"
+            data-testid="game-art-pet"
+            aria-label={`Chào ${def.title}`}
+            onClick={() => { playSfx('pop'); setWiggle((n) => n + 1); }}
+            className="rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
+          >
+            <span key={wiggle} className={wiggle ? 'block chest-wiggle' : 'block'}>
+              <GameArt art={def.art} emoji={def.emoji} artImage={def.artImage} size="hero" animated />
+            </span>
+          </button>
           <p className="font-display text-2xl font-extrabold text-white">{def.title}</p>
           <p className="text-sm font-semibold text-slate-300">{def.tagline}</p>
         </div>

@@ -1,8 +1,12 @@
-import { gameBestStars } from '../lib/engagement/store';
+import { useEffect, useRef, useState } from 'react';
+import { gameBestStars, gameLevelStars } from '../lib/engagement/store';
 import { hashString } from '../lib/prng';
 import { gameCardChip, gameCardClass, gameHeroClass } from '../lib/ui/tokens';
+import { IconLock } from '../components/icons';
+import { playSfx } from '../lib/sfx';
 import { GAME_DEFS } from './defs';
 import GameArt from './GameArt';
+import { GAME_LEVELS } from './levels';
 import type { GameDef, GameId } from './types';
 
 function Stars({ id, onCandy = false }: { id: GameId; onCandy?: boolean }) {
@@ -30,6 +34,51 @@ function NewBadge() {
     <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-rose-600 shadow">
       Mới
     </span>
+  );
+}
+
+/* CR-99 M2: total earned stars across the 3 levels - the completionist
+   goal Martin's badges provide. Hidden until the kid owns at least 1. */
+function TotalStars({ id }: { id: GameId }) {
+  const total = GAME_LEVELS.reduce((n, l) => n + gameLevelStars(id, l), 0);
+  if (total === 0) return null;
+  return (
+    <span className="text-[10px] font-extrabold text-slate-500" aria-label={`Tổng số sao: ${total} trên 9`}>
+      ⭐{total}/9
+    </span>
+  );
+}
+
+/* CR-99 M6+M7: locked teaser card - a "coming soon" zone that wobbles and
+   answers with a hint when tapped (easter egg, not a dead control). */
+function LockedCard() {
+  const [taps, setTaps] = useState(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const poke = () => {
+    playSfx('pop');
+    setTaps((n) => n + 1);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setTaps(0), 2400);
+  };
+  const hint = taps >= 3 ? 'Kiên nhẫn nào, Heo đang làm lắm!' : taps >= 1 ? 'Sắp mở rồi!' : null;
+  return (
+    <button
+      type="button"
+      data-testid="game-card-coming-soon"
+      onClick={poke}
+      aria-label="Đảo bí mật - sắp ra mắt"
+      className={`${gameCardClass('sky')} relative opacity-70 saturate-50 ${taps ? 'chest-wiggle' : ''}`}
+    >
+      <span className="absolute right-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300 shadow">
+        Sắp mở
+      </span>
+      <span className={gameCardChip('sky')}><IconLock size={28} className="text-slate-500" /></span>
+      <span className="font-display text-base font-extrabold leading-tight text-slate-600">Đảo bí mật</span>
+      <span className="text-xs font-semibold leading-snug text-slate-500">
+        {hint ?? 'Trò chơi mới đang được Heo chuẩn bị'}
+      </span>
+    </button>
   );
 }
 
@@ -88,9 +137,13 @@ export default function GameZoneShelf({ grade, onPlay }: { grade?: string; onPla
               {def.title}
             </span>
             <span className="text-xs font-semibold leading-snug text-slate-600">{def.tagline}</span>
-            <Stars id={def.id} />
+            <span className="flex items-center gap-1.5">
+              <Stars id={def.id} />
+              <TotalStars id={def.id} />
+            </span>
           </button>
         ))}
+        <LockedCard />
       </div>
     </div>
   );

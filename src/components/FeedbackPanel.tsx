@@ -39,6 +39,13 @@ interface FeedbackPanelProps {
    */
   streak?: number;
   /**
+   * CR-99 M4: consecutive-wrong run ending at this answer - drives the
+   * attempt-ladder headline on wrong verdicts (calmer copy as misses
+   * stack up, like Martin's try-again ladder). Kind-specific
+   * `headlines.wrong` still wins when provided.
+   */
+  wrongStreak?: number;
+  /**
    * CR-82 (spec s9.3, rev2 F4): 'inline' = the static 32px mascot lives in
    * the headline (today's behaviour, and the only mascot at
    * max-height:420px). 'none' = the sheet perch sibling layer in
@@ -79,6 +86,15 @@ function streakChipText(streak: number): string {
 function isStreakMilestone(streak: number): boolean {
   return streak === 3 || streak === 5 || (streak >= 10 && streak % 5 === 0);
 }
+
+/* CR-99 M4: wrong-answer attempt ladder - the first miss is a gentle
+   nudge, the second acknowledges "so close", the third+ invites a calm
+   retry together instead of repeating the same scolding tone. */
+function wrongHeadline(wrongStreak: number): string {
+  if (wrongStreak >= 3) return 'Mình cùng thử lại nhé!';
+  if (wrongStreak === 2) return 'Aww, suýt nữa rồi!';
+  return 'Chưa đúng rồi, cố lên nhé!';
+}
 // Exact class order from ebd58a5 so the no-picture DOM is byte-identical.
 const WORD_LINE_BASE_CLASS =
   'mt-2 text-xl font-semibold text-white [@media(max-height:420px)]:mt-1 [@media(max-height:420px)]:text-base';
@@ -99,7 +115,7 @@ const WORD_LINE_BASE_CLASS =
  * <div> only when the happy accent is present (isCorrect), and the
  * correct-word line uses <div> only when a picture prop is present.
  */
-export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture, celebrate, streak = 0, mascotPlacement = 'inline', headlines }: FeedbackPanelProps) {
+export default function FeedbackPanel({ kind, isCorrect, correctWord, explanation, pickedAnswer, fullSentence, picture, celebrate, streak = 0, wrongStreak = 0, mascotPlacement = 'inline', headlines }: FeedbackPanelProps) {
   const { density, band } = useViewer();
   /* CR-82 (D-20): the sheet's feedback picture animates only when the
      board allocator grants the 'feedback' slot (<=2 players post-answer). */
@@ -167,7 +183,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
         {mascotPlacement === 'inline' && (
           <Mascot mood={isCorrect ? (celebrate ? 'celebrating' : 'happy') : 'encouraging'} size="inline" />
         )}
-        {isCorrect ? (headlines?.correct ?? 'Chính xác! Giỏi quá!') : (headlines?.wrong ?? 'Chưa đúng rồi, cố lên nhé!')}
+        {isCorrect ? (headlines?.correct ?? 'Chính xác! Giỏi quá!') : (headlines?.wrong ?? wrongHeadline(wrongStreak))}
       </HeadlineTag>
       {!isCorrect && pickedAnswer && (
         /* kids-UX s3.4: no strikethrough - striking the child's pick reads

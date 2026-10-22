@@ -44,6 +44,13 @@ export default function ActiveRoundQuestion({
     correctStreak += 1;
   }
 
+  /* CR-99 M4: consecutive-wrong run - drives the attempt-ladder feedback
+     (calmer copy + thinking mascot as misses stack up). */
+  let wrongStreak = 0;
+  for (let i = session.answers.length - 1; i >= 0 && !session.answers[i].isCorrect; i -= 1) {
+    wrongStreak += 1;
+  }
+
   return (
     <QuestionCard
       question={question}
@@ -59,6 +66,7 @@ export default function ActiveRoundQuestion({
       onNext={onNextQuestion}
       speakerKey={speakerKey}
       correctStreak={correctStreak}
+      wrongStreak={wrongStreak}
     />
   );
 }
