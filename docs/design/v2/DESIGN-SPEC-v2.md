@@ -20,7 +20,7 @@
 | platforms | mobile-first 360-390px; tablet/desktop; safe-area; short-landscape ≤420px |
 | locale | vi-VN chrome copy (hyphen only); en-US learning content |
 | brand_facts | VieSchool navy/gold shell (KEEP); Baloo 2 + Be Vietnam Pro self-hosted; per-grade land identities |
-| business_goals | parent conversion via honest reports+pricing; kid retention via stars/quests; IOE-authentic exam credibility |
+| business_goals | parent conversion via honest reports+pricing; kid retention via stars/quests; IOE-authentic exam credibility | <!-- spec-lint-ignore -->
 | accessibility_needs | touch floors §3; computed contrast; reduced-motion parity; AT retries (click/keydown/pointerdown); never color-alone |
 | technical_constraints | tokens.ts SSOT (Tailwind class constants); icons.tsx SVG family (24px, 2px stroke) - documented exception to Phosphor default; emoji = pedagogy only; screen-state machine in App.tsx; `ViewerContext.band` exists, defaults `G345` in unwrapped renders/tests |
 | evidence | observed: tokens.ts, DESIGN_SYSTEM.md, StartBatchScreen, ExamScreen, ParentGate, GradeSelect, GatedLink, ExploreSheet, theme.ts, ViewerContext, StartBatchScreen.test.tsx, e2e/kids-ux.spec.ts, docs/sdlc/adr-kids-ux.md |

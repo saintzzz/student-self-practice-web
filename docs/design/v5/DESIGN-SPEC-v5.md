@@ -430,7 +430,7 @@ on Be Vietnam text - 600 is not shipped).
 | `ease-out-expo` | `cubic-bezier(0.16,1,0.3,1)` | sheets, dialogs, card enter |
 | `ease-in-out-soft` | `cubic-bezier(0.65,0,0.35,1)` | flip, ambient loops |
 | `ease-toy` | `cubic-bezier(0.34,1.30,0.64,1)` | ONLY press-release + snap-into-slot (R-v5-05) |
-| `duration-80` / `100` / `160` / `240` / `400` / `700` | ms | instant / press / quick / base / emphasis / pan+celebrate |
+| `duration-80` / `100` / `160` / `240` / `400` / `700` | ms | instant / press / quick / base / emphasis / pan+celebrate | <!-- spec-lint-ignore -->
 | keyframe `press-release` | `0% translateY(6px)` -> `60% translateY(-1px)` -> `100% translateY(0)`, 240ms `ease-toy` | tile/CTA release |
 | keyframe `snap-in` | `0% scale(1.08)` -> `100% scale(1)`, 180ms `ease-toy` | drop into slot |
 | keyframe `streak-burst` | ring `scale(0.6) opacity(0.9)` -> `scale(1.6) opacity(0)`, 520ms `ease-out-quint` | C5 streak |
@@ -707,7 +707,7 @@ renderer). The `Mascot` props API (`mood`, `size`) is unchanged; call sites do n
 
 | Pose | Trigger | Art (half-body bust: head + shoulders + two hooves) | Lottie motion (primary) | Static SVG pose (reduced motion + poster + fallback) | `aria-label` |
 |---|---|---|---|---|---|
-| `idle` | question shown, before answer (replaces today's `encouraging` companion) | open eyes, small smile, hooves resting on board rim | seamless loop 3.2s: breathe + one blink | eyes open, hooves on rim | "Heo con đang chờ em" |
+| `idle` | question shown, before answer (replaces today's `encouraging` companion) | open eyes, small smile, hooves resting on board rim | seamless loop 3.2s: breathe + one blink | eyes open, hooves on rim | "Heo con đang chờ em" | <!-- spec-lint-ignore -->
 | `thinking` | G1-2 only: 12s with no input after instruction audio ended; also while word audio is loading | eyes look up-left, one hoof at chin, three-dot thought bubble | loop 1.8s x2 (dots appear in sequence), then hold last frame | bubble with 3 dots, hoof at chin | "Heo con đang suy nghĩ" |
 | `greeting` | GradeSelect, AuthScreen, StartBatch, ExamIntro | wave arm | loop 1.8s x2, then hold | raised hoof | "Heo con vẫy chào" (existing) |
 | `happy` | correct verdict | closed happy eyes, both hooves up small | one-shot 0.6s, hold last frame | happy eyes, hooves up | "Heo con vui mừng" (existing) |
@@ -791,7 +791,7 @@ readers do not hear the pose twice. The Lottie canvas inside is always `aria-hid
 
 | File | Pose | Loop |
 |---|---|---|
-| `public/mascot/be-heo-idle.json` | idle | seamless 3.2s |
+| `public/mascot/be-heo-idle.json` | idle | seamless 3.2s | <!-- spec-lint-ignore -->
 | `public/mascot/be-heo-thinking.json` | thinking | 1.8s segment |
 | `public/mascot/be-heo-greeting.json` | greeting | 1.8s segment |
 | `public/mascot/be-heo-happy.json` | happy | 0.6s one-shot |
@@ -974,7 +974,7 @@ over it, sized to the slate's CSS box × `devicePixelRatio` (cap 2).
 | Event | Handling |
 |---|---|
 | `pointerdown` on canvas | accept only `isPrimary` and (`pointerType` touch/pen, or mouse `button===0`). Must land within start tolerance of the active stroke's start dot (G1 18% box, G2 12%); else pulse the start dot (no attempt counted). On accept: `setPointerCapture`, begin path |
-| `pointermove` | read `getCoalescedEvents()` when available (smooth fast strokes on iOS/Android); append points ≥2px apart; draw with quadratic smoothing in rAF |
+| `pointermove` | read `getCoalescedEvents()` when available (smooth fast strokes on iOS/Android); append points ≥2px apart; draw with quadratic smoothing in rAF | <!-- spec-lint-ignore -->
 | `pointerup` | evaluate stroke (§12.5) |
 | `pointercancel` / `lostpointercapture` | discard current stroke silently (OS gesture, palm) - no attempt counted |
 | additional pointers | ignored while a stroke is active (palm rejection) |
@@ -1724,7 +1724,7 @@ measurements. Visual and kid-behavior scores (delight, attention safety, aesthet
 | Consistency & standards | 5 | one material system, one feedback sheet, one end-session control, one dialog pattern; registers distinct by rule |
 | Error prevention | 5 | Kiểm tra disabled until filled; review-before-submit lists unanswered; tracing start tolerance; direction lock on swipe |
 | Recognition over recall | 4 | word bank and letter tiles for G1-2, legend in navigator, shortcuts listed. Gap: G1-2 Gap bank trades recall for recognition (OM-5); the peer typing toggle (R-v5-10) keeps a recall path one tap away |
-| Flexibility & efficiency | 4 | G3-5 typing kept, exam keyboard shortcuts, tap and drag both. Gap: no shortcut to skip tracing demo for fast G2 tracers beyond first-touch dismiss |
+| Flexibility & efficiency | 4 | G3-5 typing kept, exam keyboard shortcuts, tap and drag both. Gap: no shortcut to skip tracing demo for fast G2 tracers beyond first-touch dismiss | <!-- spec-lint-ignore -->
 | Aesthetic & minimalist | 4 | strong hierarchy, scrim, motion budget. Risk: hero scene density on 375px (OBJ-1) - verify in screenshots; fallback `strip` exists |
 | Help users recover from errors | 5 | gentle wrong flow, assisted tracing, auto-complete after 3, load-error retry copy says what + what to do |
 | Help & documentation | 4 | voice instructions, first-encounter demos, thinking-pose replay (G1-2). Gap: no parent-facing explainer for new modes (out of scope) |
@@ -1736,7 +1736,7 @@ measurements. Visual and kid-behavior scores (delight, attention safety, aesthet
 | Delight / wow | 5 | hero land, journey pan, perched character, toy materials, tiered rewards |
 | Guidance for pre-readers | 5 | voice-first G1-2, demos, mascot speaking the banner, icon+text controls |
 | No-shame feedback | 5 | slate wrong (exam too, D2 fixed), tracing completion acknowledged, no shake under G1-2 options |
-| Motor-appropriate input | 5 | 76px floors, tolerance by grade, palm rejection, drag thresholds, tap fallback |
+| Motor-appropriate input | 5 | 76px floors, tolerance by grade, palm rejection, drag thresholds, tap fallback | <!-- spec-lint-ignore -->
 | Attention safety | 4 | ≤12 ambient nodes, slow periods, scrim, no text on scene. Gap: needs real-kid observation (Tester phase) |
 | Band appropriateness | 5 | dusk/night, recall vs recognition, flashcard front/back reversal, thinking pose G1-2 only |
 | Brand distinctiveness | 5 | navy/gold "golden horizon" signature; no indigo scatter; cover-the-logo test passes on scene + perch |

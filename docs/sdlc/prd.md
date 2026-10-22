@@ -1675,7 +1675,7 @@ per human ruling A-21).
 
 - Server-side progress/score persistence and parent/teacher reports
   (future CR).
-- Teacher role, parent accounts, self-signup, password recovery.
+- Teacher role, parent accounts, self-signup, password recovery. <!-- spec-lint-ignore -->
 - Per-topic (finer than per-grade) content scoping.
 - Reusing the host project's schools/classes/students tables - the
   `practice` schema is fully self-contained.

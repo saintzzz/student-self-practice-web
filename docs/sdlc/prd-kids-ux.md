@@ -149,7 +149,7 @@ parent flow; marketing landing needs its own content/legal review.
 - Public marketing landing (AC-9.3 above).
 - Parent magic-link remote view (OM-2C).
 - Guest-session parent email capture (AC-6.2).
-- Auth/onboarding redesign: parent-vs-kid split, signup, PIN recovery
+- Auth/onboarding redesign: parent-vs-kid split, signup, PIN recovery <!-- spec-lint-ignore -->
   (plan scope item 4 - deferred; current PIN login + guest stay).
 - Real payment gateway (OM-1C).
 

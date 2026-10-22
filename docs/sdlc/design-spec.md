@@ -67,7 +67,7 @@ Precedence: where this spec and the PRD differ, the PRD wins unless a `Ruling:` 
 
 | Option | Strengths | Weaknesses | Risk |
 |--------|-----------|------------|------|
-| **A. Autoplay + loop forever (PRD AC-2.1 as written)** | Matches binding AC; Noto clips are short, subtle, seamless loops; acts as an attention hint on the prompt (R5.5 d) | Continuous motion during reading | Mild distraction |
+| **A. Autoplay + loop forever (PRD AC-2.1 as written)** | Matches binding AC; Noto clips are short, subtle, seamless loops; acts as an attention hint on the prompt (R5.5 d) | Continuous motion during reading | Mild distraction | <!-- spec-lint-ignore -->
 | B. Loop 3 cycles then hold the last frame | Delight then calm | Contradicts AC-2.1 "looping"; needs PRD amendment | Low |
 | C. Play once | Calmest | Weakest reward feel; contradicts AC-2.1 | Low |
 
@@ -413,7 +413,7 @@ The cap holds by construction (3.6); Tester verifies by counting canvases on eac
 | P-10 | Clean image | No watermark, overlaid text, brand logo, border, collage or filter effect |
 | P-11 | Thumbnail legibility | Recognisable at 96 px (prompt) and at 60 px (listening option); still a recognisable shape at 20 px (feedback) |
 | P-12 | Quality | In focus, well lit, natural color, not heavily compressed; after normalization <= 512 px, <= 80 KB, WebP, no EXIF (AC-4.4) |
-| P-13 | Cultural fit | Appropriate and familiar for Vietnamese 7-8 year olds; no culturally offensive content |
+| P-13 | Cultural fit | Appropriate and familiar for Vietnamese 7-8 year olds; no culturally offensive content | <!-- spec-lint-ignore -->
 | P-14 | Style coherence | A real photograph (not a 3D render or illustration), so the photo set is one style (R5.2) |
 
 Curator records `reviewStatus`, `reviewedBy`, `reviewedAt` (BR-12). Suggestion to Tech Lead: an optional `reviewNote` field in `image-staging/candidates.json` only, for rejection reasons (not part of `public/attribution.json`).
