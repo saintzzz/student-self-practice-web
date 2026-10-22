@@ -26,6 +26,8 @@
 
 ## Verdict
 
-Initial: NOT-CLEAN (1 major) -> fixed + remotely verified.
-No other actionable defects: ZPD SQL, grants/keyless contract,
-scanner resolution, and client error paths reviewed clean.
+Initial: NOT-CLEAN (1 major) -> fixed in `db8e410` + remotely
+verified. Follow-up round r105 (same reviewer, fix-scoped):
+**APPROVE / CLEAN**. No other actionable defects: ZPD SQL,
+grants/keyless contract, scanner resolution, and client error paths
+reviewed clean.

@@ -133,11 +133,20 @@
   >=0.85->4; in-band-first then nearest, distinct-on group dedup).
   Live-verified: anon 401, rows keyless, cold-start d3. bank.ts routes
   authenticated practice calls to adaptive with fetch_questions
-  fallback (429 surfaces - separate buckets). Scanner fix: ea-classes
-  dollar-tag-aware body capture + __impl delegation resolution (the
-  old $$-only regex swallowed $function$-tagged defs into phantom
-  bodies). tests/adaptive-fetch.selftest.mjs + bank.test.ts AC-107.x
-  cover the contract; rtm PASS.
+  fallback (429 surfaces - shared fq_* budget is terminal either
+  way). Scanner fix: ea-classes dollar-tag-aware body capture +
+  __impl delegation resolution (the old $$-only regex swallowed
+  $function$-tagged defs into phantom bodies).
+  tests/adaptive-fetch.selftest.mjs + bank.test.ts AC-107.x cover the
+  contract; rtm PASS. External review r104 (reviewer-gpt; Codex quota
+  still out): 1 major - adaptive charged parallel fqa_* buckets
+  (cross-RPC budget-split bypass); fixed in db8e410 by charging the
+  shared fq_* buckets + remote-verified. r105 fix-scoped: APPROVE/
+  CLEAN. Deployed db8e410 (Vercel success).
+- Remaining open items: CR-106 Teach-me (real cost is lesson content
+  pipeline, not plumbing), CR-108 Turnstile (BLOCKED on manual
+  Cloudflare signup), small leftovers (BatchScreen 44px button, Groq
+  STT proposal). CR-68 deferred as ever.
 - `scripts/machine-sync.ps1`: one-command handoff - exports secrets,
   re-encrypts vault bundle, commits+pushes handoff-vault.
 - Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside
