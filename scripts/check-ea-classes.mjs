@@ -176,11 +176,33 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
   if (mig.length) {
     // 5. starvation-sampling: any fetch_questions* function with a random()
     //    prefilter must contain a top-up pass (second insert / topup marker).
+    // Dollar-quote tag is captured and matched - several migrations use
+    // $function$, and a fixed $$ terminator lets a body's [\s\S]*? spill
+    // across file boundaries and swallow the next function's header.
     const fetchDefs = new Map();
+    const fetchAll = new Map();
     for (const m of mig.matchAll(
-      /create or replace function\s+practice\.(fetch_questions\w*)\([\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
-    ))
-      fetchDefs.set(m[1], m[2]); // latest definition wins
+      /create or replace function\s+practice\.(fetch_questions\w*)\([\s\S]*?as\s+(\$[\w]*\$)([\s\S]*?)\2\s*;/gi,
+    )) {
+      if (!fetchAll.has(m[1])) fetchAll.set(m[1], []);
+      fetchAll.get(m[1]).push(m[3]);
+      fetchDefs.set(m[1], m[3]); // latest definition wins
+    }
+    // Gate/dedupe checks must see through thin wrappers: a fetch surface
+    // that delegates to practice.<name>__impl enforces its filters in the
+    // impl body. 0044-era impls were created by rename, so they have no
+    // create-or-replace under the __impl name - walk back to the same
+    // name's last non-delegating def (the impl body pre-rename).
+    const effectiveFetchBody = (name, seen = new Set()) => {
+      if (seen.has(name)) return "";
+      seen.add(name);
+      for (const body of [...(fetchAll.get(name) ?? [])].reverse()) {
+        const delegate = body.match(/practice\.(\w+__impl)\s*\(/);
+        if (!delegate) return body;
+        if (fetchAll.has(delegate[1])) return effectiveFetchBody(delegate[1], seen);
+      }
+      return "";
+    };
     for (const [name, body] of fetchDefs) {
       if (/random\(\)\s*</.test(body) && !/top.?up|second pass|topup|if\s+got\s*<\s*\w+|remaining/i.test(body))
         hit("starvation-sampling", "supabase/migrations",
@@ -216,17 +238,22 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
           `alter table practice.${m[1]} without any create table - replay fails`);
     }
     // 17. fetch-gate-parity: every fetch_questions* definition must apply
-    //     the full commercial+exam approval gates, not a subset.
-    for (const [name, body] of fetchDefs) {
+    //     the full commercial+exam approval gates, not a subset. Thin
+    //     wrappers satisfy this through their __impl delegate.
+    for (const [name] of fetchDefs) {
+      const body = effectiveFetchBody(name);
       for (const gate of ["commercialReleaseEligible", "requiresHumanApprovalForExam", "requiresHumanApprovalForCommercialRelease"])
         if (!body.includes(gate))
           hit("fetch-gate-parity", "supabase/migrations", `${name} missing gate ${gate}`);
       // 18. variant-dedupe: pass-2 exclusion must exclude the variant
-      //     GROUP key, not just the already-returned row id.
+      //     GROUP key, not just the already-returned row id. Two correct
+      //     shapes exist: the seen[] merge loop or a distinct-on keyed by
+      //     the group (CR-107 adaptive fetch).
       if (/= any\(seen\)/.test(body) && !/not \(coalesce\(q\.variant_group_id,\s*q\.id\)\s*=\s*any\(seen\)\)/.test(body))
         hit("variant-dedupe", "supabase/migrations",
           `${name} second pass excludes row ids only - same variant group can repeat`);
-      if (!/seen\s*:=\s*seen\s*\|\|\s*coalesce\(/.test(body))
+      if (!/seen\s*:=\s*seen\s*\|\|\s*coalesce\(/.test(body)
+          && !/distinct\s+on\s*\(\s*coalesce\(\s*\w+\.variant_group_id/i.test(body))
         hit("variant-dedupe", "supabase/migrations",
           `${name} tracks row ids in seen, not variant-group keys`);
     }
@@ -340,11 +367,8 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
     // 40. fetch-mode-parity: public and authenticated fetches must apply
     //     the SAME per-mode eligibility predicate; public mapping exam ->
     //     mockEligible while auth uses examEligible diverges row sets.
-    const pubDefs = [...mig.matchAll(
-      /create or replace function\s+practice\.fetch_questions_public[\s\S]*?as\s+\$\$([\s\S]*?)\$\$\s*;/gi,
-    )];
-    const pubBody = pubDefs.at(-1)?.[1] ?? "";
-    if (pubDefs.length && !/p_mode\s*=\s*'exam'[\s\S]{0,400}?examEligible/i.test(pubBody))
+    const pubBody = effectiveFetchBody("fetch_questions_public");
+    if (pubBody && !/p_mode\s*=\s*'exam'[\s\S]{0,400}?examEligible/i.test(pubBody))
       hit("fetch-mode-parity", "supabase/migrations",
         "public fetch exam arm does not use examEligible - diverges from the authenticated fetch");
     // 32. sql-cas-transition: a status machine write must predicate on the
