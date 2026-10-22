@@ -1,5 +1,5 @@
 import { seededPickN } from '../lib/prng';
-import { getWordsByGrade } from '../data/vocabulary';
+import { getWordsByGrade } from '../lib/content/contentBank';
 import { isLiteralImageWord } from '../lib/content/imageSemantics';
 import { generateImageChoiceQuestions } from '../lib/generators/imageChoice';
 import { generateListeningImageChoiceQuestions } from '../lib/generators/listeningImageChoice';

@@ -1,5 +1,5 @@
 import type { ExamProgramId, ExamQuestion } from '../../types/exam';
-import { getWordsByGrade } from '../../data/vocabulary';
+import { getWordsByGrade } from '../content/contentBank';
 import { generateImageChoiceQuestions } from '../generators/imageChoice';
 import { generateListeningSentenceFillBlankQuestions } from '../generators/listeningSentenceFillBlank';
 import { generateExtraLetterQuestions } from '../generators/extraLetter';

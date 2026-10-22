@@ -5,7 +5,7 @@ import DemoHint from './DemoHint';
 import { DISPLAY_GLYPH } from '../lib/ui/tokens';
 import { getWordVisual } from '../lib/emoji/wordVisual';
 import { getSoundExample, getSoundUtterance } from '../lib/phonics/initialSounds';
-import { ALL_WORDS } from '../data/vocabulary';
+import { allWords } from '../lib/content/contentBank';
 import { EmojiVisual } from './EmojiVisual';
 import { speakWord } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
@@ -49,7 +49,7 @@ export default function PhonicsWordChoiceQuestion({
   // the "as in" convention ("như từ cat" + the cat picture).
   const example = getSoundExample(question.sound, question.word);
   const exampleVisual = useMemo(() => {
-    const entry = example ? ALL_WORDS.find((w) => w.word === example) : undefined;
+    const entry = example ? allWords().find((w) => w.word === example) : undefined;
     return entry ? getWordVisual(entry.id) : undefined;
   }, [example]);
   const utterance = getSoundUtterance(question.sound, question.word);

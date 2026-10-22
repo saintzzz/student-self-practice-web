@@ -1,4 +1,4 @@
-import { ALL_WORDS } from '../../data/vocabulary';
+import { allWords } from '../content/contentBank';
 
 /**
  * Phonics dimension for CR-03 (research doc 2.2: each SGK Tieng Anh 2 unit
@@ -194,7 +194,7 @@ function soundExampleCandidates(sound: string): string[] {
     // Examples must read like the sound: only plain lowercase single words.
     // Acronyms are excluded (CD is /s-/ not /k-/; see exceptions above) and
     // multi-word entries make poor "as in" anchors for young readers.
-    const others = ALL_WORDS.filter(
+    const others = allWords().filter(
       (w) => /^[a-z]+$/.test(w.word) && w.word !== canonical && getInitialSound(w.word) === sound,
     )
       .map((w) => w.word)

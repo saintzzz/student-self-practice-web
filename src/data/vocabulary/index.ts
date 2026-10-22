@@ -1,4 +1,4 @@
-import type { Grade, Topic, VocabWord } from '../../types';
+import type { Topic, VocabWord } from '../../types';
 import { ANIMALS_TOPIC, ANIMALS_WORDS } from './animals';
 import { COLORS_TOPIC, COLORS_WORDS } from './colors';
 import { NUMBERS_TOPIC, NUMBERS_WORDS } from './numbers';
@@ -97,14 +97,10 @@ import {
   G5_XP_FLAGS_OCEANIA_TOPIC, G5_XP_FLAGS_OCEANIA_WORDS,
 } from './g5/xp';
 
-/** CR-07: full primary coverage - all five elementary grades. */
-export const GRADES: readonly Grade[] = [
-  { id: 'grade-1', name: 'Lớp 1' },
-  { id: 'grade-2', name: 'Lớp 2' },
-  { id: 'grade-3', name: 'Lớp 3' },
-  { id: 'grade-4', name: 'Lớp 4' },
-  { id: 'grade-5', name: 'Lớp 5' },
-];
+/** CR-07: full primary coverage - all five elementary grades.
+ *  Declared in ../grades so meta-only screens never pull this bank into
+ *  the eager chunk (CR-103); re-exported here for existing imports. */
+export { GRADES } from '../grades';
 
 /**
  * 28 curated topics (AC11 requires >= 10; expanded from 14 per the

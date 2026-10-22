@@ -4,7 +4,7 @@
  * emoji key (emojiAssets.ts) without word identity.
  */
 import type { VocabWord } from '../../types';
-import { ALL_WORDS } from '../../data/vocabulary';
+import { allWords } from '../content/contentBank';
 
 export interface WordVisual {
   emoji: string;
@@ -26,11 +26,23 @@ function withBase(url: string | undefined): string | undefined {
   return BASE === '/' ? url : `${BASE}${url.replace(/^\//, '')}`;
 }
 
-const WORD_VISUALS: ReadonlyMap<string, WordVisual> = new Map(
-  ALL_WORDS.map((w: VocabWord) => [w.id, { emoji: w.emoji, imageUrl: withBase(w.imageUrl), word: w.word }]),
-);
+/* CR-103: the bank arrives via ensureContentBank(), not a static import -
+ * build the map on first read and only cache it once real words exist so
+ * an early lookup can never freeze an empty table. */
+let WORD_VISUALS: ReadonlyMap<string, WordVisual> | null = null;
+const EMPTY_VISUALS: ReadonlyMap<string, WordVisual> = new Map();
+
+function visuals(): ReadonlyMap<string, WordVisual> {
+  if (WORD_VISUALS) return WORD_VISUALS;
+  const words = allWords();
+  if (words.length === 0) return EMPTY_VISUALS;
+  WORD_VISUALS = new Map(
+    words.map((w: VocabWord) => [w.id, { emoji: w.emoji, imageUrl: withBase(w.imageUrl), word: w.word }]),
+  );
+  return WORD_VISUALS;
+}
 
 /** Returns undefined for ids outside the bank (e.g. test fixtures). */
 export function getWordVisual(wordId: string): WordVisual | undefined {
-  return WORD_VISUALS.get(wordId);
+  return visuals().get(wordId);
 }

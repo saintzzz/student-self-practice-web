@@ -1,4 +1,16 @@
 import '@testing-library/jest-dom/vitest';
+import { beforeEach } from 'vitest';
+import { ensureContentBank } from '../lib/content/contentBank';
+
+/* CR-103: production screens await ensureContentBank() at their entry
+   points; tests exercise the same sync proxies (batchSession, sources,
+   wordVisual, phonics, placement...) without mounting those screens, so
+   the bank is loaded once per test file here. beforeEach - not module
+   top level - so a file-level vi.mock('../../data/vocabulary') registers
+   before the dynamic import resolves and still wins. */
+beforeEach(async () => {
+  await ensureContentBank();
+});
 
 /**
  * jsdom does not implement PointerEvent. Testing-library falls back to a

@@ -55,7 +55,7 @@
  *   across all candidates is returned.
  * - isCorrect = score >= PRONUNCIATION_CORRECT_THRESHOLD (70), unchanged.
  */
-import { WORD_IPA } from '../../data/ipaMap';
+import { wordIpa } from '../content/contentBank';
 
 export const PRONUNCIATION_CORRECT_THRESHOLD = 70;
 /**
@@ -301,7 +301,7 @@ function g2pCode(word: string): string {
 export function phonemeCode(word: string): string {
   const lower = word.toLowerCase().replace(/[^a-z]/g, '');
   if (!lower) return '';
-  const ipa = WORD_IPA[lower];
+  const ipa = wordIpa(lower);
   return ipa ? ipaToCode(ipa) : g2pCode(lower);
 }
 

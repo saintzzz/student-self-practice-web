@@ -1,5 +1,5 @@
 import type { RoundType } from '../../types';
-import { getWordsByGrade } from '../../data/vocabulary';
+import { getWordsByGrade } from '../content/contentBank';
 import { TOTAL_ROUNDS, roundDefinitionAt } from '../rounds/roundDefinitions';
 import type { RoundContentDefinition } from '../rounds/types';
 import type { GameEnd } from '../../games/types';

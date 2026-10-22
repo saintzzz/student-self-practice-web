@@ -1,8 +1,9 @@
-import { Component, Suspense, type ComponentType, type ReactNode } from 'react';
+import { Component, Suspense, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import type { Grade } from '../types';
 import type { GameId } from './types';
 import { createRetryableLazy } from '../lib/retryableLazy';
 import { reloadPage } from '../lib/reload';
+import { contentBankReady, ensureContentBank } from '../lib/content/contentBank';
 
 /**
  * CR-83: the whole Game Zone (all six games + art) lives in ONE lazy
@@ -89,6 +90,37 @@ class GameRouteBoundaryInner extends Component<GameScreenProps, BoundaryState> {
   }
 }
 
+const LOADING_NODE = (
+  <div
+    data-testid="game-loading"
+    aria-busy="true"
+    className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-4"
+  >
+    <div className="h-24 w-24 animate-pulse rounded-full bg-amber-300/30 motion-reduce:animate-none" />
+  </div>
+);
+
+/* CR-103: every game draws its rounds from the word bank via the sync
+   contentBank proxies - hold mount until the bank chunk arrives so no
+   game ever sees an empty pool. One gate covers all Game Zone routes. */
+function BankGate({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(contentBankReady());
+  useEffect(() => {
+    if (ready) return;
+    let live = true;
+    ensureContentBank()
+      .then(() => { if (live) setReady(true); })
+      .catch(() => reloadPage());
+    return () => { live = false; };
+  }, [ready]);
+  if (!ready) return LOADING_NODE;
+  return <>{children}</>;
+}
+
 export default function GameRouteBoundary(props: GameScreenProps) {
-  return <GameRouteBoundaryInner {...props} />;
+  return (
+    <BankGate>
+      <GameRouteBoundaryInner {...props} />
+    </BankGate>
+  );
 }

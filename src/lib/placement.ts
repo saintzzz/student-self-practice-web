@@ -1,5 +1,6 @@
 import type { ImageChoiceQuestion, Question } from '../types';
-import { GRADES, getWordsByGrade } from '../data/vocabulary';
+import { GRADES } from '../data/grades';
+import { getWordsByGrade } from './content/contentBank';
 import { generateImageChoiceQuestions } from './generators/imageChoice';
 import { seededShuffleIndices } from './prng';
 import {

@@ -1,6 +1,6 @@
 import type { ExtraLetterQuestion, VocabWord } from '../../types';
 import { hashString } from '../prng';
-import { COMMON_ENGLISH_WORDS } from '../../data/commonEnglishWords';
+import { isCommonEnglishWord } from '../content/contentBank';
 
 const MIN_LENGTH = 3;
 const MAX_LENGTH = 7;
@@ -52,7 +52,7 @@ function createsAmbiguity(chars: string[], pos: number, extraLetter: string, cor
   for (let i = 0; i < withExtra.length; i++) {
     if (i === pos) continue; // the intended removal - always recovers correctWord, never ambiguous
     const candidate = withExtra.slice(0, i).concat(withExtra.slice(i + 1)).join('');
-    if (candidate !== correctWord && COMMON_ENGLISH_WORDS.has(candidate)) {
+    if (candidate !== correctWord && isCommonEnglishWord(candidate)) {
       return true;
     }
   }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { TracingMeta } from '../types';
-import { GRADES } from '../data/vocabulary';
+import { GRADES } from '../data/grades';
 import { computeBatchResult, currentRoundDefinition, type BatchState } from '../lib/batch/batchSession';
 import { TOTAL_ROUNDS } from '../lib/rounds/roundDefinitions';
 import type { GameEnd } from '../games/types';

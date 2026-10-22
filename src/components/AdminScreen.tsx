@@ -13,7 +13,7 @@ import {
   type ListRow,
 } from '../lib/assignments';
 import ReviewQueueCard from './ReviewQueueCard';
-import { GRADES } from '../data/vocabulary';
+import { GRADES } from '../data/grades';
 import {
   BODY,
   CARD,

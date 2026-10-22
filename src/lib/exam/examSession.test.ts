@@ -140,10 +140,10 @@ describe('exam flow', () => {
 });
 
 describe('scoring', () => {
-  const exam = createExam('english', 'grade-4', 's', NOW);
-
   it('answers every question correctly via examCorrectAnswerText roundtrip where possible', () => {
-    let answered = exam;
+    /* CR-103: build inside the test - describe scope runs before the
+       setup-file ensureContentBank() and would read an empty pool. */
+    let answered = createExam('english', 'grade-4', 's', NOW);
     // Deterministic full-correct pass: derive each correct answer from the
     // question shape itself.
     for (let i = 0; i < answered.questions.length; i++) {
@@ -187,7 +187,7 @@ describe('scoring', () => {
   });
 
   it('wrong answers score zero for the question', () => {
-    const q = exam.questions.find((x) => x.kind === 'grammar-mcq');
+    const q = createExam('english', 'grade-4', 's', NOW).questions.find((x) => x.kind === 'grammar-mcq');
     if (!q || q.kind !== 'grammar-mcq') throw new Error('no grammar-mcq in pool');
     const wrong = (q.correctIndex + 1) % 4;
     expect(isExamAnswerCorrect(q, { type: 'option', index: wrong })).toBe(false);

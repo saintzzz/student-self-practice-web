@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GRADES } from '../data/vocabulary';
+import { GRADES } from '../data/grades';
 import ActiveRoundQuestion from './ActiveRoundQuestion';
 import {
   buildPlacementSession,
@@ -7,6 +7,8 @@ import {
   QUESTIONS_PER_GRADE,
 } from '../lib/placement';
 import { savePlacementResult, bindActivityOwner } from '../lib/practiceResults';
+import { ensureContentBank } from '../lib/content/contentBank';
+import { reloadPage } from '../lib/reload';
 import {
   advanceToNextQuestion,
   isSessionComplete,
@@ -32,17 +34,25 @@ interface PlacementScreenProps {
  */
 export default function PlacementScreen({ isLoggedIn, onStartGrade, onBack }: PlacementScreenProps) {
   const seed = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
-  const [state, setState] = useState<{ session: PracticeSessionState; questionGradeIds: string[] }>(() =>
-    buildPlacementSession(seed),
-  );
+  /* CR-103: buildPlacementSession reads the lazy content bank - build in
+     an effect after ensureContentBank() resolves instead of a sync
+     useState initializer. */
+  const [state, setState] = useState<{ session: PracticeSessionState; questionGradeIds: string[] } | null>(null);
+  useEffect(() => {
+    let live = true;
+    ensureContentBank()
+      .then(() => { if (live) setState(buildPlacementSession(seed)); })
+      .catch(() => reloadPage());
+    return () => { live = false; };
+  }, [seed]);
 
-  const done = isSessionComplete(state.session);
+  const done = state !== null && isSessionComplete(state.session);
   const placement = done ? computePlacement(state.session, state.questionGradeIds) : null;
   const savedRef = useRef(false);
   // r16: the placement result belongs to whoever started the placement.
   useEffect(() => { void bindActivityOwner(); }, []);
   useEffect(() => {
-    if (done && placement && isLoggedIn && !savedRef.current) {
+    if (state && done && placement && isLoggedIn && !savedRef.current) {
       savedRef.current = true;
       const totalCorrect = placement.correctByGrade.reduce((a, b) => a + b, 0);
       void savePlacementResult(
@@ -55,11 +65,19 @@ export default function PlacementScreen({ isLoggedIn, onStartGrade, onBack }: Pl
   }, [done]);
 
   function handleSubmitOption(index: number): void {
-    setState((s) => ({ ...s, session: submitOptionAnswer(s.session, index) }));
+    setState((s) => s && ({ ...s, session: submitOptionAnswer(s.session, index) }));
   }
 
   function handleNext(): void {
-    setState((s) => ({ ...s, session: advanceToNextQuestion(s.session) }));
+    setState((s) => s && ({ ...s, session: advanceToNextQuestion(s.session) }));
+  }
+
+  if (!state) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-4" aria-busy="true">
+        <div className="h-24 w-24 animate-pulse rounded-full bg-amber-300/30 motion-reduce:animate-none" />
+      </div>
+    );
   }
 
   if (done && placement) {

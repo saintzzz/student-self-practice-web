@@ -11,7 +11,7 @@ import { InstructionSpeaker } from './InstructionSpeaker';
 import GiftBoxPicker from './GiftBoxPicker';
 import { SendResultsCard } from './SendResultsCard';
 import { ShareCard } from './ShareCard';
-import { GRADES } from '../data/vocabulary';
+import { GRADES } from '../data/grades';
 import {
   checkStreakStickers,
   pendingGiftStickerIds,

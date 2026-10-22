@@ -48,7 +48,8 @@ import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
 import { ArtImg } from './ArtImg';
 import ConfirmEndDialog from './ConfirmEndDialog';
-import { WORD_IPA } from '../data/ipaMap';
+import { contentBankReady, ensureContentBank, wordIpa } from '../lib/content/contentBank';
+import { reloadPage } from '../lib/reload';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
 import { MascotAvatar } from './mascot/MascotAvatar';
 import { ExamProgressRing } from './exam/ExamProgressRing';
@@ -473,6 +474,19 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   }, [exam]);
 
   async function begin(): Promise<void> {
+    // CR-103: exam generators read the word bank via contentBank - load
+    // before any question is built. Only await when cold: a resolved
+    // microtask would still defer the whole start (breaks sync tests and
+    // adds a paint of latency to the warm path). A cold chunk failure
+    // gets the same recovery as every other lazy boundary: reload.
+    if (!contentBankReady()) {
+      try {
+        await ensureContentBank();
+      } catch {
+        reloadPage();
+        return;
+      }
+    }
     setSubmitConfirmOpen(false);
     setReviewOpen(false);
     setNavOpen(false);
@@ -1383,7 +1397,7 @@ export function ExamQuestionView({
           prompt={question.displaySentence}
           promptClass={promptClass}
           hint="Gõ phần chữ còn thiếu"
-          ipa={WORD_IPA[question.word.toLowerCase()]}
+          ipa={wordIpa(question.word.toLowerCase())}
           onSubmit={(text) => onAnswer({ type: 'text', text })}
         />
       );
@@ -1508,8 +1522,8 @@ function OptionButtons({
           ) : (
             <MarkupText text={option} />
           )}
-          {ipa && WORD_IPA[option.toLowerCase()] && (
-            <span className="ml-2 text-sm font-normal text-sky-700">/{WORD_IPA[option.toLowerCase()]}/</span>
+          {ipa && wordIpa(option.toLowerCase()) && (
+            <span className="ml-2 text-sm font-normal text-sky-700">/{wordIpa(option.toLowerCase())}/</span>
           )}
           {selected === i && <IconCheckCircle size={18} aria-hidden="true" className="ml-auto text-sky-700" />}
         </button>

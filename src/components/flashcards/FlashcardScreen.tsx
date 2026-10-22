@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { Grade } from '../../types';
-import { getWordsByGrade } from '../../data/vocabulary';
+import { getWordsByGrade, ensureContentBank } from '../../lib/content/contentBank';
 import { useViewer } from '../../lib/viewer/ViewerContext';
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { usePressRelease } from '../../hooks/usePressRelease';
@@ -124,17 +124,21 @@ export default function FlashcardScreen({ grade, onExit }: FlashcardScreenProps)
      fresh seed so the next deck is shuffled anew. */
   const seedRef = useRef(0);
   const build = () => {
-    try {
-      const words = getWordsByGrade(grade.id);
-      const ratings = readReviewStore(grade.id);
-      seedRef.current += 1;
-      const deck = buildDeck(words, ratings, `g-${grade.id}-s${seedRef.current}`);
-      dispatch({ type: 'load', deck });
-      setBuildError(false);
-    } catch {
-      /* s14.5 load error - a failure never claims there are no cards. */
-      setBuildError(true);
-    }
+    void (async () => {
+      try {
+        // CR-103: the deck's word pool arrives via the lazy content bank.
+        await ensureContentBank();
+        const words = getWordsByGrade(grade.id);
+        const ratings = readReviewStore(grade.id);
+        seedRef.current += 1;
+        const deck = buildDeck(words, ratings, `g-${grade.id}-s${seedRef.current}`);
+        dispatch({ type: 'load', deck });
+        setBuildError(false);
+      } catch {
+        /* s14.5 load error - a failure never claims there are no cards. */
+        setBuildError(true);
+      }
+    })();
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(build, [grade.id]);

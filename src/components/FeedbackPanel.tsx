@@ -4,7 +4,7 @@ import { playGentleWrong, playSfx } from '../lib/sfx';
 import { speakWord } from '../lib/speech';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { CHIP_GOLD } from '../lib/ui/tokens';
-import { WORD_IPA } from '../data/ipaMap';
+import { wordIpa } from '../lib/content/contentBank';
 import { EmojiVisual } from './EmojiVisual';
 import { useLottieSlot } from './fx/LottieBudget';
 import Mascot from './Mascot';
@@ -134,7 +134,7 @@ export default function FeedbackPanel({ kind, isCorrect, correctWord, explanatio
 
   // CR-24: IPA transcription next to the correct word (user request:
   // "thêm phần phiên âm đọc") - e.g. "full moon" shows /fʊl mun/.
-  const ipa = WORD_IPA[correctWord.trim().toLowerCase()];
+  const ipa = wordIpa(correctWord.trim().toLowerCase());
 
   const HeadlineTag = isCorrect ? 'div' : 'p';
   const WordLineTag = picture ? 'div' : 'p';

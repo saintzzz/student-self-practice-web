@@ -33,7 +33,8 @@ import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagem
 import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/engagement/store';
 import { confirmParentEmail } from './lib/parentContact';
 import { bindActivityOwner } from './lib/practiceResults';
-import { GRADES } from './data/vocabulary';
+import { GRADES } from './data/grades';
+import { contentBankReady, ensureContentBank, warmupContentBank } from './lib/content/contentBank';
 import { ViewerProvider } from './lib/viewer/ViewerContext';
 import { clearParentVerification } from './components/ParentGate';
 import { __resetInstructionAutoplay } from './components/InstructionSpeaker';
@@ -289,6 +290,9 @@ export default function App() {
     // Dev-review #2: switching grade leaves the parent corner's context -
     // the gate token is revoked so reports/pricing re-gate.
     if (gradeId !== selectedGradeId) clearParentVerification();
+    // CR-103: picking a grade is the natural prefetch boundary - the word
+    // bank downloads while the kid lands on the hub, not inside a session.
+    warmupContentBank();
     setSelectedGradeId(gradeId);
     setHubOpenTile(null);
     setScreen('start-batch');
@@ -315,9 +319,21 @@ export default function App() {
     setScreen('grade-select');
   }
 
-  function handleStartBatch(): void {
+  async function handleStartBatch(): Promise<void> {
     // r16: the finished batch's result row belongs to whoever started it.
     void bindActivityOwner();
+    // CR-103: the sync round builder reads the bank via contentBank -
+    // guarantee it is loaded before createBatch runs. A chunk-load
+    // failure (stale deploy, flaky network) gets the same recovery as
+    // lazy screens: reload for a fresh index.html.
+    if (!contentBankReady()) {
+      try {
+        await ensureContentBank();
+      } catch {
+        reloadPage();
+        return;
+      }
+    }
     const seedOverride = import.meta.env.DEV ? window.__batchSeedForTesting : undefined;
     setBatch(createBatch(seedOverride, selectedGradeId ?? 'grade-2'));
     setScreen('batch');
