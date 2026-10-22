@@ -36,4 +36,21 @@ test.describe('CR-100 engagement economy', () => {
     await page.locator('[data-testid^="option-"][data-correct="false"]').first().click();
     await expect(hearts).toHaveAttribute('aria-label', /2\/3/, { timeout: 3_000 });
   });
+
+  test('CR-101: 50:50 hint disables two wrong options and costs no heart', async ({ page }) => {
+    await gotoApp(page);
+    await selectGrade(page, 0); // grade-1
+    await page.getByTestId('hub-tile-games').click();
+    await page.getByTestId('game-card-whack-a-mole').click();
+    await page.getByTestId('game-level-1').click();
+
+    const hearts = page.getByTestId('heart-meter');
+    await expect(hearts).toHaveAttribute('aria-label', /3\/3/);
+
+    // One hint per run: two wrong pads dim, hearts untouched.
+    await page.getByTestId('hint-5050').click();
+    await expect(page.locator('[data-testid^="option-"]:disabled')).toHaveCount(2);
+    await expect(hearts).toHaveAttribute('aria-label', /3\/3/);
+    await expect(page.getByTestId('hint-5050')).toBeDisabled();
+  });
 });

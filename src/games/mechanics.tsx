@@ -1,6 +1,7 @@
 import { playSfx } from '../lib/sfx';
 import { IconSpeaker } from '../components/icons';
 import { speakWord } from '../lib/speech';
+import { seededShuffleIndices } from '../lib/prng';
 import { EmojiVisual } from '../components/EmojiVisual';
 import type { SpellTile } from '../types';
 
@@ -346,4 +347,43 @@ export function GameRoundDots({
 /** Shared verdict tap sfx helper used by every shell. */
 export function gameVerdictSfx(correct: boolean): void {
   playSfx(correct ? 'correct' : 'wrong');
+}
+
+/* ------------------------------------------------------------------ */
+/* CR-101: generalized 50:50 hint (QuizShow's lifeline for every        */
+/* choice-field game). One use PER RUN - hides two wrong options. The  */
+/* hidden indexes are kept in a separate `hints` state (never merged   */
+/* into wrongPicks for scoring) so a hint costs no heart, no point and */
+/* no missLimit slot - it is a bail-out, not a failure.                 */
+/* ------------------------------------------------------------------ */
+
+/** Two distinct wrong option indexes, deterministic per question seed. */
+export function pickFiftyFifty(correctIndex: number, count: number, seed: string): number[] {
+  const wrong = Array.from({ length: count }, (_, i) => i).filter((i) => i !== correctIndex);
+  return seededShuffleIndices(wrong.length, `${seed}:5050`)
+    .slice(0, 2)
+    .map((i) => wrong[i]!);
+}
+
+export function HintButton({
+  used,
+  disabled,
+  onUse,
+}: {
+  used: boolean;
+  disabled?: boolean;
+  onUse: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid="hint-5050"
+      disabled={used || disabled}
+      onClick={onUse}
+      aria-label="Trợ giúp 50:50 - giấu 2 đáp án sai"
+      className="rounded-full border-2 border-sky-300/60 bg-navy-800/80 px-5 py-2 text-sm font-bold text-sky-200 transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-sky-300 disabled:opacity-40 disabled:hover:translate-y-0"
+    >
+      {used ? 'Đã dùng 50:50' : <><EmojiVisual emoji="💡" variant="inline" /> Trợ giúp 50:50</>}
+    </button>
+  );
 }

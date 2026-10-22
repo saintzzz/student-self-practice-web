@@ -58,6 +58,15 @@ export interface BankFetchFocus {
   minDifficulty?: number;
 }
 
+/** CR-101: the bank RPC rate-limit (PT429/'rate_limited') must surface a
+ *  kid-readable retry message, not a raw Postgres exception. */
+function bankFetchError(error: { message: string; code?: string }): Error {
+  if (error.code === 'PT429' || error.message.includes('rate_limited')) {
+    return new Error('Máy chủ đang bận một chút - em thử lại sau ít phút nhé!');
+  }
+  return new Error(error.message);
+}
+
 export async function fetchBankQuestions(
   programId: ExamProgramId,
   gradeId: string,
@@ -82,16 +91,22 @@ export async function fetchBankQuestions(
     // Guests only reach the public RPC, but it enforces the same mode
     // gates (mock/exam require mockEligible + cleared approval flags).
     const pub = await supabase.rpc('fetch_questions_public', params);
-    if (pub.error) throw new Error(pub.error.message);
+    if (pub.error) throw bankFetchError(pub.error);
     return (pub.data ?? []) as QbRow[];
   }
   const { data, error } = await supabase.rpc('fetch_questions', params);
   if (!error) return (data ?? []) as QbRow[];
+  // CR-101 r98: a per-uid rate limit must NOT fall back to the public
+  // surface - that would silently swap the uid budget for the global guest
+  // budget and the cap would never bind. Surface it instead.
+  if (error.code === 'PT429' || error.message.includes('rate_limited')) {
+    throw bankFetchError(error);
+  }
   // Authenticated RPC failed - fall back to the public surface WITH the
   // same mode so a mock request can never be silently downgraded to
   // practice-eligible content.
   const pub = await supabase.rpc('fetch_questions_public', params);
-  if (pub.error) throw new Error(pub.error.message);
+  if (pub.error) throw bankFetchError(pub.error);
   return (pub.data ?? []) as QbRow[];
 }
 

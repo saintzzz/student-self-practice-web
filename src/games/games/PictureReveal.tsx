@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededPickN, seededShuffleIndices } from '../../lib/prng';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
-import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
 import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
@@ -36,6 +36,8 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +50,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
     const nextRevealed = revealed + addedReveal;
     setRevealed(nextRevealed);
     setWrongPicks([]);
+    setHints([]);
     if (round + 1 >= rounds.length || nextRevealed >= tiles) {
       if (endedRef.current) return;
       endedRef.current = true;
@@ -77,6 +80,12 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
       }
     }
     timerRef.current = setTimeout(() => advance(correct ? 1 : 0, newCorrect), 700);
+  };
+
+  const useHint = () => {
+    if (hintUsed || lock || lives.out) return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${round}`));
   };
 
   if (!q) return null;
@@ -119,10 +128,11 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
         key={q.id}
         options={q.options}
         correctIndex={q.correctIndex}
-        wrongPicks={wrongPicks}
+        wrongPicks={[...wrongPicks, ...hints]}
         disabled={lock}
         onPick={pick}
       />
+      <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createExamFromAssignment, createExamFromBank, gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
+import { createExamFromAssignment, createExamFromBank, fetchBankQuestions, gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
 import { isExamAnswerCorrect } from '../exam/examSession';
 
 const { rpcMock, getSessionMock } = vi.hoisted(() => ({
@@ -286,6 +286,32 @@ describe('createExamFromBank - r14', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('fetchBankQuestions - CR-101 rate limiting', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset();
+  });
+
+  it('authenticated PT429 surfaces immediately - no public fallback (r98)', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock.mockResolvedValue({ data: null, error: { code: 'PT429', message: 'rate_limited' } });
+    await expect(fetchBankQuestions('english', 'grade-3', 5, 'practice'))
+      .rejects.toThrow('thử lại sau');
+    // The per-uid budget must bind: never swapped for the guest bucket.
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledWith('fetch_questions', expect.anything());
+  });
+
+  it('guest path uses the public RPC and maps PT429 to a friendly error', async () => {
+    getSessionMock.mockResolvedValue(null);
+    rpcMock.mockResolvedValue({ data: null, error: { code: 'PT429', message: 'rate_limited' } });
+    await expect(fetchBankQuestions('english', 'grade-3', 5, 'practice'))
+      .rejects.toThrow('thử lại sau');
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledWith('fetch_questions_public', expect.anything());
   });
 });
 

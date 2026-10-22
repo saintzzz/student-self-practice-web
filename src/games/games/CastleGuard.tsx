@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { imageChoiceRounds } from '../sources';
-import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import { HeartMeter } from '../lives';
@@ -35,6 +35,8 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [boltAt, setBoltAt] = useState<number | null>(null);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextSlimeId = useRef(1);
@@ -53,6 +55,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
     setSlimes(newSlimes);
     setHearts(newHearts);
     setWrongPicks([]);
+    setHints([]);
     setBoltAt(null);
     if (newHearts <= 0 || round + 1 >= rounds.length) {
       finish(newCorrect, newPoints);
@@ -106,6 +109,12 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
     setLock(false);
   };
 
+  const useHint = () => {
+    if (hintUsed || lock || endedRef.current) return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${round}`));
+  };
+
   if (!q) return null;
   const visual = getWordVisual(q.wordId);
 
@@ -148,10 +157,11 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
         key={q.id}
         options={q.options}
         correctIndex={q.correctIndex}
-        wrongPicks={wrongPicks}
+        wrongPicks={[...wrongPicks, ...hints]}
         disabled={lock}
         onPick={pick}
       />
+      <HintButton used={hintUsed} disabled={lock || endedRef.current} onUse={useHint} />
       <p className="text-sm font-semibold text-slate-300">Đúng để bắn hạ quái, sai là quái tiến gần cổng!</p>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
-import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
 import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
@@ -24,6 +24,8 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -32,6 +34,12 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
   if (!q) return null;
   const visual = getWordVisual(q.wordId);
 
+  const useHint = () => {
+    if (hintUsed || lock || lives.out) return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${round}`));
+  };
+
   const nextRound = (newCorrect: number) => {
     if (round + 1 >= rounds.length) {
       onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect , attempted: rounds.length});
@@ -39,6 +47,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
     }
     setRound(round + 1);
     setWrongPicks([]);
+    setHints([]);
     setLock(false);
   };
 
@@ -106,10 +115,11 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
         key={q.id}
         options={q.options}
         correctIndex={q.correctIndex}
-        wrongPicks={wrongPicks}
+        wrongPicks={[...wrongPicks, ...hints]}
         disabled={lock}
         onPick={pick}
       />
+      <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
     </div>
   );
 }

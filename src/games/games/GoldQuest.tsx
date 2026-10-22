@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { hashString } from '../../lib/prng';
 import { imageChoiceRounds } from '../sources';
-import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import { HeartMeter, useGameLives } from '../lives';
@@ -46,6 +46,8 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [missed, setMissed] = useState(false);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,6 +63,7 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
 
   const advance = (newCorrect: number) => {
     setWrongPicks([]);
+    setHints([]);
     setMissed(false);
     setOpened(null);
     if (round + 1 >= rounds.length) {
@@ -111,6 +114,12 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
     timerRef.current = setTimeout(() => advance(correctCount), 1100);
   };
 
+  const useHint = () => {
+    if (hintUsed || lock || lives.out || !q || phase !== 'question') return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${round}`));
+  };
+
   if (!q) return null;
   const visual = getWordVisual(q.wordId);
 
@@ -136,10 +145,11 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
             key={q.id}
             options={q.options}
             correctIndex={q.correctIndex}
-            wrongPicks={wrongPicks}
+            wrongPicks={[...wrongPicks, ...hints]}
             disabled={lock}
             onPick={pick}
           />
+          <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
           <p className="text-sm font-semibold text-slate-300">
             {missed ? 'Lần sau chọn rương nhé!' : 'Đúng rồi mới được chọn rương!'}
           </p>

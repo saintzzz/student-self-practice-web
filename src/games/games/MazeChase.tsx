@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { seededShuffleIndices } from '../../lib/prng';
 import { listeningImageRounds } from '../sources';
-import { GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
+import { GameRoundDots, HintButton, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import { HeartMeter } from '../lives';
 import type { GameProps } from '../types';
@@ -87,6 +87,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
   const [hearts, setHearts] = useState(spec.lives);
   const [correctCount, setCorrectCount] = useState(0);
   const [removedPads, setRemovedPads] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const [lock, setLock] = useState(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -206,6 +207,17 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
     setGhost(gstep);
   };
 
+  // CR-101 50:50 hint - lifts one wrong pad off the board (once per run).
+  const useHint = () => {
+    if (hintUsed || lock || endedRef.current || !q) return;
+    const wrong = layout.pads.find(
+      (p) => p.option !== q.correctIndex && !removedPads.includes(p.cell),
+    );
+    if (!wrong) return;
+    setHintUsed(true);
+    setRemovedPads((prev) => [...prev, wrong.cell]);
+  };
+
   if (!q) return null;
   const [hx, hy] = xy(hero);
 
@@ -256,6 +268,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
           );
         })}
       </div>
+      <HintButton used={hintUsed} disabled={lock || endedRef.current} onUse={useHint} />
       <p className="text-sm font-semibold text-slate-300">Chạm ô sáng kế bên để đi - coi chừng con ma!</p>
     </div>
   );

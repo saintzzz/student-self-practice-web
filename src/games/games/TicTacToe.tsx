@@ -3,7 +3,7 @@ import { seededShuffleIndices } from '../../lib/prng';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { EmojiVisual } from '../../components/EmojiVisual';
 import { imageChoiceRounds } from '../sources';
-import { WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
 import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
@@ -37,6 +37,8 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
   const [qIdx, setQIdx] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -113,6 +115,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
     setQIdx(qIdx + 1);
     timerRef.current = setTimeout(() => {
       setLock(false);
+      setHints([]);
       if (lives.out && !endedRef.current) {
         endedRef.current = true;
         onEnd({ points: nextCorrect, maxPoints: 9, correctCount: nextCorrect, attempted: qIdx + 1 });
@@ -120,6 +123,12 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
       }
       finish(next, nextCorrect);
     }, 700);
+  };
+
+  const useHint = () => {
+    if (hintUsed || lock || !q || pendingCell === null || lives.out) return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${qIdx}`));
   };
 
   return (
@@ -165,9 +174,13 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
           <WordChoiceField
             options={q.options}
             correctIndex={q.correctIndex}
+            wrongPicks={hints}
             disabled={lock}
             onPick={answer}
           />
+          <div className="mt-3 flex justify-center">
+            <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
+          </div>
         </div>
       ) : (
         !endedRef.current && (

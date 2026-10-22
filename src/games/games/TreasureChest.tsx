@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
-import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
+import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
 import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
@@ -25,6 +25,8 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,6 +40,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
     setPoints(nextPoints);
     setLocksOpen(nextLocks);
     setWrongPicks([]);
+    setHints([]);
     const done = round + 1 >= rounds.length;
     if (done) {
       if (endedRef.current) return;
@@ -86,6 +89,12 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
     setLock(false);
   };
 
+  const useHint = () => {
+    if (hintUsed || lock || lives.out) return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${round}`));
+  };
+
   if (!q) return null;
   const visual = getWordVisual(q.wordId);
 
@@ -120,10 +129,11 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
         key={q.id}
         options={q.options}
         correctIndex={q.correctIndex}
-        wrongPicks={wrongPicks}
+        wrongPicks={[...wrongPicks, ...hints]}
         disabled={lock}
         onPick={pick}
       />
+      <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
       <p className="text-sm font-semibold text-slate-300">Trả lời đúng để mở ổ khóa nhé!</p>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
-import { EmojiChoiceField, GameRoundDots, gameVerdictSfx } from '../mechanics';
+import { EmojiChoiceField, GameRoundDots, HintButton, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
 import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
@@ -24,6 +24,8 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
+  const [hints, setHints] = useState<number[]>([]);
+  const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -37,6 +39,7 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
     setPoints(nextPoints);
     setCorrectCount(nextCorrect);
     setWrongPicks([]);
+    setHints([]);
     if (round + 1 >= rounds.length) {
       onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect , attempted: spec.rounds});
       return;
@@ -73,6 +76,12 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
     }
   };
 
+  const useHint = () => {
+    if (hintUsed || lock || lives.out) return;
+    setHintUsed(true);
+    setHints(pickFiftyFifty(q.correctIndex, q.options.length, `${seed}:h${round}`));
+  };
+
   return (
     <div data-testid="game-fishing-catch" className="flex flex-col items-center gap-5">
       <div className="flex items-center gap-4">
@@ -87,11 +96,12 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
           options={q.options}
           correctIndex={q.correctIndex}
           variant="fish"
-          wrongPicks={wrongPicks}
+          wrongPicks={[...wrongPicks, ...hints]}
           disabled={lock}
           onPick={pick}
         />
       </div>
+      <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
       <p className="text-sm font-semibold text-sky-200/80">Chạm con cá đúng nhé!</p>
     </div>
   );
