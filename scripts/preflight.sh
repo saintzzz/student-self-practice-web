@@ -89,12 +89,20 @@ fi
 # --- reliability gate (reliability classes: unchecked-read, unbounded-read,
 # action-loss, cas-transition). Neu project co scripts/check-reliability.mjs
 # thi day la check bat buoc - khong duoc skip.
+# Prefer the composed code:reliability script - it chains the reliability
+# scanner, the EA-classes scanner, mascot-assets and both selftests, so a
+# preflight that only runs one scanner never leaves the others unenforced.
 if [ -f scripts/check-reliability.mjs ]; then
-  run node scripts/check-reliability.mjs
-  # scanner self-test (fixtures): .selftest.mjs so vitest/jest do not
-  # auto-pick it - node --test runs it by explicit path only.
-  if [ -f tests/reliability-scanner.selftest.mjs ]; then
-    run node --test tests/reliability-scanner.selftest.mjs
+  if has_script "code:reliability"; then
+    run npm run code:reliability --silent
+  else
+    run node scripts/check-reliability.mjs
+    [ -f scripts/check-ea-classes.mjs ] && run node scripts/check-ea-classes.mjs
+    # scanner self-test (fixtures): .selftest.mjs so vitest/jest do not
+    # auto-pick it - node --test runs it by explicit path only.
+    if [ -f tests/reliability-scanner.selftest.mjs ]; then
+      run node --test tests/reliability-scanner.selftest.mjs
+    fi
   fi
 fi
 

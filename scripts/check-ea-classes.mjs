@@ -65,6 +65,7 @@
 //  60. sync-merge-lossy            - aggregate max-merge dropping independent progress (r17 M)
 //  61. test-flag-in-prod           - localStorage test hatch honored in prod builds (r17 M)
 import { readdirSync, readFileSync, existsSync } from "fs";
+import { execSync } from "node:child_process";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "node:url";
 
@@ -77,6 +78,22 @@ const BASE = process.env.EA_SCAN_ROOT
 const hits = [];
 const hit = (cls, loc, msg) => hits.push({ cls, loc, msg });
 
+// Scan git-tracked files only - scratch dirs and gitignored local material
+// (machine-transfer, ad-hoc _*.mjs scripts) must not trip gates that CI
+// evaluates on the clean tree. Fixture runs set EA_SCAN_ROOT and keep the
+// plain filesystem walk so synthetic trees still work.
+const tracked = (() => {
+  if (process.env.EA_SCAN_ROOT) return null;
+  try {
+    return new Set(
+      execSync("git ls-files -z", { cwd: ROOT, encoding: "utf8" })
+        .split("\0").filter(Boolean),
+    );
+  } catch {
+    return null;
+  }
+})();
+
 function* walk(dir, exts) {
   if (!existsSync(dir)) return;
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -84,7 +101,11 @@ function* walk(dir, exts) {
     if (e.isDirectory()) {
       if (/node_modules|\.git|dist|vendor|fixtures/.test(e.name)) continue;
       yield* walk(p, exts);
-    } else if (exts.test(e.name)) yield p;
+    } else if (
+      exts.test(e.name) &&
+      (!tracked || tracked.has(rel(p).replaceAll("\\", "/")))
+    )
+      yield p;
   }
 }
 const rel = (p) => p.slice(BASE.length + 1);

@@ -4,7 +4,7 @@
 // Moi rule moi trong check-reliability.mjs PHAI kem fixture moi o day.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { spawnSync, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -20,21 +20,22 @@ try {
 } catch {}
 const T = tsOk ? test : test.skip;
 
-function runScanner() {
-  try {
-    const out = execFileSync("node", ["scripts/check-reliability.mjs"], {
-      cwd: ROOT,
-      env: { ...process.env, SCAN_SRC: "tests/fixtures/reliability" },
-      encoding: "utf8",
-    });
-    return out;
-  } catch (e) {
-    return (e.stdout ?? "") + (e.stderr ?? "");
-  }
+// r47: the exit code is part of the gate contract - assert it on BOTH the
+// failing fixture path (nonzero) and the passing fixture/repo path (zero).
+// spawnSync captures the real status; execFileSync's catch merges stdout
+// into the error and loses the distinction.
+function scan(scanSrc) {
+  const r = spawnSync("node", ["scripts/check-reliability.mjs"], {
+    cwd: ROOT,
+    env: { ...process.env, SCAN_SRC: scanSrc },
+    encoding: "utf8",
+  });
+  return { code: r.status ?? 1, out: (r.stdout ?? "") + (r.stderr ?? "") };
 }
 
 T("reliability scanner flags every known-bad fixture pattern", () => {
-  const out = runScanner();
+  const { code, out } = scan("tests/fixtures/reliability");
+  assert.notEqual(code, 0, `bad fixture phai exit nonzero:\n${out}`);
   const expectations = [
     /NO-ERR-BIND/, // dynamic .from(e.table), fetchAllRows khong error-bind
     /DISCARDED-QUERY/, // awaited query bo ket qua
@@ -54,7 +55,8 @@ T("reliability scanner flags every known-bad fixture pattern", () => {
 });
 
 T("reliability scanner produces zero hits on safe fixture", () => {
-  const out = runScanner();
+  const { code, out } = scan("tests/fixtures/reliability-safe");
+  assert.equal(code, 0, `safe fixture phai exit 0:\n${out}`);
   assert.equal(
     /good\.ts:\d+/.test(out),
     false,
