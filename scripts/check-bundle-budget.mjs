@@ -37,9 +37,12 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
-const JS_MAX_KB = 121;
-const CSS_MAX_KB = 10;
-const BASELINE = { js: 101.07, css: 5.2 };
+// CR-105: absolute caps re-anchored to the delta gate's effective
+// ceiling (cr82 baseline + delta). They now act as a backstop against
+// a wrong CR82_BASELINE const, not as a debt reminder - the binding
+// constraint remains the delta gate + lazy caps below.
+const JS_MAX_KB = 140;
+const CSS_MAX_KB = 23;
 
 /**
  * CR-82 (ARCHITECTURE-v5 D-03): the absolute gate was already red before
@@ -54,7 +57,8 @@ const BASELINE = { js: 101.07, css: 5.2 };
  * grew +6.52 kB over the cr82 anchor across CR-83..CR-100 (hearts meter,
  * hint buttons, paper-exam register, trail map, level ring). The anchor
  * is re-based to the post-CR-103 build; headroom +10 kB JS / +3 kB CSS.
- * The legacy absolute caps (121/10) remain advisory in the report.
+ * CR-105 re-anchored the absolute caps to the delta ceiling (140/23) -
+ * they print as a backstop; the delta gate remains the failing check.
  */
 const CR82_BASELINE = { js: 129.27, css: 19.6 };
 const CR82_DELTA = { js: 10.0, css: 3.0 };
@@ -94,7 +98,7 @@ async function main() {
       `${kind.toUpperCase()} ${path.basename(file)}: ${size.toFixed(2)} kB ` +
         `(cr82 baseline ${CR82_BASELINE[kind]}, delta cap +${CR82_DELTA[kind]}, ` +
         `delta ${size - CR82_BASELINE[kind] >= 0 ? '+' : ''}${(size - CR82_BASELINE[kind]).toFixed(2)}) ` +
-        `${ok ? 'OK' : 'OVER BUDGET'} | legacy absolute ${legacyMax}: ${size <= legacyMax ? 'OK' : 'over (inherited debt, see MEMORY)'}`,
+        `${ok ? 'OK' : 'OVER BUDGET'} | absolute backstop ${legacyMax}: ${size <= legacyMax ? 'OK' : 'over'}`,
     );
   }
 

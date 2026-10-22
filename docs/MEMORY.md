@@ -125,6 +125,19 @@
   difficulty fetch (ZPD-biased variant), CR-108 Turnstile (BLOCKED:
   needs manual Cloudflare signup). Bundle debt -> CR-105 (delta gate
   green; re-anchor recommended over byte-shaving).
+- Session 2026-10-22 cont. (iMac): CR-105 selftest landed
+  (tests/bundle-budget.selftest.mjs, AC-105.1-3, rtm PASS). CR-107
+  adaptive difficulty IMPLEMENTED: migration 0051
+  fetch_questions_adaptive(+__impl) remote-applied via MCP - ZPD bias
+  from last-30 per-skill qb_attempt_events (baseline band 3; <0.5->2,
+  >=0.85->4; in-band-first then nearest, distinct-on group dedup).
+  Live-verified: anon 401, rows keyless, cold-start d3. bank.ts routes
+  authenticated practice calls to adaptive with fetch_questions
+  fallback (429 surfaces - separate buckets). Scanner fix: ea-classes
+  dollar-tag-aware body capture + __impl delegation resolution (the
+  old $$-only regex swallowed $function$-tagged defs into phantom
+  bodies). tests/adaptive-fetch.selftest.mjs + bank.test.ts AC-107.x
+  cover the contract; rtm PASS.
 - `scripts/machine-sync.ps1`: one-command handoff - exports secrets,
   re-encrypts vault bundle, commits+pushes handoff-vault.
 - Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside

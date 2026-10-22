@@ -97,7 +97,18 @@ export async function fetchBankQuestions(
     if (pub.error) throw bankFetchError(pub.error);
     return (pub.data ?? []) as QbRow[];
   }
-  const { data, error } = await supabase.rpc('fetch_questions', params);
+  // CR-107: authenticated practice rounds go through the adaptive RPC
+  // (ZPD difficulty bias from the caller's attempt history). A missing
+  // RPC or any non-rate-limit error falls back to the plain fetch;
+  // mock/exam keep the standard surface so formal pulls stay uniform.
+  const primary = mode === 'practice' ? 'fetch_questions_adaptive' : 'fetch_questions';
+  let { data, error } = await supabase.rpc(primary, params);
+  if (
+    error && primary === 'fetch_questions_adaptive'
+    && error.code !== 'PT429' && !error.message.includes('rate_limited')
+  ) {
+    ({ data, error } = await supabase.rpc('fetch_questions', params));
+  }
   if (!error) return (data ?? []) as QbRow[];
   // CR-101 r98: a per-uid rate limit must NOT fall back to the public
   // surface - that would silently swap the uid budget for the global guest

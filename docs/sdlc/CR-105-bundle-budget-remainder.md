@@ -47,6 +47,17 @@ before judging; a stale dist showed 189 kB and produced a false alarm.)
 Option 1 (re-anchor) in this CR; revisit byte-shaving only when the
 delta gate trends toward its +10 cap again.
 
+## Acceptance criteria
+
+- AC-105.1: given a fresh `npm run build`, `scripts/check-bundle-budget.mjs`
+  exits 0 and no line reports a stale-debt "over" against a cap the
+  build can no longer meet.
+- AC-105.2: the re-anchored absolute caps equal the delta gate's
+  effective ceiling (JS 129.27+10 -> 140, CSS 19.6+3 -> 23, rounded up)
+  so a baseline const that drifts still hits an absolute backstop.
+- AC-105.3: the delta gate, lazy-chunk caps, and AC-2.5 lottie-runtime
+  check are unchanged - they remain the binding constraints.
+
 ## Out of scope
 
 - EmojiLottiePlayer chunk size (lazy, capped at 12-kB-warn elsewhere

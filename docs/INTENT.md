@@ -37,3 +37,31 @@ Committed by: orchestrator (intake)
 - Pipeline: full SDLC - discovery research, PM plan, BA PRD r2 + human rulings (OM-1..5), designer spec "Mot con duong vang" + human gate, Tech Lead ADR + human rulings, dev (6 parallel workers + orchestrator merge), dev-lead r3 APPROVE, test-lead APPROVE (mutation-verified), human go-live, external review r18 CLEAN (4 rounds).
 - Open questions resolved: pricing = in-app honest card + manual transfer (OM-1B); redesign = full kid shell restructure (mascot-led, one-gold-CTA); parent dashboard = read-only report + email digest enrichment (remote view deferred to CR-70).
 - Deferred: CR-70 backlog (marketing landing, remote parent view, guest email capture, auth redesign, real payment gateway).
+
+---
+
+# Intent 2 (2026-10-22): maintenance wave - close the deferred ledger
+Author: linhl. Status: approved ("lam lan luot nhe. sau do chay lai SDLC").
+Intake class: CR wave on brownfield - 4 tracked CRs, no WBS re-run.
+
+## Request (originator's words)
+Pending items from the MEMORY deferred ledger, worked in order, then a
+fresh SDLC pass over the project.
+
+## Intake map
+| CR | Item | Status at intake | Re-entry |
+|---|---|---|---|
+| CR-105 | Bundle budget remainder (legacy absolute caps ~9kB over) | doc + measured | BA -> tiny Dev |
+| CR-106 | "Teach me" pre-answer lessons | design sketch | BA (content-scope ruling needed) |
+| CR-107 | Adaptive difficulty fetch (ZPD-biased) | design sketch | BA -> Tech Lead (new RPC) |
+| CR-108 | Turnstile botnet defense | BLOCKED: Cloudflare signup | hold until account exists |
+
+## Already resolved at intake (no pipeline work needed)
+- G5 exam-pool gap: VERIFIED CLOSED 2026-10-22 (2,327 distinct pools,
+  gate >=800) - measurement recorded in MEMORY, no code change.
+- r17/r18 review rounds: long closed (r18 CLEAN; loop reached r102
+  APPROVE since).
+
+## Order of work
+CR-105 first (smallest, gates honesty), then CR-107 (design-ready),
+then CR-106 (largest - content authoring scope), CR-108 parked.

@@ -434,8 +434,11 @@ describe('fetchBankQuestions - CR-101 rate limiting', () => {
     await expect(fetchBankQuestions('english', 'grade-3', 5, 'practice'))
       .rejects.toThrow('thử lại sau');
     // The per-uid budget must bind: never swapped for the guest bucket.
+    // CR-107: practice goes through the adaptive RPC first - its rate
+    // limit must not fall back to fetch_questions either (that would
+    // double the learner's fetch budget across two RPC buckets).
     expect(rpcMock).toHaveBeenCalledTimes(1);
-    expect(rpcMock).toHaveBeenCalledWith('fetch_questions', expect.anything());
+    expect(rpcMock).toHaveBeenCalledWith('fetch_questions_adaptive', expect.anything());
   });
 
   it('guest path uses the public RPC and maps PT429 to a friendly error', async () => {
@@ -443,6 +446,63 @@ describe('fetchBankQuestions - CR-101 rate limiting', () => {
     rpcMock.mockResolvedValue({ data: null, error: { code: 'PT429', message: 'rate_limited' } });
     await expect(fetchBankQuestions('english', 'grade-3', 5, 'practice'))
       .rejects.toThrow('thử lại sau');
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledWith('fetch_questions_public', expect.anything());
+  });
+});
+
+describe('fetchBankQuestions - CR-107 adaptive fetch seam', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset();
+  });
+
+  it('AC-107.1/7: authenticated practice calls fetch_questions_adaptive with p_mode', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    await fetchBankQuestions('english', 'grade-3', 5, 'practice');
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledWith(
+      'fetch_questions_adaptive',
+      expect.objectContaining({ p_mode: 'practice' }),
+    );
+  });
+
+  it('AC-107.2: a missing/failed adaptive RPC falls back to fetch_questions', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'not found' } })
+      .mockResolvedValueOnce({ data: [row({ id: 'ok' })], error: null });
+    const rows = await fetchBankQuestions('english', 'grade-3', 5, 'practice');
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(rpcMock.mock.calls[0]![0]).toBe('fetch_questions_adaptive');
+    expect(rpcMock.mock.calls[1]![0]).toBe('fetch_questions');
+    expect(rows).toHaveLength(1);
+  });
+
+  it('AC-107.4: adaptive PT429 surfaces - no fallback to a second budget', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock.mockResolvedValue({ data: null, error: { code: 'PT429', message: 'rate_limited' } });
+    await expect(fetchBankQuestions('english', 'grade-3', 5, 'practice'))
+      .rejects.toThrow('thử lại sau');
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-107.5: mock mode keeps the uniform fetch - exams do not adapt', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    await fetchBankQuestions('english', 'grade-3', 5, 'mock');
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(rpcMock).toHaveBeenCalledWith(
+      'fetch_questions',
+      expect.objectContaining({ p_mode: 'mock' }),
+    );
+  });
+
+  it('AC-107.4: guests never reach the adaptive RPC', async () => {
+    getSessionMock.mockResolvedValue(null);
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    await fetchBankQuestions('english', 'grade-3', 5, 'practice');
     expect(rpcMock).toHaveBeenCalledTimes(1);
     expect(rpcMock).toHaveBeenCalledWith('fetch_questions_public', expect.anything());
   });
