@@ -38,7 +38,10 @@ export interface DailyQuestState {
 export interface EngagementState {
   totalStars: number;
   grades: Record<string, GradeProgress>;
-  streak: { lastDayISO: string | null; count: number };
+  streak: { lastDayISO: string | null; count: number; freezeUsedWeek?: string };
+  /** CR-100 (A2'): lifetime player XP - effort-based, accrues per correct
+   *  answer. Optional: blobs stored before CR-100 lack it. */
+  xp?: number;
   stickerIds: string[];
   batchesCompleted: number;
   /** Grade ids the learner has opened a batch in (for the map sticker). */
@@ -330,12 +333,28 @@ function dayDiff(aISO: string, bISO: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
+/** ISO week key (yyyy-Www) - one streak freeze is allowed per week. */
+function isoWeekKey(now: Date): string {
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const day = (d.getUTCDay() + 6) % 7; // Mon=0
+  d.setUTCDate(d.getUTCDate() - day + 3); // Thursday of this week
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86_400_000));
+  return `${d.getUTCFullYear()}-W${`${week}`.padStart(2, '0')}`;
+}
+
 export function touchStreak(now: Date = new Date()): number {
   const state = load();
   const today = todayISO(now);
   if (state.streak.lastDayISO === today) return state.streak.count;
-  if (state.streak.lastDayISO && dayDiff(state.streak.lastDayISO, today) === 1) {
-    state.streak = { lastDayISO: today, count: state.streak.count + 1 };
+  const gap = state.streak.lastDayISO ? dayDiff(state.streak.lastDayISO, today) : Infinity;
+  if (gap === 1) {
+    state.streak = { ...state.streak, lastDayISO: today, count: state.streak.count + 1 };
+  } else if (gap === 2 && state.streak.freezeUsedWeek !== isoWeekKey(now) && state.streak.count > 0) {
+    /* CR-100 (A1'): streak freeze - one missed day per ISO week does not
+       break the streak. Kids miss a day for school/family reasons; losing
+       a 20-day flame over it is what makes them quit (Duolingo pattern). */
+    state.streak = { lastDayISO: today, count: state.streak.count + 1, freezeUsedWeek: isoWeekKey(now) };
   } else {
     state.streak = { lastDayISO: today, count: 1 };
   }
@@ -645,6 +664,8 @@ export function recordCorrectAnswers(count: number, now: Date = new Date()): voi
   bumpPetXp(state, count);
   // CR-37: lifetime correct counter for effort badges.
   badgeStatsFor(state).totalCorrect += count;
+  // CR-100 (A2'): lifetime player XP - effort-based, uncapped.
+  state.xp = (state.xp ?? 0) + count * PLAYER_XP_PER_CORRECT;
   evaluateBadges(state, new Set<string>());
   persist(state);
 }
@@ -1009,6 +1030,48 @@ export interface PetState {
 /** 10 XP per correct answer - same as exam points so the pet literally
  *  grows on the same effort the scoreboard shows. */
 export const PET_XP_PER_CORRECT = 10;
+/** CR-100 (A2'): player XP uses the same per-correct rate as the pet -
+ *  one honest effort number, no second economy to explain or exploit. */
+export const PLAYER_XP_PER_CORRECT = 10;
+/** XP thresholds for the level ladder: Newbie -> Star -> Hero -> Legend. */
+export const PLAYER_LEVEL_XP = [0, 500, 1500, 4000] as const;
+export const PLAYER_LEVEL_NAMES = ['Tân binh', 'Ngôi sao', 'Anh hùng', 'Huyền thoại'] as const;
+
+export function playerLevelForXp(xp: number): number {
+  let level = 0;
+  for (let i = PLAYER_LEVEL_XP.length - 1; i >= 0; i--) {
+    if (xp >= PLAYER_LEVEL_XP[i]!) return i;
+  }
+  return level;
+}
+
+export interface PlayerLevelSnapshot {
+  level: number;
+  nameVi: string;
+  xp: number;
+  /** XP into the current level (progress-ring numerator). */
+  xpIntoLevel: number;
+  /** XP span of the current level; null at the top level. */
+  xpSpan: number | null;
+  /** 0..1 fill for the progress ring; 1 at the top level. */
+  progress: number;
+}
+
+export function getPlayerLevel(): PlayerLevelSnapshot {
+  const xp = load().xp ?? 0;
+  const level = playerLevelForXp(xp);
+  const floor = PLAYER_LEVEL_XP[level]!;
+  const ceil = PLAYER_LEVEL_XP[level + 1];
+  const span = ceil === undefined ? null : ceil - floor;
+  return {
+    level,
+    nameVi: PLAYER_LEVEL_NAMES[level]!,
+    xp,
+    xpIntoLevel: xp - floor,
+    xpSpan: span,
+    progress: span === null ? 1 : Math.min(1, (xp - floor) / span),
+  };
+}
 /** XP thresholds per stage: egg -> baby -> kid -> adult. */
 export const PET_STAGE_XP = [0, 50, 250, 600] as const;
 const PET_STAGE_NAMES = ['Trứng', 'Bé', 'Nhỏ', 'Trưởng thành'] as const;

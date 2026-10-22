@@ -5,10 +5,12 @@ import {
   gameLevelStars,
   getDeviceId,
   getOwnerAccountId,
+  getPlayerLevel,
   getState,
   markOwnerAccountId,
   parkOwnerBlob,
   recordBatchResult,
+  recordCorrectAnswers,
   recordGameResult,
   recordRoundResult,
   recordSkillAnswer,
@@ -91,6 +93,55 @@ describe('streak', () => {
     touchStreak(new Date(2026, 9, 3));
     expect(checkStreakStickers().map((s) => s.id)).toContain('streak-3');
     expect(getState().stickerIds).toContain('streak-3');
+  });
+
+  it('CR-100 freeze: one missed day per ISO week keeps the streak, second freeze resets', () => {
+    // Oct 2026: Oct 5=Mon ... Oct 11=Sun - all inside ISO week 41.
+    expect(touchStreak(new Date(2026, 9, 5))).toBe(1); // Mon
+    expect(touchStreak(new Date(2026, 9, 6))).toBe(2); // Tue
+    expect(touchStreak(new Date(2026, 9, 8))).toBe(3); // Thu - missed Wed, freeze consumed
+    expect(touchStreak(new Date(2026, 9, 10))).toBe(1); // Sat - second miss same week, reset
+  });
+
+  it('CR-100 freeze: a new ISO week grants a fresh freeze', () => {
+    expect(touchStreak(new Date(2026, 9, 8))).toBe(1); // Thu W41
+    expect(touchStreak(new Date(2026, 9, 10))).toBe(2); // Sat - freeze W41
+    expect(touchStreak(new Date(2026, 9, 12))).toBe(3); // Mon W42 - freeze W42
+  });
+
+  it('CR-100 freeze: does not resurrect a dead streak from scratch', () => {
+    expect(touchStreak(new Date(2026, 9, 8))).toBe(1); // no prior streak at all -> no freeze to burn
+  });
+});
+
+describe('player XP + level ladder (CR-100 A2)', () => {
+  it('correct answers accrue XP and map onto the level thresholds', () => {
+    expect(getPlayerLevel().level).toBe(0);
+    recordCorrectAnswers(50); // 500 xp -> Star
+    let snap = getPlayerLevel();
+    expect(snap.xp).toBe(500);
+    expect(snap.level).toBe(1);
+    expect(snap.nameVi).toBe('Ngôi sao');
+    expect(snap.xpIntoLevel).toBe(0);
+    expect(snap.progress).toBe(0);
+    recordCorrectAnswers(100); // 1500 xp -> Hero
+    snap = getPlayerLevel();
+    expect(snap.level).toBe(2);
+    expect(snap.nameVi).toBe('Anh hùng');
+    recordCorrectAnswers(250); // 4000 xp -> Legend (top level)
+    snap = getPlayerLevel();
+    expect(snap.level).toBe(3);
+    expect(snap.progress).toBe(1);
+    expect(snap.xpSpan).toBeNull();
+  });
+
+  it('progress ring reflects XP into the current level', () => {
+    recordCorrectAnswers(60); // 600 xp -> Star, 100/1000 into level
+    const snap = getPlayerLevel();
+    expect(snap.level).toBe(1);
+    expect(snap.xpIntoLevel).toBe(100);
+    expect(snap.xpSpan).toBe(1000);
+    expect(snap.progress).toBeCloseTo(0.1);
   });
 });
 

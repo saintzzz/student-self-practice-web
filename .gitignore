@@ -45,3 +45,6 @@ machine-transfer/
 scripts/.tmp-cdp/
 scripts/gemini-auth.json
 scripts/_*.sh
+secrets-context.tar.enc
+scripts/artgen/_*.mjs
+scripts/qb-math-english-rewrite.mjs

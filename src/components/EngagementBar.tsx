@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getState, subscribe } from '../lib/engagement/store';
+import LevelRing from './LevelRing';
 import StickerAlbum from './StickerAlbum';
 import { IconFlame, IconMedal, IconStar } from './icons';
 
@@ -35,6 +36,7 @@ export default function EngagementBar() {
           <span aria-hidden="true" className="inline-flex shrink-0 text-orange-400"><IconFlame size={16} /></span>
           {state.streak.count} ngày
         </span>
+        <LevelRing />
         <button
           type="button"
           data-testid="sticker-album-button"

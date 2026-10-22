@@ -5,6 +5,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
+import { HeartMeter, useGameLives } from '../lives';
 
 const ROUNDS = 8;
 const SECONDS = 20;
@@ -12,8 +13,9 @@ const PRIZES = ['⭐', '⭐⭐', '🥉', '🥉', '🥈', '🥈', '🥇', '🏆']
 
 /**
  * CR-85 Game 12 - Dau truong trieu phu (Quiz Show): climb an 8-step
- * prize ladder, 20 seconds per question, one 50:50 lifeline, a wrong or
- * timed-out answer ends the run (sudden death). Grades 3-5 only.
+ * prize ladder, 20 seconds per question, one 50:50 lifeline. CR-100 (B5):
+ * a wrong or timed-out answer drops one of 3 hearts - the run ends only
+ * when the hearts run out, not on the first mistake. Grades 3-5 only.
  */
 export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
   const spec = specFor(level);
@@ -25,6 +27,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lifelineUsed, setLifelineUsed] = useState(false);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(3);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -49,11 +52,22 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [round, secondsCap]);
 
-  // Time-out ends the run - but not while an accepted answer is in its
-  // feedback beat (the interval is cleared on pick; this guards a tick
-  // that already reached 0 in the same instant).
+  // Time-out drops a heart like a wrong answer - but not while an
+  // accepted answer is in its feedback beat (the interval is cleared on
+  // pick; this guards a tick that already reached 0 in the same instant).
   useEffect(() => {
-    if (seconds === 0 && !endedRef.current && !lock) finish(correctCount);
+    if (seconds === 0 && !endedRef.current && !lock) {
+      const left = lives.lose();
+      if (left <= 0 || round + 1 >= rounds.length) {
+        finish(correctCount);
+      } else {
+        // Same advance path as a survived wrong answer - clear any
+        // 50:50 markings so they don't bleed into the next question.
+        setWrongPicks([]);
+        setRound((r) => Math.min(r + 1, rounds.length - 1));
+        setSeconds(secondsCap);
+      }
+    }
   }, [seconds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const q = rounds[Math.min(round, rounds.length - 1)];
@@ -67,9 +81,23 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
     // pick at the last second must not race the timeout end.
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (!correct) {
-      // Sudden death - one wrong answer ends the climb.
+      // CR-100 (B5): wrong drops a heart; the climb continues until the
+      // 3-heart meter is empty - retry encouragement, not sudden death.
       setWrongPicks([index]);
-      timerRef.current = setTimeout(() => finish(correctCount), 900);
+      const left = lives.lose();
+      timerRef.current = setTimeout(() => {
+        if (left <= 0) {
+          finish(correctCount);
+          return;
+        }
+        setWrongPicks([]);
+        if (round + 1 >= rounds.length) {
+          finish(correctCount);
+          return;
+        }
+        setRound(round + 1);
+        setLock(false);
+      }, 900);
       return;
     }
     const newCorrect = correctCount + 1;
@@ -114,6 +142,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
           </span>
         ))}
       </div>
+      <HeartMeter lives={lives.lives} max={lives.max} />
       <div
         data-testid="quiz-timer"
         className={`flex h-12 w-12 items-center justify-center rounded-full border-4 font-display text-xl font-extrabold ${

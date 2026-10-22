@@ -37,19 +37,29 @@ describe('QuizShow', () => {
     expect((screen.getByTestId('lifeline-5050') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('a wrong answer ends the run immediately', () => {
+  it('CR-100: a wrong answer drops a heart and the climb continues; 3 misses end the run', () => {
     const onEnd = vi.fn();
     const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);
-    const wrong = [0, 1, 2, 3].find((i) => i !== rounds[0]!.correctIndex)!;
     render(<QuizShow grade={GRADE} seed={SEED} onEnd={onEnd} />);
-    fireEvent.click(screen.getByTestId(`option-${wrong}`));
-    act(() => vi.advanceTimersByTime(1000));
+    // Each round: pick a wrong option -> one heart drops, next round loads.
+    for (let i = 0; i < 3; i++) {
+      const wrong = [0, 1, 2, 3].find((idx) => idx !== rounds[i]!.correctIndex)!;
+      fireEvent.click(screen.getByTestId(`option-${wrong}`));
+      act(() => vi.advanceTimersByTime(1000));
+      if (i < 2) expect(onEnd).not.toHaveBeenCalled();
+    }
+    expect(screen.getByTestId('heart-meter').getAttribute('aria-label')).toContain('0/3');
     expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS });
   });
 
-  it('timing out ends the run', () => {
+  it('CR-100: timing out drops a heart and advances; the run ends when hearts run out', () => {
     const onEnd = vi.fn();
     render(<QuizShow grade={GRADE} seed={SEED} onEnd={onEnd} />);
+    act(() => vi.advanceTimersByTime(21000));
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(screen.getByTestId('heart-meter').getAttribute('aria-label')).toContain('2/3');
+    // Two more full timeouts burn the remaining hearts.
+    act(() => vi.advanceTimersByTime(21000));
     act(() => vi.advanceTimersByTime(21000));
     expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS });
   });

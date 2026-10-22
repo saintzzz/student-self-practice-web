@@ -4,6 +4,14 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    watch: {
+      // The gemini-web Chromium profile + the plaintext handoff bundle live
+      // inside the repo but are not source - watching their cookie/sqlite
+      // files crashes the dev server on Windows (EBUSY) and wastes cycles.
+      ignored: ['**/gemini-web-profile*/**', '**/machine-transfer/**'],
+    },
+  },
   build: {
     rollupOptions: {
       output: {

@@ -57,8 +57,14 @@ node scripts/gen-codex-bank.mjs --tier advanced --grades 2 --batch 5 --dry
 **Truoc khi roi may A:**
 1. `git add -A && git commit` moi thu co nghia (code + docs + scripts)
 2. Cap nhat muc `Session state` trong `docs/MEMORY.md` (tien trinh, dang chay, canh bao)
-3. `git push` — neu code chua on dinh, push nhanh `wip/handoff` thay vi main
-   (main auto-deploy Vercel)
+3. Chay `powershell -ExecutionPolicy Bypass -File scripts/machine-sync.ps1 -PushRepo`
+   (tren Windows) — tu export secrets + ma hoa + commit + push `handoff-vault`,
+   va `-PushRepo` day luon repo chinh. Neu code chua on dinh, push tay nhanh
+   `wip/handoff` thay vi main (main auto-deploy Vercel).
+   - Passphrase doc tu `%USERPROFILE%\.devin-vault-pass` (da tao san); neu thieu
+     script se hoi 1 lan roi luu lai. KHONG commit passphrase vao repo.
+   - tren macOS buoc tuong duong: `tar czf - machine-transfer | openssl enc
+     -aes-256-cbc -pbkdf2 -salt -out secrets-context.tar.enc` trong vault clone
 4. Job dang chay nen (gen/polish/verify): tien trinh trong Supabase khong mat;
    script idempotent — chay lai tren may B tiep tuc duoc
 

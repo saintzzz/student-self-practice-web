@@ -4,6 +4,7 @@ import { playSfx } from '../../lib/sfx';
 import { pickGameWords } from '../sources';
 import { GameRoundDots, PairBoardField, gameVerdictSfx, type PairBoardTile } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const PAIRS = 4;
@@ -28,6 +29,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [moves, setMoves] = useState(0);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(3);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -62,8 +64,17 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
     gameVerdictSfx(false);
     setLock(true);
     setOpen([first, idx]);
+    // CR-100 (B5): a mismatch drops a heart; out of hearts ends the run
+    // after the flip-back beat, scoring the pairs already cleared.
+    const left = lives.lose();
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
+      if (left <= 0 && !endedRef.current) {
+        endedRef.current = true;
+        const pairs = matched.size / 2;
+        onEnd({ points: pairs * 2, maxPoints: spec.rounds * 2 + 2, correctCount: pairs, attempted: Math.max(pairs, 1) });
+        return;
+      }
       setOpen([]);
       setLock(false);
     }, 750);
@@ -74,6 +85,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
       <div className="flex items-center gap-4">
         <GameRoundDots total={spec.rounds} done={matched.size / 2} />
         <span className="text-sm font-semibold text-slate-300">Lượt lật: {moves}</span>
+        <HeartMeter lives={lives.lives} max={lives.max} />
       </div>
       <PairBoardField
         tiles={tiles}

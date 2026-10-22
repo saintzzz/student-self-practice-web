@@ -84,13 +84,29 @@
 - Per-machine state that does NOT transfer: running background jobs (restart on other machine - DB progress is shared in Supabase), gemini-web Chromium profile (re-login per machine), playwright browsers.
 - `Session state` block below is rewritten at each machine switch / session end - always read it first on the receiving machine.
 
-### Session state - 2026-10-20 (Windows PC STOPPED -> resume on iMac)
-- All background jobs STOPPED by user request. Resume on iMac (scripts are idempotent; DB progress shared):
-  - llm-core STOPPED at 210/367 batches (3,962 rows in). Resume: `node scripts/gen-codex-bank.mjs --tier core --target 7000 --grades 2,3,4,5 --workers 3 --batch 25`
-  - polish STOPPED at 210/678 batches (2,533 polished / 121 dropped). Resume: `node scripts/polish-codex.mjs --grades 1,2,3,4,5 --workers 3 --batch 15`
-  - verify sweep NOT started. Next after gen lands: `node scripts/verify-codex.mjs --grades 1,2,3,4,5 --workers 3 --batch 12`
-  - codex supervisor killed - relaunch if wanted: `node scripts/_codex-resume.mjs` (or run the three scripts manually - they self-fallback codex->gemini).
-- artgen: 38 webp pushed to branch `wip/handoff-2026-10-20-artgen` - needs eye-review before merge to main.
+### Session state - 2026-10-22 (Windows PC, work committed + pushed)
+
+- CR-99 gamification quick wins: SHIPPED (commit 26fe4d3, CI green). Manual
+  read-aloud speaker, wrong-streak headline ladder, combo chip, shelf stars +
+  locked "Sap ra mat" card, LevelPicker easter egg. External review r96 done
+  (gemini; codex hit quota) - 1 fixed, 2 not-confirmed.
+- CR-100 engagement economy wave 2: SHIPPED same session - streak freeze
+  (1 missed day/ISO week), player XP ladder (Tan binh->Ngoi sao->Anh hung->
+  Huyen thoai) + LevelRing on EngagementBar, B5 hearts via shared
+  `src/games/lives.tsx` adopted in MemoryMatch/WhackMole/QuizShow (sudden-death
+  replaced by 3 hearts). e2e/cr100-hearts.spec.ts added.
+- `scripts/machine-sync.ps1`: one-command handoff - exports secrets, re-encrypts
+  vault bundle, commits+pushes handoff-vault. Passphrase at
+  `%USERPROFILE%\.devin-vault-pass` (local only, never committed).
+- Codex CLI on Windows: auth FIXED (was 401), but usage quota exhausted until
+  2026-10-27 - LLM work routes to gemini-web fallback automatically.
+- Content pipeline: pending=0 everywhere. Remaining gap: G5 eligible 6,691/7,000
+  and G5 exam pool 539/800 - needs a G5 wave biased to exam-scorable kinds
+  (MCQ/TF/fill). iMac was running the pipeline; check DB counts first.
+- Prior state (2026-10-20): llm-core stopped 210/367, polish 210/678 - those
+  resume commands still valid if DB shows pending work:
+  `node scripts/gen-codex-bank.mjs --tier core --target 7000 --grades 2,3,4,5 --workers 3 --batch 25`
+- artgen: `wip/handoff-2026-10-20-artgen` merged by iMac + round 2 done.
 - Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside handoff-vault encrypted bundle).
 - Eastgate GitLab repos (code.eastgatesoftware.com): removed from handoff scope per user request; local clones kept but remote tokens scrubbed. Not transferred - needs VPN + re-auth if ever resumed.
 - exam-ready gate: exam pool >=800/grade + 5% human spot-check.
