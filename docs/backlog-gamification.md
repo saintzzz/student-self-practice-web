@@ -60,8 +60,43 @@ depth, P2 = polish. Estimates are dev-days, not promises.
 - No reward for correct ANSWERS only - reward effort/consistency too, else kids guess-farm
 - No chat between kids (child safety - out of scope entirely)
 
+## G. Reference teardown: Martin's Learning World (martin.fibotutors.com, 2026-10-22)
+
+Live competitor teardown - Next.js SPA, one big illustrated PNG per scene +
+DOM button hotspots (no game engine; cheap pattern we can copy today).
+Do NOT clone their art/content (copyright) - generate equivalents via our
+artgen pipeline. Screenshots: `scripts/_martin-*.png` (local).
+
+| Their pattern | Verdict | Maps to |
+|---|---|---|
+| World map = single PNG + per-zone hotspot buttons | Steal the tech pattern: upgrade our trail-map to a themed-zone map | new M1 |
+| Zone shelf: 2-col "adventure" cards (icon + name + 1-line desc + play), Level N/20 footer | Restyle Game Zone shelf to this card density | new M2 |
+| "Teach me" button on every question + "Let me count again" bail option inside answers | Steal - pedagogical safety valve, kids self-serve before guessing | new M3 |
+| Feedback ladder by attempt: Correct -> 1st try -> 2nd -> ghost "try again" mascot emotions | Steal - per-attempt mascot states, richer than binary right/wrong | new M4 |
+| Hearts = "3/3 chances left this round" (per-round, not per-day) | Validates B5 - per-round is gentler than per-day lives | B5 |
+| Today's Quests strip: 5 cards/day, +1 star each, 0/5 progress | Validates A1 - exactly the daily-quest shape we designed | A1 |
+| 22-badge gallery + per-subject progress bars | Validates D2; add per-subject bars to My Progress | D2 |
+| Guest mode (play now, nothing saved) vs Adventure (saved) | Steal - zero-friction first contact; account upsell later | new M5 |
+| "Coming Soon" locked zone on the map | Cheap anticipation hook for roadmap items | new M6 |
+| Map easter eggs (pet puppy, wave to explorer, play with boat) | Cheap delight - 2-3 interactive mascots on our map | new M7 |
+| Speaker icon beside every zone name (read-aloud) | We have TTS already - wire it to zone/shelf labels | new M8 |
+| Phonics mode names worth mirroring: Big & Little, ABC Trail (before/after/between), First Sound Safari, Sound Safari (blend/break/rhyme/swap), Sight Word Picnic | Strong G1-2 phonics coverage - candidates for new Game Zone games | backlog games |
+
+New items (estimates same units):
+
+| # | Item | Pri | Effort |
+|---|------|-----|--------|
+| M1 | Themed-zone world map: one illustrated scene per grade band (dusk G1-2, night G3-5 per existing art direction) + positioned hotspot buttons per zone | P1 | 4d + art |
+| M2 | Game Zone shelf restyle: 2-col cards, icon + one-line description + level footer | P1 | 2d |
+| M3 | "Teach me" + bail option: hint/teach affordance inside every activity | P1 | 3d |
+| M4 | Attempt-ladder mascot feedback (correct -> 1st/2nd/3rd try states) | P1 | 3d |
+| M5 | Guest mode: play without account, progress unsaved, gentle account upsell | P2 | 3d |
+| M6 | Locked "Coming Soon" zone teaser on map | P2 | 1d |
+| M7 | 2-3 map easter-egg interactions | P2 | 1d |
+| M8 | Read-aloud labels on zones/shelf items via existing TTS | P1 | 1d |
+
 ## Ordering proposal (PO call)
 
-Sprint order: **A1 + A2 + B1** (motivation skeleton, ~8d) -> **A3 + E1** (collection + motion, ~7d) -> **A5 + D1 + D2** (mission+reward loop, ~8d) -> **B2 + C1** (boss+season metagame, ~7d) -> **A4** pet (needs art) -> rest.
+Sprint order: **A1 + A2 + B1** (motivation skeleton, ~8d) -> **A3 + E1 + M8** (collection + motion + read-aloud labels, ~8d) -> **M2 + M3 + M4** (shelf + teach-me + feedback ladder, ~8d) -> **A5 + D1 + D2** (mission+reward loop, ~8d) -> **B2 + C1** (boss+season metagame, ~7d) -> **M1** world map (needs art) + **A4** pet (needs art) -> rest.
 
 Each item needs a CR doc + pipeline run per SDLC rules when picked up.
