@@ -114,12 +114,17 @@
 - Content pipeline: G5 eligible ~6.6-6.9k/7000 and G5 exam pool ~540-560/800
   still the gap - needs G5 wave biased to exam-scorable kinds (MCQ/TF/fill).
   iMac runs the pipeline; check DB counts first.
-- Next designed items (CR-104 deferred section): "Teach me" pre-answer
-  lesson (needs teach_bank_question RPC - disclosure must mark the
-  attempt taught/not-scored or it re-opens the moat); adaptive
-  difficulty fetch variant (bank rows carry difficulty; learning_events
-  has outcomes - ZPD-biased pick is the design); Turnstile needs a
-  Cloudflare account (manual signup, not provisionable).
+  2026-10-22 VERIFIED CLOSED: mock-pool filter (0043 mint-form: canonical +
+  mockEligible + approved-tier + non-CR/speaking + dedup variant_group)
+  counts g5 english = 2,327 distinct pools (raw 2,471), every grade x
+  subject >= ~2,300. Exam-ready >=800/grade met on all axes; only the
+  5% human spot-check remains manual.
+- Next designed items (CR-104 deferred section): promoted to CRs
+  2026-10-22 - CR-106 Teach-me lessons (teach_bank_question RPC +
+  taught marks so disclosure never re-scores), CR-107 adaptive
+  difficulty fetch (ZPD-biased variant), CR-108 Turnstile (BLOCKED:
+  needs manual Cloudflare signup). Bundle debt -> CR-105 (delta gate
+  green; re-anchor recommended over byte-shaving).
 - `scripts/machine-sync.ps1`: one-command handoff - exports secrets,
   re-encrypts vault bundle, commits+pushes handoff-vault.
 - Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside
