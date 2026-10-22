@@ -46,8 +46,11 @@ test("AC-107.4: authenticated-only grants + full rate-limit stack", () => {
   assert.match(SRC, /revoke all on function practice\.fetch_questions_adaptive\([\s\S]*?from\s+public,\s*anon/i, "wrapper must be revoked from public+anon");
   assert.match(SRC, /grant execute on function practice\.fetch_questions_adaptive\([\s\S]*?to\s+authenticated,\s*service_role/i, "wrapper grants authenticated+service_role only");
   assert.doesNotMatch(SRC, /fetch_questions_adaptive[\s\S]*?to\s+anon/i, "anon must never hold execute");
-  assert.match(WRAP, /fqa_ip_calls:/, "per-IP call bucket missing");
-  assert.match(WRAP, /fqa_uid_calls:/, "per-uid call bucket missing");
+  // r104: adaptive must charge the SHARED fq_* buckets - a parallel
+  // fqa_* set would double the learner's aggregate fetch allowance.
+  assert.match(WRAP, /fq_ip_calls:/, "per-IP call bucket missing");
+  assert.match(WRAP, /fq_uid_calls:/, "per-uid call bucket missing");
+  assert.doesNotMatch(WRAP, /check_rate_limit(?:_weighted)?\('fqa_/, "adaptive must not charge parallel buckets");
   assert.match(WRAP, /check_rate_limit_weighted/, "weighted row bucket missing");
 });
 

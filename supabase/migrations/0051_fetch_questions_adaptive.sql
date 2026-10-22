@@ -136,13 +136,17 @@ begin
         p_grade, p_subject, p_count, p_skills, p_min_difficulty, p_mode) j;
     return;
   end if;
+  -- r104: charge the SHARED fq_* buckets, not a parallel fqa_* set -
+  -- separate buckets would let a caller exhaust the adaptive allowance
+  -- and re-draw through fetch_questions, doubling the aggregate cap
+  -- the 0049 anti-splitting design put in place.
   if v_ip is not null
-     and (practice.check_rate_limit('fqa_ip_calls:' || v_ip, 100, 3600) < 0
-       or practice.check_rate_limit_weighted('fqa_ip_rows:' || v_ip, v_rows, 3000, 3600) < 0) then
+     and (practice.check_rate_limit('fq_ip_calls:' || v_ip, 100, 3600) < 0
+       or practice.check_rate_limit_weighted('fq_ip_rows:' || v_ip, v_rows, 3000, 3600) < 0) then
     raise exception 'rate_limited' using errcode = 'PT429';
   end if;
-  if practice.check_rate_limit('fqa_uid_calls:' || v_uid, 60, 3600) < 0
-     or practice.check_rate_limit_weighted('fqa_uid_rows:' || v_uid, v_rows, 4000, 3600) < 0 then
+  if practice.check_rate_limit('fq_uid_calls:' || v_uid, 60, 3600) < 0
+     or practice.check_rate_limit_weighted('fq_uid_rows:' || v_uid, v_rows, 4000, 3600) < 0 then
     raise exception 'rate_limited' using errcode = 'PT429';
   end if;
   return query

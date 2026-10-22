@@ -101,6 +101,8 @@ export async function fetchBankQuestions(
   // (ZPD difficulty bias from the caller's attempt history). A missing
   // RPC or any non-rate-limit error falls back to the plain fetch;
   // mock/exam keep the standard surface so formal pulls stay uniform.
+  // Both RPCs charge the same fq_* budget, so a 429 is terminal either
+  // way - surface it rather than retrying the twin surface.
   const primary = mode === 'practice' ? 'fetch_questions_adaptive' : 'fetch_questions';
   let { data, error } = await supabase.rpc(primary, params);
   if (
