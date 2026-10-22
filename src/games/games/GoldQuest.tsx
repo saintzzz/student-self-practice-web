@@ -4,6 +4,7 @@ import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -45,6 +46,7 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [missed, setMissed] = useState(false);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -89,6 +91,11 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
     }
     const next = [...wrongPicks, index];
     setWrongPicks(next);
+    const left = lives.lose();
+    if (left <= 0) {
+      timerRef.current = setTimeout(() => finish(correctCount, points), 750);
+      return;
+    }
     if (next.length >= spec.missLimit) {
       setMissed(true);
       timerRef.current = setTimeout(() => advance(correctCount), 750);
@@ -109,7 +116,10 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
 
   return (
     <div data-testid="game-gold-quest" className="flex flex-col items-center gap-4">
-      <GameRoundDots total={rounds.length} done={round} />
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={rounds.length} done={round} />
+        <HeartMeter lives={lives.lives} max={lives.max} />
+      </div>
       <div
         data-testid="gem-tally"
         className="flex items-center gap-2 rounded-full border-2 border-amber-300/60 bg-navy-800/80 px-4 py-1.5 text-lg font-extrabold text-amber-200"

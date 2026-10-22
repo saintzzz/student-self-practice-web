@@ -3,6 +3,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -24,6 +25,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -68,6 +70,15 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
     }
     const next = [...wrongPicks, index];
     setWrongPicks(next);
+    const left = lives.lose();
+    if (left <= 0) {
+      timerRef.current = setTimeout(() => {
+        if (endedRef.current) return;
+        endedRef.current = true;
+        onEnd({ points, maxPoints: spec.rounds * 2, correctCount: newCorrect, attempted: Math.min(round + 1, spec.rounds) });
+      }, 650);
+      return;
+    }
     if (next.length >= spec.missLimit) {
       timerRef.current = setTimeout(() => advance(0, false, newCorrect), 650);
       return;
@@ -80,7 +91,10 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
 
   return (
     <div data-testid="game-treasure-chest" className="flex flex-col items-center gap-4">
-      <GameRoundDots total={rounds.length} done={round} />
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={rounds.length} done={round} />
+        <HeartMeter lives={lives.lives} max={lives.max} />
+      </div>
       <div
         data-testid="chest-visual"
         className={`relative flex h-28 w-40 items-center justify-center rounded-3xl border-4 border-amber-700/80 bg-gradient-to-b from-amber-600 to-amber-800 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.6)] ${locksOpen >= LOCKS ? 'game-flip-in' : ''}`}

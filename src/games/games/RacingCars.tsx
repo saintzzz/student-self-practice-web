@@ -3,6 +3,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -23,6 +24,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(spec.lives);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -49,7 +51,16 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
     else setRival(rival + 1);
     const newCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(newCorrect);
-    if (!correct) setWrongPicks([index]);
+    if (!correct) {
+      setWrongPicks([index]);
+      if (lives.lose() <= 0) {
+        timerRef.current = setTimeout(
+          () => onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect, attempted: round + 1 }),
+          750,
+        );
+        return;
+      }
+    }
     timerRef.current = setTimeout(() => nextRound(newCorrect), 750);
   };
 
@@ -82,7 +93,10 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
 
   return (
     <div data-testid="game-racing-cars" className="flex flex-col items-center gap-4">
-      <GameRoundDots total={rounds.length} done={round} />
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={rounds.length} done={round} />
+        <HeartMeter lives={lives.lives} max={lives.max} />
+      </div>
       <div className="w-full space-y-2">{lane('player')}{lane('rival')}</div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
         <EmojiVisual emoji={visual?.emoji ?? q.emoji} imageUrl={visual?.imageUrl} animated variant="block" className="text-5xl" />

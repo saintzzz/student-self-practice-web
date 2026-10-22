@@ -3,6 +3,7 @@ import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
+import { HeartMeter } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -111,11 +112,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
   return (
     <div data-testid="game-castle-guard" className="flex flex-col items-center gap-4">
       <GameRoundDots total={rounds.length} done={round} />
-      <div className="flex items-center gap-1 text-xl" data-testid="castle-hearts">
-        {Array.from({ length: spec.lives }, (_, i) => (
-          <span key={i} className={i < hearts ? '' : 'opacity-25'}><EmojiVisual emoji="❤️" variant="block" /></span>
-        ))}
-      </div>
+      <HeartMeter testId="castle-hearts" lives={hearts} max={spec.lives} />
       {/* The path: slimes enter at cell 0, castle at the right end. */}
       <div data-testid="castle-path" className="flex items-center gap-1.5">
         {Array.from({ length: PATH }, (_, cell) => (

@@ -27,7 +27,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lifelineUsed, setLifelineUsed] = useState(false);
   const [lock, setLock] = useState(false);
-  const lives = useGameLives(3);
+  const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);

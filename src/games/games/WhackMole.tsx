@@ -24,7 +24,7 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
-  const lives = useGameLives(3);
+  const lives = useGameLives(spec.lives);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 

@@ -5,6 +5,7 @@ import { EmojiVisual } from '../../components/EmojiVisual';
 import { imageChoiceRounds } from '../sources';
 import { WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const WIN_LINES = [
@@ -36,6 +37,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
   const [qIdx, setQIdx] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -104,18 +106,25 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
       if (!winnerOf(next) && next.some((c) => !c)) next = cpuMove(next);
     } else {
       next = cpuMove(next, pendingCell);
+      lives.lose();
     }
     setBoard(next);
     setPendingCell(null);
     setQIdx(qIdx + 1);
     timerRef.current = setTimeout(() => {
       setLock(false);
+      if (lives.out && !endedRef.current) {
+        endedRef.current = true;
+        onEnd({ points: nextCorrect, maxPoints: 9, correctCount: nextCorrect, attempted: qIdx + 1 });
+        return;
+      }
       finish(next, nextCorrect);
     }, 700);
   };
 
   return (
     <div data-testid="game-tic-tac-toe" className="flex flex-col items-center gap-4">
+      <HeartMeter lives={lives.lives} max={lives.max} />
       <div className="grid w-56 grid-cols-3 gap-2">
         {board.map((cell, i) => (
           <button

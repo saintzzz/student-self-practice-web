@@ -56,10 +56,10 @@ function Heart({ filled }: { filled: boolean }) {
   );
 }
 
-export function HeartMeter({ lives, max }: { lives: number; max: number }) {
+export function HeartMeter({ lives, max, testId = 'heart-meter' }: { lives: number; max: number; testId?: string }) {
   return (
     <span
-      data-testid="heart-meter"
+      data-testid={testId}
       className="inline-flex items-center gap-0.5"
       role="img"
       aria-label={`Còn ${lives}/${max} lượt thử`}

@@ -112,7 +112,7 @@ describe('WordWorm', () => {
     fireEvent.click(screen.getByTestId(back![0]));
     expect(screen.getByTestId(`worm-cell-${target!.cell}`).textContent).toBe(target!.letter);
     const hearts = screen.getByTestId('worm-hearts');
-    expect(hearts.querySelectorAll('.opacity-25').length).toBe(1);
+    expect(hearts.querySelectorAll('.scale-75').length).toBe(1);
   });
 
   it('moving into an open cell slides the worm', () => {

@@ -3,6 +3,7 @@ import { seededShuffleIndices } from '../../lib/prng';
 import { spellableWords } from '../sources';
 import { gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -130,11 +131,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
 
   return (
     <div data-testid="game-word-worm" className="flex flex-col items-center gap-3">
-      <div className="flex items-center gap-1 text-xl" data-testid="worm-hearts">
-        {Array.from({ length: spec.lives }, (_, i) => (
-          <span key={i} className={i < hearts ? '' : 'opacity-25'}><EmojiVisual emoji="❤️" variant="block" /></span>
-        ))}
-      </div>
+      <HeartMeter testId="worm-hearts" lives={hearts} max={spec.lives} />
       {/* Spelling strip - the letter the worm must eat next glows. */}
       <div data-testid="worm-word" className="flex items-center gap-1.5">
         {word.split('').map((ch, i) => (

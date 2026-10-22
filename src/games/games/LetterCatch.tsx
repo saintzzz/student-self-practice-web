@@ -6,6 +6,7 @@ import { EmojiVisual } from '../../components/EmojiVisual';
 import { spellableWords } from '../sources';
 import { GameRoundDots, LetterOrderField, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import type { SpellTile } from '../../types';
 
@@ -47,6 +48,9 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
   const [misses, setMisses] = useState(0);
   const [points, setPoints] = useState(0);
   const [done, setDone] = useState(0);
+  // Wrong bubbles are frequent in a spelling game, so the pool is
+  // gentler than answer-games: spec.lives + 3 chances per run.
+  const lives = useGameLives(spec.lives + 3);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrongTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -110,13 +114,22 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
     setWrongTile(tile.id);
     if (wrongTimerRef.current) clearTimeout(wrongTimerRef.current);
     wrongTimerRef.current = setTimeout(() => setWrongTile(null), 450);
+    if (lives.lose() <= 0) {
+      timerRef.current = setTimeout(
+        () => onEnd({ points, maxPoints: spec.rounds * 2, correctCount: done, attempted: Math.max(1, done) }),
+        500,
+      );
+    }
   };
 
   const visual = getWordVisual(word.id);
 
   return (
     <div data-testid="game-letter-catch" className="flex flex-col items-center gap-5">
-      <GameRoundDots total={words.length} done={done} />
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={words.length} done={done} />
+        <HeartMeter lives={lives.lives} max={lives.max} />
+      </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
         <EmojiVisual emoji={visual?.emoji ?? '❓'} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />
         <span className="font-display text-3xl font-extrabold tracking-[0.3em] text-slate-800">

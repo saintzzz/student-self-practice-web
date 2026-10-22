@@ -3,6 +3,7 @@ import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -26,6 +27,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [lock, setLock] = useState(false);
   const [fed, setFed] = useState(false);
+  const lives = useGameLives(spec.lives);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -61,6 +63,15 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
     gameVerdictSfx(false);
     const next = [...wrongPicks, index];
     setWrongPicks(next);
+    const left = lives.lose();
+    if (left <= 0) {
+      setLock(true);
+      timerRef.current = setTimeout(
+        () => onEnd({ points, maxPoints: spec.rounds * 2, correctCount, attempted: Math.min(round + 1, spec.rounds) }),
+        650,
+      );
+      return;
+    }
     if (next.length >= spec.missLimit) {
       setLock(true);
       timerRef.current = setTimeout(() => advance(0, false), 650);
@@ -69,7 +80,10 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
 
   return (
     <div data-testid="game-feed-the-pig" className="flex flex-col items-center gap-4">
-      <GameRoundDots total={rounds.length} done={round} />
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={rounds.length} done={round} />
+        <HeartMeter lives={lives.lives} max={lives.max} />
+      </div>
       <div className="flex flex-col items-center gap-1">
         <span
           data-testid="pig-face"

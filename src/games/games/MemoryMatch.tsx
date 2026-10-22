@@ -29,7 +29,9 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [moves, setMoves] = useState(0);
   const [lock, setLock] = useState(false);
-  const lives = useGameLives(3);
+  // Mismatches are how a memory run teaches positions, so the pool is
+  // gentler than answer-games: spec.lives + 3 chances per run.
+  const lives = useGameLives(spec.lives + 3);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);

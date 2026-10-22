@@ -4,6 +4,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
+import { HeartMeter, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -35,6 +36,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [lock, setLock] = useState(false);
+  const lives = useGameLives(spec.lives);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -63,7 +65,17 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
     setLock(true);
     const newCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(newCorrect);
-    if (!correct) setWrongPicks([index]);
+    if (!correct) {
+      setWrongPicks([index]);
+      if (lives.lose() <= 0) {
+        timerRef.current = setTimeout(() => {
+          if (endedRef.current) return;
+          endedRef.current = true;
+          onEnd({ points: revealed, maxPoints: tiles, correctCount: newCorrect, attempted: round + 1 });
+        }, 700);
+        return;
+      }
+    }
     timerRef.current = setTimeout(() => advance(correct ? 1 : 0, newCorrect), 700);
   };
 
@@ -72,7 +84,10 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
 
   return (
     <div data-testid="game-picture-reveal" className="flex flex-col items-center gap-4">
-      <GameRoundDots total={rounds.length} done={round} />
+      <div className="flex items-center gap-4">
+        <GameRoundDots total={rounds.length} done={round} />
+        <HeartMeter lives={lives.lives} max={lives.max} />
+      </div>
       <div
         data-testid="reveal-board"
         className="relative grid w-56 grid-cols-3 gap-1.5 overflow-hidden rounded-2xl border-2 border-amber-200/50 bg-gradient-to-b from-amber-50 to-orange-100 p-1.5 shadow-[0_12px_28px_-12px_rgba(0,0,0,0.6)]"
