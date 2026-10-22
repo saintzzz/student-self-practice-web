@@ -31,8 +31,11 @@ export interface QbRow {
   tokens?: string[] | null;
   /** word-to-image-mcq carries {assetId} objects, not strings. */
   choices: unknown[] | null;
-  answer: { index?: number; boolean?: boolean; text?: string; accepted?: unknown[] };
-  explanation_vi: string | null;
+  /** CR-102: absent on the wire - the fetch RPCs strip it. Verdicts come
+   *  back from `score_bank_attempts`; the field stays optional so tests
+   *  and dev seeds can still construct hydrated rows. */
+  answer?: { index?: number; boolean?: boolean; text?: string; accepted?: unknown[] };
+  explanation_vi?: string | null;
   variant_group_id: string | null;
   asset_paths: string[];
   audio_transcripts: string[];
@@ -222,6 +225,15 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
   const imageUrl = row.asset_paths[0] ? assetUrl(row.asset_paths[0]) : undefined;
   const transcript = row.audio_transcripts[0] ?? row.transcript ?? undefined;
 
+  // CR-102: `row.answer` is stripped on the wire - a keyless row maps to
+  // a pending question (bankId + placeholder fields). `isExamAnswerCorrect`
+  // branches on bankId so the placeholder can never score; hydration
+  // happens after `score_bank_attempts` resolves the attempt. Rows WITH
+  // an answer (tests, dev seeds, reorder - which keeps its sentence for
+  // the grammar-aware tile check) map exactly as before.
+  const hasKey = row.answer !== undefined && row.answer !== null;
+  const pending = hasKey ? {} : { bankId: row.id };
+
   switch (row.question_type) {
     case 'mcq':
     case 'image-to-word-mcq':
@@ -229,8 +241,9 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
     case 'visual-mcq':
     case 'visual-count-mcq': {
       const options = toFour(row.choices?.map(optionLabel));
-      const correctIndex = row.answer.index;
-      if (!options || correctIndex === undefined || correctIndex < 0 || correctIndex > 3) return null;
+      const correctIndex = row.answer?.index;
+      if (!options) return null;
+      if (hasKey && (correctIndex === undefined || correctIndex < 0 || correctIndex > 3)) return null;
       const optionImages =
         row.question_type === 'word-to-image-mcq'
           ? resolveOptionImages(row.choices, row.asset_paths)
@@ -241,13 +254,14 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         kind: 'grammar-mcq',
         prompt: transcript ? 'Nghe và chọn đáp án đúng.' : str(row.prompt_text),
         options,
-        correctIndex: correctIndex as 0 | 1 | 2 | 3,
+        correctIndex: (correctIndex ?? 0) as 0 | 1 | 2 | 3,
         explanation,
         imageUrl: row.question_type === 'word-to-image-mcq' ? undefined : imageUrl,
         optionImages,
         transcript,
         passage: row.passage ?? undefined,
         bankSkill: row.skill ?? undefined,
+        ...pending,
       };
     }
     case 'true-false': {
@@ -258,30 +272,31 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         optionLabel(row.choices[0]) === 'True' &&
         optionLabel(row.choices[1]) === 'False';
       const bool =
-        row.answer.boolean ??
-        (row.answer.text === 'True' || (tfChoices && row.answer.index === 0)
+        row.answer?.boolean ??
+        (row.answer?.text === 'True' || (tfChoices && row.answer?.index === 0)
           ? true
-          : row.answer.text === 'False' || (tfChoices && row.answer.index === 1)
+          : row.answer?.text === 'False' || (tfChoices && row.answer?.index === 1)
             ? false
             : undefined);
-      if (bool === undefined) return null;
+      if (hasKey && bool === undefined) return null;
       return {
         id: row.id,
         topicId,
         kind: 'true-false-reading',
         passage: str(row.passage ?? row.transcript),
         statement: str(row.statement ?? row.prompt_text),
-        answer: bool,
+        answer: bool ?? false,
         explanation,
         bankSkill: row.skill ?? undefined,
+        ...pending,
       };
     }
     case 'text-answer': {
       const accept = [
-        ...(row.answer.text !== undefined ? [str(row.answer.text)] : []),
-        ...(Array.isArray(row.answer.accepted) ? row.answer.accepted.map(str).filter(Boolean) : []),
+        ...(row.answer?.text !== undefined ? [str(row.answer.text)] : []),
+        ...(Array.isArray(row.answer?.accepted) ? row.answer.accepted.map(str).filter(Boolean) : []),
       ].filter(Boolean);
-      if (accept.length === 0) return null;
+      if (hasKey && accept.length === 0) return null;
       return {
         id: row.id,
         topicId,
@@ -292,10 +307,11 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
         explanation,
         imageUrl,
         bankSkill: row.skill ?? undefined,
+        ...pending,
       };
     }
     case 'reorder': {
-      const sentence = str(row.answer.text);
+      const sentence = str(row.answer?.text);
       if (!sentence) return null;
       const tokens =
         Array.isArray(row.tokens) && row.tokens.length >= 2
@@ -470,4 +486,133 @@ export async function createExamFromAssignment(
     droppedCount: rows.length - questions.length,
     poolShort: false,
   };
+}
+
+// ---------------------------------------------------------------------------
+// CR-102 - server-side scoring (the moat). Bank rows arrive keyless
+// (bankId + placeholder answer fields); verdicts come back from
+// practice.score_bank_attempts and hydrate the question objects in place.
+// ---------------------------------------------------------------------------
+
+/** One scored attempt as returned by the oracle. */
+export interface BankScore {
+  question_id: string;
+  correct: boolean;
+  correct_answer: { index?: number; boolean?: boolean; text?: string; accepted?: unknown[] } | null;
+  correct_answer_text: string | null;
+  explanation_vi: string | null;
+}
+
+/** Encode a UI-side ExamAnswer into the wire shape the oracle expects. */
+export function examAnswerToWire(question: ExamQuestion, answer: import('../exam/examSession').ExamAnswer): unknown {
+  switch (answer.type) {
+    case 'option': return { index: answer.index };
+    case 'bool': return { bool: answer.value };
+    case 'text': return { text: answer.text };
+    case 'order': {
+      // Reorder keeps its key on the wire (isWordOrderCorrect stays
+      // client-side) so it never reaches the oracle - the branch exists
+      // only for completeness.
+      const tiles = question.kind === 'word-order' ? question.tiles : [];
+      return { picked: answer.indices.map((i) => tiles[i] ?? '') };
+    }
+    default: return {};
+  }
+}
+
+/** Narrow to the bank-scored kinds (the only ones carrying `bankId`). */
+export function isBankQuestion(
+  question: ExamQuestion,
+): question is ExamQuestion & { bankId: string; bankVerdict?: boolean } {
+  return 'bankId' in question && typeof question.bankId === 'string';
+}
+
+/**
+ * Score attempts against the bank oracle. `answers[i]` pairs with
+ * `questions[i]`; null answers send a guaranteed-wrong response so the
+ * returned correct_answer_text still hydrates the review screen.
+ * Throws the same kid-friendly error on rate-limit as the fetch path.
+ */
+export async function scoreBankAttempts(
+  questions: readonly ExamQuestion[],
+  answers: readonly (import('../exam/examSession').ExamAnswer | null)[],
+): Promise<Map<string, BankScore>> {
+  const attempts = questions
+    .map((q, i) => ({ q, a: answers[i] }))
+    .filter(({ q }) => isBankQuestion(q) && (!('bankVerdict' in q) || q.bankVerdict === undefined))
+    .map(({ q, a }) => ({
+      question_id: (q as ExamQuestion & { bankId: string }).bankId,
+      response: a ? examAnswerToWire(q, a) : {},
+    }));
+  const map = new Map<string, BankScore>();
+  if (attempts.length === 0 || !isSupabaseConfigured()) return map;
+  const { data, error } = await (await getSupabase()).rpc('score_bank_attempts', {
+    p_attempts: attempts,
+  });
+  if (error) throw bankFetchError(error);
+  for (const row of (data ?? []) as BankScore[]) map.set(row.question_id, row);
+  return map;
+}
+
+/**
+ * Hydrate a pending bank question with the oracle's verdict: bankVerdict
+ * marks the attempt, the kind's real answer fields and `explanation` get
+ * written back so review rendering is identical to a hydrated row.
+ */
+export function hydrateBankQuestion(question: ExamQuestion, score: BankScore): ExamQuestion {
+  const key = score.correct_answer;
+  const shared = {
+    bankVerdict: score.correct,
+    bankCorrectText: score.correct_answer_text ?? '',
+    explanation: score.explanation_vi ?? question.explanation,
+  };
+  switch (question.kind) {
+    case 'grammar-mcq': {
+      const idx = typeof key?.index === 'number' ? key.index : question.correctIndex;
+      return { ...question, ...shared, correctIndex: (idx >= 0 && idx <= 3 ? idx : 0) as 0 | 1 | 2 | 3 };
+    }
+    case 'true-false-reading': {
+      // correct_answer_text ('True'/'False') is authoritative - it also
+      // covers index-only keys ({index:0}) that the key branches below
+      // would miss. Boolean/text/index key fields remain as fallbacks.
+      const text = score.correct_answer_text;
+      const bool =
+        key?.boolean ??
+        (text === 'True' || key?.text === 'True'
+          ? true
+          : text === 'False' || key?.text === 'False'
+            ? false
+            : key?.index === 0 ? true : key?.index === 1 ? false : question.answer);
+      return { ...question, ...shared, answer: bool };
+    }
+    case 'text-answer': {
+      const accept = [
+        ...(key?.text !== undefined ? [str(key.text)] : []),
+        ...(Array.isArray(key?.accepted) ? key.accepted.map(str).filter(Boolean) : []),
+      ];
+      return { ...question, ...shared, accept: accept.length > 0 ? accept : question.accept };
+    }
+    case 'word-order':
+      return key?.text ? { ...question, ...shared, sentence: key.text } : { ...question, ...shared };
+    default:
+      return { ...question, ...shared };
+  }
+}
+
+/**
+ * Resolve every pending bank question in a sitting - unanswered items
+ * are scored too so the review sheet can show the correct answer text.
+ * Returns a new questions array; local (non-bank) questions pass through
+ * untouched.
+ */
+export async function resolveBankVerdicts(
+  questions: readonly ExamQuestion[],
+  answers: readonly (import('../exam/examSession').ExamAnswer | null)[],
+): Promise<ExamQuestion[]> {
+  const scores = await scoreBankAttempts(questions, answers);
+  if (scores.size === 0) return [...questions];
+  return questions.map((q) => {
+    const score = isBankQuestion(q) ? scores.get(q.bankId) : undefined;
+    return score ? hydrateBankQuestion(q, score) : q;
+  });
 }

@@ -7,8 +7,31 @@ import type { Question } from './index';
  * Every kind carries `explanation` for the post-submit answer review.
  */
 
+/**
+ * CR-102 - bank-scored marker. The fetch RPCs strip `answer` and
+ * `explanation_vi` from every row (server-side scoring is the moat), so
+ * a bank-sourced question starts with placeholder answer fields plus a
+ * `bankId`. Once `practice.score_bank_attempts` resolves the attempt the
+ * question object is hydrated in place: `bankVerdict` holds the verdict,
+ * `explanation` and the kind's answer fields hold the disclosed key.
+ * `isExamAnswerCorrect` / `examCorrectAnswerText` branch on `bankId`
+ * first, so the placeholders can never silently score.
+ */
+export interface BankScored {
+  /** qb_questions.id - present only on bank-sourced, keyless questions. */
+  bankId?: string;
+  /** Server verdict for the recorded attempt (undefined = unresolved). */
+  bankVerdict?: boolean;
+  /**
+   * Oracle-provided display text for the correct answer. Returned even
+   * for skipped questions (the structured key is not), so the review
+   * sheet can render it without hydrating real answer fields.
+   */
+  bankCorrectText?: string;
+}
+
 /** Sắp xếp lại câu: tap scrambled tiles in order to rebuild `sentence`. */
-export interface WordOrderQuestion {
+export interface WordOrderQuestion extends BankScored {
   id: string;
   topicId: string;
   kind: 'word-order';
@@ -55,7 +78,7 @@ export interface MissingLetterQuestion {
 }
 
 /** Đọc hiểu Đúng/Sai: short passage + statement -> True/False. */
-export interface TrueFalseQuestion {
+export interface TrueFalseQuestion extends BankScored {
   id: string;
   topicId: string;
   kind: 'true-false-reading';
@@ -67,7 +90,7 @@ export interface TrueFalseQuestion {
 }
 
 /** Grammar MCQ: "Lien ___ lunch at 11:30." -> has. */
-export interface GrammarMcqQuestion {
+export interface GrammarMcqQuestion extends BankScored {
   id: string;
   topicId: string;
   kind: 'grammar-mcq';
@@ -106,7 +129,7 @@ export interface GrammarMcqQuestion {
  * thirty-four." -> "11"/"eleven") and science fills. `accept` lists every
  * acceptable spelling (e.g. digits AND the English word form).
  */
-export interface TextAnswerQuestion {
+export interface TextAnswerQuestion extends BankScored {
   id: string;
   topicId: string;
   kind: 'text-answer';

@@ -32,7 +32,7 @@ interface AttemptEvent {
 export type ExamTelemetryMode = 'practice' | 'mock' | 'form' | 'arena' | 'review';
 
 export interface ExamTelemetry {
-  record(question: ExamQuestion, answer: ExamAnswer, latencyMs: number): void;
+  record(question: ExamQuestion, answer: ExamAnswer, latencyMs: number, isCorrectOverride?: boolean): void;
   /** Flush remaining buffered events; call on exam finish/unmount. */
   flush(): Promise<void>;
   /** Shadow-log the adaptive difficulty recommendation (V7 slice 1). */
@@ -102,8 +102,10 @@ export function createExamTelemetry(opts: {
   }
 
   return {
-    record(question, answer, latencyMs) {
-      const isCorrect = isExamAnswerCorrect(question, answer);
+    record(question, answer, latencyMs, isCorrectOverride) {
+      // CR-102: bank questions resolve their verdict via the oracle - the
+      // caller passes it in rather than re-deriving it here.
+      const isCorrect = isCorrectOverride ?? isExamAnswerCorrect(question, answer);
       answered += 1;
       if (isCorrect) correct += 1;
       if (!enabled) return;

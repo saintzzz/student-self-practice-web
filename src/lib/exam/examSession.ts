@@ -128,6 +128,10 @@ function normalize(text: string): string {
 
 /** Single source of truth: does this answer mark this question right? */
 export function isExamAnswerCorrect(question: ExamQuestion, answer: ExamAnswer | null): boolean {
+  // CR-102: bank-scored questions carry no key - the verdict was filled
+  // by score_bank_attempts. Unresolved reads score false (fail-closed);
+  // resolveBankVerdicts runs before any scoring pass in the real flow.
+  if ('bankId' in question && question.bankId) return question.bankVerdict === true;
   if (!answer) return false;
   switch (question.kind) {
     case 'word-order': {
@@ -168,6 +172,11 @@ export function isExamAnswerCorrect(question: ExamQuestion, answer: ExamAnswer |
 
 /** The correct answer rendered as text for the review screen. */
 export function examCorrectAnswerText(question: ExamQuestion): string {
+  // CR-102: bank questions carry the oracle's display text - it is the
+  // authoritative label even when the structured key was not disclosed
+  // (skipped attempts), and it keeps hydrated questions consistent with
+  // what the server would say.
+  if ('bankId' in question && question.bankId) return question.bankCorrectText ?? '';
   switch (question.kind) {
     case 'word-order':
       return question.sentence;
@@ -316,6 +325,26 @@ export function createExam(
   };
 }
 
+/**
+ * CR-102 r99: structural equality for ExamAnswer - used to detect answer
+ * CHANGES on already-scored bank questions (a changed answer must
+ * invalidate its verdict) and to drop stale async resolutions (a score
+ * that resolves for an older answer must never patch the question).
+ */
+export function sameExamAnswer(a: ExamAnswer | null | undefined, b: ExamAnswer | null | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.type !== b.type) return false;
+  switch (a.type) {
+    case 'option': return a.index === (b as { index: number }).index;
+    case 'bool': return a.value === (b as { value: boolean }).value;
+    case 'text': return a.text === (b as { text: string }).text;
+    case 'order': {
+      const bi = (b as { indices: readonly number[] }).indices;
+      return a.indices.length === bi.length && a.indices.every((v, i) => v === bi[i]);
+    }
+  }
+}
+
 export function answerCurrent(state: ExamState, answer: ExamAnswer): ExamState {
   if (state.finishedAtMs !== null) return state;
   const answers = [...state.answers];
@@ -349,10 +378,22 @@ export function remainingSeconds(state: ExamState, nowMs: number): number {
  * CR-28: capture every answered-and-wrong question into the spaced-
  * repetition review queue. Unanswered (skipped) questions are excluded.
  */
+/**
+ * CR-102: a resolved bank question replays fine WITHOUT its `bankId` -
+ * hydration wrote the real answer fields back. Strip the marker so
+ * review-mode replays score locally instead of freezing on a stale
+ * verdict or needing the oracle.
+ */
+export function unbankQuestion<T extends ExamQuestion>(q: T): T {
+  if (!('bankId' in q) || !q.bankId) return q;
+  const { bankId: _b, bankVerdict: _v, bankCorrectText: _t, ...rest } = q;
+  return rest as T;
+}
+
 export function captureExamWrongAnswers(gradeId: string, review: readonly ExamReviewItem[]): void {
   for (const item of review) {
     if (item.answer !== null && !item.isCorrect) {
-      recordWrongExamQuestion(gradeId, item.question);
+      recordWrongExamQuestion(gradeId, unbankQuestion(item.question));
     }
   }
 }

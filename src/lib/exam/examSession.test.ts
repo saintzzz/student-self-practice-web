@@ -11,6 +11,7 @@ import {
   isExamAnswerCorrect,
   jumpTo,
   remainingSeconds,
+  sameExamAnswer,
   submitExam,
   type ExamState,
 } from './examSession';
@@ -220,5 +221,20 @@ describe('pool mix', () => {
     for (const kind of ['word-order', 'odd-pronunciation', 'missing-letter', 'grammar-mcq', 'true-false-reading'] as const) {
       expect(kinds.has(kind), `missing kind ${kind}`).toBe(true);
     }
+  });
+});
+
+describe('sameExamAnswer (CR-102 r99)', () => {
+  it('compares option/bool/text/order structurally', () => {
+    expect(sameExamAnswer(null, null)).toBe(true);
+    expect(sameExamAnswer(null, { type: 'option', index: 0 })).toBe(false);
+    expect(sameExamAnswer({ type: 'option', index: 1 }, { type: 'option', index: 1 })).toBe(true);
+    expect(sameExamAnswer({ type: 'option', index: 1 }, { type: 'option', index: 2 })).toBe(false);
+    expect(sameExamAnswer({ type: 'bool', value: true }, { type: 'bool', value: true })).toBe(true);
+    expect(sameExamAnswer({ type: 'text', text: 'cat' }, { type: 'text', text: 'cat' })).toBe(true);
+    expect(sameExamAnswer({ type: 'text', text: 'cat' }, { type: 'text', text: 'dog' })).toBe(false);
+    expect(sameExamAnswer({ type: 'order', indices: [0, 1, 2] }, { type: 'order', indices: [0, 1, 2] })).toBe(true);
+    expect(sameExamAnswer({ type: 'order', indices: [0, 1, 2] }, { type: 'order', indices: [0, 2, 1] })).toBe(false);
+    expect(sameExamAnswer({ type: 'order', indices: [0, 1] }, { type: 'option', index: 0 })).toBe(false);
   });
 });

@@ -8,6 +8,7 @@ import {
   isExamAnswerCorrect,
   jumpTo,
   remainingSeconds,
+  sameExamAnswer,
   submitExam,
   examConfigForGrade,
   EXAM_POINTS_PER_QUESTION,
@@ -31,8 +32,16 @@ import { getSession } from '../lib/auth/practiceAuth';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { liveRoomFinish, liveRoomLeave, liveRoomState, subscribeLiveRoom, type LiveChannel, type LivePlayer } from '../lib/arenaLive';
 import { recordArenaDuel, type Sticker } from '../lib/engagement/store';
-import { captureExamWrongAnswers } from '../lib/exam/examSession';
-import { createExamFromAssignment, createExamFromBank, gradeNumber } from '../lib/qb/bank';
+import { captureExamWrongAnswers, unbankQuestion } from '../lib/exam/examSession';
+import {
+  createExamFromAssignment,
+  createExamFromBank,
+  gradeNumber,
+  hydrateBankQuestion,
+  isBankQuestion,
+  resolveBankVerdicts,
+  scoreBankAttempts,
+} from '../lib/qb/bank';
 import { assignmentSubmit } from '../lib/assignments';
 import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
@@ -254,9 +263,86 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     return () => window.clearInterval(timer);
   }, [exam]);
 
+  /* CR-102: bank questions are scored by the oracle, never the client.
+   * `finishingRef` gates the resolve->submit transition; a failed resolve
+   * keeps the sitting open so honest scoring never silently fails
+   * closed. */
+  const verdictPendingRef = useRef(false);
+  const finishingRef = useRef(false);
+  const [scoreError, setScoreError] = useState(false);
+
+  /** Resolve pending bank verdicts, then stamp finishedAtMs. */
+  function finishExam(): void {
+    const snapshot = exam;
+    if (!snapshot || snapshot.finishedAtMs !== null || finishingRef.current) return;
+    finishingRef.current = true;
+    setScoreError(false);
+    // Fast path: no unresolved bank verdict - submit synchronously
+    // (local/arena/review sittings never touch the oracle).
+    const hasPending = snapshot.questions.some(
+      (q) => isBankQuestion(q) && q.bankVerdict === undefined,
+    );
+    if (!hasPending) {
+      setExam((current) =>
+        current && current.finishedAtMs === null
+          ? submitExam(current, Date.now())
+          : current,
+      );
+      finishingRef.current = false;
+      return;
+    }
+    void (async () => {
+      try {
+        const resolved = await resolveBankVerdicts(snapshot.questions, snapshot.answers);
+        setExam((current) => {
+          if (!current || current.finishedAtMs !== null) return current;
+          const byId = new Map(resolved.map((q) => [q.id, q]));
+          const merged = current.questions.map((q) => byId.get(q.id) ?? q);
+          return submitExam({ ...current, questions: merged }, Date.now());
+        });
+      } catch {
+        // Scoring failed - keep the sitting open; the kid retries the
+        // submit rather than recording a dishonest all-wrong sheet.
+        setScoreError(true);
+      } finally {
+        finishingRef.current = false;
+      }
+    })();
+  }
+
+  /** Hydrate one bank question via the oracle; returns hydrated copy. */
+  async function scoreAndHydrate(
+    question: ExamQuestion,
+    answer: ExamAnswer | null,
+  ): Promise<{ question: ExamQuestion; correct: boolean }> {
+    if (!isBankQuestion(question)) {
+      return { question, correct: isExamAnswerCorrect(question, answer) };
+    }
+    const scores = await scoreBankAttempts([question], [answer]);
+    const s = scores.get(question.bankId);
+    return {
+      question: s ? hydrateBankQuestion(question, s) : question,
+      correct: s?.correct ?? false,
+    };
+  }
+
+  /**
+   * Merge a hydrated question back into exam state. `index`+`expected`
+   * guard against stale resolutions: a score that resolves for an OLDER
+   * answer must never patch the question (the newer answer's own
+   * resolution lands later and applies instead).
+   */
+  function patchExamQuestion(hydrated: ExamQuestion, index: number, expected: ExamAnswer | null): void {
+    setExam((current) =>
+      current && sameExamAnswer(current.answers[index] ?? null, expected)
+        ? { ...current, questions: current.questions.map((q) => (q.id === hydrated.id ? hydrated : q)) }
+        : current,
+    );
+  }
+
   useEffect(() => {
     if (!isPractice && exam && exam.finishedAtMs === null && remainingSeconds(exam, now) <= 0) {
-      setExam((current) => (current ? submitExam(current, Date.now()) : current));
+      finishExam();
     }
   }, [exam, now, isPractice]);
 
@@ -522,11 +608,57 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   }
 
   function answer(answer: ExamAnswer): void {
+    // CR-102 r99: freeze input while finishExam resolves verdicts - an
+    // answer landing mid-resolve could pair a new attempt with a verdict
+    // scored for the old one.
+    if (finishingRef.current) return;
     if (isPractice) {
-      if (verdict) return; // already answered - wait for "Câu tiếp".
+      if (verdict || verdictPendingRef.current) return; // already answered - wait for "Câu tiếp".
       if (!exam) return;
       const question = exam.questions[exam.currentIndex];
       if (!question) return;
+      const index = exam.currentIndex;
+      // CR-102: keyless bank questions are scored by the oracle; the UI
+      // records the answer immediately and the verdict lands ~300ms later.
+      if (isBankQuestion(question)) {
+        verdictPendingRef.current = true;
+        setScoreError(false);
+        setExam((current) => (current ? answerCurrent(current, answer) : current));
+        void (async () => {
+          try {
+            const { question: hydrated, correct: isCorrect } = await scoreAndHydrate(question, answer);
+            patchExamQuestion(hydrated, index, answer);
+            telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current, isCorrect);
+            telemetryRef.current?.logAdaptive(question, isCorrect);
+            setVerdict({ isCorrect });
+            playSfx(isCorrect ? 'correct' : 'wrong');
+            if (isLiveArena) {
+              if (isCorrect) livePointsRef.current += EXAM_POINTS_PER_QUESTION;
+              liveChannelRef.current?.sendProgress(index + 1, livePointsRef.current);
+            }
+            if (!isArena && !isAssignment) {
+              if (isCorrect && !creditedRef.current.has(index)) {
+                creditedRef.current.add(index);
+                recordCorrectAnswers(1);
+              }
+              if (!creditedRef.current.has(`s${index}`)) {
+                creditedRef.current.add(`s${index}`);
+                recordSkillAnswer(gradeId, bankSkillOf(hydrated) ?? skillKeyFor(hydrated), isCorrect);
+              }
+              if (isReview) recordReviewOutcome(gradeId, question.id, isCorrect);
+              else if (!isCorrect) recordWrongExamQuestion(gradeId, unbankQuestion(hydrated));
+            }
+          } catch {
+            // Scoring failed (rate limit / offline) - the answer stays
+            // recorded and the kid re-taps to retry; a silent pending
+            // state would look like the button died.
+            setScoreError(true);
+          } finally {
+            verdictPendingRef.current = false;
+          }
+        })();
+        return;
+      }
       const isCorrect = isExamAnswerCorrect(question, answer);
       telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current);
       telemetryRef.current?.logAdaptive(question, isCorrect);
@@ -565,32 +697,75 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     if (!exam) return;
     const currentQuestion = exam.questions[exam.currentIndex];
     if (!currentQuestion) return;
-    // CR-27: same at-answer counting in exam mode (no verdict shown,
-    // but the quest still credits the correct answer immediately).
-    const examCorrect = isExamAnswerCorrect(currentQuestion, answer);
-    telemetryRef.current?.record(currentQuestion, answer, Date.now() - questionShownAtRef.current);
-    // CR-98: teacher assignments are assessment, not practice - no quest
-    // credit or skill-stat writes (the report reads the server attempt).
-    if (examCorrect && !creditedRef.current.has(exam.currentIndex)) {
-      creditedRef.current.add(exam.currentIndex);
-      if (!isAssignment) recordCorrectAnswers(1);
-    }
-    // CR-29: skill stats per answer; a re-answer during review does not
-    // double-count - the stats reflect the FIRST answer, matching what
-    // a real exam score sheet records.
-    if (!isAssignment && !creditedRef.current.has(`s${exam.currentIndex}`)) {
-      creditedRef.current.add(`s${exam.currentIndex}`);
-      recordSkillAnswer(gradeId, bankSkillOf(currentQuestion) ?? skillKeyFor(currentQuestion), examCorrect);
+    const index = exam.currentIndex;
+    // CR-102: bank questions score async - the attempt is recorded now,
+    // and the verdict resolves in the background, crediting on arrival.
+    // CR-102 r99: a CHANGED answer invalidates the old verdict - clear
+    // it now and rescore. Re-tapping the same resolved answer is a
+    // no-op (the verdict already matches this attempt).
+    const changed = !sameExamAnswer(exam.answers[index] ?? null, answer);
+    if (isBankQuestion(currentQuestion)) {
+      const resolved = currentQuestion.bankVerdict !== undefined;
+      if (changed || !resolved) {
+        // Score the question with its verdict cleared so the resolver
+        // filter does not skip it; the recorded answer below also drops
+        // the stale verdict from state.
+        const pending = changed && resolved
+          ? { ...currentQuestion, bankVerdict: undefined } as typeof currentQuestion
+          : currentQuestion;
+        void (async () => {
+          try {
+            const { question: hydrated, correct } = await scoreAndHydrate(pending, answer);
+            patchExamQuestion(hydrated, index, answer);
+            telemetryRef.current?.record(currentQuestion, answer, Date.now() - questionShownAtRef.current, correct);
+            if (correct && !creditedRef.current.has(index)) {
+              creditedRef.current.add(index);
+              if (!isAssignment) recordCorrectAnswers(1);
+            }
+            if (!isAssignment && !creditedRef.current.has(`s${index}`)) {
+              creditedRef.current.add(`s${index}`);
+              recordSkillAnswer(gradeId, bankSkillOf(hydrated) ?? skillKeyFor(hydrated), correct);
+            }
+          } catch {
+            // Verdict stays pending - finishExam's resolve pass retries.
+          }
+        })();
+      }
+    } else {
+      // CR-27: same at-answer counting in exam mode (no verdict shown,
+      // but the quest still credits the correct answer immediately).
+      const examCorrect = isExamAnswerCorrect(currentQuestion, answer);
+      telemetryRef.current?.record(currentQuestion, answer, Date.now() - questionShownAtRef.current);
+      // CR-98: teacher assignments are assessment, not practice - no quest
+      // credit or skill-stat writes (the report reads the server attempt).
+      if (examCorrect && !creditedRef.current.has(index)) {
+        creditedRef.current.add(index);
+        if (!isAssignment) recordCorrectAnswers(1);
+      }
+      // CR-29: skill stats per answer; a re-answer during review does not
+      // double-count - the stats reflect the FIRST answer, matching what
+      // a real exam score sheet records.
+      if (!isAssignment && !creditedRef.current.has(`s${index}`)) {
+        creditedRef.current.add(`s${index}`);
+        recordSkillAnswer(gradeId, bankSkillOf(currentQuestion) ?? skillKeyFor(currentQuestion), examCorrect);
+      }
     }
     setExam((current) => {
       if (!current) return current;
       const next = answerCurrent(current, answer);
+      // CR-102 r99: a changed bank answer carries no verdict until the
+      // re-score lands - the old verdict belongs to the old attempt.
+      const questions = isBankQuestion(currentQuestion) && changed
+        ? next.questions.map((q, i) =>
+            i === next.currentIndex ? ({ ...q, bankVerdict: undefined } as typeof q) : q)
+        : next.questions;
+      const stamped = { ...next, questions };
       // Auto-advance to the next unanswered question - essential at 200q.
       const advanceTo =
-        next.answers.findIndex((a, i) => a === null && i > next.currentIndex) !== -1
-          ? next.answers.findIndex((a, i) => a === null && i > next.currentIndex)
-          : next.answers.findIndex((a) => a === null);
-      return jumpTo(next, advanceTo === -1 ? next.currentIndex : advanceTo);
+        stamped.answers.findIndex((a, i) => a === null && i > stamped.currentIndex) !== -1
+          ? stamped.answers.findIndex((a, i) => a === null && i > stamped.currentIndex)
+          : stamped.answers.findIndex((a) => a === null);
+      return jumpTo(stamped, advanceTo === -1 ? stamped.currentIndex : advanceTo);
     });
   }
 
@@ -601,7 +776,8 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       if (!current) return current;
       const nextIndex = current.currentIndex + 1;
       if (nextIndex >= current.questions.length) {
-        return submitExam(current, Date.now());
+        finishExam();
+        return current;
       }
       return jumpTo(current, nextIndex);
     });
@@ -780,6 +956,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         </button>
       </header>
 
+      {/* CR-102: oracle scoring failed mid-submit or mid-answer - the
+          sitting stays open; the kid retries instead of losing the sheet
+          (re-tap the answer in practice, re-tap NỘP BÀI at submit). */}
+      {scoreError && (
+        <div data-testid="exam-score-error" className="mx-auto mb-2 w-fit rounded-full bg-rose-100 px-4 py-1 text-sm font-bold text-rose-800">
+          Chưa chấm được điểm - em thử lại nhé!
+        </div>
+      )}
+
       {/* CR-97: live race standings - every player's progress streams in
           via broadcast; sorted live by score then progress. */}
       {isLiveArena && exam.finishedAtMs === null && (
@@ -807,7 +992,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           confirmLabel="Kết thúc"
           onConfirm={() => {
             setSubmitConfirmOpen(false);
-            setExam((c) => (c ? submitExam(c, Date.now()) : c));
+            finishExam();
           }}
           onCancel={() => setSubmitConfirmOpen(false)}
         />
@@ -824,7 +1009,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           onBack={() => setReviewOpen(false)}
           onSubmit={() => {
             setReviewOpen(false);
-            setExam((c) => (c ? submitExam(c, Date.now()) : c));
+            finishExam();
           }}
         />
       )}

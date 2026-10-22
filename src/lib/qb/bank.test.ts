@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createExamFromAssignment, createExamFromBank, fetchBankQuestions, gradeNumber, pickUnseenFirst, toExamQuestion, type QbRow } from './bank';
-import { isExamAnswerCorrect } from '../exam/examSession';
+import { createExamFromAssignment, createExamFromBank, fetchBankQuestions, gradeNumber, hydrateBankQuestion, pickUnseenFirst, resolveBankVerdicts, toExamQuestion, type QbRow } from './bank';
+import { examCorrectAnswerText, isExamAnswerCorrect } from '../exam/examSession';
 
 const { rpcMock, getSessionMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
@@ -286,6 +286,115 @@ describe('createExamFromBank - r14', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('CR-102 server-side scoring', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset();
+  });
+
+  it('keyless mcq rows map to a pending question - no answer fields baked', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }));
+    expect(q).toMatchObject({ kind: 'grammar-mcq', bankId: 'q1', options: ['a', 'b', 'c', 'd'] });
+    // A pending question must never score - unresolved verdict reads false.
+    expect(isExamAnswerCorrect(q!, { type: 'option', index: 0 })).toBe(false);
+  });
+
+  it('hydrateBankQuestion writes the real key back for review display', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }))!;
+    const hydrated = hydrateBankQuestion(q, {
+      question_id: 'q1',
+      correct: true,
+      correct_answer: { index: 2, text: 'c' },
+      correct_answer_text: 'c',
+      explanation_vi: 'Dung roi.',
+    });
+    expect(hydrated).toMatchObject({ bankId: 'q1', bankVerdict: true, correctIndex: 2, explanation: 'Dung roi.' });
+    expect(isExamAnswerCorrect(hydrated, { type: 'option', index: 2 })).toBe(true);
+    expect(examCorrectAnswerText(hydrated)).toBe('c');
+  });
+
+  it('resolveBankVerdicts scores only unresolved bank questions', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    const pending = toExamQuestion(row({ question_type: 'mcq', choices: ['a','b','c','d'], answer: undefined }))!;
+    const resolved = {
+      ...toExamQuestion(row({ id: 'q2', question_type: 'mcq', choices: ['a','b','c','d'], answer: undefined }))!,
+      bankVerdict: true,
+    };
+    rpcMock.mockResolvedValue({ data: [{
+      question_id: 'q1', correct: true,
+      correct_answer: { index: 0 }, correct_answer_text: 'a', explanation_vi: null,
+    }], error: null });
+    const out = await resolveBankVerdicts([pending, resolved], [{ type: 'option', index: 0 }, { type: 'option', index: 0 }]);
+    // Only the pending one hit the wire.
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    const attempts = (rpcMock.mock.calls[0]![1] as { p_attempts: unknown[] }).p_attempts;
+    expect(attempts).toHaveLength(1);
+    expect(out[0]).toMatchObject({ bankVerdict: true, correctIndex: 0 });
+    expect(out[1]).toBe(resolved);
+  });
+
+  it('reorder rows keep the answer key on the wire (client-side grammar check)', () => {
+    const q = toExamQuestion(row({
+      question_type: 'reorder',
+      answer: { text: 'I like cats' },
+      tokens: ['I', 'like', 'cats'],
+    }));
+    expect(q).toMatchObject({ kind: 'word-order', sentence: 'I like cats' });
+    expect('bankId' in q! && q!.bankId).toBeFalsy();
+  });
+
+  it('r99: skipped attempts hydrate display text without the structured key', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }))!;
+    // An empty/skip attempt returns correct_answer:null (0048) - review
+    // still needs the answer text, and it must come from bankCorrectText.
+    const hydrated = hydrateBankQuestion(q, {
+      question_id: 'q1',
+      correct: false,
+      correct_answer: null,
+      correct_answer_text: 'b',
+      explanation_vi: 'Dap an la b.',
+    });
+    expect(hydrated).toMatchObject({ bankVerdict: false, bankCorrectText: 'b' });
+    expect(examCorrectAnswerText(hydrated)).toBe('b');
+    expect(isExamAnswerCorrect(hydrated, { type: 'option', index: 1 })).toBe(false);
+  });
+
+  it('r99: true-false index-only keys hydrate via correct_answer_text', () => {
+    const q = toExamQuestion(row({
+      question_type: 'true-false',
+      choices: ['True', 'False'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }))!;
+    // Keys like {index:0} carry no boolean/text - the oracle's derived
+    // text is the only reliable verdict the key resolves to.
+    const hydrated = hydrateBankQuestion(q, {
+      question_id: 'q1',
+      correct: true,
+      correct_answer: { index: 0 },
+      correct_answer_text: 'True',
+      explanation_vi: null,
+    });
+    expect(hydrated).toMatchObject({ bankVerdict: true, answer: true });
+    expect(examCorrectAnswerText(hydrated)).toBe('True');
   });
 });
 
