@@ -65,7 +65,7 @@ depth, P2 = polish. Estimates are dev-days, not promises.
 Live competitor teardown - Next.js SPA, one big illustrated PNG per scene +
 DOM button hotspots (no game engine; cheap pattern we can copy today).
 Do NOT clone their art/content (copyright) - generate equivalents via our
-artgen pipeline. Screenshots: `scripts/_martin-*.png` (local).
+artgen pipeline. (Probe screenshots were reviewed live, then cleaned up.)
 
 | Their pattern | Verdict | Maps to |
 |---|---|---|
