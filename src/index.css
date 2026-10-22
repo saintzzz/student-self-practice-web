@@ -190,6 +190,15 @@ textarea {
 }
 .sticker-chip { animation: sticker-chip-in 360ms ease-out both; }
 
+/* CR-104: combo streak chip - a quick scale pop each time the streak
+   increments (element remounts via key={streak}). */
+@keyframes combo-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.combo-pop { animation: combo-pop 300ms cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+
 /* ------------------------------------------------------------------
    CR-12 premium-max ambience (design-spec s18): ambient sky sparkle
    (reuses land-twinkle with staggered delays), mascot float, progress
@@ -268,7 +277,7 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
   .land-drift, .land-drift-slow, .land-sway, .land-twinkle, .land-float,
-  .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip,
+  .confetti-particle, .star-drop, .chest-wiggle, .stars-pop, .sticker-chip, .combo-pop,
   .ambient-sparkle, .mascot-float, .progress-shimmer, .art-breathe,
   .mascot-idle, .mascot-rock, .mascot-wave, .mascot-bounce, .mascot-nod, .mascot-hop,
   .demo-dot-pulse, .demo-dot-travel {

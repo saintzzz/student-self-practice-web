@@ -3,7 +3,7 @@ import { seededShuffleIndices } from '../../lib/prng';
 import { spellableWords } from '../sources';
 import { gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter } from '../lives';
+import { ComboMeter, HeartMeter, useCombo } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -36,6 +36,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
   const [letterIdx, setLetterIdx] = useState(0);
   const [cells, setCells] = useState<LetterCell[]>([]);
   const [hearts, setHearts] = useState(spec.lives);
+  const combo = useCombo();
   const [eaten, setEaten] = useState(0);
   const endedRef = useRef(false);
   const snakeRef = useRef(snake);
@@ -72,6 +73,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
 
   const hurt = (newHearts: number) => {
     gameVerdictSfx(false);
+    combo.miss();
     setHearts(newHearts);
     if (newHearts <= 0) finish(eaten);
   };
@@ -96,6 +98,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
     if (letter && letter.target === letterIdx) {
       // Correct letter - eat, grow, advance the spelling.
       gameVerdictSfx(true);
+      combo.hit();
       const newEaten = eaten + 1;
       setEaten(newEaten);
       setSnake([next, ...snakeRef.current]);
@@ -132,6 +135,7 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
   return (
     <div data-testid="game-word-worm" className="flex flex-col items-center gap-3">
       <HeartMeter testId="worm-hearts" lives={hearts} max={spec.lives} />
+      <ComboMeter streak={combo.streak} />
       {/* Spelling strip - the letter the worm must eat next glows. */}
       <div data-testid="worm-word" className="flex items-center gap-1.5">
         {word.split('').map((ch, i) => (

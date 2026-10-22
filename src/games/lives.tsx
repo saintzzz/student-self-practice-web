@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { playSfx } from '../lib/sfx';
 
 /**
  * CR-100 (B5): shared per-run lives for Game Zone arcade shells.
@@ -68,6 +69,63 @@ export function HeartMeter({ lives, max, testId = 'heart-meter' }: { lives: numb
       {Array.from({ length: max }, (_, i) => (
         <Heart key={i} filled={i < lives} />
       ))}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* CR-104: shared per-run combo streak. Correct answers chain a streak; */
+/* a wrong pick breaks it. Purely celebratory - it never costs hearts,  */
+/* points or gates content, so a broken streak reads as encouragement  */
+/* to start a new chain, not punishment. hit() plays the 'streak' sfx  */
+/* from streak 3 up.                                                    */
+/* ------------------------------------------------------------------ */
+
+export interface GameCombo {
+  streak: number;
+  /** Record a correct answer. Returns the new streak. */
+  hit: () => number;
+  /** Break the chain on a wrong pick. */
+  miss: () => void;
+  reset: () => void;
+}
+
+export function useCombo(): GameCombo {
+  const [streak, setStreak] = useState(0);
+  const ref = useRef(0);
+  const hit = useCallback(() => {
+    const next = ref.current + 1;
+    ref.current = next;
+    setStreak(next);
+    if (next >= 3) playSfx('streak');
+    return next;
+  }, []);
+  const miss = useCallback(() => {
+    ref.current = 0;
+    setStreak(0);
+  }, []);
+  const reset = useCallback(() => {
+    ref.current = 0;
+    setStreak(0);
+  }, []);
+  return { streak, hit, miss, reset };
+}
+
+export function ComboMeter({ streak, testId = 'combo-meter' }: { streak: number; testId?: string }) {
+  if (streak < 2) return null;
+  return (
+    <span
+      data-testid={testId}
+      role="img"
+      aria-label={`Chuỗi đúng ${streak} câu liên tiếp`}
+      title={`Chuỗi đúng ${streak} câu liên tiếp`}
+      className="combo-pop inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-0.5 font-display text-sm font-extrabold text-amber-950 shadow-md ring-1 ring-amber-200/60"
+      key={streak}
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+        <path d="M13.5 1.5s.8 3-1.5 6c-1.8 2.4-4 3.8-4 7a6 6 0 0 0 12 0c0-2-1-3.8-2-5.5-.4 1.6-1.4 2.5-2.5 3 .3-4-1-8.5-2-10.5Z" />
+      </svg>
+      x{streak}
     </span>
   );
 }

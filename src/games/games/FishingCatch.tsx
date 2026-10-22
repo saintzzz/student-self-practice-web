@@ -3,7 +3,7 @@ import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, HintButton, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const ROUNDS = 5;
@@ -27,6 +27,7 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
   const [hints, setHints] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
+  const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -52,6 +53,7 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
     if (lock) return;
     if (index === q.correctIndex) {
       gameVerdictSfx(true);
+      combo.hit();
       playSfx('pop');
       setLock(true);
       const earned = wrongPicks.length === 0 ? 2 : 1;
@@ -59,6 +61,7 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
       return;
     }
     gameVerdictSfx(false);
+    combo.miss();
     const next = [...wrongPicks, index];
     setWrongPicks(next);
     const left = lives.lose();
@@ -87,6 +90,7 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
       <div className="flex items-center gap-4">
         <GameRoundDots total={rounds.length} done={round} />
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-6 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
         <span className="font-display text-3xl font-extrabold tracking-wide text-slate-800">{q.word}</span>

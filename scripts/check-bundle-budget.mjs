@@ -47,9 +47,17 @@ const BASELINE = { js: 101.07, css: 5.2 };
  * is measured as a DELTA against that recorded baseline: +20 kB JS gzip
  * / +4.0 kB CSS gzip max, plus per-lazy-chunk caps. The inherited overrun
  * is logged in docs/MEMORY.md as its own debt item.
+ *
+ * CR-103/104 re-base: the CR-103 content-bank lazy split moved the
+ * vocabulary bank + ipaMap + commonEnglishWords behind a dynamic-import
+ * boundary - entry JS gzip dropped 224.55 -> 129.27 kB (-95.28). CSS
+ * grew +6.52 kB over the cr82 anchor across CR-83..CR-100 (hearts meter,
+ * hint buttons, paper-exam register, trail map, level ring). The anchor
+ * is re-based to the post-CR-103 build; headroom +10 kB JS / +3 kB CSS.
+ * The legacy absolute caps (121/10) remain advisory in the report.
  */
-const CR82_BASELINE = { js: 224.55, css: 13.08 };
-const CR82_DELTA = { js: 20.0, css: 4.0 };
+const CR82_BASELINE = { js: 129.27, css: 19.6 };
+const CR82_DELTA = { js: 10.0, css: 3.0 };
 const CR82_LAZY_CAPS = [
   { match: /^LetterTracingQuestion-.*\.js$/, max: 12, label: 'LetterTracingQuestion chunk' },
   { match: /^FlashcardScreen-.*\.js$/, max: 12, label: 'FlashcardScreen chunk' },

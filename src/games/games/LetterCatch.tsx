@@ -6,7 +6,7 @@ import { EmojiVisual } from '../../components/EmojiVisual';
 import { spellableWords } from '../sources';
 import { GameRoundDots, LetterOrderField, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import type { SpellTile } from '../../types';
 
@@ -51,6 +51,7 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
   // Wrong bubbles are frequent in a spelling game, so the pool is
   // gentler than answer-games: spec.lives + 3 chances per run.
   const lives = useGameLives(spec.lives + 3);
+  const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrongTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -104,11 +105,13 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
       setPlaced(next);
       if (next.length === target.length) {
         gameVerdictSfx(true);
+        combo.hit();
         finishWord(misses);
       }
       return;
     }
     gameVerdictSfx(false);
+    combo.miss();
     const nextMisses = misses + 1;
     setMisses(nextMisses);
     setWrongTile(tile.id);
@@ -129,6 +132,7 @@ export default function LetterCatch({ grade, seed, level, onEnd }: GameProps) {
       <div className="flex items-center gap-4">
         <GameRoundDots total={words.length} done={done} />
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-3 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
         <EmojiVisual emoji={visual?.emoji ?? '❓'} imageUrl={visual?.imageUrl} animated variant="block" className="text-4xl" />

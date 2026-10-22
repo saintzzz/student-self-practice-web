@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createExamFromAssignment, createExamFromBank, fetchBankQuestions, gradeNumber, hydrateBankQuestion, pickUnseenFirst, resolveBankVerdicts, toExamQuestion, type QbRow } from './bank';
+import { createExamFromAssignment, createExamFromBank, examAnswerToWire, fetchBankQuestions, gradeNumber, hydrateBankQuestion, pickUnseenFirst, resolveBankVerdicts, toExamQuestion, type QbRow } from './bank';
 import { examCorrectAnswerText, isExamAnswerCorrect } from '../exam/examSession';
 
 const { rpcMock, getSessionMock } = vi.hoisted(() => ({
@@ -51,9 +51,16 @@ describe('toExamQuestion', () => {
       choices: ['a', 'b', 'c', 'd'],
       answer: { index: 2 },
     }));
-    expect(q).toMatchObject({ kind: 'grammar-mcq', correctIndex: 2, options: ['a', 'b', 'c', 'd'] });
-    expect(isExamAnswerCorrect(q!, { type: 'option', index: 2 })).toBe(true);
-    expect(isExamAnswerCorrect(q!, { type: 'option', index: 0 })).toBe(false);
+    // CR-104: display order is a per-row permutation - assert the
+    // invariants (same set, correctIndex lands on the right option),
+    // never a hardcoded order.
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect([...q.options].sort()).toEqual(['a', 'b', 'c', 'd']);
+    expect(q.options[q.correctIndex]).toBe('c');
+    expect(q.bankOptionOrder).toHaveLength(4);
+    expect([...(q.bankOptionOrder ?? [])].sort()).toEqual([0, 1, 2, 3]);
+    expect(isExamAnswerCorrect(q, { type: 'option', index: q.correctIndex })).toBe(true);
+    expect(isExamAnswerCorrect(q, { type: 'option', index: q.options.indexOf('a') })).toBe(false);
   });
 
   it('maps image-to-word-mcq with imageUrl', () => {
@@ -73,10 +80,10 @@ describe('toExamQuestion', () => {
       answer: { index: 0 },
       asset_paths: ['images/a.webp', 'images/b.webp', 'images/c.webp', 'images/d.webp'],
     }));
-    expect(q).toMatchObject({
-      kind: 'grammar-mcq',
-      optionImages: ['/images/a.webp', '/images/b.webp', '/images/c.webp', '/images/d.webp'],
-    });
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    // optionImages permute in lockstep with options via bankOptionOrder.
+    const order = q.bankOptionOrder!;
+    expect(q.optionImages).toEqual(order.map((i) => `/images/${'abcd'[i]}.webp`));
   });
 
   it('maps reading mcq: passage flows through (CR-51)', () => {
@@ -89,8 +96,9 @@ describe('toExamQuestion', () => {
     expect(q).toMatchObject({
       kind: 'grammar-mcq',
       passage: 'On Sunday, Lan goes to the sports centre with a friend.',
-      correctIndex: 1,
     });
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect(q.options[q.correctIndex]).toBe('sports centre');
   });
 
   it('maps true-false reading: passage preferred over transcript (CR-51)', () => {
@@ -148,7 +156,8 @@ describe('toExamQuestion', () => {
       choices: ['7', '8', '9', '10'],
       answer: { index: 1 },
     }));
-    expect(q).toMatchObject({ kind: 'grammar-mcq', options: ['7', '8', '9', '10'] });
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect([...q.options].sort()).toEqual(['10', '7', '8', '9']);
     const ta = toExamQuestion(row({ question_type: 'text-answer', answer: { text: 11 as unknown as string } }));
     expect(ta).toMatchObject({ kind: 'text-answer', accept: ['11'] });
   });
@@ -171,14 +180,11 @@ describe('toExamQuestion', () => {
         'images/concepts/concept-banker-9cc826.webp',
       ],
     }));
-    expect(q).toMatchObject({
-      kind: 'grammar-mcq',
-      options: ['dentist', 'engineer', 'architect', 'banker'],
-      correctIndex: 2,
-    });
     if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect([...q.options].sort()).toEqual(['architect', 'banker', 'dentist', 'engineer']);
+    expect(q.options[q.correctIndex]).toBe('architect');
     expect(q.optionImages).toHaveLength(4);
-    expect(isExamAnswerCorrect(q, { type: 'option', index: 2 })).toBe(true);
+    expect(isExamAnswerCorrect(q, { type: 'option', index: q.correctIndex })).toBe(true);
   });
 
   it('word-to-image-mcq resolves images by assetId when join rows exceed 4 (real prod bug)', () => {
@@ -204,12 +210,21 @@ describe('toExamQuestion', () => {
       ],
     }));
     if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
-    expect(q.optionImages).toEqual([
+    expect([...q.optionImages!].sort()).toEqual([
+      '/images/concepts/concept-goal-6711f5.webp',
+      '/images/concepts/concept-medal-74478a.webp',
+      '/images/concepts/concept-think-b8049a.webp',
+      '/images/concepts/concept-wink-7c380e.webp',
+    ].sort());
+    // still paired 1:1 with the labels through the shared permutation
+    const order = q.bankOptionOrder!;
+    const orig = [
       '/images/concepts/concept-think-b8049a.webp',
       '/images/concepts/concept-wink-7c380e.webp',
       '/images/concepts/concept-medal-74478a.webp',
       '/images/concepts/concept-goal-6711f5.webp',
-    ]);
+    ];
+    expect(q.optionImages).toEqual(order.map((i) => orig[i]));
   });
 
   it('returns null when choices are not exactly 4', () => {
@@ -302,9 +317,11 @@ describe('CR-102 server-side scoring', () => {
       answer: undefined,
       explanation_vi: undefined,
     }));
-    expect(q).toMatchObject({ kind: 'grammar-mcq', bankId: 'q1', options: ['a', 'b', 'c', 'd'] });
+    expect(q).toMatchObject({ kind: 'grammar-mcq', bankId: 'q1' });
+    if (q?.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect([...q.options].sort()).toEqual(['a', 'b', 'c', 'd']);
     // A pending question must never score - unresolved verdict reads false.
-    expect(isExamAnswerCorrect(q!, { type: 'option', index: 0 })).toBe(false);
+    expect(isExamAnswerCorrect(q, { type: 'option', index: 0 })).toBe(false);
   });
 
   it('hydrateBankQuestion writes the real key back for review display', () => {
@@ -321,8 +338,12 @@ describe('CR-102 server-side scoring', () => {
       correct_answer_text: 'c',
       explanation_vi: 'Dung roi.',
     });
-    expect(hydrated).toMatchObject({ bankId: 'q1', bankVerdict: true, correctIndex: 2, explanation: 'Dung roi.' });
-    expect(isExamAnswerCorrect(hydrated, { type: 'option', index: 2 })).toBe(true);
+    // The disclosed index 2 is ORIGINAL bank order - the hydrated
+    // correctIndex is its DISPLAY position via bankOptionOrder.
+    if (hydrated.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect(hydrated).toMatchObject({ bankId: 'q1', bankVerdict: true, explanation: 'Dung roi.' });
+    expect(hydrated.options[hydrated.correctIndex]).toBe('c');
+    expect(isExamAnswerCorrect(hydrated, { type: 'option', index: hydrated.correctIndex })).toBe(true);
     expect(examCorrectAnswerText(hydrated)).toBe('c');
   });
 
@@ -342,7 +363,10 @@ describe('CR-102 server-side scoring', () => {
     expect(rpcMock).toHaveBeenCalledTimes(1);
     const attempts = (rpcMock.mock.calls[0]![1] as { p_attempts: unknown[] }).p_attempts;
     expect(attempts).toHaveLength(1);
-    expect(out[0]).toMatchObject({ bankVerdict: true, correctIndex: 0 });
+    if (out[0]!.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    // Returned key index 0 (original) -> display position via the order map.
+    expect(out[0]!.bankVerdict).toBe(true);
+    expect(out[0]!.bankOptionOrder![out[0]!.correctIndex]).toBe(0);
     expect(out[1]).toBe(resolved);
   });
 
@@ -459,5 +483,74 @@ describe('createExamFromAssignment - CR-98 r-ext1', () => {
     expect(st).not.toBeNull();
     expect(st!.questions.map((q) => String(q.id))).toEqual(['a', 'b', 'c']);
     expect(st!.droppedCount).toBe(0);
+  });
+});
+
+describe('CR-104 option permutation (position-leak fix)', () => {
+  const mcq = (id: string, correct = 0) => toExamQuestion(row({
+    id,
+    question_type: 'mcq',
+    choices: ['w', 'x', 'y', 'z'],
+    answer: { index: correct },
+  }));
+
+  it('display order is deterministic per row id (stable across remounts)', () => {
+    const a = mcq('q-det-1')!;
+    const b = mcq('q-det-1')!;
+    if (a.kind !== 'grammar-mcq' || b.kind !== 'grammar-mcq') throw new Error('mcq');
+    expect(a.options).toEqual(b.options);
+    expect(a.bankOptionOrder).toEqual(b.bankOptionOrder);
+    expect(a.correctIndex).toBe(b.correctIndex);
+  });
+
+  it('different ids produce different permutations (not a fixed rotation)', () => {
+    const orders = new Set(
+      ['q-1', 'q-2', 'q-3', 'q-4', 'q-5', 'q-6'].map(
+        (id) => (mcq(id) as { bankOptionOrder?: number[] }).bankOptionOrder!.join(','),
+      ),
+    );
+    expect(orders.size).toBeGreaterThan(1);
+  });
+
+  it('the stored key bias never reaches the display position', () => {
+    // 400 rows per original index - the audit case plus r102's demand that
+    // EVERY original index lands uniformly on every display position.
+    // Old hash-per-position shuffle gave index0 -> [33%,17%,25%,25%] and
+    // only 12/24 reachable permutations; mulberry32 stream is ~uniform.
+    for (let orig = 0; orig < 4; orig += 1) {
+      const counts = [0, 0, 0, 0];
+      for (let i = 0; i < 400; i += 1) {
+        const q = mcq(`q-bias-${orig}-${i}`, orig)!;
+        if (q.kind !== 'grammar-mcq') throw new Error('mcq');
+        counts[q.correctIndex]! += 1;
+      }
+      for (const c of counts) {
+        // expectation 100; [75,125] is loose for determinism but fails
+        // the old 133/67 correlation outright.
+        expect(c).toBeGreaterThanOrEqual(75);
+        expect(c).toBeLessThanOrEqual(125);
+      }
+    }
+  });
+
+  it('examAnswerToWire maps the picked display index back to the original index', () => {
+    const q = mcq('q-wire', 3)!; // 'z' is the stored-correct option
+    if (q.kind !== 'grammar-mcq') throw new Error('mcq');
+    const picked = q.options.indexOf('z'); // display position of 'z'
+    const wire = examAnswerToWire(q, { type: 'option', index: picked });
+    expect(wire).toEqual({ index: 3 });
+  });
+
+  it('keyless rows still shuffle - the placeholder can never leak position 0', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+    }))!;
+    if (q.kind !== 'grammar-mcq') throw new Error('mcq');
+    expect(q.bankOptionOrder).toHaveLength(4);
+    // The wire still sends the original index for the picked display slot.
+    const wire = examAnswerToWire(q, { type: 'option', index: 0 });
+    expect(wire).toEqual({ index: q.bankOptionOrder![0] });
   });
 });

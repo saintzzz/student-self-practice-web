@@ -8,7 +8,7 @@ import {
 } from '../lib/placement';
 import { savePlacementResult, bindActivityOwner } from '../lib/practiceResults';
 import { ensureContentBank } from '../lib/content/contentBank';
-import { reloadPage } from '../lib/reload';
+import { reloadPageOnce } from '../lib/reload';
 import {
   advanceToNextQuestion,
   isSessionComplete,
@@ -42,7 +42,7 @@ export default function PlacementScreen({ isLoggedIn, onStartGrade, onBack }: Pl
     let live = true;
     ensureContentBank()
       .then(() => { if (live) setState(buildPlacementSession(seed)); })
-      .catch(() => reloadPage());
+      .catch(() => reloadPageOnce('content-bank'));
     return () => { live = false; };
   }, [seed]);
 

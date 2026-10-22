@@ -1,0 +1,6 @@
+{
+  "routes": ["/"],
+  "ttfb_ms": 1000,
+  "response_ms": 4000,
+  "max_bytes": 1500000
+}

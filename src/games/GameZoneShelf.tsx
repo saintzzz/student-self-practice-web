@@ -67,7 +67,6 @@ function LockedCard() {
       type="button"
       data-testid="game-card-coming-soon"
       onClick={poke}
-      aria-label="Đảo bí mật - sắp ra mắt"
       className={`${gameCardClass('sky')} relative opacity-70 saturate-50 ${taps ? 'chest-wiggle' : ''}`}
     >
       <span className="absolute right-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300 shadow">

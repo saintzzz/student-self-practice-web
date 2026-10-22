@@ -2,7 +2,7 @@ import { Component, Suspense, useEffect, useState, type ComponentType, type Reac
 import type { Grade } from '../types';
 import type { GameId } from './types';
 import { createRetryableLazy } from '../lib/retryableLazy';
-import { reloadPage } from '../lib/reload';
+import { reloadPage, reloadPageOnce } from '../lib/reload';
 import { contentBankReady, ensureContentBank } from '../lib/content/contentBank';
 
 /**
@@ -110,7 +110,7 @@ function BankGate({ children }: { children: ReactNode }) {
     let live = true;
     ensureContentBank()
       .then(() => { if (live) setReady(true); })
-      .catch(() => reloadPage());
+      .catch(() => reloadPageOnce('content-bank'));
     return () => { live = false; };
   }, [ready]);
   if (!ready) return LOADING_NODE;

@@ -5,7 +5,7 @@ import { EmojiVisual } from '../../components/EmojiVisual';
 import { imageChoiceRounds } from '../sources';
 import { HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const WIN_LINES = [
@@ -40,6 +40,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
   const [hints, setHints] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
+  const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -98,6 +99,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
     if (pendingCell === null || lock || !q) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (correct) combo.hit(); else combo.miss();
     setLock(true);
     const nextCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(nextCorrect);
@@ -134,6 +136,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
   return (
     <div data-testid="game-tic-tac-toe" className="flex flex-col items-center gap-4">
       <HeartMeter lives={lives.lives} max={lives.max} />
+      <ComboMeter streak={combo.streak} />
       <div className="grid w-56 grid-cols-3 gap-2">
         {board.map((cell, i) => (
           <button

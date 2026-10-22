@@ -4,7 +4,7 @@ import { playSfx } from '../../lib/sfx';
 import { pickGameWords } from '../sources';
 import { GameRoundDots, PairBoardField, gameVerdictSfx, type PairBoardTile } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const PAIRS = 4;
@@ -32,6 +32,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
   // Mismatches are how a memory run teaches positions, so the pool is
   // gentler than answer-games: spec.lives + 3 chances per run.
   const lives = useGameLives(spec.lives + 3);
+  const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -57,6 +58,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
     setMoves(nextMoves);
     if (tiles[first]!.pairId === tiles[idx]!.pairId) {
       gameVerdictSfx(true);
+      combo.hit();
       const next = new Set(matched).add(first).add(idx);
       setMatched(next);
       setOpen([]);
@@ -64,6 +66,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
       return;
     }
     gameVerdictSfx(false);
+    combo.miss();
     setLock(true);
     setOpen([first, idx]);
     // CR-100 (B5): a mismatch drops a heart; out of hearts ends the run
@@ -88,6 +91,7 @@ export default function MemoryMatch({ grade, seed, level, onEnd }: GameProps) {
         <GameRoundDots total={spec.rounds} done={matched.size / 2} />
         <span className="text-sm font-semibold text-slate-300">Lượt lật: {moves}</span>
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <PairBoardField
         tiles={tiles}

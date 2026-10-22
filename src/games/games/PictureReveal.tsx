@@ -4,7 +4,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -39,6 +39,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
   const [hints, setHints] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
+  const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -65,6 +66,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
     if (lock || !q || endedRef.current) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (correct) combo.hit(); else combo.miss();
     setLock(true);
     const newCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(newCorrect);
@@ -96,6 +98,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
       <div className="flex items-center gap-4">
         <GameRoundDots total={rounds.length} done={round} />
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <div
         data-testid="reveal-board"

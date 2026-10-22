@@ -3,7 +3,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -28,6 +28,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
   const [hints, setHints] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
+  const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -63,6 +64,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
     if (lock || !q || endedRef.current || locksOpen >= LOCKS) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (correct) combo.hit(); else combo.miss();
     setLock(true);
     const newCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(newCorrect);
@@ -103,6 +105,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
       <div className="flex items-center gap-4">
         <GameRoundDots total={rounds.length} done={round} />
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <div
         data-testid="chest-visual"

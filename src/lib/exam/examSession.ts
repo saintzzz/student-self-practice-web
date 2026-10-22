@@ -386,7 +386,9 @@ export function remainingSeconds(state: ExamState, nowMs: number): number {
  */
 export function unbankQuestion<T extends ExamQuestion>(q: T): T {
   if (!('bankId' in q) || !q.bankId) return q;
-  const { bankId: _b, bankVerdict: _v, bankCorrectText: _t, ...rest } = q;
+  // CR-104: bankOptionOrder only has meaning while the oracle wire map
+  // is reachable - strip it with the rest of the bank bookkeeping.
+  const { bankId: _b, bankVerdict: _v, bankCorrectText: _t, bankOptionOrder: _o, ...rest } = q;
   return rest as T;
 }
 

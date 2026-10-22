@@ -133,10 +133,18 @@ describe('BatchScreen', () => {
     render(<BatchScreen batch={batch} {...noopHandlers} />);
 
     expect(screen.getByTestId('round-progress')).toHaveTextContent('4/5');
-    expect(screen.getByTestId('question-card')).toHaveAttribute(
-      'data-question-kind',
+    // Round 4 shuffles its 7-kind mix together - the first card's kind is
+    // seed-dependent. The AC25 guarantee is a real card, not a stub.
+    const kind = screen.getByTestId('question-card').getAttribute('data-question-kind');
+    expect([
       'describe-and-choose-image',
-    );
+      'picture-pair-matching',
+      'phonics-sound-choice',
+      'phonics-word-choice',
+      'phonics-final-choice',
+      'phonics-blend-choice',
+      'phonics-rhyme-choice',
+    ]).toContain(kind);
     expect(screen.queryByTestId('next-round-button')).not.toBeInTheDocument();
   });
 

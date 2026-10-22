@@ -173,7 +173,7 @@ export default function BatchScreen({
           type="button"
           data-testid="batch-end-early"
           onClick={() => setEndConfirmOpen(true)}
-          className="min-h-[44px] shrink-0 self-end rounded-full bg-sky-600 px-4 font-display text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-500 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:self-auto"
+          className="min-h-[48px] shrink-0 self-end rounded-full bg-sky-700 px-4 font-display text-sm font-extrabold tracking-wide text-white shadow-md transition hover:bg-sky-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:self-auto"
         >
           KẾT THÚC
         </button>

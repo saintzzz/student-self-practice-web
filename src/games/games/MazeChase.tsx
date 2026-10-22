@@ -3,7 +3,7 @@ import { seededShuffleIndices } from '../../lib/prng';
 import { listeningImageRounds } from '../sources';
 import { GameRoundDots, HintButton, ModelSpeaker, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter } from '../lives';
+import { ComboMeter, HeartMeter, useCombo } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -85,6 +85,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
   const [hero, setHero] = useState(0);
   const [ghost, setGhost] = useState(CELLS - 1);
   const [hearts, setHearts] = useState(spec.lives);
+  const combo = useCombo();
   const [correctCount, setCorrectCount] = useState(0);
   const [removedPads, setRemovedPads] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
@@ -166,6 +167,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
     if (pad) {
       const correct = pad.option === q.correctIndex;
       gameVerdictSfx(correct);
+      if (correct) combo.hit(); else combo.miss();
       setLock(true);
       if (correct) {
         const newCorrect = correctCount + 1;
@@ -198,6 +200,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
       setHearts(newHearts);
       setGhost(CELLS - 1); // ghost respawns at its corner after a scare
       gameVerdictSfx(false);
+      combo.miss();
       if (newHearts <= 0) {
         setLock(true);
         timerRef.current = setTimeout(() => finish(correctCount), 700);
@@ -225,6 +228,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
     <div data-testid="game-maze-chase" className="flex flex-col items-center gap-3">
       <GameRoundDots total={rounds.length} done={round} />
       <HeartMeter testId="maze-hearts" lives={hearts} max={spec.lives} />
+      <ComboMeter streak={combo.streak} />
       <div className="flex items-center gap-3 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-5 py-2.5 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.55)]">
         <span className="text-lg font-extrabold text-slate-800">{q.word}</span>
         <span className="text-base font-semibold text-slate-500">- đến ô có hình đúng!</span>

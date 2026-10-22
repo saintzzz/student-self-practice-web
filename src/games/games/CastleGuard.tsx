@@ -3,7 +3,7 @@ import { imageChoiceRounds } from '../sources';
 import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
-import { HeartMeter } from '../lives';
+import { ComboMeter, HeartMeter, useCombo } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -30,6 +30,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
   const [round, setRound] = useState(0);
   const [slimes, setSlimes] = useState<Slime[]>([{ id: 0, cell: 0, emoji: SLIMES[0]! }]);
   const [hearts, setHearts] = useState(spec.lives);
+  const combo = useCombo();
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -72,6 +73,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
     if (lock || !q || endedRef.current) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (correct) combo.hit(); else combo.miss();
     setLock(true);
     const newCorrect = correctCount + (correct ? 1 : 0);
     setCorrectCount(newCorrect);
@@ -122,6 +124,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
     <div data-testid="game-castle-guard" className="flex flex-col items-center gap-4">
       <GameRoundDots total={rounds.length} done={round} />
       <HeartMeter testId="castle-hearts" lives={hearts} max={spec.lives} />
+      <ComboMeter streak={combo.streak} />
       {/* The path: slimes enter at cell 0, castle at the right end. */}
       <div data-testid="castle-path" className="flex items-center gap-1.5">
         {Array.from({ length: PATH }, (_, cell) => (

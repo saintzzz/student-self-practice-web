@@ -49,7 +49,7 @@ import { EmojiVisual } from './EmojiVisual';
 import { ArtImg } from './ArtImg';
 import ConfirmEndDialog from './ConfirmEndDialog';
 import { contentBankReady, ensureContentBank, wordIpa } from '../lib/content/contentBank';
-import { reloadPage } from '../lib/reload';
+import { reloadPageOnce } from '../lib/reload';
 import { ExamResult, MarkupText, PROGRAM_LABEL } from './ExamResult';
 import { MascotAvatar } from './mascot/MascotAvatar';
 import { ExamProgressRing } from './exam/ExamProgressRing';
@@ -483,7 +483,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       try {
         await ensureContentBank();
       } catch {
-        reloadPage();
+        reloadPageOnce('content-bank');
         return;
       }
     }
@@ -1585,7 +1585,7 @@ export function WordOrderView({ question, onAnswer, promptClass }: { question: E
       <PromptLine text="Sắp xếp các từ thành câu đúng." className={promptClass} />
       {/* answer line - paper well */}
       <div className="mx-auto mb-6 flex min-h-14 max-w-xl flex-wrap items-center justify-center gap-2 rounded-xl bg-slate-100 p-3 ring-1 ring-slate-200">
-        {picked.length === 0 && <span className="text-sm text-slate-500">Bấm các từ bên dưới theo đúng thứ tự</span>}
+        {picked.length === 0 && <span className="text-sm text-slate-600">Bấm các từ bên dưới theo đúng thứ tự</span>}
         {picked.map((tileIndex, slot) => (
           <button
             key={slot}

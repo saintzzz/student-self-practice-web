@@ -28,6 +28,14 @@ export interface BankScored {
    * sheet can render it without hydrating real answer fields.
    */
   bankCorrectText?: string;
+  /**
+   * CR-104 - display-index -> original-bank-index permutation applied to
+   * index-MCQ options at map time. The bank's stored choice order skews
+   * the correct answer toward index 0 (~30-39%), so options are shuffled
+   * deterministically per row id; this map lets `examAnswerToWire` send
+   * the ORIGINAL index the oracle grades against.
+   */
+  bankOptionOrder?: readonly number[];
 }
 
 /** Sắp xếp lại câu: tap scrambled tiles in order to rebuild `sentence`. */

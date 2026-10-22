@@ -77,6 +77,20 @@ describe('QuizShow', () => {
     expect(Number(screen.getByTestId('quiz-timer').textContent)).toBeGreaterThan(0);
   });
 
+  it('CR-104 r102: a timeout breaks the combo (correct -> timeout -> correct is not x2)', () => {
+    const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);
+    render(<QuizShow grade={GRADE} seed={SEED} onEnd={vi.fn()} />);
+    // Correct on Q1 -> streak 1 (meter still hidden below 2).
+    fireEvent.click(screen.getByTestId(`option-${rounds[0]!.correctIndex}`));
+    act(() => vi.advanceTimersByTime(700));
+    // Q2 times out -> heart drops, combo must reset.
+    act(() => vi.advanceTimersByTime(21000));
+    // Correct on Q3 -> streak 1 again, so NO x2 chip may appear.
+    fireEvent.click(screen.getByTestId(`option-${rounds[2]!.correctIndex}`));
+    act(() => vi.advanceTimersByTime(700));
+    expect(screen.queryByTestId('combo-meter')).toBeNull();
+  });
+
   it('a flawless climb reports max points', () => {
     const onEnd = vi.fn();
     const rounds = imageChoiceRounds(GRADE.id, SEED, ROUNDS);

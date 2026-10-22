@@ -127,7 +127,12 @@ describe('V6 row -> ExamQuestion -> rendered UI (CR-51)', () => {
     const text = el.textContent ?? '';
     expect(JUNK.test(text)).toBe(false);
     expect(el.querySelectorAll('[data-testid^="exam-option-image-"]')).toHaveLength(4);
-    expect(el.querySelector('[data-testid="exam-option-image-2"]')?.getAttribute('src'))
+    // CR-104: options render in the per-row display permutation - the
+    // 'architect' image sits at bankOptionOrder.indexOf(2), not index 2.
+    if (q!.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    const displayIdx = q!.bankOptionOrder!.indexOf(2);
+    expect(el.querySelector(`[data-testid="exam-option-image-${displayIdx}"]`)?.getAttribute('src'))
       .toBe('/images/concepts/concept-architect-cadcfc.webp');
+    expect(q!.options[displayIdx]).toBe('architect');
   });
 });

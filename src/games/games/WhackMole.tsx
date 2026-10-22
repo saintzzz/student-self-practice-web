@@ -3,7 +3,7 @@ import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, HintButton, ModelSpeaker, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const ROUNDS = 5;
@@ -27,6 +27,7 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
   const [hints, setHints] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
+  const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -52,6 +53,7 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
     if (lock) return;
     if (index === q.correctIndex) {
       gameVerdictSfx(true);
+      combo.hit();
       playSfx('pop');
       setLock(true);
       const earned = wrongPicks.length === 0 ? 2 : 1;
@@ -59,6 +61,7 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
       return;
     }
     gameVerdictSfx(false);
+    combo.miss();
     const next = [...wrongPicks, index];
     setWrongPicks(next);
     // CR-100 (B5): every wrong whack drops a heart; out of hearts ends
@@ -89,6 +92,7 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
       <div className="flex items-center gap-4">
         <GameRoundDots total={rounds.length} done={round} />
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <ModelSpeaker word={q.word} key={q.id} />
       <EmojiChoiceField

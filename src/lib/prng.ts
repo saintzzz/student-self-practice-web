@@ -12,11 +12,24 @@ export function hashString(input: string): number {
   return hash;
 }
 
-/** Fisher-Yates shuffle of [0..n-1], seeded so the result is reproducible. */
+/** Fisher-Yates shuffle of [0..n-1], seeded so the result is reproducible.
+ *  CR-104 fix: the swap draws must come from ONE advancing PRNG stream.
+ *  The previous `hashString(seed + '-' + i) % (i+1)` produced correlated
+ *  j values - only 12 of 24 n=4 permutations were reachable and index 0
+ *  landed at display position 0 ~33% of the time instead of 25%. */
 export function seededShuffleIndices(n: number, seed: string): number[] {
   const indices = Array.from({ length: n }, (_, i) => i);
+  /* mulberry32 - 32-bit state, full period, well-mixed low bits. */
+  let state = hashString(seed) >>> 0;
+  const rand = () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
   for (let i = n - 1; i > 0; i--) {
-    const j = hashString(`${seed}-${i}`) % (i + 1);
+    const j = Math.floor(rand() * (i + 1));
     const temp = indices[i]!;
     indices[i] = indices[j]!;
     indices[j] = temp;

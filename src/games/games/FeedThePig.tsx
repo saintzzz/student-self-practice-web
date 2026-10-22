@@ -3,7 +3,7 @@ import { playSfx } from '../../lib/sfx';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, HintButton, ModelSpeaker, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
-import { HeartMeter, useGameLives } from '../lives';
+import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
@@ -30,6 +30,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
   const [hints, setHints] = useState<number[]>([]);
   const [hintUsed, setHintUsed] = useState(false);
   const lives = useGameLives(spec.lives);
+  const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -56,6 +57,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
     if (lock) return;
     if (index === q.correctIndex) {
       gameVerdictSfx(true);
+      combo.hit();
       playSfx('pop');
       setLock(true);
       setFed(true);
@@ -64,6 +66,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
       return;
     }
     gameVerdictSfx(false);
+    combo.miss();
     const next = [...wrongPicks, index];
     setWrongPicks(next);
     const left = lives.lose();
@@ -92,6 +95,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
       <div className="flex items-center gap-4">
         <GameRoundDots total={rounds.length} done={round} />
         <HeartMeter lives={lives.lives} max={lives.max} />
+        <ComboMeter streak={combo.streak} />
       </div>
       <div className="flex flex-col items-center gap-1">
         <span

@@ -28,7 +28,7 @@ import {
   onAuthChange,
   type PracticeAccount,
 } from './lib/auth/practiceAuth';
-import { reloadPage } from './lib/reload';
+import { reloadPage, reloadPageOnce } from './lib/reload';
 import { bindEngagement, flushEngagement, unbindEngagement } from './lib/engagement/sync';
 import { clearEngagementLocal, getOwnerAccountId, parkOwnerBlob } from './lib/engagement/store';
 import { confirmParentEmail } from './lib/parentContact';
@@ -330,7 +330,7 @@ export default function App() {
       try {
         await ensureContentBank();
       } catch {
-        reloadPage();
+        reloadPageOnce('content-bank');
         return;
       }
     }

@@ -36,7 +36,10 @@ function getTileClassName(index: number, selectedLetterIndex: number | null, ext
   const base =
     'relative flex h-[76px] min-w-0 flex-1 max-w-[76px] items-center justify-center rounded-[1.25rem] border-2 text-3xl ' +
     `font-extrabold uppercase transition ${material.tileFocus} ` +
-    '[@media(max-width:360px)]:text-2xl';
+    /* CR-104: in confirmed-worst-case landscape (<=420px tall) the 76px
+       key-cap alone pushes next-button ~6px past the fold; 56px stays
+       above the 48px kid touch floor and keeps the word on one row. */
+    '[@media(max-width:360px)]:text-2xl [@media(max-height:420px)]:h-14';
 
   if (selectedLetterIndex === null) {
     return `${base} ${material.tileFace} ${material.tileHover} ${material.tilePress}`;

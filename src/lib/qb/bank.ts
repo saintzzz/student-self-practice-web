@@ -240,21 +240,33 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
     case 'word-to-image-mcq':
     case 'visual-mcq':
     case 'visual-count-mcq': {
-      const options = toFour(row.choices?.map(optionLabel));
+      const rawOptions = toFour(row.choices?.map(optionLabel));
       const correctIndex = row.answer?.index;
-      if (!options) return null;
+      if (!rawOptions) return null;
       if (hasKey && (correctIndex === undefined || correctIndex < 0 || correctIndex > 3)) return null;
-      const optionImages =
+      const rawImages =
         row.question_type === 'word-to-image-mcq'
           ? resolveOptionImages(row.choices, row.asset_paths)
           : undefined;
+      // CR-104: stored choice order skews the key toward index 0
+      // (~30-39% position bias). Permute display order deterministically
+      // per row id and keep the display->original map so the oracle still
+      // grades the stored index.
+      const order = seededShuffleIndices(4, `${row.id}-opts`);
+      const options = order.map((i) => rawOptions[i]!) as unknown as typeof rawOptions;
+      const optionImages = rawImages
+        ? (order.map((i) => rawImages[i]!) as unknown as typeof rawImages)
+        : undefined;
+      const displayIndex =
+        correctIndex === undefined ? 0 : (order.indexOf(correctIndex) as 0 | 1 | 2 | 3);
       return {
         id: row.id,
         topicId,
         kind: 'grammar-mcq',
         prompt: transcript ? 'Nghe và chọn đáp án đúng.' : str(row.prompt_text),
         options,
-        correctIndex: (correctIndex ?? 0) as 0 | 1 | 2 | 3,
+        correctIndex: displayIndex,
+        bankOptionOrder: order,
         explanation,
         imageUrl: row.question_type === 'word-to-image-mcq' ? undefined : imageUrl,
         optionImages,
@@ -506,7 +518,14 @@ export interface BankScore {
 /** Encode a UI-side ExamAnswer into the wire shape the oracle expects. */
 export function examAnswerToWire(question: ExamQuestion, answer: import('../exam/examSession').ExamAnswer): unknown {
   switch (answer.type) {
-    case 'option': return { index: answer.index };
+    case 'option':
+      // CR-104: `answer.index` is a DISPLAY position after the per-row
+      // option shuffle; the oracle grades the stored index.
+      return {
+        index: ('bankOptionOrder' in question
+          ? question.bankOptionOrder?.[answer.index]
+          : undefined) ?? answer.index,
+      };
     case 'bool': return { bool: answer.value };
     case 'text': return { text: answer.text };
     case 'order': {
@@ -568,7 +587,13 @@ export function hydrateBankQuestion(question: ExamQuestion, score: BankScore): E
   };
   switch (question.kind) {
     case 'grammar-mcq': {
-      const idx = typeof key?.index === 'number' ? key.index : question.correctIndex;
+      // CR-104: the disclosed key.index is in ORIGINAL bank order -
+      // translate back to the displayed position via bankOptionOrder.
+      const origIdx = typeof key?.index === 'number' ? key.index : null;
+      const idx =
+        origIdx === null
+          ? question.correctIndex
+          : question.bankOptionOrder?.indexOf(origIdx) ?? -1;
       return { ...question, ...shared, correctIndex: (idx >= 0 && idx <= 3 ? idx : 0) as 0 | 1 | 2 | 3 };
     }
     case 'true-false-reading': {

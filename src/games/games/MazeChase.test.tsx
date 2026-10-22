@@ -26,9 +26,10 @@ describe('MazeChase', () => {
     const cell1 = screen.getByTestId('maze-cell-1') as HTMLButtonElement;
     const cell6 = screen.getByTestId('maze-cell-6') as HTMLButtonElement;
     const far = screen.getByTestId('maze-cell-23') as HTMLButtonElement;
-    // Hero at 0: neighbors are 1 and 6 (unless a wall blocks one).
+    // Hero at 0: neighbors are 1 and 6 - at least one must stay tappable
+    // (a wall MAY cover one; allReachable guarantees an escape exists).
     expect(far.disabled).toBe(true);
-    expect(cell1.disabled || cell6.disabled).toBe(false);
+    expect(cell1.disabled && cell6.disabled).toBe(false);
   });
 
   it('the hero cell is never walled and an escape move always exists (r1 soft-lock regression)', () => {
