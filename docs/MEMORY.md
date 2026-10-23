@@ -153,3 +153,23 @@
   handoff-vault encrypted bundle).
 - Eastgate GitLab repos: removed from handoff scope per user request.
 - exam-ready gate: exam pool >=800/grade + 5% human spot-check.
+
+## 2026-10-23 - CR-106 Teach-me CLOSED (prod-verified)
+
+- Shipped qua 002a879 + fix chain (507caf1, e05c03b). Migrations
+  0052 (teach_bank_question + taught_marks + skill_lessons seed G1-G2
+  EN), 0053, 0054 (restore IP rate-limit block 0049 vao
+  score_bank_attempts - r-round bat regression).
+- ExtRev loop 5 rounds -> r110 CLEAN (Codex CLI). Findings da fix:
+  teach binding theo question_id, honorTaught default FALSE chi opt-in
+  o mode==='practice' (exam/assignment/form/review khong bao gio honor),
+  examRef sync guard, concurrent-teach + finish race guards.
+- Prod verify (ea.vieschool.com, deploy e05c03b): Lop 2 -> Luyen them
+  -> Luyen de -> "Day toi" tren cau bank that -> lesson "Doc hieu" hien
+  dung KHONG lo dap an -> tra loi -> verdict "Da hoc cau nay - khong
+  tinh diem". DB: practice.taught_marks co row moi (account demo,
+  question g2-english-bulk-*). 1766 tests xanh.
+- OPEN con lai: CR-108 Turnstile (BLOCKED - Cloudflare signup la buoc
+  thu cong cua human, khong provision duoc bang API), Groq STT proposal
+  (chi la de xuat, chua co CR), CR-68 deferred. Content: G5 pool da dat
+  nguong, chi con 5% human spot-check.
