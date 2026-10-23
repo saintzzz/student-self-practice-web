@@ -38,11 +38,21 @@ function loadScript(): Promise<void> {
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
       const s = document.createElement('script');
+      const timer = setTimeout(() => {
+        s.remove();
+        scriptPromise = null;
+        reject(new Error('turnstile_unavailable'));
+      }, CHALLENGE_TIMEOUT_MS);
       s.src =
         'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
       s.async = true;
-      s.onload = () => resolve();
+      s.onload = () => {
+        clearTimeout(timer);
+        resolve();
+      };
       s.onerror = () => {
+        clearTimeout(timer);
+        s.remove();
         scriptPromise = null;
         reject(new Error('turnstile_unavailable'));
       };
