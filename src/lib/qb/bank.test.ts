@@ -659,7 +659,7 @@ describe('CR-106 teach-me (AC-106.1/106.2)', () => {
       correct_answer_text: 'a',
       explanation_vi: 'Giai thich.',
       taught: true,
-    });
+    }, true);
     expect(hydrated).toMatchObject({ bankTaught: true });
   });
 

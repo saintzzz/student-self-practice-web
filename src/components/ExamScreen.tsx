@@ -345,7 +345,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   async function scoreAndHydrate(
     question: ExamQuestion,
     answer: ExamAnswer | null,
-    honorTaught = true,
+    honorTaught = false,
   ): Promise<{ question: ExamQuestion; correct: boolean }> {
     if (!isBankQuestion(question)) {
       return { question, correct: isExamAnswerCorrect(question, answer) };
@@ -837,7 +837,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           : currentQuestion;
         void (async () => {
           try {
-            const { question: hydrated, correct } = await scoreAndHydrate(pending, answer);
+            // Graded sitting (exam/assignment) - taught marks never
+            // apply: a pre-taught form row must still grade (r109).
+            const { question: hydrated, correct } = await scoreAndHydrate(pending, answer, false);
             patchExamQuestion(hydrated, index, answer);
             telemetryRef.current?.record(currentQuestion, answer, Date.now() - questionShownAtRef.current, correct);
             if (correct && !creditedRef.current.has(index)) {
