@@ -101,13 +101,22 @@ export async function fetchBankQuestions(
     // gates (mock/exam require mockEligible + cleared approval flags).
     // CR-108: guests also need a Turnstile ticket - a PT401 means the
     // cached ticket expired in flight, so re-mint once and retry.
-    let ticket = await guestTicket();
+    let ticket: string;
+    try {
+      ticket = await guestTicket();
+    } catch {
+      throw bankFetchError({ code: 'PT401', message: 'guest_challenge_required' });
+    }
     let pub = await supabase.rpc('fetch_questions_public', {
       ...params,
       p_guest_ticket: ticket,
     });
     if (pub.error?.code === 'PT401') {
-      ticket = await guestTicket(true);
+      try {
+        ticket = await guestTicket(true);
+      } catch {
+        throw bankFetchError({ code: 'PT401', message: 'guest_challenge_required' });
+      }
       pub = await supabase.rpc('fetch_questions_public', {
         ...params,
         p_guest_ticket: ticket,

@@ -19,6 +19,7 @@ declare global {
       ) => string;
       execute: (el: HTMLElement | string) => void;
       reset: (el: HTMLElement | string) => void;
+      remove: (el: HTMLElement | string) => void;
     };
   }
 }
@@ -51,6 +52,10 @@ function loadScript(): Promise<void> {
   return scriptPromise;
 }
 
+// A stalled script/challenge must not pin `inflight` forever - bounded
+// wait, then a clean rejection so the next guest attempt re-mints fresh.
+const CHALLENGE_TIMEOUT_MS = 30000;
+
 function runChallenge(): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
@@ -59,22 +64,52 @@ function runChallenge(): Promise<string> {
       reject(e);
       return;
     }
+    // Positioned, not display:none - 'interaction-only' controls
+    // visibility; hiding the node would also hide a challenge UI when
+    // Cloudflare does need interaction (a11y + stuck-widget bug).
     const holder = document.createElement('div');
-    holder.style.display = 'none';
+    holder.style.position = 'fixed';
+    holder.style.bottom = '0';
+    holder.style.right = '0';
+    holder.style.zIndex = '2147483647';
     document.body.appendChild(holder);
-    window.turnstile?.render(holder, {
-      sitekey: SITE_KEY,
-      appearance: 'interaction-only',
-      execution: 'execute',
-      callback: (token: string) => {
-        holder.remove();
-        resolve(token);
-      },
-      'error-callback': () => {
-        holder.remove();
-        reject(new Error('turnstile_failed'));
-      },
-    });
+    let widgetId: string | null = null;
+    const cleanup = () => {
+      if (widgetId !== null) {
+        try {
+          window.turnstile?.remove(widgetId);
+        } catch {
+          /* holder removal below is enough */
+        }
+      }
+      holder.remove();
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('turnstile_failed'));
+    }, CHALLENGE_TIMEOUT_MS);
+    widgetId =
+      window.turnstile?.render(holder, {
+        sitekey: SITE_KEY,
+        appearance: 'interaction-only',
+        execution: 'execute',
+        callback: (token: string) => {
+          clearTimeout(timer);
+          cleanup();
+          resolve(token);
+        },
+        'error-callback': () => {
+          clearTimeout(timer);
+          cleanup();
+          reject(new Error('turnstile_failed'));
+        },
+      }) ?? null;
+    if (widgetId === null) {
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error('turnstile_failed'));
+      return;
+    }
     window.turnstile?.execute(holder);
   });
 }
