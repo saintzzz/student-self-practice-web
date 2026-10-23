@@ -182,6 +182,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   /** CR-106 "Dạy tôi": the disclosed skill lesson for the current
    *  question (null = hidden). Resets on every question change. */
   const [teachLesson, setTeachLesson] = useState<TeachResult | null>(null);
+  /** Focus targets for the lesson's open/dismiss handoff (r108). */
+  const teachHeadingRef = useRef<HTMLDivElement>(null);
+  const questionAreaRef = useRef<HTMLDivElement>(null);
   const [teachBusy, setTeachBusy] = useState(false);
   /** Synchronous twin of teachBusy - state updates lag one render, so a
    *  double-tap could slip a second RPC through the busy guard. */
@@ -321,7 +324,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     }
     void (async () => {
       try {
-        const resolved = await resolveBankVerdicts(snapshot.questions, snapshot.answers, snapshot.untimed === true);
+        const resolved = await resolveBankVerdicts(snapshot.questions, snapshot.answers, mode === 'practice');
         setExam((current) => {
           if (!current || current.finishedAtMs !== null) return current;
           const byId = new Map(resolved.map((q) => [q.id, q]));
@@ -392,6 +395,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     setTeachLesson(null);
     setTeachFailed(false);
   }, [exam?.currentIndex]);
+  useEffect(() => {
+    if (teachLesson) teachHeadingRef.current?.focus();
+  }, [teachLesson]);
   useEffect(() => {
     if (exam?.finishedAtMs !== null && exam) void telemetryRef.current?.flush();
   }, [exam]);
@@ -735,7 +741,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         setExam((current) => (current ? answerCurrent(current, answer) : current));
         void (async () => {
           try {
-            const { question: hydrated, correct: isCorrect } = await scoreAndHydrate(question, answer, exam?.untimed === true);
+            const { question: hydrated, correct: isCorrect } = await scoreAndHydrate(question, answer, mode === 'practice');
             patchExamQuestion(hydrated, index, answer);
             // CR-106 r106: the oracle can flag this row taught (another
             // tab taught it mid-sitting) - show the ungraded verdict and
@@ -1267,17 +1273,20 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         {/* my-auto centres the question vertically on the sheet (auto
             margins absorb leftover space) and collapses to top-flow the
             moment a long passage needs the room - no clipping. */}
-        <div className="my-auto">
+        <div className="my-auto focus:outline-none" ref={questionAreaRef} tabIndex={-1}>
         {/* CR-106: the disclosed skill lesson sits on the paper above
             the question - the kid reads, dismisses, then answers the
             (now ungraded) question. No modal: G1-2 kids lose overlay
             state. */}
         {isPractice && teachLesson && isBankQuestion(question) && teachLesson.question_id === question.bankId && (
+          /* CR-106 r108: the disclosed lesson takes focus on arrival
+             (the tapped button unmounts) and dismissal returns it to
+             the question - keyboard/SR users never lose their place. */
           <div data-testid="teach-lesson" className="mb-4 rounded-2xl border-2 border-sky-300 bg-sky-50 p-4">
             <div className="flex items-start gap-2">
               <IconBook size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-sky-700" />
               <div>
-                <div className="font-extrabold text-sky-900">{teachLesson.title_vi ?? 'Bài học nhanh'}</div>
+                <div ref={teachHeadingRef} tabIndex={-1} className="font-extrabold text-sky-900 outline-none">{teachLesson.title_vi ?? 'Bài học nhanh'}</div>
                 <div className={`mt-1 whitespace-pre-line text-sm font-bold text-sky-900/90 ${TYPE_BODY_PAPER}`}>
                   {teachLesson.body_vi ?? teachLesson.explanation_vi ?? `Câu này thuộc kỹ năng: ${teachLesson.skill ?? 'luyện tập'}.`}
                 </div>
@@ -1286,7 +1295,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             <button
               type="button"
               data-testid="teach-dismiss"
-              onClick={() => setTeachLesson(null)}
+              onClick={() => { setTeachLesson(null); questionAreaRef.current?.focus(); }}
               className={`mt-3 ${EXAM_SHEET_BTN} !min-h-[40px] px-3 text-sm`}
             >
               Mình đã hiểu - làm tiếp
