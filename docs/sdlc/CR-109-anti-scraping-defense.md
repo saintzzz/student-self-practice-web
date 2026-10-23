@@ -1,4 +1,4 @@
-# CR-109 - Anti-scraping / anti-AI-crawler defense plan (status: PROPOSAL - implement later)
+# CR-109 - Anti-scraping / anti-AI-crawler defense plan (status: PROPOSAL - lop 1 robots.txt + X-Robots-Tag da deploy; phan con lai cho keys/WAF)
 
 Yeu cau cua PO: viet phuong an truoc, implement sau. Doc nay la ban
 ke hoach phong thu noi dung + ngan kenh "cao function" (reverse-
