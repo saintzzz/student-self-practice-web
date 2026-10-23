@@ -297,7 +297,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fast path: no unresolved bank verdict - submit synchronously
     // (local/arena/review sittings never touch the oracle).
     const hasPending = snapshot.questions.some(
-      (q) => isBankQuestion(q) && q.bankVerdict === undefined,
+      // CR-106 r105: taught rows never go to the oracle - an all-taught
+      // sitting submits on the fast path, no network needed.
+      (q) => isBankQuestion(q) && q.bankVerdict === undefined && !q.bankTaught,
     );
     if (!hasPending) {
       setExam((current) =>
@@ -310,7 +312,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     }
     void (async () => {
       try {
-        const resolved = await resolveBankVerdicts(snapshot.questions, snapshot.answers);
+        const resolved = await resolveBankVerdicts(snapshot.questions, snapshot.answers, snapshot.untimed === true);
         setExam((current) => {
           if (!current || current.finishedAtMs !== null) return current;
           const byId = new Map(resolved.map((q) => [q.id, q]));
@@ -331,6 +333,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   async function scoreAndHydrate(
     question: ExamQuestion,
     answer: ExamAnswer | null,
+    honorTaught = true,
   ): Promise<{ question: ExamQuestion; correct: boolean }> {
     if (!isBankQuestion(question)) {
       return { question, correct: isExamAnswerCorrect(question, answer) };
@@ -338,7 +341,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     const scores = await scoreBankAttempts([question], [answer]);
     const s = scores.get(question.bankId);
     return {
-      question: s ? hydrateBankQuestion(question, s) : question,
+      question: s ? hydrateBankQuestion(question, s, honorTaught) : question,
       correct: s?.correct ?? false,
     };
   }
@@ -652,7 +655,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
    * Practice only - graded sittings never render the button.
    */
   function teach(): void {
-    if (!isPractice || !exam || teachBusy) return;
+    // CR-106 r105: literal 'practice' only - review/arena sittings are
+    // isPractice=true but teaching a review or race item would pull it
+    // out of grading where it must still count.
+    if (mode !== 'practice' || !exam || teachBusy || verdictPendingRef.current) return;
     const question = exam.questions[exam.currentIndex];
     if (!question || !isBankQuestion(question) || question.bankTaught || verdict) return;
     setTeachBusy(true);
@@ -690,7 +696,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // scored for the old one.
     if (finishingRef.current) return;
     if (isPractice) {
-      if (verdict || verdictPendingRef.current) return; // already answered - wait for "Câu tiếp".
+      if (verdict || verdictPendingRef.current || teachBusy) return; // already answered - wait for "Câu tiếp".
       if (!exam) return;
       const question = exam.questions[exam.currentIndex];
       if (!question) return;
@@ -712,7 +718,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         setExam((current) => (current ? answerCurrent(current, answer) : current));
         void (async () => {
           try {
-            const { question: hydrated, correct: isCorrect } = await scoreAndHydrate(question, answer);
+            const { question: hydrated, correct: isCorrect } = await scoreAndHydrate(question, answer, exam?.untimed === true);
             patchExamQuestion(hydrated, index, answer);
             telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current, isCorrect);
             telemetryRef.current?.logAdaptive(question, isCorrect);
@@ -1218,7 +1224,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           {/* CR-106: practice-only teach affordance - the disclosed row
               answers ungraded, so graded sittings never render it.
               Guests (canTeach=false) have no account to mark against. */}
-          {isPractice && canTeach && isBankQuestion(question) && !question.bankTaught && !verdict && (
+          {mode === 'practice' && canTeach && isBankQuestion(question) && !question.bankTaught && !verdict && (
             <button
               type="button"
               data-testid="teach-me"
@@ -1242,7 +1248,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             the question - the kid reads, dismisses, then answers the
             (now ungraded) question. No modal: G1-2 kids lose overlay
             state. */}
-        {isPractice && teachLesson && (
+        {isPractice && teachLesson && isBankQuestion(question) && teachLesson.question_id === question.bankId && (
           <div data-testid="teach-lesson" className="mb-4 rounded-2xl border-2 border-sky-300 bg-sky-50 p-4">
             <div className="flex items-start gap-2">
               <IconBook size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-sky-700" />

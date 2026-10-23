@@ -663,6 +663,27 @@ describe('CR-106 teach-me (AC-106.1/106.2)', () => {
     expect(hydrated).toMatchObject({ bankTaught: true });
   });
 
+  it('AC-106.2 r105: graded sittings ignore the taught flag - fixed forms still grade', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }))!;
+    // honorTaught=false models the exam/assignment path: a learner who
+    // pre-taught a form row must not get it removed from grading.
+    const hydrated = hydrateBankQuestion(q, {
+      question_id: 'q1',
+      correct: true,
+      correct_answer: { index: 0 },
+      correct_answer_text: 'a',
+      explanation_vi: null,
+      taught: true,
+    }, false);
+    expect('bankTaught' in hydrated ? hydrated.bankTaught : undefined).toBeUndefined();
+    expect('bankVerdict' in hydrated ? hydrated.bankVerdict : undefined).toBe(true);
+  });
+
   it('untaught rows keep bankTaught undefined after hydrate', () => {
     const q = toExamQuestion(row({
       question_type: 'mcq',

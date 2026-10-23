@@ -394,10 +394,7 @@ export function unbankQuestion<T extends ExamQuestion>(q: T): T {
 
 export function captureExamWrongAnswers(gradeId: string, review: readonly ExamReviewItem[]): void {
   for (const item of review) {
-    // CR-106: taught rows are attempted-not-scored - a disclosed item
-    // has no place in the wrong-answer retry queue.
-    if (item.answer !== null && !item.isCorrect
-        && !('bankTaught' in item.question && item.question.bankTaught)) {
+    if (item.answer !== null && !item.isCorrect) {
       recordWrongExamQuestion(gradeId, unbankQuestion(item.question));
     }
   }

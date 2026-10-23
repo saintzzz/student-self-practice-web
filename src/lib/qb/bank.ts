@@ -600,7 +600,9 @@ export async function scoreBankAttempts(
 ): Promise<Map<string, BankScore>> {
   const attempts = questions
     .map((q, i) => ({ q, a: answers[i] }))
-    .filter(({ q }) => isBankQuestion(q) && (!('bankVerdict' in q) || q.bankVerdict === undefined))
+    // CR-106 r105: taught rows are attempted-not-scored - never sent to
+    // the oracle, so an all-taught sitting finishes even offline.
+    .filter(({ q }) => isBankQuestion(q) && !q.bankTaught && (!('bankVerdict' in q) || q.bankVerdict === undefined))
     .map(({ q, a }) => ({
       question_id: (q as ExamQuestion & { bankId: string }).bankId,
       response: a ? examAnswerToWire(q, a) : {},
@@ -620,16 +622,18 @@ export async function scoreBankAttempts(
  * marks the attempt, the kind's real answer fields and `explanation` get
  * written back so review rendering is identical to a hydrated row.
  */
-export function hydrateBankQuestion(question: ExamQuestion, score: BankScore): ExamQuestion {
+export function hydrateBankQuestion(question: ExamQuestion, score: BankScore, honorTaught = true): ExamQuestion {
   const key = score.correct_answer;
   const shared = {
     bankVerdict: score.correct,
     bankCorrectText: score.correct_answer_text ?? '',
     explanation: score.explanation_vi ?? question.explanation,
     // CR-106: a server-flagged taught attempt is ungraded - carry the
-    // marker so computeExamResult excludes it even when the client did
-    // not originate the teach (e.g. a fixed form row taught earlier).
-    bankTaught: score.taught === true ? true : ('bankTaught' in question ? question.bankTaught : undefined),
+    // marker so computeExamResult excludes it, but ONLY in untimed
+    // sittings (honorTaught): inside a fixed form/mock/assignment the
+    // teacher's đề must still grade, otherwise pre-teaching form rows
+    // would let a learner shrink their score denominator (r105).
+    bankTaught: honorTaught && score.taught === true ? true : ('bankTaught' in question ? question.bankTaught : undefined),
   };
   switch (question.kind) {
     case 'grammar-mcq': {
@@ -679,11 +683,12 @@ export function hydrateBankQuestion(question: ExamQuestion, score: BankScore): E
 export async function resolveBankVerdicts(
   questions: readonly ExamQuestion[],
   answers: readonly (import('../exam/examSession').ExamAnswer | null)[],
+  honorTaught = true,
 ): Promise<ExamQuestion[]> {
   const scores = await scoreBankAttempts(questions, answers);
   if (scores.size === 0) return [...questions];
   return questions.map((q) => {
     const score = isBankQuestion(q) ? scores.get(q.bankId) : undefined;
-    return score ? hydrateBankQuestion(q, score) : q;
+    return score ? hydrateBankQuestion(q, score, honorTaught) : q;
   });
 }
