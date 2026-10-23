@@ -133,18 +133,32 @@ let inflight: Promise<string> | null = null;
 
 async function mintTicket(): Promise<string> {
   const cfToken = await runChallenge();
-  const res = await fetch(GATE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: cfToken }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? 'challenge_unavailable');
+  // Bounded end-to-end: request AND body read share one deadline so a
+  // stalled gate cannot pin `inflight` for every later guest attempt.
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), CHALLENGE_TIMEOUT_MS);
+  try {
+    const res = await fetch(GATE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: cfToken }),
+      signal: ac.signal,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.error ?? 'challenge_unavailable');
+    }
+    const body = (await res.json()) as { ticket: string; expires_at: number };
+    cached = { token: body.ticket, expiresAt: body.expires_at };
+    return body.ticket;
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new Error('challenge_unavailable');
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
-  const body = (await res.json()) as { ticket: string; expires_at: number };
-  cached = { token: body.ticket, expiresAt: body.expires_at };
-  return body.ticket;
 }
 
 /**
