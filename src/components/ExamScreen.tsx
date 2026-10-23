@@ -183,6 +183,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
    *  question (null = hidden). Resets on every question change. */
   const [teachLesson, setTeachLesson] = useState<TeachResult | null>(null);
   const [teachBusy, setTeachBusy] = useState(false);
+  /** Synchronous twin of teachBusy - state updates lag one render, so a
+   *  double-tap could slip a second RPC through the busy guard. */
+  const teachingRef = useRef(false);
   const [teachFailed, setTeachFailed] = useState(false);
   /** Teach needs an account (taught_marks keys on account_id) - guests
    *  keep the plain sitting without the button. */
@@ -664,9 +667,11 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // CR-106 r105: literal 'practice' only - review/arena sittings are
     // isPractice=true but teaching a review or race item would pull it
     // out of grading where it must still count.
-    if (mode !== 'practice' || !exam || teachBusy || verdictPendingRef.current) return;
+    if (mode !== 'practice' || !exam || teachBusy || teachingRef.current
+        || verdictPendingRef.current || finishingRef.current) return;
     const question = exam.questions[exam.currentIndex];
     if (!question || !isBankQuestion(question) || question.bankTaught || verdict) return;
+    teachingRef.current = true;
     setTeachBusy(true);
     setTeachFailed(false);
     void (async () => {
@@ -696,6 +701,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         // can retry; the sitting itself is unaffected.
         setTeachFailed(true);
       } finally {
+        teachingRef.current = false;
         setTeachBusy(false);
       }
     })();
