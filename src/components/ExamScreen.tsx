@@ -41,6 +41,8 @@ import {
   isBankQuestion,
   resolveBankVerdicts,
   scoreBankAttempts,
+  teachBankQuestion,
+  type TeachResult,
 } from '../lib/qb/bank';
 import { assignmentSubmit } from '../lib/assignments';
 import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
@@ -83,7 +85,7 @@ import {
   TYPE_PROMPT_PAPER_G12,
   TYPE_PROMPT_PAPER_G345,
 } from '../lib/ui/tokens';
-import { IconArrowRight, IconCheck, IconCheckCircle, IconChevronLeft, IconChevronRight, IconClock, IconFlag, IconHandshake, IconMail, IconMedal, IconMuscle, IconParty, IconSpeaker, IconSwords, IconTrophy } from './icons';
+import { IconArrowRight, IconBook, IconCheck, IconCheckCircle, IconChevronLeft, IconChevronRight, IconClock, IconFlag, IconHandshake, IconMail, IconMedal, IconMuscle, IconParty, IconSpeaker, IconSwords, IconTrophy } from './icons';
 
 /**
  * CR-24 - IOE-style Thi thử player. Visual language follows the real
@@ -149,8 +151,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const [exam, setExam] = useState<ExamState | null>(null);
   const [stripOffset, setStripOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
-  /** practice-mode verdict shown after each answer (null = awaiting answer). */
-  const [verdict, setVerdict] = useState<{ isCorrect: boolean } | null>(null);
+  /** practice-mode verdict shown after each answer (null = awaiting answer).
+   *  CR-106: `taught` marks the ungraded panel for a disclosed row. */
+  const [verdict, setVerdict] = useState<{ isCorrect: boolean; taught?: boolean } | null>(null);
   /** CR-27/29: question indexes already credited toward the daily quest
    *  (number keys) and the skill stats (`s${index}` keys) - a re-answer
    *  during exam review must not count twice. */
@@ -176,6 +179,19 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   /** sr-only timer announcements - each fires once per run. */
   const announced5Ref = useRef(false);
   const announced1Ref = useRef(false);
+  /** CR-106 "Dạy tôi": the disclosed skill lesson for the current
+   *  question (null = hidden). Resets on every question change. */
+  const [teachLesson, setTeachLesson] = useState<TeachResult | null>(null);
+  const [teachBusy, setTeachBusy] = useState(false);
+  const [teachFailed, setTeachFailed] = useState(false);
+  /** Teach needs an account (taught_marks keys on account_id) - guests
+   *  keep the plain sitting without the button. */
+  const [canTeach, setCanTeach] = useState(false);
+  useEffect(() => {
+    void getSession()
+      .then((s) => setCanTeach(!!s?.user))
+      .catch(() => setCanTeach(false));
+  }, []);
 
   // CR-97: live arena race - broadcast progress per answer, render the
   // standings strip from broadcast events, settle via RPC at the end.
@@ -356,6 +372,14 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   useEffect(() => {
     questionShownAtRef.current = Date.now();
   }, [exam?.currentIndex, exam?.questions]);
+  // CR-106: the lesson panel belongs to the question it was taught on.
+  // Keyed on currentIndex ONLY - the teach action itself replaces the
+  // questions array to flag bankTaught, and resetting on that change
+  // would wipe the panel the instant it appears.
+  useEffect(() => {
+    setTeachLesson(null);
+    setTeachFailed(false);
+  }, [exam?.currentIndex]);
   useEffect(() => {
     if (exam?.finishedAtMs !== null && exam) void telemetryRef.current?.flush();
   }, [exam]);
@@ -621,6 +645,45 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     creditedRef.current = new Set<string | number>();
   }
 
+  /**
+   * CR-106 "Dạy tôi": disclose the per-skill lesson for the current bank
+   * question. The RPC marks (account_id, question_id) taught server-side;
+   * the row then answers ungraded and never re-serves to this account.
+   * Practice only - graded sittings never render the button.
+   */
+  function teach(): void {
+    if (!isPractice || !exam || teachBusy) return;
+    const question = exam.questions[exam.currentIndex];
+    if (!question || !isBankQuestion(question) || question.bankTaught || verdict) return;
+    setTeachBusy(true);
+    setTeachFailed(false);
+    void (async () => {
+      try {
+        const lesson = await teachBankQuestion(question.bankId);
+        if (!lesson.taught) return; // not_found - nothing was disclosed
+        // Flag the row taught BEFORE showing the lesson - the answer
+        // path below reads it to skip the oracle call.
+        setExam((current) =>
+          current
+            ? {
+                ...current,
+                questions: current.questions.map((q) =>
+                  q.id === question.id ? { ...q, bankTaught: true } : q,
+                ),
+              }
+            : current,
+        );
+        setTeachLesson(lesson);
+      } catch {
+        // Rate limit / offline - the button stays available so the kid
+        // can retry; the sitting itself is unaffected.
+        setTeachFailed(true);
+      } finally {
+        setTeachBusy(false);
+      }
+    })();
+  }
+
   function answer(answer: ExamAnswer): void {
     // CR-102 r99: freeze input while finishExam resolves verdicts - an
     // answer landing mid-resolve could pair a new attempt with a verdict
@@ -635,6 +698,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // CR-102: keyless bank questions are scored by the oracle; the UI
       // records the answer immediately and the verdict lands ~300ms later.
       if (isBankQuestion(question)) {
+        if (question.bankTaught) {
+          // CR-106: a disclosed row is attempted-not-scored - record the
+          // attempt locally, skip the oracle entirely, and skip
+          // telemetry/skill/quest counters so the ungraded answer never
+          // biases the adaptive model or parent-report stats.
+          setExam((current) => (current ? answerCurrent(current, answer) : current));
+          setVerdict({ isCorrect: false, taught: true });
+          return;
+        }
         verdictPendingRef.current = true;
         setScoreError(false);
         setExam((current) => (current ? answerCurrent(current, answer) : current));
@@ -1143,24 +1215,81 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
               {flags.has(exam.currentIndex) ? 'Bỏ đánh dấu' : 'Đánh dấu câu này'}
             </button>
           )}
+          {/* CR-106: practice-only teach affordance - the disclosed row
+              answers ungraded, so graded sittings never render it.
+              Guests (canTeach=false) have no account to mark against. */}
+          {isPractice && canTeach && isBankQuestion(question) && !question.bankTaught && !verdict && (
+            <button
+              type="button"
+              data-testid="teach-me"
+              onClick={teach}
+              disabled={teachBusy}
+              className={`${EXAM_SHEET_BTN} !min-h-[40px] px-3 text-sm disabled:opacity-40`}
+            >
+              <IconBook size={14} aria-hidden="true" />
+              {teachBusy ? 'Đang mở bài học...' : 'Dạy tôi'}
+            </button>
+          )}
+          {isPractice && teachFailed && !verdict && (
+            <span className="text-xs font-bold text-amber-700">Chưa tải được bài học - thử lại nhé.</span>
+          )}
         </div>
         {/* my-auto centres the question vertically on the sheet (auto
             margins absorb leftover space) and collapses to top-flow the
             moment a long passage needs the room - no clipping. */}
         <div className="my-auto">
+        {/* CR-106: the disclosed skill lesson sits on the paper above
+            the question - the kid reads, dismisses, then answers the
+            (now ungraded) question. No modal: G1-2 kids lose overlay
+            state. */}
+        {isPractice && teachLesson && (
+          <div data-testid="teach-lesson" className="mb-4 rounded-2xl border-2 border-sky-300 bg-sky-50 p-4">
+            <div className="flex items-start gap-2">
+              <IconBook size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-sky-700" />
+              <div>
+                <div className="font-extrabold text-sky-900">{teachLesson.title_vi ?? 'Bài học nhanh'}</div>
+                <div className={`mt-1 whitespace-pre-line text-sm font-bold text-sky-900/90 ${TYPE_BODY_PAPER}`}>
+                  {teachLesson.body_vi ?? teachLesson.explanation_vi ?? `Câu này thuộc kỹ năng: ${teachLesson.skill ?? 'luyện tập'}.`}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              data-testid="teach-dismiss"
+              onClick={() => setTeachLesson(null)}
+              className={`mt-3 ${EXAM_SHEET_BTN} !min-h-[40px] px-3 text-sm`}
+            >
+              Mình đã hiểu - làm tiếp
+            </button>
+          </div>
+        )}
         <ExamQuestionView question={question} answer={exam.answers[exam.currentIndex] ?? null} onAnswer={answer} promptClass={isG12 ? TYPE_PROMPT_PAPER_G12 : TYPE_PROMPT_PAPER_G345} />
         {isPractice && verdict && (
           <div
             data-testid="practice-verdict"
-            className={`mt-6 ${verdict.isCorrect ? EXAM_VERDICT_CORRECT : EXAM_VERDICT_WRONG}`}
+            className={`mt-6 ${!verdict.taught && verdict.isCorrect ? EXAM_VERDICT_CORRECT : EXAM_VERDICT_WRONG}`}
           >
-            <div className="text-lg font-extrabold">
-              {verdict.isCorrect ? <span className="inline-flex items-center gap-1.5">Chính xác! <IconParty size={18} /></span> : 'Chưa đúng rồi.'}
-            </div>
-            <div className="mt-1 text-sm font-bold">
-              Đáp án đúng: <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(question)} /></span>
-            </div>
-            {question.explanation && <div className={`mt-1 text-sm ${TYPE_BODY_PAPER}`}><MarkupText text={question.explanation} /></div>}
+            {verdict.taught ? (
+              /* CR-106: disclosed rows answer ungraded - no correct/wrong
+                 verdict, no answer reveal (the oracle was never called
+                 for this attempt, so there is no key to show anyway). */
+              <>
+                <div className="text-lg font-extrabold">Đã học câu này - không tính điểm</div>
+                <div className="mt-1 text-sm font-bold">
+                  Em đã xem bài học nên câu trả lời này không tính điểm. Cứ trả lời thử để luyện thêm nhé!
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-extrabold">
+                  {verdict.isCorrect ? <span className="inline-flex items-center gap-1.5">Chính xác! <IconParty size={18} /></span> : 'Chưa đúng rồi.'}
+                </div>
+                <div className="mt-1 text-sm font-bold">
+                  Đáp án đúng: <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(question)} /></span>
+                </div>
+                {question.explanation && <div className={`mt-1 text-sm ${TYPE_BODY_PAPER}`}><MarkupText text={question.explanation} /></div>}
+              </>
+            )}
             {/* N1: the ONE gold action of the untimed practice sitting. */}
             <button
               type="button"

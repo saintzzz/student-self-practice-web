@@ -388,13 +388,16 @@ export function unbankQuestion<T extends ExamQuestion>(q: T): T {
   if (!('bankId' in q) || !q.bankId) return q;
   // CR-104: bankOptionOrder only has meaning while the oracle wire map
   // is reachable - strip it with the rest of the bank bookkeeping.
-  const { bankId: _b, bankVerdict: _v, bankCorrectText: _t, bankOptionOrder: _o, ...rest } = q;
+  const { bankId: _b, bankVerdict: _v, bankCorrectText: _t, bankOptionOrder: _o, bankTaught: _u, ...rest } = q;
   return rest as T;
 }
 
 export function captureExamWrongAnswers(gradeId: string, review: readonly ExamReviewItem[]): void {
   for (const item of review) {
-    if (item.answer !== null && !item.isCorrect) {
+    // CR-106: taught rows are attempted-not-scored - a disclosed item
+    // has no place in the wrong-answer retry queue.
+    if (item.answer !== null && !item.isCorrect
+        && !('bankTaught' in item.question && item.question.bankTaught)) {
       recordWrongExamQuestion(gradeId, unbankQuestion(item.question));
     }
   }
@@ -405,12 +408,17 @@ export function computeExamResult(state: ExamState): ExamResult {
     const answer = state.answers[index] ?? null;
     return { index, question, answer, isCorrect: isExamAnswerCorrect(question, answer) };
   });
-  const correctCount = review.filter((r) => r.isCorrect).length;
+  // CR-106: taught questions are attempted-not-scored - excluded from
+  // BOTH the numerator and the denominator so the score reflects graded
+  // items only. They still appear on the review sheet and count as
+  // answered for progress.
+  const graded = review.filter((r) => !('bankTaught' in r.question && r.question.bankTaught));
+  const correctCount = graded.filter((r) => r.isCorrect).length;
   const answeredCount = state.answers.filter((a) => a !== null).length;
   const finished = state.finishedAtMs ?? state.startedAtMs + state.timeLimitSec * 1000;
   const elapsedSec = Math.max(0, Math.floor((finished - state.startedAtMs) / 1000));
   return {
-    totalCount: state.questions.length,
+    totalCount: graded.length,
     answeredCount,
     correctCount,
     points: correctCount * EXAM_POINTS_PER_QUESTION,

@@ -100,9 +100,11 @@ export function ExamResult({
 }) {
   const mm = Math.floor(result.timeUsedSec / 60);
   const ss = result.timeUsedSec % 60;
-  const wrong = result.review.filter((r) => !r.isCorrect);
+  // CR-106: taught rows are ungraded - never counted as "sai" on the
+  // review toggle or in the pass ratio (totalCount already excludes them).
+  const wrong = result.review.filter((r) => !r.isCorrect && !('bankTaught' in r.question && r.question.bankTaught));
   const [showReview, setShowReview] = useState(false);
-  const passed = result.correctCount / Math.max(1, result.answeredCount) >= 0.8;
+  const passed = result.correctCount / Math.max(1, result.totalCount) >= 0.8;
   // Stars emphasis (kids-UX): the 0-3 star scale kids already know from
   // round summaries, computed from the same points ratio. Points stay the
   // headline - R-08 keeps the IOE convention parents read.
@@ -212,6 +214,12 @@ export function ExamResult({
               >
                 <div className="text-xs font-bold text-slate-500">Câu {item.index + 1}</div>
                 <div className="mt-1 text-sm font-semibold text-slate-800"><MarkupText text={reviewPrompt(item.question)} /></div>
+                {'bankTaught' in item.question && item.question.bankTaught ? (
+                  /* CR-106: a disclosed row was never oracle-scored - no
+                     key exists to show, and it was not graded anyway. */
+                  <div className="mt-2 text-sm font-bold text-sky-800">Đã học - câu này không tính điểm</div>
+                ) : (
+                  <>
                 <div className="mt-2 text-sm">
                   <span className="font-bold text-slate-700">Đáp án đúng: </span>
                   <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(item.question)} /></span>
@@ -224,6 +232,8 @@ export function ExamResult({
                 )}
                 {item.question.explanation && (
                   <div className={`mt-1 text-xs ${TYPE_BODY_PAPER}`}><MarkupText text={item.question.explanation} /></div>
+                )}
+                  </>
                 )}
               </div>
             ))}

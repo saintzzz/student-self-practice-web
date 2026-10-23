@@ -36,6 +36,14 @@ export interface BankScored {
    * the ORIGINAL index the oracle grades against.
    */
   bankOptionOrder?: readonly number[];
+  /**
+   * CR-106 - the student tapped "Dạy tôi" on this row: the skill lesson
+   * was disclosed server-side and `practice.taught_marks` holds the
+   * (account_id, question_id) mark, so the row is attempted-not-scored
+   * in every result and never re-serves to this account. Set client-side
+   * by the teach action or by hydrateBankQuestion's server 'taught' flag.
+   */
+  bankTaught?: boolean;
 }
 
 /** Sắp xếp lại câu: tap scrambled tiles in order to rebuild `sentence`. */

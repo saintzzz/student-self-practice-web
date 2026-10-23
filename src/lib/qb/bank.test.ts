@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createExamFromAssignment, createExamFromBank, examAnswerToWire, fetchBankQuestions, gradeNumber, hydrateBankQuestion, pickUnseenFirst, resolveBankVerdicts, toExamQuestion, type QbRow } from './bank';
+import { createExamFromAssignment, createExamFromBank, examAnswerToWire, fetchBankQuestions, gradeNumber, hydrateBankQuestion, pickUnseenFirst, resolveBankVerdicts, teachBankQuestion, toExamQuestion, type QbRow } from './bank';
 import { examCorrectAnswerText, isExamAnswerCorrect } from '../exam/examSession';
 
 const { rpcMock, getSessionMock } = vi.hoisted(() => ({
@@ -612,5 +612,71 @@ describe('CR-104 option permutation (position-leak fix)', () => {
     // The wire still sends the original index for the picked display slot.
     const wire = examAnswerToWire(q, { type: 'option', index: 0 });
     expect(wire).toEqual({ index: q.bankOptionOrder![0] });
+  });
+});
+
+describe('CR-106 teach-me (AC-106.1/106.2)', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset();
+  });
+
+  it('teachBankQuestion calls the teach RPC with the question id', async () => {
+    rpcMock.mockResolvedValue({
+      data: {
+        question_id: 'q1',
+        taught: true,
+        skill: 'grammar-use-of-english',
+        title_vi: 'Ngữ pháp trong câu',
+        body_vi: 'Nhìn chủ ngữ.',
+        explanation_vi: 'She di voi is.',
+      },
+      error: null,
+    });
+    const lesson = await teachBankQuestion('q1');
+    expect(rpcMock).toHaveBeenCalledWith('teach_bank_question', { p_question_id: 'q1' });
+    expect(lesson).toMatchObject({ taught: true, title_vi: 'Ngữ pháp trong câu' });
+  });
+
+  it('teachBankQuestion maps RPC errors to the kid-friendly message', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { code: 'PT429', message: 'rate_limited' } });
+    await expect(teachBankQuestion('q1')).rejects.toThrow('thử lại sau');
+  });
+
+  it('AC-106.2: a server-flagged taught verdict hydrates bankTaught - attempted-not-scored', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }))!;
+    // Even a CORRECT oracle verdict on a taught row must mark the item
+    // ungraded - the flag, not the correctness, drives the exclusion.
+    const hydrated = hydrateBankQuestion(q, {
+      question_id: 'q1',
+      correct: true,
+      correct_answer: { index: 0 },
+      correct_answer_text: 'a',
+      explanation_vi: 'Giai thich.',
+      taught: true,
+    });
+    expect(hydrated).toMatchObject({ bankTaught: true });
+  });
+
+  it('untaught rows keep bankTaught undefined after hydrate', () => {
+    const q = toExamQuestion(row({
+      question_type: 'mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: undefined,
+      explanation_vi: undefined,
+    }))!;
+    const hydrated = hydrateBankQuestion(q, {
+      question_id: 'q1',
+      correct: false,
+      correct_answer: null,
+      correct_answer_text: 'a',
+      explanation_vi: null,
+    });
+    expect('bankTaught' in hydrated ? hydrated.bankTaught : undefined).toBeUndefined();
   });
 });

@@ -526,6 +526,35 @@ export interface BankScore {
   correct_answer: { index?: number; boolean?: boolean; text?: string; accepted?: unknown[] } | null;
   correct_answer_text: string | null;
   explanation_vi: string | null;
+  /** CR-106: the caller's account already taught this row - the attempt
+   *  grades but the client marks it ungraded. */
+  taught?: boolean;
+}
+
+/** CR-106 - teach_bank_question payload: a per-skill lesson, never key
+ *  material (no `answer`/`choices` fields exist on the wire). */
+export interface TeachResult {
+  question_id: string;
+  taught: boolean;
+  skill?: string;
+  title_vi?: string | null;
+  body_vi?: string | null;
+  explanation_vi?: string | null;
+  error?: string;
+}
+
+/**
+ * CR-106: disclose the per-skill lesson for a bank question and mark
+ * (account_id, question_id) taught server-side. Authenticated only -
+ * the button is hidden for guests so PT401 never reaches here in
+ * normal flow.
+ */
+export async function teachBankQuestion(bankId: string): Promise<TeachResult> {
+  const { data, error } = await (await getSupabase()).rpc('teach_bank_question', {
+    p_question_id: bankId,
+  });
+  if (error) throw bankFetchError(error);
+  return data as TeachResult;
 }
 
 /** Encode a UI-side ExamAnswer into the wire shape the oracle expects. */
@@ -555,7 +584,7 @@ export function examAnswerToWire(question: ExamQuestion, answer: import('../exam
 /** Narrow to the bank-scored kinds (the only ones carrying `bankId`). */
 export function isBankQuestion(
   question: ExamQuestion,
-): question is ExamQuestion & { bankId: string; bankVerdict?: boolean } {
+): question is ExamQuestion & { bankId: string; bankVerdict?: boolean; bankTaught?: boolean } {
   return 'bankId' in question && typeof question.bankId === 'string';
 }
 
@@ -597,6 +626,10 @@ export function hydrateBankQuestion(question: ExamQuestion, score: BankScore): E
     bankVerdict: score.correct,
     bankCorrectText: score.correct_answer_text ?? '',
     explanation: score.explanation_vi ?? question.explanation,
+    // CR-106: a server-flagged taught attempt is ungraded - carry the
+    // marker so computeExamResult excludes it even when the client did
+    // not originate the teach (e.g. a fixed form row taught earlier).
+    bankTaught: score.taught === true ? true : ('bankTaught' in question ? question.bankTaught : undefined),
   };
   switch (question.kind) {
     case 'grammar-mcq': {

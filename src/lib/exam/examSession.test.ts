@@ -238,3 +238,35 @@ describe('sameExamAnswer (CR-102 r99)', () => {
     expect(sameExamAnswer({ type: 'order', indices: [0, 1] }, { type: 'option', index: 0 })).toBe(false);
   });
 });
+
+describe('CR-106 taught questions are attempted-not-scored (AC-106.5)', () => {
+  const taughtQ = {
+    id: 't1', topicId: 't', kind: 'grammar-mcq' as const,
+    prompt: 'She ___ a student.', options: ['is', 'are', 'am', 'be'] as const,
+    correctIndex: 0 as const, explanation: 'x', bankId: 'q1', bankTaught: true,
+  };
+  const gradedQ = {
+    id: 'g1', topicId: 't', kind: 'grammar-mcq' as const,
+    prompt: 'I ___ a student.', options: ['am', 'is', 'are', 'be'] as const,
+    correctIndex: 0 as const, explanation: 'x', bankId: 'q2', bankVerdict: true,
+  };
+  const state: ExamState = {
+    programId: 'english', gradeId: 'grade-3',
+    questions: [taughtQ, gradedQ],
+    answers: [{ type: 'option', index: 0 }, { type: 'option', index: 0 }],
+    currentIndex: 1, startedAtMs: NOW, timeLimitSec: 600,
+    untimed: true, finishedAtMs: NOW + 30_000,
+  };
+
+  it('taught rows leave both the numerator and the denominator', () => {
+    const result = computeExamResult(state);
+    // 2 questions in the sitting, but only 1 graded item.
+    expect(result.totalCount).toBe(1);
+    expect(result.correctCount).toBe(1);
+    expect(result.points).toBe(EXAM_POINTS_PER_QUESTION);
+    // The attempt still counted as answered for progress counters.
+    expect(result.answeredCount).toBe(2);
+    // Review keeps the taught row visible (it stays on the sheet).
+    expect(result.review).toHaveLength(2);
+  });
+});
