@@ -187,6 +187,10 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   /** Teach needs an account (taught_marks keys on account_id) - guests
    *  keep the plain sitting without the button. */
   const [canTeach, setCanTeach] = useState(false);
+  /** Fresh exam state for async continuations (teach resolves after
+   *  renders the closure captured - stale `exam` lies). */
+  const examRef = useRef<ExamState | null>(null);
+  useEffect(() => { examRef.current = exam; }, [exam]);
   useEffect(() => {
     void getSession()
       .then((s) => setCanTeach(!!s?.user))
@@ -291,7 +295,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   /** Resolve pending bank verdicts, then stamp finishedAtMs. */
   function finishExam(): void {
     const snapshot = exam;
-    if (!snapshot || snapshot.finishedAtMs !== null || finishingRef.current) return;
+    // CR-106 r106: a teach in flight must resolve before the sitting
+    // closes - otherwise its late callback lands on a finished state.
+    if (!snapshot || snapshot.finishedAtMs !== null || finishingRef.current || teachBusy) return;
     finishingRef.current = true;
     setScoreError(false);
     // Fast path: no unresolved bank verdict - submit synchronously
@@ -667,10 +673,15 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       try {
         const lesson = await teachBankQuestion(question.bankId);
         if (!lesson.taught) return; // not_found - nothing was disclosed
-        // Flag the row taught BEFORE showing the lesson - the answer
-        // path below reads it to skip the oracle call.
+        // CR-106 r106: bind the late callback to the still-open sitting
+        // - navigation/submission while the RPC flew must not patch a
+        // finished or replacement exam, and the lesson only shows when
+        // the mark actually landed on the current question.
+        const live = examRef.current;
+        if (!live || live.finishedAtMs !== null) return;
+        if (live.questions[live.currentIndex]?.id !== question.id) return;
         setExam((current) =>
-          current
+          current && current.finishedAtMs === null
             ? {
                 ...current,
                 questions: current.questions.map((q) =>
@@ -720,6 +731,13 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           try {
             const { question: hydrated, correct: isCorrect } = await scoreAndHydrate(question, answer, exam?.untimed === true);
             patchExamQuestion(hydrated, index, answer);
+            // CR-106 r106: the oracle can flag this row taught (another
+            // tab taught it mid-sitting) - show the ungraded verdict and
+            // skip every credit path, same as a locally taught row.
+            if (isBankQuestion(hydrated) && hydrated.bankTaught === true) {
+              setVerdict({ isCorrect: false, taught: true });
+              return;
+            }
             telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current, isCorrect);
             telemetryRef.current?.logAdaptive(question, isCorrect);
             setVerdict({ isCorrect });
