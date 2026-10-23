@@ -2,15 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createExamFromAssignment, createExamFromBank, examAnswerToWire, fetchBankQuestions, gradeNumber, hydrateBankQuestion, pickUnseenFirst, resolveBankVerdicts, teachBankQuestion, toExamQuestion, type QbRow } from './bank';
 import { examCorrectAnswerText, isExamAnswerCorrect } from '../exam/examSession';
 
-const { rpcMock, getSessionMock } = vi.hoisted(() => ({
+const { rpcMock, getSessionMock, guestTicketMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
   getSessionMock: vi.fn(),
+  guestTicketMock: vi.fn(async () => 'v1.test.ticket'),
 }));
 vi.mock('../supabase/client', () => ({
   getSupabase: async () => ({ rpc: rpcMock }),
   isSupabaseConfigured: () => true,
 }));
 vi.mock('../auth/practiceAuth', () => ({ getSession: getSessionMock }));
+vi.mock('./turnstile', () => ({ guestTicket: guestTicketMock }));
 
 function row(partial: Partial<QbRow>): QbRow {
   return {
@@ -448,6 +450,56 @@ describe('fetchBankQuestions - CR-101 rate limiting', () => {
       .rejects.toThrow('thử lại sau');
     expect(rpcMock).toHaveBeenCalledTimes(1);
     expect(rpcMock).toHaveBeenCalledWith('fetch_questions_public', expect.anything());
+  });
+});
+
+describe('fetchBankQuestions - CR-108 guest Turnstile ticket', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset();
+    guestTicketMock.mockReset();
+    guestTicketMock.mockResolvedValue('v1.test.ticket');
+  });
+
+  it('guest fetch passes p_guest_ticket to the public RPC', async () => {
+    getSessionMock.mockResolvedValue(null);
+    rpcMock.mockResolvedValue({ data: [row({})], error: null });
+    await fetchBankQuestions('english', 'grade-3', 5, 'practice');
+    expect(guestTicketMock).toHaveBeenCalled();
+    expect(rpcMock).toHaveBeenCalledWith(
+      'fetch_questions_public',
+      expect.objectContaining({ p_guest_ticket: 'v1.test.ticket' }),
+    );
+  });
+
+  it('PT401 re-mints the ticket and retries once', async () => {
+    getSessionMock.mockResolvedValue(null);
+    guestTicketMock
+      .mockResolvedValueOnce('v1.stale.ticket')
+      .mockResolvedValueOnce('v1.fresh.ticket');
+    rpcMock
+      .mockResolvedValueOnce({ data: null, error: { code: 'PT401', message: 'guest_challenge_required' } })
+      .mockResolvedValueOnce({ data: [row({})], error: null });
+    const rows = await fetchBankQuestions('english', 'grade-3', 5, 'practice');
+    expect(rows).toHaveLength(1);
+    expect(guestTicketMock.mock.calls[0]).toHaveLength(0);
+    expect(guestTicketMock).toHaveBeenNthCalledWith(2, true);
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('persistent PT401 surfaces the friendly challenge error', async () => {
+    getSessionMock.mockResolvedValue(null);
+    rpcMock.mockResolvedValue({ data: null, error: { code: 'PT401', message: 'guest_challenge_required' } });
+    await expect(fetchBankQuestions('english', 'grade-3', 5, 'practice'))
+      .rejects.toThrow('thử lại');
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('authed callers never mint a ticket', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock.mockResolvedValue({ data: [row({})], error: null });
+    await fetchBankQuestions('english', 'grade-3', 5, 'practice');
+    expect(guestTicketMock).not.toHaveBeenCalled();
   });
 });
 

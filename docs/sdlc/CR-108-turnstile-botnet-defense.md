@@ -1,4 +1,4 @@
-# CR-108 - Turnstile botnet-grade fetch defense (status: blocked on account)
+# CR-108 - Turnstile botnet-grade fetch defense (status: IMPLEMENTED)
 
 Deferred out of CR-103/104. Per-IP caps (0049) stop the single-IP
 scrape; a distributed botnet (many IPs each under cap) still drains the
@@ -18,12 +18,19 @@ global guest pools. Cloudflare Turnstile is the designed next layer.
 - Authed users exempt or reduced challenge (accounts are uid-capped
   already; friction on paying users has a cost).
 
-## Blocker
+## Implementation (done)
 
-Needs a Cloudflare account + site/secret key pair. Account signup is a
-manual human step (not provisionable); keys then go into Supabase Vault
-(`turnstile_secret`), never the repo. Until the account exists this CR
-cannot implement.
+- Edge function `practice-turnstile` (verify_jwt=false, CORS allowlist):
+  verifies `cf-turnstile-response` via siteverify, then mints a signed
+  guest ticket `b64url(v1|ip|exp|nonce).hmac` bound to the caller IP.
+- `fetch_questions_public` gained `p_guest_ticket`; anon callers without
+  a valid ticket get PT401 `guest_challenge_required`. Authed exempt.
+- Secrets in vault: `turnstile_secret` (siteverify), `guest_ticket_secret`
+  (HMAC). Edge fn reads both via `practice.get_turnstile_config`
+  (service_role-only). Fail closed on missing config.
+- Client `src/lib/qb/turnstile.ts`: lazy-loads the widget script,
+  `appearance: 'interaction-only'` (invisible unless Cloudflare suspects),
+  caches the ticket until ~60 s before expiry, one re-mint retry on PT401.
 
 ## Impact assessment
 

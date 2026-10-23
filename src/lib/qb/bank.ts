@@ -7,6 +7,7 @@
  */
 import { getSupabase, isSupabaseConfigured } from '../supabase/client';
 import { getSession } from '../auth/practiceAuth';
+import { guestTicket } from './turnstile';
 import type { ExamProgramId, ExamQuestion } from '../../types/exam';
 import { examConfigForGrade, type ExamState } from '../exam/examSession';
 import { seededShuffleIndices } from '../prng';
@@ -67,6 +68,11 @@ function bankFetchError(error: { message: string; code?: string }): Error {
   if (error.code === 'PT429' || error.message.includes('rate_limited')) {
     return new Error('Máy chủ đang bận một chút - em thử lại sau ít phút nhé!');
   }
+  // CR-108: guest challenge failed/expired or the gate is unavailable -
+  // kid-readable, actionable ("thử lại") not a raw Postgres code.
+  if (error.code === 'PT401' || error.message.includes('guest_challenge')) {
+    return new Error('Chưa xác minh được em là người thật - em thử lại nhé!');
+  }
   return new Error(error.message);
 }
 
@@ -93,7 +99,20 @@ export async function fetchBankQuestions(
   if (!session) {
     // Guests only reach the public RPC, but it enforces the same mode
     // gates (mock/exam require mockEligible + cleared approval flags).
-    const pub = await supabase.rpc('fetch_questions_public', params);
+    // CR-108: guests also need a Turnstile ticket - a PT401 means the
+    // cached ticket expired in flight, so re-mint once and retry.
+    let ticket = await guestTicket();
+    let pub = await supabase.rpc('fetch_questions_public', {
+      ...params,
+      p_guest_ticket: ticket,
+    });
+    if (pub.error?.code === 'PT401') {
+      ticket = await guestTicket(true);
+      pub = await supabase.rpc('fetch_questions_public', {
+        ...params,
+        p_guest_ticket: ticket,
+      });
+    }
     if (pub.error) throw bankFetchError(pub.error);
     return (pub.data ?? []) as QbRow[];
   }
