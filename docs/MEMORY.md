@@ -173,3 +173,28 @@
   thu cong cua human, khong provision duoc bang API), Groq STT proposal
   (chi la de xuat, chua co CR), CR-68 deferred. Content: G5 pool da dat
   nguong, chi con 5% human spot-check.
+
+## 2026-10-23 - CR-108 Turnstile guest gate IMPLEMENTED
+
+- PO cung cap Cloudflare Turnstile keys (site 0x4AAAAAAFisJ_...g - public,
+  secret -> vault `turnstile_secret`). Blocking canh guest fetch, khong
+  cong doan authed.
+- Kien truc: edge fn `practice-turnstile` (verify_jwt=false, CORS
+  allowlist) verify siteverify -> mint ticket HMAC
+  `b64url(v1|ip|exp|nonce).hex` (TTL 600s, bind IP cuoi XFF - cung quy
+  uoc practice.client_ip). RPC `fetch_questions_public` them
+  `p_guest_ticket`; anon khong ticket -> PT401 guest_challenge_required.
+  Migration 0055 da apply prod + verify: anon no-ticket tra PT401.
+- Client `src/lib/qb/turnstile.ts`: lazy script load (khong vao entry
+  chunk), appearance='interaction-only' (vo hinh voi user thuong), cache
+  ticket den ~60s truoc het han, retry 1 lan khi PT401.
+- Vault: `turnstile_secret` + `guest_ticket_secret` (khong commit).
+  Edge fn doc qua `practice.get_turnstile_config` (service_role-only).
+  Fail closed khi thieu config -> 503 challenge_unavailable.
+- ExtRev loop: r111 (a11y container, timeout, error copy) -> r112
+  (script-load bound) -> r113 (fetch body-read deadline) -> r114 CLEAN.
+- Commit: 49c0cbe (impl) + ff0c6ef + 236bdcd + ccc2c95 (review fixes) +
+  bbe2ac5 (artifact). Tests 1770 xanh, build xanh.
+- robots.txt + X-Robots-Tag noai cung da deploy cung dot (lop 1 CR-109).
+- Viec con lai cho human: Vercel WAF AI-bots -> deny (MCP token khong co
+  project scope); Turnstile widget hostname phai cover ea.vieschool.com.
