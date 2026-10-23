@@ -54,9 +54,15 @@ const b64url = (bytes: Uint8Array) =>
     .replaceAll('/', '_')
     .replaceAll('=', '');
 
-// Same convention as practice.client_ip(): LAST x-forwarded-for entry is
-// the real TCP peer appended by the edge, earlier entries are spoofable.
+// Supabase edge runtime injects cf-connecting-ip / x-real-ip with the real
+// TCP peer (x-forwarded-for is NOT reliably present here). The DB side
+// (practice.client_ip) reads the LAST xff entry on PostgREST, which is the
+// same real client IP - so the ticket binds to the right network.
 function clientIp(req: Request): string | null {
+  const cf = req.headers.get('cf-connecting-ip');
+  if (cf) return cf.trim();
+  const xr = req.headers.get('x-real-ip');
+  if (xr) return xr.trim();
   const xff = req.headers.get('x-forwarded-for');
   if (!xff) return null;
   const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);

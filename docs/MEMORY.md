@@ -198,3 +198,8 @@
 - robots.txt + X-Robots-Tag noai cung da deploy cung dot (lop 1 CR-109).
 - Viec con lai cho human: Vercel WAF AI-bots -> deny (MCP token khong co
   project scope); Turnstile widget hostname phai cover ea.vieschool.com.
+- Prod verify guest: edge fn v1 mint ticket bind ip='' vi XFF khong toi
+  duoc edge runtime -> RPC thay ip that -> PT401. Fix v2: doc
+  cf-connecting-ip truoc (Supabase edge inject, dung IP that). Verify lai
+  tren ea.vieschool.com: guest Lop 2 -> Luyen them -> Tieng Anh -> Luyen
+  de -> de 15 cau load, Turnstile vo hinh, khong co UI challenge.
