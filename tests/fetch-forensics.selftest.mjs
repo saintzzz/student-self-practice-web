@@ -21,6 +21,10 @@ const SRC59 = readFileSync(
   join(ROOT, "supabase/migrations/0059_audit_backfill_scope_fix.sql"),
   "utf8",
 );
+const SRC60 = readFileSync(
+  join(ROOT, "supabase/migrations/0060_audit_actor_canonical_restore.sql"),
+  "utf8",
+);
 // 0057 re-creates the wrappers - the effective contract is 0057's
 // bodies on top of 0056's table/helper.
 const wrap = (name) =>
@@ -87,6 +91,19 @@ test("r117: backfill spares opaque actors and 'guest:unknown'", () => {
     "must not re-hash the 0057 opaque actor form",
   );
   assert.match(predicate, /actor <> 'guest:unknown'/);
+});
+
+test("r118: canonical restore rebuilds opaque actors from ip_hash", () => {
+  // Self-heals any corruption depth: hex-16 actors are rewritten to
+  // 'guest:' + left(ip_hash,16) whenever ip_hash exists, so a double-
+  // hashed actor from a 0058 replay is repaired, not preserved.
+  assert.match(SRC60, /when ip_hash is not null then 'guest:' \|\| left\(ip_hash, 16\)/);
+  // Embedded raw-IP actors are hashed from the embedded value.
+  assert.match(SRC60, /extensions\.digest\(\s*substring\(actor from '\^guest:\(\.\+\)\$'\)/);
+  // Unrecoverable hex-16 + null ip_hash degrades honestly to unknown.
+  assert.match(SRC60, /else 'guest:unknown'/);
+  // Already-canonical rows are not rewritten.
+  assert.match(SRC60, /actor <> 'guest:' \|\| left\(ip_hash, 16\)/);
 });
 
 test("all three drain wrappers tag + audit student-path rows", () => {
