@@ -34,7 +34,14 @@ const HW = { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/j
 const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵĂÂĐÊÔƠƯÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ]/;
 // Paired delimiters; an apostrophe inside a contraction ('can't', 'don't')
 // is part of the token, not a closer - '(?=\w) keeps it internal (r131#2).
-const QUOTED = /"([^"]+)"|'((?:[^']|'(?=\w))*)'|“([^”]+)”|‘([^’]+)’/g;
+const QUOTED = /"([^"]+)"|'((?:[^']|'(?=\w))*)'|“([^”]+)”|‘((?:[^’]|’(?=\w))*)’/g;
+
+// Diacritics-insensitive comparison (r132#1): an undiacritized VN gloss
+// like 'khong the' quoted in the original must match its restored form
+// 'không thể', so required-term checks compare stripped forms.
+const stripVN = (s) => String(s ?? '').toLowerCase()
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/đ/g, 'd').replace(/Đ/g, 'd');
 
 // Resolve the correct answer to its served label (r130#1): the model must
 // see WHICH choice is right - a bare {index:N} without choices is unusable.
@@ -48,12 +55,13 @@ const correctLabel = (row) => {
 
 // English terms quoted in the ORIGINAL explanation are the taught vocab -
 // a rewrite that drops or renames them loses the lesson (r130#1 validation).
-// Only ENGLISH quoted terms must survive the rewrite - Vietnamese glosses
-// inside quotes may legitimately change during diacritics restoration.
+// Every quoted term in the original must survive the rewrite in
+// diacritics-insensitive form - English vocab stays verbatim, VN glosses
+// may gain their marks back ('khong the' -> 'không thể' is a match).
 const quotedTerms = (s) => new Set(
   [...String(s ?? '').matchAll(QUOTED)]
-    .map((m) => (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim().toLowerCase())
-    .filter((t) => t && /[a-z]/.test(t) && !VN_MARK.test(t)));
+    .map((m) => (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim())
+    .filter(Boolean));
 
 async function fetchTargets() {
   const rows = [];
@@ -155,8 +163,9 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
         const ex = byId.get(row.id);
         // validation: present, sane length, actually Vietnamese now, and
         // every English term quoted in the original is still present
+        const exNorm = stripVN(ex ?? '');
         const missingTerms = [...quotedTerms(row.explanation_vi)]
-          .filter((t) => !String(ex ?? '').toLowerCase().includes(t));
+          .filter((t) => !exNorm.includes(stripVN(t)));
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
             ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
           if (ex === row.explanation_vi) unchanged++;
