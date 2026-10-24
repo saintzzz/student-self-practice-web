@@ -77,7 +77,7 @@ where actor like 'guest:%'
     or (ip_hash is null and actor ~ '^guest:[0-9a-f]{16}$')
   );
 
--- ===== 0061 verbatim (run twice to prove idempotency) =====
+-- ===== 0061 verbatim, pass 1 =====
 update pg_temp.audit_fixture
 set actor = case
   when actor = 'guest:' || left(
@@ -93,6 +93,12 @@ set actor = case
 end
 where actor like 'guest:%';
 
+-- snapshot pass-1 results BEFORE pass 2 (r122: asserting only the
+-- final state lets a corrupt-then-repair sequence pass undetected)
+create table pg_temp.audit_pass1 as
+  select question_ids, actor from pg_temp.audit_fixture;
+
+-- ===== 0061 verbatim, pass 2 =====
 update pg_temp.audit_fixture
 set actor = case
   when actor = 'guest:' || left(
@@ -108,12 +114,11 @@ set actor = case
 end
 where actor like 'guest:%';
 
--- ===== assertions =====
+-- ===== assertions: chain replay + pass1/pass2 equality =====
 do $$
 declare
   bad int;
 begin
-  -- full 0058->0061 replay converges to canonical actors
   if (select actor from pg_temp.audit_fixture where question_ids = '{q1}')
      <> 'guest:' || left(encode(extensions.digest('203.0.113.7'::bytea,'sha256'),'hex'),16)
      then raise exception 'raw-IP+hash row not canonical'; end if;
@@ -138,5 +143,65 @@ begin
   select count(*) into bad from pg_temp.audit_fixture
     where actor ~ '(^|guest:)([0-9]{1,3}\.){3}[0-9]{1,3}';
   if bad > 0 then raise exception '% raw-IP actors remain', bad; end if;
-  raise notice 'audit-actor-restore: replay canonical + idempotent';
+  -- strict idempotency: pass 2 must not change ANY pass-1 result
+  select count(*) into bad from pg_temp.audit_fixture f
+    join pg_temp.audit_pass1 p using (question_ids)
+    where f.actor is distinct from p.actor;
+  if bad > 0 then raise exception '% rows changed on second pass', bad; end if;
+end $$;
+
+-- ===== isolated 0061 inputs (r122: chain replay transforms these
+-- states before 0061 sees them - arm coverage needs fresh rows) =====
+create table pg_temp.audit_iso (
+  actor text not null,
+  ip_hash text,
+  rpc text not null,
+  question_ids text[] not null
+);
+insert into pg_temp.audit_iso(actor, ip_hash, rpc, question_ids) values
+  -- corrupted 'unknown': exact hash16('unknown') + null ip_hash
+  ('guest:' || left(encode(extensions.digest('unknown'::bytea,'sha256'),'hex'),16),
+   null, 'fetch_questions', '{i1}'),
+  -- raw-IP actor + null ip_hash (arm 3 alone)
+  ('guest:198.51.100.9', null, 'fetch_questions_public', '{i2}'),
+  -- raw-IP actor + MISMATCHED ip_hash (ip_hash authoritative)
+  ('guest:203.0.113.7',
+   'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+   'fetch_questions_public', '{i3}'),
+  -- opaque + null ip_hash: unrecoverable, preserved as-is
+  ('guest:aaaabbbbccccdddd', null, 'fetch_questions', '{i4}'),
+  -- opaque + matching ip_hash: canonical already
+  ('guest:eeeeeeeeeeeeeeee',
+   'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+   'fetch_questions', '{i5}');
+
+update pg_temp.audit_iso
+set actor = case
+  when actor = 'guest:' || left(
+         encode(extensions.digest('unknown'::bytea, 'sha256'), 'hex'), 16)
+       and ip_hash is null then 'guest:unknown'
+  when ip_hash is not null then 'guest:' || left(ip_hash, 16)
+  when actor !~ '^guest:[0-9a-f]{16}$' and actor <> 'guest:unknown'
+    then 'guest:' || left(
+      encode(extensions.digest(
+        substring(actor from '^guest:(.+)$')::bytea, 'sha256'), 'hex'),
+      16)
+  else actor
+end
+where actor like 'guest:%';
+
+do $$
+begin
+  if (select actor from pg_temp.audit_iso where question_ids = '{i1}')
+     <> 'guest:unknown' then raise exception 'corrupted-unknown not repaired'; end if;
+  if (select actor from pg_temp.audit_iso where question_ids = '{i2}')
+     <> 'guest:' || left(encode(extensions.digest('198.51.100.9'::bytea,'sha256'),'hex'),16)
+     then raise exception 'raw-IP arm3 wrong'; end if;
+  if (select actor from pg_temp.audit_iso where question_ids = '{i3}')
+     <> 'guest:dddddddddddddddd' then raise exception 'mismatched-hash policy wrong'; end if;
+  if (select actor from pg_temp.audit_iso where question_ids = '{i4}')
+     <> 'guest:aaaabbbbccccdddd' then raise exception 'unrecoverable opaque degraded'; end if;
+  if (select actor from pg_temp.audit_iso where question_ids = '{i5}')
+     <> 'guest:eeeeeeeeeeeeeeee' then raise exception 'canonical row rewritten'; end if;
+  raise notice 'audit-actor-restore: chain + isolated cases all canonical';
 end $$;
