@@ -302,3 +302,8 @@
   script abort truoc PATCH khi missingIds/unfixed nonempty (khong con
   silently drop slot). Re-run: 0 updates can, 0 repairs can - state da
   nhat quan tu wave truoc. Re-audit P0 van 0 het.
+- r128 (f324b08): 1 major - minted dup-* co the collide voi holder
+  ngoai component (orphan tu content edits sau mint). Fix: mint tu
+  sorted member-ids + reserved registry + re-salt khi holder ngoai
+  component; chi reuse dup-* khi holder set subset component va chua
+  reserved. Dry-run giu 0 updates - idempotent.

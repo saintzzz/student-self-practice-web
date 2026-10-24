@@ -148,6 +148,7 @@ const bucketOf = new Map();
 for (const q of questions) if (eligible(q)) bucketOf.set(q.id, keyOf(q));
 
 const desired = new Map();
+const reserved = new Set(); // ids allocated this run (r128: central registry)
 let flagged = flaggedBuckets.size, transitiveMembers = 0;
 for (const members of compMembers.values()) {
   const inFlagged = members.filter((q) => flaggedBuckets.has(bucketOf.get(q.id)));
@@ -156,13 +157,25 @@ for (const members of compMembers.values()) {
   const vgs = new Set(members.map((q) => q.variant_group_id).filter(Boolean));
   // a dup-* id may only be reused when every current holder sits inside
   // this component - otherwise the id was contaminated by a wrong merge
-  // and reusing it would resurrect the bad grouping
+  // (or content edits since minting) and reusing it would merge
+  // unrelated questions
   const cleanDup = [...vgs].find((v) =>
-    v.startsWith('dup-') && (byVg.get(v) ?? []).every((h) => memberIds.has(h.id)));
-  const shared =
-    [...vgs].find((v) => !v.startsWith('dup-'))
-    ?? cleanDup
-    ?? `dup-${createHash('md5').update(inFlagged.map((q) => bucketOf.get(q.id)).sort()[0]).digest('hex').slice(0, 16)}`;
+    v.startsWith('dup-') && !reserved.has(v) &&
+    (byVg.get(v) ?? []).every((h) => memberIds.has(h.id)));
+  let shared = [...vgs].find((v) => !v.startsWith('dup-')) ?? cleanDup;
+  if (!shared) {
+    // mint from sorted member ids - deterministic and unique per
+    // component; re-salt on collision with existing holders or ids
+    // already reserved by another component this run
+    const seed = members.map((q) => q.id).sort().join(',');
+    let salt = 0;
+    do {
+      shared = `dup-${createHash('md5').update(`${seed}:${salt}`).digest('hex').slice(0, 16)}`;
+      salt += 1;
+    } while (reserved.has(shared) ||
+      (byVg.get(shared) ?? []).some((h) => !memberIds.has(h.id)));
+  }
+  reserved.add(shared);
   for (const q of members) {
     if (!desired.has(q.id)) {
       desired.set(q.id, shared);
