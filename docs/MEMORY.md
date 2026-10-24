@@ -348,3 +348,32 @@
   verify live khop. Audit them P0 check answer-index-text-mismatch.
 - fetchTable them retry-backoff (statement timeout flake).
 - Audit sau fix: MOI check = 0 tren 132,663 rows + 292 forms.
+
+### CR-111 review loop r130-r140 - CLOSED (r140 CLEAN)
+
+- r130: polish prompt thieu choices/label; khong co before/after artifact;
+  MANUALLY_REVIEWED blanket. Fix: choices+resolved label trong prompt,
+  2-phase artifact pipeline (proposals->jsonl->--apply), REVIEWED scope
+  theo check + content fingerprint. Bonus: phat hien answer.index lech
+  answer.text 9 rows (3 served - cham sai) -> migration 0065 + P0 check
+  answer-index-text-mismatch.
+- r131: apply unconditional -> conditional (before-match), conflict fail,
+  idempotent proposed; quote regex contraction-safe.
+- r132: term-preservation so sanh stripped; curly-quote contraction.
+- r133: 'can' bi 'cần' fake -> taught EN term literal match.
+- r134: substring 'candy' fake 'can' -> boundary regex; EN term ngoai
+  context -> classify theo chinh term.
+- r135: wordlist 2 chieu collision (it/ten/rat) -> context + marked
+  variant classification.
+- r136: rewrite-controlled + context untrusted -> bank-vocab lexicon.
+- r137: mixed phrase + substring gloss + 'dich' cue -> gloss-slot cues,
+  per-word check, bounded stripped.
+- r138: 'dich' cue sai; per-word mat order; numbers bi bo -> whole-term.
+- r139: mixed term van lo -> whole-term literal cho moi non-gloss quote.
+- r140: CLEAN.
+- Prod verify (Playwright): login minhld -> map -> Lop 2 -> round 1.
+  Mascot perch -left-10 top-10, khong de title (y=138 vs title y=60-80),
+  hidden tren mobile 390px, khong horizontal overflow. Deploy 7597850
+  READY; cac commit scripts/docs sau do CANCELED theo ignored-build-step
+  (frontend khong doi - dung).
+- Audit cuoi: MOI check = 0 / 132,663 rows + 292 forms.

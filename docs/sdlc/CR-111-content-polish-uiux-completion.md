@@ -70,3 +70,24 @@ Bonus defect found during verification: `answer.index` != `answer.text` on
 all 9 (verified live); new P0 check `answer-index-text-mismatch` guards it.
 
 Final audit: every check = 0 across 132,663 questions + 292 forms.
+
+## External review loop - CLOSED (r140 CLEAN)
+
+Rounds r130-r139 each produced actionable findings on the polish
+pipeline's validation logic; all fixed (see MEMORY.md for the round-by-
+round ledger). r140: CLEAN.
+
+## Production verification (post-deploy, Playwright)
+
+- Deploy dpl_Dwk1unEfkjZZeDygNqv6YfYvYEzd (7597850) = READY and serving.
+- Later commits are scripts/docs-only -> CANCELED by ignored-build-step
+  (correct; frontend unchanged).
+- Live check: login -> map -> Lớp 2 -> round 1.
+  Mascot perch now `-left-10 top-10` (y=138-210) vs title (y=60-80) - no
+  overlap; `hidden sm:block` hides it at 390px with zero horizontal
+  overflow. Answer interaction verified (tile disables, next unlocks).
+
+## Final audit state
+
+Every check = 0 across 132,663 questions + 292 forms, including the new
+P0 `answer-index-text-mismatch` (9 rows repaired by migration 0065).
