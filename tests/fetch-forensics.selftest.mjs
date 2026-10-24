@@ -17,6 +17,10 @@ const SRC57 = readFileSync(
   join(ROOT, "supabase/migrations/0057_leak_wm_actor_opacity.sql"),
   "utf8",
 );
+const SRC59 = readFileSync(
+  join(ROOT, "supabase/migrations/0059_audit_backfill_scope_fix.sql"),
+  "utf8",
+);
 // 0057 re-creates the wrappers - the effective contract is 0057's
 // bodies on top of 0056's table/helper.
 const wrap = (name) =>
@@ -73,6 +77,16 @@ test("r115: guest actor never embeds the raw client IP", () => {
     );
     assert.match(actor, /left\(v_ip_hash, 16\)/, `${name} guest actor must be hash-derived`);
   }
+});
+
+test("r117: backfill spares opaque actors and 'guest:unknown'", () => {
+  const predicate = SRC59.match(/where[\s\S]*?;/)?.[0] ?? "";
+  assert.match(
+    predicate,
+    /actor !~ '\^guest:\[0-9a-f\]\{16\}\$'/,
+    "must not re-hash the 0057 opaque actor form",
+  );
+  assert.match(predicate, /actor <> 'guest:unknown'/);
 });
 
 test("all three drain wrappers tag + audit student-path rows", () => {
