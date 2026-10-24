@@ -163,9 +163,21 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
         const ex = byId.get(row.id);
         // validation: present, sane length, actually Vietnamese now, and
         // every English term quoted in the original is still present
-        const exNorm = stripVN(ex ?? '');
+        // Terms that occur in the prompt/choices/answer are TAUGHT ENGLISH
+        // - they must survive literally (case-insensitive). Diacritics-
+        // insensitive matching is reserved for VN glosses, else 'cần' would
+        // satisfy a dropped 'can' (r133).
+        const enContext = stripVN([
+          row.prompt_text,
+          ...(Array.isArray(row.choices) ? row.choices : []),
+          correctLabel(row),
+        ].join(' '));
+        const exLower = String(ex ?? '').toLowerCase();
+        const exNorm = stripVN(ex);
         const missingTerms = [...quotedTerms(row.explanation_vi)]
-          .filter((t) => !exNorm.includes(stripVN(t)));
+          .filter((t) => enContext.includes(stripVN(t))
+            ? !exLower.includes(t.toLowerCase())
+            : !exNorm.includes(stripVN(t)));
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
             ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
           if (ex === row.explanation_vi) unchanged++;
