@@ -307,3 +307,4 @@
   sorted member-ids + reserved registry + re-salt khi holder ngoai
   component; chi reuse dup-* khi holder set subset component va chua
   reserved. Dry-run giu 0 updates - idempotent.
+- r129 (cfd181b): CLEAN - CR-110 review loop hoi tu.
