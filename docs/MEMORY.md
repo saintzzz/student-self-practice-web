@@ -203,3 +203,34 @@
   cf-connecting-ip truoc (Supabase edge inject, dung IP that). Verify lai
   tren ea.vieschool.com: guest Lop 2 -> Luyen them -> Tieng Anh -> Luyen
   de -> de 15 cau load, Turnstile vo hinh, khong co UI challenge.
+
+## 2026-10-24 - CR-109 lop 1 hoan tat: leak forensics (0056) + WAF verdict
+
+- Migration `0056_leak_watermark_fetch_audit.sql` da apply prod qua
+  Supabase MCP: table `practice.qb_fetch_audit(actor, ip_hash, rpc,
+  question_ids, fetched_at)` + helper `qb_wm_tag` gan field `wm` =
+  HMAC(id|actor|ip|rpc) bang vault `leak_wm_secret` (da tao, khong
+  commit). Rewrite 3 wrappers `fetch_questions` / `_adaptive` /
+  `_public` - signature giu nguyen, rate-limit buckets `fq_*` giu
+  nguyen, keyless contract giu nguyen.
+- Live verify: SQL probe 5 rows - 5/5 co wm, 0 key lo; audit ghi
+  rpc+actor+n_ids. Anon call `fetch_questions_public` tra PT401
+  guest_challenge_required (Turnstile gate nguyen ven).
+- Selftest `tests/fetch-forensics.selftest.mjs` 6/6 xanh;
+  check-ea-classes PASS.
+- WAF verdict: seawall API 404 tren moi scope (team/personal/slug,
+  GET/PUT/PATCH) - managed rules KHONG tao duoc qua API tren plan
+  nay => human task trong dashboard. QUAN SAT: edge da
+  `x-vercel-mitigated: deny` cho non-browser clients (curl, cac UA
+  gia) trong khi browser that van 200 - co san mot bot-mitigation
+  dang active; neu PO muon rule ro rang (ai_bots deny, rate limit)
+  can upgrade plan / bat tay trong dashboard.
+- Prod smoke 2026-10-24 (Playwright, ea.vieschool.com): login page OK,
+  guest "Choi khong can tai khoan" -> map -> Lop 5 -> Vong 1/5 load
+  cau hoi + lua chon - guest path chay tren local content, khong cham
+  drain RPC (dung design).
+- Canh bao: curl/API probes vao ea.vieschool.com se bi edge deny -
+  day la behavior mong muon, khong phai outage.
+- OPEN con lai: 5% human spot-check (manual), WAF dashboard toggle
+  (human), anomaly scoring/rotating pools/honey rows (lop 3 - defer
+  toi khi co incident), CR-68 deferred, Groq STT proposal-only.

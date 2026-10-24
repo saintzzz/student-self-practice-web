@@ -1,4 +1,4 @@
-# CR-109 - Anti-scraping / anti-AI-crawler defense plan (status: PROPOSAL - lop 1 robots.txt + X-Robots-Tag da deploy; phan con lai cho keys/WAF)
+# CR-109 - Anti-scraping / anti-AI-crawler defense plan (status: LOP 1 SHIPPED - robots.txt + X-Robots-Tag + watermark wm + qb_fetch_audit da live qua migration 0056; WAF managed-rules bi chan boi plan (API 404) - human task; lop 2 Turnstile da ship qua CR-108)
 
 Yeu cau cua PO: viet phuong an truoc, implement sau. Doc nay la ban
 ke hoach phong thu noi dung + ngan kenh "cao function" (reverse-
@@ -46,13 +46,22 @@ CR-103/104/108.
    CCBot, Bytespider, Google-Extended... (honor-system nhung mien phi).
 2. Vercel WAF rate limit rule: `/api/*` + POST caps per-IP (dashboard
    toggle, free tier du). Vercel Bot Protection (managed ruleset).
-3. Canary watermark: moi fetch response gan them tap `canary_ids`
-   (question id gia, khong hien thi) theo hash cua uid/session; neu
-   bank ro ri tren mang, truy ra nguon qua canary. Chi phi: ~0,
-   implement trong `strip_bank_row`.
-4. Telemetry `qb_fetch_audit`: log (uid, ip_hash, count, ts) gon - cho
-   phep truy pattern bat thuong hau kiem (hien cap chay mu, khong ai
-   nhin).
+   STATUS: API `seawall` tra 404 tren moi scope (GET/PUT/PATCH) -
+   managed rules khong config duoc qua API tren plan hien tai; quan
+   sat thay edge da `x-vercel-mitigated: deny` non-browser clients
+   (curl) trong khi browser that van 200 - mot mitigation bot nao do
+   dang active. Toggle ro rang hon = human task trong dashboard.
+3. Canary watermark: DEPLOYED (0056). Moi row fetch gan field `wm` =
+   HMAC(id || actor || ip_hash || rpc) bang vault `leak_wm_secret` -
+   khong fake ids, chi tag mat de truy nguon leak. Khong anh huong
+   renderer (key phu, khong anh huong strip contract).
+4. Telemetry `qb_fetch_audit`: DEPLOYED (0056). Table
+   `practice.qb_fetch_audit(actor, ip_hash, rpc, question_ids,
+   fetched_at)` - insert trong ca 3 drain wrappers
+   (`fetch_questions`, `_adaptive`, `_public`). Live-verified:
+   authenticated fetch 5/5 rows co wm, 0 answer key, audit row ghi
+   dung rpc+actor+n_ids; guest fetch bi PT401 khi thieu ticket nen
+   khong ghi audit (expected - reject truoc khi drain).
 
 ### Lop 2 - Can account/dich vu ngoai
 
@@ -76,10 +85,12 @@ CR-103/104/108.
 
 ## De xuat trien khai (khi PO duyet)
 
-- Buoc 1 (1 PR): robots.txt + Vercel WAF rules + canary_ids trong
-  strip_bank_row. Thu nghiem: e2e fetch contract khong doi.
-- Buoc 2: Cloudflare signup (HUMAN) -> CR-108 implement.
-- Buoc 3: telemetry + anomaly scoring khi co incident dau tien.
+- Buoc 1: DONE - robots.txt (2bffe27) + watermark/audit (0056).
+  WAF rule con lai la human task (API 404 tren plan hien tai).
+- Buoc 2: DONE - CR-108 Turnstile da ship + prod-verified (PT401
+  guest_challenge_required live).
+- Buoc 3: telemetry da co (0056); anomaly scoring defer toi khi
+  co incident dau tien.
 
 ## Impact assessment
 
