@@ -308,3 +308,25 @@
   component; chi reuse dup-* khi holder set subset component va chua
   reserved. Dry-run giu 0 updates - idempotent.
 - r129 (cfd181b): CLEAN - CR-110 review loop hoi tu.
+
+## CR-111 content polish + UIUX/image audit (2026-10-24)
+
+- explanation_vi polish: 1,012 rows co explanation khong dau da duoc
+  viet lai boi codex (scripts/polish-explanations.mjs, 34 batch, 0 fail).
+  Spot-check: tieng Viet tu nhien co dau, giu nguyen tu tieng Anh.
+  explanation-not-vietnamese: 654 -> 0 (VN_MARK audit bo sung uppercase).
+- ambiguous-open-prompt: triage thu cong 24 - 3 defect that da fix qua
+  migration 0064 (choices/prompt sua, giu nguyen answer+intent); 21 FP
+  + 2 post-fix row dung vao MANUALLY_REVIEWED. Con 0 unreviewed.
+- Prompt leak moi: 'I ___ see the sun. Toi khong the.' -> fix trong 0064.
+- form-blueprint-missing: audit fix - asg-* forms khong con bi flag
+  (fallback naming convention chi ap dung cho '*-form-NN').
+- explanation-mentions-other-answer: 10 row la distractor-contrast
+  pedagogy -> reviewed set. Country-name: prompts tu giai thich.
+- Image audit: 1,455 qb_assets deu co file trong public/ (0 missing,
+  0 orphan links); visual-no-assets = 0. Asset serve 200 trong browser.
+- UIUX: Playwright prod pass - login/map/question/reward screens on.
+  Bug that: mascot perch -top-9 de len round title -> chuyen sang
+  bam mep trai card, an tren mobile (QuestionCard.tsx).
+- Audit sau wave: P0=0, P1=0 (ambiguous 0, blueprint 0, expl-vi 0),
+  P2=0 (mentions 0, country 0). Chi con 5% human spot-check (manual).

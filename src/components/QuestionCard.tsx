@@ -544,10 +544,16 @@ export default function QuestionCard({
           `thinking` on the D-15 G1-2 triggers. Unmounts the moment the
           feedback sheet mounts so the sheet perch is the only mascot on
           screen (AC-79.1 / one-mascot matrix). */}
+      {/* CR-111: the old `-top-9` perch floated UP into the chrome strip
+          and covered the round title ("Vòng 1: ...") - the title line
+          landed later than the perch was designed. Now Bé Heo clings to
+          the board's LEFT EDGE over the land scene instead, on sm+ where
+          side room exists; on phones the strip already fills the top so
+          the perch hides rather than colliding. */}
       {!hasAnswered && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -top-9 left-4 z-10"
+          className="pointer-events-none absolute -left-10 top-10 z-10 hidden sm:block"
         >
           <Mascot mood={thinking ? 'thinking' : 'idle'} size="companion" />
         </span>

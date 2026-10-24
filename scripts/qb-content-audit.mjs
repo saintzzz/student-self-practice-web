@@ -64,7 +64,10 @@ const LISTEN_PROMPT = /^\s*(listen|nghe)\b|\blisten and\b|\blisten to\b/i;
 const READ_PROMPT = /read the (passage|text|email|letter|note|dialogue|story|paragraph|following)/i;
 const VISUAL_TYPES = new Set(['word-to-image-mcq', 'image-to-word-mcq', 'visual-mcq', 'visual-count-mcq']);
 const QUOTED = /[“"']([^“”"']{1,60})[”"']/;
-const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/i;
+// /i makes the class case-insensitive for letters, but precomposed
+// Vietnamese capitals are distinct code points - list both cases so an
+// all-caps or sentence-initial diacritic still counts as Vietnamese.
+const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵĂÂĐÊÔƠƯÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ]/;
 const TEMPLATE_RESIDUE = [
   /đáp án phù hợp với ngữ cảnh/i,
   /chọn câu (trả lời )?phù hợp/i,
@@ -150,10 +153,44 @@ const OPEN_PROMPT =
 const BROKEN_CHOICE =
   /\blike (cook|watch|read|brush|play|ride|swim|sing|dance?|eat|draw|jump|shop|sleep|drive?|fly|walk|run|listen)\b(?!ing)|\bi am\b|\bi not\b|\bi like\b\.?$/i;
 const IS_EN = (l) => /^[a-zA-Z'’.,!\s-]+$/.test(l);
+
+// CR-111: ids dispositioned by manual PO triage (2026-10-24). Each was
+// read in full and confirmed to have exactly one defensible answer - the
+// flags were heuristic false positives (morphology drills, category-
+// mismatched distractors, context-constrained prompts). Keeping them in a
+// reviewed set turns the queue count into "unreviewed items only" without
+// weakening the check for future rows.
+const MANUALLY_REVIEWED = new Set([
+  // ambiguous-open-prompt - all single-answer grammar/semantic drills
+  'g2-english-gemini-1ad0a4b3433f', 'g2-english-gemini-4477dccc41a3',
+  'g3-english-gemini-2efce0bae44e', 'g3-english-gemini-2fb60bc35b98',
+  'g3-english-gemini-4b8ba1bd2293', 'g3-english-gemini-7294417e066e',
+  'g3-english-gemini-80b715f44e20', 'g3-english-gemini-8403820c188f',
+  'g3-english-gemini-9518849baeb9', 'g3-english-gemini-ad53a2632cea',
+  'g3-english-gemini-ca2467f170c2', 'g3-english-gemini-d0c9a716de2b',
+  'g4-english-gemini-29a7a51f8a0e', 'g4-english-gemini-6ecb9a1e950b',
+  'g4-english-gemini-c4a31f67149b', 'g4-english-gemini-c9a21a3e65af',
+  'g4-english-gemini-ce898e842294', 'g4-english-gemini-cffc31b9eacc',
+  'g5-english-gemini-2f14967b8770', 'g5-english-gemini-9f740ba80c8e',
+  'g5-english-gemini-badfe9ce8162',
+  // post-fix re-triage: 'in the library' makes 'reading books' unique
+  'g3-english-gemini-648481753a02',
+  // explanation quotes the correct answer itself - humans can't fly
+  'g2-english-codex-be6681310387',
+  // explanation-mentions-other-answer - distractor-contrast pedagogy
+  'g2-english-codex-3a86869fe60e', 'g2-english-codex-53e070ec3d7c',
+  'g2-english-codex-599a48e0e9b8', 'g2-english-codex-5fa252d74adb',
+  'g2-english-codex-819d4d790750', 'g2-english-codex-c985cd404a2e',
+  'g2-english-gemini-c3137438d2d2', 'g4-english-gemini-133992b04cbe',
+  'g4-english-gemini-1d5130338b12', 'g5-english-gemini-df2a7033dd75',
+  // ambiguous-country-name - prompts already self-disambiguate
+  'g5-english-bulk-icon-e1fb2c353573', 'g5-english-bulk-icon-e3e21ed4b84d',
+]);
 check('ambiguous-open-prompt', 'P1',
   'Open-ended prompt where more than one choice is a plausible true answer - review for quarantine',
   questions.filter((q) => {
     if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
+    if (MANUALLY_REVIEWED.has(q.id)) return false;
     const p = q.prompt_text ?? '';
     const labels = q.choices.map((c) => choiceLabel(c));
     const ok = labels.filter((l) => IS_EN(l) && !BROKEN_CHOICE.test(l));
@@ -264,6 +301,7 @@ check('explanation-mentions-other-answer', 'P2',
   + 'why they are wrong or to gloss all options is correct pedagogy',
   questions.filter((q) => {
     if (!eligible(q) || !Array.isArray(q.choices) || q.answer?.index === undefined) return false;
+    if (MANUALLY_REVIEWED.has(q.id)) return false;
     const m = (q.explanation_vi ?? '').match(QUOTED);
     if (!m) return false;
     const expl = q.explanation_vi ?? '';
@@ -498,7 +536,7 @@ check('dup-prompt-same-grade', 'P2',
 check('ambiguous-country-name', 'P2',
   'Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...)',
   questions.filter((q) => {
-    if (!eligible(q)) return false;
+    if (!eligible(q) || MANUALLY_REVIEWED.has(q.id)) return false;
     const term = (q.prompt_text ?? '').match(/Which picture shows: (.+)\?/)?.[1]
       ?? (q.prompt_text ?? '').match(/The picture shows [“"](.+?)[”"]\./)?.[1]
       ?? correctLabel(q);
@@ -661,8 +699,15 @@ check('form-blueprint-size', 'P1',
 
 check('form-blueprint-missing', 'P1',
   'Form references a blueprint that does not exist',
-  forms.filter((f) => !bpById.has(formBlueprintId(f)))
-    .map((f) => ({ id: f.id, prompt_text: `blueprint ${formBlueprintId(f)} not found` })));
+  forms.filter((f) => {
+    // only forms that actually claim a blueprint: explicit column/payload
+    // ref, or the '<blueprintId>-form-NN' naming convention. Minted
+    // assignment forms (asg-*) carry neither - blueprint_id is NULL by
+    // design - and must not be flagged.
+    const ref = f.blueprint_id ?? f.payload?.blueprintId
+      ?? (/-form-\d+$/.test(f.id) ? f.id.replace(/-form-\d+$/, '') : null);
+    return ref && !bpById.has(ref);
+  }).map((f) => ({ id: f.id, prompt_text: `blueprint ${formBlueprintId(f)} not found` })));
 
 /* ---------- report ---------- */
 
