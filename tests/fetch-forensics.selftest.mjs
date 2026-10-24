@@ -13,8 +13,14 @@ const SRC = readFileSync(
   join(ROOT, "supabase/migrations/0056_leak_watermark_fetch_audit.sql"),
   "utf8",
 );
+const SRC57 = readFileSync(
+  join(ROOT, "supabase/migrations/0057_leak_wm_actor_opacity.sql"),
+  "utf8",
+);
+// 0057 re-creates the wrappers - the effective contract is 0057's
+// bodies on top of 0056's table/helper.
 const wrap = (name) =>
-  SRC.match(
+  (SRC57 + "\n" + SRC).match(
     new RegExp(
       `create or replace function\\s+practice\\.${name}\\s*\\([\\s\\S]*?\\$\\$;`,
       "i",
@@ -39,6 +45,34 @@ test("leak_wm_tag fails open when the secret is absent", () => {
   assert.ok(fn, "leak_wm_tag def missing");
   assert.match(fn, /when p_secret is null then '\{\}'::jsonb/, "null secret must emit {} not error");
   assert.match(SRC, /revoke all on function practice\.leak_wm_tag[\s\S]*?from public, anon, authenticated/i);
+});
+
+test("r115: wm signs the full id|actor|ip_hash|rpc payload", () => {
+  const fn = wrap("leak_wm_tag");
+  assert.match(
+    fn,
+    /p_row_id \|\| '\|' \|\| p_actor \|\| '\|' \|\|[\s\S]*?coalesce\(p_ip_hash, ''\)[\s\S]*?'\|' \|\| p_rpc/,
+    "tag must bind id, actor, ip_hash and rpc",
+  );
+  assert.match(
+    SRC57,
+    /drop function if exists practice\.leak_wm_tag\(text, text, text\)/i,
+    "weaker 3-arg overload must be dropped",
+  );
+});
+
+test("r115: guest actor never embeds the raw client IP", () => {
+  for (const name of ["fetch_questions", "fetch_questions_adaptive", "fetch_questions_public"]) {
+    const fn = wrap(name);
+    assert.ok(fn, `${name} def missing`);
+    const actor = fn.match(/v_actor[^;]*;/)?.[0] ?? "";
+    assert.doesNotMatch(
+      actor,
+      /'guest:' \|\| coalesce\(practice\.client_ip\(\)/,
+      `${name} must not store raw IP in actor`,
+    );
+    assert.match(actor, /left\(v_ip_hash, 16\)/, `${name} guest actor must be hash-derived`);
+  }
 });
 
 test("all three drain wrappers tag + audit student-path rows", () => {
