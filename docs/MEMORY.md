@@ -330,3 +330,21 @@
   bam mep trai card, an tren mobile (QuestionCard.tsx).
 - Audit sau wave: P0=0, P1=0 (ambiguous 0, blueprint 0, expl-vi 0),
   P2=0 (mentions 0, country 0). Chi con 5% human spot-check (manual).
+
+### CR-111 r130 follow-up (da apply live)
+
+- r130 external review: 3 findings da fix.
+  1. polish script gui answer duoi dang {index} khong kem choices ->
+     model khong resolve duoc dap an. Fix: prompt gui choices + resolved
+     label; validation bat buoc giu nguyen English terms da quote.
+  2. Khong co before/after artifact cho 1,012 edits -> script viet lai
+     thanh 2 phase: proposals -> docs/qa/polish-edits-*.jsonl -> --apply
+     replay. Wave cu khong snapshot duoc -> bu bang verification doc
+     (docs/qa/polish-wave-1012-verification.md).
+  3. MANUALLY_REVIEWED blanket -> REVIEWED scope theo check + content
+     fingerprint (sha1); content doi thi exemption tu het hieu luc.
+- Defect moi phat hien khi verify: answer.index lech answer.text tren 9
+  rows (3 dang serve -> cham sai hoc sinh). Migration 0065 fix ca 9,
+  verify live khop. Audit them P0 check answer-index-text-mismatch.
+- fetchTable them retry-backoff (statement timeout flake).
+- Audit sau fix: MOI check = 0 tren 132,663 rows + 292 forms.

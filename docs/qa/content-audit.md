@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-24T11:37:57.950Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-24T12:03:34.103Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -8,6 +8,7 @@ Generated: 2026-10-24T11:37:57.950Z · rows: 132663 · regenerate: `node scripts
 | `read-no-passage` | P0 | **0** | Prompt references a passage/text but none stored and none embedded in the prompt itself - unanswerable |
 | `visual-no-assets` | P0 | **0** | Image question type with no linked assets |
 | `answer-out-of-range` | P0 | **0** | answer.index points outside choices array |
+| `answer-index-text-mismatch` | P0 | **0** | answer.index points at a different choice than answer.text - grading would mark the correct pick wrong |
 | `choices-too-few` | P0 | **0** | MCQ-type with fewer than 3 choices |
 | `option-placeholder` | P0 | **0** | A choice is a literal generator placeholder like "option-4" |
 | `prompt-answer-leak` | P0 | **0** | Prompt literally contains the quoted correct answer (guessable without skill) |
@@ -26,8 +27,8 @@ Generated: 2026-10-24T11:37:57.950Z · rows: 132663 · regenerate: `node scripts
 | `form-missing-answerkey` | P0 | **0** | Form question has no entry in answerKey |
 | `form-answerkey-mismatch` | P0 | **0** | Form answerKey disagrees with the question stored answer |
 | `form-duplicate-variant` | P0 | **0** | Two questions in the same form share a variant group or identical content |
-| `ambiguous-open-prompt` | P1 | **1** | Open-ended prompt where more than one choice is a plausible true answer - review for quarantine |
 | `duplicate-choices` | P1 | **0** | Two identical choices in one question |
+| `ambiguous-open-prompt` | P1 | **0** | Open-ended prompt where more than one choice is a plausible true answer - review for quarantine |
 | `statement-as-question` | P1 | **0** | Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage |
 | `explanation-too-short` | P1 | **0** | Explanation under 20 chars - teaches nothing |
 | `explanation-not-vietnamese` | P1 | **0** | Explanation has no Vietnamese characters (untranslated?) |
@@ -38,17 +39,7 @@ Generated: 2026-10-24T11:37:57.950Z · rows: 132663 · regenerate: `node scripts
 | `form-grade-subject-mismatch` | P1 | **0** | Question grade/subject differs from its form |
 | `form-blueprint-size` | P1 | **0** | Form question count differs from blueprint targetQuestions |
 | `form-blueprint-missing` | P1 | **0** | Form references a blueprint that does not exist |
-| `explanation-mentions-other-answer` | P2 | **1** | Explanation quotes a DIFFERENT choice than the correct answer - review queue heuristic, NOT a defect count: quoting distractors to explain why they are wrong or to gloss all options is correct pedagogy |
+| `explanation-mentions-other-answer` | P2 | **0** | Explanation quotes a DIFFERENT choice than the correct answer - review queue heuristic, NOT a defect count: quoting distractors to explain why they are wrong or to gloss all options is correct pedagogy |
 | `dup-prompt-same-grade` | P2 | **0** | Identical prompt+answer that can co-appear in one exam (no shared variant_group_id) |
 | `ambiguous-country-name` | P2 | **0** | Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...) |
 | `accented-text` | P2 | **0** | Foreign accent marks (never legal in Vietnamese) in served prompt or choices |
-
-## ambiguous-open-prompt (P1) - 1 rows
-
-- `g3-english-gemini-648481753a02` — What do you like doing in your free time? - I like ___ in the library. → **reading books**
-
-
-## explanation-mentions-other-answer (P2) - 1 rows
-
-- `g2-english-codex-be6681310387` — I ___ fly in the living room. → **can't**
-

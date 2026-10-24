@@ -52,3 +52,21 @@ artifacts ("make lam chia thanh made"). Requirements:
 - Spot-check 20 polished explanations by reading them.
 - Playwright prod smoke with screenshots.
 - External review round until CLEAN.
+
+## r130 follow-up (external review findings -> fixes)
+
+1. Polish prompt sent `answer` as `{index}` without choices - model could
+   not resolve the correct label. Script now sends `c` (choices) + resolved
+   `a` label, and validation rejects rewrites that drop quoted English
+   terms from the original explanation.
+2. No before/after artifact for the 1,012 edits - script rewritten as
+   two-phase: proposals -> `docs/qa/polish-edits-*.jsonl` -> `--apply`
+   replay. Completed wave covered by `docs/qa/polish-wave-1012-verification.md`.
+3. `MANUALLY_REVIEWED` blanket exemption -> `REVIEWED` scoped per check and
+   keyed to a content fingerprint; exemptions lapse when content changes.
+
+Bonus defect found during verification: `answer.index` != `answer.text` on
+9 rows (3 served - would score correct picks wrong). Migration 0065 fixed
+all 9 (verified live); new P0 check `answer-index-text-mismatch` guards it.
+
+Final audit: every check = 0 across 132,663 questions + 292 forms.

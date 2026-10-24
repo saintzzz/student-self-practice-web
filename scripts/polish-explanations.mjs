@@ -4,14 +4,24 @@
 // artifacts ("make lam chia thanh made") - kids deserve teacher-quality text.
 // Uses the shared LLM channel (codex CLI primary, gemini-web fallback) -
 // bulk content generation runs on subscription automation, never API keys.
+//
+// Two-phase contract (r130#2):
+//   1. default run: generate proposals, validate, write a reviewable
+//      before/after artifact to docs/qa/polish-edits-<ts>.jsonl - NO writes.
+//   2. --apply <artifact.jsonl>: replay recorded proposals verbatim via
+//      PATCH. The artifact is the independent-review / rollback / replay
+//      record of every edit.
 // Usage: node scripts/polish-explanations.mjs [--dry] [--limit N] [--workers 3]
-import { readFileSync } from 'fs';
+//        node scripts/polish-explanations.mjs --apply docs/qa/polish-edits-*.jsonl
+import { readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
+const APPLY = arg('--apply', '');
 const LIMIT = Number(arg('--limit', '0'));
 const WORKERS = Number(arg('--workers', '3'));
 const BATCH = Number(arg('--batch', '30'));
@@ -21,13 +31,29 @@ const URL = KEYS.url, SVC = KEYS.keys.service_role;
 const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'practice' };
 const HW = { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/json' };
 
-const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵĐ]/i;
+const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵĂÂĐÊÔƠƯÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ]/;
+const QUOTED = /["'“‘]([^"'”’]+)["'”’]/g;
+
+// Resolve the correct answer to its served label (r130#1): the model must
+// see WHICH choice is right - a bare {index:N} without choices is unusable.
+const correctLabel = (row) => {
+  if (Array.isArray(row.choices) && row.answer?.index !== undefined) {
+    const c = row.choices[row.answer.index];
+    if (typeof c === 'string') return c;
+  }
+  return row.answer?.text ?? row.answer?.accepted?.[0] ?? '';
+};
+
+// English terms quoted in the ORIGINAL explanation are the taught vocab -
+// a rewrite that drops or renames them loses the lesson (r130#1 validation).
+const quotedTerms = (s) => new Set(
+  [...String(s ?? '').matchAll(QUOTED)].map((m) => m[1].trim().toLowerCase()).filter(Boolean));
 
 async function fetchTargets() {
   const rows = [];
   for (let off = 0; ; off += 1000) {
     const res = await fetch(
-      `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,answer,explanation_vi` +
+      `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi` +
       `&explanation_vi=not.is.null&order=id&offset=${off}&limit=1000`,
       { headers: H, signal: AbortSignal.timeout(20000) });
     if (!res.ok) throw new Error('fetch ' + res.status);
@@ -40,13 +66,13 @@ async function fetchTargets() {
 
 function promptFor(items) {
   return `You are a senior Vietnamese primary-school English teacher rewriting student-facing explanations.
-Each input item: {"i":id,"g":grade,"q":English prompt,"a":correct answer,"ex":current explanation - Vietnamese stripped of diacritics, with machine-translation artifacts}.
+Each input item: {"i":id,"g":grade,"q":English prompt,"c":[choices],"a":correct answer label,"ex":current explanation - Vietnamese stripped of diacritics, with machine-translation artifacts}.
 
 For EVERY item output {"i":"<same id>","ex":"<rewritten explanation>"}.
 
 RULES:
 - Write NATURAL Vietnamese with FULL diacritics, at the vocabulary level of a grade-<g> Vietnamese pupil. Short sentences.
-- Explain WHY the answer is correct (and briefly why a tempting wrong choice fails, if the original did).
+- The CORRECT answer is "a" - explain WHY it is correct (and briefly why a tempting wrong choice fails, if the original did). Never justify a different choice.
 - Keep EVERY English word/phrase being taught EXACTLY as in the input (answers, quoted options, grammar terms like "Past Simple" stay in English). Never translate the tested vocabulary.
 - Fix broken artifacts: "make lam chia thanh made" -> "động từ 'make' chia ở thì quá khứ thành 'made'".
 - Same meaning as the original - no new facts, no removed corrections.
@@ -55,10 +81,31 @@ RULES:
 - Output ONLY a raw JSON array, same order as input.
 
 ITEMS:
-${JSON.stringify(items.map((r) => ({ i: r.id, g: r.grade, q: String(r.prompt_text ?? '').slice(0, 160), a: r.answer, ex: r.explanation_vi })), null, 0)}`;
+${JSON.stringify(items.map((r) => ({
+    i: r.id, g: r.grade, q: String(r.prompt_text ?? '').slice(0, 160),
+    c: Array.isArray(r.choices) ? r.choices.filter((x) => typeof x === 'string').slice(0, 6) : undefined,
+    a: correctLabel(r), ex: r.explanation_vi,
+  })), null, 0)}`;
 }
 
 const channel = createLlmChannel({ workers: WORKERS, codexModel: 'gpt-6.1-sol', codexEffort: 'high' });
+
+// ---- apply mode: replay a recorded artifact verbatim ----
+if (APPLY) {
+  const edits = readFileSync(APPLY, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  let applied = 0, failed = 0;
+  for (const e of edits) {
+    if (e.applied) { applied++; continue; }
+    const res = await fetch(`${URL}/rest/v1/qb_questions?id=eq.${e.id}`, {
+      method: 'PATCH', headers: HW,
+      body: JSON.stringify({ explanation_vi: e.proposed }),
+    });
+    res.ok ? applied++ : (failed++, console.log(`  apply fail ${e.id}: ${res.status}`));
+  }
+  await channel.close();
+  console.log(`APPLIED ${applied}, failed ${failed} from ${APPLY}`);
+  process.exit(failed ? 1 : 0);
+}
 
 const targets = await fetchTargets();
 console.log(`explanations needing polish: ${targets.length}`);
@@ -73,7 +120,8 @@ if (DRY) {
 
 const queue = [];
 for (let i = 0; i < targets.length; i += BATCH) queue.push(targets.slice(i, i + BATCH));
-let done = 0, polished = 0, failed = 0, unchanged = 0;
+const edits = [];
+let done = 0, proposed = 0, failed = 0, unchanged = 0;
 await Promise.all(Array.from({ length: WORKERS }, async () => {
   while (queue.length) {
     const batch = queue.shift();
@@ -82,25 +130,29 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
       const byId = new Map(out.map((o) => [o.i, o.ex]));
       for (const row of batch) {
         const ex = byId.get(row.id);
-        // validation: present, sane length, actually Vietnamese now
+        // validation: present, sane length, actually Vietnamese now, and
+        // every English term quoted in the original is still present
+        const missingTerms = [...quotedTerms(row.explanation_vi)]
+          .filter((t) => !String(ex ?? '').toLowerCase().includes(t));
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
-            ex === row.explanation_vi || !VN_MARK.test(ex)) {
-          if (ex === row.explanation_vi) unchanged++; else failed++;
+            ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
+          if (ex === row.explanation_vi) unchanged++;
+          else { failed++; if (missingTerms.length) console.log(`  drop ${row.id}: lost terms ${missingTerms.join(',')}`); }
           continue;
         }
-        const res = await fetch(`${URL}/rest/v1/qb_questions?id=eq.${row.id}`, {
-          method: 'PATCH', headers: HW,
-          body: JSON.stringify({ explanation_vi: ex.slice(0, 500) }),
-        });
-        res.ok ? polished++ : failed++;
+        edits.push({ id: row.id, before: row.explanation_vi, proposed: ex.slice(0, 500) });
+        proposed++;
       }
     } catch (e) {
       failed += batch.length;
       console.log(`  batch fail: ${String(e.message ?? e).slice(0, 120)}`);
     }
     done++;
-    console.log(`  ${done}/${queue.length + done} batches | polished=${polished} unchanged=${unchanged} failed=${failed}`);
+    console.log(`  ${done}/${queue.length + done} batches | proposed=${proposed} unchanged=${unchanged} failed=${failed}`);
   }
 }));
 await channel.close();
-console.log(`DONE: ${polished} polished, ${unchanged} unchanged, ${failed} failed (codex=${channel.counts.codex} gemini=${channel.counts.gemini})`);
+const artifact = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'qa', `polish-edits-${Date.now()}.jsonl`);
+writeFileSync(artifact, edits.map((e) => JSON.stringify(e)).join('\n') + '\n');
+console.log(`DONE: ${proposed} proposed, ${unchanged} unchanged, ${failed} failed (codex=${channel.counts.codex} gemini=${channel.counts.gemini})`);
+console.log(`artifact: ${artifact} - review, then: node scripts/polish-explanations.mjs --apply ${artifact}`);

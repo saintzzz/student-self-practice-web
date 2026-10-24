@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const REPORT = join(
@@ -36,12 +37,18 @@ async function fetchTable(table, cols, order = 'id') {
   const out = [];
   const PAGE = 1000;
   for (let off = 0; ; off += PAGE) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=${PAGE}`,
-      { headers: HEADERS, signal: AbortSignal.timeout(15000) },
-    );
-    if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
-    const page = await res.json();
+    let page;
+    // PostgREST statement timeouts are transient under load - retry with
+    // backoff before giving up on a page.
+    for (let t = 0; t < 4; t++) {
+      const res = await fetch(
+        `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=${PAGE}`,
+        { headers: HEADERS, signal: AbortSignal.timeout(20000) },
+      ).catch(() => null);
+      if (res?.ok) { page = await res.json(); break; }
+      if (t === 3) throw new Error(`${table}: ${res?.status} ${await res?.text()}`);
+      await new Promise((s) => setTimeout(s, 3000 * (t + 1)));
+    }
     out.push(...page);
     if (page.length < PAGE) break;
   }
@@ -128,6 +135,18 @@ check('answer-out-of-range', 'P0',
   'answer.index points outside choices array',
   questions.filter((q) => Array.isArray(q.choices) && q.answer?.index !== undefined && (q.answer.index < 0 || q.answer.index >= q.choices.length)));
 
+// r130 follow-up: grading resolves answer.index, so when it disagrees with
+// answer.text the served row silently scores the right pick wrong. Found
+// live on 3 served rows; repaired by migration 0065.
+check('answer-index-text-mismatch', 'P0',
+  'answer.index points at a different choice than answer.text - grading would mark the correct pick wrong',
+  questions.filter((q) => {
+    if (!Array.isArray(q.choices) || q.answer?.index === undefined || !q.answer?.text) return false;
+    const atIdx = String(q.choices[q.answer.index] ?? '').trim().toLowerCase();
+    const aTxt = String(q.answer.text).trim().toLowerCase();
+    return atIdx && aTxt && atIdx !== aTxt;
+  }));
+
 check('choices-too-few', 'P0',
   'MCQ-type with fewer than 3 choices',
   questions.filter((q) => eligible(q) && q.question_type?.endsWith('mcq') && Array.isArray(q.choices) && q.choices.length < 3));
@@ -154,43 +173,72 @@ const BROKEN_CHOICE =
   /\blike (cook|watch|read|brush|play|ride|swim|sing|dance?|eat|draw|jump|shop|sleep|drive?|fly|walk|run|listen)\b(?!ing)|\bi am\b|\bi not\b|\bi like\b\.?$/i;
 const IS_EN = (l) => /^[a-zA-Z'’.,!\s-]+$/.test(l);
 
-// CR-111: ids dispositioned by manual PO triage (2026-10-24). Each was
-// read in full and confirmed to have exactly one defensible answer - the
-// flags were heuristic false positives (morphology drills, category-
-// mismatched distractors, context-constrained prompts). Keeping them in a
-// reviewed set turns the queue count into "unreviewed items only" without
-// weakening the check for future rows.
-const MANUALLY_REVIEWED = new Set([
-  // ambiguous-open-prompt - all single-answer grammar/semantic drills
-  'g2-english-gemini-1ad0a4b3433f', 'g2-english-gemini-4477dccc41a3',
-  'g3-english-gemini-2efce0bae44e', 'g3-english-gemini-2fb60bc35b98',
-  'g3-english-gemini-4b8ba1bd2293', 'g3-english-gemini-7294417e066e',
-  'g3-english-gemini-80b715f44e20', 'g3-english-gemini-8403820c188f',
-  'g3-english-gemini-9518849baeb9', 'g3-english-gemini-ad53a2632cea',
-  'g3-english-gemini-ca2467f170c2', 'g3-english-gemini-d0c9a716de2b',
-  'g4-english-gemini-29a7a51f8a0e', 'g4-english-gemini-6ecb9a1e950b',
-  'g4-english-gemini-c4a31f67149b', 'g4-english-gemini-c9a21a3e65af',
-  'g4-english-gemini-ce898e842294', 'g4-english-gemini-cffc31b9eacc',
-  'g5-english-gemini-2f14967b8770', 'g5-english-gemini-9f740ba80c8e',
-  'g5-english-gemini-badfe9ce8162',
-  // post-fix re-triage: 'in the library' makes 'reading books' unique
-  'g3-english-gemini-648481753a02',
-  // explanation quotes the correct answer itself - humans can't fly
-  'g2-english-codex-be6681310387',
-  // explanation-mentions-other-answer - distractor-contrast pedagogy
-  'g2-english-codex-3a86869fe60e', 'g2-english-codex-53e070ec3d7c',
-  'g2-english-codex-599a48e0e9b8', 'g2-english-codex-5fa252d74adb',
-  'g2-english-codex-819d4d790750', 'g2-english-codex-c985cd404a2e',
-  'g2-english-gemini-c3137438d2d2', 'g4-english-gemini-133992b04cbe',
-  'g4-english-gemini-1d5130338b12', 'g5-english-gemini-df2a7033dd75',
-  // ambiguous-country-name - prompts already self-disambiguate
-  'g5-english-bulk-icon-e1fb2c353573', 'g5-english-bulk-icon-e3e21ed4b84d',
-]);
+// CR-111: dispositions from manual PO triage (2026-10-24). Each row was
+// read in full and confirmed semantically valid - the flags were heuristic
+// false positives. Dispositions are scoped PER CHECK and keyed to a
+// content fingerprint (sha1 of prompt|choices|answer|explanation captured
+// at review time): if the row's content changes, the exemption lapses and
+// the row resurfaces for re-review (r130#3).
+const REVIEWED = {
+  // all single-answer grammar/semantic drills (morphology, category-
+  // mismatched distractors, context-constrained prompts)
+  'ambiguous-open-prompt': {
+    'g2-english-gemini-1ad0a4b3433f': '170c90e1d22a',
+    'g2-english-gemini-4477dccc41a3': '35d50598cb75',
+    'g3-english-gemini-2efce0bae44e': '77e6783313b3',
+    'g3-english-gemini-2fb60bc35b98': '902fb24da060',
+    'g3-english-gemini-4b8ba1bd2293': '58141ddabbbb',
+    'g3-english-gemini-7294417e066e': '3de7bf62442e',
+    'g3-english-gemini-80b715f44e20': '60e254e89b8f',
+    'g3-english-gemini-8403820c188f': '2f8e46c7d05c',
+    'g3-english-gemini-9518849baeb9': '6156803f0398',
+    'g3-english-gemini-ad53a2632cea': 'a605f975e575',
+    'g3-english-gemini-ca2467f170c2': '6237ff4fdc39',
+    'g3-english-gemini-d0c9a716de2b': '855fce5bf84e',
+    'g4-english-gemini-29a7a51f8a0e': '32d229c66c2e',
+    'g4-english-gemini-6ecb9a1e950b': '16357142d479',
+    'g4-english-gemini-c4a31f67149b': '80b65b4ca54c',
+    'g4-english-gemini-c9a21a3e65af': '37c3e75b6723',
+    'g4-english-gemini-ce898e842294': 'd3ce8dd16205',
+    'g4-english-gemini-cffc31b9eacc': 'a63d155a22bb',
+    'g5-english-gemini-2f14967b8770': 'd80e3d1c65c4',
+    'g5-english-gemini-9f740ba80c8e': 'f300f2642056',
+    'g5-english-gemini-badfe9ce8162': '420811fcc6b8',
+    // post-fix re-triage: 'in the library' makes 'reading books' unique
+    'g3-english-gemini-648481753a02': '1f930411b9a8',
+  },
+  // distractor-contrast pedagogy: quoting the distractor to explain why
+  // it is wrong is correct teaching, not a mismatch
+  'explanation-mentions-other-answer': {
+    // explanation quotes the correct answer itself - humans can't fly
+    'g2-english-codex-be6681310387': '23d101c21b10',
+    'g2-english-codex-3a86869fe60e': 'ad99e1030c0c',
+    'g2-english-codex-53e070ec3d7c': '25cf437ca04c',
+    'g2-english-codex-599a48e0e9b8': 'beca170a3751',
+    'g2-english-codex-5fa252d74adb': '2c02ecfa3020',
+    'g2-english-codex-819d4d790750': '282987765e67',
+    'g2-english-codex-c985cd404a2e': '6d6e9d1a56eb',
+    'g2-english-gemini-c3137438d2d2': '5224a66f6fe0',
+    'g4-english-gemini-133992b04cbe': 'b11734f318e0',
+    'g4-english-gemini-1d5130338b12': '68c385869077',
+    'g5-english-gemini-df2a7033dd75': '9b06d6f11175',
+  },
+  // prompts already self-disambiguate the country term
+  'ambiguous-country-name': {
+    'g5-english-bulk-icon-e1fb2c353573': '1de1d82be55c',
+    'g5-english-bulk-icon-e3e21ed4b84d': '682257b2604e',
+  },
+};
+const contentFp = (q) =>
+  crypto.createHash('sha1')
+    .update([q.prompt_text, JSON.stringify(q.choices), JSON.stringify(q.answer), q.explanation_vi].join('|'))
+    .digest('hex').slice(0, 12);
+const reviewed = (checkName, q) => REVIEWED[checkName]?.[q.id] === contentFp(q);
 check('ambiguous-open-prompt', 'P1',
   'Open-ended prompt where more than one choice is a plausible true answer - review for quarantine',
   questions.filter((q) => {
     if (!eligible(q) || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
-    if (MANUALLY_REVIEWED.has(q.id)) return false;
+    if (reviewed('ambiguous-open-prompt', q)) return false;
     const p = q.prompt_text ?? '';
     const labels = q.choices.map((c) => choiceLabel(c));
     const ok = labels.filter((l) => IS_EN(l) && !BROKEN_CHOICE.test(l));
@@ -301,7 +349,7 @@ check('explanation-mentions-other-answer', 'P2',
   + 'why they are wrong or to gloss all options is correct pedagogy',
   questions.filter((q) => {
     if (!eligible(q) || !Array.isArray(q.choices) || q.answer?.index === undefined) return false;
-    if (MANUALLY_REVIEWED.has(q.id)) return false;
+    if (reviewed('explanation-mentions-other-answer', q)) return false;
     const m = (q.explanation_vi ?? '').match(QUOTED);
     if (!m) return false;
     const expl = q.explanation_vi ?? '';
@@ -536,7 +584,7 @@ check('dup-prompt-same-grade', 'P2',
 check('ambiguous-country-name', 'P2',
   'Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...)',
   questions.filter((q) => {
-    if (!eligible(q) || MANUALLY_REVIEWED.has(q.id)) return false;
+    if (!eligible(q) || reviewed('ambiguous-country-name', q)) return false;
     const term = (q.prompt_text ?? '').match(/Which picture shows: (.+)\?/)?.[1]
       ?? (q.prompt_text ?? '').match(/The picture shows [“"](.+?)[”"]\./)?.[1]
       ?? correctLabel(q);
