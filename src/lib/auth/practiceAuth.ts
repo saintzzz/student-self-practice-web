@@ -4,6 +4,7 @@
  */
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from '../supabase/client';
+import { turnstileToken } from '../qb/turnstile';
 
 export const EMAIL_DOMAIN = 'students.ioe-practice.example';
 export const USERNAME_RE = /^[a-z0-9_-]{3,20}$/;
@@ -24,9 +25,13 @@ export function usernameToEmail(username: string): string {
 }
 
 export async function login(username: string, pin: string): Promise<string | null> {
+  // CR-108: invisible Turnstile token cho Supabase Auth captcha - bo qua
+  // khi captcha chua bat; bot cu phai qua challenge moi goi duoc.
+  const captchaToken = await turnstileToken();
   const { error } = await (await getSupabase()).auth.signInWithPassword({
     email: usernameToEmail(username),
     password: pin,
+    options: captchaToken ? { captchaToken } : undefined,
   });
   return error ? 'Tên đăng nhập hoặc mã PIN chưa đúng.' : null;
 }

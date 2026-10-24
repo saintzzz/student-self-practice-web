@@ -162,6 +162,19 @@ async function mintTicket(): Promise<string> {
 }
 
 /**
+ * Raw Cloudflare token for Supabase Auth `captchaToken` (login hardening).
+ * Fail-open: null when the challenge cannot run - Supabase ignores the
+ * option while captcha is off and rejects only when it is enabled.
+ */
+export async function turnstileToken(): Promise<string | null> {
+  try {
+    return await runChallenge();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Returns a valid guest ticket, re-minting 60 s before expiry. One retry
  * at the call site is enough: a PT401 means the ticket expired between
  * cache check and RPC, so `refresh()` forces a new challenge.
