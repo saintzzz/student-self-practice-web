@@ -118,11 +118,16 @@ const cands = [];
 {
   // --offset resume: translate to a keyset cursor with one 1-row fetch,
   // then page by id>cursor - offset loops re-scan the whole table.
+  // Old semantics processed rows[OFFSET..], so the exclusive cursor is the
+  // row at OFFSET-1; if the hop fails or OFFSET is past the end there is
+  // nothing to resume into - fail or stop, never restart from row 0.
   let cursor = null;
   if (OFFSET > 0) {
-    const r = await fetch(`${SUPA}/rest/v1/qb_questions?select=id&order=id&offset=${OFFSET}&limit=1`, { headers: H });
+    const r = await fetch(`${SUPA}/rest/v1/qb_questions?select=id&order=id&offset=${OFFSET - 1}&limit=1`, { headers: H });
+    if (!r.ok) throw new Error(`resume lookup: ${r.status} ${(await r.text()).slice(0, 200)}`);
     const row0 = (await r.json())?.[0];
-    if (row0) cursor = row0.id;
+    if (!row0) { console.log(`offset ${OFFSET} is past the end - nothing to verify`); process.exit(0); }
+    cursor = row0.id;
   }
   const url = `${SUPA}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,choices,answer,passage,statement,tokens,transcript,explanation_vi,learning_objective,review_status,publication_policy`;
   for await (const rows of paged(url, { headers: H, from: cursor })) {

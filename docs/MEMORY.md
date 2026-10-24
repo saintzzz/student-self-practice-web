@@ -413,3 +413,13 @@
 - Spot-check artifacts: docs/qa/spot-check-*.{json,md} +
   template-repair-*.jsonl proposals.
 - Audit gate cuoi moi wave: 50/50 checks = 0.
+- r141 external review (codex): 8 findings - 7 fixed (passage drift in
+  hash/before-check, a/an exemption leak trong post-normalize, mi_k->
+  mil_ live row, blueprint-shortfall abort, Fisher-Yates, verdict
+  coverage), 1 accepted-limitation (PostgREST khong co CAS). Re-verify:
+  dry-run 0 proposals, audit 50/50 = 0.
+- Side note: codex exec refactor het scripts/ sang keyset pagination
+  (scripts/lib/paged.mjs, id=gt.cursor) - fix root cause cua Supabase
+  statement timeouts (offset O(n^2) tren 132k rows). Da verify bang
+  chinh audit/dry-run chay tren code moi; qb_question_assets giu offset
+  vi khong co cot unique.
