@@ -63,21 +63,25 @@ const quotedTerms = (s) => new Set(
     .map((m) => (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim())
     .filter(Boolean));
 
-// Vietnamese function words (diacritics-stripped) mark a quoted phrase as
-// a VN gloss rather than taught English.
-const VN_FUNC = new Set([
-  'khong', 'nghia', 'dong', 'cua', 'chon', 'dung', 'duoc', 'nay', 'vay',
-  'phai', 'sai', 'nen', 'voi', 'khi', 'nhu', 'vao', 'con', 'cac', 'mot',
-  'thi', 'la', 've', 'ra', 'lai', 'vi', 'boi', 'tuc', 'ten', 'hinh',
-  'anh', 'trong', 'tren', 'duoi', 'giua', 'canh', 'se', 'da', 'dang',
-  'ma', 'neu', 'khac', 'cung', 'cang', 'nhieu', 'it', 'rat', 'qua',
-  'dau', 'moi', 'nhan', 'vua', 'van', 'roi', 'thoi', 'cho', 'co', 'o',
-]);
-const isVnGloss = (t) =>
-  stripVN(t).split(/[^a-z]+/).some((w) => w && VN_FUNC.has(w));
 const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const boundaryRe = (t) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(t)}(?![\\p{L}\\p{N}])`, 'iu');
+
+// Classify a quoted term (r135): word lists collide both ways ('it'/'ten'/
+// 'rat' are English AND stripped Vietnamese), so use evidence instead -
+//   ENGLISH if the term occurs in the question context (prompt/choices/
+//     answer) - taught vocabulary, must survive literally with boundaries.
+//   GLOSS if the rewrite contains a diacritics-marked word whose stripped
+//     form matches a word of the term - 'xin chao' -> 'xin chào' is a
+//     legitimate repair, not a deletion.
+//   ENGLISH otherwise - the safe default: a wrongly-strict term can only
+//     reject a rewrite (row stays unpolished), never delete vocabulary.
+const termIsGloss = (t, ex, enContext) => {
+  if (enContext.includes(stripVN(t))) return false;
+  const tWords = stripVN(t).split(/[^a-z]+/).filter(Boolean);
+  const marked = String(ex ?? '').split(/[^\p{L}]+/u).filter((w) => VN_MARK.test(w));
+  return tWords.some((w) => marked.some((m) => stripVN(m) === w));
+};
 
 async function fetchTargets() {
   const rows = [];
@@ -179,16 +183,15 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
         const ex = byId.get(row.id);
         // validation: present, sane length, actually Vietnamese now, and
         // every English term quoted in the original is still present
-        // Classify each quoted term by ITS OWN words (r134#1): a term
-        // containing a Vietnamese function word is a gloss (diacritics-
-        // insensitive match so 'khong the' may become 'không thể'); every
-        // other quoted term is taught English and must survive literally
-        // with word boundaries - else 'cần' would satisfy a dropped 'can'
-        // and 'candy' would fake 'can' (r133, r134#2).
+        const enContext = stripVN([
+          row.prompt_text,
+          ...(Array.isArray(row.choices) ? row.choices : []),
+          correctLabel(row),
+        ].join(' '));
         const exLower = String(ex ?? '').toLowerCase();
         const exNorm = stripVN(ex);
         const missingTerms = [...quotedTerms(row.explanation_vi)]
-          .filter((t) => isVnGloss(t)
+          .filter((t) => termIsGloss(t, ex, enContext)
             ? !exNorm.includes(stripVN(t))
             : !boundaryRe(t.toLowerCase()).test(exLower));
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
