@@ -161,6 +161,7 @@ for (const f of forms) {
     const res = await fetch(`${SUPA_URL}/rest/v1/qb_exam_forms?id=eq.${encodeURIComponent(f.id)}`, {
       method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' },
       body: JSON.stringify({ payload }),
+      signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) { console.error(`PATCH ${f.id}: ${res.status} ${await res.text()}`); process.exitCode = 1; }
   }

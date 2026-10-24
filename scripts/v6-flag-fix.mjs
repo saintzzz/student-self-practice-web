@@ -63,19 +63,9 @@ const choiceLabel = (c) =>
     : String(c?.assetId ?? '').replace(/^concept-/, '').replace(/-[0-9a-f]{6}$/, '').replace(/-/g, ' ');
 
 async function fetchAll() {
-  const out = [];
-  const PAGE = 1000;
-  for (let off = 0; ; off += PAGE) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/qb_questions?select=id,prompt_text,choices,answer,explanation_vi,learning_objective,question_type,publication_policy&offset=${off}&limit=${PAGE}`,
-      { headers: HEADERS },
-    );
-    if (!res.ok) throw new Error(`fetch: ${res.status} ${await res.text()}`);
-    const page = await res.json();
-    out.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return out;
+  return pagedAll(
+    `${SUPA_URL}/rest/v1/qb_questions?select=id,prompt_text,choices,answer,explanation_vi,learning_objective,question_type,publication_policy`,
+    { headers: HEADERS });
 }
 
 async function patch(id, fields) {

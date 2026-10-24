@@ -7,6 +7,7 @@ import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
+import { pagedAll } from './lib/paged.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -45,13 +46,7 @@ const BUCKETS = [
 const bucketOf = (c) => { const w = c.toLowerCase().replace(/[ -]/g, ' '); for (const [b, ws] of BUCKETS) if (ws.split(' ').some((x) => w === x || w.endsWith(' ' + x) || w.startsWith(x + ' '))) return b; return 'misc'; };
 
 async function fetchAll(table, cols, filter) {
-  const out = []; let off = 0;
-  for (;;) {
-    const res = await fetch(`${URL}/rest/v1/${table}?select=${cols}${filter ? '&' + filter : ''}&offset=${off}&limit=1000`, { headers: H });
-    if (!res.ok) throw new Error(table + ' ' + res.status);
-    const rows = await res.json(); out.push(...rows);
-    if (rows.length < 1000) return out; off += 1000;
-  }
+  return pagedAll(`${URL}/rest/v1/${table}?select=${cols}${filter ? '&' + filter : ''}`, { headers: H });
 }
 
 const assets = await fetchAll('qb_assets', 'id,file_path,alt_text,metadata', "kind=eq.generated-concept");

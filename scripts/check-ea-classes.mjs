@@ -410,7 +410,9 @@ for (const f of walk(BASE, /\.(ts|tsx|mjs|js|md)$/)) {
 // A script that posts to PostgREST but never exits non-zero on failure.
 for (const f of walk(join(BASE, "scripts"), /^gen-.*\.mjs$/)) {
   const src = readFileSync(f, "utf8");
-  const pushes = /fetch\([^)]*method:\s*['"]?(POST|post)['"]?|rest\/v1/.test(src);
+  // a "push" is an actual write call - a bare `rest/v1` GET (read-only
+  // export/audit scripts) must not trigger push-error requirements
+  const pushes = /method:\s*['"]?(POST|PATCH|PUT|DELETE|post|patch|put|delete)['"]?/.test(src);
   if (pushes && !/process\.exit\(1\)|process\.exitCode/.test(src))
     hit("push-silent-fail", rel(f), "no non-zero exit on push failure");
   if (/res\.ok/.test(src) === false && pushes)

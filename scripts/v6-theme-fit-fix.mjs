@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const keys = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.config/devin/secrets/supabase_new_keys.json'), 'utf8'));
 const BASE = keys.url, KEY = keys.keys.service_role;
@@ -93,14 +94,7 @@ const GLOSS = {
 const TAUT = /phù hợp với chủ đề/i;
 
 async function fetchAll(table, select) {
-  let all = [], off = 0;
-  while (true) {
-    const r = await fetch(`${BASE}/rest/v1/${table}?select=${select}&limit=1000&offset=${off}`, { headers: HDR });
-    const b = await r.json();
-    if (!Array.isArray(b) || !b.length) break;
-    all.push(...b); if (b.length < 1000) break; off += 1000;
-  }
-  return all;
+  return pagedAll(`${BASE}/rest/v1/${table}?select=${select}`, { headers: HDR });
 }
 
 const elig = (q) => { const p = q.publication_policy || {}; return q.review_status !== 'flagged' && (p.practiceEligible || p.examEligible || p.mockEligible); };

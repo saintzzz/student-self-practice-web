@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const KEY = JSON.parse(
@@ -16,17 +17,9 @@ const HEADERS = {
 };
 
 async function fetchAll() {
-  const out = [];
-  for (let off = 0; ; off += 1000) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/qb_questions?select=id,prompt_text,choices,answer,explanation_vi,learning_objective&offset=${off}&limit=1000`,
-      { headers: HEADERS });
-    if (!res.ok) throw new Error(await res.text());
-    const page = await res.json();
-    out.push(...page);
-    if (page.length < 1000) break;
-  }
-  return out;
+  return pagedAll(
+    `${SUPA_URL}/rest/v1/qb_questions?select=id,prompt_text,choices,answer,explanation_vi,learning_objective`,
+    { headers: HEADERS });
 }
 async function patch(id, fields) {
   const res = await fetch(`${SUPA_URL}/rest/v1/qb_questions?id=eq.${encodeURIComponent(id)}`, {

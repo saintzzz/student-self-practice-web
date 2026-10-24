@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { paged } from './lib/paged.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ARGS = process.argv.slice(2);
@@ -115,18 +116,22 @@ async function llmCheck(items) {
 console.log('pulling candidates...');
 const cands = [];
 {
-  let from = OFFSET;
-  for (;;) {
-    const res = await fetch(`${SUPA}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,choices,answer,passage,statement,tokens,transcript,explanation_vi,learning_objective,review_status,publication_policy&limit=1000&offset=${from}`, { headers: H });
-    const rows = await res.json();
-    if (!Array.isArray(rows) || !rows.length) break;
+  // --offset resume: translate to a keyset cursor with one 1-row fetch,
+  // then page by id>cursor - offset loops re-scan the whole table.
+  let cursor = null;
+  if (OFFSET > 0) {
+    const r = await fetch(`${SUPA}/rest/v1/qb_questions?select=id&order=id&offset=${OFFSET}&limit=1`, { headers: H });
+    const row0 = (await r.json())?.[0];
+    if (row0) cursor = row0.id;
+  }
+  const url = `${SUPA}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,choices,answer,passage,statement,tokens,transcript,explanation_vi,learning_objective,review_status,publication_policy`;
+  for await (const rows of paged(url, { headers: H, from: cursor })) {
     for (const q of rows) {
       const p = q.publication_policy || {};
       if (p.mockEligible && p.requiresHumanApprovalForExam === true && q.review_status !== 'rejected') cands.push(q);
       if (cands.length >= LIMIT) break;
     }
-    from += 1000;
-    if (rows.length < 1000 || cands.length >= LIMIT) break;
+    if (cands.length >= LIMIT) break;
   }
 }
 console.log(`candidates: ${cands.length}`);

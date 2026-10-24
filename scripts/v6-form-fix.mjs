@@ -19,6 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const DRY = process.argv.includes('--dry');
@@ -34,15 +35,7 @@ const H = {
 };
 
 async function fetchAll(table, cols, order = 'id') {
-  const out = [];
-  for (let off = 0; ; off += 1000) {
-    const res = await fetch(`${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=1000`, { headers: H });
-    if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
-    const page = await res.json();
-    out.push(...page);
-    if (page.length < 1000) break;
-  }
-  return out;
+  return pagedAll(`${SUPA_URL}/rest/v1/${table}?select=${cols}`, { headers: H, order });
 }
 
 const choiceLabel = (c) =>
@@ -92,7 +85,17 @@ function answerKeyEntry(q) {
 
 const questions = await fetchAll('qb_questions',
   'id,grade,subject,question_type,prompt_text,passage,statement,transcript,choices,answer,publication_policy,variant_group_id,review_status');
-const assetIds = new Set((await fetchAll('qb_question_assets', 'question_id', 'question_id')).map((l) => l.question_id));
+// qb_question_assets has no unique column (question_id,asset_id,sort_order
+// only) - keyset paging would skip rows that share a question_id at a page
+// boundary, so this one table keeps offset paging (21k rows - cheap).
+const assetIds = new Set();
+for (let off = 0; ; off += 1000) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/qb_question_assets?select=question_id&order=question_id&offset=${off}&limit=1000`, { headers: H });
+  if (!res.ok) throw new Error(`qb_question_assets: ${res.status} ${await res.text()}`);
+  const links = await res.json();
+  for (const l of links) assetIds.add(l.question_id);
+  if (links.length < 1000) break;
+}
 const forms = await fetchAll('qb_exam_forms', 'id,grade,subject,kind,payload');
 const qById = new Map(questions.map((q) => [q.id, q]));
 

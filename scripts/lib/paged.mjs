@@ -17,11 +17,13 @@
  * `order` may be "id" or "id.asc"; desc ordering is rejected (callers
  * scan forward only).
  */
-export async function* paged(baseUrl, { headers = {}, order = 'id', page = 1000, timeout = 20000, retries = 4 } = {}) {
+export async function* paged(baseUrl, { headers = {}, order = 'id', page = 1000, timeout = 20000, retries = 4, from = null } = {}) {
   const col = order.replace(/\.(asc|desc)$/, '');
   if (/\.desc$/.test(order)) throw new Error('paged: desc ordering unsupported');
   const sep = baseUrl.includes('?') ? '&' : '?';
-  let cursor = null;
+  // `from` resumes AFTER this cursor value - replaces the old `--offset N`
+  // resume flag (translate offset -> cursor with a single 1-row fetch).
+  let cursor = from;
   for (;;) {
     const keyset = cursor == null ? '' : `&${col}=gt.${encodeURIComponent(String(cursor))}`;
     const url = `${baseUrl}${sep}order=${order}${keyset}&limit=${page}`;
