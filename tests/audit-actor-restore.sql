@@ -175,6 +175,27 @@ insert into pg_temp.audit_iso(actor, ip_hash, rpc, question_ids) values
    'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
    'fetch_questions', '{i5}');
 
+-- pass 1
+update pg_temp.audit_iso
+set actor = case
+  when actor = 'guest:' || left(
+         encode(extensions.digest('unknown'::bytea, 'sha256'), 'hex'), 16)
+       and ip_hash is null then 'guest:unknown'
+  when ip_hash is not null then 'guest:' || left(ip_hash, 16)
+  when actor !~ '^guest:[0-9a-f]{16}$' and actor <> 'guest:unknown'
+    then 'guest:' || left(
+      encode(extensions.digest(
+        substring(actor from '^guest:(.+)$')::bytea, 'sha256'), 'hex'),
+      16)
+  else actor
+end
+where actor like 'guest:%';
+
+-- snapshot pass-1 results, then pass 2 (r123: arm-branch inputs must
+-- also be idempotent, not just the chain-replayed rows)
+create table pg_temp.audit_iso_pass1 as
+  select question_ids, actor from pg_temp.audit_iso;
+
 update pg_temp.audit_iso
 set actor = case
   when actor = 'guest:' || left(
@@ -191,6 +212,8 @@ end
 where actor like 'guest:%';
 
 do $$
+declare
+  bad int;
 begin
   if (select actor from pg_temp.audit_iso where question_ids = '{i1}')
      <> 'guest:unknown' then raise exception 'corrupted-unknown not repaired'; end if;
@@ -203,5 +226,10 @@ begin
      <> 'guest:aaaabbbbccccdddd' then raise exception 'unrecoverable opaque degraded'; end if;
   if (select actor from pg_temp.audit_iso where question_ids = '{i5}')
      <> 'guest:eeeeeeeeeeeeeeee' then raise exception 'canonical row rewritten'; end if;
-  raise notice 'audit-actor-restore: chain + isolated cases all canonical';
+  -- strict idempotency on arm-branch inputs: pass 2 changes nothing
+  select count(*) into bad from pg_temp.audit_iso f
+    join pg_temp.audit_iso_pass1 p using (question_ids)
+    where f.actor is distinct from p.actor;
+  if bad > 0 then raise exception '% isolated rows changed on second pass', bad; end if;
+  raise notice 'audit-actor-restore: chain + isolated cases all canonical + idempotent';
 end $$;
