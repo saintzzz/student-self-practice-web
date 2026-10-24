@@ -287,3 +287,11 @@
   24 ambiguous-open-prompt, 22 dangling blueprint_id (blueprints table
   empty - metadata debt), 2 ambiguous-country-name (self-clarifying).
 - Still manual: 5% human spot-check, WAF dashboard toggle.
+- r126 (c2493d1): 3 majors + 1 minor tren repair scripts - tat ca da fix:
+  group-dup key them passage+question_type (12 rows bi merge nham da
+  reset NULL); transitive vg merge (moi member cua touched vg); repair
+  script ap _assignment_mint_form rules cho kind='assignment' forms
+  (verified 0 vi pham live - approved subs truoc do tinh co du tieu
+  chuan); missing question id bay gio fail loudly qua missingIds.
+- Audit dup key cap nhat theo (passage+type). Re-audit: P0 van 0 het;
+  P2 explanation-mentions-other-answer con 10 sau exemption mo rong.

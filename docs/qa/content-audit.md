@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-24T09:24:30.758Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-24T10:07:42.362Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -27,10 +27,9 @@ Generated: 2026-10-24T09:24:30.758Z · rows: 132663 · regenerate: `node scripts
 | `form-answerkey-mismatch` | P0 | **0** | Form answerKey disagrees with the question stored answer |
 | `form-duplicate-variant` | P0 | **0** | Two questions in the same form share a variant group or identical content |
 | `explanation-not-vietnamese` | P1 | **654** | Explanation has no Vietnamese characters (untranslated?) |
-| `explanation-mentions-other-answer` | P1 | **250** | Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch) |
 | `ambiguous-open-prompt` | P1 | **24** | Open-ended prompt where more than one choice is a plausible true answer - review for quarantine |
 | `form-blueprint-missing` | P1 | **22** | Form references a blueprint that does not exist |
-| `duplicate-choices` | P1 | **3** | Two identical choices in one question |
+| `duplicate-choices` | P1 | **0** | Two identical choices in one question |
 | `statement-as-question` | P1 | **0** | Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage |
 | `explanation-too-short` | P1 | **0** | Explanation under 20 chars - teaches nothing |
 | `explanation-tautology` | P1 | **0** | Explanation only restates "answer fits the theme" without a reason or contrast |
@@ -39,6 +38,7 @@ Generated: 2026-10-24T09:24:30.758Z · rows: 132663 · regenerate: `node scripts
 | `form-near-dup-content` | P1 | **0** | Same form contains two questions identical modulo names/numbers (same template) |
 | `form-grade-subject-mismatch` | P1 | **0** | Question grade/subject differs from its form |
 | `form-blueprint-size` | P1 | **0** | Form question count differs from blueprint targetQuestions |
+| `explanation-mentions-other-answer` | P2 | **10** | Explanation quotes a DIFFERENT choice than the correct answer - review queue heuristic, NOT a defect count: quoting distractors to explain why they are wrong or to gloss all options is correct pedagogy |
 | `ambiguous-country-name` | P2 | **2** | Correct answer or prompted term is an ambiguous country name (Congo/Korea/Bosnia...) |
 | `dup-prompt-same-grade` | P2 | **0** | Identical prompt+answer that can co-appear in one exam (no shared variant_group_id) |
 | `accented-text` | P2 | **0** | Foreign accent marks (never legal in Vietnamese) in served prompt or choices |
@@ -58,22 +58,6 @@ Generated: 2026-10-24T09:24:30.758Z · rows: 132663 · regenerate: `node scripts
 - `g1-english-bulk-888c057c1d3c` — Which color has four letters? → **blue**
 - `g1-english-bulk-888c66e3f4f5` — I have seven teddy bears. How many bears? → **seven**
 - _…and 642 more (see --json)_
-
-## explanation-mentions-other-answer (P1) - 250 rows
-
-- `g1-english-bulk-13341ca3ddfa` — Bao runs from a barking dog. He feels ___. → **scared**
-- `g1-english-bulk-2851dbcc0ac3` — Which number is greater, eight or five? → **eight**
-- `g1-english-bulk-32ca22da2e2c` — She is ___ because her toy broke. → **sad**
-- `g1-english-bulk-35f8b29c712f` — What is the plural form of 'kite'? → **kites**
-- `g1-english-bulk-3f763c48fce8` — We have three happy ___. → **children**
-- `g1-english-bulk-527f92168516` — One shoe, two ___. → **shoes**
-- `g1-english-bulk-53aacaa97aee` — That loud noise scared me. I feel ___. → **afraid**
-- `g1-english-bulk-6357d29ef8ef` — Choose the correct word: one eraser, two ___. → **erasers**
-- `g1-english-bulk-7dba09da2886` — My cat and dog are ___. → **pets**
-- `g1-english-bulk-7dbca1b72ec3` — What is the plural of pencil? → **pencils**
-- `g1-english-bulk-7ddd3006aae7` — Three dolls. The plural is ___. → **dolls**
-- `g1-english-bulk-821c228a5748` — My ______ are small. → **fingers**
-- _…and 238 more (see --json)_
 
 ## ambiguous-open-prompt (P1) - 24 rows
 
@@ -107,11 +91,18 @@ Generated: 2026-10-24T09:24:30.758Z · rows: 132663 · regenerate: `node scripts
 - `asg-85157d6e-1b8f-4dc3-a21b-880f62352611` — blueprint asg-85157d6e-1b8f-4dc3-a21b-880f62352611 not found → ****
 - _…and 10 more (see --json)_
 
-## duplicate-choices (P1) - 3 rows
+## explanation-mentions-other-answer (P2) - 10 rows
 
-- `g2-english-gemini-3ed3567b86d1` — Are there ___ books in your bag? Yes, there are. → **any**
-- `g4-english-bulk-icon-15db49b9bc92` — Which picture shows: Sweden? → **sweden**
-- `g5-english-gemini-5fa2de592187` — We _____ hang traditional red lanterns on our front door to welcome the Lunar New Year. → **should**
+- `g2-english-codex-3a86869fe60e` — This driver cannot swim. He ___ swim. → **can't**
+- `g2-english-codex-53e070ec3d7c` — I ___ see the sun. Tôi không thể. → **can't**
+- `g2-english-codex-599a48e0e9b8` — A bus ___ fly. → **can't**
+- `g2-english-codex-5fa252d74adb` — Today is Friday. Yesterday was ___. → **Thursday**
+- `g2-english-codex-819d4d790750` — I ___ fly on Sundays. → **can't**
+- `g2-english-codex-c985cd404a2e` — I ___ fly. I have no wings. → **can't**
+- `g2-english-gemini-c3137438d2d2` — Choose the correct answer: Can a dog fly? - No, it ___ . → **can't**
+- `g4-english-gemini-133992b04cbe` — There is ___ apple in my lunch box. → **an**
+- `g4-english-gemini-1d5130338b12` — Tet comes ___ than the Mid-Autumn Festival in the calendar year. → **earlier**
+- `g5-english-gemini-df2a7033dd75` — If you study hard, your marks will be ___ than last semester. → **better**
 
 
 ## ambiguous-country-name (P2) - 2 rows

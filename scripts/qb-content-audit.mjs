@@ -481,8 +481,8 @@ check('dup-prompt-same-grade', 'P2',
     const byKey = new Map();
     for (const q of questions) {
       if (!eligible(q)) continue;
-      const discriminating = ((q.prompt_text ?? '') + '|' + (q.statement ?? '') + '|' + (q.transcript ?? '')).trim().toLowerCase();
-      const k = `${q.grade}|${q.subject}|${discriminating}|${correctLabel(q).toLowerCase()}`;
+      const discriminating = ((q.prompt_text ?? '') + '|' + (q.statement ?? '') + '|' + (q.transcript ?? '') + '|' + (q.passage ?? '')).trim().toLowerCase();
+      const k = `${q.grade}|${q.subject}|${q.question_type}|${discriminating}|${correctLabel(q).toLowerCase()}`;
       if (!byKey.has(k)) byKey.set(k, []);
       byKey.get(k).push(q);
     }

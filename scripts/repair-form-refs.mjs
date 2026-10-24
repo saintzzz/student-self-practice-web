@@ -69,21 +69,47 @@ const [forms, questions] = await Promise.all([
   fetchAll('qb_exam_forms', 'id,grade,subject,kind,payload'),
   fetchAll(
     'qb_questions',
-    'id,grade,subject,skill,question_type,review_status,variant_group_id,answer,content_hash',
+    'id,grade,subject,skill,question_type,review_status,variant_group_id,answer,content_hash,canonical,publication_policy',
   ),
 ]);
 const qById = new Map(questions.map((q) => [q.id, q]));
 
-// candidate pool: approved questions indexed by grade|subject|type
-const pool = new Map();
+// membership rule per form kind (r126): 'assignment' forms are
+// student-facing via assignment_form RPC - their members must satisfy
+// the same eligibility as _assignment_mint_form. Teacher forms
+// (diagnostic/midterm/final/unit-test) are is_admin previews where
+// approved rubric items are legal, so 'approved' is the bar there.
+const mintEligible = (q) =>
+  q.canonical
+  && q.review_status !== 'rejected' && q.review_status !== 'draft'
+  && q.question_type !== 'constructed-response' && q.question_type !== 'speaking-prompt'
+  && (q.publication_policy?.commercialReleaseEligible === true)
+  && (q.publication_policy?.requiresHumanApprovalForCommercialRelease !== true)
+  && (q.publication_policy?.mockEligible === true)
+  && (q.publication_policy?.requiresHumanApprovalForExam !== true);
+
+const badMember = (q, kind) =>
+  kind === 'assignment' ? !mintEligible(q)
+                        : (q.review_status === 'rejected' || q.review_status === 'draft');
+
+// candidate pool per kind: assignment needs mint-eligible subs of any
+// scorable type; teacher forms accept approved items of the SAME type
+const poolMint = new Map();
+const poolApproved = new Map();
 for (const q of questions) {
-  if (q.review_status !== 'approved') continue;
-  const k = `${q.grade}|${q.subject}|${q.question_type}`;
-  if (!pool.has(k)) pool.set(k, []);
-  pool.get(k).push(q);
+  if (q.review_status === 'approved') {
+    const k = `${q.grade}|${q.subject}|${q.question_type}`;
+    if (!poolApproved.has(k)) poolApproved.set(k, []);
+    poolApproved.get(k).push(q);
+  }
+  if (mintEligible(q)) {
+    const k = `${q.grade}|${q.subject}|*`;
+    if (!poolMint.has(k)) poolMint.set(k, []);
+    poolMint.get(k).push(q);
+  }
 }
 
-const report = { forms: 0, substituted: 0, dropped: 0, unfixed: [], keyFixed: 0, dupFixed: 0 };
+const report = { forms: 0, substituted: 0, dropped: 0, unfixed: [], missingIds: [], keyFixed: 0, dupFixed: 0 };
 const updates = [];
 
 for (const f of forms) {
@@ -95,8 +121,11 @@ for (const f of forms) {
     qids.map((id) => qById.get(id)?.variant_group_id).filter(Boolean),
   );
 
+  const isAssignment = f.kind === 'assignment';
   const pickSub = (bad) => {
-    const cands = pool.get(`${bad.grade}|${bad.subject}|${bad.question_type}`) ?? [];
+    const cands = isAssignment
+      ? (poolMint.get(`${bad.grade}|${bad.subject}|*`) ?? [])
+      : (poolApproved.get(`${bad.grade}|${bad.subject}|${bad.question_type}`) ?? []);
     const same = cands.filter(
       (c) => !inForm.has(c.id)
         && (!c.variant_group_id || !usedGroups.has(c.variant_group_id)),
@@ -119,7 +148,7 @@ for (const f of forms) {
     const dupKey = q
       ? (q.variant_group_id ?? `h:${q.content_hash ?? q.id}`)
       : `missing:${id}`;
-    const isBadStatus = q && (q.review_status === 'rejected' || q.review_status === 'draft');
+    const isBadStatus = q ? badMember(q, f.kind) : true; // missing id is always bad
     const isDup = seenGroups.has(dupKey);
     if (!isBadStatus && !isDup) {
       newIds.push(id);
@@ -127,6 +156,7 @@ for (const f of forms) {
       continue;
     }
     const sub = q ? pickSub(q) : null;
+    if (!q) report.missingIds.push(`${f.id} -> ${id} (question row absent)`);
     if (sub) {
       newIds.push(sub.id);
       seenGroups.set(sub.variant_group_id ?? dupKey, sub.id);
@@ -173,6 +203,10 @@ console.log(`forms with answerKey rebuilt: ${report.keyFixed}`);
 if (report.unfixed.length) {
   console.log('unresolved refs:');
   for (const u of report.unfixed.slice(0, 20)) console.log(`  ${u}`);
+}
+if (report.missingIds.length) {
+  console.log(`MISSING question ids (unresolvable): ${report.missingIds.length}`);
+  for (const u of report.missingIds.slice(0, 20)) console.log(`  ${u}`);
 }
 
 if (APPLY) {
