@@ -32,7 +32,9 @@ const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'prac
 const HW = { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/json' };
 
 const VN_MARK = /[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵĂÂĐÊÔƠƯÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶÉÈẺẼẸẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰÝỲỶỸỴ]/;
-const QUOTED = /["'“‘]([^"'”’]+)["'”’]/g;
+// Paired delimiters; an apostrophe inside a contraction ('can't', 'don't')
+// is part of the token, not a closer - '(?=\w) keeps it internal (r131#2).
+const QUOTED = /"([^"]+)"|'((?:[^']|'(?=\w))*)'|“([^”]+)”|‘([^’]+)’/g;
 
 // Resolve the correct answer to its served label (r130#1): the model must
 // see WHICH choice is right - a bare {index:N} without choices is unusable.
@@ -46,8 +48,12 @@ const correctLabel = (row) => {
 
 // English terms quoted in the ORIGINAL explanation are the taught vocab -
 // a rewrite that drops or renames them loses the lesson (r130#1 validation).
+// Only ENGLISH quoted terms must survive the rewrite - Vietnamese glosses
+// inside quotes may legitimately change during diacritics restoration.
 const quotedTerms = (s) => new Set(
-  [...String(s ?? '').matchAll(QUOTED)].map((m) => m[1].trim().toLowerCase()).filter(Boolean));
+  [...String(s ?? '').matchAll(QUOTED)]
+    .map((m) => (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim().toLowerCase())
+    .filter((t) => t && /[a-z]/.test(t) && !VN_MARK.test(t)));
 
 async function fetchTargets() {
   const rows = [];
@@ -91,16 +97,33 @@ ${JSON.stringify(items.map((r) => ({
 const channel = createLlmChannel({ workers: WORKERS, codexModel: 'gpt-6.1-sol', codexEffort: 'high' });
 
 // ---- apply mode: replay a recorded artifact verbatim ----
+// Conditional apply (r131#1): only overwrite when the live value still
+// equals the recorded `before` - a row edited since the artifact was made
+// is a conflict, not a silent overwrite. Rows already at `proposed` count
+// as idempotent success; missing/conflicted rows fail loudly.
 if (APPLY) {
   const edits = readFileSync(APPLY, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   let applied = 0, failed = 0;
+  const HR = { ...HW, Prefer: 'return=representation' };
   for (const e of edits) {
-    if (e.applied) { applied++; continue; }
-    const res = await fetch(`${URL}/rest/v1/qb_questions?id=eq.${e.id}`, {
-      method: 'PATCH', headers: HW,
+    const cur = await fetch(
+      `${URL}/rest/v1/qb_questions?id=eq.${e.id}&select=id,explanation_vi`, { headers: H })
+      .then((r) => r.json()).catch(() => null);
+    const live = cur?.[0]?.explanation_vi;
+    if (!cur?.length) { failed++; console.log(`  apply fail ${e.id}: row missing`); continue; }
+    if (live === e.proposed) { applied++; continue; }           // idempotent
+    if (live !== e.before) {                                   // drifted since artifact
+      failed++;
+      console.log(`  apply CONFLICT ${e.id}: live value differs from recorded 'before' - skipping`);
+      continue;
+    }
+    const res = await fetch(
+      `${URL}/rest/v1/qb_questions?id=eq.${e.id}&explanation_vi=eq.${encodeURIComponent(e.before)}`, {
+      method: 'PATCH', headers: HR,
       body: JSON.stringify({ explanation_vi: e.proposed }),
     });
-    res.ok ? applied++ : (failed++, console.log(`  apply fail ${e.id}: ${res.status}`));
+    const rows = res.ok ? await res.json() : [];
+    rows.length ? applied++ : (failed++, console.log(`  apply fail ${e.id}: no row updated (concurrent edit)`));
   }
   await channel.close();
   console.log(`APPLIED ${applied}, failed ${failed} from ${APPLY}`);
