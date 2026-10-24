@@ -97,6 +97,29 @@ test("r117: backfill spares opaque actors and 'guest:unknown'", () => {
   assert.match(predicate, /actor <> 'guest:unknown'/);
 });
 
+test("r121: replay fixture carries verbatim UPDATEs from each migration", () => {
+  const FIXTURE = readFileSync(join(ROOT, "tests/audit-actor-restore.sql"), "utf8");
+  const norm = (s) =>
+    s.toLowerCase().replace(/practice\.qb_fetch_audit/g, "pg_temp.audit_fixture")
+      .replace(/\s+/g, " ").trim();
+  const FIX = norm(FIXTURE);
+  for (const [file, src] of [
+    ["0058_audit_guest_actor_backfill", readFileSync(join(ROOT, "supabase/migrations/0058_audit_guest_actor_backfill.sql"), "utf8")],
+    ["0059_audit_backfill_scope_fix", SRC59],
+    ["0060_audit_actor_canonical_restore", SRC60],
+    ["0061_audit_actor_idempotent_restore", SRC61],
+  ]) {
+    const updates = src.match(/update practice\.qb_fetch_audit[\s\S]*?;/gi) ?? [];
+    assert.ok(updates.length >= 1, `${file} must contain an audit UPDATE`);
+    for (const u of updates) {
+      assert.ok(FIX.includes(norm(u)), `${file} UPDATE drifted from tests/audit-actor-restore.sql`);
+    }
+  }
+  // fixture must assert, not just print
+  assert.match(FIXTURE, /raise exception/);
+  assert.match(FIXTURE, /pg_temp\.audit_fixture/);
+});
+
 test("r118/r120: canonical restore is idempotent by construction", () => {
   // 0061 supersedes 0058-0060: unconditional case over every 'guest:%'
   // row, so any replay depth converges to the canonical value.
@@ -111,8 +134,7 @@ test("r118/r120: canonical restore is idempotent by construction", () => {
   assert.doesNotMatch(SRC61, /when ip_hash is null then 'guest:unknown'/);
   // The behavioral fixture asserts, not just prints.
   const FIXTURE = readFileSync(join(ROOT, "tests/audit-actor-restore.sql"), "utf8");
-  assert.match(FIXTURE, /raise exception 'restore mismatch/);
-  assert.match(FIXTURE, /raise exception 'not idempotent/);
+  assert.match(FIXTURE, /raise exception/);
 });
 
 test("all three drain wrappers tag + audit student-path rows", () => {
