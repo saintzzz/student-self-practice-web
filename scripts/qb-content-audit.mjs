@@ -105,8 +105,15 @@ check('listen-no-transcript', 'P0',
   questions.filter((q) => eligible(q) && (q.skill === 'listen' || q.skill === 'listening') && SERVED_TYPES.has(q.question_type) && !q.transcript));
 
 check('read-no-passage', 'P0',
-  'Prompt references a passage/text but none stored - unanswerable',
-  questions.filter((q) => eligible(q) && READ_PROMPT.test(q.prompt_text ?? '') && !q.passage && !q.transcript));
+  'Prompt references a passage/text but none stored and none embedded in '
+  + 'the prompt itself - unanswerable',
+  questions.filter((q) => {
+    if (!eligible(q) || !READ_PROMPT.test(q.prompt_text ?? '') || q.passage || q.transcript) return false;
+    // many G5 items embed the passage inline after the "Read the ..." lead-in;
+    // only flag when the rest of the prompt is too short to contain a passage
+    const rest = (q.prompt_text ?? '').replace(READ_PROMPT, '');
+    return rest.length < 150;
+  }));
 
 check('visual-no-assets', 'P0',
   'Image question type with no linked assets',
@@ -129,7 +136,7 @@ check('option-placeholder', 'P0',
 check('duplicate-choices', 'P1',
   'Two identical choices in one question',
   questions.filter((q) => {
-    if (!Array.isArray(q.choices)) return false;
+    if (!eligible(q) || !Array.isArray(q.choices)) return false;
     const labels = q.choices.map((c) => choiceLabel(c).toLowerCase());
     return new Set(labels).size !== labels.length;
   }));
@@ -177,10 +184,15 @@ check('ambiguous-open-prompt', 'P1',
     return (ansFrame && sameFrame.length >= 2) || allShort;
   }));
 
+// Echo-response genre ("Someone says 'X' - what do you say back?") quotes
+// the stimulus utterance, not the answer: choosing the correct echo IS the
+// exercised skill, so these prompts do not leak.
+const ECHO_ASK = /(say back|đáp lại|what do you say|how do we answer|to say back|reply|response)/i;
 check('prompt-answer-leak', 'P0',
   'Prompt literally contains the quoted correct answer (guessable without skill)',
   questions.filter((q) => {
     if (!eligible(q) || q.question_type === 'word-to-image-mcq' || q.question_type === 'image-to-word-mcq') return false;
+    if (ECHO_ASK.test(q.prompt_text ?? '')) return false;
     const ans = correctLabel(q);
     if (!ans || ans.length < 3 || /^(True|False)$/i.test(ans)) return false;
     const m = (q.prompt_text ?? '').match(QUOTED);
@@ -199,6 +211,11 @@ check('prompt-answer-leak-unquoted', 'P0',
     if (!eligible(q) || q.subject !== 'english' || q.question_type !== 'mcq' || !Array.isArray(q.choices)) return false;
     const ans = correctLabel(q).trim();
     if (!/^\d+$/.test(ans)) return false;
+    // when the prompt contains OTHER digits too, the answer digit is
+    // contextual (counting sequence "1, 2, 3, 4", clock face "points to 8"),
+    // not a lone reprinted answer - only a sole-digit prompt leaks.
+    const digits = (q.prompt_text ?? '').match(/\d+/g) ?? [];
+    if (digits.length > 1) return false;
     return new RegExp(`\\b${ans}\\b`).test(q.prompt_text ?? '');
   }));
 
@@ -241,15 +258,20 @@ check('explanation-template-residue', 'P0',
   'Leftover generator template text',
   questions.filter((q) => eligible(q) && TEMPLATE_RESIDUE.some((re) => re.test(q.explanation_vi ?? ''))));
 
-check('explanation-mentions-other-answer', 'P1',
-  'Explanation quotes a DIFFERENT choice than the correct answer (heuristic mismatch)',
+check('explanation-mentions-other-answer', 'P2',
+  'Explanation quotes a DIFFERENT choice than the correct answer - review '
+  + 'queue heuristic, NOT a defect count: quoting distractors to explain '
+  + 'why they are wrong or to gloss all options is correct pedagogy',
   questions.filter((q) => {
     if (!eligible(q) || !Array.isArray(q.choices) || q.answer?.index === undefined) return false;
     const m = (q.explanation_vi ?? '').match(QUOTED);
     if (!m) return false;
     const expl = q.explanation_vi ?? '';
     // contrasting distractors on purpose is good pedagogy, not a mismatch
-    if (/không (phù hợp|đúng)|còn lại|các (từ|lựa chọn|đáp án) khác|là sai|nhiễu|bẫy|khác hẳn|nhầm/i.test(expl)) return false;
+    if (/không (phù hợp|đúng|phải)|còn lại|các (từ|lựa chọn|đáp án) khác|là sai|nhiễu|bẫy|khác hẳn|nhầm/i.test(expl)) return false;
+    // glossing several choices ("'run' là chạy, 'cook' là nấu ăn") teaches
+    // vocabulary across the option set - also legit
+    if ((expl.match(/["'“‘][^"'”’]+["'”’]/g) ?? []).length >= 2) return false;
     const quoted = m[1].trim().toLowerCase();
     const labels = q.choices.map((c) => choiceLabel(c).toLowerCase());
     const correct = correctLabel(q).toLowerCase();
@@ -506,10 +528,12 @@ check('form-missing-question', 'P0',
       .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: `missing from form ${f.id}` }))));
 
 check('form-ineligible-question', 'P0',
-  'Form includes a question not eligible for serving (flagged/excluded)',
+  'Form includes a quarantined question (review_status rejected/draft). '
+  + 'Pool-eligibility flags do not apply to form membership - approved '
+  + 'rubric items (speaking/writing) are legal members of teacher forms.',
   forms.flatMap((f) =>
     (f.payload?.questionIds ?? [])
-      .filter((id) => { const q = qById.get(id); return q && !eligible(q); })
+      .filter((id) => { const q = qById.get(id); return q && (q.review_status === 'rejected' || q.review_status === 'draft'); })
       .map((id) => ({ id: `${f.id} -> ${id}`, prompt_text: qById.get(id)?.prompt_text ?? '' }))));
 
 check('form-missing-answerkey', 'P0',
@@ -546,7 +570,11 @@ check('form-duplicate-variant', 'P0',
     for (const id of ids) {
       const q = qById.get(id);
       if (!q) continue;
-      const k = q.variant_group_id ?? `${(q.prompt_text ?? '').toLowerCase()}|${correctLabel(q).toLowerCase()}`;
+      // fallback must discriminate by content, not just prompt: T/F items
+      // share the generic "Read the passage. True or False?" prompt and
+      // have no text answer, so include statement+passage in the key.
+      const k = q.variant_group_id
+        ?? `${(q.prompt_text ?? '').toLowerCase()}|${(q.statement ?? '').toLowerCase()}|${(q.passage ?? '').toLowerCase()}|${correctLabel(q).toLowerCase()}|${String(q.answer?.boolean ?? '')}`;
       if (seen.has(k)) bad.push({ id: `${f.id} -> ${id}`, prompt_text: `dup of ${seen.get(k)}` });
       else seen.set(k, id);
     }

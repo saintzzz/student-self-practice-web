@@ -255,3 +255,32 @@
   canonical) - tat ca verify live tren temp tables.
 - HEAD a4dfe86 -> Vercel deploy success (auto-deploy qua git push).
   CR-109 forensics CLOSED; WAF dashboard toggle van la human task.
+
+## 2026-10-24 - CR-110 form-content repair + bank quality wave 2 (SHIPPED, verified)
+
+- Static exam forms (292, teacher-facing fetch_form/assignment paths)
+  referenced 469 slots -> review_status='rejected' questions + 195
+  slots without answerKey. scripts/repair-form-refs.mjs substituted all
+  359 slots (approved same grade+subject+type, skill-preferred, no
+  dup/variant collisions), rebuilt answerKey on 271 forms, 0 drops.
+  Verified live: 5,595 refs, 0 rejected, 0 missing key.
+- 12 g1/g2 english rubric items (speaking/CR) were blanket-rejected
+  despite canonical sound content - restored to 'approved' (policy
+  flags stay false; pools never serve them; teacher forms need them).
+- migrations: 0062 quarantines 10 P0 defect questions (missing story,
+  tautology answer-leaks, 2-choice mcq); 0063 restores rubric items +
+  quarantines 4 more (dup-choices, short explanation) + Turkiye accent.
+- scripts/group-dup-prompts.mjs assigned shared variant_group_id to 531
+  identical prompt+answer groups (1,122 rows) - dup can no longer
+  co-appear in one exam. Applied + verified.
+- qb-content-audit heuristics corrected: form membership flags
+  rejected/draft (not pool-eligibility); read-no-passage skips embedded
+  passages; answer-leak exempts echo-response genre; digit-leak only on
+  sole-digit prompts; dup-variant key includes statement/passage;
+  mentions-other-answer demoted to P2 review queue (contrasting
+  distractors is good pedagogy).
+- Audit result after wave: ALL P0 = 0 (23 checks) on 132,663 rows.
+  Remaining tracked: 654 no-diacritics explanations (content-gen CR),
+  24 ambiguous-open-prompt, 22 dangling blueprint_id (blueprints table
+  empty - metadata debt), 2 ambiguous-country-name (self-clarifying).
+- Still manual: 5% human spot-check, WAF dashboard toggle.
