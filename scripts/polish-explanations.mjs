@@ -67,8 +67,8 @@ const quotedTerms = (s) =>
 // English its spelling looks: "'can' nghia la 'no'" makes 'no' a gloss
 // that may be restored to 'nó' - 'la' alone is not a cue ('dap an la
 // 'can'' keeps 'can' English). (r137#3)
-const GLOSS_PRE = /(nghia la|co nghia|tuc|dich)\s*$/i;
-const GLOSS_POST = /^\s*(la|tuc)\s*(nghia|dich|cua)\b/i;
+const GLOSS_PRE = /(nghia la|co nghia|tuc)\s*$/i;
+const GLOSS_POST = /^\s*(la|tuc)\s*(nghia|cua)\b/i;
 const isGlossSlot = (src, at, end) =>
   GLOSS_PRE.test(src.slice(Math.max(0, at - 40), at)) ||
   GLOSS_POST.test(src.slice(end, end + 40));
@@ -218,7 +218,17 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
             if (!boundaryRe(stripVN(q.term)).test(exNorm)) missingTerms.push(q.term);
             continue;
           }
-          for (const w of lexWords(q.term)) {
+          const words = lexWords(q.term);
+          // All-lexicon (or nonalphabetic) terms are complete English
+          // phrases - check them as a bounded whole so reordering
+          // ('dog bites man' -> 'man bites dog') and number swaps
+          // ('10' -> '20') cannot pass (r138#2, r138#3).
+          if (!words.length || words.every((w) => LEXICON.has(stripVN(w)))) {
+            if (!boundaryRe(q.term.toLowerCase()).test(exLower)) missingTerms.push(q.term);
+            continue;
+          }
+          // Mixed terms: lexicon words literal, the rest stripped-bounded.
+          for (const w of words) {
             const ok = LEXICON.has(stripVN(w))
               ? boundaryRe(w.toLowerCase()).test(exLower)
               : boundaryRe(stripVN(w)).test(exNorm);
