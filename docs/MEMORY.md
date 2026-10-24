@@ -234,3 +234,11 @@
 - OPEN con lai: 5% human spot-check (manual), WAF dashboard toggle
   (human), anomaly scoring/rotating pools/honey rows (lop 3 - defer
   toi khi co incident), CR-68 deferred, Groq STT proposal-only.
+- ExtRev loop CR-109: r115 (raw-IP actor + wm payload) -> 0057; r116
+  (legacy backfill) -> 0058; r117 (backfill scope qua rong + legacy
+  verify doc) -> 0059; r118 (canonical restore tu ip_hash, self-heal
+  moi corruption depth) -> 0060; r119 (regex test khong du) -> da chay
+  behavioral verification LIVE tren prod: 6 fixtures deu canonical
+  (raw-IP, corrupted opaque, unknown, opaque+null-ip, corrupted
+  unknown, canonical) + idempotent pass 2 - fixture luu o
+  tests/audit-actor-restore.sql de re-run.
