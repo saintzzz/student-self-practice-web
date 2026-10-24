@@ -77,29 +77,6 @@ const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const boundaryRe = (t) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(t)}(?![\\p{L}\\p{N}])`, 'iu');
 
-// Classify each quoted occurrence (r136, r137): neither the rewrite nor
-// the question context is trusted - prompts may contain Vietnamese and
-// the rewrite is what we are validating. The trusted English evidence is
-// the bank's own taught vocabulary (all choice labels + answer texts)
-// plus a core-word list. Preservation is checked PER WORD: a lexicon word
-// inside ANY quote must survive literally with boundaries (so 'can snore'
-// still protects 'can', and 'tense' cannot fake 'ten'); non-lexicon words
-// must survive in stripped-boundary form; whole terms in gloss slots may
-// be restored with diacritics.
-const CORE_EN = new Set(('a an the i you he she it we they me him her us them my your his its our their ' +
-  'am is are was were be been being do does did done have has had having will would shall should can could ' +
-  'may might must ought need dare not no yes and or but if then than so such too very just only also even ' +
-  'this that these those there here what which who whom whose when where why how in on at to for of with by ' +
-  'from up down out off over under again once past simple present future tense singular plural verb noun ' +
-  'adjective adverb pronoun preposition question answer sentence word letter sound picture story read write ' +
-  'listen speak look choose correct wrong true false more most less least many much few some any all both ' +
-  'each every other another same different first last next new old big small long short tall good bad happy ' +
-  'sad like want go come get give take make see say know think tell ask use find put keep let begin show ' +
-  'try turn play run walk eat drink sit stand open close say tell').split(' '));
-const LEXICON = new Set(CORE_EN);
-const lexWords = (s) => String(s ?? '').toLowerCase().split(/[^a-z']+/).filter(Boolean);
-const addLex = (s) => lexWords(s).forEach((w) => LEXICON.add(stripVN(w)));
-
 async function fetchTargets() {
   const rows = [];
   for (let off = 0; ; off += 1000) {
@@ -109,15 +86,7 @@ async function fetchTargets() {
       { headers: H, signal: AbortSignal.timeout(20000) });
     if (!res.ok) throw new Error('fetch ' + res.status);
     const chunk = await res.json();
-    for (const r of chunk) {
-      // every choice label / answer text is taught English vocabulary
-      for (const c of Array.isArray(r.choices) ? r.choices : []) {
-        if (typeof c === 'string') addLex(c);
-      }
-      addLex(r.answer?.text);
-      for (const a of r.answer?.accepted ?? []) addLex(a);
-      if (r.explanation_vi && !VN_MARK.test(r.explanation_vi)) rows.push(r);
-    }
+    rows.push(...chunk.filter((r) => r.explanation_vi && !VN_MARK.test(r.explanation_vi)));
     if (chunk.length < 1000) break;
   }
   return LIMIT ? rows.slice(0, LIMIT) : rows;
@@ -218,22 +187,13 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
             if (!boundaryRe(stripVN(q.term)).test(exNorm)) missingTerms.push(q.term);
             continue;
           }
-          const words = lexWords(q.term);
-          // All-lexicon (or nonalphabetic) terms are complete English
-          // phrases - check them as a bounded whole so reordering
-          // ('dog bites man' -> 'man bites dog') and number swaps
-          // ('10' -> '20') cannot pass (r138#2, r138#3).
-          if (!words.length || words.every((w) => LEXICON.has(stripVN(w)))) {
-            if (!boundaryRe(q.term.toLowerCase()).test(exLower)) missingTerms.push(q.term);
-            continue;
-          }
-          // Mixed terms: lexicon words literal, the rest stripped-bounded.
-          for (const w of words) {
-            const ok = LEXICON.has(stripVN(w))
-              ? boundaryRe(w.toLowerCase()).test(exLower)
-              : boundaryRe(stripVN(w)).test(exNorm);
-            if (!ok) { missingTerms.push(`${q.term} (${w})`); break; }
-          }
+          // Every non-gloss quote is preserved as a bounded whole-term
+          // literal - order, numbers, punctuation and unknown words all
+          // survive or the rewrite is rejected (r138#2, r138#3, r139).
+          // A VN gloss outside a cue slot that gets diacritized is also
+          // rejected - the strict failure only leaves the row unpolished,
+          // it can never drop taught vocabulary.
+          if (!boundaryRe(q.term.toLowerCase()).test(exLower)) missingTerms.push(q.term);
         }
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
             ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
