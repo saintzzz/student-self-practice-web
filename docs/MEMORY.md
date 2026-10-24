@@ -295,3 +295,10 @@
   chuan); missing question id bay gio fail loudly qua missingIds.
 - Audit dup key cap nhat theo (passage+type). Re-audit: P0 van 0 het;
   P2 explanation-mentions-other-answer con 10 sau exemption mo rong.
+- r127 (fa84f4d): 3 majors tren repair scripts - tat ca da fix:
+  group-dup chuyen union-find (connected components tren bucket+vg
+  edges; member vg=null gio duoc gan; component chi reuse dup-* khi
+  holder set subset component - tranh resurrect merge sai); repair
+  script abort truoc PATCH khi missingIds/unfixed nonempty (khong con
+  silently drop slot). Re-run: 0 updates can, 0 repairs can - state da
+  nhat quan tu wave truoc. Re-audit P0 van 0 het.

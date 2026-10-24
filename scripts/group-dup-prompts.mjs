@@ -107,28 +107,66 @@ for (const q of questions) {
   byKey.get(k).push(q);
 }
 
-// desired shared vg per question id
-const desired = new Map();
-let flagged = 0, transitiveMembers = 0;
+// union-find over question ids (r126): components must be the connected
+// closure of content buckets AND existing groups - overlapping buckets
+// sharing a vg member are ONE component needing ONE shared id.
+const parent = new Map(questions.map((q) => [q.id, q.id]));
+const find = (x) => {
+  let r = x;
+  while (parent.get(r) !== r) r = parent.get(r);
+  let n = parent.get(x);
+  while (n !== r) { parent.set(x, r); x = n; n = parent.get(x); }
+  return r;
+};
+const union = (a, b) => parent.set(find(a), find(b));
+
+// edge: members of the same content bucket (only buckets with >=2 members
+// can force a shared id)
+const flaggedBuckets = new Set();
 for (const [k, g] of byKey) {
   if (g.length < 2) continue;
-  const memberVgs = new Set(g.map((q) => q.variant_group_id).filter(Boolean));
-  if (memberVgs.size === 1 && g.every((q) => q.variant_group_id === [...memberVgs][0])) {
-    // all members share ONE vg - but siblings of that vg outside the
-    // bucket may still need transit merge, handled below via touched set
-  }
-  flagged += 1;
+  flaggedBuckets.add(k);
+  for (let i = 1; i < g.length; i += 1) union(g[0].id, g[i].id);
+}
+// edge: members of the same ORIGINAL (non-dup) variant group - curated
+// groups are transitive by definition. dup-* ids are our own minted
+// artifacts; bucket identity is authoritative for them, so they are NOT
+// unioned (a stale dup-* on a now-singleton row must reset, not re-merge).
+for (const [vg, members] of byVg) {
+  if (vg.startsWith('dup-') || members.length < 2) continue;
+  for (let i = 1; i < members.length; i += 1) union(members[0].id, members[i].id);
+}
+
+// components containing at least one flagged-bucket member get normalized
+const compMembers = new Map(); // root -> questions[]
+for (const q of questions) {
+  const r = find(q.id);
+  if (!compMembers.has(r)) compMembers.set(r, []);
+  compMembers.get(r).push(q);
+}
+const bucketOf = new Map();
+for (const q of questions) if (eligible(q)) bucketOf.set(q.id, keyOf(q));
+
+const desired = new Map();
+let flagged = flaggedBuckets.size, transitiveMembers = 0;
+for (const members of compMembers.values()) {
+  const inFlagged = members.filter((q) => flaggedBuckets.has(bucketOf.get(q.id)));
+  if (!inFlagged.length) continue;
+  const memberIds = new Set(members.map((q) => q.id));
+  const vgs = new Set(members.map((q) => q.variant_group_id).filter(Boolean));
+  // a dup-* id may only be reused when every current holder sits inside
+  // this component - otherwise the id was contaminated by a wrong merge
+  // and reusing it would resurrect the bad grouping
+  const cleanDup = [...vgs].find((v) =>
+    v.startsWith('dup-') && (byVg.get(v) ?? []).every((h) => memberIds.has(h.id)));
   const shared =
-    [...memberVgs].find((v) => !v.startsWith('dup-'))
-    ?? [...memberVgs][0]
-    ?? `dup-${createHash('md5').update(k).digest('hex').slice(0, 16)}`;
-  // transitive merge: every question holding any member vg joins shared
-  for (const vg of memberVgs) {
-    for (const q of byVg.get(vg) ?? []) {
-      if (desired.get(q.id) !== shared) {
-        if (desired.has(q.id)) transitiveMembers += 1;
-        desired.set(q.id, shared);
-      }
+    [...vgs].find((v) => !v.startsWith('dup-'))
+    ?? cleanDup
+    ?? `dup-${createHash('md5').update(inFlagged.map((q) => bucketOf.get(q.id)).sort()[0]).digest('hex').slice(0, 16)}`;
+  for (const q of members) {
+    if (!desired.has(q.id)) {
+      desired.set(q.id, shared);
+      if (!inFlagged.includes(q)) transitiveMembers += 1;
     }
   }
 }

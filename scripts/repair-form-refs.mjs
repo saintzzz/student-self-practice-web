@@ -210,6 +210,13 @@ if (report.missingIds.length) {
 }
 
 if (APPLY) {
+  // fail loudly before touching any form when a member id cannot be
+  // resolved - silently dropping the slot would shrink a form below its
+  // blueprint with no audit trail (r127)
+  if (report.missingIds.length || report.unfixed.length) {
+    console.error('ABORT: unresolved refs - fix or substitute manually before applying');
+    process.exit(1);
+  }
   let ok = 0;
   for (const u of updates) {
     const res = await fetch(
