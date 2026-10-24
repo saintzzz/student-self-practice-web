@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-24T12:03:34.103Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-24T21:58:57.456Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|
@@ -11,6 +11,10 @@ Generated: 2026-10-24T12:03:34.103Z · rows: 132663 · regenerate: `node scripts
 | `answer-index-text-mismatch` | P0 | **0** | answer.index points at a different choice than answer.text - grading would mark the correct pick wrong |
 | `choices-too-few` | P0 | **0** | MCQ-type with fewer than 3 choices |
 | `option-placeholder` | P0 | **0** | A choice is a literal generator placeholder like "option-4" |
+| `sees-animal-ambiguous` | P0 | **0** | "sees an animal with A" distractor also has A - more than one defensible answer |
+| `came-from-nonsense` | P0 | **0** | "It came from ___" baby-animal template - produces nonsense like "came from babies from eggs" |
+| `blank-double-article` | P0 | **0** | prompt has "a/an ___" while EVERY choice carries its own article - filling produces "a an X" |
+| `covering-appendage-answer` | P0 | **0** | "Which covering does X have?" keyed on an appendage/body answer (wings, legs, arms) - prompt must say "feature" |
 | `prompt-answer-leak` | P0 | **0** | Prompt literally contains the quoted correct answer (guessable without skill) |
 | `prompt-answer-leak-unquoted` | P0 | **0** | English item whose bare-digit correct answer is reprinted inside the prompt |
 | `prompt-image-placeholder` | P0 | **0** | Prompt describes an image in text "(Image of X)" - no real asset and the description leaks the answer |
@@ -28,6 +32,12 @@ Generated: 2026-10-24T12:03:34.103Z · rows: 132663 · regenerate: `node scripts
 | `form-answerkey-mismatch` | P0 | **0** | Form answerKey disagrees with the question stored answer |
 | `form-duplicate-variant` | P0 | **0** | Two questions in the same form share a variant group or identical content |
 | `duplicate-choices` | P1 | **0** | Two identical choices in one question |
+| `article-a-before-vowel` | P1 | **0** | "a" before a vowel-sound word (must be "an") - grammar-teaching rows exempt |
+| `finds-habitat-mismatch` | P1 | **0** | "finds a X at P" where P is not X's habitat (e.g. whale at a garden) |
+| `reorder-no-tokens` | P1 | **0** | reorder item has no stored word bank (tokens) - mapper must fall back to answer split |
+| `habitat-ambiguous-distractor` | P1 | **0** | "Where does X live?" lists a distractor that is a genuinely valid habitat for X (e.g. whale + cold polar regions) |
+| `poster-idea-unspecified` | P1 | **0** | "poster for this idea" row still served - the idea is never stated so no unique answer exists |
+| `prompt-this-no-asset` | P1 | **0** | Prompt references "this"/"the picture" but no image asset is linked |
 | `ambiguous-open-prompt` | P1 | **0** | Open-ended prompt where more than one choice is a plausible true answer - review for quarantine |
 | `statement-as-question` | P1 | **0** | Declarative statement prompt (no question/blank) with yes-no agreement options - unanswerable without a scene or passage |
 | `explanation-too-short` | P1 | **0** | Explanation under 20 chars - teaches nothing |

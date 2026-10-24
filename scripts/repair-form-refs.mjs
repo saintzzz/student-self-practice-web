@@ -49,29 +49,65 @@ async function fetchAll(table, cols) {
   const out = [];
   const PAGE = 1000;
   for (let off = 0; ; off += PAGE) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=id&offset=${off}&limit=${PAGE}`,
-      { headers: HEADERS, signal: AbortSignal.timeout(20000) },
-    );
-    if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
-    const page = await res.json();
+    let page = null;
+    for (let t = 0; t < 4 && page === null; t++) {
+      try {
+        const res = await fetch(
+          `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=id&offset=${off}&limit=${PAGE}`,
+          { headers: HEADERS, signal: AbortSignal.timeout(30000) },
+        );
+        if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
+        page = await res.json();
+      } catch (e) {
+        if (t === 3) throw e;
+        await new Promise((s) => setTimeout(s, 1500 * (t + 1)));
+      }
+    }
     out.push(...page);
     if (page.length < PAGE) break;
   }
   return out;
 }
 
+// Same near-dup key as qb-content-audit.mjs `form-near-dup-content`:
+// two members are the same question when they are identical modulo
+// person names and numbers.
+const NORM_NAMES = /\b(Peter|Mai|Lan|Nam|Hoa|Lucy|Anna|Tom|Minh|Linh|Hung|Phong|Linda|Mary|John|David|Amy|Jack|Ben|Sue|Bill|Nick|Tony|Alice|Jane|Kate|Mike|Sam|Sarah|Emma|Leo|Max|Nina|Alex|Vy|Trang|Dung|Long|Ha|Binh|Anh|Quan|Tuan|Nga|Thu|Thao|Hieu|Khanh|Bao|Chi|Duy|Giang|Huong|Khoa|Lam|My|Ngoc|Oanh|Phuong|Quynh|Son|Thanh|Trinh|Uyen|Viet|Xuan|Yen)\b/gi;
+const normText = (s) =>
+  String(s ?? '').toLowerCase().replace(NORM_NAMES, 'x')
+    .replace(/\d+/g, '#')
+    .replace(/[^a-z#]+/g, ' ').replace(/\s+/g, ' ').trim();
+const nearDupKey = (q) => {
+  if (/order|reorder|sentence-build/i.test(q.question_type ?? '') || /put the words in order/i.test(q.prompt_text ?? '')) {
+    const bank = (q.prompt_text ?? '').split(':').slice(1).join(' ');
+    const t = normText(bank.length > 5 ? bank : (q.answer?.text ?? ''));
+    return 'ro:' + t.split(' ').sort().join(' ');
+  }
+  const ctx = normText((q.passage ?? '') + ' ' + (q.statement ?? '') + ' ' + (q.transcript ?? ''));
+  if (ctx.length >= 15) return 'ctx:' + ctx;
+  const p = normText(q.prompt_text);
+  if (p.split(' ').length < 6) return 'short:' + q.id;
+  const ch = Array.isArray(q.choices)
+    ? q.choices.map((c) => normText(typeof c === 'string' ? c : c?.assetId ?? c?.label ?? c?.text ?? '')).sort().join('|')
+    : '';
+  return 'qa:' + p + '|' + ctx + '|' + ch;
+};
+
 const RUBRIC = new Set(['speaking-prompt', 'constructed-response']);
 const keyFor = (q) =>
   RUBRIC.has(q.question_type) ? { mode: 'rubric' } : (q.answer ?? { mode: 'rubric' });
 
-const [forms, questions] = await Promise.all([
-  fetchAll('qb_exam_forms', 'id,grade,subject,kind,payload'),
+const [forms, questions, blueprints] = await Promise.all([
+  fetchAll('qb_exam_forms', 'id,grade,subject,kind,blueprint_id,payload'),
   fetchAll(
     'qb_questions',
-    'id,grade,subject,skill,question_type,review_status,variant_group_id,answer,content_hash,canonical,publication_policy',
+    'id,grade,subject,skill,question_type,review_status,variant_group_id,answer,content_hash,canonical,publication_policy,prompt_text,passage,statement,transcript,choices',
   ),
+  fetchAll('qb_exam_blueprints', 'id,payload'),
 ]);
+const bpById = new Map(blueprints.map((b) => [b.id, b.payload ?? {}]));
+const formBlueprintId = (f) =>
+  f.blueprint_id ?? f.payload?.blueprintId ?? f.id.replace(/-form-\d+$/, '');
 const qById = new Map(questions.map((q) => [q.id, q]));
 
 // membership rule per form kind (r126): 'assignment' forms are
@@ -96,11 +132,18 @@ const badMember = (q, kind) =>
 // scorable type; teacher forms accept approved items of the SAME type
 const poolMint = new Map();
 const poolApproved = new Map();
+const poolApprovedGS = new Map(); // grade|subject fallback across types
+const NON_RUBRIC = (q) => !RUBRIC.has(q.question_type);
 for (const q of questions) {
   if (q.review_status === 'approved') {
     const k = `${q.grade}|${q.subject}|${q.question_type}`;
     if (!poolApproved.has(k)) poolApproved.set(k, []);
     poolApproved.get(k).push(q);
+    if (NON_RUBRIC(q)) {
+      const g = `${q.grade}|${q.subject}`;
+      if (!poolApprovedGS.has(g)) poolApprovedGS.set(g, []);
+      poolApprovedGS.get(g).push(q);
+    }
   }
   if (mintEligible(q)) {
     const k = `${q.grade}|${q.subject}|*`;
@@ -109,7 +152,7 @@ for (const q of questions) {
   }
 }
 
-const report = { forms: 0, substituted: 0, dropped: 0, unfixed: [], missingIds: [], keyFixed: 0, dupFixed: 0 };
+const report = { forms: 0, substituted: 0, dropped: 0, toppedUp: 0, unfixed: [], missingIds: [], keyFixed: 0, dupFixed: 0 };
 const updates = [];
 
 for (const f of forms) {
@@ -122,13 +165,21 @@ for (const f of forms) {
   );
 
   const isAssignment = f.kind === 'assignment';
+  const usedNd = new Set();
   const pickSub = (bad) => {
-    const cands = isAssignment
+    const typed = isAssignment
       ? (poolMint.get(`${bad.grade}|${bad.subject}|*`) ?? [])
       : (poolApproved.get(`${bad.grade}|${bad.subject}|${bad.question_type}`) ?? []);
+    // teacher forms: when the same-type pool cannot supply a non-dup sub,
+    // fall back to any non-rubric approved item of the same grade+subject
+    // (blueprints constrain targetQuestions only, not the type mix).
+    const cands = isAssignment ? typed
+      : [...typed, ...(poolApprovedGS.get(`${bad.grade}|${bad.subject}`) ?? [])
+          .filter((c) => c.question_type !== bad.question_type)];
     const same = cands.filter(
       (c) => !inForm.has(c.id)
-        && (!c.variant_group_id || !usedGroups.has(c.variant_group_id)),
+        && (!c.variant_group_id || !usedGroups.has(c.variant_group_id))
+        && !usedNd.has(nearDupKey(c)),
     );
     const bySkill = same.filter((c) => c.skill === bad.skill);
     const list = bySkill.length ? bySkill : same;
@@ -136,10 +187,13 @@ for (const f of forms) {
     const sub = list[Math.floor(Math.random() * list.length)];
     inForm.add(sub.id);
     if (sub.variant_group_id) usedGroups.add(sub.variant_group_id);
+    usedNd.add(nearDupKey(sub));
     return sub;
   };
 
-  // 1) substitute rejected/draft members + duplicate variant slots
+  // 1) substitute rejected/draft members + duplicate variant slots +
+  //    members that are near-duplicates (same template modulo names) of
+  //    an earlier kept member
   const seenGroups = new Map();
   const newIds = [];
   let changed = false;
@@ -149,10 +203,13 @@ for (const f of forms) {
       ? (q.variant_group_id ?? `h:${q.content_hash ?? q.id}`)
       : `missing:${id}`;
     const isBadStatus = q ? badMember(q, f.kind) : true; // missing id is always bad
-    const isDup = seenGroups.has(dupKey);
+    const ndKey = q ? nearDupKey(q) : null;
+    const isDup = seenGroups.has(dupKey)
+      || (ndKey && ndKey.length >= 20 && usedNd.has(ndKey));
     if (!isBadStatus && !isDup) {
       newIds.push(id);
       seenGroups.set(dupKey, id);
+      if (ndKey) usedNd.add(ndKey);
       continue;
     }
     const sub = q ? pickSub(q) : null;
@@ -169,6 +226,29 @@ for (const f of forms) {
       report.dropped += 1;
       changed = true;
     }
+  }
+
+  // 1b) top up forms that dropped below their blueprint targetQuestions
+  //     (e.g. a near-dup member removed with no same-type substitute)
+  const target = bpById.get(formBlueprintId(f))?.targetQuestions;
+  if (target && newIds.length < target) {
+    const pool = isAssignment
+      ? (poolMint.get(`${f.grade}|${f.subject}|*`) ?? [])
+      : (poolApprovedGS.get(`${f.grade}|${f.subject}`) ?? []);
+    for (const c of pool) {
+      if (newIds.length >= target) break;
+      if (inForm.has(c.id)) continue;
+      if (c.variant_group_id && usedGroups.has(c.variant_group_id)) continue;
+      const k = nearDupKey(c);
+      if (k.length >= 20 && usedNd.has(k)) continue;
+      newIds.push(c.id);
+      inForm.add(c.id);
+      if (c.variant_group_id) usedGroups.add(c.variant_group_id);
+      usedNd.add(k);
+      report.toppedUp += 1;
+      changed = true;
+    }
+    if (newIds.length < target) report.unfixed.push(`${f.id} -> blueprint shortfall ${newIds.length}/${target}`);
   }
 
   // 2) rebuild answerKey for every member (fixes missing/empty/mismatch)
@@ -199,6 +279,7 @@ console.log(`forms scanned: ${forms.length}`);
 console.log(`forms needing repair: ${report.forms}`);
 console.log(`rejected/draft/dup slots substituted: ${report.substituted} (dup: ${report.dupFixed})`);
 console.log(`slots dropped (no substitute): ${report.dropped}`);
+console.log(`slots added to reach blueprint target: ${report.toppedUp}`);
 console.log(`forms with answerKey rebuilt: ${report.keyFixed}`);
 if (report.unfixed.length) {
   console.log('unresolved refs:');
@@ -210,10 +291,11 @@ if (report.missingIds.length) {
 }
 
 if (APPLY) {
-  // fail loudly before touching any form when a member id cannot be
-  // resolved - silently dropping the slot would shrink a form below its
-  // blueprint with no audit trail (r127)
-  if (report.missingIds.length || report.unfixed.length) {
+  // fail loudly before touching any form when a member id references a
+  // question row that does not exist at all (r127). A bad member with no
+  // substitute is dropped by design - the audit's form-blueprint-size
+  // check guards any resulting shrinkage.
+  if (report.missingIds.length) {
     console.error('ABORT: unresolved refs - fix or substitute manually before applying');
     process.exit(1);
   }

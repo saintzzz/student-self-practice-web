@@ -16,6 +16,10 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import {
+  ANIMALS, ATTR_HAS, ATTR_BORDERLINE, ANIMAL_PLACE, OFFSPRING, AN_WORDS,
+  NON_COVERING, VALID_HABITATS,
+} from './lib/animal-knowledge.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const REPORT = join(
@@ -85,7 +89,7 @@ const TEMPLATE_RESIDUE = [
 const AMBIGUOUS_NAMES = new Set(['Bosnia', 'Congo', 'Korea', 'America']);
 
 const questions = await fetchTable('qb_questions',
-  'id,grade,subject,question_type,prompt_text,transcript,passage,statement,choices,answer,explanation_vi,publication_policy,review_status,variant_group_id');
+  'id,grade,subject,question_type,prompt_text,transcript,passage,statement,tokens,choices,answer,explanation_vi,publication_policy,review_status,variant_group_id');
 const links = await fetchTable('qb_question_assets', 'question_id', 'question_id');
 const assetCount = new Map();
 for (const l of links) assetCount.set(l.question_id, (assetCount.get(l.question_id) ?? 0) + 1);
@@ -163,6 +167,86 @@ check('duplicate-choices', 'P1',
     return new Set(labels).size !== labels.length;
   }));
 
+/* --- academic spot-check defect classes (docs/qa/spot-check-*.json),
+     repaired by scripts/repair-template-defects.mjs - these checks keep
+     the classes permanently closed --- */
+
+const AN_WORD_RE = new RegExp(`\\b(a|A)\\s+(${AN_WORDS.join('|')})\\b`);
+const teachesAn = (q) => {
+  const cs = (Array.isArray(q.choices) ? q.choices : []).map((c) => choiceLabel(c));
+  return cs.some((c) => /\ban\s+[aeiou]/i.test(c)) && cs.some((c) => /\b(a|A)\s+[aeiou]/.test(c));
+};
+check('article-a-before-vowel', 'P1',
+  '"a" before a vowel-sound word (must be "an") - grammar-teaching rows exempt',
+  questions.filter((q) => {
+    if (!eligible(q) || q.review_status === 'rejected' || teachesAn(q)) return false;
+    const texts = [q.prompt_text, q.answer?.text,
+      ...(Array.isArray(q.choices) ? q.choices.filter((c) => typeof c === 'string') : [])];
+    return texts.some((t) => t && AN_WORD_RE.test(t));
+  }));
+
+const SEES_AUDIT = /sees an? animal with (.+?) (?:at|in) (?:a|the) [a-z ]+\.?\s*Which animal could it be/i;
+check('sees-animal-ambiguous', 'P0',
+  '"sees an animal with A" distractor also has A - more than one defensible answer',
+  questions.filter((q) => {
+    if (!eligible(q) || q.review_status === 'rejected') return false;
+    const m = (q.prompt_text ?? '').match(SEES_AUDIT);
+    if (!m || !ATTR_HAS[m[1]] || !Array.isArray(q.choices)) return false;
+    const bad = new Set([...ATTR_HAS[m[1]], ...ATTR_BORDERLINE[m[1]]]);
+    const ans = q.answer?.text;
+    return q.choices.some((c) => typeof c === 'string' && c !== ans && bad.has(c));
+  }));
+
+check('finds-habitat-mismatch', 'P1',
+  '"finds a X at P" where P is not X\'s habitat (e.g. whale at a garden)',
+  questions.filter((q) => {
+    if (!eligible(q) || q.review_status === 'rejected') return false;
+    const m = (q.prompt_text ?? '').match(/finds an? ([a-z]+) (?:at|in) (?:a|the) ([a-z ]+?)\. It has/i);
+    if (!m || !ANIMAL_PLACE[m[1]]) return false;
+    const want = ANIMAL_PLACE[m[1]].replace(/^(at|in)\s+(a|the)\s+/, '');
+    return m[2] !== want;
+  }));
+
+check('came-from-nonsense', 'P0',
+  '"It came from ___" baby-animal template - produces nonsense like "came from babies from eggs"',
+  questions.filter((q) => eligible(q) && q.review_status !== 'rejected' && /came from ___/.test(q.prompt_text ?? '') && /finds a baby/i.test(q.prompt_text ?? '')));
+
+check('reorder-no-tokens', 'P1',
+  'reorder item has no stored word bank (tokens) - mapper must fall back to answer split',
+  questions.filter((q) => eligible(q) && q.review_status !== 'rejected' && q.question_type === 'reorder' && (!Array.isArray(q.tokens) || q.tokens.length < 2)));
+
+// --- academic spot-check round-2 families (CR-111) ----------------------
+check('blank-double-article', 'P0',
+  'prompt has "a/an ___" while EVERY choice carries its own article - filling produces "a an X"',
+  questions.filter((q) => eligible(q) && q.review_status !== 'rejected'
+    && /\b(a|an)\s+_{2,}/i.test(q.prompt_text ?? '')
+    && Array.isArray(q.choices) && q.choices.length > 0
+    && q.choices.every((c) => /^an?\s/i.test(typeof c === 'string' ? c : ''))));
+
+check('covering-appendage-answer', 'P0',
+  '"Which covering does X have?" keyed on an appendage/body answer (wings, legs, arms) - prompt must say "feature"',
+  questions.filter((q) => eligible(q) && q.review_status !== 'rejected'
+    && /^Which covering does (?:a|an) [a-z]+ have\?$/i.test(q.prompt_text ?? '')
+    && NON_COVERING.has((q.answer?.text ?? '').toLowerCase())));
+
+check('habitat-ambiguous-distractor', 'P1',
+  '"Where does X live?" lists a distractor that is a genuinely valid habitat for X (e.g. whale + cold polar regions)',
+  questions.filter((q) => {
+    if (!eligible(q) || q.review_status === 'rejected' || !Array.isArray(q.choices)) return false;
+    const m = (q.prompt_text ?? '').match(/^Where does (?:a|an) ([a-z]+) live\?$/);
+    if (!m) return false;
+    const valid = new Set(VALID_HABITATS[m[1]] || []);
+    if (!valid.size) return false;
+    const ans = (q.answer?.text ?? '').toLowerCase();
+    const ansIdx = q.answer?.index ?? q.choices.findIndex((c) => typeof c === 'string' && c.toLowerCase() === ans);
+    return q.choices.some((c, i) => i !== ansIdx && typeof c === 'string' && valid.has(c.toLowerCase()));
+  }));
+
+check('poster-idea-unspecified', 'P1',
+  '"poster for this idea" row still served - the idea is never stated so no unique answer exists',
+  questions.filter((q) => eligible(q) && q.review_status !== 'rejected'
+    && /poster for this idea/i.test(q.prompt_text ?? '') && q.question_type === 'text-answer'));
+
 // Open-ended prompts ("What about you?", "your favorite X?", "Do you like X?")
 // where more than one well-formed choice is a plausible TRUE answer are open
 // clozes - the keyed answer is not uniquely correct (user-reported class,
@@ -228,12 +312,52 @@ const REVIEWED = {
     'g5-english-bulk-icon-e1fb2c353573': '1de1d82be55c',
     'g5-english-bulk-icon-e3e21ed4b84d': '682257b2604e',
   },
+  // post-repair triage (CR-111 spot-check): every row read in full.
+  // Either the stated clue makes the keyed answer unique among the
+  // choices ("It has wings" -> bird when distractors are fish/cat/dog)
+  // or the prompt is self-contained (spelled-out word, parenthetical
+  // context, definition). 12 genuinely defective siblings were fixed in
+  // migration 0067 instead of being exempted here.
+  'prompt-this-no-asset': {
+    'g1-english-bulk-2c41b1b70b91': '889294f199b9',
+    'g1-english-bulk-3531c7ffbc5a': 'e9f5175fbff5',
+    'g1-english-bulk-4cdbaa369ee8': '94bdaeb113f7',
+    'g1-english-bulk-5506ad8de912': '594a1de0a440',
+    'g1-english-bulk-6e19353f46e2': '208e01b257e6',
+    'g1-english-bulk-e08bfdeeac92': '803a480a1585',
+    'g1-mat-v4-time-basic-fdd73cc946': 'f445849a4093',
+    'g2-english-bulk-701885d190ee': '2a13eaa0f8f0',
+    'g2-english-bulk-773fda62829e': 'd8ee49182660',
+    'g2-english-bulk-8d18062b021c': '501cca28578e',
+    'g2-english-bulk-a14ec23e2c32': 'e478e7fce084',
+    'g2-english-bulk-ad9d6317e7a8': '322ebc757be5',
+    'g2-english-bulk-ae99021cae54': '9e9c169a7888',
+    'g2-english-bulk-bdf1050eac0d': '32adfb89c747',
+    'g2-english-bulk-cf0669c0dd08': '3eeabe019894',
+    'g2-english-bulk-f2979781ff6d': '87423bea876d',
+    'g2-english-bulk-f6e89bb79ce1': 'ee03185ac221',
+    'g2-english-gemini-4dcd7a3de9a7': '24fb7f7c9fc5',
+    'g3-english-bulk-544c5658d244': '31851b9b5a2d',
+    'g3-english-bulk-8bbed6a4dafb': 'fb30ba01792f',
+    'g3-english-bulk-f96da1dcf317': '79fb76c39e59',
+    'g3-english-gemini-4476e0c1f06f': '42a4ed6fffdf',
+    'g4-english-bulk-1bd7fd830fcc': '02af8f5cb4c1',
+    'g5-english-bulk-cd15eda913a3': 'c01c30282f91',
+    // rewritten in 0067 - self-contained and unique among choices
+    'g1-english-bulk-61a047deafef': 'f3675d298fa3',
+    'g1-english-bulk-b28a4b457059': '6b5f2face52c',
+  },
 };
 const contentFp = (q) =>
   crypto.createHash('sha1')
     .update([q.prompt_text, JSON.stringify(q.choices), JSON.stringify(q.answer), q.explanation_vi].join('|'))
     .digest('hex').slice(0, 12);
 const reviewed = (checkName, q) => REVIEWED[checkName]?.[q.id] === contentFp(q);
+check('prompt-this-no-asset', 'P1',
+  'Prompt references "this"/"the picture" but no image asset is linked',
+  questions.filter((q) => eligible(q) && q.review_status !== 'rejected' && !reviewed('prompt-this-no-asset', q)
+    && !VISUAL_TYPES.has(q.question_type) && !assetCount.get(q.id)
+    && /\b(what|which)\b.{0,60}\b(is this|this picture|the picture|the image|the photo)\b/i.test(q.prompt_text ?? '')));
 check('ambiguous-open-prompt', 'P1',
   'Open-ended prompt where more than one choice is a plausible true answer - review for quarantine',
   questions.filter((q) => {

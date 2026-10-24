@@ -1,0 +1,2556 @@
+{
+ "seed": "prd-2026",
+ "bank": 104877,
+ "sampled": 600,
+ "verdicts": [
+  {
+   "i": "g1-math-tpl-c91b43d3817d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7e3de1311e55",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-b7efc0369d49",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1bb9ac130bdb",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-16537712faf3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3e1c28b81381",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-c9a69328d7ff",
+   "v": "issue",
+   "note": "Ếch thường có thể có màu xanh hoặc nâu nên cả 'green' và 'brown' đều phù hợp khi không có hình hay ngữ cảnh."
+  },
+  {
+   "i": "g2-math-tpl-64823ca35ecb",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-ec6d6bba6098",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v6-family-ae873373cda0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-11b0b589fa3c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-1871-b634d4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4-materials-around-us-013a3eabe5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3d1e897cc485",
+   "v": "issue",
+   "note": "Đề không hiển thị phép tính hoặc khẳng định cần xét đúng sai, còn '7 + 15 = 23' chỉ xuất hiện trong lời giải."
+  },
+  {
+   "i": "g2-math-tpl-7f3baa77e55b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7e2515f09f11",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-2bbdeb87afdf",
+   "v": "issue",
+   "note": "Đáp án tạo thành câu sai nghĩa 'It came from babies from eggs'; cá hồi con nở từ trứng, không phải từ các con non."
+  },
+  {
+   "i": "g1-cr67-w2i-1515-783ca6",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7dff9e4f7ecb",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7fba63872cbd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-aa31cfef7f4b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-fd1e22ae3f28",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-d09d4ec0427a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4e9c92fb4d1f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-0817-708c0a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-45a92a562f16",
+   "v": "issue",
+   "note": "Đề thiếu khẳng định cần đánh giá đúng sai nên không có căn cứ chọn False từ đoạn văn."
+  },
+  {
+   "i": "g2-math-tpl-aaa28c75dca8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-78e89eaa1a32",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-ee22a5aab32e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7a86ae9e2991",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-230b987f0260",
+   "v": "issue",
+   "note": "Thiếu hình minh họa nên không thể xác định bộ phận cơ thể được hỏi."
+  },
+  {
+   "i": "g2-english-bulk-91b94f0d1edb",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-112b6b7a6157",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-0468-ae2180",
+   "v": "issue",
+   "note": "Thiếu hình minh họa nên không thể chọn tên quốc gia đúng."
+  },
+  {
+   "i": "g1-science-tpl-867c58887dc2",
+   "v": "issue",
+   "note": "Các lựa chọn không ghép đúng nghĩa với câu hỏi, đồng thời giun đất nở từ trứng nằm trong kén nên hai lựa chọn chồng lấn."
+  },
+  {
+   "i": "g3-math-tpl-66607fe49d63",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v6-school-5d192e616ab9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-6918c0fd1f1c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-299cde0c512a",
+   "v": "issue",
+   "note": "Cả bat và monkey đều có lông nên đặc điểm đã cho không xác định được một đáp án duy nhất."
+  },
+  {
+   "i": "g1-science-tpl-304f99a86088",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-a2163803a63f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-mat-v4b-division-intro-fc146c188cf5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e65aff0b3811",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dffd9b8809e8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d6a0cf1855cd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-aacfdcee1524",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-5172808bef6a",
+   "v": "issue",
+   "note": "Bối cảnh gặp tôm trong vườn gây hiểu sai về môi trường sống dưới nước của tôm."
+  },
+  {
+   "i": "g1-cr67-w2i-0353-e560db",
+   "v": "issue",
+   "note": "Các lựa chọn chỉ có mã tài nguyên, không có hình hiển thị để học sinh nhận diện chick."
+  },
+  {
+   "i": "g1-english-bulk-9cb4165e8f17",
+   "v": "issue",
+   "note": "Cả milk và meat đều là sản phẩm từ bò, trong khi lời giải phủ nhận sai việc bò cung cấp thịt."
+  },
+  {
+   "i": "g1-science-tpl-55d6d57d2bc7",
+   "v": "issue",
+   "note": "Đáp án viết sai mạo từ: phải là 'an insect', không phải 'a insect'."
+  },
+  {
+   "i": "g2-math-tpl-66c3dacd6901",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4c119b2d910b",
+   "v": "issue",
+   "note": "Lựa chọn 'a insect' sai ngữ pháp, phải viết là 'an insect'."
+  },
+  {
+   "i": "g2-english-gemini-ad37bb6e1ef8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-aeddd932296c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-2186add30c6b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f44bb368165e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e9c995732edf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5ee469d7d79e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5130cc522007",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5ae2279a2cd4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-0387fd351dc1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-41c9b5f2b1ae",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-cgpt-99b50e75b940",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4c550b6f8c38",
+   "v": "issue",
+   "note": "Lựa chọn 'a insect' sai ngữ pháp, phải là 'an insect'."
+  },
+  {
+   "i": "g1-science-tpl-28c5b2356c65",
+   "v": "issue",
+   "note": "Các lựa chọn 'a amphibian' và 'a insect' phải dùng mạo từ 'an'."
+  },
+  {
+   "i": "g1-science-tpl-040f280dd49f",
+   "v": "issue",
+   "note": "Câu hỏi hỏi cá voi con sinh ra từ đâu nhưng đáp án 'a calf' chỉ tên gọi con non, không trả lời câu hỏi."
+  },
+  {
+   "i": "g2-math-tpl-48f41e783307",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-667bed3c08f4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-5f497f2909c5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-1ad0985e9439",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-932384cff7b8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dd2454afb3bd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ad1501340f69",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5c87118dd6d1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-19d816f27996",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dd70a646c059",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-77138a715064",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-cc70059e1d80",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e78c66f2503a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-0654-1f78a8",
+   "v": "issue",
+   "note": "Không có hình ảnh được cung cấp nên không thể xác định từ đúng."
+  },
+  {
+   "i": "g1-math-v6-b004dcc96036",
+   "v": "issue",
+   "note": "Bài yêu cầu đọc giờ rưỡi và tính thời gian theo phút, vượt phạm vi xem giờ đúng của lớp 1."
+  },
+  {
+   "i": "g1-english-bulk-ffbc44d6857d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b2ea0cb2251d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-197128f88e86",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f827a87d34ad",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-2503e17d81b4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b07ae373a6f5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-2847362d37ae",
+   "v": "issue",
+   "note": "Cụm 'a insect' trong câu hỏi sai ngữ pháp, phải là 'an insect'."
+  },
+  {
+   "i": "g2-math-tpl-ec7d8e438b4a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1686-c1d924",
+   "v": "issue",
+   "note": "Không có hình ảnh được cung cấp nên không thể xác định từ đúng."
+  },
+  {
+   "i": "g3-english-gemini-b63d12110668",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3c1d01f16420",
+   "v": "issue",
+   "note": "Thiếu nhận định cần xác định True hoặc False."
+  },
+  {
+   "i": "g3-english-bulk-80e035946493",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-846e47930bd1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-286a6f9a2ddd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1e2221dde4d7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-2884606f39f1",
+   "v": "issue",
+   "note": "Các lựa chọn lặp mạo từ với đề thành 'a a bird', và 'a insect' sai ngữ pháp."
+  },
+  {
+   "i": "g3-english-gemini-c0ee412dcc00",
+   "v": "issue",
+   "note": "Thiếu các từ cho sẵn để học sinh sắp xếp thành câu."
+  },
+  {
+   "i": "g1-english-bulk-0ce15c1ca8a7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-57163cb80384",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-6cfc3e4899db",
+   "v": "issue",
+   "note": "Đáp án 'a arachnid' sai mạo từ, phải là 'an arachnid'."
+  },
+  {
+   "i": "g2-math-tpl-76311a903397",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-v5-1255-3c067373d3",
+   "v": "issue",
+   "note": "Giải thích tính sai hàng chục thành 1, trong khi sau khi mượn phải tính 2 - 2 = 0."
+  },
+  {
+   "i": "g1-science-tpl-a378891a2ecd",
+   "v": "issue",
+   "note": "Đáp án khiến câu mang nghĩa dơi con sinh ra từ các dơi con khác, sai kiến thức sinh sản."
+  },
+  {
+   "i": "g1-science-tpl-29f8e3f9b50e",
+   "v": "issue",
+   "note": "Cả gà và cá sấu đều có vảy nên dấu hiệu trong đề không xác định được một đáp án duy nhất."
+  },
+  {
+   "i": "g3-mat-v4-four-operations-4cae7a2afc",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-9ab0378f0e9a",
+   "v": "ok"
+  },
+  {
+   "i": "g3-mat-v4-four-operations-dc20165c92",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-ca2612fcda99",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-08d5ab5f4672",
+   "v": "issue",
+   "note": "Thiếu các từ cho sẵn để học sinh sắp xếp thành câu."
+  },
+  {
+   "i": "g3-english-gemini-ccb370a69848",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-04f3127253b2",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-db627c7996b9",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-1913-5ca6fc",
+   "v": "issue",
+   "note": "Các lựa chọn chỉ có mã tài nguyên, không có hình hiển thị để học sinh chọn."
+  },
+  {
+   "i": "g1-science-tpl-c52ae0a7eec3",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-b283619d0038",
+   "v": "issue",
+   "note": "Thiếu nhận định cần xác định True hoặc False."
+  },
+  {
+   "i": "g3-english-gemini-cfa74be0995c",
+   "v": "issue",
+   "note": "Danh sách từ cần sắp xếp trống nên học sinh không thể làm bài."
+  },
+  {
+   "i": "g1-math-tpl-4b8fdff1cb65",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-5687dff7872b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-788c930187a5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-2147-d32be4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b208c3e48f7c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-4405c6e6fea8",
+   "v": "issue",
+   "note": "Thiếu phát biểu cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g1-cr67-w2i-1883-fde654",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-2029-47287d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-706a9728e633",
+   "v": "issue",
+   "note": "Mèo con được mèo mẹ sinh ra, nên đáp án nói mèo con có nguồn gốc từ 'kittens' là sai."
+  },
+  {
+   "i": "g2-english-codex-bed73d03666b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-5af03d528a7b",
+   "v": "issue",
+   "note": "Không cung cấp các từ để học sinh sắp xếp thành câu."
+  },
+  {
+   "i": "g1-english-bulk-dad846749fbf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-ea8a24c16a33",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-23a56cb2e363",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-8f98f27f940b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3c11ce581cc7",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-9bfbff17326c",
+   "v": "issue",
+   "note": "Chim cánh cụt con nở từ trứng, nhưng đáp án ghép thành câu nói nó có nguồn gốc từ chim con."
+  },
+  {
+   "i": "g1-math-tpl-e5a0c084cbcf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ad700fe00565",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ad3c4cdd24c0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7b800c67f5ec",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-03963d1fe0ce",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e4f331612734",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3cfe73b8cb91",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-824c67ec12d9",
+   "v": "issue",
+   "note": "Thiếu phát biểu cần đánh giá đúng hay sai, dù lời giải nhắc đến một phát biểu về tháng Mười."
+  },
+  {
+   "i": "g2-math-tpl-241b7112f567",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ea3a23995c4e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-b279c1deadb8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-1841ed936099",
+   "v": "issue",
+   "note": "Thiếu phát biểu cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g2-math-tpl-d7d746505124",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-e95348d9c4cc",
+   "v": "ok"
+  },
+  {
+   "i": "g3-mat-v4b-data-charts-544fe8880de3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dd730fa18dc4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-0f76c292a3fa",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-17dd9bfb1f8d",
+   "v": "issue",
+   "note": "Đề không hiển thị phép tính hoặc khẳng định cần đánh giá đúng sai."
+  },
+  {
+   "i": "g1-math-tpl-ce66a068eae9",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-d2e37d19e83e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-3886895e1510",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-93539032e8c8",
+   "v": "issue",
+   "note": "Đề thiếu khẳng định cần đánh giá, còn lời giải nhận xét một câu không xuất hiện trong đề."
+  },
+  {
+   "i": "g1-english-bulk-75365b26e6d3",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d9314b2591be",
+   "v": "issue",
+   "note": "Đề yêu cầu sắp xếp từ nhưng không cung cấp các từ cần sắp xếp."
+  },
+  {
+   "i": "g1-cr67-i2w-0720-ed67a0",
+   "v": "issue",
+   "note": "Không có hình ảnh được cung cấp để xác định từ cần chọn."
+  },
+  {
+   "i": "g1-science-cgpt-f43d5df358ab",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3d5a60a6dcec",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-bd17f542c48a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-16b53587b16b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-69ac3c494439",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-0781-1fcf5a",
+   "v": "issue",
+   "note": "Tên quốc gia Ghana phải viết hoa chữ G."
+  },
+  {
+   "i": "g2-math-tpl-ea452bcddd29",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1572798b0d62",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6acaf28c9014",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-76ae5ffd9fbd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-aa2e9262e45d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3323f8a59bc6",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-a95321645179",
+   "v": "issue",
+   "note": "Đáp án cá voi mâu thuẫn với bối cảnh con vật được nhìn thấy trong rừng."
+  },
+  {
+   "i": "g2-math-tpl-d996d9d5e827",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-0773-7a73bd",
+   "v": "issue",
+   "note": "Các lựa chọn chỉ có mã tài nguyên, không có hình ảnh để học sinh lựa chọn."
+  },
+  {
+   "i": "g3-english-bulk-7f8ea3113312",
+   "v": "issue",
+   "note": "Không có ngữ cảnh xác định môn nào khó hơn nên cả hai câu trả lời đầu đều hợp lệ."
+  },
+  {
+   "i": "g2-english-gemini-a8955418d676",
+   "v": "issue",
+   "note": "Đáp án False trái với nội dung hiển thị, còn lời giải viện dẫn phát biểu đi học thứ Bảy không có trong đề."
+  },
+  {
+   "i": "g1-science-tpl-9b8ab3a636ff",
+   "v": "issue",
+   "note": "Cả salmon và fish đều là đáp án đúng cho con vật có vảy."
+  },
+  {
+   "i": "g3-math-tpl-3eda348b8f20",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-de14f7241892",
+   "v": "issue",
+   "note": "Bài toán tính tiền và tiền thừa nhiều bước với đơn vị nghìn đồng vượt yêu cầu phù hợp cho lớp 1."
+  },
+  {
+   "i": "g1-mat-v4b-shapes-39960a5ffb68",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-986f62657a48",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-42ced344bd66",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6b7e975feae0",
+   "v": "issue",
+   "note": "Thiếu phát biểu cần đánh giá đúng/sai; đoạn văn không hề nói tàu chậm như lời giải ngụ ý."
+  },
+  {
+   "i": "g2-science-tpl-94846f13be41",
+   "v": "issue",
+   "note": "Bối cảnh nhìn thấy cá voi trong vườn không phù hợp với môi trường sống của cá voi."
+  },
+  {
+   "i": "g1-math-tpl-4ac1c2750db1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-bd6b2bd1e8a3",
+   "v": "issue",
+   "note": "Chỉ có đoạn văn được lặp lại, không có phát biểu riêng để đánh giá đúng/sai."
+  },
+  {
+   "i": "g1-english-bulk-53af1956ac59",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-icon-2a4798222b47",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-adc37b6349f6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-259efce4c5ef",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6becb2a378a9",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-4dc583ba76dc",
+   "v": "issue",
+   "note": "Không hiển thị phép tính hoặc khẳng định cần đánh giá đúng/sai."
+  },
+  {
+   "i": "g3-english-gemini-b96cad9d839e",
+   "v": "issue",
+   "note": "Thiếu phát biểu cần đánh giá đúng/sai, dù lời giải nhắc đến một câu trong đoạn văn."
+  },
+  {
+   "i": "g3-english-bulk-c5b7997c07e9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d97afac219eb",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-d3c1fb826079",
+   "v": "issue",
+   "note": "Cả 'in' và 'next to' đều tạo câu đúng và hợp nghĩa khi không có thêm ngữ cảnh xác định vị trí."
+  },
+  {
+   "i": "g3-english-gemini-ba79446bf56f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-672eb3359ea4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ea02867802d0",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-1fdf6a55c438",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-78bedc5c27e5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-92683380dafb",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-caa0d8327040",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-93570effb3cf",
+   "v": "issue",
+   "note": "Bối cảnh nhìn thấy sứa trong vườn gây hiểu sai vì sứa là động vật sống dưới nước."
+  },
+  {
+   "i": "g2-math-tpl-3c819a7197ab",
+   "v": "issue",
+   "note": "Không hiển thị phép tính hoặc khẳng định cần đánh giá đúng/sai."
+  },
+  {
+   "i": "g1-math-tpl-de7d029f1312",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-4f9e56a11998",
+   "v": "issue",
+   "note": "Bài yêu cầu tính thời gian theo phút và đọc giờ rưỡi, vượt phạm vi xem giờ đúng của lớp 1."
+  },
+  {
+   "i": "g2-math-tpl-1928b37f8471",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-b601139d1dd5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-5e15d9a37a4c",
+   "v": "issue",
+   "note": "Hổ và khỉ cũng có lông nên có nhiều lựa chọn đúng ngoài ngựa."
+  },
+  {
+   "i": "g3-english-bulk-bf3c4bc3f694",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2c73884ebb38",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-dd5cfa1cf042",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-977edd2547a3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ffc98b30aafc",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-71ac52158b6f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ea05fc8d8b04",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-98180afce344",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-c88e8b4f58cb",
+   "v": "issue",
+   "note": "Đề không cung cấp các từ cần sắp xếp nên không thể làm bài."
+  },
+  {
+   "i": "g1-english-bulk-eb1355fed1f7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-codex-415fa2581d08",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-875cd0c9d515",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-8f55367b23fc",
+   "v": "issue",
+   "note": "Cả 'brushes' và 'brushed' đều đúng ngữ pháp vì đề không xác định hành động ở hiện tại hay quá khứ."
+  },
+  {
+   "i": "g2-math-tpl-b40e7bb3a5c5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b8976c69299d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7ec426c3c317",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-be55df1e261f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-9c90fbec5eff",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7e369ae23494",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-b7f900c71cc5",
+   "v": "issue",
+   "note": "Shark, salmon và fish đều có vảy nên có nhiều đáp án đúng."
+  },
+  {
+   "i": "g3-math-tpl-311249a3ee15",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-codex-6038c099704b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-codex-96444e6eba03",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4f47f7f36e1f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-4db39c59e88c",
+   "v": "issue",
+   "note": "Đề và giải thích dạy cách viết 'Good bye' thay vì dạng chuẩn 'Goodbye' hoặc 'Good-bye'."
+  },
+  {
+   "i": "g1-science-tpl-1003341124fd",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-311e17d8fc19",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-db8331af6b40",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ad7ad80d04ae",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-49be01dae792",
+   "v": "issue",
+   "note": "Bài chỉ có đoạn văn, thiếu nhận định cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g3-gs-u11-v6-read-3bfc0d4d641c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-538aae883abb",
+   "v": "issue",
+   "note": "Hai lựa chọn sai ngữ pháp: phải viết 'an arachnid' và 'an insect'."
+  },
+  {
+   "i": "g1-science-tpl-a21053cde4ca",
+   "v": "issue",
+   "note": "Điền đáp án tạo câu sai nghĩa 'It came from babies from eggs'; tắc kè con nở từ trứng."
+  },
+  {
+   "i": "g3-english-gemini-c97a67dec86e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-01d4704ee633",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-5bbef9bd2621",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3e690a2697ee",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-52bbdae3686b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6666830db75a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3cf3fe72e820",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6e53bb45094c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-b7067e9f5ffb",
+   "v": "issue",
+   "note": "Cả rùa và thằn lằn đều có vảy nên có hai đáp án đúng."
+  },
+  {
+   "i": "g3-math-tpl-2d275ccb4765",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-ecd1b0060e0e",
+   "v": "issue",
+   "note": "Đề thiếu yêu cầu lựa chọn và cả 'Glad to meet you' lẫn 'Happy to meet you' đều đồng nghĩa với câu đã cho."
+  },
+  {
+   "i": "g1-math-tpl-51f642cd6943",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-be12e1ec7fc7",
+   "v": "issue",
+   "note": "Cả thằn lằn và kiến đều có thể sống trong khe đá hoặc tường nên câu hỏi không có đáp án duy nhất."
+  },
+  {
+   "i": "g2-math-v5-1007-f7c3f6387a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-66b30f70395b",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-c81162851660",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d8824d10caab",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-0739-52d8f1",
+   "v": "issue",
+   "note": "Các lựa chọn chỉ cung cấp mã ảnh, không có hình để học sinh nhận diện số bốn."
+  },
+  {
+   "i": "g2-english-bulk-ad4fdb09f083",
+   "v": "ok"
+  },
+  {
+   "i": "g1-visual-image-word-0031-ca8eb4",
+   "v": "issue",
+   "note": "Đề yêu cầu nhìn tranh nhưng không cung cấp tranh để xác định đáp án."
+  },
+  {
+   "i": "g2-math-tpl-0f568feefb65",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1239836d53f5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3f360e690ad1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-3bf2fd8e1a50",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3d569290d101",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-cgpt-8d2bd321d2ca",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-20a0623b869d",
+   "v": "issue",
+   "note": "Đề yêu cầu sắp xếp từ nhưng không cung cấp các từ cần sắp xếp."
+  },
+  {
+   "i": "g2-math-tpl-b3e0ff0ac7c4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-c8720ce25de9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-0438b87aa50b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-558fedc81b84",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b5746698db47",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ad0f868c6e96",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-add260a4f391",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-ce30f7d527c6",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-dc659892efe3",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-cab79b34bf26",
+   "v": "issue",
+   "note": "Đề yêu cầu sắp xếp từ nhưng không cung cấp các từ cần sắp xếp."
+  },
+  {
+   "i": "g2-math-tpl-0f006789a259",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-df27367b567f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-39de2fbf944d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d903849f11df",
+   "v": "issue",
+   "note": "Đề yêu cầu sắp xếp từ nhưng không cung cấp các từ cần sắp xếp."
+  },
+  {
+   "i": "g2-english-bulk-aba03fae4539",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-98ded021e585",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3eccae06505f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-df1c99140c35",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-7d50a51b9316",
+   "v": "issue",
+   "note": "Giải thích sai khi khẳng định câu hỏi có 'are you' luôn đi với động từ đuôi '-ing'."
+  },
+  {
+   "i": "g1-math-tpl-4d733ee1bd61",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-991d9c728822",
+   "v": "issue",
+   "note": "Các lựa chọn 'a insect' và 'a arachnid' sai mạo từ, phải là 'an insect' và 'an arachnid'."
+  },
+  {
+   "i": "g1-english-bulk-35f19376e781",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-a0c388ea7c4d",
+   "v": "issue",
+   "note": "Bài yêu cầu đọc giờ đến phút và cộng khoảng thời gian, vượt phạm vi xem giờ đúng của lớp 1."
+  },
+  {
+   "i": "g2-math-tpl-add22091965b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-68218521812e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-a61805104e76",
+   "v": "issue",
+   "note": "Đề và đoạn đọc không hiển thị phép tính hay khẳng định cần xác định đúng hoặc sai."
+  },
+  {
+   "i": "g2-science-tpl-5a3129cf3a63",
+   "v": "issue",
+   "note": "Lựa chọn 'a arachnid' sai mạo từ, phải là 'an arachnid'."
+  },
+  {
+   "i": "g1-science-cgpt-6fdfb200f4a3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-98c946fd2a2a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-35403d135b1e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-38556d53a0df",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-528e64d011e3",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-c52fc62247d3",
+   "v": "issue",
+   "note": "Thiếu hình ảnh hoặc ngữ cảnh xác định vị trí xe nên cả 'in' và 'in front of' đều có thể đúng."
+  },
+  {
+   "i": "g3-math-tpl-21f05270a8f4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-codex-38ce173e1f6e",
+   "v": "issue",
+   "note": "Thiếu phát biểu cụ thể cần đánh giá Đúng/Sai sau đoạn đọc."
+  },
+  {
+   "i": "g1-english-bulk-d75e4be64d5b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1424-0b4da8",
+   "v": "issue",
+   "note": "Không có hình ảnh để xác định từ tiếng Anh tương ứng."
+  },
+  {
+   "i": "g2-science-tpl-b005a699b9e4",
+   "v": "issue",
+   "note": "Cả 'goat' và 'cat' đều có lông nên có hai đáp án đúng."
+  },
+  {
+   "i": "g2-english-bulk-9b026f7b96de",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-a25a18abd1fd",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2e8d62f7f192",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-1b433a2250af",
+   "v": "issue",
+   "note": "Thiếu phát biểu cần đánh giá Đúng/Sai nên không có căn cứ chọn False như đáp án."
+  },
+  {
+   "i": "g2-science-tpl-98a7fc4f6e0f",
+   "v": "issue",
+   "note": "Sai mạo từ: phải viết 'an earthworm' và 'an arachnid' thay cho 'a earthworm' và 'a arachnid'."
+  },
+  {
+   "i": "g2-math-tpl-ea85c29aecc6",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-33acb8025947",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-515b0877a255",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-ce05e48b2ba2",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-b6085345e0f7",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-767d5487b605",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-6edd82b7ef22",
+   "v": "issue",
+   "note": "Cả 'shrimp' và 'turtle' đều có vỏ hoặc mai nên đặc điểm 'a shell' không xác định được một đáp án duy nhất."
+  },
+  {
+   "i": "g1-english-bulk-70e32d6f950c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-de817ebe3b11",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-a6eff503f93d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6ffdc41d117e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-visual-count-009-dd161f",
+   "v": "issue",
+   "note": "Không có hình ảnh để đếm số quyển vở."
+  },
+  {
+   "i": "g1-english-codex-84fd05256f49",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-8e5a7d8eed15",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d71702b0a1de",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-e0eda9c6719a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2ca35b000eb4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-f4b4dfb1e9a0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-6b5d0c38ae47",
+   "v": "issue",
+   "note": "Mèo con được mèo mẹ sinh ra, nên đáp án 'kittens' không trả lời đúng câu hỏi về nguồn gốc."
+  },
+  {
+   "i": "g1-english-bulk-3822f29e9df8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-783e1e976d79",
+   "v": "issue",
+   "note": "Đề chỉ đưa ra câu hoàn chỉnh, không có chỗ trống hay yêu cầu để học sinh chọn đáp án."
+  },
+  {
+   "i": "g2-math-tpl-66dbcd460fc1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-9e3299137bbe",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-b7322839d48b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-da536bc63452",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-67b9d455548d",
+   "v": "issue",
+   "note": "Vịt con nở từ trứng, nhưng đáp án 'ducklings from eggs' ghép vào câu lại nói vịt con đến từ vịt con."
+  },
+  {
+   "i": "g1-english-bulk-51ec3291ddc8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-53e66c29b030",
+   "v": "issue",
+   "note": "Cua con nở từ trứng, nhưng đáp án 'babies from eggs' ghép vào câu lại nói cua con đến từ các con non."
+  },
+  {
+   "i": "g3-english-bulk-aba9cc4ee168",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-b7a478c73bbe",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-df1514bd1e83",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-38ce95172609",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6d7346a3ac2c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-4c85111cf97b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-d29c57ca8187",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3c1c0822d4da",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-3467ba0091df",
+   "v": "issue",
+   "note": "Cả 'It's quarter to twelve.' và 'It's eleven forty-five.' đều diễn đạt đúng 11:45."
+  },
+  {
+   "i": "g2-math-tpl-b625ae61af53",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-680519d5bc6e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3ed5decadd35",
+   "v": "issue",
+   "note": "Đổi chữ đầu f của 'fish' thành d đúng là 'dish', nên phải chọn True; lời giải còn nhắc đến một phát biểu về chữ cuối không có trong đề."
+  },
+  {
+   "i": "g1-math-tpl-a438d91d0b00",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-fa094936e921",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-4f4576e6ad58",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b073cc8fa342",
+   "v": "issue",
+   "note": "Lời giải suy luận sai rằng da nhẵn là căn cứ xác định thú, và lựa chọn 'a insect' sai ngữ pháp."
+  },
+  {
+   "i": "g2-math-tpl-1cedc51e9ac3",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-4ea1e1a9168d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b1b4006acd66",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c8e4d04e1002",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-388bcc46f516",
+   "v": "issue",
+   "note": "Cá con nở từ trứng, nhưng đáp án khiến câu thành cá con sinh ra từ những con non khác."
+  },
+  {
+   "i": "g3-english-gemini-8feea84504c4",
+   "v": "issue",
+   "note": "Đề không xác định nhận định nào cần đánh giá Đúng hay Sai."
+  },
+  {
+   "i": "g2-math-tpl-cb11b7f0fc29",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-a408945e35fd",
+   "v": "ok"
+  },
+  {
+   "i": "g3-mat-v4-data-charts-1be98a747b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7178b76e84be",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-bbb57d14e09f",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-204ba1ba41aa",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-b11152ed320d",
+   "v": "issue",
+   "note": "Đề đặt bạch tuộc trong rừng, sai với môi trường sống dưới biển của loài này."
+  },
+  {
+   "i": "g1-english-bulk-6e4ed4ab5f10",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-765a63d2837b",
+   "v": "issue",
+   "note": "Cụm 'in a shelf' dùng sai giới từ, cần sửa thành 'on a shelf'."
+  },
+  {
+   "i": "g1-math-tpl-4acd724d245f",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-922e6368e711",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-c913fde40758",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5cb8bcbc6a03",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-4e8489227ff0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-db4663ae02f0",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-322a83b70dc2",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-bb60a88e1ece",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-b418d351f5be",
+   "v": "issue",
+   "note": "Đề chỉ cung cấp đoạn văn mà không có nhận định cần đánh giá Đúng hay Sai."
+  },
+  {
+   "i": "g3-english-bulk-7f92733c9a72",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-ce559feff339",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-36e9e70e55ed",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d4db186773cd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1762ad4bdda5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-528927e8aad7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-1089-ae27ad",
+   "v": "issue",
+   "note": "Các lựa chọn chỉ hiển thị mã tài nguyên, không có hình để xác định đáp án."
+  },
+  {
+   "i": "g2-english-codex-6d5a39c7ef3e",
+   "v": "issue",
+   "note": "Đề chỉ cung cấp đoạn văn mà không có nhận định cần đánh giá Đúng hay Sai."
+  },
+  {
+   "i": "g1-english-bulk-668e5ffb88ee",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-9e11f67897e3",
+   "v": "issue",
+   "note": "Thiếu câu nhận định để học sinh xác định đúng hay sai."
+  },
+  {
+   "i": "g2-math-tpl-5d1eac4e6d6b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-aaaa7c309ed0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-902f5db3f8c1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-mat-v4-measurement-conversion-85e31066d0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-9cc96983bf00",
+   "v": "issue",
+   "note": "Không hiển thị phép tính hoặc nhận định cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g1-english-bulk-3af9a2d68e83",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-listen-v5-0068-c9ff9e1c50",
+   "v": "issue",
+   "note": "Không có âm thanh được cung cấp nên học sinh không thể xác định từ nghe được."
+  },
+  {
+   "i": "g2-math-tpl-ce89cb95a8f1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-b602201d0a52",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-55f5b48cb40f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-be3df1e86904",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-caaf96398752",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-icon-ac0b36414281",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-0f8cda070a47",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-b73ae6bd753e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-358680727ead",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4-body-and-senses-6943811705",
+   "v": "issue",
+   "note": "Các lựa chọn 'Hands is' và 'Ears is' sai ngữ pháp vì chủ ngữ số nhiều phải đi với 'are'."
+  },
+  {
+   "i": "g2-science-tpl-91cff4b51bbb",
+   "v": "issue",
+   "note": "Giải thích cỏ 'cần ăn' gây hiểu sai vì cỏ tự tạo chất dinh dưỡng nhờ quang hợp."
+  },
+  {
+   "i": "g1-english-codex-41aa5efba728",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2e578c8a6b4e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b9e8a66e3175",
+   "v": "issue",
+   "note": "Fish, goldfish và gecko đều có vảy nên có nhiều đáp án đúng."
+  },
+  {
+   "i": "g2-math-tpl-2468ceec1766",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-icon-82689bc157ec",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7eedb85bde58",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu đánh giá một nhận định nhưng không cung cấp nhận định đó."
+  },
+  {
+   "i": "g1-english-bulk-4fb5c05f3fad",
+   "v": "issue",
+   "note": "Con quay thông thường chỉ xoay chứ không bay lên như mô tả trong câu hỏi và giải thích."
+  },
+  {
+   "i": "g2-math-tpl-550db1b79f1f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-09df208f6eea",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-de3c96c24506",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-6e8b6c055589",
+   "v": "issue",
+   "note": "Thiếu nhận định về thời lượng bộ phim để học sinh đánh giá đúng hay sai."
+  },
+  {
+   "i": "g3-english-gemini-fe52fe382357",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-debff502779b",
+   "v": "issue",
+   "note": "Câu dẫn không có chỗ trống hoặc yêu cầu để học sinh biết cần chọn đáp án cho việc gì."
+  },
+  {
+   "i": "g2-math-tpl-0f802e66bbb8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-a2ea24ba0f7c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d85b2addfff3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7d0441880839",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7d0f25773be2",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-3c789278d0d3",
+   "v": "issue",
+   "note": "Đề thiếu nhận định cần đánh giá đúng hoặc sai; nhận định về việc Lucy thích chuối chỉ xuất hiện trong giải thích."
+  },
+  {
+   "i": "g1-math-tpl-cef6e3ef93b0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-917fe0b02d50",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-321921ad5bc0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-v4b-spelling-641d9ef69c6d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-3702256c283b",
+   "v": "ok"
+  },
+  {
+   "i": "g3-gs-u04-v6-cloze-692dafb5a399",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7ce3c7b9078c",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-874eacd362eb",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-101f99ba14f2",
+   "v": "issue",
+   "note": "Sai mạo từ: phải viết 'An octopus' và 'an amphibian'."
+  },
+  {
+   "i": "g1-english-bulk-6d79f72df99b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c9b817d44f5c",
+   "v": "issue",
+   "note": "Đề không hiển thị phép tính hoặc khẳng định cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g1-science-tpl-11e4fc72a61f",
+   "v": "issue",
+   "note": "Đáp án 'a owl' sai mạo từ, phải là 'an owl'."
+  },
+  {
+   "i": "g3-english-gemini-b25d1647ea2a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-ba6fb509c6b1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-b0fe89361757",
+   "v": "issue",
+   "note": "Đề thiếu nhận định khoa học cần đánh giá đúng hoặc sai."
+  },
+  {
+   "i": "g2-math-tpl-5e758bd271a5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-67e7aa2a45ed",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d8b059cd2aef",
+   "v": "ok"
+  },
+  {
+   "i": "g2-cr67-i2w-0386-debcf1",
+   "v": "issue",
+   "note": "Đề yêu cầu nhìn tranh nhưng không cung cấp hình ảnh để chọn từ tương ứng."
+  },
+  {
+   "i": "g1-english-bulk-3afe13bc7d7d",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-93d77b932422",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-97355c8118f8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-6d24bca8b0b2",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-bd3984e3e5aa",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e3eff95c48ba",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1b5bdc2401a4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-38d38e14563b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-08df01658777",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-c831d961a9f6",
+   "v": "issue",
+   "note": "Đáp án tạo câu vô nghĩa rằng rùa con sinh ra từ các con non; đáp án đúng phải là 'an egg'."
+  },
+  {
+   "i": "g2-english-gemini-4f419ec4bdf9",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-9df10fefc63e",
+   "v": "ok"
+  },
+  {
+   "i": "g3-gs-u05-v6-write-e27fe323c5cc",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-81709f95b8c1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-codex-e230a8becc70",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7e5346f1b69d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-d1078b15ba51",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d86c13fe15ed",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-6cef634a1bb5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-edac5b6a1fac",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-2e553a200e1b",
+   "v": "issue",
+   "note": "Đề không hiển thị phép tính hay khẳng định cần đánh giá đúng hoặc sai."
+  },
+  {
+   "i": "g2-science-tpl-93442328be89",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1434-d439e2",
+   "v": "issue",
+   "note": "Không có hình ảnh để xác định từ tiếng Anh tương ứng."
+  },
+  {
+   "i": "g1-english-bulk-4fc158ec7a33",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-f035e88f024f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-aa468cf1938e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-904d1f05a53a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-4f43e284e5c8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5d22126933de",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-db0d9781be92",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-21ef9b38b86b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-codex-6966ae726fef",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-0e4d5bd5f0f2",
+   "v": "issue",
+   "note": "Đáp án phải viết 'an insect', và lời giải sai khi coi có cánh là đủ để xác định côn trùng."
+  },
+  {
+   "i": "g2-math-tpl-c6d4f3c3920a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-e31b0e560350",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-335658866e3d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1d1a38123ff0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-cr67-i2w-0142-9be16d",
+   "v": "issue",
+   "note": "Không có hình ảnh để xác định từ tiếng Anh tương ứng."
+  },
+  {
+   "i": "g2-math-tpl-aa753aeb2d64",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-361e84cfc823",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-91419d8b5a13",
+   "v": "issue",
+   "note": "Các lựa chọn sai mạo từ: phải viết 'an arachnid' và 'an amphibian'."
+  },
+  {
+   "i": "g2-math-tpl-eb09f1253448",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-71a1c5b2ebfe",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-cbcb44e8e358",
+   "v": "issue",
+   "note": "Đáp án ghép thành 'It came from babies from eggs' sai nghĩa; ốc con nở từ trứng."
+  },
+  {
+   "i": "g2-science-tpl-91d3b7739193",
+   "v": "issue",
+   "note": "Cả 'parrot' và 'eagle' đều có lông vũ nên có hai đáp án đúng."
+  },
+  {
+   "i": "g2-math-tpl-545d3d9bcb0e",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-9fbcb04b8009",
+   "v": "issue",
+   "note": "Thiếu nhận định cần đánh giá True hoặc False."
+  },
+  {
+   "i": "g3-english-gemini-d1fe02e7e7a7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-300a3b99ad1c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-916e863c38ec",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ed73b06c24cf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-35fd91a8b2fb",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-f5927269cd77",
+   "v": "issue",
+   "note": "Việc mẹ nướng bánh hôm nay không đủ để xác định nghề nghiệp của mẹ là thợ làm bánh."
+  },
+  {
+   "i": "g2-math-tpl-2055a812f109",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dc9eb0ffa1b4",
+   "v": "ok"
+  },
+  {
+   "i": "g3-gs-u04-v6-challenge-ebeb8896c5fc",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b5cf00480ccf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-9194a5049b2e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-w2i-1549-40c2d8",
+   "v": "issue",
+   "note": "Các lựa chọn chỉ có mã tài nguyên, không có hình ảnh để học sinh chọn."
+  },
+  {
+   "i": "g1-science-tpl-bd7dae2ab488",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-29b9c461e953",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7dbf3b82370f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-039968b433bd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-364aa0ab04bf",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-11b2419af6fc",
+   "v": "issue",
+   "note": "Điền đáp án thành 'It came from piglets' sai nghĩa vì lợn con được sinh ra từ lợn mẹ."
+  },
+  {
+   "i": "g1-mat-v4-numbers-to-100-9ed4d3cd36",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ab7fe2313bc6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ff54a3247967",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-78c4fe1ed22c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-64624f38be15",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-fca311a6425c",
+   "v": "issue",
+   "note": "Các giới từ 'at', 'in' và 'on' đều có thể dùng với 'the playground' trong câu này nên đáp án không duy nhất."
+  },
+  {
+   "i": "g2-math-tpl-158bab883d13",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-2e709a49fc52",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b6093691b159",
+   "v": "issue",
+   "note": "Giun đất nở từ trứng nằm trong kén nên hai lựa chọn 'babies from eggs' và 'babies from cocoons' không loại trừ nhau."
+  },
+  {
+   "i": "g2-math-tpl-669d7064f04d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-235d93b4bc05",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-7f9fce7ec807",
+   "v": "issue",
+   "note": "Chim cũng có thể làm tổ trên cát hoặc trong hang nên lời giải phủ nhận các nơi này là sai và câu hỏi thiếu giới hạn loài."
+  },
+  {
+   "i": "g1-math-tpl-21481f900b56",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b100b6afceaa",
+   "v": "issue",
+   "note": "Điền đáp án thành 'It came from puppies' sai nghĩa vì chó con được sinh ra từ chó mẹ."
+  },
+  {
+   "i": "g3-english-bulk-2555fc79f329",
+   "v": "issue",
+   "note": "Không nêu loài nên 'Sometimes' cũng có thể đúng vì một số cá voi nhỏ hơn một số cá heo."
+  },
+  {
+   "i": "g2-math-tpl-54c090c0e8c0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-3c50867616c8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-icon-840751cab6c2",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-4e8b337bedcf",
+   "v": "issue",
+   "note": "Không có hình hoặc ngữ cảnh để xác định 'desk' giữa bốn từ đều đúng chính tả."
+  },
+  {
+   "i": "g1-cr67-i2w-2204-0ae3e9",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu nhìn hình nhưng dữ liệu không cung cấp hình để xác định đáp án."
+  },
+  {
+   "i": "g1-math-tpl-dd7fcdf55b59",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-2805a607fe08",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3d4b2d92a9ee",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-d5c1f47ff74c",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-bd675988c10a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7897ec27fcb4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-64094c2084f9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1bea367507fc",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-listen-v5-0164-578305e400",
+   "v": "issue",
+   "note": "Không có âm thanh kèm theo nên không thể xác định từ được đọc."
+  },
+  {
+   "i": "g2-math-tpl-ea2bf7e83996",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-30d019e5da95",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v6-safety-8b6d6cceb46a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-eccc93a68d3c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-0e20dfbf906f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c3fe3c1f4009",
+   "v": "issue",
+   "note": "Đề không hiển thị phép tính hoặc nhận định cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g3-gs-u09-v6-listen-6a6fa2ca1a56",
+   "v": "issue",
+   "note": "Không có âm thanh kèm theo nên không thể xác định câu được đọc."
+  },
+  {
+   "i": "g1-cr67-i2w-0718-5694ec",
+   "v": "issue",
+   "note": "Không có hình minh họa nên không thể chọn từ tương ứng."
+  },
+  {
+   "i": "g1-science-tpl-a08a60d2b39e",
+   "v": "issue",
+   "note": "Các lựa chọn “a amphibian” và “a insect” sai ngữ pháp, phải dùng “an”."
+  },
+  {
+   "i": "g2-math-tpl-b67073e7d46e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-177201bd544e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ada6fd7d8553",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-5273d7aa5149",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2a33e00ddb8b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-5534fe2f2700",
+   "v": "issue",
+   "note": "“a elephant”, “a amphibian”, “a insect” sai mạo từ và lời giải suy luận sai rằng da dày là căn cứ xác định thú."
+  },
+  {
+   "i": "g3-mat-v4-large-numbers-math-language-183b6bd82c",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-b1b5d21ff067",
+   "v": "issue",
+   "note": "Có đoạn văn nhưng thiếu nhận định cụ thể để đánh giá đúng hay sai."
+  },
+  {
+   "i": "g2-math-tpl-1a4094f04ec1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-fc9cfd7ea651",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-536e57c984bd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-3d7354370f53",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1900deb71199",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d72f0837da64",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-360f527ca1a4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8930678dfee8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ee14da1947b1",
+   "v": "issue",
+   "note": "Đề không hiển thị phép tính hoặc nhận định cần đánh giá đúng hay sai."
+  },
+  {
+   "i": "g1-english-bulk-6fe321a38e01",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-803efc6c767a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-d0544de3d4d7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-visual-image-word-0041-1fba38",
+   "v": "issue",
+   "note": "Không có hình ảnh để xác định từ cần chọn."
+  },
+  {
+   "i": "g3-math-tpl-20eea63a4789",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7e4b12506484",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-bdcbc65c77b6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e1f493a05d77",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-ac479f27357c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-visual-image-word-0082-c45b1a",
+   "v": "issue",
+   "note": "Không có hình ảnh để xác định từ cần chọn."
+  },
+  {
+   "i": "g2-math-tpl-e431b7e72836",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-19f59ba24ccc",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-dcee027b326c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-81a8889a88fe",
+   "v": "issue",
+   "note": "Không cung cấp các từ cần sắp xếp thành câu."
+  },
+  {
+   "i": "g3-english-bulk-8c09699df347",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-cc77c3454486",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-7ff4dc7c7384",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-85fcfac452f0",
+   "v": "issue",
+   "note": "Không nêu địa điểm nên không thể xác định tháng Một hay tháng Bảy lạnh hơn."
+  },
+  {
+   "i": "g2-english-bulk-a78166bc2c10",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-80efce3af356",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-854188788ac0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-540487a2faca",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-010f43b1cfdb",
+   "v": "issue",
+   "note": "Ghép đáp án thành 'It came from babies from eggs' sai nghĩa vì câu nói cá đến từ con non thay vì nở từ trứng."
+  },
+  {
+   "i": "g2-english-codex-7284013684f3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6309bb704a60",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b19c75e1f24c",
+   "v": "issue",
+   "note": "Hai phương án 'babies from eggs' và 'chicks from eggs' đều mô tả chim non nở từ trứng nên không có đáp án duy nhất."
+  },
+  {
+   "i": "g1-math-tpl-a8fccab3a622",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-6833f5062e10",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-fb1d9d8bd5fd",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-03376e879304",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-b70177b227ca",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6c35eedfb134",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-v4b-reading-basic-76934170e33a",
+   "v": "ok"
+  }
+ ]
+}

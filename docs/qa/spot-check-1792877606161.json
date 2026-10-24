@@ -1,0 +1,1459 @@
+{
+ "seed": "round10",
+ "bank": 103602,
+ "sampled": 360,
+ "verdicts": [
+  {
+   "i": "g1-science-tpl-737dc4509b27",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b79fd60e632f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-52b6daf59c77",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-458872c7b561",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8726c0bfd75e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ec9d2d74df41",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cddc68cefca3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cdfbe95d6d6e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-c308d49ecc07",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-838c1676284e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7875c8d1e84f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1b2fa278be52",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8583e1fd15ac",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-5237b7b5d16a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-114c34e422b8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-6913f1b89121",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-178c13c3a8cc",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-eaaa96fb34fd",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-6932ba5827db",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-v4b-reading-basic-d4e0e40f5c0a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-116491fab22d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-49bf0c1bf4ce",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-62b8043e9b52",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-c7f8656946f3",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-5299aecb9b99",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d0e5cb517be9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-183f83ec3bea",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-468db2220af9",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-460d9d30fd22",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-de93ab2bad5f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-0003f7ae8b21",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cdc0f78105aa",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ce2b43165148",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-adf09f1c53ee",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-53387e684889",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-4604272d2761",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-8c52bf343887",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-5cf080dd66f1",
+   "v": "issue",
+   "note": "Đoạn văn chỉ nói cậu bé thích đá bóng, không xác nhận cậu đang chơi bóng đá như đáp án và giải thích khẳng định."
+  },
+  {
+   "i": "g2-english-codex-4e37c2b71eb2",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-83a27acd7c08",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-469948d3b95d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-bfddf1c034ec",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-52719cf0e5f5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-84fba09c854f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d3d4b407a140",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-84fb29ac1693",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-87bfc8c22d70",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c8836af40808",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c97c9a0e536d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-eee1dba1e563",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1086-7423e1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-45d67dc5d500",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-864b507aad4b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c889f08c7957",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-6d194cb858ff",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-a4e454096043",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-ad37bb6e1ef8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-75a52fea15a4",
+   "v": "issue",
+   "note": "Câu hỏi có nhiều đáp án đúng vì thủy tinh và nhiều loại nhựa cũng cứng như kim loại."
+  },
+  {
+   "i": "g1-english-bulk-cb185f124bae",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-598b4ff11d89",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-2574cf527c56",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-60be5d73d00c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-49dd9a75ca67",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-ac27c89a9f2f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-412f3a1b3a12",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-88b7148d3ed3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-deb687d20f56",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-13a46b4d2755",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-4518b28b867a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-v5-1180-8ed9d89d3f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-b07f98e28aa6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-0f2af8d763cf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6276e0bb04b1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ec2427d704a6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-64353fdc0a21",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-193512a5bf7e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-235a137d0928",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-a33abf914a3d",
+   "v": "issue",
+   "note": "Câu đầu chỉ cho biết lịch chơi vào thứ Hai, không xác định hôm nay là thứ Hai nên chưa thể suy ra ngày mai là thứ Ba."
+  },
+  {
+   "i": "g2-math-tpl-12b657e9b2db",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-913ef4788d29",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-9000a32a65f1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ba4fcddc2e14",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c8a9d005b53c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cd2b9d9e989a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ff8ebfbc9054",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-3cc54f13cb4b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-57ae8cda2d9e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8291f43dcf89",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c87980f99215",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ca94dd5df604",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-3ea884c20068",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dbb1734579a6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-3fd931e8f656",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8583f781085b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cdec2b965a2b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cddf8ea737f0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-64ee171b33ae",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8236e8a28d11",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-16e5124f7ce1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2a284676bdce",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e7cb32474c29",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-4f85d7ee9acf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-cr67-w2i-2343-88359c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f56fd6d647d6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-18c3434ad176",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cdad4f2d9101",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-455124ee8ad1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1468-fcb022",
+   "v": "issue",
+   "note": "Tên viết tắt môn thể dục phải là “PE”, không phải “pe” như đáp án và lời giải."
+  },
+  {
+   "i": "g3-cr67-w2i-1477-c13ba6",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-51599c7e5cec",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-88083d80905a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1842ec49dece",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-610cc90ab479",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-1c974fb5bbc6",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-7b4a3f844a8a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1088-ae27ad",
+   "v": "issue",
+   "note": "Hình minh họa địa danh Åland không khớp với đáp án “land” nghĩa là đất."
+  },
+  {
+   "i": "g3-english-gemini-8c2401a09ef7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-a2405f30ba78",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f8a643db8a1f",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-5b296b1cbd28",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cdc78071c87e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b6d63723c1d0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4c195666cd2d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-635327231675",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f581036ca293",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-81c30d84cfce",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-07c56dfb68fa",
+   "v": "issue",
+   "note": "Không có tranh hoặc thông tin về số thành viên để xác định đây có phải gia đình lớn hay không."
+  },
+  {
+   "i": "g1-science-tpl-7401cd851557",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-44fda3f0c716",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-82885201fbb6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cdae1a0cd5b9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-18565a27f056",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d795bc714bc5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-1962-a25cba",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-de5655d961b1",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6227746ed4b5",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-68d1efe40db2",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d9c94ea45f80",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-e83b9efc8115",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-821f6d352d4d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-5a15a6982333",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d60565ad6d46",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-172e473f60ef",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-04cd8bbd7839",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-83876ad91d56",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-64d7d536db02",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e9274a7a1203",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ea9c33cf1dd7",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e01e9259d732",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-13f4ed921e13",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c963fb538918",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-0704-2c7875",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-3faa03031459",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-4569edc5f126",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-df7612fc7600",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b59159a72a30",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-codex-ae39a6e08b88",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-858be32daf4e",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-b114f3e0ff66",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-36ae88916ad0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-63d0d0445430",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-117a618483bd",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b3f4c87c3cad",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-4784f419654f",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-codex-a92f39d6971c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-82f23e2ca23e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-65a7e01c8138",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-55bbc208a213",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c85dd10e4ba5",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-7ca49583017d",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-62a0e6afb1c4",
+   "v": "issue",
+   "note": "Cả 'drinks' và 'drank' đều đúng vì câu không xác định thời gian; 'never' cũng dùng được ở thì quá khứ."
+  },
+  {
+   "i": "g1-math-tpl-365e1a02af83",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-ab1d850aec1b",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-efdad45ca392",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-1c7e9cb2a194",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-1332d6763a7d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-8263c55520fa",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-cgpt-45df159a8c23",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-3f4727be7f56",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2d6dc30729cf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-174dc5e0fc98",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-184035ca5bd4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-85adee39aee9",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-478f31f0f8c9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e38e3d7cf157",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-00774eb9fadd",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-98d347842a0d",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-4f1f6b00c63c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ebb7baf7d60a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cc23384d2634",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-82703100aef2",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-ed5f14f95c8a",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-08a568f7527b",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-4f341420d2ef",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1827c5540f9a",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6777fa263c88",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-7bb7053e2e64",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e37b85523418",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-efe5514bbfca",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-11f4161dbd91",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-a4daf5bcdb67",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-adv-c055e86859ce",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-81c4f7049b40",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-c6fe73b569dc",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-3763f1ca2cba",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c980efd93bd9",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-6120e0bc9f57",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-cgpt-c5e82a9a67c8",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-09f76bf0a8cc",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-v5-1092-29d79fe21a",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-751a46fd1dc9",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-eab47fc4fd6f",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-3a0c8b51f4af",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-codex-e57116459aae",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-4eac63bf0806",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6ae6d2687f67",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ce00fee55459",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-0b91dbd846b3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-58d8c6d64c07",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-0967c7880179",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-661a4a78ddd0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ce31a2e9e1df",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-4aecafbf05d7",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-837a9a36a709",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-68e4896105d6",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-484a1f8e2c56",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f553c5ce23dc",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c8e4d04e1002",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-067559f7bbaa",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-0154-cdf4f7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b7a8aff511a9",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-f63c9a656a7e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-81bfae1d4645",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-54c62211d953",
+   "v": "issue",
+   "note": "Cả 'Afternoon' và 'Noon' đều nằm giữa buổi sáng và buổi tối nên câu hỏi không có đáp án duy nhất."
+  },
+  {
+   "i": "g2-science-tpl-0e4d80f43391",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-08398fc9c510",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-cgpt-93d51e84d9d4",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-11f893355667",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-18c1da0ccf0d",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-0aa554c8e4d8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-7a363e8a76b8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-78aaca1f5fcd",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4581a3919e80",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-14f39ba1ba10",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b2caf301a3a6",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-43ae07d709f7",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-569d5ff80ef6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-54183bc08bb8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-6305ce99c6f3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-574cd9f11ce0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-45465a34bf83",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cbd850a3f5e0",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-v4b-reading-basic-ae808bd26394",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-1160f2f2c21b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-770f9fe22e41",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-79fa67734fe7",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-120287778b0d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d71ffe26dea1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-040bac53f9b8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-adv-9c4a9336f679",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-3c0058bc2af7",
+   "v": "issue",
+   "note": "Không có tranh hoặc ngữ cảnh để chọn duy nhất 'house', vì cả bốn lựa chọn đều hoàn thành câu đúng."
+  },
+  {
+   "i": "g3-english-bulk-45a8b77808e5",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d988ef31bd7e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e79c7190d3bb",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-short-v5-0013-1d13c7a067",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-ecef157cf721",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-a8a3e551e449",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-v5-1204-c9d7bd00d9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-0407eb049b5d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-8626365f98fe",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-50d173cf8957",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c527c2e1962d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-c53286ea68ee",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-15a39a2447ab",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-e449b2b4ae73",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-4974fd443ac6",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-0e3b8f0e3f64",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f4af021d6bde",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-ad82087a292e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-59f8fb229157",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-707d37052c65",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-044064bdf865",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-c14af0a63142",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-79576bb8697c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-46d195133d45",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-0bba69cab8c9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-0714575bdd6e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-db7234d83229",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-8458fcf9aa65",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-37eb37f1f431",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-525755a21c4d",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-11f24ff22354",
+   "v": "ok"
+  },
+  {
+   "i": "g2-science-tpl-0133a6c85423",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-856b9d91d3b5",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-e5bb5b8db8c1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-abb6a00965e1",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-51ded59c7db0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-469e559f6e25",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-cgpt-6ab0b50e3fb2",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-f7c10f2024bf",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-acee65eff140",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b3400c998b32",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f4e2af34e3ed",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-12cf6e135d51",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-74f49d0d41b1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-6ba981c32d9f",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-432c3066f7ea",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f4bee12b8435",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-1ede30abd0f1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-01b9e884e545",
+   "v": "ok"
+  },
+  {
+   "i": "g1-cr67-i2w-0362-6f2460",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cbe1e7b580e3",
+   "v": "ok"
+  },
+  {
+   "i": "g2-cr67-w2i-2033-196c0c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-6e61ba9b8ee1",
+   "v": "issue",
+   "note": "Giải thích sai quy tắc: 'goes' dùng với chủ ngữ ngôi thứ ba số ít, không phải 'chủ ngữ số ba'."
+  },
+  {
+   "i": "g3-math-tpl-093e0263d576",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-c8e7583a66fe",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-3718a8856236",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-0304fad426a4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-86445f5dd9c4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-cgpt-1ec0c792a553",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-467304d0429d",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-fa4a2b82cb5c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-134b7fbac1e9",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-4ddc98f19104",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-a4ea20a675f6",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-b6733b4e71ef",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-5c4db20719e1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-4038a8f620d2",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-e3253d46cee0",
+   "v": "ok"
+  },
+  {
+   "i": "g2-eng-spell-v5-0141-9f144c6af9",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-dd2121b65e97",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-16bc342fa148",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cf4405f352d8",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-20dd6feb2997",
+   "v": "ok"
+  },
+  {
+   "i": "g1-science-tpl-5aebda7a7f79",
+   "v": "ok"
+  },
+  {
+   "i": "g3-gs-u07-v6-listen-29da2f9db7ad",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-cb67e411a84f",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-223bd976c125",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-5c6c04e38f4d",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-gemini-e953dcdf2703",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-f4dfbe780df0",
+   "v": "ok"
+  },
+  {
+   "i": "g3-math-tpl-3a9a962126be",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-v4b-spelling-020d8bd2c647",
+   "v": "issue",
+   "note": "Cả 'b' và 'f' đều tạo thành từ đúng ('ball', 'fall'), nhưng không có ngữ cảnh để chọn duy nhất."
+  },
+  {
+   "i": "g2-math-tpl-e4f7081974d7",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-65a82598a3d8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-44ff35186345",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-codex-5055d4437a6b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-math-tpl-617f2f4143ea",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-86f50b35edcf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-d603bb1f1e1b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-eng-spell-v5-0045-b821dc9a1c",
+   "v": "issue",
+   "note": "'Yoyo' cũng là cách viết được chấp nhận của 'yo-yo', nên có hai lựa chọn đúng."
+  },
+  {
+   "i": "g2-math-tpl-cbb954dfd92e",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d8158a92b35e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-math-tpl-11ac1fd3ba76",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-aaac7fca2f87",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-2dbda7919749",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-bulk-59e031ded1b4",
+   "v": "ok"
+  },
+  {
+   "i": "g1-english-bulk-d5b13c636e2e",
+   "v": "ok"
+  },
+  {
+   "i": "g2-english-gemini-c0e8c1599726",
+   "v": "ok"
+  },
+  {
+   "i": "g3-english-bulk-2d5bd728669c",
+   "v": "ok"
+  }
+ ]
+}

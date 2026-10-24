@@ -1,0 +1,1150 @@
+{
+ "seed": "1792863246855",
+ "bank": 104855,
+ "sampled": 239,
+ "verdicts": [
+  {
+   "i": "g2-sci-v4b-environment-care-fe835bd118a7",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-food-health-29ab4ea433bf",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-food-health-6f6528750157",
+   "v": "issue",
+   "note": "The choices describe an unspecified statement, so students cannot determine what “It” refers to."
+  },
+  {
+   "i": "g2-sci-v4b-food-health-8154ca3a4ad8",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-food-health-abf3bb50641c",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-human-body-health-02dee28bb6b5",
+   "v": "issue",
+   "note": "The prompt never mentions teeth, leaving “them” in every choice without a referent."
+  },
+  {
+   "i": "g2-sci-v4b-human-body-health-24df7cd62efa",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-human-body-health-4763aa524323",
+   "v": "issue",
+   "note": "The choices describe an unspecified statement, so students cannot determine what “It” refers to."
+  },
+  {
+   "i": "g2-sci-v4b-human-body-health-8b8e39e42a36",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-human-body-health-8fcc9c0ea2ac",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-human-body-health-dc904f02b8bb",
+   "v": "issue",
+   "note": "The explanation incorrectly claims that scientific knowledge always explains how human bodies and living things work."
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-08670f23e664",
+   "v": "issue",
+   "note": "The topic phrase “light sound basic” is ungrammatical and should be “the basics of light and sound.”"
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-11d526f26ea8",
+   "v": "issue",
+   "note": "Both a bell and a shadow fit a poster about light and sound because the prompt never specifies a sound source."
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-2166a11e471a",
+   "v": "issue",
+   "note": "The topic phrase “light sound basic” is ungrammatical and should be “the basics of light and sound.”"
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-9c43b1c7ca8e",
+   "v": "issue",
+   "note": "The topic phrase “light sound basic” is ungrammatical and should be “the basics of light and sound.”"
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-a7d3666552c7",
+   "v": "issue",
+   "note": "Both a bell and a shadow fit a poster about light and sound because the prompt never specifies a sound source."
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-b2322f287e26",
+   "v": "issue",
+   "note": "The topic phrase “light sound basic” is ungrammatical and should be “the basics of light and sound.”"
+  },
+  {
+   "i": "g2-sci-v4b-light-sound-basic-b88b53a5b184",
+   "v": "issue",
+   "note": "The topic phrase “light sound basic” is ungrammatical and should be “the basics of light and sound.”"
+  },
+  {
+   "i": "g2-sci-v4b-materials-objects-1d40d98b1d9f",
+   "v": "issue",
+   "note": "The choices classify an unspecified statement, leaving no concrete content to assess as a property or change of materials."
+  },
+  {
+   "i": "g2-sci-v4b-materials-objects-284017fbb16d",
+   "v": "issue",
+   "note": "The choices classify an unspecified statement, leaving no concrete content to assess as a property or change of materials."
+  },
+  {
+   "i": "g2-sci-v4b-materials-objects-2da696b9dc58",
+   "v": "issue",
+   "note": "Cụm 'materials objects' trong câu hỏi sai ngữ pháp, cần viết 'materials and objects'."
+  },
+  {
+   "i": "g2-sci-v4b-materials-objects-f1c7768b099a",
+   "v": "issue",
+   "note": "Cụm 'materials objects' trong câu hỏi sai ngữ pháp, cần viết 'materials and objects'."
+  },
+  {
+   "i": "g2-sci-v4b-plants-animals-habitats-220f98a7f2d7",
+   "v": "issue",
+   "note": "Câu hỏi không nêu loài sinh vật hoặc đặc điểm môi trường cần xác định để chọn 'in water'."
+  },
+  {
+   "i": "g2-sci-v4b-plants-animals-habitats-5af82fe82db0",
+   "v": "issue",
+   "note": "Cụm 'plants animals habitats' thiếu dấu câu và liên từ, cần viết 'plants, animals and habitats'."
+  },
+  {
+   "i": "g2-sci-v4b-plants-animals-habitats-8f778c9fb4a8",
+   "v": "issue",
+   "note": "Câu hỏi không nêu loài sinh vật hoặc đặc điểm môi trường cần xác định để chọn 'near a pond'."
+  },
+  {
+   "i": "g2-sci-v4b-plants-animals-habitats-8fef063539b1",
+   "v": "issue",
+   "note": "Cụm 'plants animals habitats' thiếu dấu câu và liên từ, cần viết 'plants, animals and habitats'."
+  },
+  {
+   "i": "g2-sci-v4b-weather-seasons-1a7cc6addc02",
+   "v": "issue",
+   "note": "Cụm 'weather seasons' trong câu hỏi thiếu liên từ 'and' giữa 'weather' và 'seasons'."
+  },
+  {
+   "i": "g2-sci-v4b-weather-seasons-1ab3a702430e",
+   "v": "issue",
+   "note": "Cụm 'weather seasons' trong câu hỏi thiếu liên từ 'and' giữa 'weather' và 'seasons'."
+  },
+  {
+   "i": "g2-sci-v4b-weather-seasons-74643a554912",
+   "v": "issue",
+   "note": "Lựa chọn 'Three scarves is the correct scientific explanation' sai hòa hợp chủ ngữ và động từ."
+  },
+  {
+   "i": "g2-sci-v4b-weather-seasons-ce4d8d80013c",
+   "v": "issue",
+   "note": "Câu hỏi không nêu trời mưa hay nhu cầu giữ khô để xác định vì sao phải chọn áo mưa."
+  },
+  {
+   "i": "g2-sci-v4b-weather-seasons-ea2cfc12577f",
+   "v": "issue",
+   "note": "Cụm 'weather seasons' trong câu hỏi thiếu liên từ 'and' giữa 'weather' và 'seasons'."
+  },
+  {
+   "i": "g3-sci-v4b-animals-life-cycles-3fe90401e144",
+   "v": "issue",
+   "note": "Cả bướm và cá đều có vòng đời động vật nên đều phù hợp với chủ đề được hỏi."
+  },
+  {
+   "i": "g3-sci-v4b-animals-life-cycles-57b3f07fd512",
+   "v": "issue",
+   "note": "Cụm 'animals life cycles' sai ngữ pháp, cần viết 'animal life cycles' hoặc 'animals’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-animals-life-cycles-67c3116b2ae6",
+   "v": "issue",
+   "note": "Cụm 'animals life cycles' sai ngữ pháp, cần viết 'animal life cycles' hoặc 'animals’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-animals-life-cycles-b4952019ce02",
+   "v": "issue",
+   "note": "Mèo, ếch và chim đều có vòng đời động vật nên câu hỏi không xác định được đáp án duy nhất."
+  },
+  {
+   "i": "g3-sci-v4b-animals-life-cycles-ff7e5663652e",
+   "v": "issue",
+   "note": "Cụm 'animals life cycles' sai ngữ pháp, cần viết 'animal life cycles' hoặc 'animals’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-body-health-2cbae2fcafcb",
+   "v": "issue",
+   "note": "Các lựa chọn 'Knees is...' và 'Fingers is...' sai hòa hợp chủ ngữ và động từ."
+  },
+  {
+   "i": "g3-sci-v4b-body-health-4f6e2b789f80",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-body-health-57668f90a2d1",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-body-health-5e1300556a57",
+   "v": "issue",
+   "note": "Răng, tim, da và dạ dày đều liên quan đến sức khỏe cơ thể, nhưng câu hỏi không nêu chức năng bơm máu để chọn tim."
+  },
+  {
+   "i": "g1-sci-v4b-plants-3119429a997c",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-plants-3195b4ed8ace",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-plants-842a48e0d0ee",
+   "v": "issue",
+   "note": "The choices contain subject-verb agreement errors: 'Flowers is' and 'Leaves is' should use 'are'."
+  },
+  {
+   "i": "g1-sci-v4b-plants-935d3bbb92d1",
+   "v": "issue",
+   "note": "All four choices belong on a plant poster, and the prompt gives no clue that distinguishes roots."
+  },
+  {
+   "i": "g1-sci-v4b-plants-eeee60f21d08",
+   "v": "issue",
+   "note": "The distractor sentences incorrectly use the singular count nouns 'Shoe,' 'Spoon,' and 'Chair' without articles."
+  },
+  {
+   "i": "g1-sci-v4b-safety-hygiene-376063ea9a39",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-safety-hygiene-4d04b9f4e275",
+   "v": "issue",
+   "note": "The prompt never mentions teeth, leaving 'them' undefined and the intended hygiene task unspecified."
+  },
+  {
+   "i": "g1-sci-v4b-safety-hygiene-d8ecea51d95b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-safety-hygiene-e2642b14e56d",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-safety-hygiene-eb21b0e2a810",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-weather-3885bebf0958",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-weather-c0fdaf48c1a0",
+   "v": "issue",
+   "note": "Both 'sunny' and 'snowy' are appropriate weather-poster answers, with no clue distinguishing them."
+  },
+  {
+   "i": "g1-sci-v4b-weather-cb90599f3da2",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-community-safety-1961b175583b",
+   "v": "issue",
+   "note": "No specific idea or statement is provided for students to evaluate using the descriptions beginning with 'It'."
+  },
+  {
+   "i": "g2-sci-v4b-community-safety-9c3302fff42b",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-community-safety-a9a6c0bcd6c1",
+   "v": "issue",
+   "note": "No specific idea or statement is provided for students to evaluate using the descriptions beginning with 'It'."
+  },
+  {
+   "i": "g2-sci-v4b-community-safety-acc5033a3a06",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-community-safety-c3f12f8e4e11",
+   "v": "issue",
+   "note": "The choice 'Slippers on your hands is the correct scientific explanation' has incorrect subject-verb agreement."
+  },
+  {
+   "i": "g2-sci-v4b-community-safety-f19b03984eba",
+   "v": "ok"
+  },
+  {
+   "i": "g2-sci-v4b-environment-care-c0d5f6dd9819",
+   "v": "issue",
+   "note": "No specific idea or statement is provided for students to evaluate using the descriptions beginning with 'It'."
+  },
+  {
+   "i": "g1-sci-v4b-animals-31236390e41b",
+   "v": "ok"
+  },
+  {
+   "i": "g1-sci-v4b-animals-5c6e4374ebe5",
+   "v": "issue",
+   "note": "Câu hỏi không nhắc đến chim hoặc lớp phủ cơ thể nên không xác định được đáp án feathers."
+  },
+  {
+   "i": "g1-sci-v4b-animals-d7a4b55a620a",
+   "v": "issue",
+   "note": "Câu hỏi không nêu loài vật hay hỏi về nơi sống nên không đủ căn cứ chọn in water."
+  },
+  {
+   "i": "g1-sci-v4b-animals-e4f44c740f9b",
+   "v": "issue",
+   "note": "Câu hỏi thiếu yêu cầu xác định những thứ động vật cần để sống."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-0c6aaa7b04b7",
+   "v": "issue",
+   "note": "Các lựa chọn Feet is và Eyes is sai ngữ pháp vì chủ ngữ số nhiều phải đi với are."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-21ca5c451641",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng nhìn nên nhiều bộ phận trong các lựa chọn đều phù hợp với chủ đề."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-4520d50b1731",
+   "v": "issue",
+   "note": "Các lựa chọn Hands is và Ears is sai ngữ pháp vì chủ ngữ số nhiều phải đi với are."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-49f6b96dbcb9",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng nghe nên không xác định được đáp án ears."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-61e14c97a00c",
+   "v": "issue",
+   "note": "Các lựa chọn Hands is, Knees is và Eyes is sai ngữ pháp vì chủ ngữ số nhiều phải đi với are."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-7165cc61b57b",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng ngửi nên không xác định được đáp án nose."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-717bc5231753",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng nghe nên không xác định được đáp án ears."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-d3fa41b761f0",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng ngửi nên không xác định được đáp án nose."
+  },
+  {
+   "i": "g1-sci-v4b-body-and-senses-d8694f1ab287",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng nhìn nên không xác định được đáp án eyes."
+  },
+  {
+   "i": "g1-sci-v4b-day-night-37162d926086",
+   "v": "issue",
+   "note": "Câu hỏi thiếu nội dung cần xác định về ngày và đêm, đồng thời cụm day night thiếu từ and."
+  },
+  {
+   "i": "g1-sci-v4b-day-night-a3aef2baf576",
+   "v": "issue",
+   "note": "Câu hỏi không nêu sự việc cần xác định thời điểm nên không đủ căn cứ chọn in the daytime."
+  },
+  {
+   "i": "g1-sci-v4b-family-and-school-6d4183b9352d",
+   "v": "issue",
+   "note": "Câu hỏi không nêu yêu cầu chọn hành vi an toàn hoặc tình huống đi lại ở trường."
+  },
+  {
+   "i": "g1-sci-v4b-family-and-school-7df4d5ada600",
+   "v": "issue",
+   "note": "Lựa chọn climb a wet floor dùng động từ sai nghĩa vì không thể trèo một mặt sàn."
+  },
+  {
+   "i": "g1-sci-v4b-family-and-school-e2bc39e308a4",
+   "v": "issue",
+   "note": "Câu hỏi thiếu tình huống đi đường và yêu cầu chọn hành vi an toàn để xác định đáp án."
+  },
+  {
+   "i": "g1-sci-v4b-materials-around-us-50f142cd216c",
+   "v": "issue",
+   "note": "Câu hỏi không nêu đặc tính trong suốt hay công dụng cần xét nên không xác định được đáp án glass."
+  },
+  {
+   "i": "g1-sci-v4b-materials-around-us-b1765e2bb877",
+   "v": "issue",
+   "note": "Câu hỏi không nêu đặc tính hay công dụng của vật liệu cần chọn nên ý được nhắc đến không rõ."
+  },
+  {
+   "i": "g3-sci-v4b-body-health-9219f755cbe7",
+   "v": "issue",
+   "note": "Câu hỏi không nêu chức năng hô hấp nên không có căn cứ chọn phổi thay vì các bộ phận cơ thể khác."
+  },
+  {
+   "i": "g3-sci-v4b-earth-sun-moon-basic-00e83a079432",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth sun moon basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-earth-sun-moon-basic-269f2bf01b01",
+   "v": "issue",
+   "note": "Phương án 'The moon makes its own sunlight is the correct scientific explanation.' sai cấu trúc ngữ pháp."
+  },
+  {
+   "i": "g3-sci-v4b-earth-sun-moon-basic-2d81dba98a0d",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth sun moon basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-earth-sun-moon-basic-5a0abdb5956d",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth sun moon basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-earth-sun-moon-basic-a3dc97303d15",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth sun moon basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-earth-sun-moon-basic-fb87529c6f01",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth sun moon basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-environment-1dd439751c45",
+   "v": "issue",
+   "note": "Các phương án như 'Leave it on a road is the correct scientific explanation.' ghép câu mệnh lệnh với 'is' sai ngữ pháp."
+  },
+  {
+   "i": "g3-sci-v4b-environment-4c344a623632",
+   "v": "issue",
+   "note": "Câu dẫn thiếu mạo từ 'the' trong cụm 'about the environment'."
+  },
+  {
+   "i": "g3-sci-v4b-environment-699f6834cd12",
+   "v": "issue",
+   "note": "Câu dẫn thiếu mạo từ 'the' trong cụm 'about the environment'."
+  },
+  {
+   "i": "g3-sci-v4b-environment-96b896a9bd55",
+   "v": "issue",
+   "note": "Câu hỏi không hỏi mục đích của hành động hay sự vật nào nên đáp án 'for health' thiếu ngữ cảnh."
+  },
+  {
+   "i": "g3-sci-v4b-environment-98a9e1a8206e",
+   "v": "issue",
+   "note": "Câu dẫn thiếu mạo từ 'the' trong cụm 'about the environment'."
+  },
+  {
+   "i": "g3-sci-v4b-environment-b4caf213beed",
+   "v": "issue",
+   "note": "Câu hỏi không xác định 'it' là rác hay nêu tình huống xử lý rác để chọn đáp án."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-41196fa88501",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-43dd68b7c464",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-496f85afb5b8",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-9e6ebb3fc206",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-d2690b940429",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-e8401eeee992",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-habitats-food-chains-basic-eeb4cc3e4633",
+   "v": "issue",
+   "note": "Cụm chủ đề 'habitats food chains basic' không đúng ngữ pháp tiếng Anh."
+  },
+  {
+   "i": "g3-sci-v4b-light-sound-268e35a8a343",
+   "v": "issue",
+   "note": "Câu hỏi thiếu tiêu chí để chọn sự rung động và dùng sai cụm 'light sound' thay vì 'light and sound'."
+  },
+  {
+   "i": "g3-sci-v4b-light-sound-5b366e7c9c2f",
+   "v": "issue",
+   "note": "Cả 'a song' và 'a shadow' đều phù hợp với chủ đề ánh sáng và âm thanh nên không có đáp án duy nhất."
+  },
+  {
+   "i": "g3-sci-v4b-light-sound-d4674f37a450",
+   "v": "issue",
+   "note": "Cụm 'light sound' trong câu hỏi sai ngữ pháp, cần sửa thành 'light and sound'."
+  },
+  {
+   "i": "g3-sci-v4b-light-sound-eaaa6f0dce4b",
+   "v": "issue",
+   "note": "Cụm 'light sound' trong câu hỏi sai ngữ pháp, cần sửa thành 'light and sound'."
+  },
+  {
+   "i": "g3-sci-v4b-light-sound-f06aa620b675",
+   "v": "issue",
+   "note": "Cụm 'light sound' trong câu hỏi sai ngữ pháp, cần sửa thành 'light and sound'."
+  },
+  {
+   "i": "g3-sci-v4b-light-sound-ff6c1d51e0a1",
+   "v": "issue",
+   "note": "Cụm 'light sound' trong câu hỏi sai ngữ pháp, cần sửa thành 'light and sound'."
+  },
+  {
+   "i": "g3-sci-v4b-materials-properties-1c599a5d6b95",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-materials-properties-7420931d2185",
+   "v": "issue",
+   "note": "Các lựa chọn 'Wooden door', 'Brick wall' và 'Thick metal plate' thiếu mạo từ khi làm chủ ngữ số ít."
+  },
+  {
+   "i": "g3-sci-v4b-materials-properties-879151646224",
+   "v": "issue",
+   "note": "Các lựa chọn như 'It always melts is the correct scientific explanation' ghép hai mệnh đề sai ngữ pháp."
+  },
+  {
+   "i": "g3-sci-v4b-materials-properties-923f80c2a484",
+   "v": "issue",
+   "note": "Câu hỏi không yêu cầu chọn vật liệu trong suốt nên cả bốn vật liệu đều có thể phù hợp với chủ đề."
+  },
+  {
+   "i": "g3-sci-v4b-materials-properties-9fdee8261d23",
+   "v": "issue",
+   "note": "Câu hỏi không nêu tính chống thấm hay vật liệu cụ thể nên không đủ căn cứ chọn đáp án đã khóa."
+  },
+  {
+   "i": "g3-sci-v4b-materials-properties-d003346d8cd4",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-plants-life-cycles-271d360ea198",
+   "v": "issue",
+   "note": "Cụm 'plants life cycles' sai ngữ pháp, cần sửa thành 'plant life cycles' hoặc 'plants’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-plants-life-cycles-38ff1be927dc",
+   "v": "issue",
+   "note": "Giải thích khái quát sai rằng hạt cần ánh sáng để nảy mầm, trong khi nhiều loại hạt không cần ánh sáng."
+  },
+  {
+   "i": "g3-sci-v4b-plants-life-cycles-4ebb160fa534",
+   "v": "issue",
+   "note": "Cụm 'plants life cycles' sai ngữ pháp, cần sửa thành 'plant life cycles' hoặc 'plants’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-plants-life-cycles-4f520c0be04f",
+   "v": "issue",
+   "note": "Cụm 'plants life cycles' sai ngữ pháp, cần sửa thành 'plant life cycles' hoặc 'plants’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-plants-life-cycles-b3c27ae672e8",
+   "v": "issue",
+   "note": "Cụm 'plants life cycles' sai ngữ pháp, cần sửa thành 'plant life cycles' hoặc 'plants’ life cycles'."
+  },
+  {
+   "i": "g3-sci-v4b-scientific-enquiry-7d67d554ad78",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-scientific-enquiry-eae88f08486a",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-scientific-enquiry-f752c013e253",
+   "v": "issue",
+   "note": "Câu hỏi không yêu cầu chọn dụng cụ đo chiều dài nên không đủ căn cứ chọn riêng thước kẻ cho chủ đề tìm hiểu khoa học."
+  },
+  {
+   "i": "g3-sci-v4b-scientific-enquiry-ff8587d70f9c",
+   "v": "ok"
+  },
+  {
+   "i": "g3-sci-v4b-water-air-104dfdaa1c96",
+   "v": "issue",
+   "note": "The choices contain ungrammatical constructions such as 'Air is made of wood is the correct scientific explanation.'"
+  },
+  {
+   "i": "g3-sci-v4b-water-air-2ef324cf9d66",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'water air' instead of 'water and air'."
+  },
+  {
+   "i": "g3-sci-v4b-water-air-3a457e69c699",
+   "v": "issue",
+   "note": "The prompt does not identify what 'it' refers to, although evaporation applies to liquid water."
+  },
+  {
+   "i": "g3-sci-v4b-water-air-546d9ef44d55",
+   "v": "issue",
+   "note": "The choices contain ungrammatical constructions such as 'It becomes metal is the correct scientific explanation.'"
+  },
+  {
+   "i": "g3-sci-v4b-water-air-9aed8d39ea12",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'water air' instead of 'water and air'."
+  },
+  {
+   "i": "g3-sci-v4b-water-air-aea70b48e981",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'water air' instead of 'water and air'."
+  },
+  {
+   "i": "g3-sci-v4b-water-air-b0642fbbccd9",
+   "v": "issue",
+   "note": "The prompt does not identify what 'it' refers to, although evaporation applies to liquid water."
+  },
+  {
+   "i": "g4-sci-v4b-earth-space-36d6071cda11",
+   "v": "issue",
+   "note": "The prompt supplies no specific phenomenon or question that would establish 'rotation' as the answer."
+  },
+  {
+   "i": "g4-sci-v4b-earth-space-4833889fe826",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'earth space' instead of 'Earth and space'."
+  },
+  {
+   "i": "g4-sci-v4b-earth-space-6c7d08725df0",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'earth space' instead of 'Earth and space'."
+  },
+  {
+   "i": "g4-sci-v4b-earth-space-d027c6cbe18a",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'earth space' instead of 'Earth and space'."
+  },
+  {
+   "i": "g4-sci-v4b-earth-space-d83d3405d064",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical topic phrase 'earth space' instead of 'Earth and space'."
+  },
+  {
+   "i": "g4-sci-v4b-earth-space-d8d01ed0b049",
+   "v": "issue",
+   "note": "Both a mountain and the Sun fit the broad topic, so the prompt does not establish a unique answer."
+  },
+  {
+   "i": "g4-sci-v4b-ecosystems-food-chains-0f2e21dc1196",
+   "v": "issue",
+   "note": "The topic phrase 'ecosystems food chains' is ungrammatical and needs wording such as 'ecosystems and food chains'."
+  },
+  {
+   "i": "g4-sci-v4b-ecosystems-food-chains-7b30de93cd91",
+   "v": "issue",
+   "note": "All four organisms can belong to food chains, and the prompt never asks which is a producer."
+  },
+  {
+   "i": "g4-sci-v4b-ecosystems-food-chains-bc55d457b4ca",
+   "v": "issue",
+   "note": "Both 'producer' and 'predator' fit the topic, and the prompt provides no definition to distinguish them."
+  },
+  {
+   "i": "g4-sci-v4b-ecosystems-food-chains-d41bfdb510f1",
+   "v": "issue",
+   "note": "The topic phrase 'ecosystems food chains' is ungrammatical and needs wording such as 'ecosystems and food chains'."
+  },
+  {
+   "i": "g4-sci-v4b-ecosystems-food-chains-dec0dc00878b",
+   "v": "issue",
+   "note": "The topic phrase 'ecosystems food chains' is ungrammatical and needs wording such as 'ecosystems and food chains'."
+  },
+  {
+   "i": "g4-sci-v4b-forces-motion-basic-42ed141d9dfb",
+   "v": "issue",
+   "note": "The topic phrase 'forces motion basic' is ungrammatical and should be 'basic forces and motion'."
+  },
+  {
+   "i": "g4-sci-v4b-forces-motion-basic-773ae99c7873",
+   "v": "issue",
+   "note": "The topic phrase 'forces motion basic' is ungrammatical English."
+  },
+  {
+   "i": "g4-sci-v4b-forces-motion-basic-9ef217afa6c3",
+   "v": "issue",
+   "note": "The prompt and distractors contain grammatical errors, including 'forces motion basic' and 'Turn water into metal is'."
+  },
+  {
+   "i": "g4-sci-v4b-forces-motion-basic-bef7fe72515d",
+   "v": "issue",
+   "note": "The topic phrase 'forces motion basic' is ungrammatical English."
+  },
+  {
+   "i": "g4-sci-v4b-forces-motion-basic-d10b7028942e",
+   "v": "issue",
+   "note": "The prompt uses the ungrammatical phrase 'forces motion basic' and never identifies what can 'slow a moving object'."
+  },
+  {
+   "i": "g4-sci-v4b-forces-motion-basic-f6ef60a35746",
+   "v": "issue",
+   "note": "The topic phrase 'forces motion basic' is ungrammatical English."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-02d4fc76e551",
+   "v": "issue",
+   "note": "The prompt's topic list 'heat light sound' needs grammatical coordination, such as 'heat, light and sound'."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-487b8a27b329",
+   "v": "issue",
+   "note": "The choices describe directions of transfer, but the prompt never asks about heat transfer."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-6c757a4740d5",
+   "v": "issue",
+   "note": "The prompt's topic list 'heat light sound' needs grammatical coordination, such as 'heat, light and sound'."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-81fd59947df6",
+   "v": "issue",
+   "note": "The prompt's topic list 'heat light sound' needs grammatical coordination, such as 'heat, light and sound'."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-aa29279cba66",
+   "v": "issue",
+   "note": "The choices describe directions of transfer, but the prompt never asks about heat transfer."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-f76e2ea9e18b",
+   "v": "issue",
+   "note": "The prompt lists heat, light and sound without identifying what 'it' in the choices refers to."
+  },
+  {
+   "i": "g4-sci-v4b-heat-light-sound-f9fd3742263b",
+   "v": "issue",
+   "note": "Distractors such as 'It turns into soil is the correct scientific explanation' contain two improperly joined predicates."
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-12ef3c135260",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-180301c31cc8",
+   "v": "issue",
+   "note": "Distractors such as 'Pumps air into tyres is the correct scientific explanation' are grammatically malformed."
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-b71dc845b7b9",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-c8bfeab4e11e",
+   "v": "issue",
+   "note": "The distractor 'Only sweets is the correct scientific explanation' has incorrect subject-verb agreement."
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-c8ecb0835619",
+   "v": "issue",
+   "note": "The answer 'breaks food down' has no subject, and the prompt never identifies the digestive system."
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-cfdca42cff62",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-human-body-nutrition-d8acacd3a6c3",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-materials-properties-changes-05843f97ff02",
+   "v": "issue",
+   "note": "The prompt never identifies the material or change conditions, so 'it becomes liquid water' cannot be established."
+  },
+  {
+   "i": "g4-sci-v4b-water-air-71dd0964ff2b",
+   "v": "issue",
+   "note": "Cụm chủ đề 'water air' thiếu liên từ 'and', khiến câu hỏi sai ngữ pháp."
+  },
+  {
+   "i": "g4-sci-v4b-water-air-7ab23f3404c7",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g4-sci-v4b-water-air-9897fdf0717d",
+   "v": "issue",
+   "note": "Câu hỏi không nhắc đến vòng tuần hoàn nước nên thiếu căn cứ để chọn hai quá trình được khóa đáp án."
+  },
+  {
+   "i": "g4-sci-v4b-water-air-a3898689eb6a",
+   "v": "issue",
+   "note": "Cụm chủ đề 'water air' thiếu liên từ 'and', khiến câu hỏi sai ngữ pháp."
+  },
+  {
+   "i": "g5-sci-v4b-earth-space-252d58d412bb",
+   "v": "issue",
+   "note": "Hành tinh, ngôi sao, sao chổi và thiên hà đều phù hợp với chủ đề không gian nên không có đáp án duy nhất."
+  },
+  {
+   "i": "g5-sci-v4b-earth-space-2f880fd95ae0",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth space' cần viết là 'Earth and space' để diễn đạt đúng chủ đề Trái Đất và không gian."
+  },
+  {
+   "i": "g5-sci-v4b-earth-space-974c268ff156",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g5-sci-v4b-earth-space-9e6553fd80c1",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth space' cần viết là 'Earth and space' để diễn đạt đúng chủ đề Trái Đất và không gian."
+  },
+  {
+   "i": "g5-sci-v4b-earth-space-d4b1d61a424f",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g5-sci-v4b-earth-space-dc999264ab9b",
+   "v": "issue",
+   "note": "Cụm chủ đề 'earth space' cần viết là 'Earth and space' để diễn đạt đúng chủ đề Trái Đất và không gian."
+  },
+  {
+   "i": "g5-sci-v4b-ecosystems-environment-17da63c86969",
+   "v": "issue",
+   "note": "Cụm 'ecosystems environment' sai cấu trúc, cần diễn đạt là 'ecosystems and the environment'."
+  },
+  {
+   "i": "g5-sci-v4b-ecosystems-environment-3c723aa95f75",
+   "v": "issue",
+   "note": "Câu hỏi không nêu sinh vật phân giải hay hỏi chức năng của chúng nên đáp án 'break down dead material' thiếu chủ thể."
+  },
+  {
+   "i": "g5-sci-v4b-ecosystems-environment-42f490b91866",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g5-sci-v4b-ecosystems-environment-99a2bad73bf9",
+   "v": "issue",
+   "note": "Cụm 'ecosystems environment' sai cấu trúc, cần diễn đạt là 'ecosystems and the environment'."
+  },
+  {
+   "i": "g5-sci-v4b-ecosystems-environment-d3e3244a177e",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g5-sci-v4b-ecosystems-environment-de2277949cd2",
+   "v": "issue",
+   "note": "Các lựa chọn như 'Make sunlight is the correct scientific explanation' sai ngữ pháp vì dùng cụm động từ nguyên mẫu làm chủ ngữ."
+  },
+  {
+   "i": "g5-sci-v4b-energy-electricity-448931eea645",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g5-sci-v4b-energy-electricity-522d0f45117d",
+   "v": "issue",
+   "note": "Cụm chủ đề 'energy electricity' thiếu liên từ 'and', khiến câu hỏi sai ngữ pháp."
+  },
+  {
+   "i": "g5-sci-v4b-energy-electricity-6801889a5841",
+   "v": "issue",
+   "note": "Câu hỏi không nêu bóng đèn hay hỏi điều kiện để dòng điện chạy nên đáp án 'a complete circuit' thiếu ngữ cảnh cần thiết."
+  },
+  {
+   "i": "g5-sci-v4b-energy-electricity-74e2ae885af8",
+   "v": "issue",
+   "note": "Câu hỏi yêu cầu phân loại 'this idea' nhưng không cung cấp ý tưởng cụ thể để học sinh đánh giá."
+  },
+  {
+   "i": "g4-sci-v4b-materials-properties-changes-11bcb54548fd",
+   "v": "issue",
+   "note": "Cụm 'materials properties changes' sai cấu trúc tiếng Anh, cần sửa thành 'properties and changes of materials'."
+  },
+  {
+   "i": "g4-sci-v4b-materials-properties-changes-2f4ca61f6ae8",
+   "v": "issue",
+   "note": "Cụm 'materials properties changes' sai cấu trúc tiếng Anh, cần sửa thành 'properties and changes of materials'."
+  },
+  {
+   "i": "g4-sci-v4b-materials-properties-changes-6b7ddab3f017",
+   "v": "issue",
+   "note": "Cụm 'materials properties changes' sai cấu trúc tiếng Anh, cần sửa thành 'properties and changes of materials'."
+  },
+  {
+   "i": "g4-sci-v4b-materials-properties-changes-a4b6f2762cb1",
+   "v": "issue",
+   "note": "Cả 'solid changing to liquid' và 'liquid changing to solid' đều phù hợp vì câu hỏi không chỉ rõ hiện tượng đông đặc."
+  },
+  {
+   "i": "g4-sci-v4b-materials-properties-changes-b2c5289dc900",
+   "v": "issue",
+   "note": "Cả phương án chuyển từ rắn sang lỏng và phương án nước đông thành đá đều phù hợp với chủ đề được hỏi."
+  },
+  {
+   "i": "g4-sci-v4b-plants-animals-0a50f4ce7476",
+   "v": "issue",
+   "note": "Cụm 'about plants animals' thiếu liên từ 'and' giữa 'plants' và 'animals'."
+  },
+  {
+   "i": "g4-sci-v4b-plants-animals-3fc31f50797e",
+   "v": "issue",
+   "note": "Cụm 'about plants animals' thiếu liên từ 'and' giữa 'plants' và 'animals'."
+  },
+  {
+   "i": "g4-sci-v4b-plants-animals-689f036111eb",
+   "v": "issue",
+   "note": "Cụm 'about plants animals' thiếu liên từ 'and' giữa 'plants' và 'animals'."
+  },
+  {
+   "i": "g4-sci-v4b-plants-animals-84e37e6340d5",
+   "v": "issue",
+   "note": "Cụm 'about plants animals' thiếu liên từ 'and' giữa 'plants' và 'animals'."
+  },
+  {
+   "i": "g4-sci-v4b-plants-animals-eae2e681ad86",
+   "v": "issue",
+   "note": "Cụm 'about plants animals' thiếu liên từ 'and' giữa 'plants' và 'animals'."
+  },
+  {
+   "i": "g4-sci-v4b-plants-animals-fcf846647b83",
+   "v": "issue",
+   "note": "Câu hỏi không đề cập đến quang hợp hay nhu cầu của cây nên không đủ căn cứ chọn 'light' thay vì các từ còn lại."
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-1c7a1a32f9f6",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-1cfc15449d39",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-2bc2161e2bba",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-740ee781658b",
+   "v": "issue",
+   "note": "Câu hỏi không nêu hành động cần giải thích mục đích nên đáp án 'to improve reliability' thiếu ngữ cảnh."
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-909a9d5fee98",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-ab7877b0b849",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-scientific-enquiry-b51ab3d2dd1e",
+   "v": "ok"
+  },
+  {
+   "i": "g4-sci-v4b-water-air-0e9cdd056ee6",
+   "v": "issue",
+   "note": "Cụm 'about water air' thiếu liên từ 'and' giữa 'water' và 'air'."
+  },
+  {
+   "i": "g4-sci-v4b-water-air-3fb32f490fd5",
+   "v": "issue",
+   "note": "Cụm 'about water air' thiếu liên từ 'and' giữa 'water' và 'air'."
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-26bbb5968846",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-30df7784874b",
+   "v": "issue",
+   "note": "Lựa chọn 'Rocks is the correct scientific explanation.' sai hòa hợp chủ ngữ và động từ; 'Rocks' phải đi với 'are'."
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-3c1e3b193c3f",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-5214e9d6010a",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-58c61f2eb3c8",
+   "v": "issue",
+   "note": "Giải thích khẳng định sai rằng mọi hiện tượng sinh học đều giải thích cách sinh vật duy trì nòi giống và phát triển."
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-8ee9966931f5",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-reproduction-life-cycles-ee7e308cbbc2",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-scientific-enquiry-2d56b8f4a209",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-scientific-enquiry-4b018af2f2d0",
+   "v": "issue",
+   "note": "Câu hỏi không nhắc đến biến số nên đáp án 'something that can change' thiếu đối tượng được định nghĩa."
+  },
+  {
+   "i": "g5-sci-v4b-scientific-enquiry-5928e016355f",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-scientific-enquiry-7f40022a4550",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-scientific-enquiry-c7395e2afdbe",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-scientific-enquiry-d3cad32c2d66",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-sustainability-339b23d5dc86",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-sustainability-3dd983cc9ef2",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-sustainability-4be9d2eea8f2",
+   "v": "issue",
+   "note": "Ba phương án nhiễu dùng câu mệnh lệnh làm chủ ngữ trước 'is' sai ngữ pháp, cần chuyển sang dạng V-ing hoặc đặt trong dấu ngoặc kép."
+  },
+  {
+   "i": "g5-sci-v4b-sustainability-58f3a9e28180",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-sustainability-aec7dbfb13bd",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-sustainability-d4a63250f71c",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-energy-electricity-8e94c36a167e",
+   "v": "issue",
+   "note": "Đề không hỏi về tính dẫn điện nên không có căn cứ chọn kim loại thay cho các vật liệu khác."
+  },
+  {
+   "i": "g5-sci-v4b-energy-electricity-fcf0272309a2",
+   "v": "issue",
+   "note": "Cụm chủ đề “energy electricity” sai cấu trúc tiếng Anh, cần viết “electrical energy” hoặc “energy and electricity”."
+  },
+  {
+   "i": "g5-sci-v4b-forces-motion-279efc5b0d84",
+   "v": "issue",
+   "note": "Đề không nêu hiện tượng hay lực cần xác định nên không đủ căn cứ chọn trọng lực."
+  },
+  {
+   "i": "g5-sci-v4b-forces-motion-557529f9eb11",
+   "v": "issue",
+   "note": "Cụm “forces motion” thiếu từ nối, phải viết “forces and motion”."
+  },
+  {
+   "i": "g5-sci-v4b-forces-motion-642175e58241",
+   "v": "issue",
+   "note": "Các lựa chọn như “Make mass disappear is the correct scientific explanation” sai ngữ pháp vì dùng cụm động từ nguyên mẫu làm chủ ngữ."
+  },
+  {
+   "i": "g5-sci-v4b-forces-motion-7bb0b9d6205d",
+   "v": "issue",
+   "note": "Cụm “forces motion” thiếu từ nối, phải viết “forces and motion”."
+  },
+  {
+   "i": "g5-sci-v4b-forces-motion-7eb1163fe5cd",
+   "v": "issue",
+   "note": "Đề không nêu lực hay tác nhân nào có tác dụng làm chậm vật nên đáp án thiếu căn cứ."
+  },
+  {
+   "i": "g5-sci-v4b-forces-motion-9f14b9c7de2b",
+   "v": "issue",
+   "note": "Cụm “forces motion” thiếu từ nối, phải viết “forces and motion”."
+  },
+  {
+   "i": "g5-sci-v4b-human-body-health-5b9905c5b2ef",
+   "v": "issue",
+   "note": "Các lựa chọn “Knees is”, “Kidneys is” và “Teeth is” sai hòa hợp chủ ngữ số nhiều với động từ."
+  },
+  {
+   "i": "g5-sci-v4b-human-body-health-9d905e4097fb",
+   "v": "issue",
+   "note": "Giải thích khẳng định sai rằng các câu khoa học luôn mô tả hoạt động của sinh vật hoặc cơ quan trong cơ thể."
+  },
+  {
+   "i": "g5-sci-v4b-human-body-health-a9ad9bb8c31b",
+   "v": "ok"
+  },
+  {
+   "i": "g5-sci-v4b-human-body-health-bfad30fd73e5",
+   "v": "issue",
+   "note": "Các lựa chọn như “Digest food in the stomach is the correct scientific explanation” sai ngữ pháp vì dùng cụm động từ nguyên mẫu làm chủ ngữ."
+  },
+  {
+   "i": "g5-sci-v4b-human-body-health-c66337e05260",
+   "v": "issue",
+   "note": "Đề không nhắc đến tim nên cả bơm máu và tiêu hóa thức ăn đều phù hợp với chủ đề cơ thể người."
+  },
+  {
+   "i": "g5-sci-v4b-human-body-health-e46b3ff1d58c",
+   "v": "issue",
+   "note": "Đề không hỏi về hô hấp nên thận, phổi, đầu gối và răng đều phù hợp với chủ đề cơ thể người."
+  },
+  {
+   "i": "g5-sci-v4b-materials-mixtures-changes-31530db5001e",
+   "v": "issue",
+   "note": "Các lựa chọn như “It grows roots is the correct scientific explanation” ghép hai mệnh đề sai ngữ pháp."
+  },
+  {
+   "i": "g5-sci-v4b-materials-mixtures-changes-3c526948a703",
+   "v": "issue",
+   "note": "Cụm “materials mixtures changes” thiếu dấu phẩy và từ nối, cần viết “materials, mixtures and changes”."
+  },
+  {
+   "i": "g5-sci-v4b-materials-mixtures-changes-96d46eded82e",
+   "v": "issue",
+   "note": "Đề không nêu chất hay quá trình hòa tan nào nên không thể xác định rằng dung dịch được tạo thành."
+  },
+  {
+   "i": "g5-sci-v4b-materials-mixtures-changes-96dec34ff070",
+   "v": "issue",
+   "note": "Đề không nhắc đến phương pháp lọc hay yêu cầu tách chất nên đáp án là một mảnh câu không trả lời câu hỏi cụ thể."
+  },
+  {
+   "i": "g5-sci-v4b-materials-mixtures-changes-ecec191330db",
+   "v": "issue",
+   "note": "Lựa chọn “Two sounds is the correct scientific explanation” sai hòa hợp chủ ngữ số nhiều với động từ."
+  },
+  {
+   "i": "g5-sci-v4b-materials-mixtures-changes-fbb7d350b5d4",
+   "v": "issue",
+   "note": "Cụm “materials mixtures changes” thiếu dấu phẩy và từ nối, cần viết “materials, mixtures and changes”."
+  }
+ ]
+}

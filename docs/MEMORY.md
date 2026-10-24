@@ -117,8 +117,9 @@
   2026-10-22 VERIFIED CLOSED: mock-pool filter (0043 mint-form: canonical +
   mockEligible + approved-tier + non-CR/speaking + dedup variant_group)
   counts g5 english = 2,327 distinct pools (raw 2,471), every grade x
-  subject >= ~2,300. Exam-ready >=800/grade met on all axes; only the
-  5% human spot-check remains manual.
+  subject >= ~2,300. Exam-ready >=800/grade met on all axes. The 5%
+  human spot-check item was later executed PO-led via
+  scripts/spot-check.mjs (see 'Academic spot-check waves').
 - Next designed items (CR-104 deferred section): promoted to CRs
   2026-10-22 - CR-106 Teach-me lessons (teach_bank_question RPC +
   taught marks so disclosure never re-scores), CR-107 adaptive
@@ -152,7 +153,8 @@
 - Demo PINs in `~/.config/devin/secrets/ea_demo_creds.json` (inside
   handoff-vault encrypted bundle).
 - Eastgate GitLab repos: removed from handoff scope per user request.
-- exam-ready gate: exam pool >=800/grade + 5% human spot-check.
+- exam-ready gate: exam pool >=800/grade + 5% human spot-check (DONE
+  2026-10-24 PO-led, see 'Academic spot-check waves').
 
 ## 2026-10-23 - CR-106 Teach-me CLOSED (prod-verified)
 
@@ -172,7 +174,8 @@
 - OPEN con lai: CR-108 Turnstile (BLOCKED - Cloudflare signup la buoc
   thu cong cua human, khong provision duoc bang API), Groq STT proposal
   (chi la de xuat, chua co CR), CR-68 deferred. Content: G5 pool da dat
-  nguong, chi con 5% human spot-check.
+  nguong; 5% human spot-check da chay xong 2026-10-24 (PO-led, xem muc
+  'Academic spot-check waves').
 
 ## 2026-10-23 - CR-108 Turnstile guest gate IMPLEMENTED
 
@@ -231,9 +234,10 @@
   drain RPC (dung design).
 - Canh bao: curl/API probes vao ea.vieschool.com se bi edge deny -
   day la behavior mong muon, khong phai outage.
-- OPEN con lai: 5% human spot-check (manual), WAF dashboard toggle
-  (human), anomaly scoring/rotating pools/honey rows (lop 3 - defer
-  toi khi co incident), CR-68 deferred, Groq STT proposal-only.
+- OPEN con lai: WAF dashboard toggle (human), anomaly scoring/rotating
+  pools/honey rows (lop 3 - defer toi khi co incident), CR-68 deferred,
+  Groq STT proposal-only. (Academic spot-check: DONE - xem muc
+  'Academic spot-check waves' ben duoi.)
 - ExtRev loop CR-109: r115 (raw-IP actor + wm payload) -> 0057; r116
   (legacy backfill) -> 0058; r117 (backfill scope qua rong + legacy
   verify doc) -> 0059; r118 (canonical restore tu ip_hash, self-heal
@@ -286,7 +290,8 @@
   Remaining tracked: 654 no-diacritics explanations (content-gen CR),
   24 ambiguous-open-prompt, 22 dangling blueprint_id (blueprints table
   empty - metadata debt), 2 ambiguous-country-name (self-clarifying).
-- Still manual: 5% human spot-check, WAF dashboard toggle.
+- Still manual: WAF dashboard toggle. (Academic spot-check da chay -
+  xem muc rieng.)
 - r126 (c2493d1): 3 majors + 1 minor tren repair scripts - tat ca da fix:
   group-dup key them passage+question_type (12 rows bi merge nham da
   reset NULL); transitive vg merge (moi member cua touched vg); repair
@@ -329,7 +334,7 @@
   Bug that: mascot perch -top-9 de len round title -> chuyen sang
   bam mep trai card, an tren mobile (QuestionCard.tsx).
 - Audit sau wave: P0=0, P1=0 (ambiguous 0, blueprint 0, expl-vi 0),
-  P2=0 (mentions 0, country 0). Chi con 5% human spot-check (manual).
+  P2=0 (mentions 0, country 0).
 
 ### CR-111 r130 follow-up (da apply live)
 
@@ -377,3 +382,34 @@
   READY; cac commit scripts/docs sau do CANCELED theo ignored-build-step
   (frontend khong doi - dung).
 - Audit cuoi: MOI check = 0 / 132,663 rows + 292 forms.
+
+## Academic spot-check waves (2026-10-24) - PO-led, thay the "5% human spot-check"
+
+- Methodology: scripts/spot-check.mjs lay mau ngau nhien 600 rows/round
+  tu bank dang serve (seed moi moi round: 600-row stratified sample),
+  codex cham theo rubric su pham (dung dap an, dap an duy nhat, do tuoi,
+  chat luong su pham, context/assets, explanation, EN/VN dung). Moi flag
+  duoc triage tay; defect fix deterministic bang
+  scripts/repair-template-defects.mjs (proposals jsonl -> --apply
+  conditional before-match, content_hash recompute), rows khong sua duoc
+  -> quarantine (review_status=rejected) + scripts/repair-form-refs.mjs
+  + qb-content-audit re-run.
+- Ket qua: r1 149/600 (68 FP do payload thieu statement/tokens/
+  transcript/assets - da them vao payload), r2 33, r3 42, r4 26, r5 29,
+  r6 26, r7 17/360, r8 21/360, r9 19/360, r10 12/360 (~3.3% - hoi tu;
+  moi flag deu duoc disposition: fix / quarantine / FP-co-evidence).
+- Families da sweep bank-wide: came-from nonsense, finds/sees habitat+
+  attribute ambiguity (animal-knowledge map), covering-appendage,
+  is-a-blank double article, where-lives habitat, poster "for this idea"
+  (294+187 quarantine), proper-case (~2k), reorder-no-tokens (190),
+  minutes-late curriculum (157), science-idea under-specified (164),
+  g1/g2 4-digit math (120), unverifiable yes/no state (5), g4 decimal
+  arithmetic (41 - chuong trinh lop 5), g1/g2 perimeter (81), sci-short/
+  challenge text-answer open-ended single-accepted (258), sayto
+  pragmatics (16), '1 <plural>'/piece(s) grammar (~150), data-chart
+  value ties (4), 'chủ ngữ số ba' terminology (56).
+- Tong quarantine ~1,6k rows qua cac waves; bank con ~103,6k approved -
+  trade-off co chu dich: nho hon nhung reliable.
+- Spot-check artifacts: docs/qa/spot-check-*.{json,md} +
+  template-repair-*.jsonl proposals.
+- Audit gate cuoi moi wave: 50/50 checks = 0.
