@@ -242,3 +242,16 @@
   (raw-IP, corrupted opaque, unknown, opaque+null-ip, corrupted
   unknown, canonical) + idempotent pass 2 - fixture luu o
   tests/audit-actor-restore.sql de re-run.
+- ExtRev tiep: r120 (0060 khong idempotent tren raw-IP+null-hash
+  state; fixture chi print khong assert) -> 0061 + DO-assert fixture;
+  r121 (fixture copy CASE logic - drift risk) -> fixture replay
+  verbatim UPDATE bodies cua 0058-0061 + drift-check trong selftest;
+  r122 (assert chi final state + chain replay mat arm coverage) ->
+  pass-snapshot IS NOT DISTINCT + isolated 0061 inputs; r123 (iso
+  cases chi chay 1 pass) -> two-pass idempotency tren audit_iso.
+- r124 (a4dfe86): CLEAN - loop hoi tu. Fixture day du: chain replay
+  0058->0061 + strict two-pass idempotency + isolated arm branches
+  (corrupted-unknown, raw-IP+null, mismatched hash, opaque+null,
+  canonical) - tat ca verify live tren temp tables.
+- HEAD a4dfe86 -> Vercel deploy success (auto-deploy qua git push).
+  CR-109 forensics CLOSED; WAF dashboard toggle van la human task.
