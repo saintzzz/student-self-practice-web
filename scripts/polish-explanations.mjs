@@ -58,24 +58,34 @@ const correctLabel = (row) => {
 // Every quoted term in the original must survive the rewrite in
 // diacritics-insensitive form - English vocab stays verbatim, VN glosses
 // may gain their marks back ('khong the' -> 'không thể' is a match).
-const quotedTerms = (s) => new Set(
+const quotedTerms = (s) =>
   [...String(s ?? '').matchAll(QUOTED)]
-    .map((m) => (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim())
-    .filter(Boolean));
+    .map((m) => ({ term: (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim(), at: m.index ?? 0 }))
+    .filter((q) => q.term);
+
+// A quoted term in a DEFINING-GLOSS slot is Vietnamese regardless of how
+// English its spelling looks: "'can' nghia la 'no'" makes 'no' a gloss
+// that may be restored to 'nó' - 'la' alone is not a cue ('dap an la
+// 'can'' keeps 'can' English). (r137#3)
+const GLOSS_PRE = /(nghia la|co nghia|tuc|dich)\s*$/i;
+const GLOSS_POST = /^\s*(la|tuc)\s*(nghia|dich|cua)\b/i;
+const isGlossSlot = (src, at, end) =>
+  GLOSS_PRE.test(src.slice(Math.max(0, at - 40), at)) ||
+  GLOSS_POST.test(src.slice(end, end + 40));
 
 const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const boundaryRe = (t) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(t)}(?![\\p{L}\\p{N}])`, 'iu');
 
-// Classify a quoted term (r136): neither the rewrite nor the question
-// context can be trusted - the rewrite is what we are validating (a VN
-// word like 'cần' must not stand in for 'can') and prompts can themselves
-// contain Vietnamese ('Translate xin chao ...'). The only trusted English
-// evidence is the bank's own taught vocabulary - every choice label and
-// answer text - plus a small core-word list. A quoted term is ENGLISH iff
-// all its words are in that lexicon; then it must survive literally with
-// word boundaries. A term with any non-lexicon word is gloss-eligible and
-// may match its restored-diacritics surface ('khong the' -> 'không thể').
+// Classify each quoted occurrence (r136, r137): neither the rewrite nor
+// the question context is trusted - prompts may contain Vietnamese and
+// the rewrite is what we are validating. The trusted English evidence is
+// the bank's own taught vocabulary (all choice labels + answer texts)
+// plus a core-word list. Preservation is checked PER WORD: a lexicon word
+// inside ANY quote must survive literally with boundaries (so 'can snore'
+// still protects 'can', and 'tense' cannot fake 'ten'); non-lexicon words
+// must survive in stripped-boundary form; whole terms in gloss slots may
+// be restored with diacritics.
 const CORE_EN = new Set(('a an the i you he she it we they me him her us them my your his its our their ' +
   'am is are was were be been being do does did done have has had having will would shall should can could ' +
   'may might must ought need dare not no yes and or but if then than so such too very just only also even ' +
@@ -89,10 +99,6 @@ const CORE_EN = new Set(('a an the i you he she it we they me him her us them my
 const LEXICON = new Set(CORE_EN);
 const lexWords = (s) => String(s ?? '').toLowerCase().split(/[^a-z']+/).filter(Boolean);
 const addLex = (s) => lexWords(s).forEach((w) => LEXICON.add(stripVN(w)));
-const isEnglishTerm = (t) => {
-  const ws = lexWords(t);
-  return ws.length > 0 && ws.every((w) => LEXICON.has(stripVN(w)));
-};
 
 async function fetchTargets() {
   const rows = [];
@@ -204,9 +210,21 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
         // every English term quoted in the original is still present
         const exLower = String(ex ?? '').toLowerCase();
         const exNorm = stripVN(ex);
-        const missingTerms = [...quotedTerms(row.explanation_vi)]
-          .filter((t) => !boundaryRe(t.toLowerCase()).test(exLower)
-            && !( !isEnglishTerm(t) && exNorm.includes(stripVN(t)) ));
+        const missingTerms = [];
+        for (const q of quotedTerms(row.explanation_vi)) {
+          const end = q.at + q.term.length + 2; // quote delimiters
+          if (isGlossSlot(row.explanation_vi, q.at, end)) {
+            // whole-term stripped-boundary match allows diacritic repair
+            if (!boundaryRe(stripVN(q.term)).test(exNorm)) missingTerms.push(q.term);
+            continue;
+          }
+          for (const w of lexWords(q.term)) {
+            const ok = LEXICON.has(stripVN(w))
+              ? boundaryRe(w.toLowerCase()).test(exLower)
+              : boundaryRe(stripVN(w)).test(exNorm);
+            if (!ok) { missingTerms.push(`${q.term} (${w})`); break; }
+          }
+        }
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
             ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
           if (ex === row.explanation_vi) unchanged++;
