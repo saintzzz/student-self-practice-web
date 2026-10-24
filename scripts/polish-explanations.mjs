@@ -63,6 +63,22 @@ const quotedTerms = (s) => new Set(
     .map((m) => (m[1] ?? m[2] ?? m[3] ?? m[4] ?? '').trim())
     .filter(Boolean));
 
+// Vietnamese function words (diacritics-stripped) mark a quoted phrase as
+// a VN gloss rather than taught English.
+const VN_FUNC = new Set([
+  'khong', 'nghia', 'dong', 'cua', 'chon', 'dung', 'duoc', 'nay', 'vay',
+  'phai', 'sai', 'nen', 'voi', 'khi', 'nhu', 'vao', 'con', 'cac', 'mot',
+  'thi', 'la', 've', 'ra', 'lai', 'vi', 'boi', 'tuc', 'ten', 'hinh',
+  'anh', 'trong', 'tren', 'duoi', 'giua', 'canh', 'se', 'da', 'dang',
+  'ma', 'neu', 'khac', 'cung', 'cang', 'nhieu', 'it', 'rat', 'qua',
+  'dau', 'moi', 'nhan', 'vua', 'van', 'roi', 'thoi', 'cho', 'co', 'o',
+]);
+const isVnGloss = (t) =>
+  stripVN(t).split(/[^a-z]+/).some((w) => w && VN_FUNC.has(w));
+const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const boundaryRe = (t) =>
+  new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(t)}(?![\\p{L}\\p{N}])`, 'iu');
+
 async function fetchTargets() {
   const rows = [];
   for (let off = 0; ; off += 1000) {
@@ -163,21 +179,18 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
         const ex = byId.get(row.id);
         // validation: present, sane length, actually Vietnamese now, and
         // every English term quoted in the original is still present
-        // Terms that occur in the prompt/choices/answer are TAUGHT ENGLISH
-        // - they must survive literally (case-insensitive). Diacritics-
-        // insensitive matching is reserved for VN glosses, else 'cần' would
-        // satisfy a dropped 'can' (r133).
-        const enContext = stripVN([
-          row.prompt_text,
-          ...(Array.isArray(row.choices) ? row.choices : []),
-          correctLabel(row),
-        ].join(' '));
+        // Classify each quoted term by ITS OWN words (r134#1): a term
+        // containing a Vietnamese function word is a gloss (diacritics-
+        // insensitive match so 'khong the' may become 'không thể'); every
+        // other quoted term is taught English and must survive literally
+        // with word boundaries - else 'cần' would satisfy a dropped 'can'
+        // and 'candy' would fake 'can' (r133, r134#2).
         const exLower = String(ex ?? '').toLowerCase();
         const exNorm = stripVN(ex);
         const missingTerms = [...quotedTerms(row.explanation_vi)]
-          .filter((t) => enContext.includes(stripVN(t))
-            ? !exLower.includes(t.toLowerCase())
-            : !exNorm.includes(stripVN(t)));
+          .filter((t) => isVnGloss(t)
+            ? !exNorm.includes(stripVN(t))
+            : !boundaryRe(t.toLowerCase()).test(exLower));
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
             ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
           if (ex === row.explanation_vi) unchanged++;
