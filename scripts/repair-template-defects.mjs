@@ -30,6 +30,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { paged } from './lib/paged.mjs';
 import {
   ANIMAL_VN, ATTR_HAS, ANIMAL_PLACE, ANIMAL_GROUP, GROUP_VN,
   OFFSPRING, offspringDistractors, safeDistractors, fixArticles,
@@ -66,21 +67,10 @@ function pick3(pool, seed) {
 }
 
 async function* fetchMatching(pred) {
-  let from = 0;
   const cols = 'id,question_type,grade,prompt_text,passage,statement,tokens,choices,answer,explanation_vi,review_status';
-  for (;;) {
-    let rows = null;
-    for (let attempt = 0; attempt < 6; attempt++) {
-      const r = await fetch(`${URL}/rest/v1/qb_questions?select=${cols}&order=id&offset=${from}&limit=250&review_status=neq.rejected`, { headers: H });
-      const j = await r.json();
-      if (Array.isArray(j)) { rows = j; break; }
-      await new Promise((s) => setTimeout(s, 1500 * (attempt + 1)));
-    }
-    if (!rows) throw new Error(`fetch failed at offset ${from}`);
+  const url = `${URL}/rest/v1/qb_questions?select=${cols}&review_status=neq.rejected`;
+  for await (const rows of paged(url, { headers: H, page: 250, retries: 6 }))
     for (const q of rows) if (pred(q)) yield q;
-    if (rows.length < 250) return;
-    from += 250;
-  }
 }
 
 // ---- targeted one-off fixes ------------------------------------------
@@ -616,7 +606,7 @@ const TARGETED_FIXES = {
   }),
   'g1-eng-v4b-spelling-3215b9fc2f19': (q) => ({
     // '_ilk' has two valid completions (silk, milk) - anchor the word
-    prompt_text: 'Choose the missing letter: mi_k',
+    prompt_text: 'Choose the missing letter: mil_',
     choices: ['k', 's', 'm', 't'],
     answer: { text: 'k', index: 0 },
     explanation_vi: 'Từ đầy đủ là "milk" (sữa) - chỗ trống là chữ k.',
@@ -1084,21 +1074,30 @@ async function main() {
       if (!res) { stats.noop++; continue; }
       if (res.flag) { stats.flags.push({ id: q.id, flag: res.flag, detail: res.detail }); continue; }
       const patch = { ...res.patch };
+      // a/an-teaching rows keep deliberate distractors - never normalize articles on them
+      const cs = (patch.choices ?? q.choices ?? []).filter((c) => typeof c === 'string');
+      const teachesAnRow = kind === 'article'
+        || (cs.some((c) => /\ban\s+[aeiou]/i.test(c)) && cs.some((c) => /\b(a|A)\s+[aeiou]/i.test(c)));
+      const norm = (s) => fixProperCase(fixPrepositions(teachesAnRow ? s : fixArticles(s)), { acronyms: true });
+      const normVi = (s) => fixProperCase(fixPrepositions(teachesAnRow ? s : fixArticles(s)), { acronyms: false });
       // article + proper-case + preposition passes over every patched field too
-      for (const k of ['prompt_text', 'explanation_vi', 'statement']) if (patch[k]) patch[k] = fixProperCase(fixPrepositions(fixArticles(patch[k])), { acronyms: k !== 'explanation_vi' });
-      if (patch.choices) patch.choices = patch.choices.map((c) => typeof c === 'string' ? fixProperCase(fixArticles(c)) : c);
-      if (patch.answer?.text) patch.answer = { ...patch.answer, text: fixProperCase(fixArticles(patch.answer.text)) };
+      for (const k of ['prompt_text', 'statement']) if (patch[k]) patch[k] = norm(patch[k]);
+      if (patch.explanation_vi) patch.explanation_vi = normVi(patch.explanation_vi);
+      if (patch.choices) patch.choices = patch.choices.map((c) => typeof c === 'string' ? norm(c) : c);
+      if (patch.answer?.text) patch.answer = { ...patch.answer, text: norm(patch.answer.text) };
+      if (patch.passage) patch.passage = norm(patch.passage);
       const merged = {
         prompt_text: patch.prompt_text ?? q.prompt_text,
         choices: patch.choices ?? q.choices,
         answer: patch.answer ?? q.answer,
+        passage: patch.passage ?? q.passage,
       };
-      patch.content_hash = contentHash(merged.prompt_text, merged.choices, merged.answer, q.passage);
+      patch.content_hash = contentHash(merged.prompt_text, merged.choices, merged.answer, merged.passage);
       // no-op guard: every patch field already equals the live value
-      const cur = { prompt_text: q.prompt_text, question_type: q.question_type, choices: q.choices, answer: q.answer, explanation_vi: q.explanation_vi, tokens: q.tokens, statement: q.statement, content_hash: null };
+      const cur = { prompt_text: q.prompt_text, question_type: q.question_type, choices: q.choices, answer: q.answer, explanation_vi: q.explanation_vi, tokens: q.tokens, statement: q.statement, passage: q.passage, content_hash: null };
       const changed = Object.keys(patch).filter((k) => k !== 'content_hash' && JSON.stringify(patch[k]) !== JSON.stringify(cur[k]));
       if (!changed.length) { stats.noop++; continue; }
-      const before = { prompt_text: q.prompt_text, question_type: q.question_type, choices: q.choices, answer: q.answer, explanation_vi: q.explanation_vi, tokens: q.tokens, statement: q.statement };
+      const before = { prompt_text: q.prompt_text, question_type: q.question_type, choices: q.choices, answer: q.answer, explanation_vi: q.explanation_vi, tokens: q.tokens, statement: q.statement, passage: q.passage };
       appendFileSync(file, JSON.stringify({ id: q.id, kind, before, patch }) + '\n');
       stats[kind]++; n++;
     }
@@ -1110,13 +1109,13 @@ async function main() {
   const lines = readFileSync(APPLY, 'utf8').trim().split('\n').slice(FROM).map(JSON.parse);
   let ok = 0, skip = 0, fail = 0, done = 0;
   const applyOne = async (p) => {
-    const r = await fetch(`${URL}/rest/v1/qb_questions?id=eq.${p.id}&select=prompt_text,question_type,choices,answer,explanation_vi,tokens,statement`, { headers: H });
+    const r = await fetch(`${URL}/rest/v1/qb_questions?id=eq.${p.id}&select=prompt_text,question_type,choices,answer,explanation_vi,tokens,statement,passage`, { headers: H });
     const [cur] = await r.json();
     if (!cur) { console.error('MISSING', p.id); fail++; return; }
-    const drift = ['prompt_text', 'explanation_vi', 'question_type', 'statement'].some((k) => p.before[k] !== undefined && cur[k] !== p.before[k])
+    const drift = ['prompt_text', 'explanation_vi', 'question_type', 'statement', 'passage'].some((k) => p.before[k] !== undefined && cur[k] !== p.before[k])
       || ['choices', 'answer', 'tokens'].some((k) => p.before[k] !== undefined && JSON.stringify(cur[k]) !== JSON.stringify(p.before[k]));
     if (drift) {
-      const already = ['prompt_text', 'explanation_vi', 'question_type', 'statement'].every((k) => p.patch[k] === undefined || cur[k] === p.patch[k])
+      const already = ['prompt_text', 'explanation_vi', 'question_type', 'statement', 'passage'].every((k) => p.patch[k] === undefined || cur[k] === p.patch[k])
         && ['choices', 'answer', 'tokens'].every((k) => p.patch[k] === undefined || JSON.stringify(cur[k]) === JSON.stringify(p.patch[k]));
       if (already) { skip++; return; }
       console.error('DRIFT', p.id); fail++; return;

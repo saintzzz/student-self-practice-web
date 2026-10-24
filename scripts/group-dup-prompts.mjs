@@ -26,6 +26,7 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const APPLY = process.argv.includes('--apply');
@@ -42,30 +43,7 @@ const HEADERS = {
 };
 
 async function fetchAll(cols) {
-  const out = [];
-  const PAGE = 1000;
-  for (let off = 0; ; off += PAGE) {
-    let res = null;
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      try {
-        res = await fetch(
-          `${SUPA_URL}/rest/v1/qb_questions?select=${cols}&order=id&offset=${off}&limit=${PAGE}`,
-          { headers: HEADERS, signal: AbortSignal.timeout(30000) },
-        );
-        if (res.ok) break;
-        if (res.status >= 500) { res = null; await new Promise((r) => setTimeout(r, 2000 * (attempt + 1))); continue; }
-        throw new Error(`fetch: ${res.status} ${await res.text()}`);
-      } catch (e) {
-        if (attempt === 3) throw e;
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-      }
-    }
-    if (!res?.ok) throw new Error(`fetch: page at offset ${off} failed after retries`);
-    const page = await res.json();
-    out.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return out;
+  return pagedAll(`${SUPA_URL}/rest/v1/qb_questions?select=${cols}`, { headers: HEADERS, timeout: 30000 });
 }
 
 const choiceLabel = (c) =>

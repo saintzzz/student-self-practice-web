@@ -1,6 +1,6 @@
 # Question Bank Content Audit
 
-Generated: 2026-10-24T21:58:57.456Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
+Generated: 2026-10-24T23:04:49.021Z · rows: 132663 · regenerate: `node scripts/qb-content-audit.mjs`
 
 | Check | Sev | Count | What it catches |
 |---|---|---|---|

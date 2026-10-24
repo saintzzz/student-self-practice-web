@@ -16,6 +16,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { paged, pagedAll } from './lib/paged.mjs';
 
 // r11: env config first so the audit runs in CI/clean checkouts - the
 // ~/.config/devin file is only a local fallback, never committed.
@@ -92,32 +93,26 @@ check('publication_policy present on all rows', nullPolicy !== 0, `${nullPolicy}
 // Same prompt+answer with a DIFFERENT choice set is a legit variant, not a dupe.
 const seen = new Map();
 let dupRows = 0;
-for (let off = 0; ; off += 1000) {
-  const rows = await fetchJson(
-    `${SUPA}/rest/v1/qb_questions?select=grade,subject,prompt_text,choices,answer,statement&order=id&offset=${off}&limit=1000`,
-  );
-  if (!rows.length) break;
+for await (const rows of paged(
+  `${SUPA}/rest/v1/qb_questions?select=grade,subject,prompt_text,choices,answer,statement`,
+  { headers: H },
+)) {
   for (const q of rows) {
     const k = `${q.grade}|${q.subject}|${q.prompt_text}|${JSON.stringify([...(q.choices ?? [])].sort())}|${JSON.stringify(q.answer)}|${q.statement ?? ''}`;
     const n = (seen.get(k) ?? 0) + 1;
     seen.set(k, n);
     if (n > 1) dupRows++;
   }
-  if (rows.length < 1000) break;
 }
 check('no within-grade exact dupes', dupRows !== 0, `${dupRows} duplicate rows`);
 
 // 3. known-bad semantic patterns - fetch ALL "smaller" questions and
 // verify each answer is actually the smaller of the two numbers (r2/r3
 // findings: must paginate the whole set, not sample 200).
-const sq = [];
-for (let off = 0; ; off += 1000) {
-  const page = await fetchJson(
-    `${SUPA}/rest/v1/qb_questions?select=id,prompt_text,answer&prompt_text=like.*Which*number*smaller*&order=id&offset=${off}&limit=1000`,
-  );
-  sq.push(...page);
-  if (page.length < 1000) break;
-}
+const sq = await pagedAll(
+  `${SUPA}/rest/v1/qb_questions?select=id,prompt_text,answer&prompt_text=like.*Which*number*smaller*`,
+  { headers: H },
+);
 let badCmp = 0;
 for (const q of sq) {
   const m = /smaller: (\d+) or (\d+)/.exec(q.prompt_text ?? '');
@@ -130,17 +125,13 @@ for (const q of sq) {
 check('"smaller" answers are actually the smaller number', badCmp !== 0, `${badCmp}/${sq.length} wrong`);
 
 // paginate every filtered fetch - a bare limit=1000 silently truncates
-// (external-review r4) and can miss the bad rows entirely.
+// (external-review r4) and can miss the bad rows entirely. Keyset
+// pagination: offset pages re-scan the whole table (IO-budget burn).
 async function fetchAll(filter, select = 'id,prompt_text,answer') {
-  const all = [];
-  for (let off = 0; ; off += 1000) {
-    const page = await fetchJson(
-      `${SUPA}/rest/v1/qb_questions?select=${select}&${filter}&order=id&offset=${off}&limit=1000`,
-    );
-    all.push(...page);
-    if (page.length < 1000) break;
-  }
-  return all;
+  return pagedAll(
+    `${SUPA}/rest/v1/qb_questions?select=${select}&${filter}`,
+    { headers: H },
+  );
 }
 
 // r3: scramble prompts must contain exactly the letters of the answer.

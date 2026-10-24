@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { paged } from './lib/paged.mjs';
 import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
@@ -79,16 +80,10 @@ const boundaryRe = (t) =>
 
 async function fetchTargets() {
   const rows = [];
-  for (let off = 0; ; off += 1000) {
-    const res = await fetch(
-      `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi` +
-      `&explanation_vi=not.is.null&order=id&offset=${off}&limit=1000`,
-      { headers: H, signal: AbortSignal.timeout(20000) });
-    if (!res.ok) throw new Error('fetch ' + res.status);
-    const chunk = await res.json();
+  const url = `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi` +
+    `&explanation_vi=not.is.null`;
+  for await (const chunk of paged(url, { headers: H }))
     rows.push(...chunk.filter((r) => r.explanation_vi && !VN_MARK.test(r.explanation_vi)));
-    if (chunk.length < 1000) break;
-  }
   return LIMIT ? rows.slice(0, LIMIT) : rows;
 }
 

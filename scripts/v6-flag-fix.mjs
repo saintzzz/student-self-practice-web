@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const KEY = JSON.parse(

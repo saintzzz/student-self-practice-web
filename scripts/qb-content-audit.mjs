@@ -16,6 +16,7 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { pagedAll } from './lib/paged.mjs';
 import {
   ANIMALS, ATTR_HAS, ATTR_BORDERLINE, ANIMAL_PLACE, OFFSPRING, AN_WORDS,
   NON_COVERING, VALID_HABITATS,
@@ -38,25 +39,10 @@ const HEADERS = {
 };
 
 async function fetchTable(table, cols, order = 'id') {
-  const out = [];
-  const PAGE = 1000;
-  for (let off = 0; ; off += PAGE) {
-    let page;
-    // PostgREST statement timeouts are transient under load - retry with
-    // backoff before giving up on a page.
-    for (let t = 0; t < 4; t++) {
-      const res = await fetch(
-        `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=${PAGE}`,
-        { headers: HEADERS, signal: AbortSignal.timeout(20000) },
-      ).catch(() => null);
-      if (res?.ok) { page = await res.json(); break; }
-      if (t === 3) throw new Error(`${table}: ${res?.status} ${await res?.text()}`);
-      await new Promise((s) => setTimeout(s, 3000 * (t + 1)));
-    }
-    out.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return out;
+  return pagedAll(
+    `${SUPA_URL}/rest/v1/${table}?select=${cols}`,
+    { headers: HEADERS, order },
+  );
 }
 
 const choiceLabel = (c) =>

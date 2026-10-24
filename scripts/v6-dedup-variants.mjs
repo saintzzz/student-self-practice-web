@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const KEY = JSON.parse(
@@ -17,16 +18,9 @@ const HEADERS = {
 };
 const label = (c) => (typeof c === 'object' && c ? String(c.assetId ?? c.text ?? c.label ?? '') : String(c));
 
-const rows = [];
-for (let off = 0; ; off += 1000) {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/qb_questions?select=id,grade,subject,prompt_text,choices,answer,variant_group_id,publication_policy&offset=${off}&limit=1000`,
-    { headers: HEADERS });
-  if (!res.ok) throw new Error(await res.text());
-  const page = await res.json();
-  rows.push(...page);
-  if (page.length < 1000) break;
-}
+const rows = await pagedAll(
+  `${SUPA_URL}/rest/v1/qb_questions?select=id,grade,subject,prompt_text,choices,answer,variant_group_id,publication_policy`,
+  { headers: HEADERS });
 
 const groups = new Map();
 for (const q of rows) {

@@ -17,6 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const APPLY = process.argv.includes('--apply');
@@ -34,17 +35,7 @@ const H = {
 };
 
 async function fetchTable(table, cols, order = 'id') {
-  const out = [];
-  for (let off = 0; ; off += 1000) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=${order}&offset=${off}&limit=1000`,
-      { headers: H, signal: AbortSignal.timeout(20000) });
-    if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
-    const page = await res.json();
-    out.push(...page);
-    if (page.length < 1000) break;
-  }
-  return out;
+  return pagedAll(`${SUPA_URL}/rest/v1/${table}?select=${cols}`, { headers: H, order });
 }
 
 const eligible = (q) =>

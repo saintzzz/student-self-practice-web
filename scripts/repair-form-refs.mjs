@@ -30,6 +30,7 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { pagedAll } from './lib/paged.mjs';
 
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
 const APPLY = process.argv.includes('--apply');
@@ -46,27 +47,7 @@ const HEADERS = {
 };
 
 async function fetchAll(table, cols) {
-  const out = [];
-  const PAGE = 1000;
-  for (let off = 0; ; off += PAGE) {
-    let page = null;
-    for (let t = 0; t < 4 && page === null; t++) {
-      try {
-        const res = await fetch(
-          `${SUPA_URL}/rest/v1/${table}?select=${cols}&order=id&offset=${off}&limit=${PAGE}`,
-          { headers: HEADERS, signal: AbortSignal.timeout(30000) },
-        );
-        if (!res.ok) throw new Error(`${table}: ${res.status} ${await res.text()}`);
-        page = await res.json();
-      } catch (e) {
-        if (t === 3) throw e;
-        await new Promise((s) => setTimeout(s, 1500 * (t + 1)));
-      }
-    }
-    out.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return out;
+  return pagedAll(`${SUPA_URL}/rest/v1/${table}?select=${cols}`, { headers: HEADERS, timeout: 30000 });
 }
 
 // Same near-dup key as qb-content-audit.mjs `form-near-dup-content`:
@@ -297,6 +278,12 @@ if (APPLY) {
   // check guards any resulting shrinkage.
   if (report.missingIds.length) {
     console.error('ABORT: unresolved refs - fix or substitute manually before applying');
+    process.exit(1);
+  }
+  const shortfalls = report.unfixed.filter((u) => /blueprint shortfall/.test(u));
+  if (shortfalls.length) {
+    console.error(`ABORT: ${shortfalls.length} forms still below blueprint targetQuestions after top-up:`);
+    for (const s of shortfalls.slice(0, 20)) console.error(`  ${s}`);
     process.exit(1);
   }
   let ok = 0;

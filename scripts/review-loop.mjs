@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync, mkdirSync, appendFileSync, existsSync } fr
 import { homedir } from 'os';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { paged } from './lib/paged.mjs';
 import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -51,17 +52,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function fetchPending() {
   const rows = [];
   for (const g of GRADES) {
-    let off = 0;
-    for (;;) {
-      const res = await fetch(
-        `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi,learning_objective,passage,statement,tokens` +
-        `&grade=eq.${g}&subject=eq.english&review_status=eq.${PENDING_STATUS}` +
-        `&order=id&offset=${off}&limit=1000`, { headers: H });
-      if (!res.ok) throw new Error('fetch ' + res.status);
-      const chunk = await res.json();
+    const url = `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi,learning_objective,passage,statement,tokens` +
+      `&grade=eq.${g}&subject=eq.english&review_status=eq.${PENDING_STATUS}`;
+    for await (const chunk of paged(url, { headers: H })) {
       rows.push(...chunk);
-      if (chunk.length < 1000 || (LIMIT && rows.length >= LIMIT)) break;
-      off += 1000;
+      if (LIMIT && rows.length >= LIMIT) break;
     }
     if (LIMIT && rows.length >= LIMIT) break;
   }
@@ -78,15 +73,11 @@ async function fetchRejected() {
   if (!drops.length) {
     console.log('drop file empty/missing - fetching rejected pool directly');
     const rows = [];
-    for (let off = 0; ; off += 1000) {
-      const res = await fetch(
-        `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi,learning_objective,passage,statement,tokens` +
-        `&subject=eq.english&canonical=eq.true&review_status=eq.rejected` +
-        `&order=id&offset=${off}&limit=1000`, { headers: H });
-      if (!res.ok) throw new Error('fetch ' + res.status);
-      const chunk = await res.json();
+    const rejUrl = `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi,learning_objective,passage,statement,tokens` +
+      `&subject=eq.english&canonical=eq.true&review_status=eq.rejected`;
+    for await (const chunk of paged(rejUrl, { headers: H })) {
       for (const r of chunk) { r._why = 'rejected earlier (reason lost) - re-check and fix any quality issue'; rows.push(r); }
-      if (chunk.length < 1000 || (LIMIT && rows.length >= LIMIT)) break;
+      if (LIMIT && rows.length >= LIMIT) break;
     }
     console.log(`repair fetch: ${rows.length} rejected rows`);
     return LIMIT ? rows.slice(0, LIMIT) : rows;

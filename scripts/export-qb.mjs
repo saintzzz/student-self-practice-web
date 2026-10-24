@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
+import { paged } from './lib/paged.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -28,23 +29,16 @@ const KEY = JSON.parse(
 const COLS = 'id,grade,subject,question_type,prompt_text,transcript,choices,answer,passage,statement,review_status,publication_policy';
 const PAGE = 1000;
 
-let url = `${SUPA_URL}/rest/v1/qb_questions?select=${COLS}&order=id.asc`;
+let url = `${SUPA_URL}/rest/v1/qb_questions?select=${COLS}`;
 if (!ALL) {
   url += `&question_type=eq.mcq&review_status=not.in.(rejected,draft)`;
   url += `&or=(passage.is.null,passage.eq.)&or=(transcript.is.null,transcript.eq.)&or=(statement.is.null,statement.eq.)`;
 }
 
+const headers = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Accept-Profile': 'practice' };
 const rows = [];
-for (let off = 0; ; off += PAGE) {
-  const res = await fetch(url + `&limit=${PAGE}&offset=${off}`, {
-    headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Accept-Profile': 'practice' },
-  });
-  if (!res.ok) { console.error('HTTP', res.status, await res.text()); process.exit(2); }
-  const batch = await res.json();
+for await (const batch of paged(url, { headers, page: PAGE }))
   rows.push(...batch);
-  if (batch.length < PAGE) break;
-  if (off % 10000 === 0 && off > 0) console.log(`  ...${rows.length}`);
-}
 
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(rows));

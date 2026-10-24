@@ -32,6 +32,7 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { pagedAll } from './lib/paged.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const QA_DIR = join(ROOT, 'docs', 'qa');
@@ -60,17 +61,7 @@ const DB_HEADERS = {
 };
 
 async function fetchAll(table, cols) {
-  const out = [];
-  for (let off = 0; ; off += 1000) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/${table}?select=${cols}&offset=${off}&limit=1000`,
-      { headers: DB_HEADERS, signal: AbortSignal.timeout(15000) });
-    if (!res.ok) throw new Error(`${table}: ${res.status}`);
-    const page = await res.json();
-    out.push(...page);
-    if (page.length < 1000) break;
-  }
-  return out;
+  return pagedAll(`${SUPA_URL}/rest/v1/${table}?select=${cols}`, { headers: DB_HEADERS, timeout: 15000 });
 }
 
 const choiceLabel = (c) =>

@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
+import { paged } from './lib/paged.mjs';
 
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DRY = process.argv.includes('--dry');
@@ -23,18 +24,11 @@ const HW = { ...H, 'Content-Profile': 'practice', 'Content-Type': 'application/j
 async function fetchPending() {
   const rows = [];
   for (const g of GRADES) {
-    let off = 0;
-    for (;;) {
-      const res = await fetch(
-        `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi,learning_objective,passage,statement,tokens` +
-        `&grade=eq.${g}&subject=eq.english&review_status=eq.machine-editorial-reviewed-human-academic-signoff-required` +
-        `&order=id&offset=${off}&limit=1000`,
-        { headers: H });
-      if (!res.ok) throw new Error('fetch ' + res.status);
-      const chunk = await res.json();
+    const url = `${URL}/rest/v1/qb_questions?select=id,grade,question_type,prompt_text,choices,answer,explanation_vi,learning_objective,passage,statement,tokens` +
+      `&grade=eq.${g}&subject=eq.english&review_status=eq.machine-editorial-reviewed-human-academic-signoff-required`;
+    for await (const chunk of paged(url, { headers: H })) {
       rows.push(...chunk);
-      if (chunk.length < 1000 || (LIMIT && rows.length >= LIMIT)) break;
-      off += 1000;
+      if (LIMIT && rows.length >= LIMIT) break;
     }
     if (LIMIT && rows.length >= LIMIT) break;
   }

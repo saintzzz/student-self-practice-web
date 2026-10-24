@@ -23,6 +23,7 @@ import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { paged } from './lib/paged.mjs';
 import { homedir } from 'node:os';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -44,19 +45,12 @@ const SEL = 'id,grade,question_type,domain,skill,prompt_text,choices,answer,expl
 
 async function fetchPool(where) {
   const rows = [];
-  for (const g of GRADES) {
-    let off = 0;
-    for (;;) {
-      const res = await fetch(
-        `${URL}/rest/v1/qb_questions?select=${SEL}&grade=eq.${g}&subject=eq.english&canonical=eq.true&${where}&order=id&offset=${off}&limit=1000`,
-        { headers: H });
-      if (!res.ok) throw new Error('fetch ' + res.status);
-      const chunk = await res.json();
+  for (const g of GRADES)
+    for await (const chunk of paged(
+      `${URL}/rest/v1/qb_questions?select=${SEL}&grade=eq.${g}&subject=eq.english&canonical=eq.true&${where}`,
+      { headers: H },
+    ))
       rows.push(...chunk);
-      if (chunk.length < 1000) break;
-      off += 1000;
-    }
-  }
   return rows;
 }
 

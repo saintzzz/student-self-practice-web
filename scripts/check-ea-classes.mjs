@@ -429,8 +429,10 @@ for (const f of walk(join(BASE, "scripts"), /^gen-.*\.mjs$/)) {
         hit("audit-truncation", rel(f),
           `unpaginated fetch: ${u.slice(0, 90)}`);
     }
-    if (!/offset=\$\{off\}|\.range\(/.test(src))
-      hit("audit-truncation", rel(f), "no offset/range pagination loop");
+    // Keyset via scripts/lib/paged.mjs is the preferred pagination -
+    // offset pages re-scan the whole table and burn disk IO budget.
+    if (!/paged\(|pagedAll\(|offset=\$\{off\}|\.range\(/.test(src))
+      hit("audit-truncation", rel(f), "no keyset/offset/range pagination loop");
   }
 }
 

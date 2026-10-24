@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { pagedAll } from './lib/paged.mjs';
 import crypto from 'crypto';
 import { createLlmChannel, parseJsonArray } from './llm-channel.mjs';
 
@@ -31,23 +32,11 @@ const rng = (() => {
 })();
 
 async function fetchAll() {
-  const rows = [];
-  for (let off = 0; ; off += 1000) {
-    let res = null;
-    for (let t = 0; t < 5; t++) {
-      res = await fetch(
-        `${URL}/rest/v1/qb_questions?select=id,grade,subject,question_type,skill,prompt_text,passage,statement,tokens,transcript,choices,answer,explanation_vi` +
-        `&review_status=neq.rejected&order=id&offset=${off}&limit=1000`,
-        { headers: H, signal: AbortSignal.timeout(30000) }).catch(() => null);
-      if (res?.ok) break;
-      await new Promise((s) => setTimeout(s, 3000 * (t + 1)));
-    }
-    if (!res?.ok) throw new Error('fetch ' + (res?.status ?? 'timeout'));
-    const chunk = await res.json();
-    rows.push(...chunk);
-    if (chunk.length < 1000) break;
-  }
-  return rows;
+  return pagedAll(
+    `${URL}/rest/v1/qb_questions?select=id,grade,subject,question_type,skill,prompt_text,passage,statement,tokens,transcript,choices,answer,explanation_vi` +
+    `&review_status=neq.rejected`,
+    { headers: H, timeout: 30000, retries: 5 },
+  );
 }
 
 // Question-level image assets (qb_question_assets -> qb_assets): the
@@ -135,8 +124,12 @@ if (IDS) {
   sample = all.filter((r) => wanted.has(r.id));
   console.log(`targeted ids=${wanted.size} found=${sample.length}`);
 } else {
-  // stratified-ish seeded sample: shuffle then take N
-  const shuffled = [...all].sort(() => rng() - 0.5);
+  // stratified-ish seeded sample: Fisher-Yates shuffle then take N
+  const shuffled = [...all];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   sample = shuffled.slice(0, N);
   console.log(`bank=${all.length} sample=${sample.length} seed=${SEED}`);
 }
@@ -168,6 +161,18 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
   }
 }));
 await channel.close();
+
+// coverage validation: every sampled id must have exactly one verdict
+const wantedIds = new Set(sample.map((r) => r.id));
+const seen = new Set();
+for (const v of verdicts) {
+  if (!wantedIds.has(v.i)) console.log(`  WARN verdict for unknown id: ${v.i}`);
+  else if (seen.has(v.i)) console.log(`  WARN duplicate verdict: ${v.i}`);
+  else if (v.v !== 'ok' && v.v !== 'issue') console.log(`  WARN bad verdict value: ${v.i} -> ${v.v}`);
+  else seen.add(v.i);
+}
+const missing = [...wantedIds].filter((id) => !seen.has(id));
+if (missing.length) console.log(`  WARN ${missing.length} sampled rows got no verdict (coverage ${seen.size}/${wantedIds.size})`);
 
 const issues = verdicts.filter((v) => v.v === 'issue');
 const ts = Date.now();

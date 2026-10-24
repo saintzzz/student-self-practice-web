@@ -14,6 +14,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { paged } from './lib/paged.mjs';
 
 const SOURCE_JSONL = join(homedir(), 'Desktop/primary-question-bank-v6-final/data/questions-v6.jsonl');
 const SUPA_URL = 'https://cxjpgfhqchjoernfmcra.supabase.co';
@@ -116,14 +117,8 @@ const isThin = (s) =>
 
 async function fetchLazyRows(visualOnly = false, thinOnly = false) {
   const out = [];
-  const PAGE = 1000;
-  for (let off = 0; ; off += PAGE) {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,transcript,passage,choices,answer,explanation_vi&offset=${off}&limit=${PAGE}`,
-      { headers: HEADERS },
-    );
-    if (!res.ok) throw new Error(`fetch page: ${res.status} ${await res.text()}`);
-    const page = await res.json();
+  const url = `${SUPA_URL}/rest/v1/qb_questions?select=id,grade,subject,question_type,prompt_text,transcript,passage,choices,answer,explanation_vi`;
+  for await (const page of paged(url, { headers: HEADERS })) {
     out.push(
       ...page.filter((r) =>
         thinOnly
@@ -132,7 +127,6 @@ async function fetchLazyRows(visualOnly = false, thinOnly = false) {
             ? VISUAL_TYPES.includes(r.question_type) && isTransOnly(r.explanation_vi)
             : isLazy(r.explanation_vi)),
     );
-    if (page.length < PAGE) break;
   }
   return out;
 }
