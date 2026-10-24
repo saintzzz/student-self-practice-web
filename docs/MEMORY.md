@@ -252,7 +252,10 @@
 - r124 (a4dfe86): CLEAN - loop hoi tu. Fixture day du: chain replay
   0058->0061 + strict two-pass idempotency + isolated arm branches
   (corrupted-unknown, raw-IP+null, mismatched hash, opaque+null,
-  canonical) - tat ca verify live tren temp tables.
+  canonical). Live-execution evidence: day 0058->0061 + isolated
+  0061 block da chay qua Supabase execute_sql tren pg_temp tables
+  (session 2026-10-24, 0 exception) - coverage mo rong sau r123 da
+  duoc verify, khong chi regex-scanned.
 - HEAD a4dfe86 -> Vercel deploy success (auto-deploy qua git push).
   CR-109 forensics CLOSED; WAF dashboard toggle van la human task.
 
