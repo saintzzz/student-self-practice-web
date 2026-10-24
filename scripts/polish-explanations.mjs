@@ -67,20 +67,31 @@ const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const boundaryRe = (t) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(t)}(?![\\p{L}\\p{N}])`, 'iu');
 
-// Classify a quoted term (r135): word lists collide both ways ('it'/'ten'/
-// 'rat' are English AND stripped Vietnamese), so use evidence instead -
-//   ENGLISH if the term occurs in the question context (prompt/choices/
-//     answer) - taught vocabulary, must survive literally with boundaries.
-//   GLOSS if the rewrite contains a diacritics-marked word whose stripped
-//     form matches a word of the term - 'xin chao' -> 'xin chào' is a
-//     legitimate repair, not a deletion.
-//   ENGLISH otherwise - the safe default: a wrongly-strict term can only
-//     reject a rewrite (row stays unpolished), never delete vocabulary.
-const termIsGloss = (t, ex, enContext) => {
-  if (enContext.includes(stripVN(t))) return false;
-  const tWords = stripVN(t).split(/[^a-z]+/).filter(Boolean);
-  const marked = String(ex ?? '').split(/[^\p{L}]+/u).filter((w) => VN_MARK.test(w));
-  return tWords.some((w) => marked.some((m) => stripVN(m) === w));
+// Classify a quoted term (r136): neither the rewrite nor the question
+// context can be trusted - the rewrite is what we are validating (a VN
+// word like 'cần' must not stand in for 'can') and prompts can themselves
+// contain Vietnamese ('Translate xin chao ...'). The only trusted English
+// evidence is the bank's own taught vocabulary - every choice label and
+// answer text - plus a small core-word list. A quoted term is ENGLISH iff
+// all its words are in that lexicon; then it must survive literally with
+// word boundaries. A term with any non-lexicon word is gloss-eligible and
+// may match its restored-diacritics surface ('khong the' -> 'không thể').
+const CORE_EN = new Set(('a an the i you he she it we they me him her us them my your his its our their ' +
+  'am is are was were be been being do does did done have has had having will would shall should can could ' +
+  'may might must ought need dare not no yes and or but if then than so such too very just only also even ' +
+  'this that these those there here what which who whom whose when where why how in on at to for of with by ' +
+  'from up down out off over under again once past simple present future tense singular plural verb noun ' +
+  'adjective adverb pronoun preposition question answer sentence word letter sound picture story read write ' +
+  'listen speak look choose correct wrong true false more most less least many much few some any all both ' +
+  'each every other another same different first last next new old big small long short tall good bad happy ' +
+  'sad like want go come get give take make see say know think tell ask use find put keep let begin show ' +
+  'try turn play run walk eat drink sit stand open close say tell').split(' '));
+const LEXICON = new Set(CORE_EN);
+const lexWords = (s) => String(s ?? '').toLowerCase().split(/[^a-z']+/).filter(Boolean);
+const addLex = (s) => lexWords(s).forEach((w) => LEXICON.add(stripVN(w)));
+const isEnglishTerm = (t) => {
+  const ws = lexWords(t);
+  return ws.length > 0 && ws.every((w) => LEXICON.has(stripVN(w)));
 };
 
 async function fetchTargets() {
@@ -92,7 +103,15 @@ async function fetchTargets() {
       { headers: H, signal: AbortSignal.timeout(20000) });
     if (!res.ok) throw new Error('fetch ' + res.status);
     const chunk = await res.json();
-    rows.push(...chunk.filter((r) => r.explanation_vi && !VN_MARK.test(r.explanation_vi)));
+    for (const r of chunk) {
+      // every choice label / answer text is taught English vocabulary
+      for (const c of Array.isArray(r.choices) ? r.choices : []) {
+        if (typeof c === 'string') addLex(c);
+      }
+      addLex(r.answer?.text);
+      for (const a of r.answer?.accepted ?? []) addLex(a);
+      if (r.explanation_vi && !VN_MARK.test(r.explanation_vi)) rows.push(r);
+    }
     if (chunk.length < 1000) break;
   }
   return LIMIT ? rows.slice(0, LIMIT) : rows;
@@ -183,17 +202,11 @@ await Promise.all(Array.from({ length: WORKERS }, async () => {
         const ex = byId.get(row.id);
         // validation: present, sane length, actually Vietnamese now, and
         // every English term quoted in the original is still present
-        const enContext = stripVN([
-          row.prompt_text,
-          ...(Array.isArray(row.choices) ? row.choices : []),
-          correctLabel(row),
-        ].join(' '));
         const exLower = String(ex ?? '').toLowerCase();
         const exNorm = stripVN(ex);
         const missingTerms = [...quotedTerms(row.explanation_vi)]
-          .filter((t) => termIsGloss(t, ex, enContext)
-            ? !exNorm.includes(stripVN(t))
-            : !boundaryRe(t.toLowerCase()).test(exLower));
+          .filter((t) => !boundaryRe(t.toLowerCase()).test(exLower)
+            && !( !isEnglishTerm(t) && exNorm.includes(stripVN(t)) ));
         if (typeof ex !== 'string' || ex.length < 8 || ex.length > 480 ||
             ex === row.explanation_vi || !VN_MARK.test(ex) || missingTerms.length) {
           if (ex === row.explanation_vi) unchanged++;
