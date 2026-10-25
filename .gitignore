@@ -49,3 +49,6 @@ secrets-context.tar.enc
 scripts/artgen/_*.mjs
 scripts/qb-math-english-rewrite.mjs
 scripts/azure-web-profile/
+scripts/bing-auth.json
+scripts/_*.png
+.playwright-cli/

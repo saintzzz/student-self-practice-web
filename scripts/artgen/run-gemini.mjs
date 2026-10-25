@@ -225,12 +225,36 @@ async function main() {
           (buf[0] === 0x89 && buf[1] === 0x50 ||                    // PNG
            buf[0] === 0xff && buf[1] === 0xd8 ||                    // JPEG
            buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP');
-        const dims = await wpage.evaluate(
-          (u) => [...document.querySelectorAll('img')].find((i) => i.src === u)?.naturalWidth ?? 0, src);
+        // DOM src matching is flaky after re-render - decode dims from the
+        // buffer headers instead (PNG IHDR / JPEG SOF / WebP VP8*).
+        const dims = (() => {
+          try {
+            if (buf[0] === 0x89 && buf[1] === 0x50) return buf.readUInt32BE(16);
+            if (buf[0] === 0xff && buf[1] === 0xd8) {
+              let o = 2;
+              while (o + 9 < buf.length) {
+                if (buf[o] !== 0xff) { o++; continue; }
+                const m = buf[o + 1];
+                if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc)
+                  return buf.readUInt16BE(o + 7);
+                o += 2 + buf.readUInt16BE(o + 2);
+              }
+              return 0;
+            }
+            if (buf.toString('ascii', 0, 4) === 'RIFF') {
+              const fmt = buf.toString('ascii', 12, 16);
+              if (fmt === 'VP8X') return (buf.readUIntLE(24, 3) + 1);
+              if (fmt === 'VP8 ') return buf.readUInt16LE(26) & 0x3fff;
+              if (fmt === 'VP8L') return (buf.readUInt32LE(21) & 0x3fff) + 1;
+            }
+          } catch { }
+          return 0;
+        })();
         if (!magic || buf.length < 40_000 || dims < 512 || seen.has(h)) {
           a._tries = Math.max(0, a._tries - 1); // don't burn a retry on bad-gen
           queue.push(a);
-          console.log(`[g${idx}] ${a.id}: bad-gen (${buf.length}b) - requeued`);
+          const why = [!magic && 'magic', buf.length < 40_000 && 'size', dims < 512 && `dims=${dims}`, seen.has(h) && 'dup'].filter(Boolean).join(',');
+          console.log(`[g${idx}] ${a.id}: bad-gen (${buf.length}b ${why}) - requeued`);
           await wpage.waitForTimeout(5000);
           continue;
         }
