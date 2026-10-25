@@ -324,6 +324,7 @@ async function transcribeGemini(
 async function transcribeOpenAI(
   key: string,
   model: string,
+  baseUrl: string | undefined,
   audioB64: string,
   mimeType: string,
   _targetWord: string,
@@ -331,16 +332,20 @@ async function transcribeOpenAI(
   const bytes = Uint8Array.from(atob(audioB64), (c) => c.charCodeAt(0));
   const ext = mimeType.includes('mp4') || mimeType.includes('aac')
     ? 'mp4'
-    : mimeType.includes('ogg')
-      ? 'ogg'
-      : 'webm';
+    : mimeType.includes('wav')
+      ? 'wav'
+      : mimeType.includes('ogg')
+        ? 'ogg'
+        : 'webm';
   const form = new FormData();
   form.append('file', new Blob([bytes], { type: mimeType }), `audio.${ext}`);
   form.append('model', model);
   // CR-64: khong dua targetWord vao prompt - Whisper bias manh theo no
   // nen se "nghe" ra dap an mong doi du em noi sai.
   form.append('prompt', 'A child speaking English.');
-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+  // Groq is OpenAI-compatible - same multipart shape, different base URL.
+  const endpoint = `${(baseUrl ?? 'https://api.openai.com/v1').replace(/\/$/, '')}/audio/transcriptions`;
+  const res = await fetch(endpoint, {
     method: 'POST',
     signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     headers: { Authorization: `Bearer ${key}` },
@@ -349,6 +354,72 @@ async function transcribeOpenAI(
   if (!res.ok) return `__ERR_${res.status}:${(await res.text()).slice(0, 200)}`;
   const data = (await res.json()) as { text?: string };
   return data.text?.trim() ?? null;
+}
+
+// Azure AI Speech Pronunciation Assessment (short-audio REST). Scripted
+// scenario: referenceText = the target word/phrase/paragraph; the
+// response carries a calibrated HundredMark PronScore plus per-word
+// Accuracy/Fluency/Prosody/Completeness - the only provider in the chain
+// that grades phonemes directly instead of an LLM's subjective verdict.
+// F0 free tier = 5 audio hours/month. WAV/PCM expected - the client
+// normalizes recordings to 16kHz mono WAV before upload; other mime
+// types pass through and a 400 simply falls to the next provider.
+interface AzureNBest {
+  Lexical?: string;
+  Display?: string;
+  PronScore?: number;
+  AccuracyScore?: number;
+}
+async function assessAzure(
+  key: string,
+  locale: string,
+  endpoint: string,
+  audioB64: string,
+  mimeType: string,
+  targetWord: string,
+): Promise<AssessResult | null | string> {
+  const bytes = Uint8Array.from(atob(audioB64), (c) => c.charCodeAt(0));
+  const paConfig = btoa(JSON.stringify({
+    referenceText: targetWord,
+    gradingSystem: 'HundredMark',
+    granularity: 'Phoneme',
+    dimension: 'Comprehensive',
+    enableMiscue: true,
+    enableProsodyAssessment: true,
+  }));
+  const url =
+    `${endpoint.replace(/\/$/, '')}?language=${encodeURIComponent(locale)}&format=detailed`;
+  const res = await fetch(url, {
+    method: 'POST',
+    signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+    headers: {
+      'Ocp-Apim-Subscription-Key': key,
+      'Pronunciation-Assessment': paConfig,
+      'Content-Type': mimeType.includes('wav') ? 'audio/wav' : mimeType,
+      Accept: 'application/json',
+    },
+    body: bytes,
+  });
+  if (!res.ok) return `__ERR_${res.status}:${(await res.text()).slice(0, 200)}`;
+  const data = (await res.json()) as {
+    RecognitionStatus?: string;
+    NBest?: AzureNBest[];
+  };
+  if (data.RecognitionStatus !== 'Success' || !data.NBest?.length) {
+    return `__ERR_recog:${data.RecognitionStatus ?? '?'}`;
+  }
+  const top = data.NBest[0];
+  const accuracy = top.PronScore ?? top.AccuracyScore;
+  if (typeof accuracy !== 'number' || !Number.isFinite(accuracy)) {
+    return '__ERR_noscore';
+  }
+  return {
+    heard: top.Lexical ?? top.Display ?? '',
+    accuracy: Math.max(0, Math.min(100, Math.round(accuracy))),
+    heardAlt: data.NBest.slice(1, 3)
+      .map((n) => n.Lexical ?? n.Display ?? '')
+      .filter((s) => s.length > 0),
+  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -419,7 +490,7 @@ Deno.serve(async (req: Request) => {
     if (mode === 'assess') {
       const graders = ais
         .filter((ai) =>
-          ['gemini', 'openrouter'].includes(String(ai.provider ?? 'gemini').toLowerCase()),
+          ['gemini', 'openrouter', 'azure'].includes(String(ai.provider ?? 'gemini').toLowerCase()),
         )
         .slice(0, ASSESS_MAX_ATTEMPTS);
       const assessDeadline = Math.min(deadline, Date.now() + ASSESS_BUDGET_MS);
@@ -432,16 +503,25 @@ Deno.serve(async (req: Request) => {
           (provider === 'openrouter' ? 'google/gemini-2.5-flash' : 'gemini-2.5-flash');
         try {
           const r =
-            provider === 'openrouter'
-              ? await assessOpenRouter(
+            provider === 'azure'
+              ? await assessAzure(
                   String(ai.api_key),
-                  model,
-                  String(ai.base_url ?? 'https://openrouter.ai/api/v1'),
+                  model, // azure model slot carries the locale (en-US)
+                  String(ai.base_url),
                   audioB64,
                   mimeType,
                   targetWord,
                 )
-              : await assessGemini(String(ai.api_key), model, audioB64, mimeType, targetWord);
+              : provider === 'openrouter'
+                ? await assessOpenRouter(
+                    String(ai.api_key),
+                    model,
+                    String(ai.base_url ?? 'https://openrouter.ai/api/v1'),
+                    audioB64,
+                    mimeType,
+                    targetWord,
+                  )
+                : await assessGemini(String(ai.api_key), model, audioB64, mimeType, targetWord);
           if (r !== null && typeof r === 'object') return r;
           details.push(typeof r === 'string' ? r.slice(0, 160) : `${provider}:no-json`);
         } catch {
@@ -508,8 +588,15 @@ Deno.serve(async (req: Request) => {
         (provider === 'openai' ? 'whisper-1' : 'gemini-2.5-flash');
       try {
         const t =
-          provider === 'openai'
-            ? await transcribeOpenAI(String(ai.api_key), model, audioB64, mimeType, targetWord)
+          provider === 'openai' || provider === 'groq'
+            ? await transcribeOpenAI(
+                String(ai.api_key),
+                model,
+                provider === 'groq' ? String(ai.base_url ?? '') : undefined,
+                audioB64,
+                mimeType,
+                targetWord,
+              )
             : provider === 'openrouter'
               ? await transcribeOpenRouter(
                   String(ai.api_key),
