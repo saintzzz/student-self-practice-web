@@ -1,4 +1,4 @@
-// CR-109 send agent: human-approved queue -> Resend.
+// CR-109 send agent: human-approved queue -> Brevo (default) or Resend.
 //
 //   node scripts/gtm/send.mjs [--limit 20]
 //
@@ -9,7 +9,9 @@
 //   CAS claim queued->sent (two runners can't double-send).
 
 import { createHash } from 'node:crypto';
-import { basename } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { basename, join } from 'node:path';
 import {
   arg, gtmAll, gtmCount, gtmPatch, gtmPost, H, hasFlag, recordRun, URL_,
 } from './lib.mjs';
@@ -20,9 +22,49 @@ const t0 = Date.now();
 const ENABLED = process.env.GTM_SEND_ENABLED === '1';
 const CAP = Number(process.env.GTM_DAILY_CAP ?? 20);
 const limit = Math.min(Number(arg('--limit', CAP)), CAP);
-const FROM = process.env.GTM_FROM ?? 'VieSchool <hello@go.vieschool.com>';
+const FROM = process.env.GTM_FROM ?? 'VieSchool <hello@vieschool.com>';
 const RESEND_KEY = process.env.GTM_RESEND_API_KEY ?? process.env.RESEND_API_KEY ?? '';
+const PROVIDER = process.env.GTM_PROVIDER ?? 'brevo';
+// Function declarations hoist - safe to pick before their definitions.
+const providerSend = PROVIDER === 'brevo' ? brevoSend : resendSend;
 const FORCE = hasFlag('--dry');
+
+// Env override > machine-local secrets file (same pattern as supabase keys).
+function brevoKey() {
+  if (process.env.BREVO_API_KEY) return process.env.BREVO_API_KEY;
+  try {
+    return JSON.parse(readFileSync(
+      join(homedir(), '.config', 'devin', 'secrets', 'brevo_key.json'), 'utf8',
+    )).api_key ?? '';
+  } catch { return ''; }
+}
+
+// "Name <addr>" -> {name, email}; bare "addr" -> {email}.
+function parseFrom(v) {
+  const m = /^\s*(.*?)\s*<([^>]+)>\s*$/.exec(v);
+  return m ? { name: m[1], email: m[2] } : { email: v.trim() };
+}
+
+// Brevo has no idempotency-key header - the DB CAS claim + reaper's
+// provider_message_id check carry the dedupe weight. X-Mailin-custom is
+// kept so every provider mail still carries its gtm idem token for
+// correlation in the Brevo dashboard.
+async function brevoSend({ to, subject, body, idem }) {
+  const sender = parseFrom(FROM);
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': brevoKey() },
+    body: JSON.stringify({
+      sender, to: [{ email: to }], subject, textContent: body,
+      replyTo: { email: process.env.GTM_REPLY_EMAIL ?? 'hello@vieschool.com' },
+      headers: { 'X-Mailin-custom': idem }, tags: ['gtm-outbound'],
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`brevo ${res.status}: ${JSON.stringify(j).slice(0, 200)}`);
+  return j.messageId ?? null;
+}
 
 async function resendSend({ to, subject, body, idem }) {
   const res = await fetch('https://api.resend.com/emails', {
@@ -115,7 +157,7 @@ async function main() {
     ).catch(() => null);
     if (!claimed?.length) { skip('claim_lost'); continue; }
     try {
-      const pid = await resendSend({
+      const pid = await providerSend({
         to: lead.contact_email, subject: m.subject, body: m.body,
         idem: `gtm-msg-${m.id}-${createHash('sha256').update(m.body).digest('hex').slice(0, 12)}`,
       });

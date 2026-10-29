@@ -17,7 +17,7 @@
 
 import { readFileSync } from 'node:fs';
 import {
-  arg, dedupeKey, gtmPost, gtmUpsert, hasFlag, normText, recordRun,
+  arg, dedupeKey, gtmAll, gtmPost, gtmUpsert, hasFlag, normText, recordRun,
 } from './lib.mjs';
 
 const t0 = Date.now();
@@ -148,8 +148,19 @@ try {
   }]);
   const rows = raws.map((r) => stageRow(r, campaign.id)).filter(Boolean);
   const uniq = [...new Map(rows.map((r) => [r.dedupe_key, r])).values()];
-  const staged = uniq.length ? await gtmUpsert('leads', uniq, 'dedupe_key') : [];
-  if (staged.length === 0 && adapter !== 'fixture') {
+  // Rerun safety: upsert would regress a lead that already moved past
+  // staging back to 'staged'. Only write new rows + leads still in an
+  // early state; never touch enriched/sent/queued/replied/dropped.
+  const REWRITABLE = new Set(['staged', 'cold']);
+  const existing = new Map(
+    (await gtmAll('leads', 'dedupe_key,status', null, 'id')).map((l) => [l.dedupe_key, l.status]),
+  );
+  const toUpsert = uniq.filter((r) => {
+    const s = existing.get(r.dedupe_key);
+    return !s || REWRITABLE.has(s);
+  });
+  const staged = toUpsert.length ? await gtmUpsert('leads', toUpsert, 'dedupe_key') : [];
+  if (staged.length === 0 && raws.length === 0 && adapter !== 'fixture') {
     await recordRun('discover', { province, segment, seen: raws.length, staged: 0 }, {
       ms: Date.now() - t1, campaignId: campaign.id,
       errors: [{ stage: 'adapter', msg: 'zero staged - source empty or layout change' }],

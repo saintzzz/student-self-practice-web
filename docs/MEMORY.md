@@ -514,3 +514,43 @@
   99k q / 290+ exams / 330+ vocab + B2B contact block (mailto) so
   center directors hitting the site from the outreach mails have a
   reply path.
+
+## 2026-10-29 (chieu) - GTM nationwide scan + provider switch to Brevo
+
+- Discover all-country: 13 provinces x ~48 results -> 339 staged
+  (HCM 33, Da Nang 24, Hai Phong 25, Can Tho 27, Hue 26, Nha Trang 25,
+  Bien Hoa 24, Binh Duong 21, Vung Tau 29, Vinh 29, Bac Ninh 27,
+  Thanh Hoa 26, Ha Long 23). Status-preserving upsert kept sent/
+  enriched leads untouched on re-scrape.
+- Enrich: 129 enriched w/ email, ~150 cold (no public email), 12
+  dropped (5 tieng Trung/Han false positives + placeholder/malformed
+  emails - example.com, your@email, http:// prefix).
+- draft.mjs: shortName now strips "(branch list)" SEO stuffing +
+  caps at 50 chars (164-char subjects killed). Template is now
+  BILINGUAL - VN section first, EN block after separator, opt-out
+  in both languages ("KHONG" / "STOP"). VN sentinel lines kept so
+  the DB footer gate + send.mjs checks still pass.
+- send.mjs: provider abstraction - GTM_PROVIDER=brevo (default) |
+  resend. Brevo via api.brevo.com/v3/smtp/email, key from env
+  BREVO_API_KEY or ~/.config/devin/secrets/brevo_key.json. Brevo has
+  no idempotency-key -> CAS claim + reaper pid-check carry dedupe;
+  X-Mailin-custom keeps the gtm idem token for dashboard correlation.
+  GTM_FROM default now 'VieSchool <hello@vieschool.com>'.
+- Brevo account duylinhcn3@gmail.com: free plan 300/day, domain
+  vieschool.com ALREADY authenticated via DNS (DKIM/SPF, since
+  2026-10-05 - user had configured it before). hello@vieschool.com
+  sender active.
+- Sent today: 126 total - 48 VN-only (pre-template-change) + 77
+  bilingual + 1 re-sent after fixing http://-prefixed email. 2
+  blocked/bounced addresses suppressed (kind='email', source
+  'provider').
+- IMPORTANT for approval after body edits: message_approvals is
+  unique on message_id - re-approval must UPSERT
+  (Prefer: resolution=merge-duplicates) or insert 409s and the queue
+  gate (correctly) denies re-queue.
+- Replies: still land at hello@vieschool.com -> Cloudflare Email
+  Routing -> user mailbox (free service user remembered). Reply
+  path is OUTSIDE Brevo/Resend - no auto-classification until a
+  real inbound webhook exists; manual inbox check meanwhile.
+- Landing (repo vieschool-landing): commits cca3b6e (Zalo+WhatsApp
+  fabs 0948042989) + 00d0764 (email fab) live on vieschool.com.

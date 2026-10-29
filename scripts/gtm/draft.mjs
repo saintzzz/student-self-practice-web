@@ -24,12 +24,20 @@ const VALUE_CENTER =
   'VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giao bài theo lớp, báo cáo tiến độ cho từng học viên.';
 const VALUE_SCHOOL =
   'VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giáo viên giao bài theo lớp và theo dõi tiến độ từng học sinh.';
+const VALUE_CENTER_EN =
+  'VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, class-based assignments, and per-student progress reports.';
+const VALUE_SCHOOL_EN =
+  'VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, teacher assignments by class, and per-student progress tracking.';
 
 // Maps listings stuff SEO keywords into names ("X - IELTS, TOEIC...").
 // Salutations/subjects use the head segment; full name stays in lead data.
 function shortName(lead) {
-  const head = (lead.name ?? '').split(' - ')[0].trim();
-  return head.length >= 3 ? head : (lead.name ?? '').trim();
+  const strip = (s) => s.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+  let head = strip((lead.name ?? '').split(' - ')[0]);
+  if (head.length < 3) head = strip(lead.name ?? '');
+  // Cap for subject/salutation - Maps names with branch lists ran to 160+.
+  if (head.length > 50) head = head.slice(0, 50).replace(/\s+\S*$/, '').trimEnd();
+  return head;
 }
 
 function salutation(lead) {
@@ -77,6 +85,13 @@ async function makeDraft(lead, kind) {
   const cta = kind === 'followup'
     ? 'Nếu chương trình phù hợp, anh/chị chỉ cần trả lời email này - em sẽ sắp một cuộc trao đổi ngắn 15 phút.'
     : 'Nếu anh/chị muốn xem thử, em xin sắp một cuộc trao đổi 15 phút hoặc gửi tài khoản dùng thử cho giáo viên của mình - chỉ cần trả lời email này.';
+  const where = lead.city ? ` in ${lead.city}` : '';
+  const openingEn = lead.segment === 'school'
+    ? `I found ${shortName(lead)}${where} through the school's public website.`
+    : `I found ${shortName(lead)}${where} through public business listings on Google Maps.`;
+  const ctaEn = kind === 'followup'
+    ? 'If the program fits, just reply to this email and I will arrange a short 15-minute call.'
+    : 'If you would like to see it, I can arrange a 15-minute call or send a trial teacher account - just reply to this email.';
   const body = [
     `${salutation(lead)} ${shortName(lead)},`,
     '',
@@ -88,6 +103,27 @@ async function makeDraft(lead, kind) {
     '',
     'Trân trọng,',
     footer,
+    '',
+    '--------------------',
+    'English version',
+    '--------------------',
+    '',
+    `Dear ${shortName(lead)},`,
+    '',
+    kind === 'followup'
+      ? 'I am sending this again in case you were busy last week.'
+      : openingEn,
+    '',
+    lead.segment === 'school' ? VALUE_SCHOOL_EN : VALUE_CENTER_EN,
+    '',
+    ctaEn,
+    '',
+    'Best regards,',
+    '--',
+    'VieSchool - primary English practice platform',
+    `${process.env.GTM_SENDER_NAME ?? 'VieSchool Team'} | ${process.env.GTM_SENDER_ROLE_EN ?? 'Partnerships'}`,
+    `${process.env.GTM_SENDER_ADDRESS ?? 'vieschool.com'} | ${process.env.GTM_REPLY_EMAIL ?? 'hello@vieschool.com'}`,
+    'If you prefer not to hear from us again, reply "STOP" - we will stop immediately.',
   ].join('\n');
   return { subject, body, llm };
 }
