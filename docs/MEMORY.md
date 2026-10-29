@@ -554,3 +554,23 @@
   real inbound webhook exists; manual inbox check meanwhile.
 - Landing (repo vieschool-landing): commits cca3b6e (Zalo+WhatsApp
   fabs 0948042989) + 00d0764 (email fab) live on vieschool.com.
+
+## 2026-10-29 (toi) - school wave + Cloudflare route fix
+
+- Cloudflare Email Routing: hello@vieschool.com -> duylinhcn3@gmail.com
+  now ACTIVE (rule existed but mail was blocked upstream - first test
+  hard-bounced pre-route so Brevo auto-blocklisted hello@; unblocked
+  via DELETE /v3/smtp/blockedContacts, loopback delivered). User has a
+  Cloudflare API token in secrets for future DNS/routing ops.
+- School segment: added generic "truong tieu hoc" query (public
+  schools incl. Global Success). 14 provinces scanned: ~434 staged,
+  enrich -> 137+9 drafts, review dropped 10 non-targets (Korean/
+  Japanese schools, THPT-only, mam-non-only, placeholder emails).
+  Sent 136 bilingual school emails today.
+- discover.mjs maps adapter: Google redirects to a single place page
+  (no div[role=feed]) when a viewport-pinned search hits one dominant
+  result - handled as 1-card listing instead of timeout. Also strip
+  mailto: prefix from scraped emails (discover + enrich).
+- Brevo hard bounces -> gtm.suppression (kind=email, source
+  brevo-events) + leads marked bounced: 21 addresses total.
+- Total today: 126 center + 136 school = 262 sends under 300/day cap.

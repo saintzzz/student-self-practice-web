@@ -65,21 +65,38 @@ async function mapsListings(query) {
       throw new Error('google consent wall - maps adapter blocked');
     }
     const feed = page.locator('div[role="feed"]');
-    await feed.waitFor({ state: 'visible', timeout: 20000 });
-    let seen = 0;
-    for (let i = 0; i < 14; i++) {
-      await feed.evaluate((el) => el.scrollBy(0, el.scrollHeight));
-      await page.waitForTimeout(900);
-      const n = await feed.locator('> div > a').count();
-      if (n === seen || n >= 120) break;
-      seen = n;
+    let cards;
+    try {
+      await feed.waitFor({ state: 'visible', timeout: 20000 });
+    } catch (e) {
+      // Google auto-opens the place detail page (no feed) when the
+      // viewport-pinned search resolves to a single dominant result.
+      if (page.url().includes('/maps/place/')) {
+        cards = [{ name: '', url: page.url() }];
+      } else {
+        const shot = `scripts/_maps-fail-${Date.now()}.png`;
+        await page.screenshot({ path: shot }).catch(() => {});
+        const snippet = (await page.evaluate(() => document.body?.innerText ?? '').catch(() => '')).slice(0, 300);
+        console.error(`[maps-debug] url=${page.url()} shot=${shot}\n${snippet}`);
+        throw e;
+      }
     }
-    const cards = await feed.locator('> div:has(a[href*="/maps/place/"])').evaluateAll((cs) =>
-      cs.map((c) => {
-        const a = c.querySelector('a[href*="/maps/place/"]');
-        return { name: a?.getAttribute('aria-label') ?? '', url: a?.href ?? '' };
-      }).filter((r) => r.name && r.url),
-    );
+    if (!cards) {
+      let seen = 0;
+      for (let i = 0; i < 14; i++) {
+        await feed.evaluate((el) => el.scrollBy(0, el.scrollHeight));
+        await page.waitForTimeout(900);
+        const n = await feed.locator('> div > a').count();
+        if (n === seen || n >= 120) break;
+        seen = n;
+      }
+      cards = await feed.locator('> div:has(a[href*="/maps/place/"])').evaluateAll((cs) =>
+        cs.map((c) => {
+          const a = c.querySelector('a[href*="/maps/place/"]');
+          return { name: a?.getAttribute('aria-label') ?? '', url: a?.href ?? '' };
+        }).filter((r) => r.name && r.url),
+      );
+    }
     // Phase 2: visit each place for structured fields.
     const out = [];
     for (const card of cards.slice(0, DETAIL_CAP)) {
@@ -116,7 +133,7 @@ const PERSONAL_EMAIL = /@(gmail|yahoo|hotmail|outlook|icloud)\./i;
 function stageRow(raw, campaignId) {
   const name = (raw.name ?? '').trim();
   if (!name || name.length < 3) return null;
-  const email = (raw.email ?? '').trim().toLowerCase();
+  const email = (raw.email ?? '').trim().toLowerCase().replace(/^mailto:/i, '');
   return {
     campaign_id: campaignId,
     name,

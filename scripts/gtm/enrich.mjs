@@ -84,7 +84,7 @@ async function extractEmail(website) {
       const html = await res.text();
       const mailtos = [...html.matchAll(/mailto:([^"'<>?]+)/gi)].map((m) => m[1]);
       const emails = [...new Set([...mailtos, ...(html.match(EMAIL_RE) ?? [])])]
-        .map((e) => e.trim().toLowerCase().replace(/\.$/, ''))
+        .map((e) => e.trim().toLowerCase().replace(/^mailto:/i, '').replace(/\.$/, ''))
         .filter((e) => !/\.(png|jpg|jpeg|gif|webp|svg|js|css)$/.test(e))
         .filter((e) => isBusinessEmail(e, orgDomain));
       if (emails.length) {
