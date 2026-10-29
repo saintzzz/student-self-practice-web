@@ -13,6 +13,7 @@ import {
   type ListRow,
 } from '../lib/assignments';
 import ReviewQueueCard from './ReviewQueueCard';
+import OutreachTab from './admin/OutreachTab';
 import { GRADES } from '../data/grades';
 import {
   BODY,
@@ -35,7 +36,7 @@ const BTN_SECONDARY =
 const BTN_DANGER =
   'rounded-2xl bg-white px-4 py-2 text-sm font-bold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 focus:outline-none focus:ring-4 focus:ring-rose-300';
 
-type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'assign' | 'progress' | 'review';
+type Tab = 'accounts' | 'classes' | 'enroll' | 'scope' | 'assign' | 'progress' | 'review' | 'gtm';
 
 interface PracticeClass {
   id: string;
@@ -222,6 +223,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
     { id: 'assign', label: 'Giao bài' },
     { id: 'progress', label: 'Tiến độ' },
     ...(isAdmin ? [{ id: 'review' as Tab, label: 'Duyệt câu hỏi' }] : []),
+    ...(isAdmin ? [{ id: 'gtm' as Tab, label: 'Tiếp thị' }] : []),
   ];
   const students = accounts.filter((a) => a.role === 'student');
 
@@ -483,6 +485,8 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
           <ReviewQueueCard />
         </div>
       )}
+
+      {tab === 'gtm' && isAdmin && <OutreachTab onError={setError} />}
 
       {tab === 'progress' && (
         <div className={CARD}>

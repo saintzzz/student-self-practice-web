@@ -423,3 +423,40 @@
   statement timeouts (offset O(n^2) tren 132k rows). Da verify bang
   chinh audit/dry-run chay tren code moi; qb_question_assets giu offset
   vi khong co cot unique.
+
+### Session state - 2026-10-29 (Windows PC, CR-109 in flight - GTM outbound agent)
+
+- CR-109 = Vietnam-focused B2B outbound/GTM agent (Explee-style, in-house).
+  INTENT + CR + PRD + architecture committed. B2C parent cold-email
+  REJECTED (anti-spam NĐ 90/2008 + brand risk); B2B English centers +
+  private schools only.
+- MIGRATION 0070 APPLIED REMOTE + verified via SQL probes:
+  queue_gate_denied works (no approval => no queue; no footer => no
+  queue); approval+hash match => queued; edit-after-queue auto-dequeues
+  to pending_review (body_gate trigger); gtm_suppress + is_suppressed
+  work. Fixed post-apply: `extensions.digest` qualification (pgcrypto
+  lives in `extensions`, search_path='' hid it), `service_role` table
+  grants (RLS bypass != privilege bypass), PostgREST expose
+  (`alter role authenticator set pgrst.db_schemas` + reload schema),
+  `gtm_admin_delete_suppression` policy (grant delete != RLS delete).
+- Scripts `scripts/gtm/{lib,discover,enrich,draft,send}.mjs` - npm run
+  gtm:* entry points. Fixture smoke PASSED on remote: discover staged
+  3->2 (dedupe on normalized phone), enrich rule-fallback scored
+  (fixture category lost -> signals.category fix applied), draft made
+  pending_review w/ mandated footer, send fail-closed dry by default.
+- Admin UI: `OutreachTab` wired as `admin-tab-gtm` in AdminScreen
+  (admin-only). e2e/cr109-outreach.spec.ts 4/4 PASS on real backend
+  (approve flow via gtm_approve_message RPC, suppression add+delete
+  round-trip, anonymous denied, sub-tab sections + empty states).
+- Local admin test account on remote: `gtmadmin` / `gtm-test-pin-1234`
+  (practice.accounts role=admin). .env.local generated from
+  supabase_new_keys.json (gitignored, machine-local).
+- Remaining waived ACs (in-flight, tests pending): AC-109.5 webhook
+  replay/idempotency, .6 bounce/mailer-daemon, .7 cap+CAS race,
+  .9 send-time suppression recheck, .10 source-ceiling e2e.
+- NOT done yet: gtm-reply-webhook edge fn not deployed (needs
+  GTM_WEBHOOK_SECRET + go-live gate); send.mjs never run live
+  (GTM_SEND_ENABLED unset - keep off until legal/footer/domain warm);
+  dedicated outreach domain NOT provisioned (never send from
+  vieschool.com main); external review round pending; full suite not
+  re-run after latest edits.

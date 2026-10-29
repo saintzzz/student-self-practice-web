@@ -93,5 +93,10 @@
   "AC-4.7": "pre-harness AC backlog - declared in prd.md; test reference to backfill",
   "AC-4.5": "pre-harness AC backlog - declared in prd.md; test reference to backfill",
   "AC-4.8": "pre-harness AC backlog - declared in prd.md; test reference to backfill",
-  "AC-4.10": "pre-harness AC backlog - declared in prd.md; test reference to backfill"
+  "AC-4.10": "pre-harness AC backlog - declared in prd.md; test reference to backfill",
+  "AC-109.5": "CR-109 in flight: webhook replay/idempotency - SQL-probed + edge fn shipped; e2e pending",
+  "AC-109.6": "CR-109 in flight: hard/soft bounce + mailer-daemon protection - implemented, e2e pending",
+  "AC-109.7": "CR-109 in flight: daily/campaign cap + CAS claim race - implemented, integration test pending",
+  "AC-109.9": "CR-109 in flight: send-time suppression recheck - implemented, e2e pending",
+  "AC-109.10": "CR-109 in flight: source-ceiling evidence fields - implemented, fixture e2e pending"
 }
