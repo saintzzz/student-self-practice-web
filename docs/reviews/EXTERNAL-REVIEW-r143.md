@@ -52,4 +52,17 @@ failure; postgrest-js source confirmed shouldThrowOnError=false).
 | 12 | NIT | sent event stored full recipient email | payload now `to_domain` |
 | 13 | NIT | dead `grant insert` on gtm.suppression | grant dropped (file + remote) |
 
-Round 4 verification pending.
+## Round 4 (r146) - verdict APPROVE_WITH_CHANGES
+
+All 13 round-3 fixes CONFIRMED-FIXED (reviewer re-ran the empty-HOME
+vitest suite: 22/22). Two new findings:
+
+| # | Sev | Finding | Fix |
+|---|-----|---------|-----|
+| 1 | MAJOR | `+` in the VN-boundary/stale-reaper timestamps decodes as a space inside the PostgREST URL, corrupting both filters | FV() encodeURIComponent helper applied to every timestamp filter value in send.mjs |
+| 2 | MINOR | a delivered mail whose bookkeeping writes ALL failed stayed 'sending' with no durable marker - the reaper could requeue it into a double-send | reaper excludes rows with provider_message_id; the bookkeeping fallback patch now carries status+pid+sent_at so any surviving write preserves the delivered truth; the pid is also recorded in run errors |
+
+Round 5 verification: these are localized to send.mjs; the remaining
+defect surface after this round is the residual "provider accepted AND
+database fully unreachable >15min" window - the pid is then only in
+gtm.runs errors (documented, manual recovery path).

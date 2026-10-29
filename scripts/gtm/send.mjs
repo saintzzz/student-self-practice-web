@@ -45,18 +45,24 @@ async function rpcIsSuppressed(email) {
   return res.json();
 }
 
+// PostgREST filter values ride inside the URL query - a `+` in an ISO
+// offset decodes as a space and corrupts the filter (r146 MAJOR-1).
+const FV = (v) => encodeURIComponent(v);
+
 async function main() {
   // Reap stranded claims first: a runner that died between the CAS flip
   // and the status patch left rows in 'sending' forever (r145 MAJOR-5).
-  // 15min > the longest resend timeout + patch latency.
-  const staleBefore = new Date(Date.now() - 15 * 60e3).toISOString();
-  await gtmPatch('messages', `status=eq.sending&updated_at=lt.${staleBefore}`, { status: 'queued' })
+  // 15min > the longest resend timeout + patch latency. Rows carrying a
+  // provider_message_id are EXCLUDED: the mail was already delivered,
+  // requeueing would double-send (r146 MINOR-2).
+  const staleBefore = FV(new Date(Date.now() - 15 * 60e3).toISOString());
+  await gtmPatch('messages', `status=eq.sending&provider_message_id=is.null&updated_at=lt.${staleBefore}`, { status: 'queued' })
     .catch(() => null);
   // Daily-cap day = Asia/Ho_Chi_Minh (UTC+7, no DST), not UTC - a UTC
   // boundary lets one VN day send ~2x the cap across the 07:00 edge
   // (r145 MINOR-10).
   const vnToday = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
-  const sentToday = await gtmCount('events', `kind=eq.sent&created_at=gte.${vnToday}T00:00:00+07:00`);
+  const sentToday = await gtmCount('events', `kind=eq.sent&created_at=gte.${FV(`${vnToday}T00:00:00+07:00`)}`);
   const budget = Math.max(0, Math.min(limit, CAP - sentToday));
   const rows = await gtmAll(
     'messages',
@@ -104,10 +110,15 @@ async function main() {
         await gtmPatch('leads', `id=eq.${lead.id}&status=in.(enriched,queued)`, { status: 'sent' });
         await gtmPost('events', [{ lead_id: lead.id, message_id: m.id, kind: 'sent', payload: { provider_message_id: pid, to_domain: lead.contact_email.split('@')[1] ?? null } }]);
       } catch (be) {
-        // Best-effort: force the message row to 'sent' so the admin sees
-        // the truth (delivered) even if the lead/event writes failed.
-        await gtmPatch('messages', `id=eq.${m.id}`, { status: 'sent' }).catch(() => null);
-        errors.push({ msg_id: m.id, err: `bookkeeping after send: ${be.message}` });
+        // Best-effort: force the message row to 'sent' WITH the provider
+        // id - a surviving pid keeps the reaper from ever requeueing a
+        // delivered mail even if this patch is the only write that lands
+        // (r146 MINOR-2). The pid also goes into the run error so a fully
+        // down DB still leaves a recoverable record.
+        await gtmPatch('messages', `id=eq.${m.id}`, {
+          status: 'sent', provider_message_id: pid, sent_at: new Date().toISOString(),
+        }).catch(() => null);
+        errors.push({ msg_id: m.id, provider_message_id: pid, err: `bookkeeping after send: ${be.message}` });
       }
       stats.sent++;
     } catch (e) {
