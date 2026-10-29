@@ -36,8 +36,18 @@ const ALWAYS_PRESENT_KINDS = [
 ] as const;
 
 describe('buildRound4Questions', () => {
+  // Deterministic per seed -> memoize: the suite re-draws the same
+  // seeds across tests and each draw scans the whole bank (~10s), which
+  // pushed the file past worker-RPC timeouts on loaded machines.
+  const cache = new Map<string, ReturnType<typeof buildRound4Questions>>();
+  const build = (seed: string) => {
+    let q = cache.get(seed);
+    if (!q) cache.set(seed, (q = buildRound4Questions(seed, ALL_WORDS)));
+    return q;
+  };
+
   it('returns about 10 questions, all of a Round 4 kind', () => {
-    const questions = buildRound4Questions('seed-a', ALL_WORDS);
+    const questions = build('seed-a');
 
     expect(questions).toHaveLength(ROUND_4_QUESTION_COUNT);
     expect(questions.every((q) => (ROUND4_KINDS as readonly string[]).includes(q.kind))).toBe(true);
@@ -45,7 +55,7 @@ describe('buildRound4Questions', () => {
 
   it('AC31 + CR-06: includes every always-present kind plus exactly one alternating blend/rhyme slot in every draw', () => {
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
-      const questions = buildRound4Questions(seed, ALL_WORDS);
+      const questions = build(seed);
       const kinds = new Set(questions.map((q) => q.kind));
 
       for (const kind of ALWAYS_PRESENT_KINDS) {
@@ -60,7 +70,7 @@ describe('buildRound4Questions', () => {
   it('CR-06: both blend and rhyme appear across seeds (seed-parity alternation, never starved)', () => {
     const seen = new Set<string>();
     for (const seed of ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10']) {
-      for (const q of buildRound4Questions(seed, ALL_WORDS)) {
+      for (const q of build(seed)) {
         if (q.kind === 'phonics-blend-choice' || q.kind === 'phonics-rhyme-choice') {
           seen.add(q.kind);
         }
@@ -70,7 +80,7 @@ describe('buildRound4Questions', () => {
   });
 
   it('splits the mix per the documented ratio (3 describe / 3 pair-matching / 1 sound / 1 word / 1 final / 1 blend-or-rhyme)', () => {
-    const questions = buildRound4Questions('seed-ratio', ALL_WORDS);
+    const questions = build('seed-ratio');
 
     const count = (kind: string) => questions.filter((q) => q.kind === kind).length;
     expect(count('describe-and-choose-image')).toBe(ROUND_4_DESCRIBE_COUNT);
@@ -82,7 +92,7 @@ describe('buildRound4Questions', () => {
   });
 
   it('every describe-and-choose-image question has a valid descriptionType, 4 options and a non-empty explanation', () => {
-    const questions = buildRound4Questions('seed-a', ALL_WORDS).filter((q) => q.kind === 'describe-and-choose-image');
+    const questions = build('seed-a').filter((q) => q.kind === 'describe-and-choose-image');
 
     for (const q of questions) {
       expect(['count', 'negation']).toContain(q.descriptionType);
@@ -93,7 +103,7 @@ describe('buildRound4Questions', () => {
   });
 
   it('every describe-and-choose-image question has exactly one correct option (correctIndex within bounds)', () => {
-    const questions = buildRound4Questions('seed-a', ALL_WORDS).filter((q) => q.kind === 'describe-and-choose-image');
+    const questions = build('seed-a').filter((q) => q.kind === 'describe-and-choose-image');
 
     for (const q of questions) {
       expect(q.correctIndex).toBeGreaterThanOrEqual(0);
@@ -103,7 +113,7 @@ describe('buildRound4Questions', () => {
   });
 
   it('every picture-pair-matching board has exactly 4 pairs and 8 tiles (AC32)', () => {
-    const questions = buildRound4Questions('seed-a', ALL_WORDS).filter((q) => q.kind === 'picture-pair-matching');
+    const questions = build('seed-a').filter((q) => q.kind === 'picture-pair-matching');
 
     expect(questions.length).toBeGreaterThan(0);
     for (const q of questions) {
@@ -113,15 +123,15 @@ describe('buildRound4Questions', () => {
   });
 
   it('is deterministic for the same seed', () => {
-    const first = buildRound4Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
-    const second = buildRound4Questions('seed-fixed', ALL_WORDS).map((q) => q.id);
+    const first = build('seed-fixed').map((q) => q.id);
+    const second = build('seed-fixed').map((q) => q.id);
 
     expect(first).toEqual(second);
   });
 
   it('varies its selection across different seeds (supports repeat batches without quick repetition)', () => {
-    const a = buildRound4Questions('seed-a', ALL_WORDS).map((q) => q.id);
-    const b = buildRound4Questions('seed-b', ALL_WORDS).map((q) => q.id);
+    const a = build('seed-a').map((q) => q.id);
+    const b = build('seed-b').map((q) => q.id);
 
     expect(a).not.toEqual(b);
   });
@@ -132,7 +142,7 @@ describe('buildRound4Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound4Questions(seed, ALL_WORDS)
+        build(seed)
           .filter((q) => q.kind === 'describe-and-choose-image')
           .map((q) => q.topicId),
       );
@@ -146,7 +156,7 @@ describe('buildRound4Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound4Questions(seed, ALL_WORDS)
+        build(seed)
           .filter((q) => q.kind === 'picture-pair-matching')
           .map((q) => q.topicId),
       );
@@ -160,7 +170,7 @@ describe('buildRound4Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound4Questions(seed, ALL_WORDS)
+        build(seed)
           .filter((q) => q.kind === 'phonics-sound-choice')
           .map((q) => q.topicId),
       );
@@ -174,7 +184,7 @@ describe('buildRound4Questions', () => {
 
     for (const seed of ['s1', 's2', 's3', 's4', 's5']) {
       const topicIds = new Set(
-        buildRound4Questions(seed, ALL_WORDS)
+        build(seed)
           .filter((q) => q.kind === 'phonics-word-choice')
           .map((q) => q.topicId),
       );

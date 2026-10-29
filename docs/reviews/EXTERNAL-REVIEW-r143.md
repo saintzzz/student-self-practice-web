@@ -60,9 +60,21 @@ vitest suite: 22/22). Two new findings:
 | # | Sev | Finding | Fix |
 |---|-----|---------|-----|
 | 1 | MAJOR | `+` in the VN-boundary/stale-reaper timestamps decodes as a space inside the PostgREST URL, corrupting both filters | FV() encodeURIComponent helper applied to every timestamp filter value in send.mjs |
-| 2 | MINOR | a delivered mail whose bookkeeping writes ALL failed stayed 'sending' with no durable marker - the reaper could requeue it into a double-send | reaper excludes rows with provider_message_id; the bookkeeping fallback patch now carries status+pid+sent_at so any surviving write preserves the delivered truth; the pid is also recorded in run errors |
+| 2 | MINOR | a delivered mail whose bookkeeping writes ALL failed stayed 'sending' with no durable marker - the reaper could requeue it into a double-send | see r147 below - the first attempt at this guard was dead defense |
 
-Round 5 verification: these are localized to send.mjs; the remaining
-defect surface after this round is the residual "provider accepted AND
-database fully unreachable >15min" window - the pid is then only in
-gtm.runs errors (documented, manual recovery path).
+## Round 5 (r147) - verdict APPROVE_WITH_CHANGES
+
+| # | Sev | Finding | Fix |
+|---|-----|---------|-----|
+| 1 | MINOR | pid-in-reaper-guard was dead defense: pid and status are written in the SAME patch - if it lands status='sent' already excludes the row; if it fails pid is NULL too | real guard = provider-side dedupe: `Idempotency-Key: gtm-msg-<id>-<body-sha256[:12]>` on the Resend POST (24h window); key carries body hash so edit->re-approve is a new key and is never deduped |
+| 2 | NIT | reaper `.catch(()=>null)` was silent - a failed reaper left stranded rows invisible | errors.push + run record |
+| 3 | MINOR | no regression tests for the r146 fixes | 2 filter-shape tests in lib.test.mjs assert `%2B07%3A00`, `provider_message_id=is.null`, no literal `+` |
+
+Reviewer runtime-proved the encoded URLs (`created_at=gte...%2B07%3A00`)
+and cleared the orThrow refactor (`{data:null,error:null}` success is
+not treated as failure; non-23505 tolerance sites destructure `{error}`).
+
+Residual (documented, accepted): provider accepted AND database fully
+unreachable >24h - outside the Resend idempotency window. The pid lives
+in gtm.runs errors for manual reconciliation; narrower than before and
+not closable client-side.

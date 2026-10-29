@@ -8,6 +8,7 @@
 //   provenance + suppression (re-checked at send time) + daily cap +
 //   CAS claim queued->sent (two runners can't double-send).
 
+import { createHash } from 'node:crypto';
 import { basename } from 'node:path';
 import {
   arg, gtmAll, gtmCount, gtmPatch, gtmPost, H, hasFlag, recordRun, URL_,
@@ -23,10 +24,16 @@ const FROM = process.env.GTM_FROM ?? 'VieSchool <hello@go.vieschool.com>';
 const RESEND_KEY = process.env.GTM_RESEND_API_KEY ?? process.env.RESEND_API_KEY ?? '';
 const FORCE = hasFlag('--dry');
 
-async function resendSend({ to, subject, body }) {
+async function resendSend({ to, subject, body, idem }) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_KEY}` },
+    headers: {
+      'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_KEY}`,
+      // Provider-side dedupe (24h window): a reaper-requeued attempt of
+      // the SAME content replays instead of double-mailing (r147).
+      // Key carries the body hash so an edit->re-approve is a new key.
+      'Idempotency-Key': idem,
+    },
     body: JSON.stringify({ from: FROM, to: [to], subject, text: body }),
     signal: AbortSignal.timeout(15000),
   });
@@ -48,21 +55,28 @@ async function rpcIsSuppressed(email) {
 // PostgREST filter values ride inside the URL query - a `+` in an ISO
 // offset decodes as a space and corrupts the filter (r146 MAJOR-1).
 const FV = (v) => encodeURIComponent(v);
+// Exported for the regression tests in lib.test.mjs (r147 MINOR).
+export const reaperFilter = (iso) =>
+  `status=eq.sending&provider_message_id=is.null&updated_at=lt.${FV(iso)}`;
+export const capDayFilter = (vnDate) =>
+  `kind=eq.sent&created_at=gte.${FV(`${vnDate}T00:00:00+07:00`)}`;
 
 async function main() {
+  const errors = [];
   // Reap stranded claims first: a runner that died between the CAS flip
   // and the status patch left rows in 'sending' forever (r145 MAJOR-5).
   // 15min > the longest resend timeout + patch latency. Rows carrying a
   // provider_message_id are EXCLUDED: the mail was already delivered,
-  // requeueing would double-send (r146 MINOR-2).
-  const staleBefore = FV(new Date(Date.now() - 15 * 60e3).toISOString());
-  await gtmPatch('messages', `status=eq.sending&provider_message_id=is.null&updated_at=lt.${staleBefore}`, { status: 'queued' })
-    .catch(() => null);
+  // requeueing would double-send (r146 MINOR-2). Provider-side dedupe
+  // via Idempotency-Key covers the residual all-writes-failed window.
+  const staleBefore = new Date(Date.now() - 15 * 60e3).toISOString();
+  await gtmPatch('messages', reaperFilter(staleBefore), { status: 'queued' })
+    .catch((e) => { errors.push({ err: `reaper: ${e.message}` }); return null; });
   // Daily-cap day = Asia/Ho_Chi_Minh (UTC+7, no DST), not UTC - a UTC
   // boundary lets one VN day send ~2x the cap across the 07:00 edge
   // (r145 MINOR-10).
   const vnToday = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
-  const sentToday = await gtmCount('events', `kind=eq.sent&created_at=gte.${FV(`${vnToday}T00:00:00+07:00`)}`);
+  const sentToday = await gtmCount('events', capDayFilter(vnToday));
   const budget = Math.max(0, Math.min(limit, CAP - sentToday));
   const rows = await gtmAll(
     'messages',
@@ -75,7 +89,6 @@ async function main() {
     enabled: ENABLED && !FORCE, queued_total: rows.length, budget,
     sent: 0, skipped: 0, failed: 0, reasons: {},
   };
-  const errors = [];
   for (const m of queue) {
     const lead = m.leads;
     const skip = (reason) => { stats.skipped++; stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; };
@@ -102,7 +115,10 @@ async function main() {
     ).catch(() => null);
     if (!claimed?.length) { skip('claim_lost'); continue; }
     try {
-      const pid = await resendSend({ to: lead.contact_email, subject: m.subject, body: m.body });
+      const pid = await resendSend({
+        to: lead.contact_email, subject: m.subject, body: m.body,
+        idem: `gtm-msg-${m.id}-${createHash('sha256').update(m.body).digest('hex').slice(0, 12)}`,
+      });
       // Provider accepted the mail - a bookkeeping blip must NOT mark it
       // 'failed' or a re-approve sends a duplicate (r145 MINOR-9).
       try {

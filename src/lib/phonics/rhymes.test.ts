@@ -92,13 +92,22 @@ describe('rhyme coverage over the real bank', () => {
     expect(withPartners.length).toBeGreaterThanOrEqual(10);
   });
 
-  it('rhymesWith is symmetric on every bank pair', () => {
-    for (const a of ALL_WORDS) {
-      for (const b of ALL_WORDS) {
-        expect(rhymesWith(a.word, b.word), `rhymesWith("${a.word}","${b.word}") must equal its mirror`).toBe(
-          rhymesWith(b.word, a.word),
-        );
+  it('rhymesWith is symmetric on every bank pair', async () => {
+    // Same exhaustive pair coverage, but: unordered pairs only (i<j
+    // checks both directions in one pass - half the calls), mismatches
+    // collected instead of ~2M per-pair expect() allocations, and an
+    // awaited yield every chunk keeps the vitest worker's RPC channel
+    // alive (a >10s synchronous block trips the onTaskUpdate timeout
+    // and kills the whole suite run on loaded machines).
+    const bad: string[] = [];
+    for (let i = 0; i < ALL_WORDS.length; i++) {
+      for (let j = i + 1; j < ALL_WORDS.length; j++) {
+        const a = ALL_WORDS[i].word;
+        const b = ALL_WORDS[j].word;
+        if (rhymesWith(a, b) !== rhymesWith(b, a)) bad.push(`${a}/${b}`);
       }
+      if (i % 40 === 0) await Promise.resolve();
     }
+    expect(bad, `asymmetric pairs: ${bad.slice(0, 5).join(', ')}`).toEqual([]);
   });
 });

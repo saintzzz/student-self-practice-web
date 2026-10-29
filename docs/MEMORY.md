@@ -454,9 +454,28 @@
 - Remaining waived ACs (in-flight, tests pending): AC-109.5 webhook
   replay/idempotency, .6 bounce/mailer-daemon, .7 cap+CAS race,
   .9 send-time suppression recheck, .10 source-ceiling e2e.
-- NOT done yet: gtm-reply-webhook edge fn not deployed (needs
-  GTM_WEBHOOK_SECRET + go-live gate); send.mjs never run live
-  (GTM_SEND_ENABLED unset - keep off until legal/footer/domain warm);
+- External review DONE through round 5 (r143-r147, all in
+  docs/reviews/EXTERNAL-REVIEW-r143.md): 30 findings total, all fixed.
+  Round 5 was APPROVE_WITH_CHANGES on 3 items - all three closed in the
+  r147 commit (Resend Idempotency-Key, reaper error recording, filter
+  regression tests). No clean-APPROVE round ran after r147 - that is
+  the one residual if a 6th round is wanted; the 3 items were narrow
+  and all carry regression tests now.
+- Hardened beyond the PRD after review: INSERT+UPDATE queue gate,
+  orThrow error propagation in webhook (postgrest-js never throws),
+  per-address correlation, From normalization, claim-release + stamped
+  processing events (idempotent retry), sending-claim reaper +
+  messages.updated_at, VN-day send cap, FV()-encoded filters, Resend
+  Idempotency-Key, PII redaction in events + dry-run, uuid filter gates,
+  bounded admin reads + truncation chips, CI-safe lib.test.mjs.
+- Remote state: gtm tables EMPTY (probe data cleaned), migration 0070
+  fully applied incl. updated_at column + INSERT gate; PostgREST
+  exposes gtm schema; e2e skips without local admin creds file (by
+  design; was 3-pass/1-skip with creds on the other machine).
+- NOT done yet (operational, not code): gtm-reply-webhook not deployed
+  (needs `supabase functions deploy` + GTM_REPLY_SECRET + Resend webhook
+  config - a human go-live step); send.mjs never run live
+  (GTM_SEND_ENABLED unset - keep off until domain warm + legal review);
   dedicated outreach domain NOT provisioned (never send from
-  vieschool.com main); external review round pending; full suite not
-  re-run after latest edits.
+  vieschool.com main); LLM keys for enrich/draft/classify optional
+  (rule fallbacks exist).
