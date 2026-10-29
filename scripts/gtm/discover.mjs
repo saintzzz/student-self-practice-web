@@ -8,6 +8,10 @@
 //   maps    - Playwright Google Maps search scrape (name/category/
 //             address/phone/website from the public results panel;
 //             no login). Consent wall or layout break => non-zero exit.
+//   places  - official Google Places Text Search API (paid, ToS-clean
+//             for packaged redistribution). Needs GTM_GOOGLE_PLACES_KEY
+//             env or ~/.config/devin/secrets/google_places_key.json
+//             {"api_key": "..."} - customer provides their own key.
 //   fixture - deterministic JSON array [{name,address,city,phone,
 //             website,category}] for tests and seeded runs (AC-109.1).
 //
@@ -16,6 +20,8 @@
 // dedupe_key - reruns upsert, never duplicate (REQ-1.2/AC-109.1).
 
 import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import {
   arg, dedupeKey, gtmAll, gtmPost, gtmUpsert, hasFlag, normText, recordRun,
 } from './lib.mjs';
@@ -129,6 +135,63 @@ async function mapsListings(query) {
   }
 }
 
+// placesListings: Google Places Text Search (New). Same output shape
+// as mapsListings so stageRow/pipeline are adapter-agnostic.
+// Key resolution: env > machine-local secrets file; fails loudly so a
+// missing key can never silently fall back to scraping.
+function placesKey() {
+  if (process.env.GTM_GOOGLE_PLACES_KEY) return process.env.GTM_GOOGLE_PLACES_KEY;
+  try {
+    const p = join(homedir(), '.config', 'devin', 'secrets', 'google_places_key.json');
+    return JSON.parse(readFileSync(p, 'utf8')).api_key;
+  } catch {
+    throw new Error('places adapter needs GTM_GOOGLE_PLACES_KEY env or ~/.config/devin/secrets/google_places_key.json');
+  }
+}
+
+async function placesListings(query) {
+  const key = placesKey();
+  const FIELD_MASK = [
+    'places.id', 'places.displayName', 'places.formattedAddress',
+    'places.internationalPhoneNumber', 'places.nationalPhoneNumber',
+    'places.websiteUri', 'places.googleMapsUri', 'places.primaryTypeDisplayName',
+    'nextPageToken',
+  ].join(',');
+  const out = [];
+  let pageToken = null;
+  for (let page = 0; page < 3; page++) {
+    const body = {
+      textQuery: `${query} ${province}`,
+      languageCode: 'vi',
+      pageSize: 20,
+      ...(lat && lng ? { locationBias: { circle: { center: { latitude: Number(lat), longitude: Number(lng) }, radius: 40000 } } } : {}),
+      ...(pageToken ? { pageToken } : {}),
+    };
+    const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELD_MASK, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!res.ok) throw new Error(`places api ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const j = await res.json();
+    for (const p of j.places ?? []) {
+      out.push({
+        name: p.displayName?.text ?? '',
+        source_url: p.googleMapsUri ?? '',
+        phone: p.internationalPhoneNumber ?? p.nationalPhoneNumber ?? '',
+        category: p.primaryTypeDisplayName?.text ?? '',
+        address: p.formattedAddress ?? '',
+        website: p.websiteUri ?? '',
+      });
+    }
+    pageToken = j.nextPageToken ?? null;
+    if (!pageToken) break;
+    await new Promise((r) => setTimeout(r, 2000)); // nextPageToken warm-up
+  }
+  return out;
+}
+
 const PERSONAL_EMAIL = /@(gmail|yahoo|hotmail|outlook|icloud)\./i;
 function stageRow(raw, campaignId) {
   const name = (raw.name ?? '').trim();
@@ -143,7 +206,7 @@ function stageRow(raw, campaignId) {
     phone: raw.phone ?? null,
     website: raw.website ?? null,
     contact_email: email && !PERSONAL_EMAIL.test(email) ? email : null,
-    source: adapter === 'fixture' ? 'fixture' : `maps:${raw.category ?? 'search'}`,
+    source: adapter === 'fixture' ? 'fixture' : `${adapter}:${raw.category ?? 'search'}`,
     source_url: raw.source_url ?? null,
     signals: raw.category ? { category: raw.category } : null,
     lawful_basis: 'public_business_contact',
@@ -156,7 +219,11 @@ const t1 = t0;
 try {
   let raws = [];
   for (const q of QUERIES[segment] ?? [segment]) {
-    const part = adapter === 'fixture' ? await fixtureListings() : await mapsListings(q);
+    const part = adapter === 'fixture'
+      ? await fixtureListings()
+      : adapter === 'places'
+        ? await placesListings(q)
+        : await mapsListings(q);
     raws.push(...part);
     if (adapter === 'fixture') break; // fixture file is the whole source
   }
