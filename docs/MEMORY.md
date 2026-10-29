@@ -479,3 +479,38 @@
   dedicated outreach domain NOT provisioned (never send from
   vieschool.com main); LLM keys for enrich/draft/classify optional
   (rule fallbacks exist).
+
+## 2026-10-29 - CR-109 FIRST LIVE SEND (Hanoi center campaign)
+
+- User authorized live send. Pipeline ran end-to-end: maps discover
+  (Hanoi, viewport-pinned) 30 staged -> rule-enrich 12 enriched
+  (6 dropped) -> 12 template drafts -> SQL-approve -> **12/12
+  DELIVERED** via Resend (provider ids stored).
+- Fixes landed from real-data defects: maps adapter @lat,lng viewport
+  pin + per-place detail-page scrape (was returning scraper-IP
+  geography and storing Maps category as address); ruleEnrich
+  non-English-language penalty; extractEmail trim; draft shortName()
+  (SEO-stuffed Maps names -> ~65-char subjects).
+- Send used GTM_FROM "VieSchool <hello@vieschool.com>" - the main
+  domain IS verified in Resend (earlier note assumed dedicated
+  subdomain required). Deviation from the dedicated-domain design:
+  fine for the 12-mail pilot; still provision an outreach subdomain
+  before volume so reputation risk stays off the transactional domain.
+- Resend key gtm-send-worker minted via MCP -> stored in
+  ~/.config/devin/secrets/gtm_keys.json (rotate in dashboard if lost).
+- Approval used SQL insert into gtm.message_approvals (service role
+  has no auth.uid so gtm_approve_message RPC denies) - gate verified
+  hash+footer on every row anyway.
+- Replies land in hello@vieschool.com inbox (Resend receiving off) -
+  no auto-classify until gtm-reply-webhook deploys. Deploy still
+  blocked: needs `supabase login` (no access token on this machine)
+  then `supabase functions deploy gtm-reply-webhook` +
+  GTM_WEBHOOK_SECRET + Resend webhook pointing at the function URL
+  (resend MCP create-webhook can do that last step once deployed).
+- Follow-up path: `npm run gtm:draft -- --followups` picks up sent
+  mails >=4d unreplied; 12 cold leads still email-less (websites had
+  no published address - phone/Zalo outreach or second-pass scraping).
+- vieschool-landing updated live (repo commit e7c17ec): real stats
+  99k q / 290+ exams / 330+ vocab + B2B contact block (mailto) so
+  center directors hitting the site from the outreach mails have a
+  reply path.

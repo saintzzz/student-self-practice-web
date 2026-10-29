@@ -52,3 +52,4 @@ scripts/azure-web-profile/
 scripts/bing-auth.json
 scripts/_*.png
 .playwright-cli/
+supabase/.temp/
