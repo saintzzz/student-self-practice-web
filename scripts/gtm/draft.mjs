@@ -20,14 +20,18 @@ const campaignId = arg('--campaign-id', null);
 const followups = hasFlag('--followups');
 const FOLLOWUP_DAYS = 4;
 
+const PARTNER_VN =
+  'Ngoài ra VieSchool có chính sách ưu đãi cho giáo viên và đơn vị giới thiệu học sinh - chia sẻ doanh thu theo số học viên đăng ký, chi tiết xin trao đổi khi anh/chị phản hồi.';
+const PARTNER_EN =
+  'We also run a partner program for teachers and organizations who introduce students - revenue share per enrolled student, details shared on reply.';
 const VALUE_CENTER =
-  'VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giao bài theo lớp, báo cáo tiến độ cho từng học viên.';
+  `VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giao bài theo lớp, báo cáo tiến độ cho từng học viên. ${PARTNER_VN}`;
 const VALUE_SCHOOL =
-  'VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giáo viên giao bài theo lớp và theo dõi tiến độ từng học sinh.';
+  `VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giáo viên giao bài theo lớp và theo dõi tiến độ từng học sinh. ${PARTNER_VN}`;
 const VALUE_CENTER_EN =
-  'VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, class-based assignments, and per-student progress reports.';
+  `VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, class-based assignments, and per-student progress reports. ${PARTNER_EN}`;
 const VALUE_SCHOOL_EN =
-  'VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, teacher assignments by class, and per-student progress tracking.';
+  `VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, teacher assignments by class, and per-student progress tracking. ${PARTNER_EN}`;
 
 // Maps listings stuff SEO keywords into names ("X - IELTS, TOEIC...").
 // Salutations/subjects use the head segment; full name stays in lead data.

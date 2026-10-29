@@ -30,7 +30,7 @@ const campaignName = arg('--campaign', `${province} ${segment} ${new Date().toIS
 
 const QUERIES = {
   center: ['trung tâm tiếng Anh', 'trung tâm anh ngữ', 'lớp học tiếng Anh trẻ em'],
-  school: ['trường tư thục tiểu học', 'trường quốc tế tiểu học', 'trường song ngữ tiểu học'],
+  school: ['trường tiểu học', 'trường tư thục tiểu học', 'trường quốc tế tiểu học', 'trường song ngữ tiểu học'],
 };
 
 async function fixtureListings() {
