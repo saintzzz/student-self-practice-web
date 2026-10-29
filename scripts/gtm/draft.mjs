@@ -25,6 +25,13 @@ const VALUE_CENTER =
 const VALUE_SCHOOL =
   'VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giáo viên giao bài theo lớp và theo dõi tiến độ từng học sinh.';
 
+// Maps listings stuff SEO keywords into names ("X - IELTS, TOEIC...").
+// Salutations/subjects use the head segment; full name stays in lead data.
+function shortName(lead) {
+  const head = (lead.name ?? '').split(' - ')[0].trim();
+  return head.length >= 3 ? head : (lead.name ?? '').trim();
+}
+
 function salutation(lead) {
   return lead.segment === 'school' ? 'Kính gửi Ban Giám hiệu' : 'Kính gửi anh/chị';
 }
@@ -32,8 +39,8 @@ function salutation(lead) {
 function fallbackOpening(lead) {
   const where = lead.city ? ` tại ${lead.city}` : '';
   return lead.segment === 'school'
-    ? `Em biết đến ${lead.name}${where} qua trang thông tin công khai của trường.`
-    : `Em biết đến ${lead.name}${where} qua danh sách trung tâm trên Google Maps.`;
+    ? `Em biết đến ${shortName(lead)}${where} qua trang thông tin công khai của trường.`
+    : `Em biết đến ${shortName(lead)}${where} qua danh sách trung tâm trên Google Maps.`;
 }
 
 const DRAFT_SCHEMA = (o) =>
@@ -54,7 +61,7 @@ async function makeDraft(lead, kind) {
   const value = lead.segment === 'school' ? VALUE_SCHOOL : VALUE_CENTER;
   let subject, opening, llm = false;
   if (kind === 'followup') {
-    subject = `Re: VieSchool x ${lead.name} - luyện tiếng Anh cho học viên`;
+    subject = `Re: VieSchool x ${shortName(lead)} - luyện tiếng Anh cho học viên`;
     opening = 'Em gửi lại email này phòng trường hợp tuần trước anh/chị bận.';
   } else if (llmAvailable()) {
     const got = await chatJson(draftPrompt(lead), DRAFT_SCHEMA);
@@ -64,14 +71,14 @@ async function makeDraft(lead, kind) {
     }
   }
   if (!opening) {
-    subject = subject ?? `VieSchool x ${lead.name} - hệ thống bài tập tiếng Anh tiểu học`;
+    subject = subject ?? `VieSchool x ${shortName(lead)} - hệ thống bài tập tiếng Anh tiểu học`;
     opening = fallbackOpening(lead);
   }
   const cta = kind === 'followup'
     ? 'Nếu chương trình phù hợp, anh/chị chỉ cần trả lời email này - em sẽ sắp một cuộc trao đổi ngắn 15 phút.'
     : 'Nếu anh/chị muốn xem thử, em xin sắp một cuộc trao đổi 15 phút hoặc gửi tài khoản dùng thử cho giáo viên của mình - chỉ cần trả lời email này.';
   const body = [
-    `${salutation(lead)} ${lead.name},`,
+    `${salutation(lead)} ${shortName(lead)},`,
     '',
     opening,
     '',

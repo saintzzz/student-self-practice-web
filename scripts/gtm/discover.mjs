@@ -1,6 +1,7 @@
 // CR-109 discover agent: stage public business listings into gtm.leads.
 //
 //   node scripts/gtm/discover.mjs --province "Đà Nẵng" --segment center \
+//     [--lat 16.0471 --lng 108.2068] \
 //     [--adapter maps|fixture] [--fixture-file path] [--campaign "name"]
 //
 // Adapters:
@@ -22,6 +23,8 @@ import {
 const t0 = Date.now();
 const province = arg('--province', 'Đà Nẵng');
 const segment = arg('--segment', 'center');
+const lat = arg('--lat', null);
+const lng = arg('--lng', null);
 const adapter = arg('--adapter', hasFlag('--fixture-file') ? 'fixture' : 'maps');
 const campaignName = arg('--campaign', `${province} ${segment} ${new Date().toISOString().slice(0, 10)}`);
 
@@ -36,10 +39,14 @@ async function fixtureListings() {
   return JSON.parse(readFileSync(file, 'utf8'));
 }
 
-// Google Maps results-panel scrape: each result card carries
-// name/category/address; phone+website arrive in the detail pane but
-// the card aria-label + address text are enough for staging - enrich
-// fetches websites later. Consent wall / zero cards => throw.
+// Google Maps scrape, two phases:
+//   1. results feed -> place URLs (viewport-pinned via /@lat,lng so Google
+//      returns the requested province, not the scraper IP's geography)
+//   2. each place page -> structured fields via data-item-id attributes
+//      (locale-independent): address / phone / website / category
+// Consent wall / zero cards => throw (non-zero exit).
+const DETAIL_CAP = 25;
+
 async function mapsListings(query) {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch({ headless: true });
@@ -49,8 +56,9 @@ async function mapsListings(query) {
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
     });
+    const viewport = lat && lng ? `/@${lat},${lng},12z` : '';
     await page.goto(
-      `https://www.google.com/maps/search/${encodeURIComponent(`${query} ${province}`)}?hl=vi`,
+      `https://www.google.com/maps/search/${encodeURIComponent(`${query} ${province}`)}${viewport}?hl=vi`,
       { waitUntil: 'domcontentloaded', timeout: 45000 },
     );
     if (await page.locator('form[action*="consent"]').count()) {
@@ -58,7 +66,6 @@ async function mapsListings(query) {
     }
     const feed = page.locator('div[role="feed"]');
     await feed.waitFor({ state: 'visible', timeout: 20000 });
-    // Scroll the feed to force lazy pages until stable or ~40 cards.
     let seen = 0;
     for (let i = 0; i < 14; i++) {
       await feed.evaluate((el) => el.scrollBy(0, el.scrollHeight));
@@ -67,20 +74,39 @@ async function mapsListings(query) {
       if (n === seen || n >= 120) break;
       seen = n;
     }
-    return await feed.locator('> div:has(a[href*="/maps/place/"])').evaluateAll((cards) =>
-      cards.map((c) => {
+    const cards = await feed.locator('> div:has(a[href*="/maps/place/"])').evaluateAll((cs) =>
+      cs.map((c) => {
         const a = c.querySelector('a[href*="/maps/place/"]');
-        const name = a?.getAttribute('aria-label') ?? '';
-        const url = a?.href ?? '';
-        const bits = [...c.querySelectorAll('div > div > span, div > div > div > span')]
-          .map((s) => s.textContent?.trim() ?? '')
-          .filter(Boolean);
-        const phone = bits.find((b) => /^(0|\+84)[\d .]{8,}/.test(b)) ?? '';
-        const category = bits.find((b) => b.length < 40 && !/^(0|\+84|http)/.test(b) && !b.includes('·')) ?? '';
-        const address = bits.find((b) => b.length >= 20 && !b.startsWith('http')) ?? '';
-        return { name, source_url: url, phone, category, address, website: '' };
-      }).filter((r) => r.name),
+        return { name: a?.getAttribute('aria-label') ?? '', url: a?.href ?? '' };
+      }).filter((r) => r.name && r.url),
     );
+    // Phase 2: visit each place for structured fields.
+    const out = [];
+    for (const card of cards.slice(0, DETAIL_CAP)) {
+      try {
+        await page.goto(card.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForSelector('h1', { timeout: 10000 });
+        const detail = await page.evaluate(() => {
+          const txt = (sel) => document.querySelector(sel)?.textContent?.trim() ?? '';
+          const aria = (sel) => (document.querySelector(sel)?.getAttribute('aria-label') ?? '').replace(/^[^:]*:\s*/, '');
+          return {
+            name: txt('h1'),
+            address: txt('button[data-item-id="address"] .Io6YTe') || aria('button[data-item-id="address"]'),
+            phone: txt('button[data-item-id^="phone"] .Io6YTe') || aria('button[data-item-id^="phone"]'),
+            website: document.querySelector('a[data-item-id="authority"]')?.href ?? '',
+            category: txt('button[jsaction*="category"]') || txt('.DkEaL'),
+          };
+        });
+        out.push({
+          name: detail.name || card.name, source_url: card.url,
+          phone: detail.phone, category: detail.category,
+          address: detail.address, website: detail.website,
+        });
+      } catch {
+        out.push({ name: card.name, source_url: card.url, phone: '', category: '', address: '', website: '' });
+      }
+    }
+    return out;
   } finally {
     await browser.close();
   }

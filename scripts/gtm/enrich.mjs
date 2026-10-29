@@ -46,10 +46,13 @@ JSON tra ve:
 
 function ruleEnrich(lead) {
   const t = normText(`${lead.name} ${lead.source ?? ''}`);
-  const schoolish = /(truong|school|quoc te|international|song ngu|bilingual|tu thuc)/.test(t);
+  const schoolish = /(truong|school|quoc te|international|song ngu|bilingual|tu thuc|ngoai ngu)/.test(t);
   const centerish = /(anh ngu|tieng anh|english|ielts|cambridge|academy)/.test(t);
+  const nonEnglish = /(tieng trung|tieng han|tieng nhat|tieng duc|tieng phap|tieng nga|chinese|korean|japanese)/.test(t);
   const segment = centerish ? 'center' : schoolish ? 'school' : 'unknown';
-  const fit = segment === 'center' ? 7 : segment === 'school' ? 6 : 3;
+  // Language centers with no English signal (e.g. Chinese-only) are
+  // non-targets even when Maps files them under a generic edu category.
+  const fit = !centerish && nonEnglish ? 2 : segment === 'center' ? 7 : segment === 'school' ? 6 : 3;
   return {
     segment, fit,
     reason: 'rule-fallback: ' + (segment === 'unknown' ? 'khong ro segment' : `name signal ${segment}`),
@@ -81,7 +84,7 @@ async function extractEmail(website) {
       const html = await res.text();
       const mailtos = [...html.matchAll(/mailto:([^"'<>?]+)/gi)].map((m) => m[1]);
       const emails = [...new Set([...mailtos, ...(html.match(EMAIL_RE) ?? [])])]
-        .map((e) => e.toLowerCase().replace(/\.$/, ''))
+        .map((e) => e.trim().toLowerCase().replace(/\.$/, ''))
         .filter((e) => !/\.(png|jpg|jpeg|gif|webp|svg|js|css)$/.test(e))
         .filter((e) => isBusinessEmail(e, orgDomain));
       if (emails.length) {
