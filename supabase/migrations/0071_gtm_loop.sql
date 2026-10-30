@@ -39,4 +39,6 @@ create index if not exists demo_accounts_expiry_idx on gtm.demo_accounts(expires
 
 alter table gtm.inbox_replies enable row level security;
 alter table gtm.demo_accounts enable row level security;
+grant select, insert, update on gtm.inbox_replies to service_role;
+grant select, insert, update on gtm.demo_accounts to service_role;
 -- service-role only, same posture as other gtm tables (checked in 0070).

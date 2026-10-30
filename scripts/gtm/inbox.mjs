@@ -22,7 +22,7 @@ const GMAIL_USER = process.env.GTM_GMAIL_USER ?? 'duylinhcn3@gmail.com';
 const GMAIL_PASS = process.env.GTM_GMAIL_PASS
   ?? (existsSync(SEC('gmail_app_password') ?? '') ? readFileSync(SEC('gmail_app_password'), 'utf8').trim().replace(/\s/g, '') : null);
 const OWNER = process.env.GTM_OWNER_EMAIL ?? 'hello@vieschool.com';
-const PHONE_RE = /(?:\+?84|0)\d[\d\s.]{7,11}/;
+const PHONE_RE = /(?:\+84|0)[35789]\d[\d\s.]{6,9}\d/; // VN mobiles only
 const TRIAL_RE = /(dung thu|trial|tai khoan|demo|xem thu|dang ky)/i;
 const STOP_RE = /(khong nhan|unsubscribe|KHÔNG|dung lai|stop)/i;
 
@@ -56,11 +56,12 @@ const fetchUnseen = async () => {
     const ids = (srch.match(/^\* SEARCH( .*)?$/m)?.[1] ?? '').trim().split(' ').filter(Boolean).slice(-30);
     const msgs = [];
     for (const id of ids) {
-      const raw = await send(`FETCH ${id} (FLAGS BODY[HEADER.FIELDS (FROM SUBJECT MESSAGE-ID)] BODY[TEXT]<0.600>)`);
+      const raw = await send(`FETCH ${id} (BODY[HEADER.FIELDS (FROM SUBJECT MESSAGE-ID)])`);
       const msgId = raw.match(/Message-ID:\s*<?([^>\s]+)/i)?.[1];
       const from = raw.match(/From:\s*(.*)/i)?.[1]?.match(/[\w.+-]+@[\w.-]+/)?.[0];
       const subject = raw.match(/Subject:\s*(.*)/i)?.[1]?.trim();
-      const body = raw.slice(raw.indexOf('BODY[TEXT]')).replace(/<[^>]+>/g, ' ').slice(0, 4000);
+      const bodyRaw = await send(`FETCH ${id} (BODY[TEXT]<0.2000>)`).catch(() => '');
+      const body = bodyRaw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000);
       if (msgId && from) msgs.push({ id, msgId, from, subject, body });
     }
     await send('LOGOUT').catch(() => {});
@@ -81,9 +82,13 @@ const run = async () => {
   if (!GMAIL_PASS) { console.log('no gmail_app_password secret - set it then rerun'); return; }
   const msgs = await fetchUnseen();
   for (const m of msgs) {
-    const { intent, phone } = classify(m);
+    let { intent, phone } = classify(m);
     const { data: lead } = await gtm.schema('gtm').from('leads')
       .select('id').ilike('contact_email', m.from).maybeSingle();
+    // only act on senders matching a real lead - newsletters containing
+    // accidental digit strings are not consult requests
+    if (!lead && intent !== 'unsubscribe') intent = 'unclassified';
+    if (!lead && intent === 'unsubscribe') continue; // not our lead either
     const ins = await gtm.schema('gtm').from('inbox_replies').upsert({
       lead_id: lead?.id ?? null, gmail_message_id: m.msgId, from_email: m.from,
       subject: m.subject, snippet: m.body.slice(0, 400), intent, phone: phone ?? null,
