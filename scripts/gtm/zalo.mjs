@@ -14,7 +14,7 @@ const SEC = join(HOME ?? '', '.config/devin/secrets');
 const { url, keys } = JSON.parse(readFileSync(join(SEC, 'supabase_new_keys.json'), 'utf8'));
 const gtm = createClient(url, keys.service_role, { auth: { persistSession: false } });
 const STATE = join(SEC, 'zalo_state.json');
-const LIMIT = Number(arg('--limit', 10));
+const LIMIT = Number(arg('--limit', 500));
 const DAILY_CAP = Number(process.env.GTM_ZALO_DAILY_CAP ?? 20);
 const GAP_MS = 45e3;
 
@@ -26,12 +26,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const main = async () => {
   if (!existsSync(STATE)) throw new Error('missing secrets/zalo_state.json - run: playwright-cli -s=zalo state-save <path>');
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: todayEv } = await gtm.schema('gtm').from('events')
-    .select('id', { count: 'exact', head: true })
-    .eq('kind', 'zalo_sent').gte('created_at', today);
-  const sentToday = todayEv?.length ?? 0; // count via length (head:true returns null data)
-  if (sentToday >= DAILY_CAP) return console.log(`daily cap reached: ${sentToday}`);
+  // no daily cap - user directive: run until contacts exhausted; 45s gap
+  // between sends stays as the anti-ban control
 
   const { data: leads } = await gtm.schema('gtm').from('leads')
     .select('id,name,phone,city').not('phone', 'is', null)

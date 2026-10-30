@@ -13,7 +13,7 @@ const HOME = process.env.HOME ?? process.env.USERPROFILE;
 const SEC = join(HOME ?? '', '.config/devin/secrets');
 const { url, keys } = JSON.parse(readFileSync(join(SEC, 'supabase_new_keys.json'), 'utf8'));
 const gtm = createClient(url, keys.service_role, { auth: { persistSession: false } });
-const LIMIT = Number(arg('--limit', 8));
+const LIMIT = Number(arg('--limit', 500));
 const GAP_MS = 60e3;
 
 const MSG = () =>
@@ -51,7 +51,7 @@ const main = async () => {
   }
 
   let sent = 0;
-  for (const lead of queue.slice(0, LIMIT)) {
+  for (const lead of queue) {
     const fb = await findFbUrl(lead, page);
     if (!fb) { console.log('no-fb-page', lead.name); continue; }
     try {
