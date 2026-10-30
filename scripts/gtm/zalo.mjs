@@ -16,7 +16,8 @@ const gtm = createClient(url, keys.service_role, { auth: { persistSession: false
 const STATE = join(SEC, 'zalo_state.json');
 const LIMIT = Number(arg('--limit', 500));
 const DAILY_CAP = Number(process.env.GTM_ZALO_DAILY_CAP ?? 20);
-const GAP_MS = 45e3;
+const GAP_MS = 120e3; // 2min between searches - Zalo throttles phone lookups
+const BACKOFF_AFTER = 3, BACKOFF_MS = 600e3; // 3 consecutive misses -> 10min
 
 const MSG = (lead) =>
   `Chào anh/chị, em bên VieSchool - hệ sinh thái số cho trường tiểu học: English Arena (99.000+ câu hỏi SGK Global Success, đề thi IOE, 15 trò chơi), Công cụ soạn đề giáo viên (ma trận, xuất Word/PDF), Sổ chủ nhiệm điện tử. Anh/chị có 5 phút để em giới thiệu không ạ? https://vieschool.com`;
@@ -61,7 +62,7 @@ const main = async () => {
   if (!logged) { await browser.close(); throw new Error('zalo login timeout - scan QR in the opened window'); }
   await sleep(3000);
 
-  let sent = 0;
+  let sent = 0, misses = 0;
   for (const lead of queue) {
     const phone = normPhone(lead.phone);
     // mobiles only - landlines (02x) & shortcodes can't have personal Zalo
@@ -73,7 +74,17 @@ const main = async () => {
       await page.keyboard.press('Enter');
       await sleep(4000);
       const msgBtn = page.getByText('Nhắn tin', { exact: true }).last();
-      if (!await msgBtn.count()) { console.log('no-zalo', phone, lead.name); await page.keyboard.press('Escape'); continue; }
+      if (!await msgBtn.count()) {
+        misses++;
+        console.log('no-zalo', phone, lead.name);
+        await page.keyboard.press('Escape');
+        if (misses >= BACKOFF_AFTER) {
+          console.log(`throttled? ${misses} consecutive misses - cooling ${BACKOFF_MS / 60000}min`);
+          await sleep(BACKOFF_MS); misses = 0;
+        } else await sleep(GAP_MS);
+        continue;
+      }
+      misses = 0;
       await msgBtn.click();
       await sleep(2500);
       const box = page.locator('[contenteditable="true"]').last();

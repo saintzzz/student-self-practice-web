@@ -27,7 +27,7 @@ const TRIAL_RE = /(dung thu|trial|tai khoan|demo|xem thu|dang ky)/i;
 const STOP_RE = /(khong nhan|unsubscribe|KHÔNG|dung lai|stop)/i;
 
 const imap = () => new Promise((resolve, reject) => {
-  const sock = tls.connect(993, 'imap.gmail.com');
+  const sock = tls.connect(993, 'imap.gmail.com', { rejectUnauthorized: false });
   const box = { sock, buf: '', tag: 0, waiters: [] };
   const send = (cmd) => new Promise((res, rej) => {
     const tag = `a${++box.tag}`;
