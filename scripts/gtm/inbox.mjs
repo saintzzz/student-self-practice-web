@@ -18,7 +18,7 @@ const SEC = (n) => [process.env[`GTM_${n.toUpperCase()}`],
   join(HOME ?? '', '.config/devin/secrets', n)].find((p) => p && existsSync(p));
 const keyFile = JSON.parse(readFileSync(SEC('supabase_new_keys.json'), 'utf8'));
 const gtm = createClient(keyFile.url, keyFile.keys.service_role, { auth: { persistSession: false } });
-const GMAIL_USER = process.env.GTM_GMAIL_USER ?? 'hello@vieschool.com';
+const GMAIL_USER = process.env.GTM_GMAIL_USER ?? 'duylinhcn3@gmail.com';
 const GMAIL_PASS = process.env.GTM_GMAIL_PASS
   ?? (existsSync(SEC('gmail_app_password') ?? '') ? readFileSync(SEC('gmail_app_password'), 'utf8').trim().replace(/\s/g, '') : null);
 const OWNER = process.env.GTM_OWNER_EMAIL ?? 'hello@vieschool.com';
