@@ -19,7 +19,7 @@ const DAILY_CAP = Number(process.env.GTM_ZALO_DAILY_CAP ?? 20);
 const GAP_MS = 45e3;
 
 const MSG = (lead) =>
-  `Chào anh/chị, em bên VieSchool - nền tảng luyện tiếng Anh tiểu học bám chương trình Global Success (~30.000 câu có đáp án, giao bài theo lớp, báo cáo tiến độ từng học viên). Anh/chị có 5 phút để em giới thiệu thử không ạ? https://vieschool.com`;
+  `Chào anh/chị, em bên VieSchool - hệ sinh thái số cho trường tiểu học: English Arena (99.000+ câu hỏi SGK Global Success, đề thi IOE, 15 trò chơi), Công cụ soạn đề giáo viên (ma trận, xuất Word/PDF), Sổ chủ nhiệm điện tử. Anh/chị có 5 phút để em giới thiệu không ạ? https://vieschool.com`;
 
 const normPhone = (p) => (p ?? '').replace(/[^\d]/g, '').replace(/^84/, '0');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -48,7 +48,7 @@ const main = async () => {
   // does NOT carry it. First run: headed window opens, user scans QR once.
   const browser = await chromium.launchPersistentContext(
     join(SEC, 'zalo-profile'), {
-      headless: hasFlag('--headless'),
+      headless: false, // Zalo blocks/behaves differently headless - always headed
       viewport: { width: 1280, height: 800 },
     });
   const page = browser.pages()[0] ?? await browser.newPage();

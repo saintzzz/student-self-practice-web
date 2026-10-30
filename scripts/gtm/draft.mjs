@@ -25,13 +25,13 @@ const PARTNER_VN =
 const PARTNER_EN =
   'We also run a partner program for teachers and organizations who introduce students - revenue share per enrolled student, details shared on reply.';
 const VALUE_CENTER =
-  `VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giao bài theo lớp, báo cáo tiến độ cho từng học viên. ${PARTNER_VN}`;
+  `VieSchool là hệ sinh thái số cho trường tiểu học: English Arena - ngân hàng 99.000+ câu hỏi bám SGK Global Success (Tiếng Anh, Toán TA, Khoa học TA) kèm giải thích, 290+ đề thi chuẩn IOE, 15 trò chơi luyện tập; Công cụ soạn đề cho giáo viên (ma trận đề, xuất Word/PDF chuẩn nhà trường, hỗ trợ AI); và Sổ chủ nhiệm điện tử. Trung tâm dùng được ngay để giao bài về nhà có kiểm soát và báo cáo tiến độ từng học viên. ${PARTNER_VN}`;
 const VALUE_SCHOOL =
-  `VieSchool là nền tảng luyện tiếng Anh cho học sinh tiểu học (lớp 1-5), bám sát chương trình Global Success - ngân hàng gần 30.000 câu hỏi có đáp án và giải thích, giáo viên giao bài theo lớp và theo dõi tiến độ từng học sinh. ${PARTNER_VN}`;
+  `VieSchool là hệ sinh thái số cho trường tiểu học: English Arena - 99.000+ câu hỏi bám SGK Global Success (Tiếng Anh, Toán TA, Khoa học TA) kèm giải thích, 290+ đề thi chuẩn IOE; Công cụ soạn đề giáo viên (ma trận, xuất Word/PDF, hỗ trợ AI); và Sổ chủ nhiệm điện tử. Giáo viên giao bài theo lớp và theo dõi tiến độ từng học sinh. ${PARTNER_VN}`;
 const VALUE_CENTER_EN =
-  `VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, class-based assignments, and per-student progress reports. ${PARTNER_EN}`;
+  `VieSchool is a digital ecosystem for primary schools: English Arena - 99,000+ curriculum-aligned questions (Global Success) with explanations, 290+ IOE-format tests, 15 practice games; teacher authoring tools (exam matrices, Word/PDF export, AI-assisted); and a digital homeroom register. Centers use it for controlled homework and per-student reporting. ${PARTNER_EN}`;
 const VALUE_SCHOOL_EN =
-  `VieSchool is an English practice platform for primary students (grades 1-5), aligned with the Global Success curriculum - a question bank of nearly 30,000 questions with answers and explanations, teacher assignments by class, and per-student progress tracking. ${PARTNER_EN}`;
+  `VieSchool is a digital ecosystem for primary schools: English Arena - 99,000+ Global Success-aligned questions with explanations and 290+ IOE-format tests; teacher authoring tools (matrices, Word/PDF export, AI-assisted); and a digital homeroom register. Teachers assign by class and track each student. ${PARTNER_EN}`;
 
 // Maps listings stuff SEO keywords into names ("X - IELTS, TOEIC...").
 // Salutations/subjects use the head segment; full name stays in lead data.
