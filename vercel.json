@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/guides-indexnow-key.txt", "destination": "https://vieschool-content.vercel.app/guides-indexnow-key.txt" },
+    { "source": "/sitemap.xml", "destination": "https://vieschool-content.vercel.app/ea/guides/sitemap.xml" },
     { "source": "/guides", "destination": "https://vieschool-content.vercel.app/ea/guides" },
     { "source": "/guides/:path*", "destination": "https://vieschool-content.vercel.app/ea/guides/:path*" }
   ],

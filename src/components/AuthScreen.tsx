@@ -118,6 +118,11 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
       <p className="mt-4 text-center text-xs font-semibold text-slate-400">
         English Arena - sản phẩm của VieSchool
       </p>
+      <p className="mt-2 text-center text-xs font-semibold">
+        <a href="/guides" className="text-amber-300 underline-offset-2 transition hover:text-amber-200 hover:underline">
+          Cẩm nang phụ huynh: luyện IOE, phonics, tiếng Anh SGK
+        </a>
+      </p>
     </div>
   );
 }
