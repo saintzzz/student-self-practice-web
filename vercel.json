@@ -1,4 +1,8 @@
 {
+  "rewrites": [
+    { "source": "/guides-indexnow-key.txt", "destination": "https://vieschool-content.vercel.app/guides-indexnow-key.txt" },
+    { "source": "/guides/:path*", "destination": "https://vieschool-content.vercel.app/ea/guides/:path*" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

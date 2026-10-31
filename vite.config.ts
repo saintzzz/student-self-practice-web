@@ -29,7 +29,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
-    exclude: ['node_modules/**', 'e2e/**', 'tests/fixtures/**'],
+    // '**/node_modules/**' (not 'node_modules/**') - the scripts/gtm symlink
+    // points outside the repo, so vendored test files under
+    // scripts/gtm/*/node_modules must still be excluded.
+    exclude: ['**/node_modules/**', 'scripts/gtm/**', 'e2e/**', 'tests/fixtures/**'],
     // EmojiVisual pulls a 171 kB lazy player chunk on first mount in every
     // component test; unbounded parallelism starves long tests past their
     // timeouts on mid-range machines. Cap workers for stability.
