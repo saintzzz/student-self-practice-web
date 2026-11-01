@@ -100,13 +100,19 @@ export function EmojiChoiceField({
               disabled={disabled || wrong}
               onClick={() => handlePick(i)}
               className={`${base} game-bob mx-auto h-24 w-20 flex-col rounded-t-full rounded-b-[3rem] bg-gradient-to-b ${BALLOON_COLORS[i % 4]} text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.3),0_8px_18px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
-              style={{ animationDelay: `${i * 220}ms` }}
+              /* stagger is for the ambient loop only - a one-shot verdict
+                 animation must start immediately (review r144). */
+              style={{ animationDelay: wrong || hit ? '0ms' : `${i * 220}ms` }}
             >
               {/* CR-91: light disc stage so the art reads on the balloon
                   (was: raw emoji on a saturated fill - same value band,
                   the picture was the least legible element). */}
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.35)]">
-                <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" className="text-3xl" />
+                {/* r144: EmojiVisual's render mode is mount-only ("one-way
+                    per mount"), so key by visual identity - a slot whose
+                    word changes across rounds must remount, else an
+                    image-mode shell renders a wordless slot blank. */}
+                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" className="text-3xl" />
               </span>
               <span aria-hidden className="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-inherit" />
             </button>
@@ -122,11 +128,11 @@ export function EmojiChoiceField({
               disabled={disabled || wrong}
               onClick={() => handlePick(i)}
               className={`${base} game-drift h-20 rounded-2xl border-2 border-sky-200/50 bg-gradient-to-b from-sky-400 to-sky-600 text-3xl shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
-              style={{ animationDelay: `${i * 340}ms` }}
+              style={{ animationDelay: wrong || hit ? '0ms' : `${i * 340}ms` }}
             >
               {/* CR-91: light disc stage - art pops, tile keeps its hue. */}
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.3)]">
-                <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" className="text-2xl" />
+                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" className="text-2xl" />
               </span>
             </button>
           );
@@ -151,7 +157,7 @@ export function EmojiChoiceField({
                 className={`${moleUp ? (up ? 'game-mole-up' : 'game-mole-down') : 'game-peek'} flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}
                 style={moleUp ? undefined : { animationDelay: `${i * 300}ms` }}
               >
-                <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" />
+                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" />
               </span>
             </button>
           );
@@ -166,9 +172,9 @@ export function EmojiChoiceField({
               disabled={disabled || wrong}
               onClick={() => handlePick(i)}
               className={`${base} game-bob mx-auto h-24 w-24 flex-col rounded-full border-4 border-amber-100/80 bg-gradient-to-b from-amber-50 to-orange-100 text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.7),0_10px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
-              style={{ animationDelay: `${i * 240}ms` }}
+              style={{ animationDelay: wrong || hit ? '0ms' : `${i * 240}ms` }}
             >
-              <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" className="text-4xl drop-shadow-sm" />
+              <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" className="text-4xl drop-shadow-sm" />
             </button>
           );
         }
@@ -182,7 +188,7 @@ export function EmojiChoiceField({
             onClick={() => handlePick(i)}
             className={`${base} h-24 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 text-5xl shadow-[0_8px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
           >
-            <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" />
+            <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" />
           </button>
         );
       })}
