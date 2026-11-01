@@ -1,4 +1,5 @@
 import type { Topic, VocabWord } from '../../types';
+import { VOCAB_IMAGES } from '../vocabImages';
 import { ANIMALS_TOPIC, ANIMALS_WORDS } from './animals';
 import { COLORS_TOPIC, COLORS_WORDS } from './colors';
 import { NUMBERS_TOPIC, NUMBERS_WORDS } from './numbers';
@@ -329,13 +330,34 @@ const WORDS_BY_TOPIC: Record<string, VocabWord[]> = {
 };
 
 /**
+ * CR-115: attach the audited concept art path (VOCAB_IMAGES) to words
+ * that lack a curated imageUrl. Words without art pass through by
+ * identity; words WITH art are enriched ONCE and cached by id so the
+ * CR-07 shared-word invariant ("same id = same object across grades")
+ * still holds.
+ */
+const ART_CACHE = new Map<string, VocabWord>();
+function withArt(w: VocabWord): VocabWord {
+  const url = VOCAB_IMAGES[w.id];
+  if (w.imageUrl || !url) return w;
+  let cached = ART_CACHE.get(w.id);
+  if (!cached) {
+    cached = { ...w, imageUrl: url };
+    ART_CACHE.set(w.id, cached);
+  }
+  return cached;
+}
+
+/**
  * Whole-bank list, deduped by id: a word shared across grades (CR-07
  * shared.ts review vocabulary) is the SAME object listed in multiple
  * topic arrays, so a raw flat() would duplicate its id and break the
  * global unique-id invariant.
  */
 export const ALL_WORDS: readonly VocabWord[] = [
-  ...new Map(Object.values(WORDS_BY_TOPIC).flat().map((w) => [w.id, w])).values(),
+  ...new Map(
+    Object.values(WORDS_BY_TOPIC).flat().map((w) => [w.id, withArt(w)]),
+  ).values(),
 ];
 
 export function getTopicsByGrade(gradeId: string): Topic[] {
@@ -343,7 +365,7 @@ export function getTopicsByGrade(gradeId: string): Topic[] {
 }
 
 export function getWordsByTopic(topicId: string): VocabWord[] {
-  return WORDS_BY_TOPIC[topicId] ?? [];
+  return (WORDS_BY_TOPIC[topicId] ?? []).map(withArt);
 }
 
 /**

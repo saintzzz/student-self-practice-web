@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { playSfx } from '../../lib/sfx';
+import { hashString } from '../../lib/prng';
 import { listeningImageRounds } from '../sources';
 import { EmojiChoiceField, GameRoundDots, HintButton, ModelSpeaker, gameVerdictSfx, pickFiftyFifty } from '../mechanics';
 import { specFor } from '../levels';
@@ -7,6 +8,13 @@ import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
 
 const ROUNDS = 5;
+
+/* CR-115 timing mechanic: a 250ms tick drives each mole's up/down
+   schedule - CYCLE ticks per loop, UP_LEN ticks visible per loop,
+   phases staggered so usually 1-2 moles are up at a time. */
+const TICK_MS = 250;
+const CYCLE = 16;
+const UP_LEN = 5;
 
 /**
  * CR-84 Game 7 - Dap chuot (Whack-a-mole): TTS speaks a word, four moles
@@ -31,7 +39,33 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
+  /* Mole up/down schedule: 250ms tick + seeded per-hole phase offsets
+     (re-rolled every round via `seed:phase:<round>`). Pure state - the
+     field just renders which indexes are up and gates taps to those. */
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+
   const q = rounds[round];
+  const phases = useMemo(
+    () =>
+      q
+        ? q.options.map(
+            (_, i) =>
+              (i * (CYCLE / q.options.length) +
+                (hashString(`${seed}:phase:${round}:${i}`) % 4)) %
+              CYCLE,
+          )
+        : [],
+    [q, seed, round],
+  );
+  const moleUp = useMemo(
+    () => phases.map((_, i) => i).filter((i) => (tick + phases[i]) % CYCLE < UP_LEN),
+    [phases, tick],
+  );
+
   if (!q) return null;
 
   const advance = (addedPoints: number, wasCorrect: boolean) => {
@@ -97,14 +131,16 @@ export default function WhackMole({ grade, seed, level, onEnd }: GameProps) {
       <ModelSpeaker word={q.word} key={q.id} />
       <EmojiChoiceField
         options={q.options}
+        optionWordIds={q.optionWordIds}
         correctIndex={q.correctIndex}
         variant="mole"
+        moleUp={moleUp}
         wrongPicks={[...wrongPicks, ...hints]}
         disabled={lock}
         onPick={pick}
       />
       <HintButton used={hintUsed} disabled={lock || lives.out} onUse={useHint} />
-      <p className="text-sm font-semibold text-slate-300">Nghe từ rồi đập con chuột đúng nhé!</p>
+      <p className="text-sm font-semibold text-slate-300">Nghe từ rồi đập đúng lúc con chuột thò lên nhé!</p>
     </div>
   );
 }

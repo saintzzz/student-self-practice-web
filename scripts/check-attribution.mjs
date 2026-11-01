@@ -80,25 +80,28 @@ async function lsDirs(dir) {
   return entries.filter((e) => e.isDirectory()).map((e) => e.name).sort();
 }
 
-async function collectTsFiles(dir) {
-  const out = [];
-  for (const e of await readdir(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) out.push(...await collectTsFiles(p));
-    else if (e.name.endsWith('.ts')) out.push(p);
-  }
-  return out;
-}
-
+/**
+ * CR-115: word ids come from the REAL ALL_WORDS list - earlier versions
+ * grepped `id: '...'` literals and silently missed every tuple-style word
+ * in the grade xp files, so attribution records for legitimate words were
+ * flagged.
+ * Bundles a tiny module with esbuild (repo dep) instead of regex.
+ */
 async function collectWordIds() {
-  const ids = new Set();
-  for (const file of await collectTsFiles(VOCAB_DIR)) {
-    const source = await readFile(file, 'utf8');
-    for (const match of source.matchAll(/\bid:\s*'([^']+)'/g)) {
-      ids.add(match[1]);
-    }
-  }
-  return ids;
+  const { buildSync } = await import('esbuild');
+  const result = buildSync({
+    stdin: {
+      contents: `import { ALL_WORDS } from './src/data/vocabulary/index'; export const WORD_IDS = ALL_WORDS.map((w) => w.id);`,
+      resolveDir: ROOT,
+      loader: 'ts',
+    },
+    bundle: true,
+    format: 'esm',
+    write: false,
+  });
+  const code = result.outputFiles[0].text;
+  const mod = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+  return new Set(mod.WORD_IDS);
 }
 
 async function main() {

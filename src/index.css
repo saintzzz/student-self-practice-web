@@ -416,6 +416,28 @@ textarea {
 }
 .game-peek { animation: game-peek 2.4s ease-in-out infinite; }
 
+/* CR-115 WhackMole timing: the caller drives up/down state - CSS only
+   slides the mole sprite in/out of the hole (button keeps overflow:hidden
+   so a "down" mole ducks behind the rim). */
+.game-mole-up { transform: translateY(-6%); transition: transform 160ms ease-out; }
+.game-mole-down { transform: translateY(70%); transition: transform 200ms ease-in; }
+@media (prefers-reduced-motion: reduce) {
+  .game-mole-up, .game-mole-down { transition: none; }
+}
+
+/* CR-115: correct-pick burst - quick overshoot pop + glow ring that
+   reads as "reward" without blocking the round advance. Transform +
+   box-shadow only; reduced-motion turns it off below. */
+@keyframes game-hit {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.game-hit {
+  animation: game-hit 380ms cubic-bezier(0.2, 0.9, 0.35, 1.35);
+  box-shadow: 0 0 0 4px rgb(52 211 153 / 0.85), 0 0 22px rgb(52 211 153 / 0.55);
+}
+
 /* CR-85 Word Worm direction pad buttons. */
 .worm-btn {
   display: flex;
@@ -445,7 +467,7 @@ textarea {
   .trace-start-pulse { animation: none; }
   .audio-bars { animation: none; }
   .tile-shake, .dart-arrow { animation: none; }
-  .game-bob, .game-drift, .game-bubble, .game-shake, .game-flip-in, .game-peek { animation: none; }
+  .game-bob, .game-drift, .game-bubble, .game-shake, .game-flip-in, .game-peek, .game-hit { animation: none; }
 }
 
 /* CR-14: Be Vietnam Pro body font, self-hosted (OFL-1.1) under

@@ -95,6 +95,7 @@ export default function BalloonPop({ grade, seed, level, onEnd }: GameProps) {
       <ModelSpeaker word={q.word} key={q.id} />
       <EmojiChoiceField
         options={q.options}
+        optionWordIds={q.optionWordIds}
         correctIndex={q.correctIndex}
         variant="balloon"
         wrongPicks={[...wrongPicks, ...hints]}

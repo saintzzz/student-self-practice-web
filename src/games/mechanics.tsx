@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { playSfx } from '../lib/sfx';
 import { IconSpeaker } from '../components/icons';
 import { speakWord } from '../lib/speech';
 import { seededShuffleIndices } from '../lib/prng';
 import { EmojiVisual } from '../components/EmojiVisual';
+import { getWordVisual } from '../lib/emoji/wordVisual';
 import type { SpellTile } from '../types';
 
 /**
@@ -26,8 +28,21 @@ export interface EmojiChoiceFieldProps {
   correctIndex: number;
   /** Which visual dress the options wear inside the game scene. */
   variant?: 'grid' | 'balloon' | 'fish' | 'mole' | 'food';
+  /**
+   * CR-115: word ids parallel to `options` (ListeningImageChoiceQuestion.
+   * optionWordIds) - lets each option resolve its audited concept art
+   * through getWordVisual. Absent ids (or words without art) fall back
+   * to the emoji chain unchanged.
+   */
+  optionWordIds?: readonly string[];
   /** Indexes already tapped wrongly - render dimmed/disabled. */
   wrongPicks?: readonly number[];
+  /**
+   * CR-115 WhackMole timing mechanic (variant='mole' only): indexes of
+   * moles currently popped up - a mole that is down cannot be whacked.
+   * Undefined keeps every mole tappable (legacy behavior).
+   */
+  moleUp?: readonly number[];
   disabled?: boolean;
   onPick: (index: number) => void;
 }
@@ -43,10 +58,22 @@ export function EmojiChoiceField({
   options,
   correctIndex,
   variant = 'grid',
+  optionWordIds,
   wrongPicks = [],
+  moleUp,
   disabled,
   onPick,
 }: EmojiChoiceFieldProps) {
+  /* CR-115: last-tapped index - a correct tap plays the game-hit burst
+     (wrong taps keep the existing game-shake via wrongPicks). */
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => setPicked(null), [options]);
+
+  const handlePick = (index: number) => {
+    setPicked(index);
+    onPick(index);
+  };
+
   return (
     <div
       data-testid="emoji-choice-field"
@@ -54,6 +81,13 @@ export function EmojiChoiceField({
     >
       {options.map((emoji, i) => {
         const wrong = wrongPicks.includes(i);
+        const hit = picked === i && !wrong;
+        /* CR-115: audited concept art for this option when the word id
+           resolves to one; EmojiVisual falls back to the emoji chain on
+           missing art or load error. */
+        const imageUrl = optionWordIds
+          ? getWordVisual(optionWordIds[i] ?? '')?.imageUrl
+          : undefined;
         const base =
           'relative flex items-center justify-center transition motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300';
         if (variant === 'balloon') {
@@ -64,15 +98,15 @@ export function EmojiChoiceField({
               data-testid={`option-${i}`}
               data-correct={i === correctIndex}
               disabled={disabled || wrong}
-              onClick={() => onPick(i)}
-              className={`${base} game-bob mx-auto h-24 w-20 flex-col rounded-t-full rounded-b-[3rem] bg-gradient-to-b ${BALLOON_COLORS[i % 4]} text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.3),0_8px_18px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+              onClick={() => handlePick(i)}
+              className={`${base} game-bob mx-auto h-24 w-20 flex-col rounded-t-full rounded-b-[3rem] bg-gradient-to-b ${BALLOON_COLORS[i % 4]} text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.3),0_8px_18px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
               style={{ animationDelay: `${i * 220}ms` }}
             >
               {/* CR-91: light disc stage so the art reads on the balloon
                   (was: raw emoji on a saturated fill - same value band,
                   the picture was the least legible element). */}
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.35)]">
-                <EmojiVisual emoji={emoji} variant="block" className="text-3xl" />
+                <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" className="text-3xl" />
               </span>
               <span aria-hidden className="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-inherit" />
             </button>
@@ -86,34 +120,38 @@ export function EmojiChoiceField({
               data-testid={`option-${i}`}
               data-correct={i === correctIndex}
               disabled={disabled || wrong}
-              onClick={() => onPick(i)}
-              className={`${base} game-drift h-20 rounded-2xl border-2 border-sky-200/50 bg-gradient-to-b from-sky-400 to-sky-600 text-3xl shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+              onClick={() => handlePick(i)}
+              className={`${base} game-drift h-20 rounded-2xl border-2 border-sky-200/50 bg-gradient-to-b from-sky-400 to-sky-600 text-3xl shadow-[inset_0_2px_0_rgba(255,255,255,0.4),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
               style={{ animationDelay: `${i * 340}ms` }}
             >
               {/* CR-91: light disc stage - art pops, tile keeps its hue. */}
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.3)]">
-                <EmojiVisual emoji={emoji} variant="block" className="text-2xl" />
+                <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" className="text-2xl" />
               </span>
             </button>
           );
         }
         if (variant === 'mole') {
+          /* CR-115: when the caller drives the up/down schedule, only a
+             popped-up mole can be whacked; down = hidden behind the rim. */
+          const up = moleUp ? moleUp.includes(i) : true;
           return (
             <button
               key={i}
               type="button"
               data-testid={`option-${i}`}
               data-correct={i === correctIndex}
-              disabled={disabled || wrong}
-              onClick={() => onPick(i)}
-              className={`${base} mx-auto h-24 w-24 flex-col overflow-hidden rounded-b-full rounded-t-[2rem] border-b-8 border-amber-950/60 bg-gradient-to-b from-amber-800/70 to-amber-950/80 shadow-[inset_0_10px_18px_-6px_rgba(0,0,0,0.7)] active:scale-95 disabled:opacity-40 ${wrong ? 'game-shake' : ''}`}
+              data-up={up}
+              disabled={disabled || wrong || !up}
+              onClick={() => handlePick(i)}
+              className={`${base} mx-auto h-24 w-24 flex-col overflow-hidden rounded-b-full rounded-t-[2rem] border-b-8 border-amber-950/60 bg-gradient-to-b from-amber-800/70 to-amber-950/80 shadow-[inset_0_10px_18px_-6px_rgba(0,0,0,0.7)] active:scale-95 disabled:cursor-default ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
               aria-label={`Lỗ ${i + 1}: ${emoji}`}
             >
               <span
-                className={`game-peek flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}
-                style={{ animationDelay: `${i * 300}ms` }}
+                className={`${moleUp ? (up ? 'game-mole-up' : 'game-mole-down') : 'game-peek'} flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}
+                style={moleUp ? undefined : { animationDelay: `${i * 300}ms` }}
               >
-                <EmojiVisual emoji={emoji} variant="block" />
+                <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" />
               </span>
             </button>
           );
@@ -126,11 +164,11 @@ export function EmojiChoiceField({
               data-testid={`option-${i}`}
               data-correct={i === correctIndex}
               disabled={disabled || wrong}
-              onClick={() => onPick(i)}
-              className={`${base} game-bob mx-auto h-24 w-24 flex-col rounded-full border-4 border-amber-100/80 bg-gradient-to-b from-amber-50 to-orange-100 text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.7),0_10px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+              onClick={() => handlePick(i)}
+              className={`${base} game-bob mx-auto h-24 w-24 flex-col rounded-full border-4 border-amber-100/80 bg-gradient-to-b from-amber-50 to-orange-100 text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.7),0_10px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
               style={{ animationDelay: `${i * 240}ms` }}
             >
-              <EmojiVisual emoji={emoji} variant="block" className="text-4xl drop-shadow-sm" />
+              <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" className="text-4xl drop-shadow-sm" />
             </button>
           );
         }
@@ -141,10 +179,10 @@ export function EmojiChoiceField({
             data-testid={`option-${i}`}
             data-correct={i === correctIndex}
             disabled={disabled || wrong}
-            onClick={() => onPick(i)}
-            className={`${base} h-24 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 text-5xl shadow-[0_8px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+            onClick={() => handlePick(i)}
+            className={`${base} h-24 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 text-5xl shadow-[0_8px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
           >
-            <EmojiVisual emoji={emoji} variant="block" />
+            <EmojiVisual emoji={emoji} imageUrl={imageUrl} variant="block" />
           </button>
         );
       })}
@@ -172,10 +210,20 @@ export function WordChoiceField({
   disabled,
   onPick,
 }: WordChoiceFieldProps) {
+  /* CR-115: same correct-pick burst as EmojiChoiceField. */
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => setPicked(null), [options]);
+
+  const handlePick = (index: number) => {
+    setPicked(index);
+    onPick(index);
+  };
+
   return (
     <div data-testid="word-choice-field" className="grid grid-cols-2 gap-3">
       {options.map((word, i) => {
         const wrong = wrongPicks.includes(i);
+        const hit = picked === i && !wrong;
         return (
           <button
             key={i}
@@ -183,8 +231,8 @@ export function WordChoiceField({
             data-testid={`option-${i}`}
             data-correct={i === correctIndex}
             disabled={disabled || wrong}
-            onClick={() => onPick(i)}
-            className={`flex min-h-[64px] items-center justify-center rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-3 text-xl font-extrabold text-slate-800 shadow-[inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-4px_0_rgba(180,83,9,0.2),0_8px_20px_-8px_rgba(0,0,0,0.55)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-amber-300 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
+            onClick={() => handlePick(i)}
+            className={`flex min-h-[64px] items-center justify-center rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-3 text-xl font-extrabold text-slate-800 shadow-[inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-4px_0_rgba(180,83,9,0.2),0_8px_20px_-8px_rgba(0,0,0,0.55)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-95 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus:outline-none focus:ring-4 focus:ring-amber-300 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
           >
             {word}
           </button>

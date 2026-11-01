@@ -183,6 +183,17 @@ declare global {
   }
 }
 
+/**
+ * jsdom does not implement HTMLMediaElement.play/pause - sfx calls them on
+ * every verdict and each call prints a "Not implemented" jsdom error that
+ * buries real output. Stub both as quiet no-ops; nothing in the suite
+ * asserts on actual audio playback.
+ */
+HTMLMediaElement.prototype.play = function play() {
+  return Promise.resolve();
+};
+HTMLMediaElement.prototype.pause = function pause() {};
+
 vi.mock('../components/EmojiLottiePlayer', () => ({
   default: function MockEmojiLottiePlayer(props: {
     lottieKey: string;

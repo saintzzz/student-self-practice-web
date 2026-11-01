@@ -344,6 +344,15 @@ exception surface (paper reports). No theme switch.
   (idle bob, rock, wave, bounce, nod, hop) that animates the generated
   Bé Heo poses - the Lottie pose rig is retired in favor of generated
   art + CSS motion (`data-mascot-renderer="art"`).
+- **Game-zone set (`game-*`):** ambient loops `game-bob` (balloons),
+  `game-drift` (fish), `game-bubble`, `game-peek` (mole holes);
+  one-shot feedback `game-hit` (380ms correct-pick burst) vs
+  `game-shake` (420ms wrong-pick). Every loop is excluded under
+  `prefers-reduced-motion`.
+- **Vocab art in options:** `EmojiChoiceField` resolves `optionWordIds`
+  through the vocabulary bank - a word with audited art renders its
+  `/images/vocab/{id}.webp` illustration (attribution-governed, ADR-5);
+  words without art keep the emoji visual chain unchanged.
 - **States:** every interactive element ships hover (lift/lighten),
   `:focus-visible` ring (`focus:ring-4 focus:ring-amber-300/60` family),
   active (`scale-95` press), disabled (opacity). Pointer cursor on all controls.

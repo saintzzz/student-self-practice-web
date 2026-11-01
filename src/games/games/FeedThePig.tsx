@@ -114,6 +114,7 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
       </div>
       <EmojiChoiceField
         options={q.options}
+        optionWordIds={q.optionWordIds}
         correctIndex={q.correctIndex}
         variant="food"
         wrongPicks={[...wrongPicks, ...hints]}

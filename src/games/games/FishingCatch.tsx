@@ -98,6 +98,7 @@ export default function FishingCatch({ grade, seed, level, onEnd }: GameProps) {
       <div className="w-full rounded-3xl border border-sky-300/30 bg-gradient-to-b from-sky-500/25 to-sky-800/40 px-3 py-5">
         <EmojiChoiceField
           options={q.options}
+          optionWordIds={q.optionWordIds}
           correctIndex={q.correctIndex}
           variant="fish"
           wrongPicks={[...wrongPicks, ...hints]}
