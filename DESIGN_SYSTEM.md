@@ -52,6 +52,15 @@
 > `PROMPT_DAY`, EngagementBar `tone="day"`). Play boards, login, admin and
 > credits keep the navy register - day is the map's own surface, not a
 > global light theme.
+>
+> **CR-116 rev2 - surface separation law:** detailed art is a backdrop,
+> never the surface under content. The fixed hero fades out via
+> `mask-image` (opaque to ~50% viewport height, transparent by 80%) plus
+> the emerald linear veil in `scrimDay`, so the interactive zone always
+> sits on the calm `pageGradient`. Anything floating on art gets an
+> opaque surface or a halo: trail dots carry `ring-white/90`, waypoint
+> discs `ring-white`, and naked text is banned - every line of copy on
+> the map rides a glass chip (guest hint, social proof, credit pill).
 
 ---
 

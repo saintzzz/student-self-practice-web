@@ -315,9 +315,11 @@ export const scene = {
   scrim:
     'bg-[radial-gradient(62%_52%_at_50%_44%,rgba(11,18,36,0.55),transparent_76%)]',
   /* CR-116: day-twin of scrim - a soft white mist that keeps chrome
-     readable over the bright generated scene without dimming it. */
+     readable over the bright generated scene without dimming it.
+     rev2: linear emerald veil in the lower band polishes the art ->
+     pageGradient seam and further lightens the interactive zone. */
   scrimDay:
-    'bg-[radial-gradient(62%_52%_at_50%_44%,rgba(224,242,254,0.5),transparent_76%)]',
+    'bg-[radial-gradient(62%_52%_at_50%_44%,rgba(224,242,254,0.5),transparent_76%),linear-gradient(to_bottom,transparent_58%,rgba(236,253,245,0.8)_85%)]',
   layer:
     'scene-layer absolute inset-x-[-8%] bottom-0 will-change-transform transition-transform duration-700 ease-out-quint motion-reduce:transition-none',
 } as const;

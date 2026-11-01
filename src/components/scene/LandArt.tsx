@@ -62,7 +62,19 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
           decoding="async"
           onError={() => setFailedFiles((f) => [...f, src])}
           className="scene-layer scene-layer-mid absolute bottom-0 left-[-7%] h-full w-[114%] max-w-none object-cover object-[center_bottom]"
-          style={{ filter: TONE_FILTER[resolvedTone] }}
+          style={{
+            filter: TONE_FILTER[resolvedTone],
+            /* CR-116 rev2: the painted scene fades out toward the viewport
+               bottom so the interactive zone (trail, postcards, footer)
+               always sits on the calm pageGradient - detailed art is the
+               hero backdrop, never the surface under content. */
+            ...(resolvedTone === 'day'
+              ? {
+                  maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 80%)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 80%)',
+                }
+              : {}),
+          }}
         />
         {/* L4 scrim equivalent - keeps page content readable over the
             generated scene; day tone uses the white-mist twin so the

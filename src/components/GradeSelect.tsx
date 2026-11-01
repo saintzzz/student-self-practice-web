@@ -45,7 +45,7 @@ function TrailDots({ from, to }: { from: number; to: number }) {
       {trailDots(from, to, 56).map((d, i) => (
         <span
           key={i}
-          className="absolute h-1.5 w-1.5 rounded-full bg-amber-500/95 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+          className="absolute h-1.5 w-1.5 rounded-full bg-amber-500/95 ring-2 ring-white/90 shadow-[0_0_8px_rgba(245,158,11,0.45)]"
           style={{ left: `${d.x}%`, top: d.y, transform: 'translate(-50%,-50%)' }}
         />
       ))}
@@ -62,7 +62,7 @@ function TrailColumn({ above, below }: { above: boolean; below: boolean }) {
   const run = (top: boolean) => (
     <span className={`flex h-1/2 flex-col items-center justify-evenly ${top ? 'pb-9' : 'pt-9'}`}>
       {[0, 1, 2].map((k) => (
-        <span key={k} className="h-1.5 w-1.5 rounded-full bg-amber-500/95 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <span key={k} className="h-1.5 w-1.5 rounded-full bg-amber-500/95 ring-2 ring-white/90 shadow-[0_0_8px_rgba(245,158,11,0.45)]" />
       ))}
     </span>
   );
@@ -275,7 +275,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
                   <span aria-hidden="true" className="absolute -inset-1.5 rounded-full bg-amber-300/40 motion-safe:animate-ping motion-safe:[animation-iteration-count:3]" />
                 )}
                 <span
-                  className={`flex h-14 w-14 items-center justify-center rounded-full ${land.discBg} font-display text-2xl font-extrabold text-white ring-4 ring-white/80 shadow-[inset_0_2px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_14px_-4px_rgba(15,23,42,0.4)]`}
+                  className={`flex h-14 w-14 items-center justify-center rounded-full ${land.discBg} font-display text-2xl font-extrabold text-white ring-4 ring-white shadow-[inset_0_2px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_14px_-4px_rgba(15,23,42,0.4)]`}
                 >
                   {(grade.name.match(/\d+/) ?? ['?'])[0]}
                 </span>
@@ -350,7 +350,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           {trailDots(visibleGrades.length % 2 === 1 ? TRAIL_X.right : TRAIL_X.left, 50, 56).map((d, i) => (
             <span
               key={i}
-              className="absolute h-1.5 w-1.5 rounded-full bg-amber-500/95 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+              className="absolute h-1.5 w-1.5 rounded-full bg-amber-500/95 ring-2 ring-white/90 shadow-[0_0_8px_rgba(245,158,11,0.45)]"
               style={{ left: `${d.x}%`, top: d.y, transform: 'translate(-50%,-50%)' }}
             />
           ))}
@@ -365,7 +365,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           games=15 on 2026-11-01. Static string, not a live query: the
           footer stays free of a roundtrip and the numbers only move
           upward between audits. */}
-      <p data-testid="social-proof" className="mt-6 text-sm font-bold text-slate-700">
+      <p data-testid="social-proof" className="mt-6 inline-flex items-center rounded-full bg-white/75 px-4 py-1.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-sky-200/80 backdrop-blur-sm">
         132.000+ câu hỏi · 290+ đề thi thử · 15 trò chơi · theo sát Global Success
       </p>
       {/* CR-43: footer stacks vertically - the old inline elements
@@ -382,7 +382,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
             Nguồn hình ảnh
           </button>
         )}
-        <GatedLink href="https://vieschool.com" className="text-xs font-bold text-slate-600 underline-offset-2 transition hover:text-sky-700 hover:underline">          English Arena - sản phẩm của VieSchool</GatedLink>
+        <GatedLink href="https://vieschool.com" className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-sky-200/70 backdrop-blur-sm transition hover:text-sky-700 hover:underline">          English Arena - sản phẩm của VieSchool</GatedLink>
       </footer>
       {changePinOpen && <ChangePinDialog onClose={() => setChangePinOpen(false)} />}
     </div>
