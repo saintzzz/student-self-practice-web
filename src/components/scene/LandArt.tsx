@@ -44,6 +44,11 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
     journey !== undefined ? ({ '--journey': journey } as CSSProperties) : undefined;
 
   if (variant === 'hero') {
+    /* CR-116 rev2: the day hero renders inside a bounded top band that
+       scrolls with the page instead of a fixed full-viewport backdrop -
+       detailed art is the hero decoration, never the surface under
+       content (external review r150). */
+    const dayHero = resolvedTone === 'day';
     return (
       <div
         ref={ref}
@@ -53,7 +58,7 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
         data-land={resolvedLand}
         data-renderer="art"
         aria-hidden="true"
-        className={scene.root}
+        className={dayHero ? scene.heroBand : scene.root}
         style={journeyStyle}
       >
         <img
@@ -64,14 +69,12 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
           className="scene-layer scene-layer-mid absolute bottom-0 left-[-7%] h-full w-[114%] max-w-none object-cover object-[center_bottom]"
           style={{
             filter: TONE_FILTER[resolvedTone],
-            /* CR-116 rev2: the painted scene fades out toward the viewport
-               bottom so the interactive zone (trail, postcards, footer)
-               always sits on the calm pageGradient - detailed art is the
-               hero backdrop, never the surface under content. */
-            ...(resolvedTone === 'day'
+            /* CR-116 rev2: the band's bottom edge dissolves into the
+               pageGradient so the seam never reads as a hard crop. */
+            ...(dayHero
               ? {
-                  maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 80%)',
-                  WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 80%)',
+                  maskImage: 'linear-gradient(to bottom, black 0%, black 68%, transparent 96%)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 68%, transparent 96%)',
                 }
               : {}),
           }}

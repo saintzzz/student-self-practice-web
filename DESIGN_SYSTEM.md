@@ -54,13 +54,15 @@
 > global light theme.
 >
 > **CR-116 rev2 - surface separation law:** detailed art is a backdrop,
-> never the surface under content. The fixed hero fades out via
-> `mask-image` (opaque to ~50% viewport height, transparent by 80%) plus
-> the emerald linear veil in `scrimDay`, so the interactive zone always
-> sits on the calm `pageGradient`. Anything floating on art gets an
-> opaque surface or a halo: trail dots carry `ring-white/90`, waypoint
-> discs `ring-white`, and naked text is banned - every line of copy on
-> the map rides a glass chip (guest hint, social proof, credit pill).
+> never the surface under content. The day hero renders in a bounded
+> `heroBand` (62vh at the page top, `position:absolute` - it scrolls
+> away with the page, never fixed) whose bottom edge dissolves into the
+> `pageGradient` via `mask-image` + the emerald veil in `scrimDay`, so
+> the interactive zone always sits on a calm flat surface. Anything
+> floating on art gets an opaque surface or a halo: trail dots carry
+> `ring-white/90`, waypoint discs `ring-white`, and naked text is
+> banned - every line of copy on the map rides a glass chip (guest
+> hint, social proof, credit pill).
 
 ---
 
