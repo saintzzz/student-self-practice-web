@@ -360,9 +360,17 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         </div>
       )}
       {joinClassSlot}
+      {/* CR-114: real bank counts as social proof (questoraplay hosts-
+          counter lesson) - qb_questions=132663, qb_exam_forms=292,
+          games=15 on 2026-11-01. Static string, not a live query: the
+          footer stays free of a roundtrip and the numbers only move
+          upward between audits. */}
+      <p data-testid="social-proof" className="mt-6 text-sm font-bold text-slate-400">
+        132.000+ câu hỏi · 290+ đề thi thử · 15 trò chơi · theo sát Global Success
+      </p>
       {/* CR-43: footer stacks vertically - the old inline elements
           rendered glued together on one line. */}
-      <footer className="mt-12 flex flex-col items-center gap-3">
+      <footer className="mt-8 flex flex-col items-center gap-3">
         {onOpenCredits && (
           <button
             ref={creditsRef}

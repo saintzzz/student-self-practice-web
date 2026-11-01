@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePressRelease } from '../hooks/usePressRelease';
 import type { BatchResult } from '../lib/batch/batchSession';
 import { getScoreStatus } from '../lib/batch/scoreStatus';
@@ -23,6 +23,8 @@ import {
 } from '../lib/engagement/store';
 import { savePracticeResult } from '../lib/practiceResults';
 import { IconHome, IconPlay, IconStar } from './icons';
+import { GAME_DEFS } from '../games/defs';
+import type { GameId } from '../games/types';
 
 interface BatchSummaryProps {
   result: BatchResult;
@@ -34,6 +36,8 @@ interface BatchSummaryProps {
   objectiveId?: string;
   /** kids-UX (design s3.2): batch-scoped autoplay key for the speakers. */
   speakerKey?: string;
+  /** CR-114: opens the arcade - renders the "nghỉ giải lao" game break. */
+  onPlayGame?: (gameId: GameId) => void;
 }
 
 /**
@@ -51,7 +55,7 @@ interface BatchSummaryProps {
  * fork; "Chơi tiếp" keeps the practice-again-button testid and the only
  * gold emphasis.
  */
-export default function BatchSummary({ result, gradeId, onStartNewBatch, onChooseGrade, objectiveId, speakerKey }: BatchSummaryProps) {
+export default function BatchSummary({ result, gradeId, onStartNewBatch, onChooseGrade, objectiveId, speakerKey, onPlayGame }: BatchSummaryProps) {
   const status = getScoreStatus(result.points, result.maxPoints);
   /* CR-82 (spec s16.1): the gold "Chơi tiếp" CTA springs on release. */
   const againPress = usePressRelease();
@@ -60,6 +64,14 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
     gift, fork, share and send-results surfaces all stay behind this same
     `earned` gate. */
   const earned = result.totalQuestions > 0;
+  /* CR-114: seeded game pick - stable per batch, grade-appropriate. */
+  const breakGame = useMemo(() => {
+    const pool = GAME_DEFS.filter((d) => !d.grades || d.grades.includes(gradeId));
+    if (!pool.length) return null;
+    let hash = 0;
+    for (const ch of objectiveId ?? 'break') hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return pool[hash % pool.length];
+  }, [gradeId, objectiveId]);
   const awarded = useRef<{ batch: BatchAwardResult; streakStickers: Sticker[]; totalStars: number } | null>(null);
   const [award, setAward] = useState(awarded.current);
 
@@ -198,6 +210,25 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
               label="Chia sẻ thành tích"
             />
           </div>
+
+          {/* CR-114: game break - closes the learn->play reward loop a
+              classroom platform runs per-answer; seeded by batch so the
+              suggestion is stable across remounts. */}
+          {onPlayGame && breakGame && (
+            <button
+              type="button"
+              data-testid="game-break-button"
+              onClick={() => onPlayGame(breakGame.id)}
+              className="mt-4 flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-sky-500/15 p-4 text-left ring-1 ring-white/15 transition hover:from-emerald-500/30 hover:to-sky-500/25 active:scale-[0.98]"
+            >
+              <span className="text-3xl" aria-hidden>{breakGame.emoji}</span>
+              <span className="flex-1">
+                <span className="block text-base font-extrabold text-emerald-200">Nghỉ giải lao chút nào!</span>
+                <span className="block text-sm font-semibold text-sky-200">{breakGame.title} - {breakGame.tagline}</span>
+              </span>
+              <span className="text-xl text-emerald-300" aria-hidden>→</span>
+            </button>
+          )}
 
           {/* kids-UX s3.10 session fork - equal-size choices, no
               auto-advance; "Chơi tiếp" keeps the gold next-step emphasis. */}

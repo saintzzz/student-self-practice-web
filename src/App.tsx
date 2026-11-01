@@ -11,6 +11,7 @@ import AuthScreen from './components/AuthScreen';
 // Route-level code splitting: adult/secondary surfaces load on demand so the
 // kid first-paint bundle stays light (low-end school devices).
 const ParentReportScreen = lazy(() => import('./components/ParentReportScreen'));
+const ClassShowScreen = lazy(() => import('./components/ClassShowScreen'));
 const ArenaLiveLobby = lazy(() => import('./components/ArenaLiveLobby'));
 const CreditsScreen = lazy(() => import('./components/CreditsScreen'));
 const PlacementScreen = lazy(() => import('./components/PlacementScreen'));
@@ -63,7 +64,7 @@ import type { PronunciationScoringOptions } from './lib/rounds/pronunciationScor
 import type { Grade, TracingMeta } from './types';
 import type { GameEnd } from './games/types';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game';
+type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game' | 'classshow';
 
 // r16: StrictMode replays the mount effect - the confirm RPC consumes
 // the token on first success, so a naive second call would see
@@ -657,6 +658,7 @@ export default function App() {
           setActiveGame(gameId);
           setScreen('game');
         }}
+        onStartClassShow={() => setScreen('classshow')}
         onBack={handleBackToGrades}
         initialHubTile={hubOpenTile}
         isGuest={authMode !== 'student'}
@@ -690,6 +692,22 @@ export default function App() {
           }}
         />
       </LottieBudgetProvider>,
+      { gradeId: selectedGradeId },
+    );
+  }
+
+  // CR-114: Sân khấu lớp - teacher-led projector show. Grade-scoped so
+  // question content matches the class the teacher opened it from.
+  if (screen === 'classshow' && selectedGrade) {
+    return shell(
+      suspense(
+        <ClassShowScreen
+          onBack={() => {
+            setHubOpenTile('arena');
+            setScreen('start-batch');
+          }}
+        />,
+      ),
       { gradeId: selectedGradeId },
     );
   }
@@ -763,6 +781,10 @@ export default function App() {
         onRequestLogin={() => {
           setAuthMode('login');
           setScreen('login');
+        }}
+        onPlayGame={(gameId) => {
+          setActiveGame(gameId);
+          setScreen('game');
         }}
       />,
       { gradeId: batch.gradeId },

@@ -73,6 +73,8 @@ interface StartBatchScreenProps {
   onStartFlashcards?: () => void;
   /** CR-83: Game Zone entry - opens the arcade run for a game id. */
   onStartGame?: (gameId: GameId) => void;
+  /** CR-114: Sân khấu lớp - teacher-led projector show for the whole class. */
+  onStartClassShow?: () => void;
   /** Mount the hub with this tile already expanded - used when a
    *  sub-screen returns the kid to where they came from (e.g. 'games'
    *  after an arcade run). */
@@ -167,7 +169,7 @@ function FormPicker({ gradeId, programId, isAdmin, onStartExam }: { gradeId: str
  *  - CR-46 preserved: every grade reaches every program/mode - only
  *    the container path differs per band.
  */
-export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onArenaLive, onStartFlashcards, onStartGame, initialHubTile, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
+export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onArenaCreate, onArenaAccept, onArenaBot, onArenaLive, onStartFlashcards, onStartGame, onStartClassShow, initialHubTile, onBack, isGuest, isAdmin, onLogin }: StartBatchScreenProps) {
   const examConfig = examConfigForGrade(grade.id);
   const { band, density } = useViewer();
   const isG12 = band === 'G12' || grade.id === 'grade-1' || grade.id === 'grade-2';
@@ -273,6 +275,26 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
     <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
   );
 
+  /* CR-114: teacher-led class show lives inside Đấu trường - same
+     competition family, different screen (projector vs devices). */
+  const classShowEl = onStartClassShow ? (
+    <div data-testid="hub-section-classshow" className="mt-3">
+      <button
+        type="button"
+        data-testid="class-show-open"
+        onClick={onStartClassShow}
+        className="flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-fuchsia-500/20 to-sky-500/15 p-4 text-left ring-1 ring-white/15 transition hover:from-fuchsia-500/30 hover:to-sky-500/25 active:scale-[0.98]"
+      >
+        <span className="text-3xl" aria-hidden>🎤</span>
+        <span className="flex-1">
+          <span className="block text-lg font-extrabold text-amber-100">Sân khấu lớp</span>
+          <span className="block text-sm font-semibold text-sky-200">Chiếu màn này - cả lớp thi trả lời, không cần thiết bị</span>
+        </span>
+        <span className="text-xl text-amber-300" aria-hidden>→</span>
+      </button>
+    </div>
+  ) : null;
+
   const rewardCards = (withQuest: boolean) => (
     <div id="hub-section-reward" data-testid="hub-section-reward">
       {withQuest && <DailyQuestCard />}
@@ -357,6 +379,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           art: '/images/emblems/emblem-arena.webp',
           sections: [
             ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
+            ...(classShowEl ? [{ id: 'classshow', content: classShowEl }] : []),
             { id: 'rank', content: leaderboardEl },
           ],
         },
@@ -427,6 +450,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           content: (
             <>
               <div id="hub-section-arena" data-testid="hub-section-arena">{arenaCardEl}</div>
+              {classShowEl}
               <div id="hub-section-rank" data-testid="hub-section-rank">{leaderboardEl}</div>
             </>
           ),

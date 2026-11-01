@@ -42,6 +42,8 @@ interface BatchScreenProps {
   /** CR-13: guest trial - lock rounds after the free Round 1 behind login. */
   guestLocked?: boolean;
   onRequestLogin?: () => void;
+  /** CR-114: BatchSummary "nghỉ giải lao" arcade entry. */
+  onPlayGame?: (gameId: import('../games/types').GameId) => void;
 }
 
 /* CR-86: TOTAL_ROUNDS comes from the round registry (4 question rounds +
@@ -78,6 +80,7 @@ export default function BatchScreen({
   onCompleteGameRound,
   guestLocked = false,
   onRequestLogin,
+  onPlayGame,
 }: BatchScreenProps) {
   const roundKey = `${batch.seed}:${batch.roundIndex}`;
   const { secondsRemaining } = useRoundTimer(roundKey, batch.phase === 'active', onRoundTimeExpired);
@@ -119,6 +122,7 @@ export default function BatchScreen({
         onChooseGrade={onChooseGrade}
         objectiveId={`batch:${batch.seed}`}
         speakerKey={`batch-${batch.gradeId}-${batch.seed}`}
+        onPlayGame={onPlayGame}
       />
     );
   }
@@ -133,6 +137,7 @@ export default function BatchScreen({
         onChooseGrade={onChooseGrade}
         objectiveId={`batch:${batch.seed}`}
         speakerKey={`batch-${batch.gradeId}-${batch.seed}`}
+        onPlayGame={onPlayGame}
       />
     );
   }
