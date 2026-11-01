@@ -80,7 +80,7 @@ export default function JoinClassCard({ isGuest, onJoined, tone = 'dark' }: { is
               placeholder="VD: R8WHYF"
               className={`w-32 rounded-xl border-2 px-3 py-2 text-center font-display text-lg font-extrabold uppercase tracking-[0.3em] focus:border-amber-400 focus:outline-none ${
                 day
-                  ? 'border-sky-300 bg-white text-sky-950 placeholder:text-slate-400'
+                  ? 'border-sky-300 bg-white text-sky-950 placeholder:text-slate-600'
                   : 'border-slate-500/60 bg-[#0d1b26] text-white placeholder:text-slate-600'}`}
             />
             <button
