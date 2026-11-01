@@ -1,6 +1,7 @@
 # 01 - Pricing: Đề xuất bảng giá English Arena
 
-> Phiên bản: v1 - 03/10/2026 - Trạng thái: DRAFT, giá đề xuất chờ founder chốt
+> Phiên bản: v2 - 01/11/2026 - Trạng thái: DRAFT, giá đề xuất chờ founder chốt
+> v2: bổ sung tham chiếu đối thủ classroom-game (Questora, Kahoot, Blooket, Gimkit) và phần mềm trung tâm (ClassPilot, Dạy Tốt, SheetStore); thêm Tier 2c giáo viên cá nhân và gói Center Pack flat.
 > Mọi giá đã bao gồm cả tiếng Anh và Toán tiếng Anh, Lớp 1-5. Giá chưa bao gồm VAT (cần kế toán xác nhận cách xuất hóa đơn).
 
 ## 1. Giá tham chiếu thị trường (nghiên cứu 10/2026)
@@ -16,11 +17,23 @@
 | Violympic | Phí duy trì tài khoản / gói thi thử | 45.000đ/môn (2026-2027); thi thử combo 10 lượt 149.000đ, 20 lượt 209.000đ (ưu đãi đến 31/12/2025) | hoatieu.vn, violympic.vn |
 | Kyna English | 1 kèm 1 online trẻ em | từ 520.000đ/tháng (khoảng 65.000đ/buổi) | kynaenglish.vn |
 | Trung tâm Anh ngữ | Lớp tiểu học | Trung tâm địa phương khoảng 1.150.000đ/tháng; thương hiệu lớn khoảng 162.000-368.000đ/giờ | chauthanhesl.edu.vn, ila.edu.vn |
+| **Questora (VN)** | Pro 1 GV / năm | **149.000đ** | questoraplay.app (tra 11/2026) |
+| **Blooket** | Free / Plus năm | Free (60 HS/game) / $36 (~900.000đ) | blooket.com, slideswith.com |
+| **Gimkit** | Pro GV năm / Department 20 GV | $59.88 (~1,5 triệu) / $650 (~16 triệu) | gimkit.com, formswrite.com |
+| **Kahoot!** | K!+ Bronze→Gold năm | $36-144 (~900.000-3,6 triệu)/GV | kahoot.com/schools/plans |
+| **Quizizz/Wayground** | Individual năm | ~$96-120 (~2,4-3 triệu) | slideswith.com, teachfloor.com |
+| **ClassPilot** (quản lý TT ngoại ngữ VN) | Khởi đầu / Chuyên nghiệp | 6,9 triệu (≤150 HV) / 11,9 triệu (≤600 HV)/năm | classpilot.beup.space |
+| **Dạy Tốt** (quản lý TT VN) | Solo GV / Center / Chain | 149.000đ/tháng (1,43 triệu/năm) / 499.000đ/tháng (4,79 triệu/năm) / 1,49 triệu/tháng | daytot.com.vn |
+| **SheetStore** (QL trung tâm trên Google Sheets) | Trọn đời | 799.000đ một lần | sheet.com.vn |
+| **MISA EMIS** (trường công lập) | Mỗi nghiệp vụ | 5-12 triệu khởi tạo+năm đầu; duy trì 2-4 triệu/năm | emis.misa.vn |
+| **vnEdu Connect (VNPT)** | Gói OTT | 50.000-400.000đ/tháng theo dung lượng + báo giá trường | vnptgroup.vn |
 
 **Kết luận tham chiếu:**
 - App tự học cho trẻ em ở VN neo trong khoảng **600.000-960.000đ/năm** (giá khuyến mãi thực trả).
 - Luyện thi chính thức IOE + Violympic: phụ huynh muốn luyện đề cả hai thường trả khoảng **259.000đ (IOE combo) + 45.000đ (phí tài khoản Violympic) + 149.000đ (10 lượt thi thử) = khoảng 450.000đ/năm**, chia trên 2-3 nền tảng.
 - Ta **không thay thế** IOE/Violympic (HS vẫn cần tài khoản chính thức để thi), nên giá phải ở mức "bổ sung dễ quyết định", không vượt app tổng quát.
+- **Công cụ lớp học cho giáo viên** neo ở **149.000đ-1,5 triệu/GV/năm** (Questora rẻ nhất vì VN-first, Blooket gần free). Đây là nhóm GV quyết dùng tự trả - hàng rào phải cực thấp.
+- **Phần mềm quản lý trung tâm** neo ở **4,8-11,9 triệu/năm flat** (Dạy Tốt, ClassPilot) - chủ trung tâm nghĩ theo "tiền/tháng", không nghĩ theo "/HS". Trường công lập neo cao hơn (MISA 5-12 triệu/nghiệp vụ).
 
 ## 2. Đề xuất 3 tier
 
@@ -42,6 +55,14 @@ Theo ruling ở 00-gtm-strategy.md mục 3.3, tier này có 2 hình thức:
 |---|---|---|---|
 | 2a. Giá nhóm lớp (trường công) | Phụ huynh tự trả trực tiếp cho VieSchool, giáo viên không thu tiền | **199.000đ/HS/năm** | Từ 15 HS cùng lớp đăng ký qua mã lớp. Giáo viên được dùng miễn phí quyền xem lớp |
 | 2b. Gói Lớp (trường tư, trung tâm, GV tự trả) | Giáo viên hoặc đơn vị | **3.900.000đ/lớp/năm học** | Tối đa 35 HS (khoảng 111.000đ/HS). Thêm HS: 120.000đ/HS |
+| 2c. GV Cá nhân (mới, v2) | Giáo viên tự trả | **Free / 249.000đ/năm** | Xem mục 3.7 - kênh viral, không phải nguồn doanh thu chính |
+
+**2c - GV Cá nhân (đề xuất mới):** Questora chứng minh GV trả 149.000đ/năm cho công cụ lớp học không cần hỏi ai. Ta nên cho phần lớn giá trị đó miễn phí vì mỗi GV mang EA vào ~35-70 HS và 1 trung tâm - GV là kênh bán, không phải khách trả tiền chính.
+
+| Gói | Giá | Giới hạn |
+|---|---|---|
+| GV Free | 0đ | Class Show (Sân khấu lớp), soạn đề cơ bản, 1 lớp tối đa 35 HS, xem tiến độ tổng hợp |
+| GV Pro | 249.000đ/năm | Giao bài có deadline, báo cáo theo HS/kỹ năng, nhiều lớp, xuất đề Word/PDF |
 
 ### Tier 3 - Trường/Trung tâm (site license)
 
@@ -52,6 +73,15 @@ Theo ruling ở 00-gtm-strategy.md mục 3.3, tier này có 2 hình thức:
 | Từ 800 HS | **Liên hệ** (định hướng 59.000-69.000đ) | - |
 
 Bao gồm: tạo tài khoản hàng loạt qua admin, phiếu đăng nhập in sẵn cho HS, quản lý lớp/học sinh, báo cáo phụ huynh, 1 buổi onboarding GV, hỗ trợ Zalo trong giờ hành chính.
+
+**Center Pack - gói flat cho trung tâm nhỏ (mới, v2):** trung tâm 30-150 HV không tư duy "/HS" mà tư duy "tiền/tháng" - ClassPilot/Dạy Tốt đều bán flat. Đề xuất gói flat chạy song song với site license:
+
+| Gói | Giá đề xuất | Điều kiện |
+|---|---|---|
+| Center 100 | **4.900.000đ/năm** | Tối đa 100 HS active + toàn bộ công cụ GV + Sổ chủ nhiệm cho 1 cơ sở (~49.000đ/HS nếu đủ 100, ngang 1 buổi học phí/HS) |
+| Center 300 | **9.900.000đ/năm** | Tối đa 300 HS active, 2 cơ sở, white-label logo trung tâm |
+
+So tham chiếu: ClassPilot Chuyên nghiệp 11,9 triệu/năm chỉ làm quản lý, không có nội dung luyện tập; Dạy Tốt Center 4,79 triệu/năm cũng chỉ làm quản lý. Center Pack rẻ hơn hoặc ngang mà **kèm 132.000+ câu hỏi, luyện phát âm, đấu trường, báo cáo kỹ năng**.
 
 **Bundle hệ sinh thái VieSchool (định hướng):** trường mua kèm TVC360 hoặc Sổ Chủ nhiệm Số được giảm 15% phần English Arena. Giá TVC360/Sổ Chủ nhiệm Số không thuộc phạm vi tài liệu này.
 
@@ -65,6 +95,9 @@ Bao gồm: tạo tài khoản hàng loạt qua admin, phiếu đăng nhập in s
 4. **Có giá tối thiểu theo hợp đồng** (100 HS cho site license) để bảo vệ thời gian onboarding.
 5. **Founding price có thời hạn** tạo lý do quyết định ngay trong mùa thi IOE, nhưng không kéo giá niêm yết xuống lâu dài.
 6. **Chi phí biên thấp** (web app, backend Supabase, audio đã sinh sẵn), nên biên lợi nhuận gộp chủ yếu phụ thuộc chi phí bán hàng và CSKH, không phụ thuộc hạ tầng. Cần kế toán xác nhận chi phí hạ tầng thực tế theo số HS.
+7. **Không đua giá với công cụ lớp học (v2).** Questora 149.000đ/GV là giá sàn của nhóm. Nếu ta đua bằng giá thấp hơn thì mất ngân sách cho kênh quan trọng hơn; thay vào đó ta cho công cụ lớp học FREE vì giá trị của nó là đưa GV/HS vào hệ sinh thái, không phải doanh thu trực tiếp.
+8. **Không cạnh tranh giá với phần mềm quản lý trung tâm.** Họ bán nghiệp vụ quản lý, ta bán nội dung + kết quả học tập. Bundle Center Pack phải rẻ hơn ClassPilot nhưng **không rẻ hơn nhiều** - câu chuyện là "được thêm kho nội dung + phát âm + sổ chủ nhiệm", không phải "rẻ hơn".
+9. **Giá B2C không hạ thêm.** 399.000đ đã bằng ~50% Monkey Junior và ngang tổng chi phí IOE+Violympic lẻ. Với phụ huynh rào cản là niềm tin/bằng chứng kết quả, không phải 100-200.000đ chênh lệch - hạ giá chỉ đốt margin mà không mở thêm nhu cầu.
 
 ## 4. Kiểm tra độ nhạy giá (đề xuất)
 
@@ -95,3 +128,5 @@ Bao gồm: tạo tài khoản hàng loạt qua admin, phiếu đăng nhập in s
 1. Chốt giá niêm yết B2C: 399.000đ/năm (đề xuất) hay 299.000đ?
 2. Chốt giá site license 99.000đ/HS/năm và mức tối thiểu 100 HS?
 3. Gói miễn phí sau guest trial trông thế nào (giới hạn gì) để có lý do nâng cấp?
+4. (v2) Duyệt Tier 2c GV Free/GV Pro 249.000đ - cần entitlement phân quyền GV trong app trước khi bán.
+5. (v2) Duyệt Center Pack flat 4,9/9,9 triệu chạy song song site license?
