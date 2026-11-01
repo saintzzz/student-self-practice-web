@@ -12,14 +12,14 @@
  * approved record in public/attribution.json (the audit pipeline), then
  * re-run this script.
  */
-import { copyFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PUBLIC = join(ROOT, 'public');
 const VOCAB_DIR = join(PUBLIC, 'images', 'vocab');
-const CONCEPTS_DIR = join(PUBLIC, 'images', 'concepts');
 const ATTR = join(PUBLIC, 'attribution.json');
 const OUT = join(ROOT, 'src', 'data', 'vocabImages.ts');
 const publish = process.argv.includes('--publish');
@@ -34,19 +34,29 @@ const records = (JSON.parse(readFileSync(ATTR, 'utf8')).images ?? [])
   );
 
 if (publish) {
-  const conceptFiles = existsSync(CONCEPTS_DIR) ? readdirSync(CONCEPTS_DIR) : [];
   let copied = 0;
   for (const r of records) {
     const dest = join(PUBLIC, r.file);
     if (existsSync(dest)) continue;
-    const src = conceptFiles.find((f) =>
-      new RegExp(`^concept-${r.wordId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-[0-9a-f]{6}\\.webp$`).test(f),
-    );
-    if (!src) {
-      console.warn(`  no concept source for approved record ${r.wordId} -> ${r.file}`);
+    /* r144 round 2: never guess a source from the word id - an approved
+       record approves specific BYTES. Only a record that binds
+       sourceFile + sourceSha256 (content-verified at approval time) may
+       restore a missing vocab file; anything else needs a human publish. */
+    if (!r.sourceFile || !r.sourceSha256) {
+      console.warn(`  ${r.wordId}: no bound source - publish manually after re-audit`);
       continue;
     }
-    copyFileSync(join(CONCEPTS_DIR, src), dest);
+    const srcPath = join(PUBLIC, r.sourceFile);
+    if (!existsSync(srcPath)) {
+      console.warn(`  ${r.wordId}: bound source missing on disk: ${r.sourceFile}`);
+      continue;
+    }
+    const sha = createHash('sha256').update(readFileSync(srcPath)).digest('hex');
+    if (sha !== r.sourceSha256) {
+      console.warn(`  ${r.wordId}: source bytes differ from approved hash - refusing to publish`);
+      continue;
+    }
+    copyFileSync(srcPath, dest);
     copied++;
   }
   console.log(`published ${copied} missing vocab file(s)`);
