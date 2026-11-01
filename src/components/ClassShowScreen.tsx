@@ -81,7 +81,8 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
       /* A classroom show must not die on flaky wifi, a guest challenge
          miss or a thin pool - pad with the bundled set (shuffled, no
          id clashes with bank rows) instead of blocking the lesson. */
-      const pad = [...SAMPLE_QUESTIONS].sort(() => Math.random() - 0.5);
+      const pad = [...SAMPLE_QUESTIONS].sort(() => Math.random() - 0.5)
+        .filter((s) => !shows.some((q) => q.id === s.id));
       shows = [...shows, ...pad.slice(0, count - shows.length)];
     }
     setQuestions(shows);
@@ -94,11 +95,11 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
 
   function spin(exclude: ReadonlySet<number>) {
     const names = roster.length ? roster : SAMPLE_ROSTER;
-    const eligibleCount = names.length - exclude.size;
-    if (eligibleCount <= 0) { advance(); return; }
     // Kill any prior interval before arming a new one - rapid
     // steal/restart paths must never stack spotlight timers (r19).
-    if (spotTimer.current) clearInterval(spotTimer.current);
+    if (spotTimer.current) { clearInterval(spotTimer.current); spotTimer.current = null; }
+    const eligibleCount = names.map((_, i) => i).filter((i) => !exclude.has(i)).length;
+    if (eligibleCount <= 0) { advance(); return; }
     setPhase('spotlight');
     let ticks = 0;
     spotTimer.current = setInterval(() => {
@@ -118,6 +119,9 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
   }
 
   function advance() {
+    // A live spotlight interval must not resurrect the question phase
+    // after a skip/all-missed advance (r20) - kill it first.
+    if (spotTimer.current) { clearInterval(spotTimer.current); spotTimer.current = null; }
     setMissed(new Set());
     if (qIndex + 1 >= questions.length) {
       setPhase('podium');
@@ -139,7 +143,8 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
       /* Steal mechanic: a wrong answer opens the same question to
          another student - classic classroom drama, per Questora's
          "pass the turn" rule. Everyone missing ends the question. */
-      const next = new Set(missed); next.add(picked);
+      const next = new Set(missed);
+      if (picked >= 0 && picked < players.length) next.add(picked);
       setMissed(next);
       spin(next);
     }
@@ -169,7 +174,12 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
   const stageRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (phase === 'question' || phase === 'podium') {
-      stageRef.current?.querySelector<HTMLElement>('[data-stage-focus]')?.focus();
+      try {
+        stageRef.current?.querySelector<HTMLElement>('[data-stage-focus]')
+          ?.focus({ preventScroll: true });
+      } catch {
+        stageRef.current?.querySelector<HTMLElement>('[data-stage-focus]')?.focus();
+      }
     }
   }, [phase, qIndex]);
 
@@ -192,8 +202,10 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
           </div>
 
           {/* Loading freezes picks so they still match the in-flight
-              request - inert beats per-control disabled (React 18-safe). */}
-          <div {...(phase === 'loading' ? { inert: '' } : {})} className="contents">
+              request - real wrapper box (not display:contents, r20) so
+              inert blocks pointer+keyboard everywhere reliably. */}
+          <div {...(phase === 'loading' ? { inert: '' } : {})}
+            className={`space-y-6 ${phase === 'loading' ? 'opacity-60' : ''}`}>
           <div>
             <p className="mb-2 text-sm font-bold text-sky-200">Lớp</p>
             <div className="flex flex-wrap gap-2">

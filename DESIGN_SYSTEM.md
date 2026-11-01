@@ -151,6 +151,36 @@ as stars). `shell(node, gradeId)` in `App.tsx` routes this; adult surfaces
 - **Option tiles:** one unanswered frame `border-[#3b5280]` + `toy.face`;
   per-index rainbow borders are banned (color = judged state only).
 
+### Class Show stage (CR-114 - `ClassShowScreen`)
+
+"Sân khấu lớp" is a **projector surface** - the teacher casts it to a wall
+screen and operates it from the podium. Conventions:
+
+- **Surface:** existing `CARD` navy glass on the brand shell - no new
+  background token; the radial `amber-300/18` glow behind the spotlight
+  card is the stage light.
+- **Scale:** everything reads from 3+ meters - spotlight name `text-5xl/
+  sm:6xl`, question `text-3xl/sm:4xl font-display`, options `text-2xl`,
+  verdicts `text-2xl min-h-[64px]`. Never `text-sm` for on-stage content
+  (setup form may use normal scale - it is operator UI, not stage).
+- **CTA law on stage:** the gold button is `Hiện đáp án` only ("next
+  step" semantics). Verdicts are emerald (`Đúng +10`) and rose
+  (`Sai - cướp lượt`) - never gold; `Bỏ qua`/`Câu khác` is a plain
+  white/10 secondary.
+- **Steal state:** wrong answer flips the spotlight caption to
+  `🔥 Cướp lượt!` - the only amber-flame affordance; scoreboard row of
+  the picked student is `bg-amber-400/15`.
+- **Keyboard contract** (teacher walks the room): Space/Enter = start
+  (setup) or reveal (question), → / Enter = Đúng, ← = Sai (cướp lượt),
+  ↓ = skip. Interactive elements own their keys - handler skips when the
+  event target is BUTTON/TEXTAREA/INPUT/SELECT/A.
+- **a11y:** spotlight name is `role="status" aria-live="polite"`; phase
+  changes move focus to the `[data-stage-focus]` element (`tabIndex={-1}`);
+  setup controls go `inert` while loading.
+- **Resilience:** questions load from the public practice bank exactly
+  `count` deep (no over-fetch); any shortfall pads from the bundled
+  16-question sample set so a dead wifi never kills a live class.
+
 ### Surface-pairing rule (CR-44 - the bug this file exists to prevent)
 
 Every text color is bound to a **surface class**, never picked in isolation:

@@ -109,6 +109,10 @@ export const SAMPLE_QUESTIONS: readonly ShowQuestion[] = [
   { id: 'sq10', kind: 'choice', prompt: 'How many legs does a spider have?', options: ['Six', 'Seven', 'Eight', 'Ten'], correctIndex: 2 },
   { id: 'sq11', kind: 'reveal', prompt: 'Điền chữ còn thiếu: "The cat is ___ the box." (ở trong)', revealText: 'in' },
   { id: 'sq12', kind: 'bool', subPrompt: 'Monday comes before Tuesday.', prompt: 'Tuesday comes before Monday.', boolAnswer: false },
+  { id: 'sq13', kind: 'choice', prompt: 'I ___ a student.', options: ['is', 'am', 'are', 'be'], correctIndex: 1 },
+  { id: 'sq14', kind: 'bool', subPrompt: 'Mai likes pink. Her bag is pink.', prompt: 'Mai has a blue bag.', boolAnswer: false },
+  { id: 'sq15', kind: 'choice', prompt: 'Từ nào phát âm khác các từ còn lại?', options: ['pen', 'ten', 'hen', 'fine'], correctIndex: 3 },
+  { id: 'sq16', kind: 'reveal', prompt: 'Điền chữ còn thiếu: "Good ___, teacher!" (buổi sáng)', revealText: 'morning' },
 ];
 
 /** Parse a textarea roster: commas/newlines separate names, trim,

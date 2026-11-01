@@ -1,26 +1,32 @@
-# External Review - Round 20 (Codex CLI)
+# External Review r20 - CR-114 Class Show
 
-Reviewer: codex-cli (real external run). Scope: commit 0b3421f, HEAD=0b3421f.
+Reviewer: pinned cross-model reviewer-gpt (documented fallback), round r20.
+Target: commit 91628cc (r19 fixes + steal mechanic).
+Verdict: **ROUND CLEAN** - APPROVE_WITH_CHANGES, zero Critical/High.
 
-1. [major] src/lib/exam/wordOrder.ts:259 - Complement filtering misses real inflections: generated `gos` never matches `goes`, so “To school she goes” remains accepted and the new regression test fails. Likewise, `listened` works but `listening` and `sitting` are generated incorrectly. Fix - use explicit valid inflections or curated alternate orders.
+## Findings
 
-2. [major] src/components/InstructionSpeaker.tsx:72 - Retry is armed only for `blocked` and only on `pointerdown`. `error`/`unavailable` leave no retry on the current screen; keyboard and assistive-technology users cannot trigger the pointer-only retry. Fix - restore an accessible replay button with failure feedback and user-initiated playback.
+### Medium
 
-Review limited to the supplied diff; repository reads were blocked by execution policy.
+1. **[FE] `spin` preflight used `exclude.size`, could over-skip on a stale index.** **FIXED:** eligibility now computed by filtering roster indices exactly like `pickStudent`; `verdict(false)` guards `picked` bounds before adding to `missed`.
 
-## Triage (post-review)
+2. **[FE] `advance()` did not clear a live spotlight interval** - ArrowDown skip or all-missed path could let the interval resurrect the question phase. **FIXED:** `advance()` clears and nulls `spotTimer.current` first; `spin()` also nulls after clearing.
 
-1. CONFIRMED + FIXED. Naive `${verb}s`/`${verb}ing` generated "gos",
-   "siting", "writeing", "studyed" - bonds never matched real forms.
-   Replaced with explicit NONREGULAR form lists (goes/went/going,
-   sits/sat/sitting, flies/flew/flying, studies/studied/studying...).
-   Regression tests cover -s, -ing and irregular forms
-   ("listens to" / "sitting on" / "flies to").
-2. CONFIRMED + FIXED (adapted). The retry listener is now armed on ANY
-   failure status (blocked/error/unavailable) and listens for BOTH
-   pointerdown and keydown, so keyboard and assistive-technology users
-   get the same retry path. A visible replay button was deliberately
-   removed by product decision; gesture retry plus per-key release on
-   next mount is the accessible equivalent. New tests cover the keydown
-   path and non-blocked failure arming.
+### Low
 
+3. **[FE] Pad comment claimed no id clashes but code did not enforce it.** **FIXED:** pad filters sample ids already present in the show.
+
+4. **[FE] `inert` on a `display: contents` wrapper is cross-browser fragile.** **FIXED:** real wrapper div (`space-y-6`, no `contents`) + `opacity-60` while loading.
+
+### Nit
+
+5. **[FE] `.focus()` without preventScroll can jump the projector view.** **FIXED:** `focus({ preventScroll: true })` with a plain-focus fallback.
+
+## r19 verification
+
+All r19 fixes confirmed in 91628cc: exact-`count` fetch, `initialGradeId` wiring, optionImages passthrough + rendering, setup Space/Enter with interactive-target skip, aria-live/status/alert + phase focus, spin timer clear, inert loading, stable podium ties. Vietnamese copy clean of em/en dashes; at most one `CTA_GOLD_XL` per screen state.
+
+## Triage
+
+- Fixed: 1, 2, 3, 4, 5 (all actionable findings closed in the follow-up commit on top of 91628cc).
+- Loop status: **clean round achieved** - CR-114 external review loop complete (2 rounds).
