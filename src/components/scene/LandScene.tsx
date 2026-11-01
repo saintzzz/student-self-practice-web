@@ -118,8 +118,20 @@ const LandScene = forwardRef<HTMLDivElement, LandSceneProps>(function LandScene(
       data-band={band}
       data-scene-paused={paused || undefined}
       aria-hidden="true"
-      className={scene.root}
-      style={journeyStyle}
+      /* CR-116 rev2 (r152): the day hero reserves the same in-flow band
+         the generated-art renderer uses - GradeSelect pulls -mt-[14vh]
+         against it, so the contract must hold even when both webp
+         files fail and this vector fallback renders. */
+      className={resolvedTone === 'day' ? scene.heroBand : scene.root}
+      style={
+        resolvedTone === 'day'
+          ? {
+              ...journeyStyle,
+              maskImage: 'linear-gradient(to bottom, black 0%, black 68%, transparent 96%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 68%, transparent 96%)',
+            }
+          : journeyStyle
+      }
     >
       {/* L0 sky: navy gradient + gold horizon + land-tinted glow
           (CR-116: day tone paints a bright morning sky instead). */}
@@ -155,8 +167,9 @@ const LandScene = forwardRef<HTMLDivElement, LandSceneProps>(function LandScene(
           <art.Near p={palette} tone={resolvedTone} hero />
         </svg>
       </div>
-      {/* L4 scrim - darkens the scene behind the board */}
-      <div className={`absolute inset-0 ${scene.scrim}`} />
+      {/* L4 scrim - darkens the scene behind the board; day tone keeps
+          the white-mist twin (CR-116). */}
+      <div className={`absolute inset-0 ${resolvedTone === 'day' ? scene.scrimDay : scene.scrim}`} />
     </div>
   );
 });

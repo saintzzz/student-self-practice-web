@@ -50,6 +50,21 @@ describe('LandArt', () => {
     expect(root.querySelector('img')).toBeNull();
   });
 
+  it('keeps the in-flow hero band contract when the vector fallback renders (r152)', () => {
+    render(<LandArt land="map" variant="hero" tone="day" />);
+    const img = screen.getByTestId('land-scene').querySelector('img');
+    fireEvent.error(img!);
+    const base = screen.getByTestId('land-scene').querySelector('img');
+    fireEvent.error(base!);
+    /* Both art files failed -> vector LandScene renders. GradeSelect
+       pulls -mt-[14vh] against the 58vh in-flow band, so the fallback
+       must reserve the same space (not the fixed full-viewport root). */
+    const root = screen.getByTestId('land-scene');
+    expect(root.className).toContain('h-[58vh]');
+    expect(root.className).toContain('relative');
+    expect(root.className).not.toContain('fixed');
+  });
+
   it('non-day tones keep requesting the base art file directly', () => {
     render(<LandArt land="jungle" variant="strip" tone="night" />);
     const img = screen.getByTestId('land-scene').querySelector('img');
