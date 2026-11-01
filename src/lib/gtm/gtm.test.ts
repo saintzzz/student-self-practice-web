@@ -13,6 +13,11 @@ import {
   // @ts-ignore - plain .mjs agent lib, no types
 } from '../../../scripts/gtm/lib.mjs';
 
+// scripts/gtm is a symlink into the sibling scanning-marketing checkout
+// (private shared pipeline) - absent on CI. vite.config.ts excludes this
+// file when lib.mjs cannot be resolved, so the suite only runs where the
+// pipeline is vendored (dev checkouts). See the test.exclude comment.
+
 describe('normText / normPhone (REQ-1.2 dedupe input)', () => {
   it('strips diacritics + lowercases + collapses', () => {
     expect(normText('Trung Tâm Tiếng Anh  Đà Nẵng!')).toBe('trung tam tieng anh da nang');

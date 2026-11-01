@@ -1,6 +1,16 @@
 /// <reference types="vitest/config" />
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+
+// scripts/gtm is a symlink into the sibling scanning-marketing checkout
+// (private shared pipeline). It resolves on dev machines but not on CI,
+// where the dangling link makes src/lib/gtm/gtm.test.ts fail at import
+// time. When the pipeline is absent, drop that one suite from the run;
+// every dev checkout still executes it.
+const gtmPipelineVendored = existsSync(
+  new URL('./scripts/gtm/lib.mjs', import.meta.url),
+);
 
 export default defineConfig({
   plugins: [react()],
@@ -32,7 +42,13 @@ export default defineConfig({
     // '**/node_modules/**' (not 'node_modules/**') - the scripts/gtm symlink
     // points outside the repo, so vendored test files under
     // scripts/gtm/*/node_modules must still be excluded.
-    exclude: ['**/node_modules/**', 'scripts/gtm/**', 'e2e/**', 'tests/fixtures/**'],
+    exclude: [
+      '**/node_modules/**',
+      'scripts/gtm/**',
+      'e2e/**',
+      'tests/fixtures/**',
+      ...(gtmPipelineVendored ? [] : ['src/lib/gtm/gtm.test.ts']),
+    ],
     // EmojiVisual pulls a 171 kB lazy player chunk on first mount in every
     // component test; unbounded parallelism starves long tests past their
     // timeouts on mid-range machines. Cap workers for stability.

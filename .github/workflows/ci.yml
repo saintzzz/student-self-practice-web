@@ -17,20 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # scripts/gtm is a symlink to a sibling scanning-marketing checkout
-      # (shared pipeline, see commit 0086523). On CI the sibling does not
-      # exist, so fetch the pipeline inside the workspace and repoint the
-      # link at it. Dev checkouts keep their real sibling - nothing changes
-      # locally.
-      - name: Checkout gtm pipeline (scripts/gtm target)
-        uses: actions/checkout@v7
-        with:
-          repository: saintzzz/scanning-marketing
-          path: scanning-marketing
-
-      - name: Resolve scripts/gtm symlink
-        run: ln -sfn ../scanning-marketing scripts/gtm
-
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
