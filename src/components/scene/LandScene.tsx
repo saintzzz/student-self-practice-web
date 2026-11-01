@@ -31,6 +31,9 @@ const ART: Record<LandKey, { Far: ComponentType<LandArtProps>; Mid: ComponentTyp
   city: cityArt,
   space: spaceArt,
   brand: brandArt,
+  /* CR-116: map's vector fallback paints the sky scene (the real art is
+     land-map-day.webp). */
+  map: skyArt,
 };
 
 /** v4 art viewBox; hero ground layers share it so strip/hero stay in sync. */
@@ -118,8 +121,9 @@ const LandScene = forwardRef<HTMLDivElement, LandSceneProps>(function LandScene(
       className={scene.root}
       style={journeyStyle}
     >
-      {/* L0 sky: navy gradient + gold horizon + land-tinted glow */}
-      <div className={`absolute inset-0 ${resolvedTone === 'dusk' ? scene.skyDusk : scene.skyNight}`} />
+      {/* L0 sky: navy gradient + gold horizon + land-tinted glow
+          (CR-116: day tone paints a bright morning sky instead). */}
+      <div className={`absolute inset-0 ${resolvedTone === 'day' ? scene.skyDay : resolvedTone === 'dusk' ? scene.skyDusk : scene.skyNight}`} />
       <div className={`absolute inset-0 ${resolvedTone === 'night' ? scene.horizonGoldNight : scene.horizonGold}`} />
       <div
         className="absolute inset-0"

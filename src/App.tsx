@@ -19,7 +19,7 @@ const AdminScreen = lazy(() => import('./components/AdminScreen'));
 import ExamRouteBoundary from './components/exam/ExamRouteBoundary';
 import LandShell from './components/LandShell';
 import { LottieBudgetProvider, PRE_ROUND_SLOTS } from './components/fx/LottieBudget';
-import { bandForGrade } from './lib/ui/theme';
+import { bandForGrade, type LandKey, type SceneTone } from './lib/ui/theme';
 import { isSupabaseConfigured } from './lib/supabase/client';
 import {
   fetchMyAccount,
@@ -500,12 +500,12 @@ export default function App() {
   // scene in the band tone (G1-2 dusk / G3-5 night); the journey map
   // (GradeSelect) and AuthScreen ride the hero brand night; adult
   // surfaces keep the brand strip. Exam keeps its own desk register.
-  const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean }) => {
+  const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean; land?: LandKey; tone?: SceneTone }) => {
     if (opts?.gradeId) {
       const tone = bandForGrade(opts.gradeId) === 'G12' ? 'dusk' : 'night';
       return <LandShell gradeId={opts.gradeId} tone={tone} variant="hero">{node}</LandShell>;
     }
-    return <LandShell land="brand" tone="night" variant={opts?.hero ? 'hero' : 'strip'}>{node}</LandShell>;
+    return <LandShell land={opts?.land ?? 'brand'} tone={opts?.tone ?? 'night'} variant={opts?.hero ? 'hero' : 'strip'}>{node}</LandShell>;
   };
 
   // kids-UX (ADR KUX-5): every screen renders inside one ViewerProvider so
@@ -585,10 +585,12 @@ export default function App() {
     <>
       <JoinClassCard
         isGuest={authMode !== 'student'}
+        tone="day"
         onJoined={() => void fetchMyAllowedGrades().then(setAllowedGrades).catch(() => {})}
       />
       <AssignmentsInbox
         isGuest={authMode !== 'student'}
+        tone="day"
         error={assignmentError}
         onTake={(item) => void handleTakeAssignment(item)}
       />
@@ -612,7 +614,7 @@ export default function App() {
         {...authChipProps}
         />
       </LottieBudgetProvider>,
-      { hero: true },
+      { hero: true, land: 'map', tone: 'day' },
     );
   }
 
@@ -806,7 +808,7 @@ export default function App() {
         {...authChipProps}
       />
     </LottieBudgetProvider>,
-    { hero: true },
+    { hero: true, land: 'map', tone: 'day' },
   );
   }
 

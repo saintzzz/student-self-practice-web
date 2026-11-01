@@ -27,6 +27,11 @@
 export const CARD =
   'rounded-3xl bg-gradient-to-b from-[#162C55] to-[#0E1F42] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_20px_40px_-16px_rgba(0,0,0,0.6),0_8px_16px_-8px_rgba(0,0,0,0.4)] ring-1 ring-[#2a3a5e] sm:p-8';
 
+/* CR-116: paper twin of CARD for the day map - milk card on the sky
+   canvas; same radius/padding idiom so paired cards read as one family. */
+export const CARD_DAY =
+  'rounded-3xl bg-white/85 p-6 shadow-[inset_0_1px_0_white,0_20px_40px_-16px_rgba(14,116,144,0.35),0_8px_16px_-8px_rgba(14,116,144,0.25)] ring-1 ring-sky-200/90 backdrop-blur-sm sm:p-8';
+
 /** CR-14: VieSchool dark card - navy glass + gold ring for brand
     surfaces (login/admin) matching the vieschool.com landing. */
 export const CARD_DARK =
@@ -65,6 +70,20 @@ export const NAV_PILL =
  * look, but floored at the 44px touch minimum instead of the primary 76px. */
 export const NAV_PILL_SM =
   'inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-amber-200 shadow-md ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15 hover:ring-amber-300/50 focus:outline-none focus:ring-4 focus:ring-amber-300/60';
+
+/* ------------------------------------------------------------------ */
+/* CR-116 day register (journey map): the map rides a bright sky/meadow  */
+/* canvas - navy glass pills turn muddy there, so chrome switches to a   */
+/* milk-glass surface + deep-sky ink. Hover focus stays amber so the     */
+/* "next step is gold" semantic survives the tone flip.                  */
+/* ------------------------------------------------------------------ */
+export const NAV_PILL_DAY =
+  'inline-flex min-h-[76px] items-center justify-center rounded-full bg-white/75 px-6 py-3 text-lg font-bold text-sky-900 shadow-md ring-1 ring-sky-200/90 backdrop-blur-sm transition hover:bg-white/95 hover:ring-amber-400/80 focus:outline-none focus:ring-4 focus:ring-amber-400/70 [@media(max-height:420px)]:min-h-0';
+export const NAV_PILL_SM_DAY =
+  'inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/75 px-4 py-2 text-sm font-bold text-sky-900 shadow-md ring-1 ring-sky-200/90 backdrop-blur-sm transition hover:bg-white/95 hover:ring-amber-400/80 focus:outline-none focus:ring-4 focus:ring-amber-400/60';
+export const H1_DAY =
+  'font-display text-3xl font-extrabold tracking-tight text-sky-950 sm:text-4xl';
+export const PROMPT_DAY = 'text-xl font-semibold text-sky-800';
 
 /** Header chips for the active-play bar (round / timer / score) - navy glass. */
 const CHIP_BASE =
@@ -285,12 +304,20 @@ export const scene = {
   root: 'pointer-events-none fixed inset-0 z-0 overflow-hidden',
   skyDusk: 'bg-gradient-to-b from-navy-950 via-navy-900 to-navy-700',
   skyNight: 'bg-gradient-to-b from-navy-950 via-navy-950 to-navy-800',
+  /* CR-116: vector-fallback sky for tone=day (the real day scenes are
+     generated art; this keeps the LandScene hero bright when the webp
+     is missing). */
+  skyDay: 'bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200',
   horizonGold:
     'bg-[radial-gradient(90%_38%_at_50%_100%,rgba(251,191,36,0.28),transparent_70%)]',
   horizonGoldNight:
     'bg-[radial-gradient(90%_38%_at_50%_100%,rgba(251,191,36,0.14),transparent_70%)]',
   scrim:
     'bg-[radial-gradient(62%_52%_at_50%_44%,rgba(11,18,36,0.55),transparent_76%)]',
+  /* CR-116: day-twin of scrim - a soft white mist that keeps chrome
+     readable over the bright generated scene without dimming it. */
+  scrimDay:
+    'bg-[radial-gradient(62%_52%_at_50%_44%,rgba(224,242,254,0.5),transparent_76%)]',
   layer:
     'scene-layer absolute inset-x-[-8%] bottom-0 will-change-transform transition-transform duration-700 ease-out-quint motion-reduce:transition-none',
 } as const;

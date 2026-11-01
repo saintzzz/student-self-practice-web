@@ -6,7 +6,7 @@
  * same world. Pure descriptor map - no DOM here.
  */
 
-export type LandKey = 'sky' | 'playground' | 'town' | 'jungle' | 'city' | 'space' | 'brand';
+export type LandKey = 'sky' | 'playground' | 'town' | 'jungle' | 'city' | 'space' | 'brand' | 'map';
 
 export interface Land {
   key: LandKey;
@@ -115,6 +115,22 @@ export const LANDS: Record<LandKey, Land> = {
     motif: '🚀',
     nightRim: 'bg-violet-400',
     horizonGlow: 'rgba(167,139,250,0.15)',
+  },
+  /** CR-116: the journey map's own day register - bright morning sky
+      fading to meadow green. Only the GradeSelect shell uses it; card/
+      chrome fields reuse the sky values since 'map' owns no grade card. */
+  map: {
+    key: 'map',
+    nameVi: 'Hành trình',
+    subtitleVi: '',
+    pageGradient: 'bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100',
+    cardTint: 'bg-white/95',
+    cardRing: 'ring-sky-300',
+    discBg: 'bg-sky-500',
+    accentText: 'text-sky-800',
+    motif: '🗺️',
+    nightRim: 'bg-sky-400',
+    horizonGlow: 'rgba(125,211,252,0.30)',
   },
   /** CR-14: VieSchool brand surface - deep navy + gold (landing palette)
       for adult-facing surfaces (login, admin). */
@@ -295,6 +311,22 @@ const SCENE_BASE: Record<LandKey, ScenePalette> = {
       nebula: '#a78bfa',
     },
     lights: { star: '#fefce8', rocketFlame: '#fbbf24' },
+  },
+  /** CR-116: vector fallback for the map shell reuses the sky scene -
+      the generated land-map-day.webp is the real art; this keeps the
+      LandScene chain rendering if the file is missing. */
+  map: {
+    ground: ['#86efac', '#4ade80'],
+    props: {
+      cloud: '#ffffff',
+      moonShadow: '#bae6fd',
+      flower1: '#fb7185',
+      flower2: '#fbbf24',
+      flower3: '#38bdf8',
+      flower4: '#f472b6',
+      flowerCenter: '#ffffff',
+    },
+    lights: { sunRay: '#fde047', sun: '#fbbf24', sunCore: '#fde68a', moon: '#fef9c3', sparkle: '#ffffff' },
   },
   brand: {
     ground: ['#101a36', '#0b1224'],

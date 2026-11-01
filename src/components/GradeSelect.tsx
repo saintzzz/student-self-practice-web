@@ -9,7 +9,7 @@ import { getState } from '../lib/engagement/store';
 import { EmojiVisual } from './EmojiVisual';
 import { ParentGate, isParentVerified } from './ParentGate';
 import { GatedLink } from './GatedLink';
-import { NAV_PILL, NAV_PILL_SM, H1, PROMPT, SCREEN_ENTER } from '../lib/ui/tokens';
+import { NAV_PILL_DAY, NAV_PILL_SM_DAY, H1_DAY, PROMPT_DAY, SCREEN_ENTER } from '../lib/ui/tokens';
 import { IconChevronRight, IconFamily, IconFlag, IconStar } from './icons';
 
 /**
@@ -45,7 +45,7 @@ function TrailDots({ from, to }: { from: number; to: number }) {
       {trailDots(from, to, 56).map((d, i) => (
         <span
           key={i}
-          className="absolute h-1.5 w-1.5 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(252,211,77,0.55)]"
+          className="absolute h-1.5 w-1.5 rounded-full bg-amber-500/95 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
           style={{ left: `${d.x}%`, top: d.y, transform: 'translate(-50%,-50%)' }}
         />
       ))}
@@ -62,7 +62,7 @@ function TrailColumn({ above, below }: { above: boolean; below: boolean }) {
   const run = (top: boolean) => (
     <span className={`flex h-1/2 flex-col items-center justify-evenly ${top ? 'pb-9' : 'pt-9'}`}>
       {[0, 1, 2].map((k) => (
-        <span key={k} className="h-1.5 w-1.5 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(252,211,77,0.55)]" />
+        <span key={k} className="h-1.5 w-1.5 rounded-full bg-amber-500/95 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
       ))}
     </span>
   );
@@ -138,7 +138,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid="change-pin-button"
               onClick={() => setChangePinOpen(true)}
-              className={NAV_PILL_SM}
+              className={NAV_PILL_SM_DAY}
             >
               Đổi mã PIN
             </button>
@@ -148,7 +148,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid="login-link"
               onClick={onLogin}
-              className={NAV_PILL_SM}
+              className={NAV_PILL_SM_DAY}
             >
               Đăng nhập
             </button>
@@ -158,7 +158,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               type="button"
               data-testid="signout-button"
               onClick={onSignOut}
-              className={NAV_PILL_SM}
+              className={NAV_PILL_SM_DAY}
             >
               Đăng xuất
             </button>
@@ -171,10 +171,10 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           of a floating emoji. */}
       <div className="mb-2 flex items-center justify-center gap-4 text-left sm:gap-5">
         <div className="relative shrink-0">
-          {/* Golden medallion frame - bright rim + inner navy bezel so
-              the pig sits IN an artifact, not on the navy. */}
-          <div className="rounded-full bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 p-[5px] shadow-[0_0_30px_rgba(251,191,36,0.35),0_10px_24px_-10px_rgba(0,0,0,0.7)]">
-            <div className="rounded-full bg-gradient-to-b from-navy-700 to-navy-850 p-1.5 ring-1 ring-inset ring-white/15">
+          {/* Golden medallion frame - bright rim + deep-sky bezel so
+              the pig sits IN an artifact and still pops on the day art. */}
+          <div className="rounded-full bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 p-[5px] shadow-[0_0_30px_rgba(251,191,36,0.35),0_10px_24px_-10px_rgba(0,0,0,0.35)]">
+            <div className="rounded-full bg-gradient-to-b from-sky-600 to-sky-800 p-1.5 ring-1 ring-inset ring-white/25">
               <MascotAvatar sizePx={80} />
             </div>
           </div>
@@ -187,16 +187,16 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           </span>
         </div>
         <div className="min-w-0">
-          <h1 className={H1}>
+          <h1 className={H1_DAY}>
             {/* nbsp keeps "Bé {name}" together so the wrap reads
                 "Hành trình của / Bé Heo" instead of orphaning "Heo";
                 the name carries the gold accent - it is THE child's. */}
             Hành trình của{' '}
-            <span className="text-amber-300">
+            <span className="text-amber-800">
               Bé {studentName?.trim().replace(/^bé\s+/i, '') || 'Heo'}
             </span>
           </h1>
-          <p className={PROMPT + ' mt-0.5'}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
+          <p className={PROMPT_DAY + ' mt-0.5'}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
         </div>
       </div>
       {/* CR-72 + CR-82 polish: placement CTA + guest hint + engagement
@@ -213,11 +213,11 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
             Làm bài kiểm tra đầu vào
           </button>
         )}
-        <EngagementBar />
+        <EngagementBar tone="day" />
         {guestTrial && (
           <p
             data-testid="guest-trial-hint"
-            className="inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-4 py-1.5 text-sm font-bold text-sky-200 backdrop-blur"
+            className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-sm font-bold text-sky-800 shadow-sm ring-1 ring-sky-300/80 backdrop-blur"
           >
             Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 5 vòng
           </p>
@@ -227,9 +227,9 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
             type="button"
             data-testid="open-parent-report"
             onClick={() => (isParentVerified() ? onReport() : setReportGateOpen(true))}
-            className={`${NAV_PILL_SM} inline-flex items-center gap-1`}
+            className={`${NAV_PILL_SM_DAY} inline-flex items-center gap-1`}
           >
-            <IconFamily size={14} className="text-slate-300" /> Góc ba mẹ
+            <IconFamily size={14} className="text-sky-600" /> Góc ba mẹ
           </button>
         )}
       </div>
@@ -244,7 +244,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
         />
       )}
       {visibleGrades.length === 0 ? (
-        <div data-testid="no-scope-message" className="rounded-3xl bg-gradient-to-b from-navy-800 to-navy-850 p-8 text-lg font-bold text-slate-300 shadow-lg ring-1 ring-white/15">
+        <div data-testid="no-scope-message" className="rounded-3xl bg-white/90 p-8 text-lg font-bold text-slate-600 shadow-lg ring-1 ring-sky-200/90">
           Cô/Thầy chưa mở nội dung cho bé - hãy hỏi cô nhé!
         </div>
       ) : (
@@ -320,7 +320,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
               </span>
               <IconChevronRight
                 size={20}
-                className={`relative z-10 shrink-0 text-slate-400 ${cardLeft ? '' : 'rotate-180'}`}
+                className={`relative z-10 shrink-0 text-slate-500 ${cardLeft ? '' : 'rotate-180'}`}
               />
             </button>
           );
@@ -350,7 +350,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           {trailDots(visibleGrades.length % 2 === 1 ? TRAIL_X.right : TRAIL_X.left, 50, 56).map((d, i) => (
             <span
               key={i}
-              className="absolute h-1.5 w-1.5 rounded-full bg-amber-300/90 shadow-[0_0_8px_rgba(252,211,77,0.55)]"
+              className="absolute h-1.5 w-1.5 rounded-full bg-amber-500/95 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
               style={{ left: `${d.x}%`, top: d.y, transform: 'translate(-50%,-50%)' }}
             />
           ))}
@@ -365,7 +365,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           games=15 on 2026-11-01. Static string, not a live query: the
           footer stays free of a roundtrip and the numbers only move
           upward between audits. */}
-      <p data-testid="social-proof" className="mt-6 text-sm font-bold text-slate-400">
+      <p data-testid="social-proof" className="mt-6 text-sm font-bold text-slate-700">
         132.000+ câu hỏi · 290+ đề thi thử · 15 trò chơi · theo sát Global Success
       </p>
       {/* CR-43: footer stacks vertically - the old inline elements
@@ -377,12 +377,12 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
             type="button"
             data-testid="credits-link"
             onClick={onOpenCredits}
-            className={NAV_PILL}
+            className={NAV_PILL_DAY}
           >
             Nguồn hình ảnh
           </button>
         )}
-        <GatedLink href="https://vieschool.com" className="text-xs font-bold text-slate-400 underline-offset-2 transition hover:text-slate-300 hover:underline">          English Arena - sản phẩm của VieSchool</GatedLink>
+        <GatedLink href="https://vieschool.com" className="text-xs font-bold text-slate-600 underline-offset-2 transition hover:text-sky-700 hover:underline">          English Arena - sản phẩm của VieSchool</GatedLink>
       </footer>
       {changePinOpen && <ChangePinDialog onClose={() => setChangePinOpen(false)} />}
     </div>

@@ -5,14 +5,15 @@ import { getPlayerLevel } from '../lib/engagement/store';
  * a small progress ring (fill = XP into the current level) plus the level
  * name. Amber carries the progress/reward register like the star chip.
  */
-export default function LevelRing() {
+export default function LevelRing({ tone = 'dark' }: { tone?: 'dark' | 'day' }) {
   const snap = getPlayerLevel();
   const r = 9;
   const c = 2 * Math.PI * r;
+  const day = tone === 'day';
   return (
     <span
       data-testid="level-chip"
-      className="inline-flex min-h-[44px] items-center gap-1.5 px-4 py-1.5 text-sm font-extrabold text-slate-100"
+      className={`inline-flex min-h-[44px] items-center gap-1.5 px-4 py-1.5 text-sm font-extrabold ${day ? 'text-sky-950' : 'text-slate-100'}`}
       title={`Cấp ${snap.nameVi} - ${snap.xp} XP`}
     >
       <svg
@@ -21,7 +22,7 @@ export default function LevelRing() {
         role="img"
         aria-label={`Cấp độ ${snap.nameVi}`}
       >
-        <circle cx="12" cy="12" r={r} fill="none" strokeWidth="3" className="stroke-white/15" />
+        <circle cx="12" cy="12" r={r} fill="none" strokeWidth="3" className={day ? 'stroke-sky-200' : 'stroke-white/15'} />
         <circle
           cx="12"
           cy="12"
@@ -31,7 +32,7 @@ export default function LevelRing() {
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={c * (1 - snap.progress)}
-          className="stroke-amber-400 transition-[stroke-dashoffset] duration-700 motion-reduce:transition-none"
+          className={`${day ? 'stroke-amber-500' : 'stroke-amber-400'} transition-[stroke-dashoffset] duration-700 motion-reduce:transition-none`}
         />
       </svg>
       {snap.nameVi}

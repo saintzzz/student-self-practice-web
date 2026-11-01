@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchMyClassName, joinClassByCode } from '../lib/classJoin';
-import { CARD } from '../lib/ui/tokens';
+import { CARD, CARD_DAY } from '../lib/ui/tokens';
 import { IconSchool } from './icons';
 
 /**
@@ -12,7 +12,7 @@ import { IconSchool } from './icons';
  * (one class per student - switching is an admin action).
  * `onJoined` lets the parent refresh grade scopes right after a join.
  */
-export default function JoinClassCard({ isGuest, onJoined }: { isGuest: boolean; onJoined?: () => void }) {
+export default function JoinClassCard({ isGuest, onJoined, tone = 'dark' }: { isGuest: boolean; onJoined?: () => void; tone?: 'dark' | 'day' }) {
   const [myClass, setMyClass] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [code, setCode] = useState('');
@@ -55,18 +55,19 @@ export default function JoinClassCard({ isGuest, onJoined }: { isGuest: boolean;
     }
   }
 
+  const day = tone === 'day';
   return (
-    <div data-testid="join-class-card" className={`mt-4 ${CARD}`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300"><IconSchool size={20} className="mr-1.5 inline-block" /> Lớp của em</h2>
+    <div data-testid="join-class-card" className={`mt-4 ${day ? CARD_DAY : CARD}`}>
+      <h2 className={`font-display text-xl font-extrabold ${day ? 'text-amber-700' : 'text-amber-300'}`}><IconSchool size={20} className="mr-1.5 inline-block" /> Lớp của em</h2>
       {!loaded ? (
-        <p className="mt-3 text-sm font-semibold text-slate-400">Đang tải...</p>
+        <p className={`mt-3 text-sm font-semibold ${day ? 'text-slate-500' : 'text-slate-400'}`}>Đang tải...</p>
       ) : myClass ? (
-        <p data-testid="join-class-current" className="mt-3 text-sm font-bold text-emerald-300">
-          Em đang học trong lớp: <span className="text-white">{myClass}</span>
+        <p data-testid="join-class-current" className={`mt-3 text-sm font-bold ${day ? 'text-emerald-700' : 'text-emerald-300'}`}>
+          Em đang học trong lớp: <span className={day ? 'text-sky-950' : 'text-white'}>{myClass}</span>
         </p>
       ) : (
         <form onSubmit={submit} className="mt-3">
-          <p className="text-sm font-semibold text-slate-300">
+          <p className={`text-sm font-semibold ${day ? 'text-slate-700' : 'text-slate-300'}`}>
             Cô giáo cho em mã lớp chưa? Nhập vào đây để học chung với các bạn nhé!
           </p>
           <div className="mt-2 flex gap-2">
@@ -77,7 +78,10 @@ export default function JoinClassCard({ isGuest, onJoined }: { isGuest: boolean;
               onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[ILO01]|[^A-Z0-9]/g, ''))}
               maxLength={6}
               placeholder="VD: R8WHYF"
-              className="w-32 rounded-xl border-2 border-slate-500/60 bg-[#0d1b26] px-3 py-2 text-center font-display text-lg font-extrabold uppercase tracking-[0.3em] text-white placeholder:text-slate-600 focus:border-amber-400 focus:outline-none"
+              className={`w-32 rounded-xl border-2 px-3 py-2 text-center font-display text-lg font-extrabold uppercase tracking-[0.3em] focus:border-amber-400 focus:outline-none ${
+                day
+                  ? 'border-sky-300 bg-white text-sky-950 placeholder:text-slate-400'
+                  : 'border-slate-500/60 bg-[#0d1b26] text-white placeholder:text-slate-600'}`}
             />
             <button
               type="submit"
@@ -89,7 +93,7 @@ export default function JoinClassCard({ isGuest, onJoined }: { isGuest: boolean;
             </button>
           </div>
           {message && (
-            <p data-testid="join-class-error" className="mt-2 text-sm font-semibold text-rose-300">
+            <p data-testid="join-class-error" className={`mt-2 text-sm font-semibold ${day ? 'text-rose-600' : 'text-rose-300'}`}>
               {message}
             </p>
           )}

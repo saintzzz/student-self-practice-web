@@ -27,10 +27,16 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
 ) {
   const resolvedTone: SceneTone = tone ?? (night ? 'night' : 'day');
   const resolvedLand = LANDS[land] ? land : 'sky';
-  const [failedFile, setFailedFile] = useState<string | null>(null);
-  const src = `/images/lands/land-${resolvedLand}.webp`;
+  const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const baseSrc = `/images/lands/land-${resolvedLand}.webp`;
+  /* CR-116: day tone prefers the `-day` art variant (bright midday
+     scenes). Chain: day file -> base file -> vector LandScene, so a
+     land without a generated day variant still renders its dusk art
+     instead of collapsing to the flat vector. */
+  const chain = resolvedTone === 'day' ? [baseSrc.replace(/\.webp$/, '-day.webp'), baseSrc] : [baseSrc];
+  const src = chain.find((s) => !failedFiles.includes(s));
 
-  if (failedFile === src) {
+  if (!src) {
     return <LandScene ref={ref} land={resolvedLand} variant={variant} tone={resolvedTone} journey={journey} />;
   }
 
@@ -54,13 +60,14 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
           src={src}
           alt=""
           decoding="async"
-          onError={() => setFailedFile(src)}
+          onError={() => setFailedFiles((f) => [...f, src])}
           className="scene-layer scene-layer-mid absolute bottom-0 left-[-7%] h-full w-[114%] max-w-none object-cover object-[center_bottom]"
           style={{ filter: TONE_FILTER[resolvedTone] }}
         />
         {/* L4 scrim equivalent - keeps page content readable over the
-            bright generated scene. */}
-        <div className={`absolute inset-0 ${scene.scrim}`} />
+            generated scene; day tone uses the white-mist twin so the
+            bright art stays bright (CR-116). */}
+        <div className={`absolute inset-0 ${resolvedTone === 'day' ? scene.scrimDay : scene.scrim}`} />
       </div>
     );
   }
@@ -81,7 +88,7 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
         alt=""
         loading="lazy"
         decoding="async"
-        onError={() => setFailedFile(src)}
+        onError={() => setFailedFiles((f) => [...f, src])}
         className="h-full w-full object-cover object-[center_bottom]"
         style={{ filter: TONE_FILTER[resolvedTone] }}
       />

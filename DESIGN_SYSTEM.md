@@ -43,6 +43,15 @@
 > tone); subtiles are light `subTileClass` rows (76px G1-2 / 64px G3-5)
 > with `subTileChip` tone chips. Parent candy tile = destination, light
 > row = item inside it, white card = actions - never sibling-candy.
+>
+> **CR-116 (v6.2):** journey-map day register - the GradeSelect map leaves
+> the navy canvas: `land="map" tone="day"` renders a generated sunny
+> world-map hero (`land-map-day.webp`), postcard headers pull
+> `land-{key}-day.webp` variants of the five land scenes, and all chrome
+> switches to dark-ink-on-white-glass (`NAV_PILL_SM_DAY`, `H1_DAY`,
+> `PROMPT_DAY`, EngagementBar `tone="day"`). Play boards, login, admin and
+> credits keep the navy register - day is the map's own surface, not a
+> global light theme.
 
 ---
 
@@ -59,14 +68,17 @@
 
 ## 2. Brand direction
 
-- **Visual style:** playful-adventure "journey map" on a premium navy/gold brand
-  shell. Cards float like game tiles; gold = treasure/reward language.
+- **Visual style:** playful-adventure "journey map". The map itself is a
+  sunny-day painted world (CR-116); the surrounding product keeps the
+  premium navy/gold brand shell. Cards float like game tiles; gold =
+  treasure/reward language.
 - **Mood & tone:** warm, encouraging, game-like; Vietnamese-first copy.
 - **Design personality:** playful/kids - rounded, bold, tactile.
-- **Design concept:** *"a treasure-map adventure inside a VieSchool-brand navy
-  arena"* - expressed through per-grade "land" card identities (sky/playground/
-  town/jungle/city/space), gold treasure accents for stars/scores, a pig mascot
-  (🐷), and spring-physics micro-celebrations.
+- **Design concept:** *"a sunny treasure-map adventure - five colorful lands
+  to explore, framed by the VieSchool-brand navy arena"* - expressed through
+  per-grade "land" card identities (sky/playground/town/jungle/city/space),
+  generated day-tone scene art, gold treasure accents for stars/scores, a
+  pig mascot (🐷), and spring-physics micro-celebrations.
 - **Adversarial-review verdict:** with the name covered it could read as a generic
   kids app - what keeps it distinctive is the navy/gold VieSchool shell unifying
   every surface (login, play, admin) plus the per-land card tint system. Weakness
@@ -81,15 +93,18 @@
 
 ## 3. Color system
 
-Two coordinated systems: the **brand shell** (navy/gold, all chrome) and the
-**land tints** (per-grade card accents inside the map).
+Three coordinated systems: the **brand shell** (navy/gold, all chrome on
+adult + play surfaces), the **map day register** (CR-116, GradeSelect only)
+and the **land tints** (per-grade card accents inside the map).
 
 | Role | Color | Value | Usage |
 |---|---|---|---|
-| 60% - Dominant | VieSchool navy | `#0b1224` → `#101a36` gradient (`brand.pageGradient`); exam surfaces `#0d1b26` | page backgrounds |
+| 60% - Dominant | VieSchool navy | `#0b1224` → `#101a36` gradient (`brand.pageGradient`); exam surfaces `#0d1b26` | page backgrounds (non-map) |
+| 60% - Dominant (map only) | day sky | `from-sky-300 via-sky-100 to-emerald-100` (`map.pageGradient`) + `land-map-day.webp` hero | journey-map canvas |
 | 30% - Secondary | navy card | `from-[#162C55]` to `[#0E1F42]` (`CARD`), `#121b33/90` (`CARD_DARK`) | cards, panels |
 | 30% - Secondary | light "paper" panels | `bg-sky-50` + `ring-sky-100` | tables/reports inside dark cards |
-| 10% - Accent | VieSchool gold | amber-300→500 gradients; `amber-300/400` text on navy | CTAs, stars, score, focus rings |
+| 30% - Secondary (map only) | day glass | `bg-white/80` + `ring-sky-300/80` chips, `bg-white/90` cards | map chrome, guest hint, no-scope card |
+| 10% - Accent | VieSchool gold | amber-300→500 gradients; `amber-300/400` text on navy; `amber-800` text on day glass | CTAs, stars, score, focus rings |
 
 **Land card tints** (map only, `theme.ts`): sky / lime / emerald / indigo /
 violet `*-50/95` card + `*-400/500` disc + `*-800/900` accent text.
@@ -191,6 +206,10 @@ Every text color is bound to a **surface class**, never picked in isolation:
 - **On light surfaces** (`bg-white`, `*-50` cards, `bg-amber-100` chips, light
   land cards): dark text only - `amber-700/800/900`, `sky-700/800/900`,
   `slate-600/700`. Never `*-100/200/300` text.
+- **On the day map** (`map.pageGradient` + scene art, `bg-white/80-90` glass):
+  dark ink only - `sky-800/900/950`, `amber-800/950`, `slate-600/700`.
+  White/light text is banned there even over "dark" photo regions - drop a
+  `bg-white/80` chip behind it instead (the login pill idiom).
 - **Translucent chips** (`bg-*-500/15`) are dark-surface elements - they sit on
   navy only. A light-tinted chip (`bg-amber-100`, `CHIP_GOLD`) must pair with
   dark text (`text-amber-900/950`).
@@ -201,6 +220,11 @@ Every text color is bound to a **surface class**, never picked in isolation:
 Computed pairs (verified): `amber-950` on amber-100→200 = **11.7:1**;
 `amber-700` on `lime-50` = **4.85:1**; `amber-400` on `#0E1F42` = **9.7:1**;
 `sky-300` on `#0E1F42` = **9.7:1**; `sky-800` on white = **7.6:1**.
+Day-map pairs (rendered-pixel audit, CR-116): `sky-950` H1 on scene sky =
+**8.7:1**; `sky-800` prompt/trial on scene meadow = **5.2:1 / 5.0:1**;
+`sky-900` login pill on scene sky = **6.3:1**; `amber-800` name accent on
+scene meadow = **4.2:1**; `slate-700` social proof = **9.2:1**; `sky-900`
+image-source pill = **5.8:1**.
 
 **Dark mode:** the app IS dark-mode-primary (navy shell); light panels are the
 exception surface (paper reports). No theme switch.
@@ -226,10 +250,13 @@ exception surface (paper reports). No theme switch.
 - **Containers:** `max-w-3xl` journey map, `max-w-2xl` summary, `max-w-xl`
   dialogs, `max-w-md` auth.
 - **Spacing:** page `px-4 py-6 sm:py-8`; cards `p-6 sm:p-8`; chip gaps `gap-2`.
-- **Page anatomy (journey map):** nav pills (top-right) → mascot → H1 journey
-  title → subtitle → placement CTA → engagement chips → parent-report pill →
-  grade card grid (`grid-cols-1 sm:grid-cols-2 gap-6`) → footer (stacked:
-  image-source pill row, then attribution row).
+- **Page anatomy (journey map, CR-116):** nav pills (top-right, day glass) →
+  mascot medallion + H1/prompt → placement CTA + engagement chips +
+  guest hint + parent-report pill (one wrap row) → winding trail of
+  zigzag land postcards (`TrailDots` connectors + waypoint discs, finish
+  flag at the tail) → join-class / assignments slots → footer. The whole
+  page rides `land="map" tone="day"`: `land-map-day.webp` hero art up
+  top, `sky-300→emerald-100` gradient continuing under the trail.
 - **Page anatomy (launchpad, CR-73):** back nav → gold `Chơi` CTA →
   (G3-5 only: DailyQuestCard) → inline **ModeHub** sections → footer.
   The old bottom-sheet `ExploreSheet` IA is replaced by `ModeHub`
@@ -331,6 +358,12 @@ exception surface (paper reports). No theme switch.
 - **Content images:** self-hosted (`public/images/vio/`, `public/images/...`)
   with provenance tracked in the image-source credits footer + `docs/` source
   registry. Never hotlink third-party images.
+- **Scene art (CR-116):** generated lands live in `public/images/lands/`.
+  `land-{key}.webp` is the golden-dusk base; `land-{key}-day.webp` is the
+  bright-midday variant for `tone="day"`. `LandArt` resolves
+  `day variant → base file → vector LandScene`, so a missing file degrades
+  without a broken image. Tone filters apply to base art only - day files
+  are already painted bright.
 - **Treatment:** rounded, fixed dimensions (`width`/`height` or aspect), no
   decorative-only images without alt handling.
 
@@ -389,8 +422,11 @@ before shipping any UI. Project-specific:
   neutrals. Nothing outside this set.
 - **Emoji-as-illustration is intentional** (kids product) - exception to the
   "no emoji structural icons" ban; they still carry `aria-hidden` + text pairs.
-- **Navy shell is deliberate**, including under light land cards - not a bug
-  to "fix" back to light theme.
+- **Navy shell is deliberate** on play boards, login, admin, credits and
+  reports - including under light land cards - not a bug to "fix" back to
+  light theme. The **journey map is the sanctioned exception** (CR-116):
+  it runs the day register on purpose, and spreading day glass onto navy
+  surfaces is equally wrong.
 - **Every new chip/pill must declare its surface class** and pair text
   accordingly (§3). A token composed over an overriding bg = review fail.
 
