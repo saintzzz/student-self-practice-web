@@ -1,37 +1,44 @@
-# External Review - Round 19 (Codex CLI)
+# External Review r19 - CR-114 Class Show
 
-Reviewer: codex-cli (real external run). Scope: base cd1659a, HEAD=58d1745.
+Reviewer: pinned cross-model reviewer-gpt (documented fallback).
+Target: commit 84401e9 (Sân khấu lớp teacher-led projector mode).
+Verdict: **REJECT** - zero Critical, two High findings.
 
-1. [major] src/lib/exam/wordOrder.ts:211 - Adjunct detection accepts verb complements as movable suffixes: “I look at a cat.” accepts “At a cat I look”; “I play with a ball.” accepts “With a ball I play.” Invalid answers now score correct - use curated alternate orders or restrict transformations to verified sentence patterns.
+## Findings
 
-2. [major] src/lib/exam/wordOrder.ts:262 - Conjunct swapping exchanges adjacent tokens without identifying noun phrases. “I have a red pen and blue ruler.” accepts “I have a red blue and pen ruler.” - swap complete, validated conjunct phrases or whitelist authored alternates.
+### High
 
-3. [major] src/components/InstructionSpeaker.tsx:56 - Autoplay permanently consumes its key before playback succeeds, while removing the retry control and status handling. Blocked/error playback leaves children with no way to hear the instruction - retain an accessible retry path and mark keys played only after successful playback.
+1. **[FE] Guest Class Show over-fetches 3x the show size** - `createExamFromBank` was called with `count * 3` (24-48), inflating the public RPC draw to 39-77 rows. **FIXED + re-dispositioned:** review found every bank row surviving `toExamQuestion` is already stage-displayable, so the headroom was pure waste on the guest quota. Now requests exactly `count`; any shortfall after normalization pads from the bundled sample set instead of a bigger draw.
 
-4. [major] scripts/external-review.mjs:74 - Runner invokes `codex review`, whose Git execution is sandbox-blocked according to the supplied AGENTS.md instructions; the mandatory review cannot run through this path - compute the diff in the runner and feed it to `codex exec`, propagating failures.
+2. **[FE] Grade context ignored - always opened grade 3** - `App.tsx` declared the route grade-scoped but `ClassShowScreen` hard-coded `grade-3`. **FIXED:** `initialGradeId` prop now flows from the hub (`App.tsx` passes `selectedGradeId`). Verified live: entering from grade 4 preselects `show-grade-grade-4`.
 
-5. [minor] src/lib/generators/describeAndChooseImage.ts:22 - Splitting on hyphens turns “X-ray” into “x”, producing “a X-ray”; the same bug exists in listeningSentenceFillBlank.ts:28 - check full-word exceptions before splitting and explicitly handle X-ray.
+### Medium
 
-## Triage (post-review)
+3. **[FE] image-choice support missing** - CR listed image-choice as displayable; normalization dropped `optionImages` MCQs. **FIXED:** `word-to-image-mcq`/`image-choice` rows now keep `optionImages` and render picture cells beside the A-D letters (class points at a letter).
 
-1. CONFIRMED + FIXED. `PP_COMPLEMENT_BONDS` (wordOrder.ts) - a PP headed
-   by a preposition bound to the preceding verb ("look at", "play with",
-   "listen to", "goes to"...) is a complement and no longer fronts. 4
-   regression tests added; genuine adjuncts ("At seven I get up") still
-   pass. Bank sweep re-verified clean.
-2. CONFIRMED + FIXED. Conjunct swap now requires boundary words on both
-   sides (CONJUNCT_BOUNDARY_LEFT/RIGHT): "a red pen and blue ruler" can no
-   longer emit "a red blue and pen ruler"; bare-noun swaps ("maths and
-   English") still accepted.
-3. CONFIRMED + FIXED. InstructionSpeaker now releases the autoplay key on
-   'blocked'/'error'/'unavailable' status and arms a one-shot pointerdown
-   retry (a blocked browser allows speech after the first user gesture).
-   Keys are consumed only after playback reports playing/ended. 3 new
-   tests cover blocked-release, gesture retry, and played-key retention.
-4. ALREADY FIXED before the review ran - the runner had been switched to
-   `codex exec` with a locally-computed diff in the same commit series
-   (the finding references the earlier `codex review` revision).
-5. CONFIRMED + FIXED. article() checks the full word against the
-   exception tables BEFORE splitting on hyphen/space; 'x-ray'/'xray'
-   added to ARTICLE_AN_WORDS in both generators.
+4. **[FE] Space did not start from setup** - keyboard contract said Space = pick/start. **FIXED:** Space/Enter now calls `start()` from setup when the focus target is not an interactive element (button/textarea/input/select/a skip to avoid double-fire).
 
+5. **[FE] No focus management / live regions on phase changes.** **FIXED:** spotlight is `role="status" aria-live="polite"`; question prompt and podium heading get `data-stage-focus` + programmatic focus on phase entry; roster error is `role="alert"`.
+
+### Low
+
+6. **[FE] Spotlight interval could stack on rapid re-spins.** **FIXED:** `spin()` clears any existing `spotTimer` before arming a new one.
+
+7. **[FE] Setup controls editable during load.** **FIXED:** grade/program/count/roster wrapped in a conditional `inert` container while `phase === 'loading'`.
+
+8. **[FE] Podium ties sorted alphabetically.** **FIXED:** `podiumOrder` now stable-sorts score desc only - ties keep roster order (test updated).
+
+### Nit
+
+9. **[FE] Verdict icons not marked decorative.** **DISMISSED:** `iconProps()` in `src/components/icons.tsx` already sets `aria-hidden: true` on every icon.
+
+## Triage summary
+
+- Fixed: 1, 2, 3, 4, 5, 6, 7, 8
+- Not confirmed (with evidence): 9
+
+## Fixes verified
+
+- `npx tsc --noEmit` clean; `npm run build` green (ClassShowScreen chunk 16.1 kB).
+- `classshow.test.ts`: 15/15 pass (incl. new steal/exclude + stable-tie cases).
+- Playwright live on dev server: grade-4 entry preselects grade 4; wrong answer shows "Cuớp lượt" chip and re-spotlights a different student on the SAME question; "Bỏ qua" advances to the next question and clears steal state.

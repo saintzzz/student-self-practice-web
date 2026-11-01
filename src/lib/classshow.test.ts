@@ -46,11 +46,11 @@ describe('normalizeShowQuestion', () => {
     expect(s).toMatchObject({ kind: 'reveal', revealText: 'I can see a cat.' });
   });
 
-  it('drops optionImages MCQs - image grids do not stage on one screen', () => {
+  it('keeps image-option MCQs - the class points at a letter cell', () => {
     const s = normalizeShowQuestion({
       ...mcq, optionImages: ['/a.png', '/b.png', '/c.png', '/d.png'],
     } as ExamQuestion);
-    expect(s).toBeNull();
+    expect(s).toMatchObject({ kind: 'choice', optionImages: ['/a.png', '/b.png', '/c.png', '/d.png'] });
   });
 
   it('drops non-displayable kinds', () => {
@@ -83,13 +83,20 @@ describe('pickStudent', () => {
   it('single-name roster always picks 0', () => {
     expect(pickStudent(['Solo'], 0, () => 0.9)).toBe(0);
   });
+  it('steal: exclude skips students who already missed', () => {
+    const idx = pickStudent(['A', 'B', 'C'], -1, () => 0.9, new Set([0, 2]));
+    expect(idx).toBe(1);
+  });
+  it('returns -1 when everyone already missed', () => {
+    expect(pickStudent(['A', 'B'], 0, () => 0.5, new Set([0, 1]))).toBe(-1);
+  });
 });
 
 describe('podiumOrder', () => {
-  it('sorts by score desc, name asc on ties', () => {
+  it('sorts by score desc; ties keep roster order (no name bias)', () => {
     const order = podiumOrder([
       { name: 'B', score: 10 }, { name: 'A', score: 10 }, { name: 'C', score: 30 },
     ]);
-    expect(order.map((p) => p.name)).toEqual(['C', 'A', 'B']);
+    expect(order.map((p) => p.name)).toEqual(['C', 'B', 'A']);
   });
 });

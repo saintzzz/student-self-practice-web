@@ -702,6 +702,7 @@ export default function App() {
     return shell(
       suspense(
         <ClassShowScreen
+          initialGradeId={selectedGradeId}
           onBack={() => {
             setHubOpenTile('arena');
             setScreen('start-batch');

@@ -14,6 +14,8 @@ export interface ShowQuestion {
   /** Secondary context line (passage caption, instruction). */
   subPrompt?: string;
   options?: readonly string[];
+  /** Image-option MCQs (word-to-image-mcq): same letters, picture cells. */
+  optionImages?: readonly string[];
   correctIndex?: number;
   boolAnswer?: boolean;
   /** Text revealed after the class answers aloud (reveal kind). */
@@ -27,12 +29,15 @@ export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
   const anyQ = q as unknown as Record<string, unknown>;
   switch (q.kind) {
     case 'grammar-mcq': {
-      const options = (anyQ.optionImages ? null : q.options) as readonly string[] | null;
+      // word-to-image-mcq rows carry optionImages - the class points at
+      // the letter, so picture cells are stage-displayable too.
+      const imgs = anyQ.optionImages as readonly string[] | undefined;
+      const options = q.options as readonly string[] | null;
       if (!options?.length) return null;
       return {
         id: q.id, kind: 'choice', prompt: q.prompt,
         subPrompt: q.passage ?? (q.transcript ? 'Nghe cô đọc câu này nhé!' : undefined),
-        options, correctIndex: q.correctIndex, imageUrl: q.imageUrl,
+        options, optionImages: imgs, correctIndex: q.correctIndex, imageUrl: q.imageUrl,
       };
     }
     case 'odd-pronunciation':
@@ -124,15 +129,19 @@ export function parseRoster(text: string): string[] {
 }
 
 /** Spotlight pick: avoid repeating the same student twice in a row
- *  when the roster has 2+ names. */
-export function pickStudent(names: readonly string[], lastIndex: number, rand: () => number): number {
-  if (names.length <= 1) return 0;
-  let idx = Math.floor(rand() * names.length);
-  if (idx === lastIndex) idx = (idx + 1) % names.length;
-  return idx;
+ *  when the roster has 2+ names; `exclude` skips students who already
+ *  missed this question (steal mechanic). Returns -1 when nobody is
+ *  eligible. */
+export function pickStudent(names: readonly string[], lastIndex: number, rand: () => number, exclude?: ReadonlySet<number>): number {
+  const eligible = names.map((_, i) => i).filter((i) => !exclude?.has(i));
+  if (!eligible.length) return -1;
+  const fresh = eligible.filter((i) => i !== lastIndex);
+  const pool = fresh.length ? fresh : eligible;
+  return pool[Math.floor(rand() * pool.length)] ?? -1;
 }
 
-/** Rank the roster for the podium: stable by score desc, name asc. */
+/** Rank the roster for the podium: score desc; ties keep roster order
+ *  (Array.sort is stable) so "An" never beats "Vy" just for the name. */
 export function podiumOrder(scores: readonly { name: string; score: number }[]): { name: string; score: number }[] {
-  return [...scores].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'vi'));
+  return [...scores].sort((a, b) => b.score - a.score);
 }

@@ -39,9 +39,9 @@ type Phase = 'setup' | 'loading' | 'spotlight' | 'question' | 'revealed' | 'podi
 
 interface Player { name: string; score: number; }
 
-export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
+export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: () => void; initialGradeId?: string | null }) {
   const [phase, setPhase] = useState<Phase>('setup');
-  const [gradeId, setGradeId] = useState('grade-3');
+  const [gradeId, setGradeId] = useState(initialGradeId ?? 'grade-3');
   const [programId, setProgramId] = useState<ExamProgramId>('english');
   const [count, setCount] = useState<number>(8);
   const [rosterText, setRosterText] = useState(() => {
@@ -53,6 +53,7 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
   const [picked, setPicked] = useState(-1);
   const [spotName, setSpotName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [missed, setMissed] = useState<ReadonlySet<number>>(new Set());
   const lastPicked = useRef(-1);
   const spotTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -69,32 +70,44 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
     try { localStorage.setItem(ROSTER_STORAGE_KEY, rosterText); } catch { /* ignore */ }
     let shows: ShowQuestion[] = [];
     try {
-      const state = await createExamFromBank(programId, gradeId, { count: count * 3, mode: 'practice' });
+      /* Request the show size only - every bank row that survives
+         toExamQuestion mapping is stage-displayable, so over-fetching
+         just burns the guest quota (r19 finding). */
+      const state = await createExamFromBank(programId, gradeId, { count, mode: 'practice' });
       shows = (state?.questions ?? []).map(normalizeShowQuestion)
         .filter((q): q is ShowQuestion => q !== null).slice(0, count);
     } catch { /* bank unreachable - fall through to the bundled set */ }
-    if (shows.length < 4) {
-      /* A classroom show must not die on flaky wifi or a guest challenge
-         miss - shuffle the bundled set instead of blocking the lesson. */
-      shows = [...SAMPLE_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, count);
+    if (shows.length < count) {
+      /* A classroom show must not die on flaky wifi, a guest challenge
+         miss or a thin pool - pad with the bundled set (shuffled, no
+         id clashes with bank rows) instead of blocking the lesson. */
+      const pad = [...SAMPLE_QUESTIONS].sort(() => Math.random() - 0.5);
+      shows = [...shows, ...pad.slice(0, count - shows.length)];
     }
     setQuestions(shows);
     setPlayers(roster.map((name) => ({ name, score: 0 })));
     setQIndex(0);
+    setMissed(new Set());
     lastPicked.current = -1;
-    spin();
+    spin(new Set());
   }
 
-  function spin() {
-    setPhase('spotlight');
+  function spin(exclude: ReadonlySet<number>) {
     const names = roster.length ? roster : SAMPLE_ROSTER;
+    const eligibleCount = names.length - exclude.size;
+    if (eligibleCount <= 0) { advance(); return; }
+    // Kill any prior interval before arming a new one - rapid
+    // steal/restart paths must never stack spotlight timers (r19).
+    if (spotTimer.current) clearInterval(spotTimer.current);
+    setPhase('spotlight');
     let ticks = 0;
     spotTimer.current = setInterval(() => {
       ticks += 1;
       setSpotName(names[Math.floor(Math.random() * names.length)]);
       if (ticks >= 16) {
         if (spotTimer.current) clearInterval(spotTimer.current);
-        const idx = pickStudent(names, lastPicked.current, Math.random);
+        const idx = pickStudent(names, lastPicked.current, Math.random, exclude);
+        if (idx < 0) { advance(); return; }
         lastPicked.current = idx;
         setPicked(idx);
         setSpotName(names[idx]);
@@ -104,39 +117,66 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
     }, 80);
   }
 
-  function verdict(correct: boolean) {
-    if (phase !== 'revealed' && phase !== 'question') return;
-    if (correct) {
-      playSfx('correct');
-      setPlayers((ps) => ps.map((p, i) => (i === picked ? { ...p, score: p.score + SHOW_POINTS } : p)));
-    } else {
-      playGentleWrong();
-    }
+  function advance() {
+    setMissed(new Set());
     if (qIndex + 1 >= questions.length) {
       setPhase('podium');
       playSfx('star');
     } else {
       setQIndex((i) => i + 1);
-      spin();
+      spin(new Set());
     }
   }
 
-  // Projector keyboard: Space/Enter reveals or picks, → Đúng, ← Sai.
+  function verdict(correct: boolean) {
+    if (phase !== 'revealed' && phase !== 'question') return;
+    if (correct) {
+      playSfx('correct');
+      setPlayers((ps) => ps.map((p, i) => (i === picked ? { ...p, score: p.score + SHOW_POINTS } : p)));
+      advance();
+    } else {
+      playGentleWrong();
+      /* Steal mechanic: a wrong answer opens the same question to
+         another student - classic classroom drama, per Questora's
+         "pass the turn" rule. Everyone missing ends the question. */
+      const next = new Set(missed); next.add(picked);
+      setMissed(next);
+      spin(next);
+    }
+  }
+
+  // Projector keyboard: Space/Enter starts (setup) or reveals,
+  // → Đúng, ← Sai, ↓ bỏ qua. Form fields keep their own keys.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (phase === 'question' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); setPhase('revealed'); }
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      // Interactive elements own their keys - a focused button already
+      // clicks on Enter/Space, so the stage handler must not double-fire.
+      if (tag && ['TEXTAREA', 'INPUT', 'BUTTON', 'SELECT', 'A'].includes(tag)) return;
+      if (phase === 'setup' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); void start(); }
+      else if (phase === 'question' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); setPhase('revealed'); }
       else if (phase === 'revealed' && (e.key === 'ArrowRight' || e.key === 'Enter')) verdict(true);
       else if (phase === 'revealed' && e.key === 'ArrowLeft') verdict(false);
+      else if ((phase === 'question' || phase === 'revealed') && e.key === 'ArrowDown') advance();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, qIndex, picked, questions.length]);
+  }, [phase, qIndex, picked, missed, questions.length, rosterText]);
+
+  // Stage focus follows the phase so keyboard/screen-reader users land
+  // on the live surface, not on whatever button they just pressed (r19).
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (phase === 'question' || phase === 'podium') {
+      stageRef.current?.querySelector<HTMLElement>('[data-stage-focus]')?.focus();
+    }
+  }, [phase, qIndex]);
 
   const podium = useMemo(() => podiumOrder(players), [players]);
 
   return (
-    <div className={`${SCREEN_ENTER} mx-auto w-full max-w-5xl px-4 pb-10`} data-testid="class-show">
+    <div ref={stageRef} className={`${SCREEN_ENTER} mx-auto w-full max-w-5xl px-4 pb-10`} data-testid="class-show">
       <div className="mb-4 flex items-center justify-between">
         <button type="button" onClick={onBack} className={NAV_PILL_SM} data-testid="class-show-back">
           ← Quay lại
@@ -151,6 +191,9 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
             <h1 className={H2}>Chiếu màn này lên lớp - em nào được gọi sẽ trả lời!</h1>
           </div>
 
+          {/* Loading freezes picks so they still match the in-flight
+              request - inert beats per-control disabled (React 18-safe). */}
+          <div {...(phase === 'loading' ? { inert: '' } : {})} className="contents">
           <div>
             <p className="mb-2 text-sm font-bold text-sky-200">Lớp</p>
             <div className="flex flex-wrap gap-2">
@@ -207,8 +250,9 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
               Dùng lớp mẫu 8 em
             </button>
           </div>
+          </div>
 
-          {error && <p className="rounded-xl bg-rose-500/15 px-4 py-3 text-base font-bold text-rose-200 ring-1 ring-rose-400/40">{error}</p>}
+          {error && <p role="alert" className="rounded-xl bg-rose-500/15 px-4 py-3 text-base font-bold text-rose-200 ring-1 ring-rose-400/40">{error}</p>}
 
           <button type="button" data-testid="show-start" onClick={start} disabled={phase === 'loading'}
             className={`${CTA_GOLD_XL} w-full ${phase === 'loading' ? 'opacity-60' : ''}`}>
@@ -227,8 +271,8 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
           {/* Spotlight card - who answers */}
           <div className={`${CARD} relative overflow-hidden py-8 text-center`}>
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.18),transparent_65%)]" />
-            <p className={`${TYPE_SECTION_NAVY} relative`}>Em trả lời</p>
-            <p data-testid="show-spotlight"
+            <p className={`${TYPE_SECTION_NAVY} relative`}>{missed.size > 0 ? '🔥 Cướp lượt!' : 'Em trả lời'}</p>
+            <p data-testid="show-spotlight" role="status" aria-live="polite"
               className={`relative font-display text-5xl font-extrabold tracking-tight sm:text-6xl ${phase === 'spotlight' ? 'animate-pulse text-amber-200/80' : 'text-amber-300'}`}>
               {spotName || '...'}
             </p>
@@ -245,7 +289,8 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
               {question.imageUrl && (
                 <img src={question.imageUrl} alt="" className="mx-auto max-h-44 rounded-2xl ring-1 ring-white/15" />
               )}
-              <p data-testid="show-question" className="text-center font-display text-3xl font-extrabold leading-snug text-white sm:text-4xl">
+              <p data-testid="show-question" data-stage-focus tabIndex={-1}
+                className="text-center font-display text-3xl font-extrabold leading-snug text-white outline-none sm:text-4xl">
                 {question.prompt}
               </p>
 
@@ -259,7 +304,9 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
                         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-extrabold ${isCorrect ? 'bg-emerald-300 text-emerald-950' : 'bg-white/10 text-amber-200'}`}>
                           {String.fromCharCode(65 + i)}
                         </span>
-                        {opt}
+                        {question.optionImages?.[i]
+                          ? <img src={question.optionImages[i]} alt={opt} className="h-20 w-20 rounded-xl object-contain" />
+                          : opt}
                       </div>
                     );
                   })}
@@ -289,15 +336,25 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
               {/* Teacher controls */}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 {phase === 'question' ? (
-                  <button type="button" data-testid="show-reveal-btn" onClick={() => setPhase('revealed')}
-                    className={CTA_GOLD_XL}>
-                    <IconPlay size={22} className="mr-2" /> Hiện đáp án
-                  </button>
+                  <>
+                    <button type="button" data-testid="show-reveal-btn" onClick={() => setPhase('revealed')}
+                      className={CTA_GOLD_XL}>
+                      <IconPlay size={22} className="mr-2" /> Hiện đáp án
+                    </button>
+                    <button type="button" data-testid="show-skip" onClick={advance}
+                      className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95">
+                      Câu khác ↓
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button type="button" data-testid="show-wrong" onClick={() => verdict(false)}
                       className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95">
-                      <IconX size={26} /> Sai
+                      <IconX size={26} /> Sai - cướp lượt
+                    </button>
+                    <button type="button" data-testid="show-skip" onClick={advance}
+                      className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95">
+                      Bỏ qua ↓
                     </button>
                     <button type="button" data-testid="show-correct" onClick={() => verdict(true)}
                       className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-emerald-500/25 px-8 text-2xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50 transition hover:bg-emerald-500/35 active:scale-95">
@@ -331,7 +388,7 @@ export default function ClassShowScreen({ onBack }: { onBack: () => void }) {
         <div className={`${CARD} relative overflow-hidden text-center`}>
           <Confetti big />
           <IconTrophy size={56} className="mx-auto mb-3 text-amber-300" />
-          <h2 className="mb-6 font-display text-4xl font-extrabold text-white">Bảng vinh danh</h2>
+          <h2 data-stage-focus tabIndex={-1} className="mb-6 font-display text-4xl font-extrabold text-white outline-none">Bảng vinh danh</h2>
           <div className="mx-auto flex max-w-lg items-end justify-center gap-4">
             {[1, 0, 2].map((real) => {
               const player = podium[real];
