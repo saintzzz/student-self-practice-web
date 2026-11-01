@@ -5,13 +5,5 @@
     { "source": "/mua", "destination": "https://vieschool-content.vercel.app/ea/mua" },
     { "source": "/guides", "destination": "https://vieschool-content.vercel.app/ea/guides" },
     { "source": "/guides/:path*", "destination": "https://vieschool-content.vercel.app/ea/guides/:path*" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noai, noimageai" }
-      ]
-    }
   ]
 }
