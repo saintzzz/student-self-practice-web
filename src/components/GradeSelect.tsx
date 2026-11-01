@@ -130,7 +130,7 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
   const nextId = visibleGrades.find((g) => !(engagement.grades[g.id]?.stars > 0))?.id;
 
   return (
-    <div className={`mx-auto max-w-3xl px-4 py-6 text-center sm:py-8 ${SCREEN_ENTER}`}>
+    <div className={`mx-auto max-w-3xl -mt-[14vh] px-4 py-6 text-center sm:py-8 ${SCREEN_ENTER}`}>
       {(onSignOut || onLogin) && (
         <div className="mb-2 flex justify-end gap-2">
           {onSignOut && (
@@ -168,8 +168,10 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
       {/* CR-82 polish: mascot medallion + title share one row - the
           header drops ~110px so the land postcards enter the first
           viewport, and the pig reads as a badge of the journey instead
-          of a floating emoji. */}
-      <div className="mb-2 flex items-center justify-center gap-4 text-left sm:gap-5">
+          of a floating emoji. CR-116 rev2: the row overlaps the hero
+          band's dissolving edge, so it rides a frosted cartouche - an
+          opaque surface, never bare copy on the painting. */}
+      <div className="mx-auto mb-2 flex w-fit items-center justify-center gap-4 rounded-3xl bg-white/75 px-5 py-4 text-left shadow-lg ring-1 ring-sky-200/80 backdrop-blur-md sm:gap-5">
         <div className="relative shrink-0">
           {/* Golden medallion frame - bright rim + deep-sky bezel so
               the pig sits IN an artifact and still pops on the day art. */}

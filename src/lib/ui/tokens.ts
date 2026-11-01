@@ -302,10 +302,11 @@ export const scene = {
   glow: 'bg-[radial-gradient(ellipse_60%_45%_at_50%_0%,rgba(56,89,165,0.38),transparent),radial-gradient(ellipse_50%_40%_at_15%_100%,rgba(245,158,11,0.10),transparent)]',
   /** CR-82 hero scene (DESIGN-SPEC-v5 s5.1). */
   root: 'pointer-events-none fixed inset-0 z-0 overflow-hidden',
-  /* CR-116 rev2: day hero art lives in a bounded band at the page top
-     and scrolls away with it - content never travels through fixed
-     artwork, the interactive zone stays on the flat pageGradient. */
-  heroBand: 'pointer-events-none absolute inset-x-0 top-0 z-0 h-[62vh] overflow-hidden',
+  /* CR-116 rev2: day hero art lives in a bounded in-flow band at the
+     page top - it reserves real layout space (external review r150-151)
+     so every element after it sits on the flat pageGradient, and the
+     band's own bottom edge dissolves into that gradient via mask. */
+  heroBand: 'pointer-events-none relative z-0 h-[58vh] overflow-hidden',
   skyDusk: 'bg-gradient-to-b from-navy-950 via-navy-900 to-navy-700',
   skyNight: 'bg-gradient-to-b from-navy-950 via-navy-950 to-navy-800',
   /* CR-116: vector-fallback sky for tone=day (the real day scenes are
