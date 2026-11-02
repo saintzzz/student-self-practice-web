@@ -38,12 +38,25 @@ function RoundMic({
   const micRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { micRef.current?.focus(); }, []);
 
-  // r160-2: while the verdict shows, render a settled note instead of
-  // whatever stale phase the hook last held ('processing'/'recording'
-  // visuals beside a verdict read as a bug).
+  // r160-2/r162: while the verdict shows, keep the same button element
+  // mounted (disabled + settled caption) - replacing it with a note
+  // drops keyboard focus to the document until the next round mounts.
   if (disabled) {
     return (
-      <p className="text-sm font-semibold text-slate-400">Đã gửi giọng đọc - sang câu tiếp…</p>
+      <div className="flex flex-col items-center gap-3 py-1">
+        <button
+          type="button"
+          ref={micRef}
+          data-testid="say-mic"
+          disabled
+          aria-disabled="true"
+          aria-label={`Đã gửi giọng đọc của từ ${word}`}
+          className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-white opacity-50 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)] focus:outline-none"
+        >
+          <IconMic size={30} />
+        </button>
+        <p className="text-sm font-semibold text-slate-400">Đã gửi giọng đọc - sang câu tiếp…</p>
+      </div>
     );
   }
   if (phase === 'unsupported') {
