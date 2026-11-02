@@ -26,4 +26,7 @@ export const GAME_LAZY: Record<GameId, RetryableLazy<GameProps>> = {
   'maze-chase': createRetryableLazy(() => import('./games/MazeChase')),
   'word-worm': createRetryableLazy(() => import('./games/WordWorm')),
   'castle-guard': createRetryableLazy(() => import('./games/CastleGuard')),
+  'missing-letter': createRetryableLazy(() => import('./games/MissingLetter')),
+  'sentence-scramble': createRetryableLazy(() => import('./games/SentenceScramble')),
+  'odd-one-out': createRetryableLazy(() => import('./games/OddOneOut')),
 };

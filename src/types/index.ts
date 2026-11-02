@@ -49,7 +49,9 @@ export type QuestionKind =
   | 'phonics-final-choice'
   | 'phonics-blend-choice'
   | 'phonics-rhyme-choice'
-  | 'letter-tracing';
+  | 'letter-tracing'
+  | 'word-order'
+  | 'missing-letter';
 
 /**
  * CR-82 (DESIGN-SPEC-v5 s12.5/D-10): telemetry carried with a tracing

@@ -10,6 +10,7 @@ import GameArt from './GameArt';
 import { GAME_LEVELS, LEVEL_META, specFor, timeBonusFor, type GameLevel } from './levels';
 import type { GameEnd, GameId } from './types';
 import type { Grade } from '../types';
+import { bandForGrade } from '../lib/ui/theme';
 
 interface GameScreenProps {
   grade: Grade;
@@ -128,9 +129,14 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
     return () => clearInterval(t);
   }, [level, end, seed]);
 
+  /* Desk register: play surfaces keep the dusk/night scene (same rule
+     App.shell applies to batch boards) - without it the light day
+     gradient sits under the white header text (CR-119 regression fix). */
+  const deskTone = bandForGrade(grade.id) === 'G12' ? 'dusk' : 'night';
+
   if (!def || !Game) {
     return (
-      <LandShell gradeId={grade.id} variant="hero">
+      <LandShell gradeId={grade.id} tone={deskTone} variant="hero">
         <div className="mx-auto max-w-md px-4 py-10 text-center text-slate-200">
           Chưa có trò chơi này - quay lại khu trò chơi nhé.
           <div className="mt-4">
@@ -190,7 +196,7 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
   void tick;
 
   return (
-    <LandShell gradeId={grade.id} variant="hero">
+    <LandShell gradeId={grade.id} tone={deskTone} variant="hero">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
         <header className="mb-4 flex items-center gap-3">
           <button

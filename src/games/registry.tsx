@@ -4,6 +4,7 @@ import type {
   LetterOrderFieldProps,
   PairBoardFieldProps,
   WordChoiceFieldProps,
+  WordOrderFieldProps,
 } from './mechanics';
 import type { GameComponent, GameId, GameMechanic } from './types';
 import MemoryMatch from './games/MemoryMatch';
@@ -21,11 +22,15 @@ import QuizShow from './games/QuizShow';
 import MazeChase from './games/MazeChase';
 import WordWorm from './games/WordWorm';
 import CastleGuard from './games/CastleGuard';
+import MissingLetter from './games/MissingLetter';
+import SentenceScramble from './games/SentenceScramble';
+import OddOneOut from './games/OddOneOut';
 import {
   EmojiChoiceField,
   LetterOrderField,
   PairBoardField,
   WordChoiceField,
+  WordOrderField,
 } from './mechanics';
 
 /**
@@ -56,6 +61,9 @@ export const GAME_COMPONENTS: Record<GameId, GameComponent> = {
   'maze-chase': MazeChase,
   'word-worm': WordWorm,
   'castle-guard': CastleGuard,
+  'missing-letter': MissingLetter,
+  'sentence-scramble': SentenceScramble,
+  'odd-one-out': OddOneOut,
 };
 
 export const GAME_MECHANICS = {
@@ -85,5 +93,10 @@ export const GAME_MECHANICS = {
     id: 'pair-board',
     kinds: ['picture-pair-matching'],
     Step: PairBoardField as ComponentType<PairBoardFieldProps>,
+  },
+  'word-order': {
+    id: 'word-order',
+    kinds: ['word-order'],
+    Step: WordOrderField as ComponentType<WordOrderFieldProps>,
   },
 } as const satisfies Record<string, GameMechanic & { Step: ComponentType<any> }>;

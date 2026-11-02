@@ -299,6 +299,91 @@ export function LetterOrderField({
 }
 
 /* ------------------------------------------------------------------ */
+/* WordOrderField - tap scrambled word tiles to rebuild a sentence.     */
+/* Used by: SentenceScramble; adoptable by every 'word-order' surface   */
+/* (the CR-26 scorer accepts grammatically valid alternates).           */
+/* ------------------------------------------------------------------ */
+
+export interface WordOrderFieldProps {
+  /** Scrambled tiles, order stable within a round. */
+  tiles: readonly string[];
+  /** Indexes already moved into the answer, in placement order. */
+  placedIndexes: readonly number[];
+  /** One-shot wrong-verdict flash on the answer zone. */
+  wrongFlash?: boolean;
+  disabled?: boolean;
+  /** Tap a rack tile (its original index) to place it, or a placed
+   *  tile to send it back. */
+  onTapTile: (tileIndex: number) => void;
+  onTapPlaced: (placedPosition: number) => void;
+}
+
+export function WordOrderField({
+  tiles,
+  placedIndexes,
+  wrongFlash,
+  disabled,
+  onTapTile,
+  onTapPlaced,
+}: WordOrderFieldProps) {
+  const placed = placedIndexes.map((i) => tiles[i]!);
+  return (
+    <div data-testid="word-order-field" className="flex w-full flex-col items-center gap-4">
+      {/* Answer zone: placed tiles sit left-to-right in a dashed well;
+          an empty slot hint shows how many words remain. */}
+      <div
+        data-testid="word-order-answer"
+        className={`flex min-h-[64px] w-full flex-wrap items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-3 py-2.5 transition motion-reduce:transition-none ${
+          wrongFlash
+            ? 'game-shake border-rose-300/80 bg-rose-500/15'
+            : placed.length === tiles.length
+              ? 'border-emerald-300/80 bg-emerald-500/15'
+              : 'border-sky-300/50 bg-navy-800/50'
+        }`}
+      >
+        {placed.length === 0 && (
+          <span className="text-sm font-semibold text-sky-300/80">Chạm các từ bên dưới theo đúng thứ tự</span>
+        )}
+        {placed.map((word, pos) => (
+          <button
+            key={`${placedIndexes[pos]}-${pos}`}
+            type="button"
+            data-testid={`placed-${pos}`}
+            disabled={disabled}
+            onClick={() => onTapPlaced(pos)}
+            className="rounded-xl border-2 border-emerald-200/80 bg-gradient-to-b from-emerald-50 to-emerald-100 px-3 py-1.5 text-lg font-extrabold text-emerald-900 shadow-[inset_0_2px_0_rgba(255,255,255,0.6),0_4px_10px_-4px_rgba(0,0,0,0.4)] transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-emerald-300"
+          >
+            {word}
+          </button>
+        ))}
+      </div>
+      {/* Tile rack. */}
+      <div className="flex flex-wrap justify-center gap-2.5">
+        {tiles.map((word, i) => {
+          const used = placedIndexes.includes(i);
+          return (
+            <button
+              key={`${word}-${i}`}
+              type="button"
+              data-testid={`tile-${i}`}
+              disabled={disabled || used}
+              onClick={() => onTapTile(i)}
+              className={`rounded-xl border-2 px-3.5 py-2 text-lg font-extrabold transition motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-sky-300 ${
+                used
+                  ? 'scale-90 border-sky-900/30 bg-navy-800/40 text-sky-200/30'
+                  : 'border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 text-slate-800 shadow-[inset_0_2px_0_rgba(255,255,255,0.6),0_6px_14px_-6px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 active:scale-95'
+              }`}
+            >
+              {word}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* PairBoardField - face-down memory grid (emoji <-> word pairs).       */
 /* Used by: MemoryMatch; adoptable by 'picture-pair-matching' rounds.   */
 /* ------------------------------------------------------------------ */

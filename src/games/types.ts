@@ -24,7 +24,10 @@ export type GameId =
   | 'quiz-show'
   | 'maze-chase'
   | 'word-worm'
-  | 'castle-guard';
+  | 'castle-guard'
+  | 'missing-letter'
+  | 'sentence-scramble'
+  | 'odd-one-out';
 
 export interface GameEnd {
   /** Numerator for starsForScore (normalized per game, see each shell). */
