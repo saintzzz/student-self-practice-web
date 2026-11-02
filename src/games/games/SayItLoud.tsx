@@ -38,6 +38,14 @@ function RoundMic({
   const micRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { micRef.current?.focus(); }, []);
 
+  // r160-2: while the verdict shows, render a settled note instead of
+  // whatever stale phase the hook last held ('processing'/'recording'
+  // visuals beside a verdict read as a bug).
+  if (disabled) {
+    return (
+      <p className="text-sm font-semibold text-slate-400">Đã gửi giọng đọc - sang câu tiếp…</p>
+    );
+  }
   if (phase === 'unsupported') {
     return (
       <p className="max-w-xs rounded-2xl border border-white/15 bg-navy-800/70 px-5 py-4 text-center text-sm font-semibold text-slate-300">
@@ -74,36 +82,37 @@ function RoundMic({
       </div>
     );
   }
-  if (phase === 'processing') {
-    return (
-      <div className="flex flex-col items-center gap-3 py-2">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-amber-600 text-white shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(245,158,11,0.5)]">
-          <IconClock size={30} className="animate-pulse motion-reduce:animate-none" />
-        </span>
-        <p className="text-base font-semibold text-amber-200">Đang chấm giọng em...</p>
-      </div>
-    );
-  }
   const recording = phase === 'recording';
+  const processing = phase === 'processing';
+  // One button element for idle/recording/processing - swapping elements
+  // mid-flow drops keyboard focus (r160-2).
   return (
     <div className="flex flex-col items-center gap-3 py-1">
       <button
         type="button"
         ref={micRef}
         data-testid="say-mic"
-        disabled={disabled}
+        disabled={disabled || processing}
         onClick={recording ? stopRecording : startRecording}
-        aria-label={recording ? 'Đọc xong nhấn lại để chấm luôn' : 'Nhấn rồi đọc to lên'}
+        aria-label={processing
+          ? `Đang chấm giọng đọc của từ ${word}`
+          : recording
+            ? `Đọc xong ${word} nhấn lại để chấm luôn`
+            : `Nhấn rồi đọc to: ${word}`}
         className={`relative flex h-20 w-20 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-rose-400 ${
-          recording
-            ? 'bg-gradient-to-b from-rose-500 to-rose-700 shadow-[inset_0_3px_0_rgba(255,255,255,0.3),0_10px_28px_-6px_rgba(244,63,94,0.6)]'
-            : 'bg-gradient-to-b from-rose-400 to-rose-600 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)]'
+          processing
+            ? 'cursor-wait bg-gradient-to-b from-amber-400 to-amber-600 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(245,158,11,0.5)]'
+            : recording
+              ? 'bg-gradient-to-b from-rose-500 to-rose-700 shadow-[inset_0_3px_0_rgba(255,255,255,0.3),0_10px_28px_-6px_rgba(244,63,94,0.6)]'
+              : 'bg-gradient-to-b from-rose-400 to-rose-600 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)]'
         } ${disabled ? 'opacity-50' : ''}`}
       >
         {recording && (
           <span aria-hidden className="absolute -inset-1.5 animate-pulse rounded-full border-4 border-rose-400/50 motion-reduce:hidden" />
         )}
-        {recording ? (
+        {processing ? (
+          <IconClock size={30} className="animate-pulse motion-reduce:animate-none" />
+        ) : recording ? (
           <span className="flex items-end gap-1" aria-hidden>
             {[0, 1, 2, 3, 4].map((i) => (
               <span key={i} className="audio-bars h-6 w-1.5 rounded-full bg-white/90" style={{ animationDelay: `${i * 130}ms` }} />
@@ -114,7 +123,7 @@ function RoundMic({
         )}
       </button>
       <p className="text-sm font-semibold text-slate-300">
-        {recording ? 'Đọc xong nhấn lại để chấm luôn' : 'Nhấn mic rồi đọc to lên'}
+        {processing ? 'Đang chấm giọng em...' : recording ? 'Đọc xong nhấn lại để chấm luôn' : 'Nhấn mic rồi đọc to lên'}
       </p>
       {recording && heardText && (
         <p data-testid="say-heard" className="text-sm italic text-amber-300">Nghe thấy: {heardText}</p>
