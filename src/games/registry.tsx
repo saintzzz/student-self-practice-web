@@ -25,6 +25,7 @@ import CastleGuard from './games/CastleGuard';
 import MissingLetter from './games/MissingLetter';
 import SentenceScramble from './games/SentenceScramble';
 import OddOneOut from './games/OddOneOut';
+import SayItLoud from './games/SayItLoud';
 import {
   EmojiChoiceField,
   LetterOrderField,
@@ -64,6 +65,7 @@ export const GAME_COMPONENTS: Record<GameId, GameComponent> = {
   'missing-letter': MissingLetter,
   'sentence-scramble': SentenceScramble,
   'odd-one-out': OddOneOut,
+  'say-it-loud': SayItLoud,
 };
 
 export const GAME_MECHANICS = {

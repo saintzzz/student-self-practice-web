@@ -174,4 +174,13 @@ export const GAME_DEFS: readonly GameDef[] = [
     tone: 'rose',
     fresh: true,
   },
+  {
+    id: 'say-it-loud',
+    title: 'Đọc to nào',
+    tagline: 'Nghe mẫu rồi đọc to vào micro',
+    emoji: '🎤',
+    art: ['🎤','📢','⭐'],
+    tone: 'orange',
+    fresh: true,
+  },
 ];

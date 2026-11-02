@@ -27,7 +27,8 @@ export type GameId =
   | 'castle-guard'
   | 'missing-letter'
   | 'sentence-scramble'
-  | 'odd-one-out';
+  | 'odd-one-out'
+  | 'say-it-loud';
 
 export interface GameEnd {
   /** Numerator for starsForScore (normalized per game, see each shell). */
