@@ -48,10 +48,10 @@ function RoundMic({
           type="button"
           ref={micRef}
           data-testid="say-mic"
-          disabled
           aria-disabled="true"
+          onClick={() => {}}
           aria-label={`Đã gửi giọng đọc của từ ${word}`}
-          className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-white opacity-50 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)] focus:outline-none"
+          className="relative flex h-20 w-20 cursor-default items-center justify-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-white opacity-50 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)] focus:outline-none focus:ring-4 focus:ring-rose-400"
         >
           <IconMic size={30} />
         </button>
@@ -105,8 +105,8 @@ function RoundMic({
         type="button"
         ref={micRef}
         data-testid="say-mic"
-        disabled={disabled || processing}
-        onClick={recording ? stopRecording : startRecording}
+        aria-disabled={processing || undefined}
+        onClick={processing ? () => {} : recording ? stopRecording : startRecording}
         aria-label={processing
           ? `Đang chấm giọng đọc của từ ${word}`
           : recording
@@ -118,7 +118,7 @@ function RoundMic({
             : recording
               ? 'bg-gradient-to-b from-rose-500 to-rose-700 shadow-[inset_0_3px_0_rgba(255,255,255,0.3),0_10px_28px_-6px_rgba(244,63,94,0.6)]'
               : 'bg-gradient-to-b from-rose-400 to-rose-600 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)]'
-        } ${disabled ? 'opacity-50' : ''}`}
+        }`}
       >
         {recording && (
           <span aria-hidden className="absolute -inset-1.5 animate-pulse rounded-full border-4 border-rose-400/50 motion-reduce:hidden" />
