@@ -20,6 +20,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
   const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [slowLogin, setSlowLogin] = useState(false);
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -29,8 +30,18 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
     }
     setBusy(true);
     setError(null);
-    const err = await login(username, pin);
-    setBusy(false);
+    // CR-006 note: the Turnstile challenge can hold login ~30s on strict
+    // networks - staged copy tells the user it is a security check, not a
+    // hang.
+    const slowTimer = setTimeout(() => setSlowLogin(true), 4000);
+    let err: string | null = null;
+    try {
+      err = await login(username, pin);
+    } finally {
+      clearTimeout(slowTimer);
+      setSlowLogin(false);
+      setBusy(false);
+    }
     if (err) {
       setError(err);
     } else {
@@ -110,7 +121,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
             disabled={busy}
             className="min-h-[76px] rounded-3xl bg-gradient-to-b from-amber-300 to-amber-500 px-8 font-display text-2xl font-extrabold text-[#0b1224] shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-4px_0_rgba(0,0,0,0.18),0_6px_16px_-4px_rgba(242,201,87,0.5)] transition hover:-translate-y-0.5 hover:shadow-[inset_0_2px_0_rgba(255,255,255,0.45),inset_0_-4px_0_rgba(0,0,0,0.18),0_10px_22px_-6px_rgba(242,201,87,0.6)] active:translate-y-0 active:scale-95 active:shadow-[inset_0_2px_0_rgba(255,255,255,0.25),inset_0_-2px_0_rgba(0,0,0,0.18)] disabled:translate-y-0 disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-amber-300/60"
           >
-            {busy ? 'Đang vào...' : 'Đăng nhập'}
+            {busy ? (slowLogin ? 'Đang kiểm tra bảo mật...' : 'Đang vào...') : 'Đăng nhập'}
           </button>
         </form>
       </div>
