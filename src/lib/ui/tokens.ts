@@ -158,11 +158,13 @@ export function hubTileClass(tone: HubTone, minH: 96 | 76): string {
 export const HUB_TILE_EXPANDED = 'brightness-110 ring-2 ring-white/60';
 
 /** CR-92 (hub hierarchy): expanded content is a DRAWER - a recessed
- *  dark tray topped by a strip in the parent tile's tone. Before this,
+ *  tray topped by a strip in the parent tile's tone. Before this,
  *  expanded children rendered as identical candy tiles in the same
  *  column, so an open accordion read as one flat rainbow strip with no
  *  parent/child structure. The tone top-edge ties the drawer to its
- *  parent; light sub-rows inside pop on the dark tray. */
+ *  parent. CR-118: the launchpad went day register, so the tray is a
+ *  recessed paper well (sky-50 + inner shade) - same drawer idiom,
+ *  light register. */
 const HUB_TRAY_EDGE: Record<HubTone, string> = {
   sky: 'border-t-sky-400',
   orange: 'border-t-orange-400',
@@ -172,8 +174,12 @@ const HUB_TRAY_EDGE: Record<HubTone, string> = {
 };
 
 export function hubTrayClass(tone: HubTone): string {
-  return `mt-2 space-y-3 rounded-2xl border-t-4 ${HUB_TRAY_EDGE[tone]} bg-[#0c1830]/85 p-2.5 ring-1 ring-white/15 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]`;
+  return `mt-2 space-y-3 rounded-2xl border-t-4 ${HUB_TRAY_EDGE[tone]} bg-sky-50/90 p-2.5 ring-1 ring-sky-200/80 shadow-[inset_0_2px_10px_rgba(14,116,144,0.12)]`;
 }
+
+/** List row inside CARD_DAY surfaces (arena challenges, coach skills,
+ *  quest items, shelf tiles) - sky-50 paper well, never navy. CR-118. */
+export const ROW_DAY = 'rounded-xl bg-sky-50 ring-1 ring-sky-200';
 
 /** Subtile rows inside a drawer: light paper face + tone chip + tone
  *  depth edge - reads as an item INSIDE the parent, never as a sibling

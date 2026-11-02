@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { weakSkillsFor } from '../lib/engagement/coach';
-import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { CARD_DAY, BTN_SECONDARY_PAPER, ROW_DAY } from '../lib/ui/tokens';
 import type { ExamProgramId } from '../types/exam';
 import type { BankFetchFocus } from '../lib/qb/bank';
 import { IconTarget } from './icons';
@@ -27,28 +27,28 @@ export default function CoachCard({ gradeId, onDrill }: CoachCardProps) {
   if (weak.length === 0) return null;
 
   return (
-    <div data-testid="coach-card" className={`mt-4 ${CARD} text-left`}>
-      <h2 className="font-display flex items-center gap-2 text-xl font-extrabold text-amber-300"><IconTarget size={20} aria-hidden="true" /> Gợi ý cho em</h2>
-      <p className="mt-1 text-sm font-semibold text-slate-300">
+    <div data-testid="coach-card" className={`mt-4 ${CARD_DAY} text-left`}>
+      <h2 className="font-display flex items-center gap-2 text-xl font-extrabold text-amber-800"><IconTarget size={20} aria-hidden="true" /> Gợi ý cho em</h2>
+      <p className="mt-1 text-sm font-semibold text-slate-600">
         Dựa trên bài làm 7 ngày qua - ôn đúng chỗ còn yếu:
       </p>
       <ul className="mt-3 space-y-2">
         {weak.map((w) => (
           <li
             key={w.skillKey}
-            className="flex items-center gap-3 rounded-xl bg-[#16232e] px-3 py-2.5 ring-1 ring-white/10"
+            className={`flex items-center gap-3 ${ROW_DAY} px-3 py-2.5`}
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-sm font-extrabold text-white">{w.label}</span>
+                <span className="truncate text-sm font-extrabold text-sky-950">{w.label}</span>
                 <span
                   data-testid={`coach-acc-${w.skillKey}`}
-                  className="shrink-0 text-xs font-bold text-slate-400"
+                  className="shrink-0 text-xs font-bold text-slate-500"
                 >
                   đúng {Math.round(w.accuracy * 100)}%
                 </span>
               </div>
-              <div className="mt-1 h-2 rounded-full bg-white/10">
+              <div className="mt-1 h-2 rounded-full bg-sky-200/70">
                 <div
                   className={`h-full rounded-full ${accuracyColor(w.accuracy)}`}
                   style={{ width: `${Math.round(w.accuracy * 100)}%` }}
@@ -59,7 +59,7 @@ export default function CoachCard({ gradeId, onDrill }: CoachCardProps) {
               type="button"
               data-testid={`coach-drill-${w.skillKey}`}
               onClick={() => onDrill(w.program, { skills: w.drillSkills })}
-              className={`shrink-0 ${BTN_SECONDARY_NAVY} px-4 py-2 text-sm`}
+              className={`shrink-0 ${BTN_SECONDARY_PAPER} px-4 py-2 text-sm`}
             >
               Ôn ngay
             </button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ownedHomeItems } from '../lib/engagement/store';
-import { CARD } from '../lib/ui/tokens';
+import { CARD_DAY } from '../lib/ui/tokens';
 import { ArtImg } from './ArtImg';
 import { IconHome } from './icons';
 
@@ -14,10 +14,10 @@ export default function HomeShelf() {
   const [items] = useState(() => ownedHomeItems());
 
   return (
-    <div data-testid="home-shelf" className={`mt-4 ${CARD} text-left`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300"><IconHome size={20} className="mr-1.5 inline-block" /> Nhà của em</h2>
+    <div data-testid="home-shelf" className={`mt-4 ${CARD_DAY} text-left`}>
+      <h2 className="font-display text-xl font-extrabold text-amber-800"><IconHome size={20} className="mr-1.5 inline-block" /> Nhà của em</h2>
       {items.length === 0 ? (
-        <p className="mt-2 text-sm font-semibold text-slate-300">
+        <p className="mt-2 text-sm font-semibold text-slate-600">
           Chưa có đồ chơi nào - hoàn thành bài luyện để mở hộp quà nhé!
         </p>
       ) : (
@@ -28,13 +28,13 @@ export default function HomeShelf() {
                 key={item.id}
                 data-testid={`home-item-${item.id}`}
                 title={item.nameVi}
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-2xl ring-1 ring-white/15"
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-2xl ring-1 ring-sky-200"
               >
                 <ArtImg key={item.art} src={item.art} emoji={item.emoji} size={36} />
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs font-bold text-slate-400">
+          <p className="mt-2 text-xs font-bold text-slate-500">
             {items.length} món đồ trong nhà
           </p>
         </>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { arenaOpen, arenaRecent, type ArenaOpenChallenge, type ArenaRecentRow } from '../lib/arena';
-import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { CARD_DAY, BTN_SECONDARY_PAPER, ROW_DAY } from '../lib/ui/tokens';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { IconClock, IconHandshake, IconSwords, IconTrophy, IconX } from './icons';
 
@@ -53,9 +53,9 @@ export default function ArenaCard({
   }, [gradeId, isGuest]);
 
   return (
-    <div className={`mt-4 ${CARD}`} data-testid="arena-card">
-      <h2 className="flex items-center justify-center gap-2 text-center font-display text-xl font-extrabold text-amber-300"><IconSwords size={20} /> Arena</h2>
-      <p className="mt-1 text-center text-sm font-semibold text-slate-300">
+    <div className={`mt-4 ${CARD_DAY}`} data-testid="arena-card">
+      <h2 className="flex items-center justify-center gap-2 text-center font-display text-xl font-extrabold text-amber-800"><IconSwords size={20} /> Arena</h2>
+      <p className="mt-1 text-center text-sm font-semibold text-slate-600">
         10 câu cùng một đề - ai nhiều điểm hơn thắng, hòa thì ai nhanh hơn thắng.
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -63,7 +63,7 @@ export default function ArenaCard({
           type="button"
           data-testid="arena-create"
           onClick={isGuest ? onBot : onCreate}
-          className={`flex-1 ${BTN_SECONDARY_NAVY}`}
+          className={`flex-1 ${BTN_SECONDARY_PAPER}`}
           style={{ minHeight: density.primaryMinH }}
         >
           <span className="inline-flex items-center gap-2"><IconSwords size={18} /> {isGuest ? "Đấu với máy" : "Tạo thử thách"}</span>
@@ -73,7 +73,7 @@ export default function ArenaCard({
             type="button"
             data-testid="arena-live-open"
             onClick={onLive}
-            className={`flex-1 ${BTN_SECONDARY_NAVY}`}
+            className={`flex-1 ${BTN_SECONDARY_PAPER}`}
             style={{ minHeight: density.primaryMinH }}
           >
             <span className="inline-flex items-center gap-2"><IconTrophy size={18} /> Đấu trực tiếp</span>
@@ -83,7 +83,7 @@ export default function ArenaCard({
           <button
             type="button"
             onClick={onLogin}
-            className={`flex-1 ${BTN_SECONDARY_NAVY}`}
+            className={`flex-1 ${BTN_SECONDARY_PAPER}`}
             style={{ minHeight: density.primaryMinH }}
           >
             Đăng nhập để đấu với bạn thật
@@ -95,7 +95,7 @@ export default function ArenaCard({
         <div className="mt-4">
           {mine.length > 0 && (
             <>
-              <div className="text-sm font-extrabold text-slate-300">
+              <div className="text-sm font-extrabold text-slate-600">
                 Thử thách của em - đang chờ bạn nhận
               </div>
               <ul className="mt-2 space-y-2">
@@ -103,16 +103,16 @@ export default function ArenaCard({
                   <li
                     key={c.id}
                     data-testid="arena-own-challenge"
-                    className="flex items-center justify-between gap-2 rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-sky-400/30"
+                    className={`flex items-center justify-between gap-2 ${ROW_DAY} px-3 py-2`}
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-extrabold text-white">{c.creator_name}</div>
-                      <div className="text-xs font-bold text-slate-400">
+                      <div className="truncate text-sm font-extrabold text-sky-950">{c.creator_name}</div>
+                      <div className="text-xs font-bold text-slate-500">
                         {c.creator_score} điểm - {Math.floor(c.creator_time_ms / 60000)}:
                         {String(Math.floor(c.creator_time_ms / 1000) % 60).padStart(2, '0')}
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-lg bg-sky-500/20 px-3 py-2 text-sm font-extrabold text-sky-300">
+                    <span className="shrink-0 rounded-lg bg-sky-100 px-3 py-2 text-sm font-extrabold text-sky-700 ring-1 ring-sky-300">
                       <span className="inline-flex items-center gap-1"><IconClock size={14} /> Đang chờ</span>
                     </span>
                   </li>
@@ -120,11 +120,11 @@ export default function ArenaCard({
               </ul>
             </>
           )}
-          <div className={`${mine.length > 0 ? 'mt-4 ' : ''}text-sm font-extrabold text-slate-300`}>
+          <div className={`${mine.length > 0 ? 'mt-4 ' : ''}text-sm font-extrabold text-slate-600`}>
             Thử thách đang mở
           </div>
           {theirs.length === 0 ? (
-            <p className="mt-2 text-sm font-semibold text-slate-400">
+            <p className="mt-2 text-sm font-semibold text-slate-500">
               Chưa có thử thách nào của bạn bè - em có thể tạo thử thách mới nhé!
             </p>
           ) : (
@@ -133,11 +133,11 @@ export default function ArenaCard({
                 {(showAllAccepts ? theirs : theirs.slice(0, 2)).map((c) => (
                   <li
                     key={c.id}
-                    className="flex items-center justify-between gap-2 rounded-xl bg-[#16232e] px-3 py-2 ring-1 ring-white/10"
+                    className={`flex items-center justify-between gap-2 ${ROW_DAY} px-3 py-2`}
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-extrabold text-white">{c.creator_name}</div>
-                      <div className="text-xs font-bold text-slate-400">
+                      <div className="truncate text-sm font-extrabold text-sky-950">{c.creator_name}</div>
+                      <div className="text-xs font-bold text-slate-500">
                         {c.creator_score} điểm - {Math.floor(c.creator_time_ms / 60000)}:
                         {String(Math.floor(c.creator_time_ms / 1000) % 60).padStart(2, '0')}
                       </div>
@@ -146,7 +146,7 @@ export default function ArenaCard({
                       type="button"
                       data-testid={`arena-accept-${c.id}`}
                       onClick={() => onAccept(c)}
-                      className={`shrink-0 ${BTN_SECONDARY_NAVY} px-3 py-2 text-sm`}
+                      className={`shrink-0 ${BTN_SECONDARY_PAPER} px-3 py-2 text-sm`}
                     >
                       Nhận kèo
                     </button>
@@ -158,7 +158,7 @@ export default function ArenaCard({
                   type="button"
                   data-testid="arena-accept-more"
                   onClick={() => setShowAllAccepts(true)}
-                  className={`mt-2 w-full ${BTN_SECONDARY_NAVY}`}
+                  className={`mt-2 w-full ${BTN_SECONDARY_PAPER}`}
                   style={{ minHeight: density.primaryMinH }}
                 >
                   Xem thêm {theirs.length - 2} thử thách
@@ -171,7 +171,7 @@ export default function ArenaCard({
 
       {!isGuest && recent !== null && recent.length > 0 && (
         <div className="mt-4">
-          <div className="text-sm font-extrabold text-slate-300">Trận gần đây của bạn</div>
+          <div className="text-sm font-extrabold text-slate-600">Trận gần đây của bạn</div>
           <ul className="mt-2 space-y-2">
             {recent.map((m) => {
               const opp = m.i_created ? m.opponent_name : m.creator_name;
@@ -180,10 +180,10 @@ export default function ArenaCard({
               return (
                 <li
                   key={m.id}
-                  className="flex items-center justify-between rounded-xl bg-[#16232e] px-3 py-2 text-sm font-bold ring-1 ring-white/10"
+                  className={`flex items-center justify-between ${ROW_DAY} px-3 py-2 text-sm font-bold`}
                 >
-                  <span className="text-slate-300">vs {opp ?? '?'}</span>
-                  <span className={m.is_draw ? 'text-sky-300' : m.i_won ? 'text-emerald-300' : 'text-rose-300'}>
+                  <span className="text-slate-600">vs {opp ?? '?'}</span>
+                  <span className={m.is_draw ? 'text-sky-600' : m.i_won ? 'text-emerald-600' : 'text-rose-600'}>
                     <span className="inline-flex items-center gap-1.5">{m.is_draw ? <IconHandshake size={16} /> : m.i_won ? <IconTrophy size={16} /> : <IconX size={16} />} {mine} - {theirs}</span>
                   </span>
                 </li>

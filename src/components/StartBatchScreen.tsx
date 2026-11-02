@@ -35,10 +35,10 @@ import {
   type IconProps,
 } from './icons';
 import {
-  CARD,
-  H1,
-  PROMPT,
-  NAV_PILL,
+  CARD_DAY,
+  H1_DAY,
+  PROMPT_DAY,
+  NAV_PILL_DAY,
   SCREEN_ENTER,
   CTA_GOLD_XL,
   BTN_DRILL,
@@ -283,14 +283,14 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         type="button"
         data-testid="class-show-open"
         onClick={onStartClassShow}
-        className="flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-fuchsia-500/20 to-sky-500/15 p-4 text-left ring-1 ring-white/15 transition hover:from-fuchsia-500/30 hover:to-sky-500/25 active:scale-[0.98]"
+        className="flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-fuchsia-100 to-sky-100 p-4 text-left ring-1 ring-fuchsia-300/70 transition hover:from-fuchsia-200 hover:to-sky-200 active:scale-[0.98]"
       >
         <span className="text-3xl" aria-hidden>🎤</span>
         <span className="flex-1">
-          <span className="block text-lg font-extrabold text-amber-100">Sân khấu lớp</span>
-          <span className="block text-sm font-semibold text-sky-200">Chiếu màn này - cả lớp thi trả lời, không cần thiết bị</span>
+          <span className="block text-lg font-extrabold text-fuchsia-900">Sân khấu lớp</span>
+          <span className="block text-sm font-semibold text-sky-700">Chiếu màn này - cả lớp thi trả lời, không cần thiết bị</span>
         </span>
-        <span className="text-xl text-amber-300" aria-hidden>→</span>
+        <span className="text-xl text-fuchsia-600" aria-hidden>→</span>
       </button>
     </div>
   ) : null;
@@ -306,7 +306,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
   /* CR-92: the note sits inside the dark hub tray - slate-600 was the
      paper-pairing value; on the tray it needs light ink. */
   const learnNote = (
-    <p className="text-sm font-semibold text-slate-200">
+    <p className="text-sm font-semibold text-slate-600">
       Luyện đề: {examConfig.drillCount} câu, chữa ngay. Thi thử: {examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút, giống thi thật.
     </p>
   );
@@ -483,10 +483,10 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
       ];
 
   return (
-    <div className={`mx-auto max-w-2xl px-4 py-6 sm:py-10 ${SCREEN_ENTER}`}>
-      <div className={`${CARD} text-center`}>
+    <div className={`mx-auto -mt-[12vh] max-w-2xl px-4 pb-6 sm:pb-10 ${SCREEN_ENTER}`}>
+      <div className={`${CARD_DAY} text-center`}>
         <div className="mb-6 flex items-start justify-between gap-2">
-          <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL}>
+          <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL_DAY}>
             <span className="inline-flex items-center gap-1.5"><IconArrowLeft size={18} /> Quay lại</span>
           </button>
           <InstructionSpeaker
@@ -502,7 +502,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         {/* Land vignette: the mascot stands ON its land's ground (strip
             scene over the land's page gradient) instead of floating on
             navy - each grade's home screen wears its land identity. */}
-        <div className={`relative mx-auto h-40 max-w-sm overflow-hidden rounded-2xl ring-1 ring-white/20 shadow-[inset_0_2px_0_rgba(255,255,255,0.15)] ${land.pageGradient}`}>
+        <div className={`relative mx-auto h-28 max-w-sm overflow-hidden rounded-2xl ring-1 ring-sky-300/70 sm:h-40 ${land.pageGradient}`}>
           <LandArt land={land.key} variant="strip" tone="day" />
           <div className="absolute inset-x-0 bottom-1 flex justify-center">
             <Mascot mood="greeting" />
@@ -529,14 +529,14 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           </>
         ) : (
           <>
-            <h1 className={`mt-3 ${H1}`}>{grade.name}: Sẵn sàng phiêu lưu chưa?</h1>
+            <h1 className={`mt-2 ${H1_DAY}`}>{grade.name}: Sẵn sàng phiêu lưu chưa?</h1>
             <p className="mt-2">
               <span className={`inline-flex items-center gap-1.5 rounded-full ${land.cardTint} px-4 py-1.5 text-sm font-extrabold ${land.accentText} ring-2 ${land.cardRing}`}>
                 {land.motif && <EmojiVisual emoji={land.motif} className="text-xs" />}
                 {land.nameVi}
               </span>
             </p>
-            <p className={`mt-3 ${PROMPT}`}>
+            <p className={`mt-2 ${PROMPT_DAY}`}>
               Luyện tập Tiếng Anh: 4 vòng câu hỏi + 1 vòng trò chơi thưởng.
             </p>
           </>
@@ -545,7 +545,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           type="button"
           data-testid="start-batch-button"
           onClick={onStartBatch}
-          className={`mt-6 w-full ${CTA_GOLD_XL} sm:w-auto`}
+          className={`mt-4 w-full ${CTA_GOLD_XL} sm:mt-6 sm:w-auto`}
           {...startPress}
         >
           <span className="flex flex-col items-center">

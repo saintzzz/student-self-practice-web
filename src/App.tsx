@@ -496,15 +496,19 @@ export default function App() {
   }
 
   // CR-10 DS-T1 + CR-82 (M2, spec s6.6): every screen lives inside a
-  // land shell. Kid play surfaces (start-batch, batch) get the v5 hero
-  // scene in the band tone (G1-2 dusk / G3-5 night); the kid world
-  // surfaces (GradeSelect map, AuthScreen login, loading splash) ride
-  // the sunny world-map day register (CR-116/117); adult surfaces keep
-  // the brand strip. Exam keeps its own desk register.
+  // land shell. Kid world surfaces (GradeSelect map, AuthScreen login,
+  // loading splash, launchpad) ride the sunny day register (CR-116/117/
+  // 118 - launchpad gets the compact band since its content is tall);
+  // batch play boards keep the band scene (G1-2 dusk / G3-5 night);
+  // adult surfaces keep the brand strip. Exam keeps its own desk
+  // register.
   const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean | 'compact'; land?: LandKey; tone?: SceneTone }) => {
     if (opts?.gradeId) {
-      const tone = bandForGrade(opts.gradeId) === 'G12' ? 'dusk' : 'night';
-      return <LandShell gradeId={opts.gradeId} tone={tone} variant="hero">{node}</LandShell>;
+      // CR-118: the launchpad (start-batch) joins the kid day register -
+      // callers may override tone/hero; default keeps the band scene.
+      const tone = opts.tone ?? (bandForGrade(opts.gradeId) === 'G12' ? 'dusk' : 'night');
+      const variant = opts.hero === 'compact' ? 'hero-compact' : 'hero';
+      return <LandShell gradeId={opts.gradeId} tone={tone} variant={variant}>{node}</LandShell>;
     }
     const variant = opts?.hero === 'compact' ? 'hero-compact' : opts?.hero ? 'hero' : 'strip';
     return <LandShell land={opts?.land ?? 'brand'} tone={opts?.tone ?? 'night'} variant={variant}>{node}</LandShell>;
@@ -681,7 +685,7 @@ export default function App() {
           />,
         )}
       </LottieBudgetProvider>,
-      { gradeId: selectedGradeId },
+      { gradeId: selectedGradeId, tone: 'day', hero: 'compact' },
     );
   }
 

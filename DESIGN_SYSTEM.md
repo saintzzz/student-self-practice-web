@@ -39,10 +39,11 @@
 > (already true on hub tiles).
 >
 > **CR-92 (v6.1):** hub drawer model - expanded sections render inside
-> `hubTrayClass(tone)` (recessed navy tray + top edge in the parent
-> tone); subtiles are light `subTileClass` rows (76px G1-2 / 64px G3-5)
-> with `subTileChip` tone chips. Parent candy tile = destination, light
-> row = item inside it, white card = actions - never sibling-candy.
+> `hubTrayClass(tone)` (recessed tray + top edge in the parent tone -
+> navy before CR-118, light sky-50 paper well since); subtiles are
+> light `subTileClass` rows (76px G1-2 / 64px G3-5) with `subTileChip`
+> tone chips. Parent candy tile = destination, light row = item inside
+> it, white card = actions - never sibling-candy.
 >
 > **CR-116 (v6.2):** journey-map day register - the GradeSelect map leaves
 > the navy canvas: `land="map" tone="day"` renders a generated sunny
@@ -65,6 +66,28 @@
 > `NAV_PILL_DAY`, the credit line sits on a `bg-white/70` chip, and the
 > error state runs `rose-700` on `rose-50`. Admin and parent-facing
 > surfaces keep `CARD_DARK`/navy - the day register is kids-only.
+>
+> **CR-118 (v6.4):** the launchpad joins the day register - closes the
+> last mixed-register kid screen. `start-batch` mounts
+> `{ land: <grade land>, tone: 'day', hero: 'compact' }` (36vh poster;
+> the screen's content is tall so it gets the login band, not the 58vh
+> map band). The outer card is `CARD_DAY` pulled `-mt-[12vh]` into the
+> seam; `H1_DAY`/`PROMPT_DAY`/`NAV_PILL_DAY` replace the navy chrome;
+> the `Sân khấu lớp` tile runs `fuchsia-100→sky-100` with fuchsia-900
+> ink. `hubTrayClass` becomes a light paper well (`sky-50` + inner
+> shade) - same drawer idiom, light register. All seven inner cards
+> (arena, leaderboard, review, coach, daily quest, pet, home shelf)
+> retune to `CARD_DAY` + `ROW_DAY` sky-50 rows + dark ink. Mobile fold:
+> in-card land vignette drops to `h-28` (the compact band above shows
+> the same land - no doubled art) so the gold `Chơi` CTA's top edge
+> enters the 667px fold (measured y=624, 80px tall).
+>
+> **Deliberate exception - desk register:** batch play boards, exams,
+> and reports keep navy/dusk surfaces. This is an intentional focus
+> register for question-answering work (dim surround, bright card
+> content), not an inconsistency - day is for world/navigation
+> surfaces, desk navy is for doing-the-work surfaces. Any change to
+> that split needs its own CR.
 >
 > **CR-116 rev2 - surface separation law:** detailed art is a backdrop,
 > never the surface under content. The day hero renders in a bounded
@@ -148,7 +171,7 @@ submit now joins the gold family (commit/advance voice).
 `tokens.ts` now carries named semantic layers on top of the legacy exports
 (names kept for compatibility - import tokens, never re-spell classes):
 
-- **Hub (paper panel inside navy launchpad):** `HUB_PANEL` light panel,
+- **Hub (paper panel inside the day launchpad):** `HUB_PANEL` light panel,
   `TRAIL_TILE` 96px G1-2 / `TRAIL_TILE_SM` 76px G3-5 section tiles,
   `TRAIL_TILE_EXPANDED` selected wash, `BTN_DRILL` / `BTN_ADVANCED` paper
   secondary actions, `BTN_EXAM` navy exam-register entries,

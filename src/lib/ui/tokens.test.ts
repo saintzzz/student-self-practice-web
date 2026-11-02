@@ -114,3 +114,56 @@ describe('FF-2b: geometry tokens never imported by components', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('CR-118: launchpad day register', () => {
+  it('hubTrayClass renders a light paper well, never the navy tray', () => {
+    for (const tone of ['sky', 'orange', 'emerald', 'amber', 'rose'] as const) {
+      const cls = tokens.hubTrayClass(tone);
+      expect(cls).toContain('bg-sky-50');
+      expect(cls).not.toMatch(/#0c1830|bg-\[#|white\/15/);
+    }
+  });
+
+  it('ROW_DAY is a sky-50 paper row', () => {
+    expect(tokens.ROW_DAY).toContain('bg-sky-50');
+    expect(tokens.ROW_DAY).toContain('ring-sky-200');
+  });
+
+  it('launchpad components never import navy-register tokens', () => {
+    const launchpadFiles = [
+      'src/components/StartBatchScreen.tsx',
+      'src/components/ArenaCard.tsx',
+      'src/components/LeaderboardCard.tsx',
+      'src/components/ReviewCard.tsx',
+      'src/components/CoachCard.tsx',
+      'src/components/DailyQuestCard.tsx',
+      'src/components/PetCard.tsx',
+      'src/components/HomeShelf.tsx',
+    ];
+    const NAVY_TOKENS = /\b(CARD|H1|PROMPT|NAV_PILL|BTN_SECONDARY_NAVY)\b(?!_DAY|_PAPER|_SM)/;
+    const offenders: string[] = [];
+    for (const rel of launchpadFiles) {
+      const source = readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+      const importBlock = source.match(/import \{[^}]+\} from '[^']*tokens'/g) ?? [];
+      for (const block of importBlock) {
+        const names = block.replace(/import \{/, '').replace(/\} from.*/, '').split(',');
+        for (const raw of names) {
+          const name = raw.trim();
+          if (NAVY_TOKENS.test(name) && !/_DAY\b|_PAPER\b/.test(name)) {
+            offenders.push(`${rel}: ${name}`);
+          }
+        }
+      }
+      // no leftover dark surface literals inside the launchpad files
+      if (/bg-\[#16232e\]|bg-\[#0c1830\]|ring-white\/10|text-white\b/.test(source)) {
+        offenders.push(`${rel}: dark literal`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('start-batch mounts the day register shell', () => {
+    const source = readFileSync(path.join(REPO_ROOT, 'src/App.tsx'), 'utf8');
+    expect(source).toContain("{ gradeId: selectedGradeId, tone: 'day', hero: 'compact' }");
+  });
+});

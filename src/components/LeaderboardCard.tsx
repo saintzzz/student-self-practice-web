@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchLeaderboard, type LeaderboardEntry } from '../lib/leaderboard';
 import { isSupabaseConfigured } from '../lib/supabase/client';
-import { CARD, BTN_SECONDARY_NAVY } from '../lib/ui/tokens';
+import { CARD_DAY, BTN_SECONDARY_PAPER, ROW_DAY } from '../lib/ui/tokens';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { IconLock, IconMedal, IconTrophy } from './icons';
 
@@ -12,7 +12,7 @@ interface LeaderboardCardProps {
   onLogin?: () => void;
 }
 
-const MEDAL_COLORS = ['text-amber-400', 'text-slate-300', 'text-orange-400'];
+const MEDAL_COLORS = ['text-amber-500', 'text-slate-400', 'text-orange-500'];
 
 /**
  * CR-30: weekly leaderboard card on the grade home screen. Aggregate
@@ -40,11 +40,11 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
   }, [gradeId, isGuest, configured]);
 
   return (
-    <div data-testid="leaderboard-card" className={`mt-4 ${CARD} text-left`}>
-      <h2 className="font-display text-xl font-extrabold text-amber-300"><IconTrophy size={20} className="mr-1.5 inline-block" /> Bảng xếp hạng tuần</h2>
+    <div data-testid="leaderboard-card" className={`mt-4 ${CARD_DAY} text-left`}>
+      <h2 className="font-display text-xl font-extrabold text-amber-800"><IconTrophy size={20} className="mr-1.5 inline-block" /> Bảng xếp hạng tuần</h2>
       {isGuest ? (
         <div className="mt-3 text-center">
-          <p className="text-sm font-semibold text-slate-300">
+          <p className="text-sm font-semibold text-slate-600">
             Đăng nhập để thi đua xếp hạng với các bạn cùng lớp nhé!
           </p>
           {onLogin && (
@@ -52,7 +52,7 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
               type="button"
               data-testid="leaderboard-login"
               onClick={onLogin}
-              className={`mt-3 ${BTN_SECONDARY_NAVY}`}
+              className={`mt-3 ${BTN_SECONDARY_PAPER}`}
               style={{ minHeight: density.primaryMinH }}
             >
               Đăng nhập
@@ -62,13 +62,13 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
       ) : !configured ? (
         /* CR-73: explicit locked/empty state when Supabase is absent -
            the card used to spin "Đang tải…" forever. */
-        <p data-testid="leaderboard-locked" className="mt-3 text-sm font-semibold text-slate-400">
+        <p data-testid="leaderboard-locked" className="mt-3 text-sm font-semibold text-slate-500">
           <IconLock size={16} className="mr-1 inline-block" /> Bảng xếp hạng tạm chưa kết nối - thử lại sau nhé!
         </p>
       ) : !loaded ? (
-        <p className="mt-3 text-sm font-semibold text-slate-400">Đang tải bảng xếp hạng...</p>
+        <p className="mt-3 text-sm font-semibold text-slate-500">Đang tải bảng xếp hạng...</p>
       ) : entries!.length === 0 ? (
-        <p data-testid="leaderboard-empty" className="mt-3 text-sm font-semibold text-slate-300">
+        <p data-testid="leaderboard-empty" className="mt-3 text-sm font-semibold text-slate-600">
           Chưa có ai lên bảng tuần này - bé hãy là người đầu tiên!
         </p>
       ) : (
@@ -79,20 +79,20 @@ export default function LeaderboardCard({ gradeId, isGuest, onLogin }: Leaderboa
               data-testid={`leaderboard-row-${entry.rank}`}
               className={`flex items-center gap-3 rounded-xl px-3 py-2 ${
                 entry.is_me
-                  ? 'bg-amber-400/20 ring-2 ring-amber-400/60'
-                  : 'bg-[#16232e] ring-1 ring-white/10'
+                  ? 'bg-amber-100 ring-2 ring-amber-400'
+                  : ROW_DAY
               }`}
             >
-              <span className="w-8 shrink-0 text-center font-display text-lg font-extrabold text-white">
+              <span className="w-8 shrink-0 text-center font-display text-lg font-extrabold text-sky-950">
                 {entry.rank <= 3
                   ? <><IconMedal size={20} className={`mx-auto ${MEDAL_COLORS[entry.rank - 1]}`} /><span className="sr-only">Hạng {entry.rank}</span></>
                   : `${entry.rank}`}
               </span>
-              <span className={`min-w-0 flex-1 truncate text-sm font-bold ${entry.is_me ? 'text-amber-200' : 'text-white'}`}>
+              <span className={`min-w-0 flex-1 truncate text-sm font-bold ${entry.is_me ? 'text-amber-800' : 'text-sky-950'}`}>
                 {entry.display_name}
                 {entry.is_me && ' (mình)'}
               </span>
-              <span className="shrink-0 text-sm font-extrabold text-amber-300">
+              <span className="shrink-0 text-sm font-extrabold text-amber-800">
                 {entry.weekly_points} điểm
               </span>
             </li>

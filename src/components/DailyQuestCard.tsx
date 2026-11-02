@@ -6,7 +6,7 @@ import {
   DAILY_QUEST_BONUS,
   type DailyQuestId,
 } from '../lib/engagement/store';
-import { CARD, BTN_REWARD_EARNED } from '../lib/ui/tokens';
+import { CARD_DAY, BTN_REWARD_EARNED, ROW_DAY } from '../lib/ui/tokens';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { usePressRelease } from '../hooks/usePressRelease';
 import { IconCheckCircle, IconFlame, IconPencil, IconTarget, IconTrophy, type IconProps } from './icons';
@@ -49,11 +49,11 @@ export default function DailyQuestCard() {
   }
 
   return (
-    <div data-testid="daily-quest-card" className={`mt-4 ${CARD} text-left`}>
+    <div data-testid="daily-quest-card" className={`mt-4 ${CARD_DAY} text-left`}>
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-extrabold text-amber-300">Nhiệm vụ ngày</h2>
+        <h2 className="font-display text-xl font-extrabold text-amber-800">Nhiệm vụ ngày</h2>
         {streak > 0 && (
-          <span data-testid="quest-streak" className="rounded-full bg-orange-500/20 px-3 py-1 text-sm font-extrabold text-orange-300 ring-1 ring-orange-400/40">
+          <span data-testid="quest-streak" className="rounded-full bg-orange-100 px-3 py-1 text-sm font-extrabold text-orange-800 ring-1 ring-orange-300">
             <IconFlame size={14} className="mr-1 inline" />{streak} ngày liên tiếp
           </span>
         )}
@@ -66,16 +66,16 @@ export default function DailyQuestCard() {
             <li
               key={quest.id}
               data-testid={`quest-${quest.id}`}
-              className="rounded-2xl bg-[#16232e] p-3 ring-1 ring-white/10"
+              className={`rounded-2xl ${ROW_DAY} p-3`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl text-slate-300" aria-hidden><meta.icon size={24} /></span>
+                <span className="text-2xl text-slate-500" aria-hidden><meta.icon size={24} /></span>
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-bold ${quest.done ? 'text-emerald-300' : 'text-white'}`}>
+                  <p className={`text-sm font-bold ${quest.done ? 'text-emerald-600' : 'text-sky-950'}`}>
                     {meta.label}
                   </p>
                   {quest.target > 1 && !quest.done && (
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-sky-200/70">
                       <div
                         className="h-full rounded-full bg-emerald-400 transition-[width] motion-reduce:transition-none"
                         style={{ width: `${pct}%` }}
@@ -84,9 +84,9 @@ export default function DailyQuestCard() {
                   )}
                 </div>
                 {quest.done ? (
-                  <span className="text-xl text-emerald-400" aria-label="done"><IconCheckCircle size={22} /></span>
+                  <span className="text-xl text-emerald-500" aria-label="done"><IconCheckCircle size={22} /></span>
                 ) : (
-                  <span className="text-sm font-extrabold text-slate-400">
+                  <span className="text-sm font-extrabold text-slate-500">
                     {quest.progress}/{quest.target}
                   </span>
                 )}
@@ -108,7 +108,7 @@ export default function DailyQuestCard() {
         </button>
       )}
       {snapshot.bonusClaimed && (
-        <p data-testid="quest-all-done" className="mt-3 text-center text-sm font-bold text-emerald-300">
+        <p data-testid="quest-all-done" className="mt-3 text-center text-sm font-bold text-emerald-600">
           Hoàn thành nhiệm vụ ngày! Hẹn bạn ngày mai nhé.
         </p>
       )}
