@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/", "has": [{ "type": "query", "key": "verify_email" }], "destination": "/index.html" },
-    { "source": "/app", "destination": "/index.html" },
+    { "source": "/", "has": [{ "type": "query", "key": "verify_email" }], "destination": "/app.html" },
+    { "source": "/app", "destination": "/app.html" },
     { "source": "/", "destination": "https://vieschool-content.vercel.app/ea/home" },
     { "source": "/guides-indexnow-key.txt", "destination": "https://vieschool-content.vercel.app/guides-indexnow-key.txt" },
     { "source": "/llms.txt", "destination": "https://vieschool-content.vercel.app/ea/llms.txt" },
