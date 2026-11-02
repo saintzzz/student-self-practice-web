@@ -65,12 +65,12 @@ export default function SentenceScramble({ grade, seed, level, onEnd }: GameProp
       );
       return;
     }
-    // Wrong attempt: flash the well, then return the tiles to the rack
-    // so the child can rebuild without losing the round outright.
+    // r158-2: a submitted wrong order ends the round - same one-submit
+    // rule as every choice game. Resetting the same round let a retry
+    // still bank the point and fake a perfect accuracy score.
     timerRef.current = setTimeout(() => {
-      setPlaced([]);
       setWrongFlash(false);
-      setLock(false);
+      advance(correctCount);
     }, 700);
   };
 

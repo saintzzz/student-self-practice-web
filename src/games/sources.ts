@@ -65,11 +65,11 @@ export function listeningImageRounds(
  * `n` spellable words for Letter Catch - single alphabetic word, capped
  * length so bubbles fit the strip (G1-2 shorter, G3-5 longer).
  */
-export function spellableWords(gradeId: string, seed: string, n: number): VocabWord[] {
+export function spellableWords(gradeId: string, seed: string, n: number, minLen = 3): VocabWord[] {
   const isG12 = gradeId === 'grade-1' || gradeId === 'grade-2';
   const maxLen = isG12 ? 6 : 8;
   const pool = gameWordPool(gradeId).filter(
-    (w) => /^[a-zA-Z]+$/.test(w.word) && w.word.length >= 3 && w.word.length <= maxLen,
+    (w) => /^[a-zA-Z]+$/.test(w.word) && w.word.length >= minLen && w.word.length <= maxLen,
   );
   return seededPickN(pool, Math.min(n, pool.length), `${seed}:spell`);
 }
@@ -110,7 +110,10 @@ function distractorRun(answer: string, key: string): string {
  * Options are 4 letter runs of equal length; one pick per round.
  */
 export function missingLetterRounds(gradeId: string, seed: string, n: number): MissingLetterRound[] {
-  const words = spellableWords(gradeId, `${seed}:ml`, n).filter((w) => w.word.length >= 4);
+  // Filter BEFORE sampling (r158-1): sampling n then dropping <4-letter
+  // words could return an empty run - the game would render blank and
+  // never end.
+  const words = spellableWords(gradeId, `${seed}:ml`, n, 4);
   const rounds: MissingLetterRound[] = [];
   for (const word of words) {
     const w = word.word.toLowerCase();
@@ -121,12 +124,17 @@ export function missingLetterRounds(gradeId: string, seed: string, n: number): M
     const start = 1 + (hashString(`${word.id}-mstart`) % Math.max(1, maxStart));
     const missing = w.slice(start, start + runLen);
     const maskedWord = `${w.slice(0, start)}${'_ '.repeat(runLen).trim()}${w.slice(start + runLen)}`;
-    const options = [
-      missing,
-      distractorRun(missing, `${seed}:${word.id}:d1`),
-      distractorRun(missing, `${seed}:${word.id}:d2`),
-      distractorRun(missing, `${seed}:${word.id}:d3`),
-    ];
+    // 3 distinct distractors (r158-3) - deduped; the pad fallback is a
+    // repeated consonant run that can't collide with a real masked run.
+    const options: string[] = [missing];
+    for (let i = 0; options.length < 4 && i < 40; i++) {
+      const d = distractorRun(missing, `${seed}:${word.id}:d${i}`);
+      if (!options.includes(d)) options.push(d);
+    }
+    for (let c = 0; options.length < 4; c++) {
+      const d = String.fromCharCode(98 + (c % 25)).repeat(missing.length);
+      if (!options.includes(d)) options.push(d);
+    }
     const order = seededShuffleIndices(4, `${seed}:${word.id}:ord`);
     const shuffled = order.map((i) => options[i]!);
     rounds.push({

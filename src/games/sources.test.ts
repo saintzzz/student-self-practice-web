@@ -117,6 +117,21 @@ describe('missingLetterRounds (CR-119)', () => {
     const a = missingLetterRounds('grade-2', 'ml3', 5).map((q) => `${q.word.id}:${q.missing}`);
     expect(a).toEqual(missingLetterRounds('grade-2', 'ml3', 5).map((q) => `${q.word.id}:${q.missing}`));
   });
+
+  it('r158-1: filters before sampling - always serves a full run when the pool has words', () => {
+    for (const gradeId of GRADES) {
+      const rounds = missingLetterRounds(gradeId, '2603', 5);
+      expect(rounds.length).toBe(5);
+    }
+  });
+
+  it('r158-3: all 4 options are distinct', () => {
+    for (const gradeId of GRADES) {
+      for (const q of missingLetterRounds(gradeId, '1', 8)) {
+        expect(new Set(q.options).size).toBe(4);
+      }
+    }
+  });
 });
 
 describe('wordOrderRounds (CR-119)', () => {
