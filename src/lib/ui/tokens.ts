@@ -308,6 +308,10 @@ export const scene = {
      so every element after it sits on the flat pageGradient, and the
      band's own bottom edge dissolves into that gradient via mask. */
   heroBand: 'pointer-events-none relative z-0 h-[58vh] overflow-hidden',
+  /* CR-117 (r154): form-dominant kid surfaces (login) get a shorter
+     poster band - 36vh leaves room for the form card to pull into the
+     seam while keeping the submit CTA above the fold at 375x667. */
+  heroBandCompact: 'pointer-events-none relative z-0 h-[36vh] overflow-hidden',
   skyDusk: 'bg-gradient-to-b from-navy-950 via-navy-900 to-navy-700',
   skyNight: 'bg-gradient-to-b from-navy-950 via-navy-950 to-navy-800',
   /* CR-116: vector-fallback sky for tone=day (the real day scenes are

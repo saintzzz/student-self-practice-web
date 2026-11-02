@@ -501,12 +501,13 @@ export default function App() {
   // surfaces (GradeSelect map, AuthScreen login, loading splash) ride
   // the sunny world-map day register (CR-116/117); adult surfaces keep
   // the brand strip. Exam keeps its own desk register.
-  const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean; land?: LandKey; tone?: SceneTone }) => {
+  const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean | 'compact'; land?: LandKey; tone?: SceneTone }) => {
     if (opts?.gradeId) {
       const tone = bandForGrade(opts.gradeId) === 'G12' ? 'dusk' : 'night';
       return <LandShell gradeId={opts.gradeId} tone={tone} variant="hero">{node}</LandShell>;
     }
-    return <LandShell land={opts?.land ?? 'brand'} tone={opts?.tone ?? 'night'} variant={opts?.hero ? 'hero' : 'strip'}>{node}</LandShell>;
+    const variant = opts?.hero === 'compact' ? 'hero-compact' : opts?.hero ? 'hero' : 'strip';
+    return <LandShell land={opts?.land ?? 'brand'} tone={opts?.tone ?? 'night'} variant={variant}>{node}</LandShell>;
   };
 
   // kids-UX (ADR KUX-5): every screen renders inside one ViewerProvider so
@@ -542,7 +543,7 @@ export default function App() {
       <div className="flex min-h-[42vh] items-center justify-center text-lg font-bold text-sky-700">
         Đang tải...
       </div>,
-      { hero: true, land: 'map', tone: 'day' },
+      { hero: 'compact', land: 'map', tone: 'day' },
     );
   }
 
@@ -556,7 +557,7 @@ export default function App() {
       <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
         <AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />
       </LottieBudgetProvider>,
-      { hero: true, land: 'map', tone: 'day' },
+      { hero: 'compact', land: 'map', tone: 'day' },
     );
   }
 

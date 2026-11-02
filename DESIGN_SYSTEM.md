@@ -56,10 +56,11 @@
 > **CR-117 (v6.3):** the kid login joins the day register. "Chào bé!" +
 > PIN is a student-facing surface, so `AuthScreen` rides the same
 > `land="map" tone="day"` world-map hero as GradeSelect (the loading
-> splash too - no navy flash between states). The `CARD_DAY` form card
-> pulls `-mt-[26vh]` into the hero seam, deeper than the map header's
-> `-mt-[14vh]` because the card is taller - the submit CTA stays above
-> the fold at 840px viewport. `INPUT_DAY` (white field, `sky-300` border,
+> splash too - no navy flash between states). Form-dominant kid
+> surfaces use the `hero-compact` variant - a 36vh `heroBandCompact`
+> poster instead of the map's 58vh band - and the `CARD_DAY` form card
+> pulls `-mt-[22vh]` into its seam, so the submit CTA stays above the
+> fold even at 375x667 (measured 661px). `INPUT_DAY` (white field, `sky-300` border,
 > `amber-400` focus ring) replaces `INPUT_DARK`; the guest entry uses
 > `NAV_PILL_DAY`, the credit line sits on a `bg-white/70` chip, and the
 > error state runs `rose-700` on `rose-50`. Admin and parent-facing

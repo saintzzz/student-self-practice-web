@@ -15,9 +15,11 @@ CR-116 classified `AuthScreen` as adult-facing and left it on
   mount `land="map" tone="day"` hero instead of `brand`/`night` - no
   navy flash between loading, login and the guest map.
 - `AuthScreen.tsx`: full retune to day tokens - `CARD_DAY` form card
-  pulled `-mt-[26vh]` into the hero seam (deeper than the map header's
-  `-mt-[14vh]` because the card is taller; keeps the submit CTA above
-  the fold at 840px), `INPUT_DAY` (white field, `sky-300` border,
+  pulled `-mt-[22vh]` into the seam of a compact `heroBandCompact`
+  (36vh poster; the login is form-dominant so it gets a shorter band
+  than the map's 58vh - external review r154). Submit CTA stays above
+  the fold at both 1440x900 and 375x667 (measured 661px < 667).
+  `INPUT_DAY` (white field, `sky-300` border,
   `amber-400` focus ring), `NAV_PILL_DAY` guest entry, `rose-700` on
   `rose-50` error, `bg-white/70` credit chip, golden medallion mascot
   (same idiom as the map header).

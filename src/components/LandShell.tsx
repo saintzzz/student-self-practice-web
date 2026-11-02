@@ -12,9 +12,10 @@ interface LandShellProps {
   night?: boolean;
   /** CR-82 (v5 s6.2): palette tone - day | dusk | night. */
   tone?: SceneTone;
-  /** CR-82 (v5 s6.2): 'hero' = full-bleed layered scene; 'strip' = v4
-   *  bottom strip (kept for adult/credits surfaces + revert). */
-  variant?: 'hero' | 'strip';
+  /** CR-82 (v5 s6.2): 'hero' = full-bleed layered scene; 'hero-compact'
+   *  = the shorter 36vh band for form-dominant kid surfaces (CR-117
+   *  login); 'strip' = v4 bottom strip (adult/credits + revert). */
+  variant?: 'hero' | 'hero-compact' | 'strip';
   children: ReactNode;
 }
 

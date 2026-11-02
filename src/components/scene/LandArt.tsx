@@ -43,22 +43,24 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
   const journeyStyle: CSSProperties | undefined =
     journey !== undefined ? ({ '--journey': journey } as CSSProperties) : undefined;
 
-  if (variant === 'hero') {
+  if (variant === 'hero' || variant === 'hero-compact') {
     /* CR-116 rev2: the day hero renders inside a bounded top band that
        scrolls with the page instead of a fixed full-viewport backdrop -
        detailed art is the hero decoration, never the surface under
-       content (external review r150). */
+       content (external review r150). CR-117: 'hero-compact' reserves
+       the shorter 36vh band for form-dominant kid surfaces (login). */
     const dayHero = resolvedTone === 'day';
+    const bandCls = variant === 'hero-compact' ? scene.heroBandCompact : scene.heroBand;
     return (
       <div
         ref={ref}
         data-testid="land-scene"
-        data-variant="hero"
+        data-variant={variant}
         data-tone={resolvedTone}
         data-land={resolvedLand}
         data-renderer="art"
         aria-hidden="true"
-        className={dayHero ? scene.heroBand : scene.root}
+        className={dayHero ? bandCls : scene.root}
         style={journeyStyle}
       >
         <img

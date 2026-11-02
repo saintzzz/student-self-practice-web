@@ -39,7 +39,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
   }
 
   return (
-    <div className={`mx-auto -mt-[26vh] flex min-h-[86vh] max-w-md flex-col px-4 pb-10 ${SCREEN_ENTER}`}>
+    <div className={`mx-auto -mt-[22vh] flex min-h-[64vh] max-w-md flex-col px-4 pb-10 ${SCREEN_ENTER}`}>
       <div className={CARD_DAY}>
         <div className="mb-3 flex justify-center">
           {/* Same golden medallion idiom as the map header - the pig is

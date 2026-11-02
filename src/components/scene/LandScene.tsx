@@ -41,8 +41,10 @@ const VIEW_BOX = '0 0 1200 320';
 
 export interface LandSceneProps {
   land: LandKey;
-  /** 'hero' = full-bleed fixed layers; 'strip' = v4 bottom strip. */
-  variant?: 'hero' | 'strip';
+  /** 'hero' = full-bleed layers; 'hero-compact' = same scene in the
+      shorter 36vh band (CR-117 form-dominant surfaces); 'strip' = v4
+      bottom strip. */
+  variant?: 'hero' | 'hero-compact' | 'strip';
   /** Palette tone - replaces the legacy `night` CSS filter. */
   tone?: SceneTone;
   /** Legacy: maps to tone='night'. */
@@ -64,7 +66,7 @@ const LandScene = forwardRef<HTMLDivElement, LandSceneProps>(function LandScene(
   // Ambient pause while the tab is hidden (OBJ-1 perf): data-scene-paused
   // freezes every descendant CSS animation via index.css.
   useEffect(() => {
-    if (variant !== 'hero') return;
+    if (variant === 'strip') return;
     const onVisibility = () => setPaused(document.hidden);
     onVisibility();
     document.addEventListener('visibilitychange', onVisibility);
@@ -112,7 +114,7 @@ const LandScene = forwardRef<HTMLDivElement, LandSceneProps>(function LandScene(
     <div
       ref={ref}
       data-testid="land-scene"
-      data-variant="hero"
+      data-variant={variant}
       data-tone={resolvedTone}
       data-land={resolvedLand}
       data-band={band}
@@ -121,8 +123,15 @@ const LandScene = forwardRef<HTMLDivElement, LandSceneProps>(function LandScene(
       /* CR-116 rev2 (r152): the day hero reserves the same in-flow band
          the generated-art renderer uses - GradeSelect pulls -mt-[14vh]
          against it, so the contract must hold even when both webp
-         files fail and this vector fallback renders. */
-      className={resolvedTone === 'day' ? scene.heroBand : scene.root}
+         files fail and this vector fallback renders. CR-117: compact
+         surfaces (login) reserve the shorter 36vh band instead. */
+      className={
+        resolvedTone === 'day'
+          ? variant === 'hero-compact'
+            ? scene.heroBandCompact
+            : scene.heroBand
+          : scene.root
+      }
       style={
         resolvedTone === 'day'
           ? {

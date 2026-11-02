@@ -65,6 +65,22 @@ describe('LandArt', () => {
     expect(root.className).not.toContain('fixed');
   });
 
+  it('reserves the compact 36vh band for hero-compact day, art and fallback alike (CR-117)', () => {
+    render(<LandArt land="map" variant="hero-compact" tone="day" />);
+    let root = screen.getByTestId('land-scene');
+    expect(root).toHaveAttribute('data-variant', 'hero-compact');
+    expect(root.className).toContain('h-[36vh]');
+    /* Same contract through the vector fallback: both webp files fail
+       and the band still reserves its compact height for the login
+       card's -mt-[22vh] pull. */
+    fireEvent.error(root.querySelector('img')!);
+    fireEvent.error(screen.getByTestId('land-scene').querySelector('img')!);
+    root = screen.getByTestId('land-scene');
+    expect(root.querySelector('svg')).toBeTruthy();
+    expect(root.className).toContain('h-[36vh]');
+    expect(root.className).not.toContain('fixed');
+  });
+
   it('non-day tones keep requesting the base art file directly', () => {
     render(<LandArt land="jungle" variant="strip" tone="night" />);
     const img = screen.getByTestId('land-scene').querySelector('img');
