@@ -21,7 +21,7 @@
  */
 
 /** CR-16: the whole play surface now rides the VieSchool navy/gold brand
-    (same family as CARD_DARK used on login/admin since CR-14). Status
+    (same family as CARD_DARK kept on admin since CR-14). Status
     colors keep their semantics on dark: emerald = correct, rose = wrong,
     amber = progress/score. */
 export const CARD =
@@ -32,8 +32,9 @@ export const CARD =
 export const CARD_DAY =
   'rounded-3xl bg-white/85 p-6 shadow-[inset_0_1px_0_white,0_20px_40px_-16px_rgba(14,116,144,0.35),0_8px_16px_-8px_rgba(14,116,144,0.25)] ring-1 ring-sky-200/90 backdrop-blur-sm sm:p-8';
 
-/** CR-14: VieSchool dark card - navy glass + gold ring for brand
-    surfaces (login/admin) matching the vieschool.com landing. */
+/** CR-14: VieSchool dark card - navy glass + gold ring for adult brand
+    surfaces (admin/parent) matching the vieschool.com landing. The kid
+    login moved to CARD_DAY in CR-117. */
 export const CARD_DARK =
   'rounded-3xl bg-[#121b33]/90 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_40px_-16px_rgba(0,0,0,0.6),0_8px_16px_-8px_rgba(0,0,0,0.4)] ring-1 ring-[#2a3a5e] backdrop-blur-sm sm:p-8';
 

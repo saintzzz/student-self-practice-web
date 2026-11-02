@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { MascotAvatar } from './mascot/MascotAvatar';
-import { CARD_DARK, NAV_PILL_DARK, SCREEN_ENTER } from '../lib/ui/tokens';
+import { CARD_DAY, NAV_PILL_DAY, SCREEN_ENTER } from '../lib/ui/tokens';
 import { login, USERNAME_RE } from '../lib/auth/practiceAuth';
 import { IconEye, IconEyeOff } from './icons';
 
-/** CR-14: dark navy + gold (VieSchool landing palette) on the auth surface. */
-const INPUT_DARK =
-  'w-full rounded-2xl border-2 border-[#2a3a5e] bg-[#0b1224]/60 px-5 py-4 text-lg font-bold text-slate-100 shadow-inner transition placeholder:font-normal placeholder:text-slate-500 focus:border-amber-300 focus:outline-none focus:ring-4 focus:ring-amber-300/30 focus:shadow-[0_8px_20px_-8px_rgba(242,201,87,0.35)]';
+/** CR-116 rev3: day register - the kid login rides the same sunny
+ *  world-map surface as the journey map (was CR-14 navy/gold). */
+const INPUT_DAY =
+  'w-full rounded-2xl border-2 border-sky-300 bg-white px-5 py-4 text-lg font-bold text-sky-950 shadow-inner transition placeholder:font-normal placeholder:text-slate-500 focus:border-amber-400 focus:outline-none focus:ring-4 focus:ring-amber-300/40 focus:shadow-[0_8px_20px_-8px_rgba(242,201,87,0.35)]';
 
 interface AuthScreenProps {
   onLoggedIn: () => void;
@@ -38,24 +39,30 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
   }
 
   return (
-    <div className={`mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10 ${SCREEN_ENTER}`}>
-      <div className={CARD_DARK}>
-        <div className="mb-4 flex justify-center">
-          <MascotAvatar sizePx={80} />
+    <div className={`mx-auto -mt-[26vh] flex min-h-[86vh] max-w-md flex-col px-4 pb-10 ${SCREEN_ENTER}`}>
+      <div className={CARD_DAY}>
+        <div className="mb-3 flex justify-center">
+          {/* Same golden medallion idiom as the map header - the pig is
+              the badge that greets you into the sunny world. */}
+          <span className="rounded-full bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 p-[5px] shadow-[0_0_24px_rgba(251,191,36,0.3),0_8px_18px_-8px_rgba(0,0,0,0.3)]">
+            <span className="block rounded-full bg-gradient-to-b from-sky-600 to-sky-800 p-1.5 ring-1 ring-inset ring-white/25">
+              <MascotAvatar sizePx={72} />
+            </span>
+          </span>
         </div>
-        <p className="mb-1 text-center font-display text-sm font-extrabold uppercase tracking-[0.2em] text-amber-300">
+        <p className="mb-1 text-center font-display text-sm font-extrabold uppercase tracking-[0.2em] text-amber-800">
           English Arena
         </p>
-        <h1 className="mb-2 text-center font-display text-3xl font-extrabold tracking-tight text-slate-50 sm:text-4xl">
+        <h1 className="mb-2 text-center font-display text-3xl font-extrabold tracking-tight text-sky-950 sm:text-4xl">
           Chào bé!
         </h1>
-        <p className="mb-6 text-center text-xl text-slate-300">Đăng nhập để vào lớp của mình</p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-lg text-slate-300">
-            <span className="font-bold text-slate-200">Tên đăng nhập</span>
+        <p className="mb-4 text-center text-xl text-sky-800">Đăng nhập để vào lớp của mình</p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-lg text-sky-800">
+            <span className="font-bold text-sky-900">Tên đăng nhập</span>
             <input
               data-testid="login-username"
-              className={INPUT_DARK}
+              className={INPUT_DAY}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
@@ -63,12 +70,12 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
               spellCheck={false}
             />
           </label>
-          <label className="flex flex-col gap-1 text-lg text-slate-300">
-            <span className="font-bold text-slate-200">Mã PIN</span>
+          <label className="flex flex-col gap-1 text-lg text-sky-800">
+            <span className="font-bold text-sky-900">Mã PIN</span>
             <span className="relative block">
               <input
                 data-testid="login-pin"
-                className={`${INPUT_DARK} pr-16`}
+                className={`${INPUT_DAY} pr-16`}
                 type={showPin ? 'text' : 'password'}
                 inputMode="numeric"
                 value={pin}
@@ -83,7 +90,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
                 aria-label={showPin ? 'Ẩn mã PIN' : 'Hiện mã PIN'}
                 aria-pressed={showPin}
                 onClick={() => setShowPin((v) => !v)}
-                className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-xl text-slate-300 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300/60"
+                className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-xl text-sky-700 transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
               >
                 {showPin ? <IconEyeOff size={18} /> : <IconEye size={18} />}
               </button>
@@ -92,7 +99,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
           {error && (
             <div
               data-testid="login-error"
-              className="rounded-3xl bg-rose-400/15 py-3 text-center font-bold text-rose-200 ring-1 ring-rose-400/40"
+              className="rounded-3xl bg-rose-50 py-3 text-center font-bold text-rose-700 ring-1 ring-rose-300"
             >
               {error}
             </div>
@@ -111,15 +118,15 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
         data-testid="guest-button"
         type="button"
         onClick={onGuest}
-        className={`mt-6 self-center ${NAV_PILL_DARK}`}
+        className={`mt-6 self-center ${NAV_PILL_DAY}`}
       >
         Chơi không cần tài khoản
       </button>
-      <p className="mt-4 text-center text-xs font-semibold text-slate-400">
+      <p className="mt-4 self-center rounded-full bg-white/70 px-3 py-1 text-center text-xs font-semibold text-slate-600 ring-1 ring-sky-200/70">
         English Arena - sản phẩm của VieSchool
       </p>
       <p className="mt-2 text-center text-xs font-semibold">
-        <a href="/guides" className="text-amber-300 underline-offset-2 transition hover:text-amber-200 hover:underline">
+        <a href="/guides" className="text-amber-800 underline-offset-2 transition hover:text-amber-700 hover:underline">
           Cẩm nang phụ huynh: luyện IOE, phonics, tiếng Anh SGK
         </a>
       </p>

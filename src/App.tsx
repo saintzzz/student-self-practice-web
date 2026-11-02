@@ -497,9 +497,10 @@ export default function App() {
 
   // CR-10 DS-T1 + CR-82 (M2, spec s6.6): every screen lives inside a
   // land shell. Kid play surfaces (start-batch, batch) get the v5 hero
-  // scene in the band tone (G1-2 dusk / G3-5 night); the journey map
-  // (GradeSelect) and AuthScreen ride the hero brand night; adult
-  // surfaces keep the brand strip. Exam keeps its own desk register.
+  // scene in the band tone (G1-2 dusk / G3-5 night); the kid world
+  // surfaces (GradeSelect map, AuthScreen login, loading splash) ride
+  // the sunny world-map day register (CR-116/117); adult surfaces keep
+  // the brand strip. Exam keeps its own desk register.
   const shell = (node: ReactNode, opts?: { gradeId?: string | null; hero?: boolean; land?: LandKey; tone?: SceneTone }) => {
     if (opts?.gradeId) {
       const tone = bandForGrade(opts.gradeId) === 'G12' ? 'dusk' : 'night';
@@ -538,21 +539,24 @@ export default function App() {
 
   if (authMode === 'loading') {
     return shell(
-      <div className="flex min-h-screen items-center justify-center text-lg font-bold text-sky-700">
+      <div className="flex min-h-[42vh] items-center justify-center text-lg font-bold text-sky-700">
         Đang tải...
       </div>,
+      { hero: true, land: 'map', tone: 'day' },
     );
   }
 
   /* CR-82 (D-21 / AC-2.5): pre-round screens mount ZERO Lottie players -
      the greeting mascot renders its static pose so no player chunk, WASM
-     or mascot/emoji JSON request fires before the first question. */
+     or mascot/emoji JSON request fires before the first question.
+     CR-116 rev3: the kid login rides the same sunny world-map register
+     as the journey map - one continuous day surface into the arena. */
   if (configured && (authMode === 'login' || screen === 'login')) {
     return shell(
       <LottieBudgetProvider slots={PRE_ROUND_SLOTS}>
         <AuthScreen onLoggedIn={handleLoggedIn} onGuest={handleGuest} />
       </LottieBudgetProvider>,
-      { hero: true },
+      { hero: true, land: 'map', tone: 'day' },
     );
   }
 

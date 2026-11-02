@@ -49,9 +49,21 @@
 > world-map hero (`land-map-day.webp`), postcard headers pull
 > `land-{key}-day.webp` variants of the five land scenes, and all chrome
 > switches to dark-ink-on-white-glass (`NAV_PILL_SM_DAY`, `H1_DAY`,
-> `PROMPT_DAY`, EngagementBar `tone="day"`). Play boards, login, admin and
-> credits keep the navy register - day is the map's own surface, not a
+> `PROMPT_DAY`, EngagementBar `tone="day"`). Play boards, admin and
+> credits keep the navy register - day is the kids' world surface, not a
 > global light theme.
+>
+> **CR-117 (v6.3):** the kid login joins the day register. "Chào bé!" +
+> PIN is a student-facing surface, so `AuthScreen` rides the same
+> `land="map" tone="day"` world-map hero as GradeSelect (the loading
+> splash too - no navy flash between states). The `CARD_DAY` form card
+> pulls `-mt-[26vh]` into the hero seam, deeper than the map header's
+> `-mt-[14vh]` because the card is taller - the submit CTA stays above
+> the fold at 840px viewport. `INPUT_DAY` (white field, `sky-300` border,
+> `amber-400` focus ring) replaces `INPUT_DARK`; the guest entry uses
+> `NAV_PILL_DAY`, the credit line sits on a `bg-white/70` chip, and the
+> error state runs `rose-700` on `rose-50`. Admin and parent-facing
+> surfaces keep `CARD_DARK`/navy - the day register is kids-only.
 >
 > **CR-116 rev2 - surface separation law:** detailed art is a backdrop,
 > never the surface under content. The day hero renders in a bounded
@@ -160,7 +172,9 @@ inside `LandShell night`: page keeps the deep-navy `brand` gradient while
 the grade's land art renders moonlit (`LandScene` `night` prop -
 `brightness-[0.6] saturate-[0.7]` on the scene SVG; sparkles stay bright
 as stars). `shell(node, gradeId)` in `App.tsx` routes this; adult surfaces
-(grade-select map, login, credits, admin, report, exam) stay `brand`.
+(credits, admin, report, exam) stay `brand`, while the kid-facing
+surfaces (grade-select map, login, loading splash) ride
+`land="map" tone="day"`.
 
 - **Land rim:** `land.nightRim` (theme.ts) - a solid accent strip on the
   board's top edge (playground lime-400, town sky-400, jungle emerald-400,
@@ -231,6 +245,12 @@ Every text color is bound to a **surface class**, never picked in isolation:
 Computed pairs (verified): `amber-950` on amber-100→200 = **11.7:1**;
 `amber-700` on `lime-50` = **4.85:1**; `amber-400` on `#0E1F42` = **9.7:1**;
 `sky-300` on `#0E1F42` = **9.7:1**; `sky-800` on white = **7.6:1**.
+Login day pairs (rendered-pixel audit, CR-117, on `CARD_DAY` glass):
+`sky-950` H1 = **13.2:1**; `sky-900` label = **8.6:1**; `sky-800` sub =
+**6.5:1**; `amber-800` eyebrow = **6.5:1**; navy on `amber-400` submit =
+**10.3:1**; `sky-900` guest pill = **8.4:1**; `rose-700` on `rose-50`
+error = **5.4:1**; `slate-600` credit chip = **6.2:1**; `amber-800`
+guides link on meadow gradient = **5.0:1**.
 Day-map pairs (rendered-pixel audit, CR-116): `sky-950` H1 on scene sky =
 **8.7:1**; `sky-800` prompt/trial on scene meadow = **5.2:1 / 5.0:1**;
 `sky-900` login pill on scene sky = **6.3:1**; `amber-800` name accent on
@@ -433,11 +453,11 @@ before shipping any UI. Project-specific:
   neutrals. Nothing outside this set.
 - **Emoji-as-illustration is intentional** (kids product) - exception to the
   "no emoji structural icons" ban; they still carry `aria-hidden` + text pairs.
-- **Navy shell is deliberate** on play boards, login, admin, credits and
+- **Navy shell is deliberate** on play boards, admin, credits and
   reports - including under light land cards - not a bug to "fix" back to
-  light theme. The **journey map is the sanctioned exception** (CR-116):
-  it runs the day register on purpose, and spreading day glass onto navy
-  surfaces is equally wrong.
+  light theme. The **kid world surfaces are the sanctioned exception**
+  (CR-116 map, CR-117 login): they run the day register on purpose, and
+  spreading day glass onto navy surfaces is equally wrong.
 - **Every new chip/pill must declare its surface class** and pair text
   accordingly (§3). A token composed over an overriding bg = review fail.
 
