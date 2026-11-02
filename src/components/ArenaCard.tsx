@@ -183,7 +183,7 @@ export default function ArenaCard({
                   className={`flex items-center justify-between ${ROW_DAY} px-3 py-2 text-sm font-bold`}
                 >
                   <span className="text-slate-600">vs {opp ?? '?'}</span>
-                  <span className={m.is_draw ? 'text-sky-600' : m.i_won ? 'text-emerald-600' : 'text-rose-600'}>
+                  <span className={m.is_draw ? 'text-sky-700' : m.i_won ? 'text-emerald-700' : 'text-rose-700'}>
                     <span className="inline-flex items-center gap-1.5">{m.is_draw ? <IconHandshake size={16} /> : m.i_won ? <IconTrophy size={16} /> : <IconX size={16} />} {mine} - {theirs}</span>
                   </span>
                 </li>

@@ -71,7 +71,7 @@ export default function DailyQuestCard() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl text-slate-500" aria-hidden><meta.icon size={24} /></span>
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-bold ${quest.done ? 'text-emerald-600' : 'text-sky-950'}`}>
+                  <p className={`text-sm font-bold ${quest.done ? 'text-emerald-700' : 'text-sky-950'}`}>
                     {meta.label}
                   </p>
                   {quest.target > 1 && !quest.done && (
@@ -84,7 +84,7 @@ export default function DailyQuestCard() {
                   )}
                 </div>
                 {quest.done ? (
-                  <span className="text-xl text-emerald-500" aria-label="done"><IconCheckCircle size={22} /></span>
+                  <span className="text-xl text-emerald-700" aria-label="done"><IconCheckCircle size={22} /></span>
                 ) : (
                   <span className="text-sm font-extrabold text-slate-500">
                     {quest.progress}/{quest.target}
@@ -108,7 +108,7 @@ export default function DailyQuestCard() {
         </button>
       )}
       {snapshot.bonusClaimed && (
-        <p data-testid="quest-all-done" className="mt-3 text-center text-sm font-bold text-emerald-600">
+        <p data-testid="quest-all-done" className="mt-3 text-center text-sm font-bold text-emerald-700">
           Hoàn thành nhiệm vụ ngày! Hẹn bạn ngày mai nhé.
         </p>
       )}
