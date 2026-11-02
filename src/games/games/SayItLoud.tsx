@@ -24,12 +24,19 @@ const ROUNDS = 5;
 function RoundMic({
   word,
   onAttempt,
+  disabled,
 }: {
   word: string;
   onAttempt: (transcript: string, options?: PronunciationScoringOptions) => void;
+  /** r160-2: grey the control while the verdict shows (settled anyway). */
+  disabled?: boolean;
 }) {
   const { phase, startRecording, stopRecording, retry, skip, heardText } =
     usePronunciationRecording(onAttempt, word);
+  // r160-2: each round's fresh mic takes keyboard focus so SR/keyboard
+  // users land on the actionable control instead of losing their place.
+  const micRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { micRef.current?.focus(); }, []);
 
   if (phase === 'unsupported') {
     return (
@@ -43,7 +50,7 @@ function RoundMic({
       <div className="flex flex-col items-center gap-3">
         <p className="max-w-xs text-center text-sm font-semibold text-slate-300">
           {phase === 'permission-denied'
-            ? 'Trình duyệt chưa được cấp quyền micro - bấm Thử lại rồi chọn Cho phép nhé.'
+            ? 'Micro đang bị chặn - bấm vào biểu tượng ổ khóa cạnh địa chỉ trang web, bật quyền Micro rồi chọn Thử lại. Hoặc Bỏ qua câu này nhé.'
             : 'Chưa nghe rõ giọng em - ra chỗ yên tĩnh, để micro gần miệng rồi đọc thật to nhé.'}
         </p>
         <div className="flex gap-3">
@@ -82,14 +89,16 @@ function RoundMic({
     <div className="flex flex-col items-center gap-3 py-1">
       <button
         type="button"
+        ref={micRef}
         data-testid="say-mic"
+        disabled={disabled}
         onClick={recording ? stopRecording : startRecording}
         aria-label={recording ? 'Đọc xong nhấn lại để chấm luôn' : 'Nhấn rồi đọc to lên'}
         className={`relative flex h-20 w-20 items-center justify-center rounded-full text-white transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-rose-400 ${
           recording
             ? 'bg-gradient-to-b from-rose-500 to-rose-700 shadow-[inset_0_3px_0_rgba(255,255,255,0.3),0_10px_28px_-6px_rgba(244,63,94,0.6)]'
             : 'bg-gradient-to-b from-rose-400 to-rose-600 shadow-[inset_0_3px_0_rgba(255,255,255,0.35),0_10px_24px_-6px_rgba(244,63,94,0.5)]'
-        }`}
+        } ${disabled ? 'opacity-50' : ''}`}
       >
         {recording && (
           <span aria-hidden className="absolute -inset-1.5 animate-pulse rounded-full border-4 border-rose-400/50 motion-reduce:hidden" />
@@ -156,7 +165,11 @@ export default function SayItLoud({ grade, seed, level, onEnd }: GameProps) {
       advance(correctCount);
       return;
     }
-    const { score, isCorrect } = scorePronunciationAttempt(word.word, transcript, options);
+    // r160-1: local scoring only - a present serverScore would raise the
+    // pass bar from 70 to 90 (assess mode), quietly re-tuning the game's
+    // difficulty against the approved scope.
+    void options;
+    const { score, isCorrect } = scorePronunciationAttempt(word.word, transcript);
     gameVerdictSfx(isCorrect);
     setFeedback({ text: transcript, score, ok: isCorrect });
     if (isCorrect) combo.hit(); else combo.miss();
@@ -192,13 +205,18 @@ export default function SayItLoud({ grade, seed, level, onEnd }: GameProps) {
           <IconSpeaker size={18} />
         </button>
       </div>
-      {feedback ? (
-        <p data-testid="say-feedback" className={`text-lg font-extrabold ${feedback.ok ? 'text-emerald-300' : 'text-rose-300'}`}>
-          {feedback.ok ? 'Chuẩn lắm!' : `Nghe thấy "${feedback.text}" - ${feedback.score} điểm`}
-        </p>
-      ) : (
-        <RoundMic key={`${word.id}-${round}`} word={word.word} onAttempt={handleAttempt} />
-      )}
+      {/* r160-2: persistent live region announces the verdict while the
+          mic stays mounted - unmounting it mid-run dropped keyboard
+          focus and screen-reader users missed the result entirely. */}
+      <p
+        role="status"
+        aria-live="polite"
+        data-testid="say-feedback"
+        className={`min-h-7 text-lg font-extrabold ${feedback ? (feedback.ok ? 'text-emerald-300' : 'text-rose-300') : 'sr-only'}`}
+      >
+        {feedback ? (feedback.ok ? 'Chuẩn lắm!' : `Nghe thấy "${feedback.text}" - ${feedback.score} điểm`) : ''}
+      </p>
+      <RoundMic key={`${word.id}-${round}`} word={word.word} onAttempt={handleAttempt} disabled={!!feedback} />
     </div>
   );
 }
