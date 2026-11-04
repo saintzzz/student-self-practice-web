@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/guides/", "destination": "/guides", "permanent": true },
+    { "source": "/mua/", "destination": "/mua", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/", "has": [{ "type": "query", "key": "verify_email" }], "destination": "/app.html" },
     { "source": "/app", "destination": "/app.html" },
