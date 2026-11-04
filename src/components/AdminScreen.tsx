@@ -11,6 +11,7 @@ import {
   assignmentReport,
   type AssignmentReport,
   type ListRow,
+  type ReportSkillStudentRow,
 } from '../lib/assignments';
 import ReviewQueueCard from './ReviewQueueCard';
 import OutreachTab from './admin/OutreachTab';
@@ -886,7 +887,10 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
                           <td className="py-1.5 pr-3">
                             {s.submitted_at
                               ? (s.late ? 'Nộp muộn' : 'Đã nộp')
-                              : s.started_at ? 'Đang làm' : 'Chưa làm'}
+                              : s.started_at ? 'Đang làm'
+                                : new Date(report.data.assignment.due_at) < new Date()
+                                  ? <span className="font-bold text-rose-600">Quá hạn, chưa nộp</span>
+                                  : 'Chưa làm'}
                           </td>
                           <td className="py-1.5 pr-3 font-bold">
                             {s.submitted_at ? `${s.score}/${s.total}` : '-'}
@@ -911,6 +915,36 @@ function AssignmentsPanel({ classes, scopes, say, setError }: {
                             </span>
                             <span className="text-sky-800">{q.skill ?? q.q_id}</span>
                             <span className="text-xs text-slate-400">({q.attempts} lượt)</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* CR-125: trouble groups - em nao yeu ky nang nao (accuracy <70%).
+                      Co the giao bai luyen lai ngay bang nut ben duoi. */}
+                  {(report.data.skill_students ?? []).filter((s) => s.accuracy < 0.7).length > 0 && (
+                    <div className="mt-3" data-testid={`assign-trouble-groups-${r.id}`}>
+                      <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-sky-700">Em nào yếu kỹ năng nào</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {Object.entries(
+                          (report.data.skill_students ?? [])
+                            .filter((s) => s.accuracy < 0.7)
+                            .reduce<Record<string, ReportSkillStudentRow[]>>((acc, s) => {
+                              const k = s.skill ?? 'Khác';
+                              (acc[k] ??= []).push(s);
+                              return acc;
+                            }, {}),
+                        ).map(([skill, students]) => (
+                          <li key={skill} className="text-sm">
+                            <span className="font-bold text-sky-800">{skill}:</span>{' '}
+                            {students.map((s) => (
+                              <span key={s.student_id} className="mr-2 inline-flex items-center gap-1">
+                                <span className="text-sky-900">{s.student_name}</span>
+                                <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-xs font-bold text-rose-700">
+                                  {Math.round(s.accuracy * 100)}%
+                                </span>
+                              </span>
+                            ))}
                           </li>
                         ))}
                       </ul>

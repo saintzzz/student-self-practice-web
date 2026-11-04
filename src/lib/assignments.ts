@@ -62,10 +62,23 @@ export interface ReportQuestionRow {
   attempts: number;
 }
 
+/** CR-125: per-student x per-skill cross-tab - trouble spots nhom theo
+ *  skill (em nao yeu ky nang nao), khac questions (lop sai nhieu cau nao). */
+export interface ReportSkillStudentRow {
+  skill: string | null;
+  student_id: string;
+  student_name: string;
+  correct: number;
+  total: number;
+  accuracy: number;
+}
+
 export interface AssignmentReport {
   assignment: { id: string; title: string; due_at: string; status: string };
   roster: ReportRosterRow[];
   questions: ReportQuestionRow[];
+  /** CR-125: present on post-migration servers; absent on older ones. */
+  skill_students?: ReportSkillStudentRow[];
 }
 
 const msg = (e: unknown): string =>
