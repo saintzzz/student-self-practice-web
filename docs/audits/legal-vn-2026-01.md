@@ -228,3 +228,44 @@ So luong lo hong: **4 x P0, 4 x P1, 4 x P2**.
   ban quyen tot cho hinh anh.
 - replies.mjs co unsubscribe handling cho outreach.
 - Demo SCN dung seed data gia - khong ro du lieu HS that.
+
+---
+
+## F. Remediation status (2026-01 audit follow-up)
+
+Da trien khai (tai lieu hoa qua cac commit trong ngay):
+
+- **vieschool-landing** (30a8042): 3 trang phap ly canonical
+  `/chinh-sach-bao-mat`, `/dieu-khoan`, `/chinh-sach-ban-hang`; footer co
+  dinh danh nha cung cap (VieSchool - Le Duy Linh, SDT, email) + link
+  chinh sach tren moi trang; go dead-code GA; sua dong affiliate (hoa
+  hong chi cho doi tac/trung tam, giao vien nhan cong cu mien phi).
+- **vieschool-content** (68cc145): `shared/ga-consent.js` consent-gated
+  GA loader tren toan bo 12 trang - GA chi chay sau khi nguoi dung dong
+  y, `allow_google_signals=false` tat vinh vien ad personalization /
+  audiences / remarketing tren mat san pham tre em; footer link chinh
+  sach + dinh danh nha cung cap tren moi trang; ea/mua co cau xac nhan
+  thanh toan = dong y dieu khoan + bao mat (thu nhan su dong y cua phu
+  huynh tai diem kich hoat xu ly du lieu).
+- **student-self-practice-web** (EA app): thong bao su dong y cua phu
+  huynh + link dieu khoan/bao mat tren AuthScreen - diem thu thap du
+  lieu cua tre em.
+- **so-chu-nhiem**: login-form co link dieu khoan/bao mat + tuyen bo
+  phan chia controller/processor (VieSchool xu ly du lieu HS theo uy
+  quyen cua nha truong).
+- **scanning-marketing** (e472ade): draft.mjs tach pitch - trung tam
+  giu partner program, truong/giao vien chi nhan cong cu mien phi, khong
+  con hua hoa hong.
+
+Con lai can ben chu so huu cung cap / quyet dinh:
+
+- Ten phap nhan chinh thuc (HKD/DN) + MST/GP + dia chi dang ky - cac
+  trang phap ly dang ghi "VieSchool - Le Duy Linh" (ca nhan).
+- Thong bao website TMDT tren saleonline.gov.vn + So TTTT (ND 147/2024).
+- Ho so A05 (DPIA mau 01-03 + truyen DL ra nuoc ngoai 04a/04b) + chi
+  dinh DPO - khong the tu dong hoa; can thong tin phap nhan.
+- DPA mau cho truong hoc (PDPD D.28) - draft template da co trong
+  chinh-sach-bao-mat phan dich vu cho truong, can van ban hop dong.
+- STK ca nhan 0157 9495 001 -> nen chuyen sang TK phap nhan khi co MST.
+- Consent withdrawal UX: hien tai xoa localStorage de doi lua chon GA -
+  neu muon nut "doi dong y cookie" tren footer thi them sau.
