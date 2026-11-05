@@ -28,7 +28,8 @@ export type GameId =
   | 'missing-letter'
   | 'sentence-scramble'
   | 'odd-one-out'
-  | 'say-it-loud';
+  | 'say-it-loud'
+  | 'story-time';
 
 export interface GameEnd {
   /** Numerator for starsForScore (normalized per game, see each shell). */

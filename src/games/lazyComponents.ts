@@ -30,4 +30,5 @@ export const GAME_LAZY: Record<GameId, RetryableLazy<GameProps>> = {
   'sentence-scramble': createRetryableLazy(() => import('./games/SentenceScramble')),
   'odd-one-out': createRetryableLazy(() => import('./games/OddOneOut')),
   'say-it-loud': createRetryableLazy(() => import('./games/SayItLoud')),
+  'story-time': createRetryableLazy(() => import('./games/StoryTime')),
 };

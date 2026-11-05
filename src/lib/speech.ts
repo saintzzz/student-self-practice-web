@@ -216,6 +216,15 @@ function tryPlayAudioFile(
       audio.playbackRate = speed === 'slow' ? NORMAL_FILE_RATE * SLOW_FACTOR : NORMAL_FILE_RATE;
       const request: PendingAudioRequest = { audio, preempted: false };
       let settled = false;
+      /* CR-126: 'ended' was declared in SpeechPlaybackStatus (and consumed
+         by speakInstruction) but never emitted on the mp3 path - report it
+         on natural completion so sequential playback (story read-along)
+         can advance. Attached only after 'playing' fires, self-removes on
+         fire; preempted requests stay silent. */
+      const onEnded = () => {
+        audio.removeEventListener('ended', onEnded);
+        if (!request.preempted) onStatus?.('ended');
+      };
       const cleanup = () => {
         audio.removeEventListener('playing', onPlaying);
         audio.removeEventListener('error', onError);
@@ -238,6 +247,7 @@ function tryPlayAudioFile(
         }
         activeAudio = audio;
         onStatus?.('started');
+        audio.addEventListener('ended', onEnded);
         settle(true);
       };
       const onError = () => {
@@ -324,6 +334,10 @@ function synthesize(
     utterance.onstart = () => sendStatus('started');
     utterance.onend = () => {
       if (activeUtterance === utterance) activeUtterance = null;
+      /* CR-126: report natural completion - 'ended' bypasses the once-only
+         sendStatus ('started' already consumed it), same pattern as the
+         mic-cancel branch below. */
+      onStatus?.('ended');
     };
     utterance.onerror = (event) => {
       if (activeUtterance === utterance) activeUtterance = null;

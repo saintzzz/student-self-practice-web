@@ -183,4 +183,13 @@ export const GAME_DEFS: readonly GameDef[] = [
     tone: 'orange',
     fresh: true,
   },
+  {
+    id: 'story-time',
+    title: 'Đọc truyện',
+    tagline: 'Nghe truyện, đọc theo rồi trả lời câu hỏi',
+    emoji: '📖',
+    art: ['📖','🎧','⭐'],
+    tone: 'sky',
+    fresh: true,
+  },
 ];

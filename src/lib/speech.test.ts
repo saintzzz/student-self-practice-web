@@ -85,6 +85,20 @@ describe('speakWord', () => {
     expect(onStatus).toHaveBeenCalledWith('started');
   });
 
+  it('reports "ended" via onStatus when the utterance finishes naturally (CR-126)', async () => {
+    vi.spyOn(window.speechSynthesis, 'speak').mockImplementation((utterance: SpeechSynthesisUtterance) => {
+      utterance.onstart?.({} as unknown as SpeechSynthesisEvent);
+      utterance.onend?.({} as unknown as SpeechSynthesisEvent);
+    });
+    const onStatus = vi.fn();
+
+    speakWord('cat', onStatus);
+    await flush();
+
+    expect(onStatus).toHaveBeenCalledWith('started');
+    expect(onStatus).toHaveBeenCalledWith('ended');
+  });
+
   it('reports "unsupported" via onStatus when window.speechSynthesis does not exist', async () => {
     const original = window.speechSynthesis;
     // @ts-expect-error deliberately removing a browser API for this test

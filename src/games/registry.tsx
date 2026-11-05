@@ -26,6 +26,7 @@ import MissingLetter from './games/MissingLetter';
 import SentenceScramble from './games/SentenceScramble';
 import OddOneOut from './games/OddOneOut';
 import SayItLoud from './games/SayItLoud';
+import StoryTime from './games/StoryTime';
 import {
   EmojiChoiceField,
   LetterOrderField,
@@ -66,6 +67,7 @@ export const GAME_COMPONENTS: Record<GameId, GameComponent> = {
   'sentence-scramble': SentenceScramble,
   'odd-one-out': OddOneOut,
   'say-it-loud': SayItLoud,
+  'story-time': StoryTime,
 };
 
 export const GAME_MECHANICS = {
