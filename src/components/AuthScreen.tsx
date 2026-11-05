@@ -142,7 +142,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
         </a>
       </p>
       <p className="mt-3 max-w-sm self-center text-center text-[11px] leading-relaxed text-slate-500">
-        Bé dùng English Arena dưới sự đồng ý và giám sát của ba mẹ. Bằng việc đăng nhập hoặc chơi, ba mẹ đồng ý với{' '}
+        English Arena dành cho bé sử dụng dưới sự hướng dẫn và giám sát của ba mẹ. Ba mẹ xem{' '}
         <a href="https://vieschool.com/dieu-khoan" className="font-semibold text-sky-700 hover:underline">
           Điều khoản sử dụng
         </a>{' '}
@@ -150,7 +150,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
         <a href="https://vieschool.com/chinh-sach-bao-mat" className="font-semibold text-sky-700 hover:underline">
           Chính sách bảo mật
         </a>{' '}
-        của VieSchool.
+        của VieSchool tại đây.
       </p>
     </div>
   );
