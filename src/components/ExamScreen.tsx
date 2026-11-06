@@ -1048,7 +1048,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           <div className="truncate text-sm font-extrabold tracking-wide text-sky-200 sm:text-lg">
             {isAssignment && assignment
               ? assignment.title
-              : `${isReview ? 'Ôn lại câu sai' : isPractice ? 'Luyện đề' : 'Thi thử'} - ${isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}`}
+              : focus?.label
+                ? `${focus.label} - ${isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}`
+                : `${isReview ? 'Ôn lại câu sai' : isPractice ? 'Luyện đề' : 'Thi thử'} - ${isReview ? gradeLabel : `${PROGRAM_LABEL[programId]} - ${gradeLabel}`}`}
           </div>
           {isAssignment && assignment?.dueAt && (
             <div data-testid="assignment-due" className="truncate text-xs font-bold text-amber-300">
