@@ -65,4 +65,23 @@ describe('CR-131 submitQuestionReport', () => {
     expect(await submitQuestionReport({ questionId: 'q3', kind: 'audio' })).toBe('error');
     expect(alreadyReported('q3')).toBe(false);
   });
+
+  it('returns error (no unhandled rejection) when getSession rejects', async () => {
+    sessionMock.mockRejectedValue(new Error('auth down'));
+    expect(await submitQuestionReport({ questionId: 'q4', kind: 'typo' })).toBe('error');
+    expect(supabaseMock).not.toHaveBeenCalled();
+  });
+
+  it('returns error when getSupabase rejects', async () => {
+    supabaseMock.mockRejectedValue(new Error('import failed'));
+    expect(await submitQuestionReport({ questionId: 'q5', kind: 'typo' })).toBe('error');
+  });
+
+  it('truncates note to the 200-char DB guard', async () => {
+    const { client, calls } = insertResult(null);
+    supabaseMock.mockResolvedValue(client);
+    await submitQuestionReport({ questionId: 'q6', kind: 'other', note: 'x'.repeat(300) });
+    const insert = calls.find((c) => c[0] === 'insert');
+    expect((insert?.[1] as { note: string }).note).toHaveLength(200);
+  });
 });

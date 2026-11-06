@@ -41,19 +41,23 @@ export async function submitQuestionReport(input: {
   context?: string;
 }): Promise<ReportStatus> {
   if (!isSupabaseConfigured()) return 'guest';
-  const session = await getSession();
-  if (!session) return 'guest';
-  if (alreadyReported(input.questionId)) return 'duplicate';
-  const client = await getSupabase();
-  if (!client) return 'error';
-  const { error } = await client.from('question_reports').insert({
-    question_id: input.questionId,
-    account_id: session.user.id,
-    kind: input.kind,
-    note: input.note?.slice(0, 200) || null,
-    context: input.context ?? null,
-  });
-  if (error) return 'error';
-  markReported(input.questionId);
-  return 'sent';
+  try {
+    const session = await getSession();
+    if (!session) return 'guest';
+    if (alreadyReported(input.questionId)) return 'duplicate';
+    const client = await getSupabase();
+    if (!client) return 'error';
+    const { error } = await client.from('question_reports').insert({
+      question_id: input.questionId,
+      account_id: session.user.id,
+      kind: input.kind,
+      note: input.note?.slice(0, 200) || null,
+      context: input.context ?? null,
+    });
+    if (error) return 'error';
+    markReported(input.questionId);
+    return 'sent';
+  } catch {
+    return 'error';
+  }
 }

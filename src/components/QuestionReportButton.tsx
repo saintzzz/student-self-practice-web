@@ -3,7 +3,7 @@
  * that expands into a kind picker + optional note. Hidden for guests
  * (RLS needs an account) and after a same-day report.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getSession } from '../lib/auth/practiceAuth';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { alreadyReported, submitQuestionReport, type ReportKind } from '../lib/questionReport';
@@ -22,13 +22,16 @@ export default function QuestionReportButton(props: { questionId: string; contex
   const [kind, setKind] = useState<ReportKind | null>(null);
   const [note, setNote] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const liveRef = useRef(true);
 
   useEffect(() => {
-    let live = true;
+    liveRef.current = true;
     if (isSupabaseConfigured()) {
-      void getSession().then((s) => { if (live && s && !alreadyReported(props.questionId)) setEligible(true); });
+      void getSession()
+        .then((s) => { if (liveRef.current && s && !alreadyReported(props.questionId)) setEligible(true); })
+        .catch(() => { /* auth unavailable - keep the button hidden */ });
     }
-    return () => { live = false; };
+    return () => { liveRef.current = false; };
   }, [props.questionId]);
 
   if (!eligible || state === 'sent') return state === 'sent' ? (
@@ -39,6 +42,7 @@ export default function QuestionReportButton(props: { questionId: string; contex
     if (!kind || state === 'sending') return;
     setState('sending');
     const res = await submitQuestionReport({ questionId: props.questionId, kind, note: note || undefined, context: props.context });
+    if (!liveRef.current) return;
     if (res === 'sent' || res === 'duplicate') setState('sent');
     else setState('idle');
   };
