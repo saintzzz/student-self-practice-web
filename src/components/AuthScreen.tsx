@@ -138,7 +138,7 @@ export default function AuthScreen({ onLoggedIn, onGuest }: AuthScreenProps) {
       </p>
       <p className="mt-2 text-center text-xs font-semibold">
         <a href="/guides" className="text-amber-800 underline-offset-2 transition hover:text-amber-700 hover:underline">
-          Cẩm nang phụ huynh: luyện IOE, phonics, tiếng Anh SGK
+          Cẩm nang phụ huynh: luyện thi, phonics, tiếng Anh SGK
         </a>
       </p>
       <p className="mt-3 max-w-sm self-center text-center text-[11px] leading-relaxed text-slate-500">
