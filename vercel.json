@@ -11,6 +11,7 @@
     { "source": "/llms.txt", "destination": "https://vieschool-content.vercel.app/ea/llms.txt" },
     { "source": "/sitemap.xml", "destination": "https://vieschool-content.vercel.app/ea/guides/sitemap.xml" },
     { "source": "/mua", "destination": "https://vieschool-content.vercel.app/ea/mua" },
+    { "source": "/thi-cup", "destination": "https://vieschool-content.vercel.app/ea/thi-cup" },
     { "source": "/guides", "destination": "https://vieschool-content.vercel.app/ea/guides" },
     { "source": "/guides/:path*", "destination": "https://vieschool-content.vercel.app/ea/guides/:path*" }
   ]
