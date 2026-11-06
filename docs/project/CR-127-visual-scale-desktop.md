@@ -17,13 +17,16 @@ by viewport. Nothing gets bigger on desktop.
 
 ## Scope
 
-Add `sm:` (>=640px) size bumps to visuals only - mobile rendering unchanged:
+Add `sm:` (>=640px) size bumps to visuals - mobile rendering unchanged
+except one intentional defect fix called out below:
 
 - `ImageChoiceQuestion`: prompt exhibit text-8xl -> sm:text-9xl (96->128px).
 - `ListeningImageChoiceQuestion`: option exhibits text-6xl -> sm:text-8xl.
 - `CountingImageQuestion`: prompt text-6xl -> sm:text-7xl; counting option
-  exhibits get explicit text-4xl sm:text-5xl (previously inherited the
-  button's text-2xl = 24 px - too small at every viewport).
+  exhibits get explicit text-4xl sm:text-5xl. This DOES change mobile too:
+  the options previously inherited the option button's text-2xl = 24 px,
+  which is illegible for a count-the-objects picture at any viewport -
+  a latent sizing defect, fixed for both breakpoints.
 - `DescribeAndChooseImageQuestion`: option exhibits text-4xl -> sm:text-6xl.
 - `PicturePairMatchingQuestion`: tile text-2xl -> sm:text-4xl.
 - `ExamScreen`: prompt image max-h-48 -> sm:max-h-64; option images
