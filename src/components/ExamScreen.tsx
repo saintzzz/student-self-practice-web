@@ -50,6 +50,7 @@ import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
 import { ArtImg } from './ArtImg';
+import QuestionReportButton from './QuestionReportButton';
 import ConfirmEndDialog from './ConfirmEndDialog';
 import { contentBankReady, ensureContentBank, wordIpa } from '../lib/content/contentBank';
 import { reloadPageOnce } from '../lib/reload';
@@ -1345,6 +1346,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
                   Đáp án đúng: <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(question)} /></span>
                 </div>
                 {question.explanation && <div className={`mt-1 text-sm ${TYPE_BODY_PAPER}`}><MarkupText text={question.explanation} /></div>}
+                <QuestionReportButton questionId={question.id} context={`practice:${focus?.label ?? 'luyện tập'}`} />
               </>
             )}
             {/* N1: the ONE gold action of the untimed practice sitting. */}

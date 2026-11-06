@@ -11,6 +11,7 @@ import Mascot from './Mascot';
 import Confetti from './celebrations/Confetti';
 import { SendResultsCard } from './SendResultsCard';
 import { ShareCard } from './ShareCard';
+import QuestionReportButton from './QuestionReportButton';
 import {
   BTN_SECONDARY_PAPER,
   EXAM_DESK,
@@ -276,6 +277,7 @@ export function ExamResult({
                 {item.question.explanation && (
                   <div className={`mt-1 text-xs ${TYPE_BODY_PAPER}`}><MarkupText text={item.question.explanation} /></div>
                 )}
+                <QuestionReportButton questionId={item.question.id} context="exam-review" />
                   </>
                 )}
               </div>
