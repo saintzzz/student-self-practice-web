@@ -157,7 +157,7 @@ if (GRADE === 2) { // G2: số đến 1000, cộng trừ có nhớ ≤100, nhân
     push('arithmetic', 'numbers', 3, `? × ${b} = ${p}`, a, [a + 1, a - 1, p - b], `Vì ${a} × ${b} = ${p} nên số cần tìm là ${a}.`);
     const dv = rr(2, 5), q2 = rr(3, 9), dvd = dv * q2;
     push('arithmetic', 'numbers', 3, `${dvd} : ? = ${q2}`, dv, [dv + 1, dv - 1, q2], `Vì ${dvd} : ${dv} = ${q2} nên số cần tìm là ${dv}.`);
-    const [obj, short] = pick(ITEMS), c1 = rr(15, 45), c2 = rr(8, 30);
+    const [obj, short] = pick(ITEMS), c2 = rr(8, 30), c1 = c2 + rr(2, 25);
     push('word-problem', 'numbers', 3, `${pick(NAMES)} hái được ${c1} ${short}, em hái được ${c2} ${short}. Hỏi bạn hái nhiều hơn em bao nhiêu ${short}?`, c1 - c2, [c1 + c2, c1 - c2 + 1, c1 - c2 - 1], `${c1} - ${c2} = ${c1 - c2}.`);
     const s = rr(3, 9);
     push('geometry', 'geometry', 3, `Hình vuông có cạnh ${s} cm. Chu vi hình vuông là bao nhiêu cm?`, 4 * s, [3 * s, 4 * s + 1, s * s], `Chu vi hình vuông = cạnh × 4 = ${s} × 4 = ${4 * s} cm.`);
