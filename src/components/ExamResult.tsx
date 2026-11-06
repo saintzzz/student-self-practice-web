@@ -185,7 +185,9 @@ export function ExamResult({
                 })}
               </ul>
               {(() => {
-                const percent = Math.round((result.correctCount / Math.max(1, result.totalCount)) * 100);
+                // r168: compare the exact ratio - rounding 89.5% to 90
+                // would grant a tier below its stated cutoff.
+                const percent = (result.correctCount / Math.max(1, result.totalCount)) * 100;
                 const award = examLabel.awards.find((t) => percent >= t.min);
                 return (
                   <p data-testid="exam-award" className="mt-3 text-center text-sm font-extrabold text-amber-700">

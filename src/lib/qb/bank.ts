@@ -455,21 +455,11 @@ export async function createExamFromBank(
   const mode = opts.mode ?? 'practice';
   const seenKey = `ea-seen:${programId}:${gradeId}:${mode}:${opts.focus?.minDifficulty ?? 'all'}`;
   const seen = fixedForm ? [] : loadSeen(seenKey);
-  const rows = fixedForm
-    ? await fetchBankForm(opts.formId!)
-    : await fetchBankQuestions(
-        programId,
-        gradeId,
-        // CR-66: tier nang cao fetch gan het pool (hien tai <= ~200) de
-        // thay moi cau chua gap - tranh lap qua 20% du pool lon hon
-        // sample random. Drill thuong van fetch the, khong can het pool.
-        opts.focus?.minDifficulty ? 250 : Math.ceil(target * 1.6),
-        mode,
-        opts.focus,
-      );
   // CR-129: IOE competition-structure mock - sectioned paper fetched
   // per-skill so the composition is guaranteed, scored with the same
   // engine, labeled for the result screen's section table + award tier.
+  // r168: branch BEFORE the flat fetch - a stray 250-row draw would
+  // waste an RPC call and could fail a paper that never needed it.
   const ioeRound = ioeRoundById(opts.focus?.ioeRound);
   if (ioeRound && !fixedForm) {
     const ioeSeenKey = `ea-seen:${programId}:${gradeId}:ioe:${ioeRound.id}`;
@@ -512,6 +502,18 @@ export async function createExamFromBank(
       },
     };
   }
+  const rows = fixedForm
+    ? await fetchBankForm(opts.formId!)
+    : await fetchBankQuestions(
+        programId,
+        gradeId,
+        // CR-66: tier nang cao fetch gan het pool (hien tai <= ~200) de
+        // thay moi cau chua gap - tranh lap qua 20% du pool lon hon
+        // sample random. Drill thuong van fetch the, khong can het pool.
+        opts.focus?.minDifficulty ? 250 : Math.ceil(target * 1.6),
+        mode,
+        opts.focus,
+      );
   const mapped = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
   // r5: malformed bank rows must not silently shorten a session - count
   // them so the UI can surface a fixed-form defect or a thin pool.

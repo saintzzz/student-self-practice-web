@@ -119,6 +119,8 @@ function IoePicker({ onStartExam }: { onStartExam: (p: ExamProgramId, m: 'exam',
       <button
         type="button"
         data-testid="ioe-toggle"
+        aria-expanded={open}
+        aria-controls="ioe-rounds"
         onClick={() => setOpen((v) => !v)}
         className={`${BTN_EXAM} w-full`}
       >
@@ -126,7 +128,7 @@ function IoePicker({ onStartExam }: { onStartExam: (p: ExamProgramId, m: 'exam',
         {open ? <IconChevronUp size={14} className="ml-1 inline-block" /> : <IconChevronDown size={14} className="ml-1 inline-block" />}
       </button>
       {open && (
-        <div className="mt-2 flex flex-col gap-2" role="group" aria-label="Chọn cấp thi IOE">
+        <div id="ioe-rounds" className="mt-2 flex flex-col gap-2" role="group" aria-label="Chọn cấp thi IOE">
           {IOE_ROUNDS.map((r) => (
             <button
               key={r.id}
