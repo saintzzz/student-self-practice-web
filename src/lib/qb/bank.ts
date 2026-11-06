@@ -10,7 +10,7 @@ import { getSession } from '../auth/practiceAuth';
 import { guestTicket } from './turnstile';
 import type { ExamProgramId, ExamQuestion } from '../../types/exam';
 import { examConfigForGrade, type ExamState } from '../exam/examSession';
-import { IOE_AWARD_TIERS, ioeRoundById } from '../exam/ioeBlueprint';
+import { CUP_AWARD_TIERS, cupRoundById } from '../exam/cupBlueprint';
 import { seededShuffleIndices } from '../prng';
 import { isWordOrderCorrect } from '../exam/wordOrder';
 
@@ -61,9 +61,9 @@ export function gradeNumber(gradeId: string): number {
 export interface BankFetchFocus {
   skills?: string[];
   minDifficulty?: number;
-  /** CR-129: IOE round id - build a sectioned competition-structure
+  /** CR-129/130: cup round id - build a sectioned competition-structure
    *  paper instead of a flat pool draw. */
-  ioeRound?: string;
+  cupRound?: string;
 }
 
 /** CR-101: the bank RPC rate-limit (PT429/'rate_limited') must surface a
@@ -455,34 +455,34 @@ export async function createExamFromBank(
   const mode = opts.mode ?? 'practice';
   const seenKey = `ea-seen:${programId}:${gradeId}:${mode}:${opts.focus?.minDifficulty ?? 'all'}`;
   const seen = fixedForm ? [] : loadSeen(seenKey);
-  // CR-129: IOE competition-structure mock - sectioned paper fetched
+  // CR-129/130: Thi Cup competition-structure mock - sectioned paper fetched
   // per-skill so the composition is guaranteed, scored with the same
   // engine, labeled for the result screen's section table + award tier.
   // r168: branch BEFORE the flat fetch - a stray 250-row draw would
   // waste an RPC call and could fail a paper that never needed it.
-  const ioeRound = ioeRoundById(opts.focus?.ioeRound);
-  if (ioeRound && !fixedForm) {
-    const ioeSeenKey = `ea-seen:${programId}:${gradeId}:ioe:${ioeRound.id}`;
-    const ioeSeen = loadSeen(ioeSeenKey);
+  const cupRound = cupRoundById(opts.focus?.cupRound);
+  if (cupRound && !fixedForm) {
+    const cupSeenKey = `ea-seen:${programId}:${gradeId}:cup:${cupRound.id}`;
+    const cupSeen = loadSeen(cupSeenKey);
     const sections: { label: string; start: number; count: number }[] = [];
     const questions: ExamQuestion[] = [];
     let dropped = 0;
-    for (const section of ioeRound.sections) {
+    for (const section of cupRound.sections) {
       const sectionRows = await fetchBankQuestions(
         programId,
         gradeId,
         Math.ceil(section.count * 1.6),
         'mock',
-        { skills: section.skills, minDifficulty: ioeRound.minDifficulty },
+        { skills: section.skills, minDifficulty: cupRound.minDifficulty },
       );
       const sectionMapped = sectionRows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
       dropped += sectionRows.length - sectionMapped.length;
-      const picked = pickUnseenFirst(sectionMapped, section.count, ioeSeen);
+      const picked = pickUnseenFirst(sectionMapped, section.count, cupSeen);
       sections.push({ label: section.label, start: questions.length, count: picked.length });
       questions.push(...picked);
     }
     if (questions.length === 0) return null;
-    markSeen(ioeSeenKey, questions.map((q) => q.id));
+    markSeen(cupSeenKey, questions.map((q) => q.id));
     return {
       programId,
       gradeId,
@@ -490,15 +490,15 @@ export async function createExamFromBank(
       answers: questions.map(() => null),
       currentIndex: 0,
       startedAtMs: Date.now(),
-      timeLimitSec: ioeRound.timeSec,
+      timeLimitSec: cupRound.timeSec,
       untimed: false,
       finishedAtMs: null,
       droppedCount: dropped,
-      poolShort: sections.some((s, i) => s.count < ioeRound.sections[i]!.count),
+      poolShort: sections.some((s, i) => s.count < cupRound.sections[i]!.count),
       examLabel: {
-        title: `Thi thử IOE - ${ioeRound.label}`,
+        title: `Thi Cúp - ${cupRound.label}`,
         sections,
-        awards: IOE_AWARD_TIERS,
+        awards: CUP_AWARD_TIERS,
       },
     };
   }

@@ -125,7 +125,7 @@ export default function App() {
   const [examFormId, setExamFormId] = useState<string | null>(null);
   /** CR-58/59: drill focus for the current run - coach skill drill or
    *  advanced-tier difficulty floor. */
-  const [examFocus, setExamFocus] = useState<{ skills?: string[]; minDifficulty?: number; label?: string; ioeRound?: string } | null>(null);
+  const [examFocus, setExamFocus] = useState<{ skills?: string[]; minDifficulty?: number; label?: string; cupRound?: string } | null>(null);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [focusCreditsLink, setFocusCreditsLink] = useState(false);
   /** CR-83: which Game Zone title the 'game' screen is playing. */
@@ -343,7 +343,7 @@ export default function App() {
   /** CR-24/25: 'practice' = 20-question drill; 'exam' = 200q/30min mock.
    *  CR-28: 'review' = spaced-repetition session over due wrong questions.
    *  CR-58/59: focus = skill drill or advanced-tier filter. */
-  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string, focus?: { skills?: string[]; minDifficulty?: number; label?: string; ioeRound?: string }): void {
+  function handleStartExam(programId: ExamProgramId, mode: 'practice' | 'exam' | 'review', formId?: string, focus?: { skills?: string[]; minDifficulty?: number; label?: string; cupRound?: string }): void {
     setExamProgramId(programId);
     setExamMode(mode);
     setExamFormId(formId ?? null);

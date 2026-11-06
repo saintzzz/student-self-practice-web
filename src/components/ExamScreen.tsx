@@ -15,7 +15,7 @@ import {
   type ExamAnswer,
   type ExamState,
 } from '../lib/exam/examSession';
-import { ioeRoundById, type IoeRound } from '../lib/exam/ioeBlueprint';
+import { cupRoundById, type CupRound } from '../lib/exam/cupBlueprint';
 import { speakSentence } from '../lib/speech';
 import { playSfx } from '../lib/sfx';
 import {
@@ -139,7 +139,7 @@ interface ExamScreenProps {
   formId?: string;
   /** CR-58/59: drill focus - qb skill filter (coach) or difficulty floor
    *  (advanced tier). label shows on the intro screen. */
-  focus?: { skills?: string[]; minDifficulty?: number; label?: string; ioeRound?: string };
+  focus?: { skills?: string[]; minDifficulty?: number; label?: string; cupRound?: string };
   onExit: () => void;
 }
 
@@ -149,7 +149,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   // CR-98: assignments run exam-style - countdown, no instant verdicts.
   const isPractice = mode !== 'exam' && mode !== 'assignment';
   const isReview = mode === 'review';
-  const ioeRound = ioeRoundById(focus?.ioeRound);
+  const cupRound = cupRoundById(focus?.cupRound);
   const [exam, setExam] = useState<ExamState | null>(null);
   const [stripOffset, setStripOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
@@ -960,7 +960,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     // Fresh count at render time - items may have been mastered in a
     // just-finished session, leaving nothing to review right now.
     const reviewCount = isReview ? getDueReviewItems(gradeId).length : 0;
-    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} assignment={assignment} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} submitBlocked={flushBlocked} focusLabel={focus?.label} ioeRound={ioeRound} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
+    return <ExamIntro programId={programId} gradeId={gradeId} gradeLabel={gradeLabel} isPractice={isPractice} isReview={isReview} isArena={isArena} assignment={assignment} reviewCount={reviewCount} loading={loadingBank} loadError={loadError} submitBlocked={flushBlocked} focusLabel={focus?.label} cupRound={cupRound} onBegin={begin} onExit={() => { liveAbandon(); onExit(); }} />;
   }
 
   if (result) {
@@ -1386,7 +1386,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   );
 }
 
-function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, assignment, reviewCount, loading, loadError, submitBlocked, focusLabel, ioeRound, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; assignment?: { id: string; title: string; dueAt: string }; reviewCount?: number; loading?: boolean; loadError?: boolean; submitBlocked?: boolean; focusLabel?: string; ioeRound?: IoeRound; onBegin: () => void; onExit: () => void }) {
+function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isArena, assignment, reviewCount, loading, loadError, submitBlocked, focusLabel, cupRound, onBegin, onExit }: { programId: ExamProgramId; gradeId: string; gradeLabel: string; isPractice: boolean; isReview?: boolean; isArena?: boolean; assignment?: { id: string; title: string; dueAt: string }; reviewCount?: number; loading?: boolean; loadError?: boolean; submitBlocked?: boolean; focusLabel?: string; cupRound?: CupRound; onBegin: () => void; onExit: () => void }) {
   const title = isArena
     ? `Đấu trường - ${PROGRAM_LABEL[programId]}`
     : assignment ? assignment.title
@@ -1454,8 +1454,8 @@ function ExamIntro({ programId, gradeId, gradeLabel, isPractice, isReview, isAre
             </>
           ) : (
             <>
-              <li>• {ioeRound ? `${ioeRound.sections.reduce((n, s) => n + s.count, 0)} câu hỏi - làm trong ${Math.floor(ioeRound.timeSec / 60)} phút` : `${examConfigForGrade(gradeId).examCount} câu hỏi - làm trong ${Math.floor(examConfigForGrade(gradeId).examTimeSec / 60)} phút`}</li>
-              {ioeRound && <li>• {ioeRound.sections.length} phần thi theo cấu trúc IOE {ioeRound.label}</li>}
+              <li>• {cupRound ? `${cupRound.sections.reduce((n, s) => n + s.count, 0)} câu hỏi - làm trong ${Math.floor(cupRound.timeSec / 60)} phút` : `${examConfigForGrade(gradeId).examCount} câu hỏi - làm trong ${Math.floor(examConfigForGrade(gradeId).examTimeSec / 60)} phút`}</li>
+              {cupRound && <li>• {cupRound.sections.length} phần thi theo cấu trúc Thi Cúp {cupRound.label}</li>}
               <li>• Bấm số câu để nhảy tới câu bất kỳ, làm xong quay lại sửa được</li>
               <li>• Đánh dấu câu khó bằng lá cờ - phím F cũng được</li>
               <li>• Hết giờ tự động nộp bài</li>

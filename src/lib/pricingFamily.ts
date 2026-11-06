@@ -75,7 +75,7 @@ export const PRICING: readonly PricingOffer[] = [
 /** What every paid plan includes (01-pricing.md Tier 1 row, translated to
  *  app vocabulary per design s3.8.a). */
 export const PRICING_BENEFITS =
-  'Gói gồm: Luyện tập, Thi thử IOE, Ôn lại câu sai, Đấu trường 1v1, Kiểm tra đầu vào, sao và huy hiệu, báo cáo cho ba mẹ, đồng bộ nhiều thiết bị.';
+  'Gói gồm: Luyện tập, Thi Cúp, Ôn lại câu sai, Đấu trường 1v1, Kiểm tra đầu vào, sao và huy hiệu, báo cáo cho ba mẹ, đồng bộ nhiều thiết bị.';
 
 /** 01-pricing.md Tier 1: sibling discount is part of the offer. */
 export const PRICING_SIBLING_NOTE = 'Anh chị em: giảm 50% từ con thứ 2 (cùng gói).';

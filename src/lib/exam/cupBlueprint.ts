@@ -1,9 +1,10 @@
 /**
- * CR-129 - IOE-style competition mock blueprints.
+ * CR-129/CR-130 - "Thi Cup" competition mock blueprints (VieSchool
+ * own-brand - no third-party competition names in product UI).
  *
- * Rounds reuse the same 4-section IOE shape; counts/time/difficulty
- * escalate truong -> huyen -> tinh. Sections fetch separately through
- * the bank's p_skills filter so the composition is guaranteed.
+ * Rounds reuse the same 4-section competition shape; counts/time/
+ * difficulty escalate dong -> bac -> vang. Sections fetch separately
+ * through the bank's p_skills filter so the composition is guaranteed.
  * Content difficulty itself comes from the per-grade bank pools, so
  * one blueprint serves every grade.
  *
@@ -11,24 +12,24 @@
  * the result screen renders the "khong phai de thi chinh thuc"
  * disclaimer alongside the estimated award tier.
  */
-export interface IoeSection {
+export interface CupSection {
   label: string;
   skills: string[];
   count: number;
 }
 
-export interface IoeAwardTier {
+export interface CupAwardTier {
   /** minimum percent correct (0-100) to earn this tier. */
   min: number;
   label: string;
 }
 
-export interface IoeRound {
-  id: 'truong' | 'huyen' | 'tinh';
+export interface CupRound {
+  id: 'dong' | 'bac' | 'vang';
   label: string;
   timeSec: number;
   minDifficulty?: number;
-  sections: readonly IoeSection[];
+  sections: readonly CupSection[];
 }
 
 const VOCAB_GRAMMAR = [
@@ -38,10 +39,10 @@ const VOCAB_GRAMMAR = [
   'functional-language',
 ];
 
-export const IOE_ROUNDS: readonly IoeRound[] = [
+export const CUP_ROUNDS: readonly CupRound[] = [
   {
-    id: 'truong',
-    label: 'Cấp trường',
+    id: 'dong',
+    label: 'Vòng Đồng',
     timeSec: 20 * 60,
     sections: [
       { label: 'Nghe hiểu', skills: ['listening'], count: 6 },
@@ -51,8 +52,8 @@ export const IOE_ROUNDS: readonly IoeRound[] = [
     ],
   },
   {
-    id: 'huyen',
-    label: 'Cấp huyện',
+    id: 'bac',
+    label: 'Vòng Bạc',
     timeSec: 25 * 60,
     minDifficulty: 2,
     sections: [
@@ -63,8 +64,8 @@ export const IOE_ROUNDS: readonly IoeRound[] = [
     ],
   },
   {
-    id: 'tinh',
-    label: 'Cấp tỉnh',
+    id: 'vang',
+    label: 'Vòng Vàng',
     timeSec: 30 * 60,
     minDifficulty: 3,
     sections: [
@@ -76,17 +77,17 @@ export const IOE_ROUNDS: readonly IoeRound[] = [
   },
 ];
 
-export const IOE_AWARD_TIERS: readonly IoeAwardTier[] = [
+export const CUP_AWARD_TIERS: readonly CupAwardTier[] = [
   { min: 90, label: 'Giải Nhất' },
   { min: 75, label: 'Giải Nhì' },
   { min: 60, label: 'Giải Ba' },
   { min: 45, label: 'Khuyến khích' },
 ];
 
-export function ioeRoundById(id: string | undefined): IoeRound | undefined {
-  return IOE_ROUNDS.find((r) => r.id === id);
+export function cupRoundById(id: string | undefined): CupRound | undefined {
+  return CUP_ROUNDS.find((r) => r.id === id);
 }
 
-export function ioeAwardForPercent(percent: number): IoeAwardTier | undefined {
-  return IOE_AWARD_TIERS.find((t) => percent >= t.min);
+export function cupAwardForPercent(percent: number): CupAwardTier | undefined {
+  return CUP_AWARD_TIERS.find((t) => percent >= t.min);
 }
