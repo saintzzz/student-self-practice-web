@@ -1619,7 +1619,7 @@ export function ExamQuestionView({
                 type="button"
                 data-testid={`exam-letter-${i}`}
                 onClick={() => onAnswer({ type: 'option', index: i })}
-                className="h-16 w-16 rounded-xl bg-white font-letter text-2xl font-bold uppercase text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl bg-white font-letter text-2xl sm:text-3xl font-bold uppercase text-slate-800 ring-1 ring-slate-300 shadow-sm transition hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-600 active:scale-95 motion-reduce:transition-none"
               >
                 {letter}
               </button>
@@ -1641,7 +1641,7 @@ function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { te
           alt=""
           decoding="async"
           data-testid="exam-question-image"
-          className="art-breathe mx-auto mb-3 max-h-48 rounded-lg bg-white object-contain ring-1 ring-slate-200"
+          className="art-breathe mx-auto mb-3 max-h-48 sm:max-h-64 rounded-lg bg-white object-contain ring-1 ring-slate-200"
         />
       )}
       <MarkupText text={text} />
@@ -1654,7 +1654,7 @@ function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { te
 function OptionImg({ src, alt, delay, testId }: { src: string; alt: string; delay: number; testId: string }) {
   const [failed, setFailed] = useState(false);
   if (failed) return <MarkupText text={alt} />;
-  return <img src={src} alt={alt} decoding="async" data-testid={testId} onError={() => setFailed(true)} className="art-breathe inline-block max-h-20 rounded bg-white object-contain p-1 ring-1 ring-slate-200" style={{ animationDelay: `${delay}s` }} />;
+  return <img src={src} alt={alt} decoding="async" data-testid={testId} onError={() => setFailed(true)} className="art-breathe inline-block max-h-20 sm:max-h-28 rounded bg-white object-contain p-1 ring-1 ring-slate-200" style={{ animationDelay: `${delay}s` }} />;
 }
 
 function OptionButtons({

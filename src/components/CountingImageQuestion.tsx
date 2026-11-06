@@ -41,7 +41,7 @@ export default function CountingImageQuestion({
       {isCountToImage ? (
         <p className="mb-3 text-4xl font-extrabold text-white">{countLabel(question.prompt)}</p>
       ) : (
-        <div className="mb-3 text-6xl leading-relaxed" aria-hidden="true">
+        <div className="mb-3 text-6xl sm:text-7xl leading-relaxed" aria-hidden="true">
           <span className={material.exhibitPaper}>
             <EmojiVisual emoji={question.prompt.emoji} count={question.prompt.count} />
           </span>
@@ -61,7 +61,7 @@ export default function CountingImageQuestion({
           >
             {getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}
             {isCountToImage ? (
-              <span aria-hidden="true" className={`${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
+              <span aria-hidden="true" className={`text-4xl sm:text-5xl ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
                 <EmojiVisual emoji={option.emoji} count={option.count} />
               </span>
             ) : (

@@ -39,7 +39,7 @@ export default function ImageChoiceQuestion({
     <div>
       <QuestionBanner text={INSTRUCTION} speakerKey={speakerKey} />
       <div
-        className="mb-3 text-8xl [@media(max-height:420px)]:text-6xl"
+        className="mb-3 text-8xl sm:text-9xl [@media(max-height:420px)]:text-6xl"
         aria-hidden="true"
       >
         {/* CR-81 S3: exhibit frame - the prompt visual reads as a card

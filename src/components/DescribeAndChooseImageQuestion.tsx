@@ -77,7 +77,7 @@ export default function DescribeAndChooseImageQuestion({
             aria-label={getOptionLabelPrefix(index, selectedIndex, question.correctIndex) + option.emoji.repeat(option.count)}
           >
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
-            <span aria-hidden="true" className={`text-4xl leading-relaxed ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
+            <span aria-hidden="true" className={`text-4xl sm:text-6xl leading-relaxed ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
               <EmojiVisual emoji={option.emoji} count={option.count} />
             </span>
           </PressableOptionButton>

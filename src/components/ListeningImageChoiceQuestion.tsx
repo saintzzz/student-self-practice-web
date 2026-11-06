@@ -88,7 +88,7 @@ export default function ListeningImageChoiceQuestion({
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
             {/* CR-81 S3: framed exhibit - emoji sits on a pinned card,
                 alternating tilt reads hand-placed (inner span only). */}
-            <span aria-hidden="true" className={`text-6xl ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
+            <span aria-hidden="true" className={`text-6xl sm:text-8xl ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
               <EmojiVisual
                 // Keyed on the group state so flipping to the fallback
                 // remounts every option into svg mode - EmojiVisual derives

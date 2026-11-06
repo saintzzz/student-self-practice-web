@@ -26,12 +26,12 @@ export default function GameArt({
 }) {
   const scene = art && art.length > 0 ? art : [emoji];
   const heroIdx = Math.floor(scene.length / 2);
-  const heroCls = size === 'hero' ? 'text-6xl -translate-y-1' : 'text-4xl -translate-y-0.5';
-  const sideCls = size === 'hero' ? 'text-2xl' : 'text-lg';
+  const heroCls = size === 'hero' ? 'text-6xl sm:text-7xl -translate-y-1' : 'text-4xl sm:text-5xl -translate-y-0.5';
+  const sideCls = size === 'hero' ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-xl';
   const [imgFailed, setImgFailed] = useState(false);
   if (artImage && !imgFailed) {
     return (
-      <span className={`relative flex items-center justify-center ${size === 'hero' ? 'h-20 w-20' : 'h-14 w-14'}`} aria-hidden>
+      <span className={`relative flex items-center justify-center ${size === 'hero' ? 'h-20 w-20 sm:h-24 sm:w-24' : 'h-14 w-14 sm:h-16 sm:w-16'}`} aria-hidden>
         <img
           src={artImage}
           alt=""

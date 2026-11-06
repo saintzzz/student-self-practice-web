@@ -35,7 +35,7 @@ function tileClassName(isMatched: boolean, isPending: boolean, isWrongFlash: boo
      the browser steal vertical/diagonal drags via pointercancel; the
      surrounding card still scrolls from non-tile space. */
   const base =
-    'flex min-h-[76px] w-full items-center justify-center rounded-[1.25rem] border-2 p-4 text-2xl font-bold ' +
+    'flex min-h-[76px] w-full items-center justify-center rounded-[1.25rem] border-2 p-4 text-2xl sm:text-4xl font-bold ' +
     `transition ${material.tileFocus} disabled:cursor-not-allowed ${dragEnabled ? 'touch-none' : 'touch-pan-y'}`;
 
   if (isMatched) {
