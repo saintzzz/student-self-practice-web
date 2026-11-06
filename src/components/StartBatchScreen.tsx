@@ -380,8 +380,11 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               voiceKeyPrefix="hub-sub"
               tiles={[
                 /* CR-82 (R-v5-12): Đấu trường left this group - 3
-                   subjects + conditional Ôn tập = 3 or 4 subtiles. */
-                ...EXAM_PROGRAMS.map((program) => ({
+                   subjects + conditional Ôn tập = 3 or 4 subtiles.
+                   CR-128 r175-2: math-vi is bank-only - hide it when
+                   there is no Supabase (offline/dev bundled path would
+                   otherwise serve English math under the Toán label). */
+                ...EXAM_PROGRAMS.filter((p) => p.id !== 'math-vi' || isSupabaseConfigured()).map((program) => ({
                   id: program.id,
                   icon: program.icon,
                   label: program.name,
@@ -476,7 +479,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             <>
               <div id="hub-section-learn" data-testid="hub-section-learn" className="space-y-3">
                 {learnNote}
-                {EXAM_PROGRAMS.map((p) => programBlock(p))}
+                {EXAM_PROGRAMS.filter((p) => p.id !== 'math-vi' || isSupabaseConfigured()).map((p) => programBlock(p))}
               </div>
               {hasDueReview && (
                 <div id="hub-section-review" data-testid="hub-section-review">{reviewCardEl}</div>

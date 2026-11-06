@@ -290,9 +290,12 @@ function buildEnglishPool(gradeId: string, seed: string): ExamQuestion[] {
 
 export function buildExamPool(programId: ExamProgramId, gradeId: string, seed: string): ExamQuestion[] {
   switch (programId) {
-    // CR-128: math-vi has no bundled VI pool - this fallback only serves
-    // offline/arena paths; canonical delivery is the bank via SUBJECTS.
+    // CR-128 r175-2: math-vi is bank-only - the bundled math generator
+    // is English and must never serve under the Vietnamese 'Toán' label.
+    // The bundled path (offline dev / arena) returns nothing; the card
+    // is hidden when Supabase is not configured (StartBatchScreen).
     case 'math-vi':
+      return [];
     case 'math':
       return generateMathQuestions(gradeId, seed);
     case 'science':

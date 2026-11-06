@@ -122,7 +122,14 @@ Separate subject discriminator `math-vi` - NOT a locale flag on `math`:
 
 ### Remaining for full M1
 
-- Browser-verified prod flow (card -> practice -> result).
+- Browser-verified prod flow (card -> practice -> result) - DONE:
+  demo_hs login, Toán card, real VI questions served/scored with VI
+  explanations + "Báo lỗi câu này" visible.
+- r175 findings FIXED: assignment_create/assignment_remediate subject
+  mapping (migration 0075); bundled fallback no longer serves English
+  math under the Toán label (math-vi = bank-only, card hidden when
+  Supabase unconfigured).
+- Confirmation review round after this deploy.
 - True-false / number-input VI items (pilot is mcq-only; types exist in
   the engine, need VI content).
 - Topic tree expansion toward ~3k items; "Báo lỗi câu này" already live
