@@ -138,7 +138,7 @@ interface ExamScreenProps {
   formId?: string;
   /** CR-58/59: drill focus - qb skill filter (coach) or difficulty floor
    *  (advanced tier). label shows on the intro screen. */
-  focus?: { skills?: string[]; minDifficulty?: number; label?: string };
+  focus?: { skills?: string[]; minDifficulty?: number; label?: string; ioeRound?: string };
   onExit: () => void;
 }
 
@@ -1005,7 +1005,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             </button>
           </div>
         )}
-        <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} onExit={onExit} onRetry={canRetry ? begin : undefined} />
+        <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} examLabel={exam?.examLabel} onExit={onExit} onRetry={canRetry ? begin : undefined} />
       </div>
     );
   }
@@ -1238,6 +1238,18 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           <span>
             <span className={EXAM_QNUM}>Câu {exam.currentIndex + 1}</span>
             <span className="text-slate-500">/ {exam.questions.length}</span>
+            {/* CR-129: section label under the counter on structure
+                mocks so the paper reads like the real competition. */}
+            {exam.examLabel && (() => {
+              const sec = exam.examLabel.sections.find(
+                (s) => exam.currentIndex >= s.start && exam.currentIndex < s.start + s.count,
+              );
+              return sec ? (
+                <span data-testid="exam-section-label" className="block text-[11px] font-bold uppercase tracking-wide text-sky-700">
+                  {sec.label}
+                </span>
+              ) : null;
+            })()}
           </span>
           {!isPractice && (
             <button

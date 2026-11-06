@@ -81,6 +81,16 @@ export interface ExamState {
   droppedCount?: number;
   /** Pool was too small to reach the requested question count. */
   poolShort?: boolean;
+  /**
+   * CR-129: competition-structure metadata (IOE mock). Sections are
+   * contiguous ranges over `questions` - `start` is the first index.
+   * Awards are percent thresholds the result screen maps to a tier.
+   */
+  examLabel?: {
+    title: string;
+    sections: readonly { label: string; start: number; count: number }[];
+    awards: readonly { min: number; label: string }[];
+  };
 }
 
 export interface ExamReviewItem {

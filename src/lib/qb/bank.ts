@@ -10,6 +10,7 @@ import { getSession } from '../auth/practiceAuth';
 import { guestTicket } from './turnstile';
 import type { ExamProgramId, ExamQuestion } from '../../types/exam';
 import { examConfigForGrade, type ExamState } from '../exam/examSession';
+import { IOE_AWARD_TIERS, ioeRoundById } from '../exam/ioeBlueprint';
 import { seededShuffleIndices } from '../prng';
 import { isWordOrderCorrect } from '../exam/wordOrder';
 
@@ -60,6 +61,9 @@ export function gradeNumber(gradeId: string): number {
 export interface BankFetchFocus {
   skills?: string[];
   minDifficulty?: number;
+  /** CR-129: IOE round id - build a sectioned competition-structure
+   *  paper instead of a flat pool draw. */
+  ioeRound?: string;
 }
 
 /** CR-101: the bank RPC rate-limit (PT429/'rate_limited') must surface a
@@ -463,6 +467,51 @@ export async function createExamFromBank(
         mode,
         opts.focus,
       );
+  // CR-129: IOE competition-structure mock - sectioned paper fetched
+  // per-skill so the composition is guaranteed, scored with the same
+  // engine, labeled for the result screen's section table + award tier.
+  const ioeRound = ioeRoundById(opts.focus?.ioeRound);
+  if (ioeRound && !fixedForm) {
+    const ioeSeenKey = `ea-seen:${programId}:${gradeId}:ioe:${ioeRound.id}`;
+    const ioeSeen = loadSeen(ioeSeenKey);
+    const sections: { label: string; start: number; count: number }[] = [];
+    const questions: ExamQuestion[] = [];
+    let dropped = 0;
+    for (const section of ioeRound.sections) {
+      const sectionRows = await fetchBankQuestions(
+        programId,
+        gradeId,
+        Math.ceil(section.count * 1.6),
+        'mock',
+        { skills: section.skills, minDifficulty: ioeRound.minDifficulty },
+      );
+      const sectionMapped = sectionRows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
+      dropped += sectionRows.length - sectionMapped.length;
+      const picked = pickUnseenFirst(sectionMapped, section.count, ioeSeen);
+      sections.push({ label: section.label, start: questions.length, count: picked.length });
+      questions.push(...picked);
+    }
+    if (questions.length === 0) return null;
+    markSeen(ioeSeenKey, questions.map((q) => q.id));
+    return {
+      programId,
+      gradeId,
+      questions,
+      answers: questions.map(() => null),
+      currentIndex: 0,
+      startedAtMs: Date.now(),
+      timeLimitSec: ioeRound.timeSec,
+      untimed: false,
+      finishedAtMs: null,
+      droppedCount: dropped,
+      poolShort: sections.some((s, i) => s.count < ioeRound.sections[i]!.count),
+      examLabel: {
+        title: `Thi thử IOE - ${ioeRound.label}`,
+        sections,
+        awards: IOE_AWARD_TIERS,
+      },
+    };
+  }
   const mapped = rows.map(toExamQuestion).filter((q): q is ExamQuestion => q !== null);
   // r5: malformed bank rows must not silently shorten a session - count
   // them so the UI can surface a fixed-form defect or a thin pool.

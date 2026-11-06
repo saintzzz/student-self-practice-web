@@ -47,6 +47,7 @@ import {
   BTN_PAPER_ACTION,
 } from '../lib/ui/tokens';
 import { examConfigForGrade } from '../lib/exam/examSession';
+import { IOE_ROUNDS } from '../lib/exam/ioeBlueprint';
 import { getLand } from '../lib/ui/theme';
 import LandArt from './scene/LandArt';
 import { EmojiVisual } from './EmojiVisual';
@@ -108,6 +109,41 @@ const FORM_KIND_LABEL: Record<string, string> = {
   'midterm-2': 'Giữa kỳ 2',
   'final-2': 'Cuối kỳ 2',
 };
+
+/** CR-129: IOE competition-structure mock - pick a round, get a
+ *  sectioned paper with IOE framing + award estimate. English only. */
+function IoePicker({ onStartExam }: { onStartExam: (p: ExamProgramId, m: 'exam', formId: undefined, focus: { label: string; ioeRound: string }) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        data-testid="ioe-toggle"
+        onClick={() => setOpen((v) => !v)}
+        className={`${BTN_EXAM} w-full`}
+      >
+        Thi thử IOE{' '}
+        {open ? <IconChevronUp size={14} className="ml-1 inline-block" /> : <IconChevronDown size={14} className="ml-1 inline-block" />}
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-col gap-2" role="group" aria-label="Chọn cấp thi IOE">
+          {IOE_ROUNDS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              data-testid={`ioe-${r.id}`}
+              onClick={() => onStartExam('english', 'exam', undefined, { label: `Thi thử IOE - ${r.label}`, ioeRound: r.id })}
+              className={`${BTN_PAPER_ACTION} flex w-full items-center justify-between gap-2 text-left`}
+            >
+              <span>{r.label} · {r.sections.reduce((n, s) => n + s.count, 0)} câu · {Math.floor(r.timeSec / 60)} phút</span>
+              <IconArrowRight size={14} className="shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** CR-48 phase 5 + CR-50: collapsible V6 assessment forms per program.
  *  Teacher-only surface - students drill via Luyen de / Thi thu.
@@ -227,6 +263,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           {/* CR-82 (R-v5-12): flashcards = the 4th row of the English
               block only (vocabulary is English content), a BTN_DRILL-
               family paper row at the band's standalone floor. */}
+          {program.id === 'english' && <IoePicker onStartExam={onStartExam} />}
           {program.id === 'english' && onStartFlashcards && (
             <button
               type="button"

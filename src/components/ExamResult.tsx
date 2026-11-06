@@ -85,6 +85,7 @@ export function ExamResult({
   gradeLabel,
   isPractice,
   studentName,
+  examLabel,
   onExit,
   onRetry,
 }: {
@@ -94,6 +95,14 @@ export function ExamResult({
   isPractice: boolean;
   /** Display name -> first-name-only share card (PII-minimized). */
   studentName?: string;
+  /** CR-129: competition-structure metadata - renders the section
+   *  breakdown, the estimated award tier and the self-authored
+   *  disclaimer on the certificate. */
+  examLabel?: {
+    title: string;
+    sections: readonly { label: string; start: number; count: number }[];
+    awards: readonly { min: number; label: string }[];
+  };
   onExit: () => void;
   /** CR-28: hidden when the review queue is drained (nothing to retry). */
   onRetry?: () => void;
@@ -157,6 +166,38 @@ export function ExamResult({
               <div className="text-xs font-bold text-slate-500">thời gian</div>
             </div>
           </div>
+          {/* CR-129: competition paper - per-section correct counts,
+              the estimated award tier and the self-authored
+              disclaimer (not an official exam). */}
+          {examLabel && (
+            <div className="mt-4 text-left" data-testid="exam-section-breakdown">
+              <ul className="space-y-1.5">
+                {examLabel.sections.map((s) => {
+                  const secCorrect = result.review.filter(
+                    (r) => r.index >= s.start && r.index < s.start + s.count && r.isCorrect,
+                  ).length;
+                  return (
+                    <li key={s.label} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 ring-1 ring-slate-200">
+                      <span>{s.label}</span>
+                      <span>{secCorrect}/{s.count}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              {(() => {
+                const percent = Math.round((result.correctCount / Math.max(1, result.totalCount)) * 100);
+                const award = examLabel.awards.find((t) => percent >= t.min);
+                return (
+                  <p data-testid="exam-award" className="mt-3 text-center text-sm font-extrabold text-amber-700">
+                    {award ? `${award.label} - ước tính` : 'Chưa đạt giải - cố lên em!'}
+                  </p>
+                );
+              })()}
+              <p className="mt-2 text-center text-[11px] font-semibold leading-relaxed text-slate-400">
+                Đề tự biên soạn theo cấu trúc tham khảo - không phải đề thi chính thức; mức giải chỉ để tham khảo.
+              </p>
+            </div>
+          )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
