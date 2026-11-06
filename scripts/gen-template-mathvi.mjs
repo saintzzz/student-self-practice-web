@@ -103,6 +103,18 @@ if (GRADE === 1) { // G1: số đến 20/100, cộng trừ trong 10-20, so sánh
     const w = rr(3, 9), k1 = rr(1, w - 1);
     push('number-sense', 'numbers', 2, `${w} = ${k1} + ?`, w - k1, [w - k1 + 1, w - k1 - 1, k1], `${w} = ${k1} + ${w - k1}.`);
   }
+  for (let i = 0; i < 30; i++) { // nâng cao G1: hai bước, tìm số trừ/bị trừ, so sánh chênh lệch, tiền
+    const x = rr(6, 12), y = rr(3, 8), z = rr(1, 5), s = x + y - z;
+    push('arithmetic', 'numbers', 3, `Tính: ${x} + ${y} - ${z} = ?`, s, [s + 1, s - 1, x + y, x - z], `${x} + ${y} = ${x + y}, rồi ${x + y} - ${z} = ${s}.`);
+    const m = rr(10, 20), k2 = rr(2, m - 2);
+    push('number-sense', 'numbers', 3, `Số nào trừ đi ${k2} thì bằng ${m - k2}?`, m, [m - k2, m + k2, k2], `Vì ${m} - ${k2} = ${m - k2} nên số cần tìm là ${m}.`);
+    const a = rr(8, 19), b = rr(1, a - 2);
+    push('number-sense', 'numbers', 3, `Số ${a} lớn hơn số ${b} bao nhiêu đơn vị?`, a - b, [a - b - 1, a - b + 1, a + b], `${a} - ${b} = ${a - b}.`);
+    const [obj, short] = pick(ITEMS), c1 = rr(4, 9), g = rr(2, 6);
+    push('word-problem', 'numbers', 3, `${pick(NAMES)} có ${c1 + g} ${short}, nhiều hơn em ${g} ${short}. Hỏi em có bao nhiêu ${short}?`, c1, [c1 + g + g, c1 + g, g], `Bạn có ${c1 + g} ${short}, nhiều hơn em ${g} ${short} nên em có ${c1 + g} - ${g} = ${c1} ${short}.`);
+    const vnd = pick([1, 2, 5]);
+    push('money', 'numbers', 3, `Nam có 2 tờ ${vnd} nghìn đồng. Hỏi Nam có tất cả bao nhiêu nghìn đồng?`, 2 * vnd, [vnd, 2 * vnd + 1, vnd + 2], `2 tờ ${vnd} nghìn = ${vnd} + ${vnd} = ${2 * vnd} nghìn đồng.`);
+  }
 }
 
 if (GRADE === 2) { // G2: số đến 1000, cộng trừ có nhớ ≤100, nhân chia 2-5, đo cm/dm/m, lít, giờ
@@ -139,6 +151,20 @@ if (GRADE === 2) { // G2: số đến 1000, cộng trừ có nhớ ≤100, nhân
       ['Hình chữ nhật có mấy góc vuông?', '4', ['2', '3', '1'], 'Hình chữ nhật có 4 góc vuông.'],
     ]);
     push('geometry', 'geometry', 1, geo[0], geo[1], geo[2], geo[3]);
+  }
+  for (let i = 0; i < 30; i++) { // nâng cao G2: hai bước, thừa số/số bị chia ẩn, chu vi, tiền lẻ
+    const a = rr(3, 9), b = rr(3, 9), p = a * b;
+    push('arithmetic', 'numbers', 3, `? × ${b} = ${p}`, a, [a + 1, a - 1, p - b], `Vì ${a} × ${b} = ${p} nên số cần tìm là ${a}.`);
+    const dv = rr(2, 5), q2 = rr(3, 9), dvd = dv * q2;
+    push('arithmetic', 'numbers', 3, `${dvd} : ? = ${q2}`, dv, [dv + 1, dv - 1, q2], `Vì ${dvd} : ${dv} = ${q2} nên số cần tìm là ${dv}.`);
+    const [obj, short] = pick(ITEMS), c1 = rr(15, 45), c2 = rr(8, 30);
+    push('word-problem', 'numbers', 3, `${pick(NAMES)} hái được ${c1} ${short}, em hái được ${c2} ${short}. Hỏi bạn hái nhiều hơn em bao nhiêu ${short}?`, c1 - c2, [c1 + c2, c1 - c2 + 1, c1 - c2 - 1], `${c1} - ${c2} = ${c1 - c2}.`);
+    const s = rr(3, 9);
+    push('geometry', 'geometry', 3, `Hình vuông có cạnh ${s} cm. Chu vi hình vuông là bao nhiêu cm?`, 4 * s, [3 * s, 4 * s + 1, s * s], `Chu vi hình vuông = cạnh × 4 = ${s} × 4 = ${4 * s} cm.`);
+    const m = rr(60, 95), n = rr(10, m - 10);
+    push('arithmetic', 'numbers', 3, `${m} - ? = ${m - n}`, n, [n + 1, n - 1, m - n - 1], `Vì ${m} - ${n} = ${m - n} nên số cần tìm là ${n}.`);
+    const vnd = pick([2, 5]), cnt = rr(2, 4);
+    push('money', 'numbers', 3, `Mai có ${cnt} tờ ${vnd} nghìn đồng. Hỏi Mai có tất cả bao nhiêu nghìn đồng?`, cnt * vnd, [cnt * vnd - vnd, cnt * vnd + vnd, vnd], `${cnt} × ${vnd} = ${cnt * vnd} nghìn đồng.`);
   }
 }
 

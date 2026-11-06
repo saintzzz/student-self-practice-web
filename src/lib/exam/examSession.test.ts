@@ -89,6 +89,14 @@ describe('createExam', () => {
     expect(kinds.has('true-false-reading')).toBe(true);
     expect(kinds.has('grammar-mcq') || kinds.has('text-answer')).toBe(true);
   });
+
+  it('math-vi is bank-only: no bundled pool and createExam throws', () => {
+    // CR-128 r176: the bundled math generator is English - it must never
+    // serve under the Vietnamese "Toán" label, and a zero-question exam
+    // must fail loudly instead of seating an empty session.
+    expect(buildExamPool('math-vi', 'grade-3', 's')).toEqual([]);
+    expect(() => createExam('math-vi', 'grade-3', 's', NOW)).toThrow(/empty bundled pool/);
+  });
 });
 
 describe('exam flow', () => {

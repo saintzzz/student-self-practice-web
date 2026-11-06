@@ -329,6 +329,15 @@ export function createExam(
   const config = examConfigForGrade(gradeId);
   const pool = buildExamPool(programId, gradeId, seed);
   const questions = pool.slice(0, count ?? config.examCount);
+  // CR-128 r176: a zero-question exam is always a bug (bank-only programs
+  // like math-vi must go through createExamFromBank; an empty pool for a
+  // bundled program means a bad program/grade pair). Fail loudly instead
+  // of seating the student in an empty session.
+  if (questions.length === 0) {
+    throw new Error(
+      `createExam: empty bundled pool for ${programId}/${gradeId} - bank-only programs must use createExamFromBank`,
+    );
+  }
   return {
     programId,
     gradeId,
