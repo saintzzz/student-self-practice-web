@@ -58,7 +58,7 @@ export interface MockTrendResult {
 const WEEK_DAYS = 7;
 const TREND_LIMIT = 10;
 /** practice.results.program CHECK constraint: 'batch' | 'english' | 'math' | 'science'. */
-const EXAM_PROGRAMS = ['english', 'math', 'science'] as const;
+const EXAM_PROGRAMS = ['english', 'math', 'science', 'math-vi'] as const;
 /** A hard ceiling on rows scanned client-side; a child doing 500+
  *  activities in a week is far outside the product envelope. */
 const WEEK_ROW_CAP = 500;

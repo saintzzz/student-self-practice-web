@@ -158,7 +158,7 @@ describe('fetchMockTrend', () => {
     const calls = builders[0].calls;
     expect(calls).toContainEqual(['eq', 'account_id', 'stu-1']);
     expect(calls).toContainEqual(['eq', 'grade_id', 'grade-3']);
-    expect(calls).toContainEqual(['in', 'program', ['english', 'math', 'science']]);
+    expect(calls).toContainEqual(['in', 'program', ['english', 'math', 'science', 'math-vi']]);
     expect(calls).toContainEqual(['is', 'form_id', null]);
   });
 

@@ -172,4 +172,6 @@ export type ExamOnlyQuestion =
 /** An exam may draw from both practice kinds and exam-only kinds. */
 export type ExamQuestion = Question | ExamOnlyQuestion;
 
-export type ExamProgramId = 'english' | 'math' | 'science';
+/** CR-128: 'math-vi' = Toán tiếng Việt (SGK track); 'math' stays
+ *  math-in-English for the English exam ecosystem. */
+export type ExamProgramId = 'english' | 'math' | 'science' | 'math-vi';

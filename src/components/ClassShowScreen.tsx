@@ -28,6 +28,7 @@ import {
 
 const PROGRAMS: readonly { id: ExamProgramId; name: string; emoji: string }[] = [
   { id: 'english', name: 'Tiếng Anh', emoji: '🔤' },
+  { id: 'math-vi', name: 'Toán', emoji: '🧮' },
   { id: 'math', name: 'Toán tiếng Anh', emoji: '🔢' },
   { id: 'science', name: 'Khoa học', emoji: '🔬' },
 ];

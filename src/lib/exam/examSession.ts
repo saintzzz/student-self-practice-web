@@ -290,6 +290,9 @@ function buildEnglishPool(gradeId: string, seed: string): ExamQuestion[] {
 
 export function buildExamPool(programId: ExamProgramId, gradeId: string, seed: string): ExamQuestion[] {
   switch (programId) {
+    // CR-128: math-vi has no bundled VI pool - this fallback only serves
+    // offline/arena paths; canonical delivery is the bank via SUBJECTS.
+    case 'math-vi':
     case 'math':
       return generateMathQuestions(gradeId, seed);
     case 'science':

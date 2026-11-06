@@ -374,7 +374,7 @@ export default function App() {
     }
     if (GRADES.some((g) => g.id === res.gradeId)) setSelectedGradeId(res.gradeId);
     const pid: ExamProgramId =
-      res.programId === 'math' || res.programId === 'science' ? res.programId : 'english';
+      res.programId === 'math' || res.programId === 'science' || res.programId === 'math-vi' ? res.programId : 'english';
     setExamProgramId(pid);
     setExamMode('assignment');
     setExamFormId(null);
@@ -403,7 +403,7 @@ export default function App() {
     // The accepted duel must replay the challenge's OWN program with its
     // seed - otherwise an identical seed would render a different set.
     const pid: ExamProgramId =
-      challenge.program_id === 'math' || challenge.program_id === 'science' ? challenge.program_id : 'english';
+      challenge.program_id === 'math' || challenge.program_id === 'science' || challenge.program_id === 'math-vi' ? challenge.program_id : 'english';
     setExamProgramId(pid);
     setExamMode('arena');
     setExamFocus(null);

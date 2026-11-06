@@ -320,6 +320,18 @@ export function IconHash(props: IconProps) {
   );
 }
 
+export function IconAbacus(props: IconProps) {
+  return (
+    <svg {...iconProps(props)}>
+      <rect x="4" y="4.5" width="16" height="15" rx="2" />
+      <path d="M4 9.5h16M4 14.5h16" />
+      <path d="M8.5 4.5v15M15.5 4.5v15" />
+      <circle cx="8.5" cy="9.5" r="0.6" fill="currentColor" />
+      <circle cx="15.5" cy="14.5" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function IconFlask(props: IconProps) {
   return (
     <svg {...iconProps(props)}>

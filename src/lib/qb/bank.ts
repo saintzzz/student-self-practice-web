@@ -17,7 +17,7 @@ import { isWordOrderCorrect } from '../exam/wordOrder';
 export interface QbRow {
   id: string;
   grade: number;
-  subject: 'english' | 'math' | 'science';
+  subject: 'english' | 'math' | 'science' | 'math-vi';
   domain: string | null;
   skill: string;
   question_type: string;
@@ -50,6 +50,7 @@ const SUBJECTS: Record<ExamProgramId, QbRow['subject']> = {
   english: 'english',
   math: 'math',
   science: 'science',
+  'math-vi': 'math-vi',
 };
 
 export function gradeNumber(gradeId: string): number {

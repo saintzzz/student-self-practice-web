@@ -753,3 +753,36 @@ describe('CR-106 teach-me (AC-106.1/106.2)', () => {
     expect('bankTaught' in hydrated ? hydrated.bankTaught : undefined).toBeUndefined();
   });
 });
+
+describe('CR-128 math-vi (Toán tiếng Việt)', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+    getSessionMock.mockReset();
+  });
+
+  it('program math-vi queries the math-vi bank subject', async () => {
+    getSessionMock.mockResolvedValue({ user: { id: 'u1' } });
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    await fetchBankQuestions('math-vi', 'grade-3', 5, 'practice');
+    expect(rpcMock).toHaveBeenCalledWith(
+      'fetch_questions_adaptive',
+      expect.objectContaining({ p_subject: 'math-vi', p_grade: 3 }),
+    );
+  });
+
+  it('Vietnamese math mcq rows map and score like any bank row', () => {
+    const q = toExamQuestion(row({
+      subject: 'math-vi',
+      skill: 'arithmetic',
+      prompt_text: 'Tính: 338 + 45 = ?',
+      choices: ['393', '373', '384', '383'],
+      answer: { index: 3, text: '383' },
+      explanation_vi: '338 + 45 = 383.',
+    }))!;
+    if (q.kind !== 'grammar-mcq') throw new Error('expected grammar-mcq');
+    expect(q.prompt).toBe('Tính: 338 + 45 = ?');
+    expect(q.options[q.correctIndex]).toBe('383');
+    expect(isExamAnswerCorrect(q, { type: 'option', index: q.correctIndex })).toBe(true);
+    expect(examCorrectAnswerText(q)).toBe('383');
+  });
+});

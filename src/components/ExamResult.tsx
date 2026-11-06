@@ -36,6 +36,7 @@ import { IconHome, IconPlay } from './icons';
 /** CR-24: program display names (shared with the exam header/intro). */
 export const PROGRAM_LABEL: Record<ExamProgramId, string> = {
   english: 'Tiếng Anh',
+  'math-vi': 'Toán',
   math: 'Toán tiếng Anh',
   science: 'Khoa học',
 };

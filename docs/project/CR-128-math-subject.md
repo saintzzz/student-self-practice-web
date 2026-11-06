@@ -83,5 +83,48 @@ Same repo, same app, subject dimension - NOT a separate app/fork:
 
 ## Status
 
-Scope drafted. Next: BA detail for M1 (topic tree, renderer specs,
-bank seeding pipeline), then Tech Lead.
+M1 pilot shipped (grade-scoped Vietnamese math track).
+
+### Architecture decision (resolved)
+
+Separate subject discriminator `math-vi` - NOT a locale flag on `math`:
+- `'math'` stays math-in-English (English exam ecosystem, 54k rows).
+- `'math-vi'` is the SGK Vietnamese track - clean separation at the
+  bank, RPC, results, and UI layers with zero ambiguity on every join.
+- Migration `0074_math_vi_subject.sql` extended
+  `qb_questions_subject_check` and `results_program_check` to include
+  `'math-vi'`. Arena tables intentionally unchanged (duels are
+  English-only by design).
+
+### Shipped
+
+- DB: constraints migrated; `fetch_questions`/`_public`/`_adaptive`
+  serve `math-vi` unchanged (`p_subject` is free-text).
+- Content: `scripts/gen-template-mathvi.mjs` - deterministic VI
+  templates per SGK ranges (G1 ≤20, G2 ≤1000/nhân chia 2-5, G3 ≤1000/
+  chu vi, G4 lớp nghìn/phân số/góc, G5 thập phân/%/diện tích/thể tích/
+  v-t-s). 939 items seeded: g1:150 g2:168 g3:320 g4:173 g5:128, all
+  `rights_status='owned-original-generated'`, `review_status='approved'`,
+  practice+mock eligible, exam-gated off.
+- App: `ExamProgramId += 'math-vi'`; SUBJECTS/PROGRAM_LABEL/
+  PROGRAM_VOICE_HINT/PROGRAM_STYLE/EXAM_PROGRAMS/ClassShow extended;
+  `IconAbacus` added; 'Toán' card (amber, 🧮) sits after 'Tiếng Anh',
+  before 'Toán tiếng Anh'. Assignment + challenge pid mapping updated.
+  `buildExamPool` math-vi falls back to the bundled math generator for
+  the offline/arena path only (canonical delivery is the bank).
+- Tests: `bank.test.ts` math-vi subject-mapping + VI-row scoring (53
+  tests green).
+
+### Verified
+
+- RPC returns VI prompts/choices with keyless wire shape (server-side
+  scoring preserved); 8-row random sample all mathematically correct.
+
+### Remaining for full M1
+
+- Browser-verified prod flow (card -> practice -> result).
+- True-false / number-input VI items (pilot is mcq-only; types exist in
+  the engine, need VI content).
+- Topic tree expansion toward ~3k items; "Báo lỗi câu này" already live
+  on every bank row including math-vi.
+- External review round pending after deploy.

@@ -19,6 +19,7 @@ import ModeHub, { HubGroup, type HubTileDef } from './ModeHub';
 import GameZoneShelf from '../games/GameZoneShelf';
 import type { GameId } from '../games/types';
 import {
+  IconAbacus,
   IconArrowLeft,
   IconArrowRight,
   IconBook,
@@ -88,17 +89,29 @@ interface StartBatchScreenProps {
   onLogin?: () => void;
 }
 
-/** CR-24: IOE-style Thi thử - 3 chương trình riêng biệt. */
+/** CR-24: IOE-style Thi thử - 3 chương trình riêng biệt.
+ *  CR-128: 'math-vi' = Toán SGK tiếng Việt - track riêng, đặt sau
+ *  Tiếng Anh; 'math' (Toán tiếng Anh) giữ nguyên cho hệ đề tiếng Anh. */
 const EXAM_PROGRAMS: readonly { id: ExamProgramId; icon: ComponentType<IconProps>; name: string; desc: string }[] = [
   { id: 'english', icon: IconFlag, name: 'Tiếng Anh', desc: 'Nghe, đọc, ngữ pháp, sắp câu' },
+  { id: 'math-vi', icon: IconAbacus, name: 'Toán', desc: 'Số học, hình học, giải toán' },
   { id: 'math', icon: IconHash, name: 'Toán tiếng Anh', desc: 'Tính nhẩm, đọc số, hình học' },
   { id: 'science', icon: IconFlask, name: 'Khoa học', desc: 'Động vật, cây cối, tự nhiên' },
 ];
 
 const PROGRAM_VOICE_HINT: Record<ExamProgramId, string> = {
   english: 'Chọn cách luyện Tiếng Anh nhé!',
+  'math-vi': 'Chọn cách luyện Toán nhé!',
   math: 'Chọn cách luyện Toán bằng tiếng Anh nhé!',
   science: 'Chọn cách luyện Khoa học nhé!',
+};
+
+/** Subtile tone/emoji/art per program (CR-128 added math-vi). */
+const PROGRAM_STYLE: Record<ExamProgramId, { tone: 'sky' | 'rose' | 'emerald' | 'amber'; emoji: string; art: string }> = {
+  english: { tone: 'sky', emoji: '🔤', art: '/images/emblems/emblem-learn.webp' },
+  'math-vi': { tone: 'amber', emoji: '🧮', art: '/images/emblems/emblem-math.webp' },
+  math: { tone: 'rose', emoji: '🔢', art: '/images/emblems/emblem-math.webp' },
+  science: { tone: 'emerald', emoji: '🔬', art: '/images/emblems/emblem-science.webp' },
 };
 
 const FORM_KIND_LABEL: Record<string, string> = {
@@ -374,9 +387,9 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
                   label: program.name,
                   sub: program.desc,
                   voiceHint: PROGRAM_VOICE_HINT[program.id],
-                  tone: program.id === 'english' ? 'sky' as const : program.id === 'math' ? 'rose' as const : 'emerald' as const,
-                  emoji: program.id === 'english' ? '🔤' : program.id === 'math' ? '🔢' : '🔬',
-                  art: program.id === 'english' ? '/images/emblems/emblem-learn.webp' : program.id === 'math' ? '/images/emblems/emblem-math.webp' : '/images/emblems/emblem-science.webp',
+                  tone: PROGRAM_STYLE[program.id].tone,
+                  emoji: PROGRAM_STYLE[program.id].emoji,
+                  art: PROGRAM_STYLE[program.id].art,
                   content: programBlock(program, false),
                 })),
                 ...(hasDueReview || hasCoachHints
