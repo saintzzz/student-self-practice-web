@@ -129,7 +129,10 @@ Separate subject discriminator `math-vi` - NOT a locale flag on `math`:
   mapping (migration 0075); bundled fallback no longer serves English
   math under the Toán label (math-vi = bank-only, card hidden when
   Supabase unconfigured).
-- Confirmation review round after this deploy.
+- DONE. Review loop closed: r175 (2 majors) -> r176 (1 major) -> r177
+  (1 minor) -> r178 CLEAN. Prod-verified demo_hs: Luyen de + Thi thu
+  (120q) + Nang cao all serve VI questions; assignment minting maps
+  math-vi; nang-cao d3 pool non-empty all grades; 0 negative answers.
 - True-false / number-input VI items (pilot is mcq-only; types exist in
   the engine, need VI content).
 - Topic tree expansion toward ~3k items; "Báo lỗi câu này" already live
