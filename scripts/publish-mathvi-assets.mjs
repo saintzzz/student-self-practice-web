@@ -52,7 +52,8 @@ function vizFor(p) {
   // small-count add/compare word problems -> countable groups (unlabeled)
   if ((m = p.match(RX_ADD)) || (m = p.match(RX_PICK))) {
     const a = Number(m[1]), b = Number(m[3]);
-    if (a + b <= 16) return { type: 'groups', a, b, emoji: m[2] };
+    // <=12 per side keeps 3 rows inside the 220px viewBox (halfRow: y=80+55r)
+    if (a <= 12 && b <= 12) return { type: 'groups', a, b, emoji: m[2] };
   }
   return null;
 }
