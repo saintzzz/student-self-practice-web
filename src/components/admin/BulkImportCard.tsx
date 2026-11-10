@@ -29,6 +29,31 @@ interface Props {
 
 const TEMPLATE = 'username,display_name,pin\nhs001,Nguyen Van A,123456\n';
 
+/** Minimal RFC-4180 CSV reader - quoted cells, escaped quotes. */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let cell = '';
+  let row: string[] = [];
+  let quoted = false;
+  for (let i = 0; i <= text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cell += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r' || ch === undefined) {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell);
+      if (row.some((c) => c !== '')) rows.push(row);
+      row = [];
+      cell = '';
+    } else cell += ch;
+  }
+  return rows;
+}
+
 export default function BulkImportCard({ classes, onDone, invokeAdmin }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<Row[]>([]);
@@ -41,8 +66,13 @@ export default function BulkImportCard({ classes, onDone, invokeAdmin }: Props) 
     setParseErr(null);
     setRows([]);
     try {
-      const { default: readXlsxFile } = await import('read-excel-file/browser');
-      const raw = (await readXlsxFile(file)) as unknown as unknown[][];
+      let raw: unknown[][];
+      if (/\.csv$/i.test(file.name)) {
+        raw = parseCsv(await file.text());
+      } else {
+        const { readSheet } = await import('read-excel-file/browser');
+        raw = await readSheet(file);
+      }
       const parsed: Row[] = [];
       for (const r of raw) {
         const username = String(r[0] ?? '').trim();
@@ -114,8 +144,10 @@ export default function BulkImportCard({ classes, onDone, invokeAdmin }: Props) 
         File .xlsx hoặc .csv với 3 cột: <b>username, display_name, pin</b>. Có thể gán luôn vào lớp sau khi tạo.
       </p>
       <div className="mb-3 flex flex-wrap items-center gap-3">
+        <label htmlFor="bulk-file" className="sr-only">Chọn file danh sách học sinh</label>
         <input
           ref={fileRef}
+          id="bulk-file"
           data-testid="bulk-file"
           type="file"
           accept=".xlsx,.csv"
@@ -126,7 +158,8 @@ export default function BulkImportCard({ classes, onDone, invokeAdmin }: Props) 
         <button type="button" className={BTN_SECONDARY} onClick={downloadTemplate} disabled={busy}>
           Tải template
         </button>
-        <select data-testid="bulk-class" className={SELECT} style={{ maxWidth: 260 }} value={classId} onChange={(e) => setClassId(e.target.value)} disabled={busy}>
+        <label htmlFor="bulk-class" className="sr-only">Gán vào lớp</label>
+        <select id="bulk-class" data-testid="bulk-class" className={SELECT} style={{ maxWidth: 260 }} value={classId} onChange={(e) => setClassId(e.target.value)} disabled={busy}>
           <option value="">- Không gán lớp -</option>
           {classes.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
