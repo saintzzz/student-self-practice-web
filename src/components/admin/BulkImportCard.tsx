@@ -68,7 +68,7 @@ export default function BulkImportCard({ classes, onDone, invokeAdmin }: Props) 
     try {
       let raw: unknown[][];
       if (/\.csv$/i.test(file.name)) {
-        raw = parseCsv(await file.text());
+        raw = parseCsv((await file.text()).replace(/^\uFEFF/, ''));
       } else {
         const { readSheet } = await import('read-excel-file/browser');
         raw = await readSheet(file);
