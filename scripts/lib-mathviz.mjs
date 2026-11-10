@@ -207,15 +207,40 @@ function barCompare({ a, b, unit }) {
   const scale = 220 / a;
   const wA = 220, wB = Math.round(b * scale);
   const y1 = 60, y2 = 130, hh = 44;
-  const gapX = 70 + wB;
+  const gapX = 70 + wB, gapW = wA - wB;
+  // r181-3: a narrow gap overflows its label - park it outside the box
+  const gapLabel = gapW >= 30
+    ? txt(gapX + gapW / 2, y2 + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 17, 'middle', RED, 700)
+    : txt(gapX + gapW + 10, y2 + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 15, 'start', RED, 700);
   return wrap(
     `<rect x="70" y="${y1}" width="${wA}" height="${hh}" fill="${BAR}" stroke="#b45309" stroke-width="2" rx="4"/>` +
     txt(70 + wA / 2, y1 + hh / 2 + 7, a, 18, 'middle', '#78350f', 700) +
     `<rect x="70" y="${y2}" width="${wB}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
     txt(70 + wB / 2, y2 + hh / 2 + 7, b, 18, 'middle', '#082f49', 700) +
-    `<rect x="${gapX}" y="${y2}" width="${wA - wB}" height="${hh}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="5 4" rx="4"/>` +
-    txt(gapX + (wA - wB) / 2, y2 + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 17, 'middle', RED, 700),
+    `<rect x="${gapX}" y="${y2}" width="${gapW}" height="${hh}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="5 4" rx="4"/>` +
+    gapLabel,
     `Sơ đồ so sánh: ${a} và ${b}`,
+  );
+}
+
+// 'A nhieu hon B k, tim B': top bar = a (known), bottom bar is the
+// unknown B drawn proportionally shorter with the difference box = k.
+function barCompareGap({ a, gap, unit }) {
+  const scale = 220 / a;
+  const wA = 220, wB = Math.max(24, Math.round((a - gap) * scale));
+  const y1 = 60, y2 = 130, hh = 44;
+  const gapX = 70 + wB, gapW = wA - wB;
+  const gapLabel = gapW >= 30
+    ? txt(gapX + gapW / 2, y2 + hh / 2 + 7, gap, 16, 'middle', RED, 700)
+    : txt(gapX + gapW / 2, y2 - 10, gap, 15, 'middle', RED, 700);
+  return wrap(
+    `<rect x="70" y="${y1}" width="${wA}" height="${hh}" fill="${BAR}" stroke="#b45309" stroke-width="2" rx="4"/>` +
+    txt(70 + wA / 2, y1 + hh / 2 + 7, `${a}${unit ? ' ' + unit : ''}`, 18, 'middle', '#78350f', 700) +
+    `<rect x="70" y="${y2}" width="${wB}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
+    txt(70 + wB / 2, y2 + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 18, 'middle', '#082f49', 700) +
+    `<rect x="${gapX}" y="${y2}" width="${gapW}" height="${hh}" fill="#fee2e2" stroke="${RED}" stroke-width="2" stroke-dasharray="5 4" rx="4"/>` +
+    gapLabel,
+    `Sơ đồ so sánh: ${a} nhiều hơn ${gap}`,
   );
 }
 
@@ -241,10 +266,12 @@ function barEqualParts({ total, parts, unit }) {
   const gap = 5, w = 230;
   const sw = (w - (parts - 1) * gap) / parts;
   const y = 85, hh = 46;
+  // r181-2: '?' must fit the segment, not spill across boundaries
+  const qSize = Math.max(9, Math.min(18, sw * 0.62));
   let out = '';
   for (let i = 0; i < parts; i++) {
     out += `<rect x="${65 + i * (sw + gap)}" y="${y}" width="${sw}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
-      txt(65 + i * (sw + gap) + sw / 2, y + hh / 2 + 6, '?', 18, 'middle', '#082f49', 700);
+      txt(65 + i * (sw + gap) + sw / 2, y + hh / 2 + qSize * 0.36, '?', qSize, 'middle', '#082f49', 700);
   }
   out += `<path d="M65 ${y - 10} v6 h${w} v-6" fill="none" stroke="${INK}" stroke-width="2"/>` +
     txt(65 + w / 2, y - 20, `${total} ${unit ?? ''}`, 17);
@@ -253,12 +280,16 @@ function barEqualParts({ total, parts, unit }) {
 
 function barSubtract({ whole, part, unit }) {
   // whole bar = whole; `part` segment shaded; remainder is '?'
-  const wWhole = 230, wPart = Math.max(40, Math.round(wWhole * (part / whole)));
+  // r181-4: true proportional scale; a too-narrow part labels outside
+  const wWhole = 230, wPart = Math.max(14, Math.round(wWhole * (part / whole)));
   const x = 65, y = 85, hh = 48;
+  const partLabel = wPart >= 26
+    ? txt(x + wPart / 2, y + hh / 2 + 7, part, 18, 'middle', '#082f49', 700)
+    : txt(x + wPart / 2, y + hh + 22, part, 15, 'middle', '#082f49', 700);
   return wrap(
     `<rect x="${x}" y="${y}" width="${wPart}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
     `<rect x="${x + wPart}" y="${y}" width="${wWhole - wPart}" height="${hh}" fill="#f1f5f9" stroke="${RED}" stroke-width="2" stroke-dasharray="5 4" rx="4"/>` +
-    txt(x + wPart / 2, y + hh / 2 + 7, part, 18, 'middle', '#082f49', 700) +
+    partLabel +
     txt(x + wPart + (wWhole - wPart) / 2, y + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 18, 'middle', RED, 700) +
     `<path d="M${x} ${y - 10} v6 h${wWhole} v-6" fill="none" stroke="${INK}" stroke-width="2"/>` +
     txt(x + wWhole / 2, y - 20, `${whole} ${unit ?? ''}`, 17),
@@ -286,6 +317,7 @@ function bar({ kind, ...rest }) {
   if (kind === 'compare') return barCompare(rest);
   if (kind === 'ratio') return barRatio(rest);
   if (kind === 'subtract') return barSubtract(rest);
+  if (kind === 'compareGap') return barCompareGap(rest);
   if (kind === 'multiply') return barMultiply(rest);
   return barEqualParts(rest);
 }

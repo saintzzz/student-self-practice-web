@@ -63,7 +63,8 @@ function vizFor(p) {
   if ((m = p.match(RX_RATIO))) return { type: 'bar', kind: 'ratio', total: Number(m[1]), ratio: Number(m[3]), unit: m[2] };
   if ((m = p.match(RX_DIVIDE))) return { type: 'bar', kind: 'equalParts', total: Number(m[1]), parts: Number(m[3]), unit: m[2] };
   if ((m = p.match(RX_SOLD))) return { type: 'bar', kind: 'subtract', whole: Number(m[1]), part: Number(m[3]), unit: m[2] };
-  if ((m = p.match(RX_MORE))) return { type: 'bar', kind: 'subtract', whole: Number(m[1]), part: Number(m[3]), unit: m[2] };
+  // 'A co X, nhieu hon em k - em = ?' is a comparison, not a subtraction
+  if ((m = p.match(RX_MORE))) return { type: 'bar', kind: 'compareGap', a: Number(m[1]), gap: Number(m[3]), unit: m[2] };
   if ((m = p.match(RX_CMP_NUM))) return { type: 'bar', kind: 'compare', a: Number(m[1]), b: Number(m[2]) };
   if ((m = p.match(RX_PW_CLASS))) return { type: 'bar', kind: 'partWhole', a: Number(m[1]), b: Number(m[3]), unit: m[2] };
   if ((m = p.match(RX_PW_CAN))) return { type: 'bar', kind: 'partWhole', a: Number(m[1]), b: Number(m[2]), unit: 'lít' };
