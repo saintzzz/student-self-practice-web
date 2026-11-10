@@ -23,9 +23,19 @@ const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supa
 const SUPA = keys.url, SVC = keys.keys.service_role;
 const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'practice', 'Content-Profile': 'practice' };
 
-const ITEMS = 'vở|bút|sách|kẹo|bi|cam|hoa|gà|nhãn vở|lít';
+const ITEMS = 'vở|bút|sách|kẹo|bi|cam|hoa|gà|nhãn vở';
 const RX_ADD = new RegExp(`có (\\d+) (${ITEMS})[,.].*?thêm (\\d+) \\2`);
 const RX_PICK = new RegExp(`hái được (\\d+) (${ITEMS}), em hái được (\\d+) \\2`);
+// CR-133 word-problem bar-model patterns (generator templates are fixed)
+const RX_PW_CLASS = new RegExp(`Lớp 2A có (\\d+) (${ITEMS})\\. Lớp 2B có (\\d+) \\2`);
+const RX_PW_CAN = /Can to đựng (\d+) lít, can bé đựng (\d+) lít/;
+const RX_CMP_NUM = /Số (\d+) lớn hơn số (\d+) bao nhiêu đơn vị/;
+const RX_MORE = new RegExp(`có (\\d+) (${ITEMS}), nhiều hơn em (\\d+) \\2`);
+const RX_SOLD = /Cửa hàng có (\d+) (\w+(?: \w+)?)\. Đã bán (\d+) \2/;
+const RX_DIVIDE = new RegExp(`xếp (\\d+) (${ITEMS}) vào (\\d+) (?:túi|hộp|rổ|kệ|lọ) đều nhau`);
+const RX_RATIO = new RegExp(`Hai thùng có (\\d+) (${ITEMS}), thùng lớn gấp (\\d+) lần`);
+const RX_MULTI = /Mỗi \w+(?: \w+)? giá ([\d.]+) đồng\. Mua (\d+)/;
+const RX_BOND = /(\d+) = (\d+) \+ \?/;
 // prompt -> viz spec. Return null when the image would leak the answer
 // or add nothing.
 function vizFor(p) {
@@ -49,11 +59,28 @@ function vizFor(p) {
   }
   if ((m = p.match(/Chia một cái bánh thành (\d+) phần bằng nhau/))) return { type: 'fraction', num: 1, den: Number(m[1]) };
   if ((m = p.match(/Phân số (\d+)\/(\d+) viết thành số thập phân/)) && Number(m[2]) <= 10) return { type: 'fraction', num: Number(m[1]), den: Number(m[2]) };
-  // small-count add/compare word problems -> countable groups (unlabeled)
-  if ((m = p.match(RX_ADD)) || (m = p.match(RX_PICK))) {
+  // ---- CR-133 bar models for word problems (givens labeled, unknown '?') ----
+  if ((m = p.match(RX_RATIO))) return { type: 'bar', kind: 'ratio', total: Number(m[1]), ratio: Number(m[3]), unit: m[2] };
+  if ((m = p.match(RX_DIVIDE))) return { type: 'bar', kind: 'equalParts', total: Number(m[1]), parts: Number(m[3]), unit: m[2] };
+  if ((m = p.match(RX_SOLD))) return { type: 'bar', kind: 'subtract', whole: Number(m[1]), part: Number(m[3]), unit: m[2] };
+  if ((m = p.match(RX_MORE))) return { type: 'bar', kind: 'subtract', whole: Number(m[1]), part: Number(m[3]), unit: m[2] };
+  if ((m = p.match(RX_CMP_NUM))) return { type: 'bar', kind: 'compare', a: Number(m[1]), b: Number(m[2]) };
+  if ((m = p.match(RX_PW_CLASS))) return { type: 'bar', kind: 'partWhole', a: Number(m[1]), b: Number(m[3]), unit: m[2] };
+  if ((m = p.match(RX_PW_CAN))) return { type: 'bar', kind: 'partWhole', a: Number(m[1]), b: Number(m[2]), unit: 'lít' };
+  if ((m = p.match(RX_MULTI))) return { type: 'bar', kind: 'multiply', unitPrice: m[1], n: Number(m[2]), unit: 'đồng' };
+  if ((m = p.match(RX_BOND))) return { type: 'numberBond', whole: Number(m[1]), a: Number(m[2]), b: '?' };
+  if ((m = p.match(RX_PICK))) {
+    const a = Number(m[1]), b = Number(m[3]);
+    // hai-nhieu-hon is a compare problem - bar model is canonical at any size
+    if (/nhiều hơn/.test(p)) return { type: 'bar', kind: 'compare', a, b, unit: m[2] };
+    if (a <= 12 && b <= 12) return { type: 'groups', a, b, emoji: m[2] };
+    return { type: 'bar', kind: 'partWhole', a, b, unit: m[2] };
+  }
+  if ((m = p.match(RX_ADD))) {
     const a = Number(m[1]), b = Number(m[3]);
     // <=12 per side keeps 3 rows inside the 220px viewBox (halfRow: y=80+55r)
     if (a <= 12 && b <= 12) return { type: 'groups', a, b, emoji: m[2] };
+    return { type: 'bar', kind: 'partWhole', a, b, unit: m[2] };
   }
   return null;
 }

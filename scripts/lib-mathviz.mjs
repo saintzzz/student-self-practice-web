@@ -182,6 +182,132 @@ export function fraction({ num, den }) {
   );
 }
 
+// ---- bar model (tape diagram) - Singapore Math canonical model ----
+// {type:'bar', kind:'partWhole'|'compare'|'ratio'|'equalParts', ...}
+// Givens are labeled, the unknown is drawn as '?' - teaches the model.
+const BAR = '#f59e0b', BAR2 = '#fbbf24', BAR3 = '#38bdf8';
+
+function barPartWhole({ a, b, unit }) {
+  const tot = a + b;
+  const wA = Math.round(220 * (a / tot)), wB = 220 - wA;
+  const y = 70, hh = 48;
+  return wrap(
+    `<rect x="70" y="${y}" width="${wA}" height="${hh}" fill="${BAR}" stroke="#b45309" stroke-width="2" rx="4"/>` +
+    `<rect x="${70 + wA}" y="${y}" width="${wB}" height="${hh}" fill="${BAR2}" stroke="#b45309" stroke-width="2" rx="4"/>` +
+    txt(70 + wA / 2, y + hh / 2 + 7, a, 18, 'middle', '#78350f', 700) +
+    txt(70 + wA + wB / 2, y + hh / 2 + 7, b, 18, 'middle', '#78350f', 700) +
+    `<path d="M70 ${y + hh + 12} v-6 h220 v6" fill="none" stroke="${INK}" stroke-width="2"/>` +
+    txt(180, y + hh + 36, `? ${unit ?? ''}`, 18),
+    `Sơ đồ đoạn thẳng: ${a} và ${b}`,
+  );
+}
+
+function barCompare({ a, b, unit }) {
+  // a >= b guaranteed by the matcher; shorter bar + '?' gap
+  const scale = 220 / a;
+  const wA = 220, wB = Math.round(b * scale);
+  const y1 = 60, y2 = 130, hh = 44;
+  const gapX = 70 + wB;
+  return wrap(
+    `<rect x="70" y="${y1}" width="${wA}" height="${hh}" fill="${BAR}" stroke="#b45309" stroke-width="2" rx="4"/>` +
+    txt(70 + wA / 2, y1 + hh / 2 + 7, a, 18, 'middle', '#78350f', 700) +
+    `<rect x="70" y="${y2}" width="${wB}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
+    txt(70 + wB / 2, y2 + hh / 2 + 7, b, 18, 'middle', '#082f49', 700) +
+    `<rect x="${gapX}" y="${y2}" width="${wA - wB}" height="${hh}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="5 4" rx="4"/>` +
+    txt(gapX + (wA - wB) / 2, y2 + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 17, 'middle', RED, 700),
+    `Sơ đồ so sánh: ${a} và ${b}`,
+  );
+}
+
+function barRatio({ total, ratio, unit }) {
+  // total split into (ratio+1) equal parts; the small part is '?'
+  const segs = ratio + 1;
+  const gap = 6, w = Math.min(230, segs * 46);
+  const sw = (w - (segs - 1) * gap) / segs;
+  const y = 85, hh = 46;
+  let out = '';
+  for (let i = 0; i < segs; i++) {
+    const last = i === segs - 1;
+    out += `<rect x="${70 + i * (sw + gap)}" y="${y}" width="${sw}" height="${hh}" fill="${last ? BAR3 : BAR}" stroke="${last ? '#0369a1' : '#b45309'}" stroke-width="2" rx="4"/>` +
+      txt(70 + i * (sw + gap) + sw / 2, y + hh / 2 + 6, last ? '?' : (segs <= 6 ? '1' : ''), last ? 20 : 15, 'middle', last ? '#082f49' : '#78350f', 700);
+  }
+  out += `<path d="M70 ${y + hh + 12} v-6 h${w} v6" fill="none" stroke="${INK}" stroke-width="2"/>` +
+    txt(70 + w / 2, y + hh + 36, `${total} ${unit ?? ''}`, 17);
+  return wrap(out, `Sơ đồ tỉ số: tổng ${total}, gấp ${ratio} lần`);
+}
+
+function barEqualParts({ total, parts, unit }) {
+  // division: total split into `parts` equal segments, each '?'
+  const gap = 5, w = 230;
+  const sw = (w - (parts - 1) * gap) / parts;
+  const y = 85, hh = 46;
+  let out = '';
+  for (let i = 0; i < parts; i++) {
+    out += `<rect x="${65 + i * (sw + gap)}" y="${y}" width="${sw}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
+      txt(65 + i * (sw + gap) + sw / 2, y + hh / 2 + 6, '?', 18, 'middle', '#082f49', 700);
+  }
+  out += `<path d="M65 ${y - 10} v6 h${w} v-6" fill="none" stroke="${INK}" stroke-width="2"/>` +
+    txt(65 + w / 2, y - 20, `${total} ${unit ?? ''}`, 17);
+  return wrap(out, `Sơ đồ chia đều: ${total} chia ${parts} phần`);
+}
+
+function barSubtract({ whole, part, unit }) {
+  // whole bar = whole; `part` segment shaded; remainder is '?'
+  const wWhole = 230, wPart = Math.max(40, Math.round(wWhole * (part / whole)));
+  const x = 65, y = 85, hh = 48;
+  return wrap(
+    `<rect x="${x}" y="${y}" width="${wPart}" height="${hh}" fill="${BAR3}" stroke="#0369a1" stroke-width="2" rx="4"/>` +
+    `<rect x="${x + wPart}" y="${y}" width="${wWhole - wPart}" height="${hh}" fill="#f1f5f9" stroke="${RED}" stroke-width="2" stroke-dasharray="5 4" rx="4"/>` +
+    txt(x + wPart / 2, y + hh / 2 + 7, part, 18, 'middle', '#082f49', 700) +
+    txt(x + wPart + (wWhole - wPart) / 2, y + hh / 2 + 7, `?${unit ? ' ' + unit : ''}`, 18, 'middle', RED, 700) +
+    `<path d="M${x} ${y - 10} v6 h${wWhole} v-6" fill="none" stroke="${INK}" stroke-width="2"/>` +
+    txt(x + wWhole / 2, y - 20, `${whole} ${unit ?? ''}`, 17),
+    `Sơ đồ: ${whole} bớt ${part}`,
+  );
+}
+
+function barMultiply({ n, unitPrice, unit }) {
+  // n equal segments each labeled unitPrice, whole is '?'
+  const gap = 5, w = 230;
+  const sw = (w - (n - 1) * gap) / n;
+  const y = 85, hh = 46;
+  let out = '';
+  for (let i = 0; i < n; i++) {
+    out += `<rect x="${65 + i * (sw + gap)}" y="${y}" width="${sw}" height="${hh}" fill="${BAR}" stroke="#b45309" stroke-width="2" rx="4"/>` +
+      txt(65 + i * (sw + gap) + sw / 2, y + hh / 2 + 7, unitPrice, sw < 52 ? 12 : 15, 'middle', '#78350f', 700);
+  }
+  out += `<path d="M65 ${y + hh + 12} v-6 h${w} v6" fill="none" stroke="${INK}" stroke-width="2"/>` +
+    txt(65 + w / 2, y + hh + 36, `? ${unit ?? ''}`, 18);
+  return wrap(out, `Sơ đồ nhân: ${n} lần ${unitPrice}`);
+}
+
+function bar({ kind, ...rest }) {
+  if (kind === 'partWhole') return barPartWhole(rest);
+  if (kind === 'compare') return barCompare(rest);
+  if (kind === 'ratio') return barRatio(rest);
+  if (kind === 'subtract') return barSubtract(rest);
+  if (kind === 'multiply') return barMultiply(rest);
+  return barEqualParts(rest);
+}
+
+// ---- number bond - part-part-whole circles (g1-2) ----
+// whole on top, parts on leaves; any slot may be '?' (the unknown)
+function numberBond({ a = '?', b = '?', whole = '?' }) {
+  const cx = W / 2;
+  const bond = (x1, y1, x2, y2) =>
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94a3b8" stroke-width="3"/>`;
+  const slot = (x, y, v, unknown) =>
+    `<circle cx="${x}" cy="${y}" r="30" fill="${unknown ? '#fff7ed' : '#eff6ff'}" stroke="${unknown ? BAR : BLUE}" stroke-width="3"/>` +
+    txt(x, y + 7, v, 20, 'middle', unknown ? '#b45309' : BLUE, 700);
+  return wrap(
+    bond(cx, 62, cx - 80, 140) + bond(cx, 62, cx + 80, 140) +
+    slot(cx, 55, whole, whole === '?') +
+    slot(cx - 80, 155, a, a === '?') +
+    slot(cx + 80, 155, b, b === '?'),
+    `Sơ đồ tách gộp số`,
+  );
+}
+
 // ---- dispatch ----
 export function renderViz(spec) {
   switch (spec.type) {
@@ -191,6 +317,8 @@ export function renderViz(spec) {
     case 'count': return count(spec);
     case 'money': return money(spec);
     case 'fraction': return fraction(spec);
+    case 'bar': return bar(spec);
+    case 'numberBond': return numberBond(spec);
     default: return wrap('', 'diagram');
   }
 }
@@ -202,6 +330,8 @@ export function vizLabel(spec) {
     case 'count': return `${spec.n} ${spec.emoji} để đếm`;
     case 'money': return `Các tờ tiền`;
     case 'fraction': return `Phân số ${spec.num}/${spec.den}`;
+    case 'bar': return 'Sơ đồ đoạn thẳng (bar model)';
+    case 'numberBond': return 'Sơ đồ tách gộp số';
     default: return 'hình minh họa';
   }
 }
