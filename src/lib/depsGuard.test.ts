@@ -21,10 +21,17 @@ const DEPENDENCY_BASELINE = [
   '@supabase/supabase-js',
   'react',
   'react-dom',
+  // CR-134: admin bulk-import parses .xlsx/.csv. Dynamic-imported inside
+  // BulkImportCard only - stays out of the student chunk (XLSX_IMPORTERS).
+  'read-excel-file',
 ];
 
 const LOTTIE_IMPORTERS = new Set([
   path.join('src', 'components', 'EmojiLottiePlayer.tsx'),
+]);
+
+const XLSX_IMPORTERS = new Set([
+  path.join('src', 'components', 'admin', 'BulkImportCard.tsx'),
 ]);
 
 function collectSource(dir: string, out: string[] = []): string[] {
@@ -55,6 +62,19 @@ describe('dependency guards (CR-82 FF-9/FF-18)', () => {
     }
     for (const importer of importers) {
       expect(LOTTIE_IMPORTERS.has(importer), `unexpected lottie importer: ${importer}`).toBe(true);
+    }
+  });
+
+  it('read-excel-file imported only by the admin bulk importer', () => {
+    const importers: string[] = [];
+    for (const file of collectSource(SRC_DIR)) {
+      const source = readFileSync(file, 'utf8');
+      if (/from\s+['"]read-excel-file/.test(source) || /import\s*\(\s*['"]read-excel-file/.test(source)) {
+        importers.push(path.relative(REPO_ROOT, file));
+      }
+    }
+    for (const importer of importers) {
+      expect(XLSX_IMPORTERS.has(importer), `unexpected read-excel-file importer: ${importer}`).toBe(true);
     }
   });
 });

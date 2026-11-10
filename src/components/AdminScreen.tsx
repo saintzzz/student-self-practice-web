@@ -15,6 +15,7 @@ import {
 } from '../lib/assignments';
 import ReviewQueueCard from './ReviewQueueCard';
 import OutreachTab from './admin/OutreachTab';
+import BulkImportCard from './admin/BulkImportCard';
 import { GRADES } from '../data/grades';
 import {
   BODY,
@@ -130,18 +131,18 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
     return () => { refreshGenRef.current++; }; // unmount invalidates in-flight
   }, [refresh]);
 
-  async function invokeAdmin(payload: Record<string, unknown>): Promise<string | null> {
+  async function invokeAdmin(payload: Record<string, unknown>): Promise<{ err: string | null; accountId?: string }> {
     const { data, error } = await (await getSupabase()).functions.invoke('practice-admin', { body: payload });
-    if (error) return data?.error ?? error.message;
-    if (data?.error) return data.error;
-    return null;
+    if (error) return { err: data?.error ?? error.message };
+    if (data?.error) return { err: data.error };
+    return { err: null, accountId: data?.accountId };
   }
 
   async function handleCreateAccount(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const err = await invokeAdmin({
+    const { err } = await invokeAdmin({
       action: 'create-account',
       username: newUser.username,
       displayName: newUser.displayName,
@@ -158,14 +159,14 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
   async function handleResetPin(acc: PracticeAccount): Promise<void> {
     const pin = window.prompt(`Mã PIN mới cho ${acc.username} (tối thiểu 6 ký tự):`);
     if (!pin) return;
-    const err = await invokeAdmin({ action: 'reset-pin', accountId: acc.id, pin });
+    const { err } = await invokeAdmin({ action: 'reset-pin', accountId: acc.id, pin });
     if (err) return setError(err);
     say(`Đã đổi PIN cho ${acc.username}`);
   }
 
   async function handleDeleteAccount(acc: PracticeAccount): Promise<void> {
     if (!window.confirm(`Xóa tài khoản ${acc.username}?`)) return;
-    const err = await invokeAdmin({ action: 'delete-account', accountId: acc.id });
+    const { err } = await invokeAdmin({ action: 'delete-account', accountId: acc.id });
     if (err) return setError(err);
     say(`Đã xóa ${acc.username}`);
     void refresh();
@@ -308,6 +309,7 @@ export default function AdminScreen({ account, onSignOut, onPractice }: AdminScr
               Tạo tài khoản
             </button>
           </form>
+          <BulkImportCard classes={classes} onDone={() => void refresh()} invokeAdmin={invokeAdmin} />
           <ul data-testid="account-list" className="flex flex-col gap-2">
             {accounts.map((a) => (
               <li
