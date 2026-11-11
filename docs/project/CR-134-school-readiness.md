@@ -51,3 +51,23 @@ accounts one-by-one.
 ## Estimate
 
 S-M: one migration + optional admin UI panel.
+
+## Status + incident postmortem
+
+**Shipped:** 0076/0077/0078 (caps) + bulk import UI; r183/r184 findings
+fixed; r185 CLEAN. Bulk import verified on prod (CSV upload -> create ->
+enroll -> delete, DB clean).
+
+**Incident (fixed):** 0076-0078 were written by re-emitting the 0056
+function bodies - silently reverting 0057's upgrade (5-arg leak_wm_tag,
+opaque guest actor). The dropped 3-arg helper made every fetch call fail
+42883; all question loads broke. 0079 restored the 0057 bodies with the
+caps on top; verified RPC 200 + wm tags on prod.
+
+**Process lessons (now standing rules):**
+- Never re-emit a function body from an older migration file - read
+  `pg_get_functiondef` (the LIVE definition) as the base.
+- After any DB migration touching student-path RPCs, smoke-call the
+  real RPC with a user JWT before declaring done.
+- `git add -A` near QA scratch scripts commits them - keep scratch
+  outside the repo or use explicit paths.
