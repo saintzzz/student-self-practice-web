@@ -106,12 +106,14 @@ export function shape({ shape, a, b, c }) {
 
 // ---- countable objects: {type:'groups', a, b, emoji} or {type:'count', n, emoji} ----
 const EMOJI = {
-  'quả táo': '🍎', 'quả cam': '🍊', 'viên bi': '🔵', 'cái kẹo': '🍬',
+  'quả táo': '🍎', 'quả cam': '🍊', 'quả xoài': '🥭', 'quả ổi': '🍏',
+  'quả mận': '🍑', 'viên bi': '🔵', 'hòn bi': '🔵', 'cái kẹo': '🍬',
   'bông hoa': '🌸', 'con gà': '🐔', 'quyển vở': '📗', 'cây bút': '✏️',
-  'quyển sách': '📕', 'nhãn vở': '🏷️',
+  'quyển sách': '📕', 'nhãn vở': '🏷️', 'cái nhãn vở': '🏷️',
   // short noun forms used by the generator's ITEMS short names
   cam: '🍊', 'kẹo': '🍬', 'vở': '📗', 'bi': '🔵', 'bút': '✏️',
   'sách': '📕', 'hoa': '🌸', 'gà': '🐔', 'lít': '💧', 'táo': '🍎',
+  'xoài': '🥭', 'ổi': '🍏', 'mận': '🍑',
 };
 export function emojiFor(short) { return EMOJI[short] ?? '🔵'; }
 

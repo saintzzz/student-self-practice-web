@@ -23,7 +23,8 @@ const keys = JSON.parse(readFileSync(join(homedir(), '.config/devin/secrets/supa
 const SUPA = keys.url, SVC = keys.keys.service_role;
 const H = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Accept-Profile': 'practice', 'Content-Profile': 'practice' };
 
-const ITEMS = 'vở|bút|sách|kẹo|bi|cam|hoa|gà|nhãn vở';
+// Full classifier forms - prompts now always say "quả cam", never bare "cam".
+const ITEMS = 'quả cam|cái kẹo|quyển vở|hòn bi|cây bút|quyển sách|cái nhãn vở|bông hoa|quả táo|quả xoài|quả ổi|quả mận|con gà';
 const RX_ADD = new RegExp(`có (\\d+) (${ITEMS})[,.].*?thêm (\\d+) \\2`);
 const RX_PICK = new RegExp(`hái được (\\d+) (${ITEMS}), em hái được (\\d+) \\2`);
 // CR-133 word-problem bar-model patterns (generator templates are fixed)
@@ -31,10 +32,10 @@ const RX_PW_CLASS = new RegExp(`Lớp 2A có (\\d+) (${ITEMS})\\. Lớp 2B có (
 const RX_PW_CAN = /Can to đựng (\d+) lít, can bé đựng (\d+) lít/;
 const RX_CMP_NUM = /Số (\d+) lớn hơn số (\d+) bao nhiêu đơn vị/;
 const RX_MORE = new RegExp(`có (\\d+) (${ITEMS}), nhiều hơn em (\\d+) \\2`);
-const RX_SOLD = /Cửa hàng có (\d+) (\w+(?: \w+)?)\. Đã bán (\d+) \2/;
+const RX_SOLD = new RegExp(`Cửa hàng có (\\d+) (${ITEMS})\\. Đã bán (\\d+) \\2`);
 const RX_DIVIDE = new RegExp(`xếp (\\d+) (${ITEMS}) vào (\\d+) (?:túi|hộp|rổ|kệ|lọ) đều nhau`);
-const RX_RATIO = new RegExp(`Hai thùng có (\\d+) (${ITEMS}), thùng lớn gấp (\\d+) lần`);
-const RX_MULTI = /Mỗi \w+(?: \w+)? giá ([\d.]+) đồng\. Mua (\d+)/;
+const RX_RATIO = new RegExp(`Hai thùng chứa tất cả (\\d+) (${ITEMS}), thùng lớn gấp (\\d+) lần`);
+const RX_MULTI = new RegExp(`Mỗi (${ITEMS}) giá ([\\d.]+) đồng\\. Mua (\\d+)`);
 const RX_BOND = /(\d+) = (\d+) \+ \?/;
 // prompt -> viz spec. Return null when the image would leak the answer
 // or add nothing.
@@ -68,7 +69,7 @@ function vizFor(p) {
   if ((m = p.match(RX_CMP_NUM))) return { type: 'bar', kind: 'compare', a: Number(m[1]), b: Number(m[2]) };
   if ((m = p.match(RX_PW_CLASS))) return { type: 'bar', kind: 'partWhole', a: Number(m[1]), b: Number(m[3]), unit: m[2] };
   if ((m = p.match(RX_PW_CAN))) return { type: 'bar', kind: 'partWhole', a: Number(m[1]), b: Number(m[2]), unit: 'lít' };
-  if ((m = p.match(RX_MULTI))) return { type: 'bar', kind: 'multiply', unitPrice: m[1], n: Number(m[2]), unit: 'đồng' };
+  if ((m = p.match(RX_MULTI))) return { type: 'bar', kind: 'multiply', unitPrice: m[2], n: Number(m[3]), unit: 'đồng' };
   if ((m = p.match(RX_BOND))) return { type: 'numberBond', whole: Number(m[1]), a: Number(m[2]), b: '?' };
   if ((m = p.match(RX_PICK))) {
     const a = Number(m[1]), b = Number(m[3]);
@@ -88,7 +89,9 @@ function vizFor(p) {
 
 const rows = [];
 for (let off = 0; ; off += 1000) {
-  const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.math-vi&select=id,prompt_text,grade,skill&limit=1000&offset=${off}`, { headers: H });
+  // only serving questions get assets - quarantined rows keep history but
+  // must not render visuals in case they're ever re-served.
+  const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.math-vi&publication_policy->>practiceEligible=eq.true&select=id,prompt_text,grade,skill&limit=1000&offset=${off}`, { headers: H });
   if (!res.ok) throw new Error(`fetch ${res.status}: ${await res.text()}`);
   const page = await res.json();
   rows.push(...page);

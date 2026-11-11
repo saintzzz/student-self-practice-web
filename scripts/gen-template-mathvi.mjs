@@ -39,8 +39,17 @@ const pick = (arr) => arr[rnd(arr.length)];
 const shuffle = (a) => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = rnd(i + 1); [r[i], r[j]] = [r[j], r[i]]; } return r; };
 
 const NAMES = ['An', 'Bình', 'Chi', 'Dũng', 'Hà', 'Huy', 'Lan', 'Mai', 'Nam', 'Phúc', 'Quân', 'Thu'];
-const ITEMS = [['quả cam', 'cam'], ['cái kẹo', 'kẹo'], ['quyển vở', 'vở'], ['hòn bi', 'bi'], ['cây bút', 'bút'], ['quyển sách', 'sách'], ['cái nhãn vở', 'nhãn vở'], ['bông hoa', 'hoa']];
-const PLACES = ['túi', 'hộp', 'rổ', 'kệ', 'lọ'];
+// [full form with classifier, short noun]. Prompts ALWAYS use the full
+// form ("5 quyển vở") - bare nouns ("5 vở") read as broken Vietnamese.
+const ITEMS = [['quả cam', 'cam'], ['cái kẹo', 'kẹo'], ['quyển vở', 'vở'], ['hòn bi', 'bi'], ['cây bút', 'bút'], ['quyển sách', 'sách'], ['cái nhãn vở', 'nhãn vở'], ['bông hoa', 'hoa'], ['quả táo', 'táo'], ['quả xoài', 'xoài'], ['quả ổi', 'ổi']];
+// "hái" collocates only with flowers and fruit - never stationery/marbles.
+const HARVEST_ITEMS = [['quả cam', 'cam'], ['quả táo', 'táo'], ['quả xoài', 'xoài'], ['quả ổi', 'ổi'], ['quả mận', 'mận'], ['bông hoa', 'hoa']];
+// Containers that plausibly hold each item ("xếp sách vào lọ" is wrong).
+const CONTAINERS = {
+  cam: ['túi', 'rổ', 'hộp'], táo: ['túi', 'rổ', 'hộp'], xoài: ['túi', 'rổ', 'hộp'], 'ổi': ['túi', 'rổ', 'hộp'],
+  kẹo: ['túi', 'hộp', 'lọ'], vở: ['hộp', 'kệ', 'túi'], bi: ['hộp', 'lọ', 'túi', 'rổ'],
+  bút: ['hộp', 'lọ', 'túi'], sách: ['kệ', 'hộp', 'túi'], 'nhãn vở': ['hộp', 'túi', 'lọ'], hoa: ['rổ', 'túi'],
+};
 
 const items = [];
 const seen = new Set();
@@ -86,14 +95,14 @@ if (GRADE === 1) { // G1: số đến 20/100, cộng trừ trong 10-20, so sánh
     const n = rr(2, 19);
     push('number-sense', 'numbers', 1, `Số liền sau của số ${n} là số nào?`, n + 1, [n - 1, n + 2, n + 10], `Số liền sau của ${n} là ${n + 1}.`);
     push('number-sense', 'numbers', 1, `Số liền trước của số ${n + 1} là số nào?`, n, [n + 1, n + 2, n - 1], `Số liền trước của ${n + 1} là ${n}.`);
-    const [obj, short] = pick(ITEMS), x = rr(2, 8), y = rr(1, 9);
-    push('word-problem', 'numbers', 2, `${pick(NAMES)} có ${x} ${short}. Mẹ cho thêm ${y} ${short}. Hỏi bạn có tất cả bao nhiêu ${short}?`, x + y, [x + y + 1, x + y - 1, Math.abs(x - y)], `${x} + ${y} = ${x + y}.`);
+    const [obj] = pick(ITEMS), x = rr(2, 8), y = rr(1, 9), nm = pick(NAMES);
+    push('word-problem', 'numbers', 2, `Bạn ${nm} có ${x} ${obj}. Mẹ cho ${nm} thêm ${y} ${obj}. Hỏi ${nm} có tất cả bao nhiêu ${obj}?`, x + y, [x + y + 1, x + y - 1, Math.abs(x - y)], `${x} + ${y} = ${x + y}.`);
     const k = pick([1, 2]), st = rr(1, 10), terms = [st, st + k, st + 2 * k, st + 3 * k];
     push('patterns', 'numbers', 2, `Điền số vào chỗ trống: ${terms.slice(0, 3).join(', ')}, ___`, terms[3], [terms[3] + 1, terms[3] - 1, terms[3] + k + 1], `Dãy đếm thêm ${k}: ${terms[2]} + ${k} = ${terms[3]}.`);
   }
   for (let i = 0; i < 10; i++) {
     const h = rr(1, 12);
-    push('time', 'measurement', 1, `Đồng hồ chỉ ${h} giờ đúng. Kim phút chỉ vào số mấy?`, 12, [h, 6, 3], `Giờ đúng: kim phút chỉ số 12.`);
+    push('time', 'measurement', 1, `Lúc ${h} giờ đúng, kim phút chỉ vào số mấy?`, 12, [h, 6, 3], `Giờ đúng: kim phút chỉ số 12.`);
     const geo = pick([
       ['Hình có 3 cạnh gọi là hình gì?', 'tam giác', ['vuông', 'tròn', 'chữ nhật'], 'Hình có 3 cạnh là hình tam giác.'],
       ['Hình có 4 cạnh bằng nhau gọi là hình gì?', 'vuông', ['chữ nhật', 'tam giác', 'tròn'], '4 cạnh bằng nhau là hình vuông.'],
@@ -110,8 +119,8 @@ if (GRADE === 1) { // G1: số đến 20/100, cộng trừ trong 10-20, so sánh
     push('number-sense', 'numbers', 3, `Số nào trừ đi ${k2} thì bằng ${m - k2}?`, m, [m - k2, m + k2, k2], `Vì ${m} - ${k2} = ${m - k2} nên số cần tìm là ${m}.`);
     const a = rr(8, 19), b = rr(1, a - 2);
     push('number-sense', 'numbers', 3, `Số ${a} lớn hơn số ${b} bao nhiêu đơn vị?`, a - b, [a - b - 1, a - b + 1, a + b], `${a} - ${b} = ${a - b}.`);
-    const [obj, short] = pick(ITEMS), c1 = rr(4, 9), g = rr(2, 6);
-    push('word-problem', 'numbers', 3, `${pick(NAMES)} có ${c1 + g} ${short}, nhiều hơn em ${g} ${short}. Hỏi em có bao nhiêu ${short}?`, c1, [c1 + g + g, c1 + g, g], `Bạn có ${c1 + g} ${short}, nhiều hơn em ${g} ${short} nên em có ${c1 + g} - ${g} = ${c1} ${short}.`);
+    const [obj] = pick(ITEMS), c1 = rr(4, 9), g = rr(2, 6), nm = pick(NAMES);
+    push('word-problem', 'numbers', 3, `Bạn ${nm} có ${c1 + g} ${obj}, nhiều hơn em ${g} ${obj}. Hỏi em có bao nhiêu ${obj}?`, c1, [c1 + g + g, c1 + g, g], `Bạn ${nm} có ${c1 + g} ${obj}, nhiều hơn em ${g} ${obj} nên em có ${c1 + g} - ${g} = ${c1} ${obj}.`);
     const vnd = pick([1, 2, 5]);
     push('money', 'numbers', 3, `Nam có 2 tờ ${vnd} nghìn đồng. Hỏi Nam có tất cả bao nhiêu nghìn đồng?`, 2 * vnd, [vnd, 2 * vnd + 1, vnd + 2], `2 tờ ${vnd} nghìn = ${vnd} + ${vnd} = ${2 * vnd} nghìn đồng.`);
   }
@@ -135,8 +144,8 @@ if (GRADE === 2) { // G2: số đến 1000, cộng trừ có nhớ ≤100, nhân
     if (a !== b) push('number-sense', 'numbers', 1, `Số nào BÉ HƠN: ${a} hay ${b}?`, Math.min(a, b), [Math.max(a, b), Math.min(a, b) - 1, Math.min(a, b) + 10], `${Math.min(a, b)} bé hơn ${Math.max(a, b)}.`);
     const n = rr(101, 998);
     push('number-sense', 'numbers', 1, `Số liền sau của số ${n} là số nào?`, n + 1, [n - 1, n + 10, n + 2], `Số liền sau của ${n} là ${n + 1}.`);
-    const [obj, short] = pick(ITEMS), x = rr(12, 60), y = rr(8, 40);
-    push('word-problem', 'numbers', 2, `Lớp 2A có ${x} ${short}. Lớp 2B có ${y} ${short}. Hỏi cả hai lớp có bao nhiêu ${short}?`, x + y, [x + y + 1, x + y - 1, Math.abs(x - y) + x], `${x} + ${y} = ${x + y}.`);
+    const [obj] = pick(ITEMS), x = rr(12, 60), y = rr(8, 40);
+    push('word-problem', 'numbers', 2, `Lớp 2A có ${x} ${obj}. Lớp 2B có ${y} ${obj}. Hỏi cả hai lớp có bao nhiêu ${obj}?`, x + y, [x + y + 1, x + y - 1, Math.abs(x - y) + x], `${x} + ${y} = ${x + y}.`);
     const dm = rr(2, 9);
     push('measurement', 'measurement', 2, `${dm} dm = ? cm`, dm * 10, [dm * 100, dm + 10, dm], `1 dm = 10 cm nên ${dm} dm = ${dm * 10} cm.`);
     const lit = rr(2, 15);
@@ -144,7 +153,7 @@ if (GRADE === 2) { // G2: số đến 1000, cộng trừ có nhớ ≤100, nhân
   }
   for (let i = 0; i < 8; i++) {
     const h = rr(1, 11);
-    push('time', 'measurement', 2, `${h} giờ rưỡi là ${h} giờ bao nhiêu phút?`, 30, [15, 45, 60], `${h} giờ rưỡi = ${h} giờ 30 phút.`);
+    push('time', 'measurement', 2, `${h} giờ rưỡi tức là ${h} giờ bao nhiêu phút?`, 30, [15, 45, 60], `${h} giờ rưỡi = ${h} giờ 30 phút.`);
     const geo = pick([
       ['Hình tứ giác có mấy cạnh?', '4', ['3', '5', '6'], 'Hình tứ giác có 4 cạnh.'],
       ['Đoạn thẳng AB dài 5 cm, đoạn BC dài 4 cm. Đường gấp khúc ABC dài bao nhiêu cm?', '9', ['8', '10', '20'], '5 + 4 = 9 cm.'],
@@ -157,8 +166,8 @@ if (GRADE === 2) { // G2: số đến 1000, cộng trừ có nhớ ≤100, nhân
     push('arithmetic', 'numbers', 3, `? × ${b} = ${p}`, a, [a + 1, a - 1, p - b], `Vì ${a} × ${b} = ${p} nên số cần tìm là ${a}.`);
     const dv = rr(2, 5), q2 = rr(3, 9), dvd = dv * q2;
     push('arithmetic', 'numbers', 3, `${dvd} : ? = ${q2}`, dv, [dv + 1, dv - 1, q2], `Vì ${dvd} : ${dv} = ${q2} nên số cần tìm là ${dv}.`);
-    const [obj, short] = pick(ITEMS), c2 = rr(8, 30), c1 = c2 + rr(2, 25);
-    push('word-problem', 'numbers', 3, `${pick(NAMES)} hái được ${c1} ${short}, em hái được ${c2} ${short}. Hỏi bạn hái nhiều hơn em bao nhiêu ${short}?`, c1 - c2, [c1 + c2, c1 - c2 + 1, c1 - c2 - 1], `${c1} - ${c2} = ${c1 - c2}.`);
+    const [obj] = pick(HARVEST_ITEMS), c2 = rr(8, 30), c1 = c2 + rr(2, 25), nm = pick(NAMES);
+    push('word-problem', 'numbers', 3, `${nm} hái được ${c1} ${obj}, em hái được ${c2} ${obj}. Hỏi ${nm} hái nhiều hơn em bao nhiêu ${obj}?`, c1 - c2, [c1 + c2, c1 - c2 + 1, c1 - c2 - 1], `${c1} - ${c2} = ${c1 - c2}.`);
     const s = rr(3, 9);
     push('geometry', 'geometry', 3, `Hình vuông có cạnh ${s} cm. Chu vi hình vuông là bao nhiêu cm?`, 4 * s, [3 * s, 4 * s + 1, s * s], `Chu vi hình vuông = cạnh × 4 = ${s} × 4 = ${4 * s} cm.`);
     const m = rr(60, 95), n = rr(10, m - 10);
@@ -183,11 +192,12 @@ for (let i = 0; i < 24; i++) { // multiplication/division tables
 }
 for (let i = 0; i < 24; i++) { // word problems - VN contexts
   const [obj, short] = pick(ITEMS), n = rr(2, 8), per = rr(3, 9), total = n * per;
-  push('word-problem', 'numbers', 3, `${pick(NAMES)} xếp ${total} ${short} vào ${n} ${pick(PLACES)} đều nhau. Hỏi mỗi chỗ có bao nhiêu ${short}?`, per, [per + 1, per - 1, n, total - n], `${total} : ${n} = ${per}.`);
-  const a1 = rr(15, 60), a2 = rr(8, 45);
-  push('word-problem', 'numbers', 3, `${pick(NAMES)} có ${a1} ${short}. Mẹ cho thêm ${a2} ${short} nữa. Hỏi bạn có tất cả bao nhiêu ${short}?`, a1 + a2, [a1 + a2 + 1, a1 + a2 - 1, a1 - a2, a1 + a2 + 10], `${a1} + ${a2} = ${a1 + a2}.`);
+  const place = pick(CONTAINERS[short]);
+  push('word-problem', 'numbers', 3, `${pick(NAMES)} xếp ${total} ${obj} vào ${n} ${place} đều nhau. Hỏi mỗi ${place} có bao nhiêu ${obj}?`, per, [per + 1, per - 1, n, total - n], `${total} : ${n} = ${per}.`);
+  const a1 = rr(15, 60), a2 = rr(8, 45), nm3 = pick(NAMES);
+  push('word-problem', 'numbers', 3, `Bạn ${nm3} có ${a1} ${obj}. Mẹ cho ${nm3} thêm ${a2} ${obj} nữa. Hỏi ${nm3} có tất cả bao nhiêu ${obj}?`, a1 + a2, [a1 + a2 + 1, a1 + a2 - 1, a1 - a2, a1 + a2 + 10], `${a1} + ${a2} = ${a1 + a2}.`);
   const c = rr(50, 200), sold = rr(10, c - 10);
-  push('word-problem', 'numbers', 3, `Cửa hàng có ${c} ${obj}. Đã bán ${sold} ${obj}. Hỏi cửa hàng còn lại bao nhiêu ${short}?`, c - sold, [c - sold + 1, c - sold - 1, sold - c + 200, c - sold + 10], `${c} - ${sold} = ${c - sold}.`);
+  push('word-problem', 'numbers', 3, `Cửa hàng có ${c} ${obj}. Đã bán ${sold} ${obj}. Hỏi cửa hàng còn lại bao nhiêu ${obj}?`, c - sold, [c - sold + 1, c - sold - 1, sold - c + 200, c - sold + 10], `${c} - ${sold} = ${c - sold}.`);
 }
 for (let i = 0; i < 22; i++) { // comparison, ordering, place value
   const a = rr(100, 999), b = rr(100, 999);
@@ -195,7 +205,7 @@ for (let i = 0; i < 22; i++) { // comparison, ordering, place value
   const n3 = rr(100, 999);
   const hund = Math.floor(n3 / 100), ten = Math.floor((n3 % 100) / 10), one = n3 % 10;
   const pos = pick([['trăm', hund], ['chục', ten], ['đơn vị', one]]);
-  push('number-sense', 'numbers', 2, `Chữ số hàng ${pos[0]} của số ${n3} là chữ số nào?`, pos[1], [(pos[1] + 1) % 10, (pos[1] + 9) % 10, pos[1] + 10], `Số ${n3} có hàng trăm là ${hund}, hàng chục là ${ten}, hàng đơn vị là ${one}.`);
+  push('number-sense', 'numbers', 2, `Chữ số hàng ${pos[0]} của số ${n3} là chữ số nào?`, pos[1], [(pos[1] + 1) % 10, (pos[1] + 9) % 10, (pos[1] + 2) % 10], `Số ${n3} có hàng trăm là ${hund}, hàng chục là ${ten}, hàng đơn vị là ${one}.`);
   const k = rr(2, 9), start = rr(3, 40), terms = [start, start + k, start + 2 * k, start + 3 * k];
   push('patterns', 'numbers', 3, `Điền số thích hợp vào chỗ trống: ${terms.slice(0, 3).join(', ')}, ___`, terms[3], [terms[3] + 1, terms[3] - 1, terms[3] + k, terms[2] + 1], `Dãy tăng đều thêm ${k} mỗi số: ${terms[2]} + ${k} = ${terms[3]}.`);
   push('number-sense', 'numbers', 1, `Số liền sau của số ${n3} là số nào?`, n3 + 1, [n3 - 1, n3 + 10, n3 + 2], `Số liền sau của ${n3} là ${n3 + 1}.`);
@@ -224,7 +234,7 @@ for (let i = 0; i < 8; i++) { // fractions + time + money
     [[2, 3, 4].filter((x) => x !== den).map((x) => `1/${x}`), [`${den}/1`, `2/${den}`]].flat().slice(0, 3),
     `Chia ${den} phần bằng nhau, lấy 1 phần được 1/${den} cái bánh.`);
   const h = rr(1, 11), half = pick([['', 60], ['rưỡi', 30]]);
-  if (half[0]) push('time', 'measurement', 2, `Bây giờ là ${h} giờ ${half[0]}. Đồng hồ chỉ phút chỉ vào số mấy?`, 6, [3, 12, h], `${h} giờ rưỡi: kim phút chỉ số 6 (30 phút).`);
+  if (half[0]) push('time', 'measurement', 2, `Lúc ${h} giờ rưỡi, kim phút chỉ vào số mấy?`, 6, [3, 12, h], `${h} giờ rưỡi: kim phút chỉ số 6 (30 phút).`);
   const vnd = pick([2000, 5000, 10000, 20000]), cnt = rr(2, 4);
   push('money', 'numbers', 2, `${pick(NAMES)} có ${cnt} tờ ${num(vnd)} đồng. Hỏi bạn có tất cả bao nhiêu đồng?`, num(vnd * cnt) + ' đồng',
     [num(vnd * cnt + vnd) + ' đồng', num(vnd * cnt - vnd) + ' đồng', num(vnd + cnt) + ' đồng'],
@@ -260,8 +270,8 @@ if (GRADE === 4) { // G4: số đến 99999/lớp nghìn, nhân chia nhiều ch�
   for (let i = 0; i < 16; i++) {
     const w = rr(3, 15), l = w + rr(2, 20);
     push('geometry', 'measurement', 3, `Hình chữ nhật có chiều dài ${l} m, chiều rộng ${w} m. Diện tích là bao nhiêu m²?`, w * l, [2 * (w + l), w * l + l, w * l - w, w + l], `Diện tích HCN = dài × rộng = ${l} × ${w} = ${w * l} m².`);
-    const [obj, short] = pick(ITEMS), x = rr(120, 900), price = rr(2, 9);
-    push('word-problem', 'numbers', 3, `Mỗi ${obj} giá ${num(price * 1000)} đồng. Mua ${price} ${short} hết bao nhiêu đồng?`, num(price * price * 1000) + ' đồng', [num(price * 1000 + price) + ' đồng', num(price * price * 100) + ' đồng', num(price * 1000) + ' đồng'], `${price} × ${num(price * 1000)} = ${num(price * price * 1000)} đồng.`);
+    const [obj] = pick(ITEMS), x = rr(120, 900), price = rr(2, 9);
+    push('word-problem', 'numbers', 3, `Mỗi ${obj} giá ${num(price * 1000)} đồng. Mua ${price} ${obj} hết bao nhiêu đồng?`, num(price * price * 1000) + ' đồng', [num(price * 1000 + price) + ' đồng', num(price * price * 100) + ' đồng', num(price * 1000) + ' đồng'], `${price} × ${num(price * 1000)} = ${num(price * price * 1000)} đồng.`);
     const geo = pick([
       ['Góc bé hơn góc vuông gọi là góc gì?', 'góc nhọn', ['góc tù', 'góc bẹt', 'góc vuông'], 'Góc nhọn < 90 độ.'],
       ['Góc lớn hơn góc vuông nhưng bé hơn góc bẹt gọi là gì?', 'góc tù', ['góc nhọn', 'góc vuông', 'góc bẹt'], '90 độ < góc tù < 180 độ.'],
@@ -297,18 +307,42 @@ if (GRADE === 5) { // G5: số thập phân, %, tỉ số, diện tích tam giá
     const den = pick([2, 4, 5, 10, 20, 25, 50]), numr = rr(1, den - 1);
     const dec = numr / den;
     push('fractions', 'numbers', 3, `Phân số ${numr}/${den} viết thành số thập phân là?`, num(dec), [num(dec + 1), num(dec / 10), `${numr},${den}`], `${numr}/${den} = ${numr} : ${den} = ${num(dec)}.`);
-    const [obj, short] = pick(ITEMS), total2 = rr(4, 9) * 20, ratio = pick([2, 3, 4]);
+    const [obj] = pick(ITEMS), total2 = rr(4, 9) * 20, ratio = pick([2, 3, 4]);
     const part = total2 / (ratio + 1);
-    if (Number.isInteger(part)) push('word-problem', 'numbers', 3, `Hai thùng có ${total2} ${short}, thùng lớn gấp ${ratio} lần thùng bé. Hỏi thùng bé có bao nhiêu ${short}?`, part, [part + 1, part - 1, total2 - part], `Thùng bé = ${total2} : (${ratio} + 1) = ${part}.`);
+    if (Number.isInteger(part)) push('word-problem', 'numbers', 3, `Hai thùng chứa tất cả ${total2} ${obj}, thùng lớn gấp ${ratio} lần thùng bé. Hỏi thùng bé chứa bao nhiêu ${obj}?`, part, [part + 1, part - 1, total2 - part], `Thùng bé = ${total2} : (${ratio} + 1) = ${part}.`);
     const frac = pick([[1, 2, '50'], [1, 4, '25'], [3, 4, '75'], [1, 5, '20'], [2, 5, '40']]);
     push('fractions', 'numbers', 2, `${frac[0]}/${frac[1]} = ? %`, frac[2], ['10', '60', `${frac[0]}${frac[1]}`], `${frac[0]}/${frac[1]} = ${frac[2]}%.`);
   }
 }
 
+// ---------- semantic guard ----------
+// Fail generation on non-idiomatic Vietnamese - a wrong-collocation
+// question teaches kids the wrong language. Extend as new bad patterns
+// are found in review.
+const BARE_NOUNS = 'cam|kẹo|vở|bi|bút|sách|hoa|nhãn vở|táo|xoài|ổi|mận|gà';
+const SEMANTIC_RULES = [
+  // 'hái' only collocates with harvestable things (fruit/flowers).
+  [/hái được \d+ (?!quả|bông|chùm)/, '"hái" chỉ đi với quả/hoa - kiểm tra HARVEST_ITEMS'],
+  // Bare noun after a number = missing classifier ("5 vở" -> "5 quyển vở").
+  [new RegExp(`\\d+ (${BARE_NOUNS})(?=[^a-zà-ỹ]|$)`), 'thiếu lượng từ trước danh từ đếm được'],
+  [/mỗi chỗ/, '"mỗi chỗ" - phải dùng đúng tên chỗ chứa (mỗi túi/hộp/...)'],
+  [/chỉ phút chỉ|Đồng hồ chỉ phút/, 'lỗi chính tả: "kim phút chỉ"'],
+  [/giờ rưỡi là/, 'thiếu "tức là" trong câu giờ rưỡi'],
+];
+const bad = [];
+for (const r of items) {
+  for (const [rx, why] of SEMANTIC_RULES) {
+    if (rx.test(r.prompt_text) || rx.test(r.explanation_vi ?? '')) bad.push(`${r.prompt_text}  <- ${why}`);
+  }
+  // distractors for "chữ số" questions must themselves be digits 0-9
+  if (/là chữ số nào/.test(r.prompt_text) && r.choices.some(c => !/^\d$/.test(c))) bad.push(`${r.prompt_text}  <- distractor không phải chữ số`);
+}
+if (bad.length) { console.error(`SEMANTIC GUARD FAILED (${bad.length}):\n` + bad.slice(0, 30).join('\n')); process.exit(1); }
+
 // ---------- upsert ----------
 const rows = items;
 console.log(`generated ${rows.length} math-vi items for grade ${GRADE}`);
-if (DRY) { console.log(rows.slice(0, 3)); process.exit(0); }
+if (DRY) { if (process.env.DUMP) rows.forEach(r => console.log(`${r.prompt_text}  |  đáp án: ${r.answer.text}  |  ${r.explanation_vi}`)); else console.log(rows.slice(0, 3)); process.exit(0); }
 const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' }, body: JSON.stringify(rows) });
 const body = await res.text();
 if (!res.ok) throw new Error(`upsert failed ${res.status}: ${body.slice(0, 300)}`);
