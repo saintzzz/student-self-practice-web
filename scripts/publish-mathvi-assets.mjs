@@ -90,11 +90,15 @@ function vizFor(p) {
 const rows = [];
 for (let off = 0; ; off += 1000) {
   // only serving questions get assets - quarantined rows keep history but
-  // must not render visuals in case they're ever re-served.
-  const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.math-vi&publication_policy->>practiceEligible=eq.true&select=id,prompt_text,grade,skill&limit=1000&offset=${off}`, { headers: H });
+  // must not render visuals in case they're ever re-served. Any of the
+  // three serving flags counts (mock/exam-only rows still render).
+  const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.math-vi&select=id,prompt_text,grade,skill,publication_policy&limit=1000&offset=${off}`, { headers: H });
   if (!res.ok) throw new Error(`fetch ${res.status}: ${await res.text()}`);
   const page = await res.json();
-  rows.push(...page);
+  rows.push(...page.filter(q => {
+    const p = q.publication_policy ?? {};
+    return p.practiceEligible || p.mockEligible || p.examEligible;
+  }));
   if (page.length < 1000) break;
 }
 console.log(`math-vi rows: ${rows.length}`);
