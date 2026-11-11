@@ -44,6 +44,12 @@ export interface BankScored {
    * by the teach action or by hydrateBankQuestion's server 'taught' flag.
    */
   bankTaught?: boolean;
+  /**
+   * CR-137 - misconception rationale for the wrong option the student
+   * picked, disclosed by the oracle only after the attempt is scored.
+   * Never carries the correct answer - it explains the chosen distractor.
+   */
+  distractorFeedback?: string;
 }
 
 /** Sắp xếp lại câu: tap scrambled tiles in order to rebuild `sentence`. */

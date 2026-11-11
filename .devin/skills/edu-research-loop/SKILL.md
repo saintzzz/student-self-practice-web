@@ -38,10 +38,16 @@ SDLC pipeline (PM->BA->...->external review).
 4. Update `docs/research/edu-apps/BACKLOG.md`: re-rank CR candidates,
    mark what was filed/shipped/deferred, add new candidates.
 5. For each item marked "File CR" in Decisions, create the CR doc
-   skeleton under `docs/project/CR-NNN-*.md` (next free number) with
-   problem/evidence/scope/acceptance - the SDLC picks it up later.
-6. Commit + push ONLY files under `docs/` (report, backlog, CR docs).
-   Never push code, scripts, secrets, or scratch files.
+   under `docs/project/CR-NNN-*.md` (next free number) with
+   problem/evidence/scope/acceptance.
+6. **Implement** the decided CRs in the same cycle - the report IS the
+   mandate. Run the full SDLC per CR (code -> tests -> commit ->
+   deploy -> external review). If a CR is too large for one cycle,
+   implement its highest-value slice and mark the rest in BACKLOG.
+   Only items the PO explicitly marks "research-only / next cycle"
+   stay as docs.
+7. Commit + push docs AND implementation. Never push secrets or
+   scratch files.
 
 ## Report template
 
@@ -72,4 +78,6 @@ Scope / Method
 - Research stays honest: negative/mixed findings are recorded, not
   cherry-picked. Correlate-only claims are labeled as such.
 - No competitor brand assets/copy in our product - methods only.
-- Report diffs only under `docs/`; the loop NEVER self-deploys code.
+- Implementation runs the normal pipeline gates (lint/typecheck/tests/
+  build, external review loop until clean); a cycle that can't finish
+  its CRs leaves them marked in-progress in BACKLOG, not half-shipped.

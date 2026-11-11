@@ -156,7 +156,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
   const [now, setNow] = useState(() => Date.now());
   /** practice-mode verdict shown after each answer (null = awaiting answer).
    *  CR-106: `taught` marks the ungraded panel for a disclosed row. */
-  const [verdict, setVerdict] = useState<{ isCorrect: boolean; taught?: boolean } | null>(null);
+  const [verdict, setVerdict] = useState<{ isCorrect: boolean; taught?: boolean; feedback?: string } | null>(null);
   /** CR-27/29: question indexes already credited toward the daily quest
    *  (number keys) and the skill stats (`s${index}` keys) - a re-answer
    *  during exam review must not count twice. */
@@ -755,7 +755,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             }
             telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current, isCorrect);
             telemetryRef.current?.logAdaptive(question, isCorrect);
-            setVerdict({ isCorrect });
+            setVerdict({ isCorrect, feedback: isBankQuestion(hydrated) ? (hydrated as { distractorFeedback?: string }).distractorFeedback : undefined });
             playSfx(isCorrect ? 'correct' : 'wrong');
             if (isLiveArena) {
               if (isCorrect) livePointsRef.current += EXAM_POINTS_PER_QUESTION;
@@ -1345,6 +1345,11 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
                 <div className="mt-1 text-sm font-bold">
                   Đáp án đúng: <span className="font-extrabold text-emerald-800"><MarkupText text={examCorrectAnswerText(question)} /></span>
                 </div>
+                {verdict.feedback && (
+                  <div data-testid="distractor-feedback" className={`mt-1 text-sm font-semibold text-amber-900 ${TYPE_BODY_PAPER}`}>
+                    Gợi ý: {verdict.feedback}
+                  </div>
+                )}
                 {question.explanation && <div className={`mt-1 text-sm ${TYPE_BODY_PAPER}`}><MarkupText text={question.explanation} /></div>}
                 <QuestionReportButton questionId={question.id} context={`practice:${focus?.label ?? 'luyện tập'}`} />
               </>

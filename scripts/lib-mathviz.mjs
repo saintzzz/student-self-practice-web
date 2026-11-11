@@ -342,6 +342,26 @@ function numberBond({ a = '?', b = '?', whole = '?' }) {
   );
 }
 
+// ---- choice grid: 2x2 labeled candidate models (visual-puzzle questions) ----
+// spec.cells = 4 sub-specs; each rendered in its own cell labeled A-D.
+function choiceGrid({ cells }) {
+  const gw = W / 2, gh = H / 2;
+  const letters = ['A', 'B', 'C', 'D'];
+  let inner = '';
+  cells.forEach((cell, i) => {
+    const x = (i % 2) * gw, y = Math.floor(i / 2) * gh;
+    const sub = renderViz(cell).replace(
+      '<svg xmlns="http://www.w3.org/2000/svg"',
+      `<svg x="${x + 6}" y="${y + 6}" width="${gw - 12}" height="${gh - 12}"`,
+    );
+    inner += `<rect x="${x + 2}" y="${y + 2}" width="${gw - 4}" height="${gh - 4}" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/>` +
+      sub +
+      `<rect x="${x + 8}" y="${y + 8}" width="34" height="26" rx="8" fill="${BLUE}"/>` +
+      txt(x + 25, y + 26, letters[i], 15, 'middle', '#fff', 800);
+  });
+  return wrap(inner, 'Bốn hình A B C D để chọn');
+}
+
 // ---- dispatch ----
 export function renderViz(spec) {
   switch (spec.type) {
@@ -353,6 +373,7 @@ export function renderViz(spec) {
     case 'fraction': return fraction(spec);
     case 'bar': return bar(spec);
     case 'numberBond': return numberBond(spec);
+    case 'choiceGrid': return choiceGrid(spec);
     default: return wrap('', 'diagram');
   }
 }
@@ -366,6 +387,7 @@ export function vizLabel(spec) {
     case 'fraction': return `Phân số ${spec.num}/${spec.den}`;
     case 'bar': return 'Sơ đồ đoạn thẳng (bar model)';
     case 'numberBond': return 'Sơ đồ tách gộp số';
+    case 'choiceGrid': return 'Bốn hình A B C D để chọn';
     default: return 'hình minh họa';
   }
 }

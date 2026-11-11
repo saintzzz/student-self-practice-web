@@ -606,6 +606,9 @@ export interface BankScore {
   correct_answer: { index?: number; boolean?: boolean; text?: string; accepted?: unknown[] } | null;
   correct_answer_text: string | null;
   explanation_vi: string | null;
+  /** CR-137: misconception rationale for the wrong option the student
+   *  picked (mcq-family only, null when absent/correct/unanswered). */
+  distractor_feedback?: string | null;
   /** CR-106: the caller's account already taught this row - the attempt
    *  grades but the client marks it ungraded. */
   taught?: boolean;
@@ -708,6 +711,8 @@ export function hydrateBankQuestion(question: ExamQuestion, score: BankScore, ho
     bankVerdict: score.correct,
     bankCorrectText: score.correct_answer_text ?? '',
     explanation: score.explanation_vi ?? question.explanation,
+    // CR-137: "tại sao sai" hint for the picked distractor.
+    distractorFeedback: score.distractor_feedback ?? undefined,
     // CR-106: a server-flagged taught attempt is ungraded - carry the
     // marker so computeExamResult excludes it, but ONLY in ordinary
     // practice sittings (honorTaught): inside a review/form/mock/

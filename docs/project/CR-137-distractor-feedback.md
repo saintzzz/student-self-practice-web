@@ -32,3 +32,19 @@ which misconception each distractor encodes but throws that away.
 - UI shows "Tại sao sai: ..." line for the chosen wrong option.
 - Semantic guard covers rationale text (same rules as prompts).
 - Full SDLC + external review.
+
+## Status: IMPLEMENTED (cycle W46)
+
+- Generator emits `answer.distractor_feedback` = {wrongValue: rationale}
+  for every `Tinh:` row via a post-pass over distractor arithmetic
+  (wrong-op, off-by-one, off-by-ten, divisor-vs-quotient).
+- Migration `0081_distractor_feedback.sql`: score_bank_attempts returns
+  `distractor_feedback` for the option actually picked - post-submit
+  only, body is verbatim live def + v_fb plumbing (0079 lesson applied).
+- `BankScore.distractor_feedback` -> `hydrateBankQuestion` ->
+  `distractorFeedback` on BankScored -> practice verdict shows
+  "Goi y: <rationale>" under the correct-answer line.
+- Verified live: wrong pick on "Tinh: 338 + 45" returns
+  "Ban cong nham them 1 chuc."; correct pick returns null.
+- Upsert switched to merge-duplicates so regenerated rows pick up the
+  new answer field (quarantined ids untouched).

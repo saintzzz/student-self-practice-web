@@ -55,8 +55,10 @@ const items = [];
 const seen = new Set();
 const num = (n) => n.toLocaleString('vi-VN');
 
-/** push a mcq item; distractors are plausible-wrong strings, deduped. */
-function push(skill, domain, difficulty, prompt, answer, distractors, expl) {
+/** push a mcq item; distractors are plausible-wrong strings, deduped.
+ *  feedback (optional): { distractorValue: "tại sao sai" } - misconception
+ *  hints shown when the student picks that wrong option. */
+function push(skill, domain, difficulty, prompt, answer, distractors, expl, feedback) {
   const key = prompt;
   if (seen.has(key)) return;
   seen.add(key);
@@ -67,7 +69,7 @@ function push(skill, domain, difficulty, prompt, answer, distractors, expl) {
     id: `g${GRADE}-mathvi-tpl-${createHash('sha1').update(key).digest('hex').slice(0, 12)}`,
     grade: GRADE, subject: 'math-vi', domain, skill, question_type: 'mcq', difficulty,
     prompt_text: prompt,
-    choices, answer: { text: String(answer), index: choices.indexOf(String(answer)) },
+    choices, answer: { text: String(answer), index: choices.indexOf(String(answer)), ...(feedback ? { distractor_feedback: feedback } : {}) },
     explanation_vi: expl, canonical: true, tags: ['vi'],
     rights_status: 'owned-original-generated',
     curriculum_alignment: { grade: GRADE, coreTopic: skill, moetSubject: 'Mathematics', alignmentLevel: 'topic-skill', curriculumRole: 'core', primaryFramework: 'MOET-2018' },
@@ -315,6 +317,69 @@ if (GRADE === 5) { // G5: số thập phân, %, tỉ số, diện tích tam giá
   }
 }
 
+// ---------- CR-136: visual-puzzle questions (ST Math-style) ----------
+// Prompt asks which of 4 labeled models shows an expression; the asset
+// (built by publish-mathvi-assets.mjs) renders the 4 candidate models.
+// Correct slot is derived from the prompt hash so both sides agree.
+function pushPuzzle(difficulty, a, op, b) {
+  const opTxt = { '+': 'cộng', '-': 'trừ', '×': 'nhân', ':': 'chia' }[op];
+  const prompt = `Hình nào thể hiện phép tính ${a} ${op} ${b}?`;
+  if (seen.has(prompt)) return;
+  seen.add(prompt);
+  const slot = createHash('sha1').update(prompt).digest()[0] % 4;
+  const choices = ['Hình A', 'Hình B', 'Hình C', 'Hình D'];
+  items.push({
+    id: `g${GRADE}-mathvi-tpl-${createHash('sha1').update(prompt).digest('hex').slice(0, 12)}`,
+    grade: GRADE, subject: 'math-vi', domain: 'visual-puzzle', skill: 'model-recognition',
+    question_type: 'mcq', difficulty,
+    prompt_text: prompt,
+    choices, answer: { text: choices[slot], index: slot },
+    explanation_vi: `Hình ${'ABCD'[slot]} vẽ đúng sơ đồ của phép ${opTxt} ${a} ${op} ${b}.`,
+    canonical: true, tags: ['vi', 'visual-puzzle'],
+    rights_status: 'owned-original-generated',
+    curriculum_alignment: { grade: GRADE, coreTopic: 'model-recognition', moetSubject: 'Mathematics', alignmentLevel: 'topic-skill', curriculumRole: 'core', primaryFramework: 'MOET-2018' },
+    source: { kind: 'generated-v6', method: 'cr136-visual-puzzle', provenance: 'Deterministic Vietnamese template generation; original, not copied.' },
+    review_status: 'approved',
+    publication_policy: { examEligible: false, mockEligible: true, practiceEligible: true, commercialReleaseEligible: true, requiresHumanApprovalForExam: false, requiresHumanApprovalForCommercialRelease: false },
+    content_hash: createHash('sha1').update(`${GRADE}|mathvi|${prompt}`).digest('hex').slice(0, 12),
+  });
+}
+// grade-scaled operand ranges; ~16 puzzles per grade
+{
+  const lo = GRADE <= 2 ? 4 : 12, hi = GRADE <= 2 ? 18 : GRADE === 3 ? 60 : 120;
+  for (let i = 0; i < 8; i++) {
+    const a = rr(lo, hi), b = rr(2, Math.min(a - 1, hi));
+    pushPuzzle(GRADE <= 2 ? 2 : 3, a, '+', b);
+    pushPuzzle(GRADE <= 2 ? 2 : 3, a, '-', b);
+  }
+}
+
+// ---------- CR-137: misconception feedback on arithmetic distractors ----------
+// Auto-derive "tại sao sai" for every 'Tính:' item from the distractor's
+// relationship to the operands - covers all grades without per-site edits.
+for (const r of items) {
+  const m = /^Tính: (\d+) ([+\-×:]) (\d+) = \?$/.exec(r.prompt_text);
+  if (!m) continue;
+  const [, x, op, y] = m; const a = +x, b = +y;
+  const fb = {};
+  for (const c of r.choices) {
+    const v = +c;
+    if (Number.isNaN(v) || c === r.answer.text) continue;
+    if (op === '+' && v === a - b) fb[c] = 'Bạn đã trừ nhầm thay vì cộng.';
+    else if (op === '+' && v === a + b + 10) fb[c] = 'Bạn cộng nhầm thêm 1 chục.';
+    else if (op === '+' && v === b - a) fb[c] = 'Bạn đã trừ nhầm thay vì cộng.';
+    else if (op === '-' && v === a + b) fb[c] = 'Bạn đã cộng nhầm thay vì trừ.';
+    else if (op === '-' && v === b - a) fb[c] = 'Bạn trừ ngược - phải lấy số lớn trừ số bé.';
+    else if (op === '×' && v === a + b) fb[c] = 'Bạn đã cộng nhầm thay vì nhân.';
+    else if (op === '×' && (v === a * (b + 1) || v === a * (b - 1))) fb[c] = 'Bạn nhân sai 1 lần - kiểm tra lại bảng nhân.';
+    else if (op === ':' && v === b) fb[c] = 'Bạn lấy nhầm số chia làm kết quả.';
+    else if (op === ':' && v === a - b) fb[c] = 'Bạn đã trừ nhầm thay vì chia.';
+    else if (v === +r.answer.text + 1 || v === +r.answer.text - 1) fb[c] = 'Bạn tính sai 1 đơn vị - thử đếm lại.';
+    else if (v === +r.answer.text + 10 || v === +r.answer.text - 10) fb[c] = 'Bạn sai 1 chục - kiểm tra hàng chục.';
+  }
+  if (Object.keys(fb).length) r.answer.distractor_feedback = fb;
+}
+
 // ---------- semantic guard ----------
 // Fail generation on non-idiomatic Vietnamese - a wrong-collocation
 // question teaches kids the wrong language. Extend as new bad patterns
@@ -344,7 +409,10 @@ if (bad.length) { console.error(`SEMANTIC GUARD FAILED (${bad.length}):\n` + bad
 const rows = items;
 console.log(`generated ${rows.length} math-vi items for grade ${GRADE}`);
 if (DRY) { if (process.env.DUMP) rows.forEach(r => console.log(`${r.prompt_text}  |  đáp án: ${r.answer.text}  |  ${r.explanation_vi}`)); else console.log(rows.slice(0, 3)); process.exit(0); }
-const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' }, body: JSON.stringify(rows) });
+// merge-duplicates (not ignore): same deterministic id must pick up new
+// fields like answer.distractor_feedback; quarantined rows have different
+// ids so their rejected state is untouched.
+const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: { ...H, Prefer: 'resolution=merge-duplicates,return=minimal,count=exact' }, body: JSON.stringify(rows) });
 const body = await res.text();
 if (!res.ok) throw new Error(`upsert failed ${res.status}: ${body.slice(0, 300)}`);
 console.log('upsert status', res.status, res.statusText, body.slice(0, 300));

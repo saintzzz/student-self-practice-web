@@ -84,6 +84,31 @@ function vizFor(p) {
     if (a <= 12 && b <= 12) return { type: 'groups', a, b, emoji: m[2] };
     return { type: 'bar', kind: 'partWhole', a, b, unit: m[2] };
   }
+  // CR-136 visual-puzzle: "Hình nào thể hiện phép tính a op b?" -> 2x2 grid of
+  // candidate models. Correct slot must match the generator: sha1(prompt)[0] % 4.
+  if ((m = p.match(/Hình nào thể hiện phép tính (\d+) ([+\-×:]) (\d+)\?/))) {
+    const a = +m[1], op = m[2], b = +m[3];
+    const correct = {
+      '+': { type: 'bar', kind: 'partWhole', a, b, unit: '' },
+      '-': { type: 'bar', kind: 'subtract', whole: a, part: b, unit: '' },
+      '×': { type: 'bar', kind: 'multiply', n: b, unitPrice: a, unit: '' },
+      ':': { type: 'bar', kind: 'equalParts', total: a, parts: b, unit: '' },
+    }[op];
+    // wrong pools are per-op: a distractor model must NOT also be a valid
+    // depiction of the expression (e.g. compareGap/numberBond both encode a-b,
+    // so they can never distract a '-' puzzle).
+    const pools = {
+      '+': [{ type: 'bar', kind: 'compare', a, b }, { type: 'bar', kind: 'compareGap', a, gap: b, unit: '' }, { type: 'bar', kind: 'equalParts', total: a + b, parts: 2, unit: '' }],
+      '-': [{ type: 'bar', kind: 'compare', a, b }, { type: 'bar', kind: 'equalParts', total: a, parts: 2, unit: '' }, { type: 'bar', kind: 'multiply', n: 2, unitPrice: b, unit: '' }],
+      '×': [{ type: 'bar', kind: 'partWhole', a, b, unit: '' }, { type: 'bar', kind: 'equalParts', total: a, parts: b, unit: '' }, { type: 'bar', kind: 'compare', a, b }],
+      ':': [{ type: 'bar', kind: 'partWhole', a, b, unit: '' }, { type: 'bar', kind: 'multiply', n: 2, unitPrice: b, unit: '' }, { type: 'bar', kind: 'compare', a, b }],
+    };
+    const wrongs = pools[op].filter((w) => JSON.stringify(w) !== JSON.stringify(correct)).slice(0, 3);
+    const slot = createHash('sha1').update(p).digest()[0] % 4;
+    const cells = [];
+    for (let i = 0, w = 0; i < 4; i++) cells.push(i === slot ? correct : wrongs[w++]);
+    return { type: 'choiceGrid', cells };
+  }
   return null;
 }
 

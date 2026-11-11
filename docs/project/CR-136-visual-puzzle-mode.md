@@ -36,3 +36,18 @@ concept-first learners, and is the piece our CPA coverage is missing
   misconception shapes), VN explanation tying model->symbols.
 - No answer leak through images (same rules as CR-132).
 - Full SDLC: BA -> design (figure-choice UX) -> dev -> external review.
+
+## Status: IMPLEMENTED (cycle W46)
+
+- `choiceGrid` renderer in `scripts/lib-mathviz.mjs`: 2x2 grid of labeled
+  candidate models (A-D) in one SVG asset - no schema/UI change needed,
+  choices stay text "Hinh A/B/C/D".
+- `pushPuzzle()` in `gen-template-mathvi.mjs`: 16 puzzles per grade
+  ("Hinh nao the hien phep tinh a op b?"), correct slot derived
+  deterministically from sha1(prompt)[0] % 4 so the asset publisher
+  renders the correct model in the same cell.
+- Wrong-model pools are per-operation: a distractor model is never a
+  valid depiction of the expression (compareGap/numberBond encode a-b,
+  so they can never appear in '-' puzzles).
+- Verified: 78 puzzle assets live; slot-consistency check on live rows
+  passes (answer letter == cell containing the correct spec).
