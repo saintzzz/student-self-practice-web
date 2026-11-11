@@ -648,6 +648,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
             setNow(Date.now());
             setStripOffset(0);
             setVerdict(null);
+            setCombo(0);
             creditedRef.current = new Set<string | number>();
             return;
           }
@@ -667,6 +668,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
     setNow(Date.now());
     setStripOffset(0);
     setVerdict(null);
+    setCombo(0);
     creditedRef.current = new Set<string | number>();
   }
 
