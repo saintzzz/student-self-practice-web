@@ -92,7 +92,7 @@ for (let off = 0; ; off += 1000) {
   // only serving questions get assets - quarantined rows keep history but
   // must not render visuals in case they're ever re-served. Any of the
   // three serving flags counts (mock/exam-only rows still render).
-  const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.math-vi&select=id,prompt_text,grade,skill,publication_policy&limit=1000&offset=${off}`, { headers: H });
+  const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.math-vi&select=id,prompt_text,grade,skill,publication_policy&order=id&limit=1000&offset=${off}`, { headers: H });
   if (!res.ok) throw new Error(`fetch ${res.status}: ${await res.text()}`);
   const page = await res.json();
   rows.push(...page.filter(q => {
