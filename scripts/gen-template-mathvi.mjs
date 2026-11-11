@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { puzzleCells, puzzleSlot, puzzleAssetId, puzzleOptionLabel } from './lib-puzzle.mjs';
 
 const ARGS = process.argv.slice(2);
 const arg = (n, d) => { const i = ARGS.indexOf(n); return i >= 0 ? ARGS[i + 1] : d; };
@@ -326,14 +327,20 @@ function pushPuzzle(difficulty, a, op, b) {
   const prompt = `Hình nào thể hiện phép tính ${a} ${op} ${b}?`;
   if (seen.has(prompt)) return;
   seen.add(prompt);
-  const slot = createHash('sha1').update(prompt).digest()[0] % 4;
-  const choices = ['Hình A', 'Hình B', 'Hình C', 'Hình D'];
+  const cells = puzzleCells(prompt);
+  const slot = puzzleSlot(prompt);
+  // word-to-image-mcq: each option is a real image choice. The publisher
+  // renders one full-size SVG per candidate under the same asset ids.
+  const choices = cells.map((cell, i) => ({
+    assetId: puzzleAssetId(cell),
+    label: puzzleOptionLabel(prompt, i),
+  }));
   items.push({
     id: `g${GRADE}-mathvi-tpl-${createHash('sha1').update(prompt).digest('hex').slice(0, 12)}`,
     grade: GRADE, subject: 'math-vi', domain: 'visual-puzzle', skill: 'model-recognition',
-    question_type: 'mcq', difficulty,
+    question_type: 'word-to-image-mcq', difficulty,
     prompt_text: prompt,
-    choices, answer: { text: choices[slot], index: slot },
+    choices, answer: { text: choices[slot].label, index: slot },
     explanation_vi: `Hình ${'ABCD'[slot]} vẽ đúng sơ đồ của phép ${opTxt} ${a} ${op} ${b}.`,
     canonical: true, tags: ['vi', 'visual-puzzle'],
     rights_status: 'owned-original-generated',

@@ -15,6 +15,7 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderViz, vizLabel } from './lib-mathviz.mjs';
+import { puzzleCells, puzzleAssetId } from './lib-puzzle.mjs';
 
 const DRY = process.argv.includes('--dry');
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -84,31 +85,12 @@ function vizFor(p) {
     if (a <= 12 && b <= 12) return { type: 'groups', a, b, emoji: m[2] };
     return { type: 'bar', kind: 'partWhole', a, b, unit: m[2] };
   }
-  // CR-136 visual-puzzle: "Hình nào thể hiện phép tính a op b?" -> 2x2 grid of
-  // candidate models. Correct slot must match the generator: sha1(prompt)[0] % 4.
-  if ((m = p.match(/Hình nào thể hiện phép tính (\d+) ([+\-×:]) (\d+)\?/))) {
-    const a = +m[1], op = m[2], b = +m[3];
-    const correct = {
-      '+': { type: 'bar', kind: 'partWhole', a, b, unit: '' },
-      '-': { type: 'bar', kind: 'subtract', whole: a, part: b, unit: '' },
-      '×': { type: 'bar', kind: 'multiply', n: b, unitPrice: a, unit: '' },
-      ':': { type: 'bar', kind: 'equalParts', total: a, parts: b, unit: '' },
-    }[op];
-    // wrong pools are per-op: a distractor model must NOT also be a valid
-    // depiction of the expression (e.g. compareGap/numberBond both encode a-b,
-    // so they can never distract a '-' puzzle).
-    const pools = {
-      '+': [{ type: 'bar', kind: 'compare', a, b }, { type: 'bar', kind: 'compareGap', a, gap: b, unit: '' }, { type: 'bar', kind: 'equalParts', total: a + b, parts: 2, unit: '' }],
-      '-': [{ type: 'bar', kind: 'compare', a, b }, { type: 'bar', kind: 'equalParts', total: a, parts: 2, unit: '' }, { type: 'bar', kind: 'multiply', n: 2, unitPrice: b, unit: '' }],
-      '×': [{ type: 'bar', kind: 'partWhole', a, b, unit: '' }, { type: 'bar', kind: 'equalParts', total: a, parts: b, unit: '' }, { type: 'bar', kind: 'compare', a, b }],
-      ':': [{ type: 'bar', kind: 'partWhole', a, b, unit: '' }, { type: 'bar', kind: 'multiply', n: 2, unitPrice: b, unit: '' }, { type: 'bar', kind: 'compare', a, b }],
-    };
-    const wrongs = pools[op].filter((w) => JSON.stringify(w) !== JSON.stringify(correct)).slice(0, 3);
-    const slot = createHash('sha1').update(p).digest()[0] % 4;
-    const cells = [];
-    for (let i = 0, w = 0; i < 4; i++) cells.push(i === slot ? correct : wrongs[w++]);
-    return { type: 'choiceGrid', cells };
-  }
+  // CR-136 visual-puzzle: "Hình nào thể hiện phép tính a op b?" -> four
+  // full-size candidate-model assets linked at sort_order 0-3 so the
+  // client renders real image choices (word-to-image-mcq). Specs come
+  // from lib-puzzle.mjs, shared with the generator.
+  const cells = puzzleCells(p);
+  if (cells) return { type: 'puzzle', cells };
   return null;
 }
 
@@ -134,6 +116,19 @@ let skipped = 0;
 for (const q of rows) {
   const spec = vizFor(q.prompt_text);
   if (!spec) { skipped++; continue; }
+  if (spec.type === 'puzzle') {
+    // one full-size asset per candidate, sort_order = option index so
+    // resolveOptionImages pairs asset_paths[i] with choice i
+    spec.cells.forEach((cell, i) => {
+      const aid = puzzleAssetId(cell);
+      if (!assets.has(aid)) {
+        const labeled = { type: 'labeledModel', letter: 'ABCD'[i], model: cell };
+        assets.set(aid, { spec: labeled, svg: renderViz(labeled), alt: `Hình ${'ABCD'[i]}` });
+      }
+      links.push({ question_id: q.id, asset_id: aid, sort_order: i });
+    });
+    continue;
+  }
   const aid = `mathvi-${createHash('sha1').update(JSON.stringify(spec)).digest('hex').slice(0, 10)}`;
   if (!assets.has(aid)) {
     assets.set(aid, { spec, svg: renderViz(spec), alt: vizLabel(spec) });

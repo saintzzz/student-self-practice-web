@@ -342,6 +342,22 @@ function numberBond({ a = '?', b = '?', whole = '?' }) {
   );
 }
 
+// ---- labeled model: one full-size candidate + letter badge ----
+// Visual-puzzle options render as real image choices (word-to-image-mcq),
+// each a full 360x220 model so labels stay readable (r187).
+function labeledModel({ letter, model }) {
+  const sub = renderViz(model).replace(
+    '<svg xmlns="http://www.w3.org/2000/svg"',
+    `<svg x="10" y="10" width="${W - 20}" height="${H - 20}"`,
+  );
+  return wrap(
+    sub +
+    `<rect x="16" y="14" width="52" height="40" rx="12" fill="${BLUE}"/>` +
+    txt(42, 42, letter, 24, 'middle', '#fff', 800),
+    `Hình ${letter}`,
+  );
+}
+
 // ---- choice grid: 2x2 labeled candidate models (visual-puzzle questions) ----
 // spec.cells = 4 sub-specs; each rendered in its own cell labeled A-D.
 function choiceGrid({ cells }) {
@@ -374,6 +390,7 @@ export function renderViz(spec) {
     case 'bar': return bar(spec);
     case 'numberBond': return numberBond(spec);
     case 'choiceGrid': return choiceGrid(spec);
+    case 'labeledModel': return labeledModel(spec);
     default: return wrap('', 'diagram');
   }
 }
@@ -388,6 +405,7 @@ export function vizLabel(spec) {
     case 'bar': return 'Sơ đồ đoạn thẳng (bar model)';
     case 'numberBond': return 'Sơ đồ tách gộp số';
     case 'choiceGrid': return 'Bốn hình A B C D để chọn';
+    case 'labeledModel': return `Hình ${spec.letter}`;
     default: return 'hình minh họa';
   }
 }
