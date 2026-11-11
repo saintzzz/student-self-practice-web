@@ -1,16 +1,21 @@
 ---
 name: edu-research-loop
-description: Weekly PO research cycle - survey the world's best K-5 learning apps, write a report, decide CR filings, keep the product pedagogy current. Runs weekly via launchd (devin -p headless) and manually anytime. Output docs/research/edu-apps/.
+description: Weekly PO research cycle - survey the world's best K-5 learning apps (pedagogy AND UI/UX), write a report, then auto-implement the decided items in the same run. Runs weekly via launchd (devin -p headless) and manually anytime. Output docs/research/edu-apps/.
 ---
 
 # Edu research loop (weekly)
 
-Purpose: keep English Arena's pedagogy at world-class level by
-continuously studying the best global learning products and converting
-findings into CRs. The agent running this IS the PO: it decides what
-gets filed, what gets deferred, what gets dropped. It never implements
-features inside this loop - implementation runs through the normal
-SDLC pipeline (PM->BA->...->external review).
+Purpose: keep English Arena at world-class level - pedagogy AND
+interface - by continuously studying the best global learning products.
+The pipeline is the user's stated flow:
+
+  self-evaluate as PO -> write the report -> (headless devin reads the
+  report) -> auto-implement whatever the report's Decisions marked
+  "implement", in the SAME run, through the normal SDLC gates.
+
+The report is the contract: implementation works ONLY off its Decisions
+section. The agent running this IS the PO - it decides what ships, what
+is deferred, what is dropped.
 
 ## Cadence
 
@@ -20,11 +25,18 @@ SDLC pipeline (PM->BA->...->external review).
 
 ## Focus rotation (pick the next un-done theme)
 
+Every cycle surveys BOTH axes of the chosen theme: pedagogy (how kids
+learn) and UI/UX (how the product looks/feels/responds). UX reports go
+to `<YYYY>-W<ww>-ux.md` when the theme is pedagogy-led, or inline in the
+main report when the theme is UX-led.
+
 1. Math pedagogy (CPA, bar models, manipulatives, adaptive engines)
-2. Gamification & retention (streaks, goals, rewards, live class play)
-3. VN competitors (VioEdu, Monkey Junior, Kyna, IOE-native features)
-4. STEM/science & English cross-subject methods
-5. Teacher/admin workflow (reports, differentiation, classroom tools)
+2. UI/UX & interaction patterns (feedback moments, character systems,
+   celebration, tap targets, motion, empty/error states)
+3. Gamification & retention (streaks, goals, rewards, live class play)
+4. VN competitors (VioEdu, Monkey Junior, Kyna, IOE-native features)
+5. STEM/science & English cross-subject methods
+6. Teacher/admin workflow (reports, differentiation, classroom tools)
 
 ## Method
 
@@ -40,12 +52,13 @@ SDLC pipeline (PM->BA->...->external review).
 5. For each item marked "File CR" in Decisions, create the CR doc
    under `docs/project/CR-NNN-*.md` (next free number) with
    problem/evidence/scope/acceptance.
-6. **Implement** the decided CRs in the same cycle - the report IS the
-   mandate. Run the full SDLC per CR (code -> tests -> commit ->
-   deploy -> external review). If a CR is too large for one cycle,
-   implement its highest-value slice and mark the rest in BACKLOG.
-   Only items the PO explicitly marks "research-only / next cycle"
-   stay as docs.
+6. **Implement** - reread the report's Decisions section and implement
+   every item marked "implement" (auto-implement if warranted = the PO
+   already decided it in the report). Run the full SDLC per item
+   (code -> tests -> commit -> deploy -> external review). If an item
+   is too large for one cycle, implement its highest-value slice and
+   mark the rest in BACKLOG. Only items the report explicitly marks
+   "research-only / next cycle" stay as docs.
 7. Commit + push docs AND implementation. Never push secrets or
    scratch files.
 
