@@ -46,9 +46,12 @@ export function puzzleCells(prompt) {
   return cells;
 }
 
-/** Deterministic asset id for one candidate model. */
-export function puzzleAssetId(cellSpec) {
-  return `mathvi-opt-${createHash('sha1').update(JSON.stringify(cellSpec)).digest('hex').slice(0, 10)}`;
+/** Deterministic asset id for one candidate model AT a given option
+ *  letter. The letter is baked into the rendered SVG badge, so the id
+ *  must include it - otherwise the same model at a different option
+ *  index would share an asset showing the wrong letter (r188). */
+export function puzzleAssetId(cellSpec, letter) {
+  return `mathvi-opt-${createHash('sha1').update(JSON.stringify({ letter, cellSpec })).digest('hex').slice(0, 10)}`;
 }
 
 /** Visible/accessible label for option i of a puzzle prompt. */

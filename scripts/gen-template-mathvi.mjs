@@ -332,7 +332,7 @@ function pushPuzzle(difficulty, a, op, b) {
   // word-to-image-mcq: each option is a real image choice. The publisher
   // renders one full-size SVG per candidate under the same asset ids.
   const choices = cells.map((cell, i) => ({
-    assetId: puzzleAssetId(cell),
+    assetId: puzzleAssetId(cell, 'ABCD'[i]),
     label: puzzleOptionLabel(prompt, i),
   }));
   items.push({

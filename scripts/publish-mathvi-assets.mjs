@@ -120,7 +120,7 @@ for (const q of rows) {
     // one full-size asset per candidate, sort_order = option index so
     // resolveOptionImages pairs asset_paths[i] with choice i
     spec.cells.forEach((cell, i) => {
-      const aid = puzzleAssetId(cell);
+      const aid = puzzleAssetId(cell, 'ABCD'[i]);
       if (!assets.has(aid)) {
         const labeled = { type: 'labeledModel', letter: 'ABCD'[i], model: cell };
         assets.set(aid, { spec: labeled, svg: renderViz(labeled), alt: `Hình ${'ABCD'[i]}` });
