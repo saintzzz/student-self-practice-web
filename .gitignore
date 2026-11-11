@@ -53,3 +53,4 @@ scripts/bing-auth.json
 scripts/_*.png
 .playwright-cli/
 supabase/.temp/
+logs/
