@@ -323,7 +323,7 @@ const BARE_NOUNS = 'cam|kẹo|vở|bi|bút|sách|hoa|nhãn vở|táo|xoài|ổi|
 const SEMANTIC_RULES = [
   // 'hái' only collocates with the exact harvest forms ("hái được 5 quả
   // vở" must not pass just because it starts with 'quả').
-  [new RegExp(`hái được \\d+ (?!${HARVEST_ITEMS.map(i => i[0]).join('|')})`), '"hái" chỉ đi với các mục trong HARVEST_ITEMS'],
+  [new RegExp(`hái được \\d+ (?!${HARVEST_ITEMS.map(i => `${i[0]}(?=[,.?!]|$)`).join('|')})`), '"hái" chỉ đi với các mục trong HARVEST_ITEMS'],
   // Bare noun after a number = missing classifier ("5 vở" -> "5 quyển vở").
   [new RegExp(`\\d+ (${BARE_NOUNS})(?=[^a-zà-ỹ]|$)`), 'thiếu lượng từ trước danh từ đếm được'],
   [/mỗi chỗ/, '"mỗi chỗ" - phải dùng đúng tên chỗ chứa (mỗi túi/hộp/...)'],

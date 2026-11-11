@@ -18,7 +18,7 @@ set review_status = 'rejected',
 where subject = 'math-vi' and (
   -- 'hái' + anything not an exact harvest form (old harvest prompts
   -- used classifier-less short nouns, so ALL old 'hái' rows match)
-  (prompt_text ~ 'hái được' and prompt_text !~ 'hái được [0-9]+ (quả cam|quả táo|quả xoài|quả ổi|quả mận|bông hoa|chùm nho)')
+  (prompt_text ~ 'hái được' and prompt_text !~ 'hái được [0-9]+ (quả cam|quả táo|quả xoài|quả ổi|quả mận|bông hoa|chùm nho)([,.?!]|$)')
   -- bare countable noun after a number = missing classifier
   or prompt_text ~ '[0-9]+ (nhãn vở|cam|kẹo|vở|bi|bút|sách|hoa|táo|xoài|ổi|mận|gà)([^a-zà-ỹ]|$)'
   -- 'mỗi chỗ' instead of the actual container name
