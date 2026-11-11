@@ -318,6 +318,174 @@ if (GRADE === 5) { // G5: số thập phân, %, tỉ số, diện tích tam giá
   }
 }
 
+// ---------- CR-140: higher-order + diverse frames ----------
+// The bank was ~45% bare "Tính: a op b" drill - kids see the same skeleton
+// with shuffled numbers. These families test REASONING (which operation,
+// find-the-error, multi-step, inverse, estimation) and widen surface
+// contexts (money, time, age, measure, patterns). Each family stays small
+// on purpose: diversity beats volume per shape.
+{
+  const n2 = GRADE <= 2 ? 50 : 500;
+  const mult = GRADE <= 2 ? [2, 3, 4, 5] : [3, 4, 6, 7, 8, 9];
+
+  // F1 find-the-error: student judges a shown computation.
+  for (let i = 0; i < 6; i++) {
+    const a = pick(mult), b = pick(mult), p = a * b;
+    const shownRight = i % 5 === 4;
+    const shown = shownRight ? p : p + pick([1, -1, a, 2]);
+    const name = pick(NAMES);
+    push('reasoning', 'arithmetic', 3,
+      `Bạn ${name} tính: ${a} × ${b} = ${shown}. Bạn ấy tính đúng hay sai?`,
+      shownRight ? 'Đúng' : `Sai - đáp án đúng là ${p}`,
+      [`Đúng`, `Sai - đáp án đúng là ${p + 1}`, `Sai - đáp án đúng là ${p + a}`, `Sai - đáp án đúng là ${p - 1}`].filter((c) => c !== (shownRight ? 'Đúng' : `Sai - đáp án đúng là ${p}`)),
+      `${a} × ${b} = ${p}, nên ${shownRight ? 'bạn ấy tính đúng' : `kết quả ${shown} là sai`}.`);
+  }
+
+  // F2 which-expression: pick the operation, don't compute.
+  for (let i = 0; i < 6; i++) {
+    const [full, short] = pick(ITEMS);
+    const k = rr(2, 6), m = pick(mult);
+    const name = pick(NAMES);
+    push('reasoning', 'word-problem', 3,
+      `${name} xếp ${k} túi, mỗi túi có ${m} ${full}. Phép tính nào tính được tổng số ${short}?`,
+      `${k} × ${m}`, [`${k} + ${m}`, `${k} - ${m}`, `${k} : ${m}`],
+      `${k} túi, mỗi túi ${m} - tổng là phép nhân ${k} × ${m}.`);
+    const t = k * m;
+    push('reasoning', 'word-problem', 3,
+      `Có ${t} ${full} xếp đều vào ${k} hộp. Phép tính nào tính số ${short} ở mỗi hộp?`,
+      `${t} : ${k}`, [`${t} × ${k}`, `${t} - ${k}`, `${t} + ${k}`],
+      `Chia đều ${t} cho ${k} hộp - phép chia ${t} : ${k}.`);
+  }
+
+  // F3 two-step word problems.
+  for (let i = 0; i < 6; i++) {
+    const [full, short] = pick(ITEMS);
+    const k = rr(2, 5), m = pick(mult), a = rr(1, k * m - 2);
+    push('word-problem', 'arithmetic', 3,
+      `Mẹ mua ${k} túi, mỗi túi có ${m} ${full}. Cả nhà dùng hết ${a} ${full}. Hỏi còn lại bao nhiêu ${short}?`,
+      k * m - a, [k * m + a, k * m - a + 1, k * m],
+      `Tổng ${k} × ${m} = ${k * m} ${full}; còn lại ${k * m} - ${a} = ${k * m - a}.`);
+    const have = rr(3, 30);
+    push('word-problem', 'arithmetic', 3,
+      `Em có ${have} ${full}, mua thêm ${k} túi mỗi túi ${m} ${full}. Hỏi em có tất cả bao nhiêu ${short}?`,
+      have + k * m, [have + k + m, (have + k) * m, k * m - have],
+      `Thêm ${k} × ${m} = ${k * m} ${full}; tất cả ${have} + ${k * m} = ${have + k * m}.`);
+  }
+
+  // F4 compare two expressions: >, <, = .
+  for (let i = 0; i < 6; i++) {
+    const a = pick(mult), b = pick(mult), c = pick(mult), d = pick(mult);
+    const l = a * b, r = c * d;
+    const ans = l === r ? '=' : l > r ? '>' : '<';
+    push('reasoning', 'arithmetic', 2,
+      `Điền dấu thích hợp: ${a} × ${b} ... ${c} × ${d}`,
+      ans, [ans === '>' ? '<' : '>', ans === '<' ? '>' : '<', ans === '=' ? '<' : '='],
+      `${a} × ${b} = ${l}, ${c} × ${d} = ${r} - nên ${l} ${ans} ${r}.`);
+  }
+
+  // F5 estimation (G3+): round a sum/difference to the nearest ten.
+  if (GRADE >= 3) {
+    for (let i = 0; i < 5; i++) {
+      const a = rr(21, 99), b = rr(11, 99), s = a + b;
+      const t = Math.round(s / 10) * 10;
+      push('reasoning', 'numbers', 2,
+        `Tổng ${a} + ${b} gần bằng số tròn chục nào nhất?`,
+        t, [s, t + 10, t - 10],
+        `${a} + ${b} = ${s}, ${s} gần nhất với ${t}.`);
+    }
+  }
+
+  // F6 divisibility / odd-one-out.
+  for (let i = 0; i < 5; i++) {
+    const k = pick([2, 5, 10]);
+    const yes = k * rr(2, 12);
+    const nos = new Set();
+    while (nos.size < 3) { const c = rr(11, n2); if (c % k !== 0) nos.add(c); }
+    push('reasoning', 'numbers', 2,
+      `Số nào sau đây chia hết cho ${k}?`,
+      yes, [...nos],
+      `${yes} : ${k} = ${yes / k} - chia hết.`);
+  }
+
+  // F7 inverse relationship.
+  for (let i = 0; i < 5; i++) {
+    const k = pick(mult), m = pick(mult), t = k * m;
+    const [full, short] = pick(ITEMS);
+    const nA = pick(NAMES); let nB = pick(NAMES); while (nB === nA) nB = pick(NAMES);
+    push('word-problem', 'arithmetic', 3,
+      `${nA} có ${t} ${full}, gấp ${k} lần số ${short} của ${nB}. Hỏi ${nB} có bao nhiêu ${short}?`,
+      m, [t - k, k, t + k],
+      `Gấp ${k} lần nghĩa là ${t} = ${k} × số của bạn - số của bạn là ${t} : ${k} = ${m}.`);
+  }
+
+  // F8 elapsed time.
+  for (let i = 0; i < 5; i++) {
+    const h = rr(6, 20), mins = pick([15, 30, 45]);
+    push('time', 'measurement', 2,
+      `Em bắt đầu học lúc ${h} giờ, học trong ${mins} phút. Hỏi mấy giờ em xong?`,
+      `${h} giờ ${mins} phút`, [`${h} giờ`, `${h + 1} giờ`, `${mins} giờ`],
+      `${h} giờ + ${mins} phút = ${h} giờ ${mins} phút.`);
+  }
+
+  // F9 money change.
+  for (let i = 0; i < 5; i++) {
+    const price = rr(2, 45) * 1000, paid = price + pick([1000, 2000, 5000, 10000]);
+    const [full, short] = pick(ITEMS);
+    push('word-problem', 'measurement', 2,
+      `Em mua 1 ${full} giá ${num(price)} đồng, đưa cô bán ${num(paid)} đồng. Hỏi cô trả lại bao nhiêu đồng?`,
+      num(paid - price), [num(price), num(paid), num(paid - price + 1000)],
+      `Trả lại ${num(paid)} - ${num(price)} = ${num(paid - price)} đồng.`);
+  }
+
+  // F10 unit conversion.
+  for (let i = 0; i < 5; i++) {
+    const kind = pick(['dm-cm', 'm-dm', 'gio-phut', 'kg-g']);
+    if (kind === 'dm-cm') { const n = rr(2, 20); push('measurement', 'measurement', 1, `${n} dm = bao nhiêu cm?`, n * 10, [n + 10, n * 100, n], `1 dm = 10 cm nên ${n} dm = ${n * 10} cm.`); }
+    else if (kind === 'm-dm') { const n = rr(2, 20); push('measurement', 'measurement', 1, `${n} m = bao nhiêu dm?`, n * 10, [n + 10, n * 100, n], `1 m = 10 dm nên ${n} m = ${n * 10} dm.`); }
+    else if (kind === 'kg-g') { if (GRADE >= 3) { const n = rr(2, 9); push('measurement', 'measurement', 2, `${n} kg = bao nhiêu gam?`, num(n * 1000), [num(n * 100), num(n * 10), n], `1 kg = 1000 g nên ${n} kg = ${num(n * 1000)} g.`); } else { const n = rr(2, 9); push('measurement', 'measurement', 1, `${n} dm = bao nhiêu cm?`, n * 10, [n + 10, n * 100, n], `1 dm = 10 cm nên ${n} dm = ${n * 10} cm.`); } }
+    else { const n = rr(1, 3); push('time', 'measurement', 2, `${n} giờ = bao nhiêu phút?`, n * 60, [n * 10, n * 100, 60 + n], `1 giờ = 60 phút nên ${n} giờ = ${n * 60} phút.`); }
+  }
+
+  // F11 fraction of a number (G3+).
+  if (GRADE >= 3) {
+    for (let i = 0; i < 5; i++) {
+      const den = pick([2, 3, 4, 5]);
+      const q = rr(2, 15), n = den * q;
+      push('fractions', 'fractions', 2,
+        `1/${den} của ${n} là bao nhiêu?`,
+        q, [n - den, den, n / 2 === q ? q + 1 : Math.floor(n / 2)],
+        `1/${den} của ${n} = ${n} : ${den} = ${q}.`);
+    }
+  }
+
+  // F12 place-value reasoning.
+  for (let i = 0; i < 5; i++) {
+    if (GRADE <= 2) {
+      const c = rr(1, 9), u = rr(0, 9);
+      push('numbers', 'numbers', 1,
+        `Số gồm ${c} chục và ${u} đơn vị là số nào?`,
+        c * 10 + u, [c + u, u * 10 + c, c * 10],
+        `${c} chục = ${c * 10}, cộng ${u} đơn vị được ${c * 10 + u}.`);
+    } else {
+      const h = rr(1, 9), c = rr(0, 9), u = rr(0, 9);
+      push('numbers', 'numbers', 1,
+        `Số gồm ${h} trăm, ${c} chục và ${u} đơn vị là số nào?`,
+        h * 100 + c * 10 + u, [h * 100 + u * 10 + c, h + c + u, h * 100 + c * 10],
+        `${h} trăm = ${h * 100}, ${c} chục = ${c * 10}, ${u} đơn vị - tổng ${h * 100 + c * 10 + u}.`);
+    }
+  }
+
+  // F13 age relationships.
+  for (let i = 0; i < 5; i++) {
+    const a = rr(7, 15), k = rr(1, a - 5);
+    const n1m = pick(NAMES); let n2m = pick(NAMES); while (n2m === n1m) n2m = pick(NAMES);
+    push('word-problem', 'numbers', 2,
+      `${n1m} năm nay ${a} tuổi, ${n2m} kém ${n1m} ${k} tuổi. Hỏi ${n2m} bao nhiêu tuổi?`,
+      a - k, [a + k, k, a],
+      `${n2m} kém ${k} tuổi nên ${a} - ${k} = ${a - k} tuổi.`);
+  }
+}
+
 // ---------- CR-136: visual-puzzle questions (ST Math-style) ----------
 // Prompt asks which of 4 labeled models shows an expression; the asset
 // (built by publish-mathvi-assets.mjs) renders the 4 candidate models.
