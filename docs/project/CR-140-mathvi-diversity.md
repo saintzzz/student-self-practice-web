@@ -19,3 +19,13 @@ of repeated word-problem frames.
 ## Verified
 - Serving bank: 1298 rows, 353 distinct shapes (was 158), bare drill 12%.
 - Semantic guard passes all 5 grades.
+
+## Extended scope (all subjects)
+- math (toán tiếng Anh): same shape-cap-12 quarantine - 43,267 surplus
+  drill rows rejected (52.4k -> ~9.2k live; "# + # = ___" was x4,950 in G2).
+- science: literal prompt+answer dedupe - 4,710 duplicate rows rejected.
+- english: literal prompt+answer dedupe - 5,795 duplicate rows rejected
+  (prompt-only key NOT used: image-MCQ rows share prompt text but differ
+  by answer/asset).
+- All quarantines set review_status='rejected' + all serving flags off,
+  history retained. Total this CR: ~54k rows curated out of serving.
