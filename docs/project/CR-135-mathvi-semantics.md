@@ -54,3 +54,17 @@ it immediately.
 - DB: zero serving (`canonical`/eligible) rows matching bad patterns.
 - Semantic guard fails generation if a bad pattern is reintroduced.
 - Practice/Thi thử flows verified on prod.
+
+## Status: DONE (2026-11-11)
+
+- 208 bad rows rejected + all policy flags false (migration `0080`,
+  applied to prod, verified 0 bad still serving / 1175 serving).
+- All 5 grades regenerated with classifier-correct prompts.
+- Semantic guard active in generator (hái whitelist, bare-noun check,
+  malformed phrasing, digit distractors).
+- 365 questions re-linked to 341 visual assets (ordered pagination).
+- Verified via live RPC: 240 served prompts across G2/G3/G5, zero
+  bad patterns; prompts now read "Phúc hái được 39 quả táo",
+  "xếp 25 cây bút vào 5 túi... mỗi túi", "thùng chứa tất cả 80 quả xoài".
+- External review r187 (3 findings) -> r188 (4) -> r189 (1) -> CLEAN.
+  Commits: 8518928, 96b37ae, 829410d, a4f85ef.
