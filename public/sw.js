@@ -10,7 +10,7 @@ importScripts('/sw-rules.js');
 const { isApiPath, isBuildAsset, isMediaAsset, isAppNav, shellCacheKey } =
   self.SwRules;
 
-const SW_VERSION = 1;
+const SW_VERSION = 2;
 const STATIC = `vieschool-static-v${SW_VERSION}`;
 const MEDIA = `vieschool-media-v${SW_VERSION}`;
 const APP_SHELL_URL = '/app';
@@ -107,7 +107,16 @@ self.addEventListener('activate', (e) => {
       .then((names) =>
         Promise.all(
           names
-            .filter((n) => n !== STATIC && n !== MEDIA)
+            // Only OUR versioned namespaces - other caches on this
+            // origin (unrelated apps sharing the host) are not ours
+            // to erase.
+            .filter(
+              (n) =>
+                (n.startsWith('vieschool-static-') ||
+                  n.startsWith('vieschool-media-')) &&
+                n !== STATIC &&
+                n !== MEDIA,
+            )
             .map((n) => caches.delete(n)),
         ),
       )

@@ -72,7 +72,11 @@ export default function PwaUi({ screen }: { screen: Screen }) {
         <div className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 shadow-md ring-1 ring-white/15 backdrop-blur-md">
           <button
             type="button"
-            onClick={() => void promptInstall()}
+            onClick={() =>
+              // The event is consumed once - clear readiness so the
+              // chip can't be tapped into an 'unavailable' prompt.
+              void promptInstall().then(() => setInstallReady(false))
+            }
             aria-label="Cài app lên màn hình chính"
             className="inline-flex min-h-[44px] items-center px-2 text-sm font-bold text-amber-200 transition hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/60 rounded-full"
           >
