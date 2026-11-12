@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import GradeSelect from './components/GradeSelect';
+import PwaUi from './components/PwaUi';
 import JoinClassCard from './components/JoinClassCard';
 import AssignmentsInbox from './components/AssignmentsInbox';
 import { assignmentTake, type InboxItem } from './lib/assignments';
@@ -64,7 +65,7 @@ import type { PronunciationScoringOptions } from './lib/rounds/pronunciationScor
 import type { Grade, TracingMeta } from './types';
 import type { GameEnd } from './games/types';
 
-type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game' | 'classshow';
+export type Screen = 'login' | 'admin' | 'grade-select' | 'start-batch' | 'batch' | 'credits' | 'placement' | 'exam' | 'report' | 'flashcards' | 'game' | 'classshow';
 
 // r16: StrictMode replays the mount effect - the confirm RPC consumes
 // the token on first success, so a naive second call would see
@@ -827,6 +828,7 @@ export default function App() {
       loggedIn={authMode === 'student' || authMode === 'admin'}
     >
       {renderScreen()}
+      <PwaUi screen={screen} />
     </ViewerProvider>
   );
 }

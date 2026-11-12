@@ -1,0 +1,32 @@
+{
+  "name": "English Arena - VieSchool",
+  "short_name": "English Arena",
+  "description": "Luyện tiếng Anh tiểu học (lớp 1-5) bám sát Global Success - English practice for Vietnamese primary students.",
+  "lang": "vi",
+  "start_url": "/app",
+  "scope": "/app",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1b26",
+  "theme_color": "#0d1b26",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

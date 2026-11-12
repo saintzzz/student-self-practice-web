@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import DebugAudioScreen from './components/DebugAudioScreen';
 import './index.css';
+import { initPwa } from './lib/pwa';
+
+initPwa();
 
 const rootElement = document.getElementById('root');
 
