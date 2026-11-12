@@ -74,8 +74,9 @@ export default function PwaUi({ screen }: { screen: Screen }) {
             type="button"
             onClick={() =>
               // The event is consumed once - clear readiness so the
-              // chip can't be tapped into an 'unavailable' prompt.
-              void promptInstall().then(() => setInstallReady(false))
+              // chip can't be tapped into an 'unavailable' prompt,
+              // even if promptInstall() itself rejects.
+              void promptInstall().finally(() => setInstallReady(false))
             }
             aria-label="Cài app lên màn hình chính"
             className="inline-flex min-h-[44px] items-center px-2 text-sm font-bold text-amber-200 transition hover:text-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/60 rounded-full"
