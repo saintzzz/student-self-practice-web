@@ -105,6 +105,16 @@ assetlinks.json hosting is noted for the deployer phase.
   MEDIA_MAX. Registration uses updateViaCache:'none' because sw.js
   importScripts('/sw-rules.js'). Shell precache is best-effort.
 
+- Ruling (store packaging): TWA/Bubblewrap is REJECTED for this app -
+  Google Play Families policy makes Trusted Web Activities incompatible
+  with apps targeting children under 13 (Bubblewrap prints this warning
+  on init). Packaging instead: Capacitor 6 WebView shell
+  (`com.vieschool.englisharena`, server.url -> ea.vieschool.com/app,
+  allowNav restricted to app origin + Supabase), release-signed AAB
+  built locally via gradlew bundleRelease. No Play IAP in v1.
+  Privacy policy shipped as public/privacy.html at
+  ea.vieschool.com/privacy.html.
+
 ## Test evidence
 
 - `npx vitest run src/lib/pwa.test.ts` - 17/17 pass (predicates +

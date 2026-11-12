@@ -1,0 +1,20 @@
+# Vercel only needs source + config to build; everything else is local.
+node_modules/
+dist/
+docs/
+scripts/
+artgen-out/
+audio-out/
+machine-transfer/
+_shots/
+e2e/
+*.log
+*.tsv
+*.md
+!README.md
+.git/
+.vercel/
+.env*
+coverage/
+playwright-report/
+test-results/
