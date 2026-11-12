@@ -22,7 +22,9 @@
     "gtm:discover": "node scripts/gtm/discover.mjs",
     "gtm:enrich": "node scripts/gtm/enrich.mjs",
     "gtm:draft": "node scripts/gtm/draft.mjs",
-    "gtm:send": "node scripts/gtm/send.mjs"
+    "gtm:send": "node scripts/gtm/send.mjs",
+    "play:check": "node scripts/play-publish.mjs check",
+    "play:publish": "node scripts/play-publish.mjs publish"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "0.19.16",
