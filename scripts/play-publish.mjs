@@ -37,6 +37,7 @@ const ICON_PATH = resolve('public/icon-512.png');
 const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const UPLOAD = 'https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications';
 const TRACK = process.argv.find((a) => a.startsWith('--track='))?.slice(8) || 'production';
+const STATUS = process.argv.find((a) => a.startsWith('--status='))?.slice(9) || 'completed';
 const RELEASE_NAME = '1.0.0';
 const RELEASE_NOTES_VI = 'Phát hành đầu tiên.';
 
@@ -190,7 +191,7 @@ async function setTrack(editId, versionCode) {
       {
         name: RELEASE_NAME,
         versionCodes: [String(versionCode)],
-        status: 'completed',
+        status: STATUS,
         releaseNotes: [{ language: 'vi', text: RELEASE_NOTES_VI }],
       },
     ],
@@ -267,7 +268,24 @@ if (cmd === 'check') {
     await api('DELETE', `/edits/${editId}`).catch(() => {});
     throw e;
   }
+} else if (cmd === 'promote') {
+  // Move an ALREADY-UPLOADED versionCode to another track - Play rejects
+  // re-uploading the same version code, so promotion must skip the bundle.
+  const vc = Number(process.argv.find((a) => a.startsWith('--version='))?.slice(10));
+  if (!vc) {
+    console.error('usage: node scripts/play-publish.mjs promote --version=3 [--track=production]');
+    process.exit(1);
+  }
+  const editId = await openEdit();
+  try {
+    await setTrack(editId, vc);
+    await commitEdit(editId);
+    console.log(`PROMOTED ${PKG} v${vc} -> ${TRACK}`);
+  } catch (e) {
+    await api('DELETE', `/edits/${editId}`).catch(() => {});
+    throw e;
+  }
 } else {
-  console.error('usage: node scripts/play-publish.mjs [check|publish] [--track=internal|production]');
+  console.error('usage: node scripts/play-publish.mjs [check|assets|publish|promote] [--track=internal|production] [--version=N]');
   process.exit(1);
 }

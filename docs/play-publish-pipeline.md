@@ -54,3 +54,26 @@ node scripts/play-publish.mjs publish
 Override paths via env: `PLAY_AAB`, `PLAY_ASSETS`.
 Bump `RELEASE_NAME` / `RELEASE_NOTES_VI` in the script per release
 (or wire to android versionName later).
+
+## Console automation (when API can't do it)
+
+Some console actions have no API (submitting releases for review, tester
+lists, wizard steps). Drive the user's logged-in Chrome via a copied
+profile + Playwright persistent context:
+
+1. Quit Chrome fully (graceful quit - tabs restore later).
+2. Copy session pieces to a temp profile:
+   `Local State`, `Default/Cookies`, `Default/Cookies-journal` ->
+   `/tmp/ea-chrome-prof/`.
+3. `chromium.launchPersistentContext('/tmp/ea-chrome-prof',
+   { channel:'chrome', args:['--disable-blink-features=AutomationControlled'] })`
+   - real Chrome binary keeps Keychain access so cookies decrypt.
+   - Chrome >= 136 refuses remote debugging on the DEFAULT profile;
+     a copied profile dir bypasses that.
+   - Google sign-in may still reject automation browsers - the USER
+     types the password once in the opened window, session persists
+     in the temp profile afterwards.
+4. `scripts/console-probe.mjs` is the reusable driver pattern.
+
+Profile lock: only one Chrome can hold a profile dir - kill stray
+instances (`pkill -f ea-chrome-prof`) before relaunching.
