@@ -9,7 +9,7 @@
 // What it does in one run:
 //   node scripts/play-publish.mjs publish
 //     1. open an Edit
-//     2. write store listings (vi-VN primary + en-US fallback)
+//     2. write store listings (vi primary + en-US fallback)
 //     3. upload icon, feature graphic, phone screenshots
 //     4. upload the release AAB
 //     5. create/refresh the production release
@@ -41,8 +41,8 @@ const RELEASE_NAME = '1.0.0';
 const RELEASE_NOTES_VI = 'Phát hành đầu tiên.';
 
 const LISTINGS = {
-  'vi-VN': {
-    language: 'vi-VN',
+  'vi': {
+    language: 'vi',
     title: 'English Arena',
     shortDescription:
       'Luyện tiếng Anh lớp 1-5 theo SGK Global Success - chơi mà học mỗi ngày',
@@ -166,10 +166,10 @@ async function uploadImage(editId, imageType, filePath) {
     return;
   }
   // clear old images of that type then upload new
-  await api('DELETE', `/edits/${editId}/listings/vi-VN/${imageType}`).catch(() => {});
+  await api('DELETE', `/edits/${editId}/listings/vi/${imageType}`).catch(() => {});
   const bytes = readFileSync(filePath);
   await up(
-    `/edits/${editId}/listings/vi-VN/${imageType}?uploadType=media`,
+    `/edits/${editId}/listings/vi/${imageType}?uploadType=media`,
     bytes,
     'image/png',
   );
@@ -191,7 +191,7 @@ async function setTrack(editId, versionCode) {
         name: RELEASE_NAME,
         versionCodes: [String(versionCode)],
         status: 'completed',
-        releaseNotes: [{ language: 'vi-VN', text: RELEASE_NOTES_VI }],
+        releaseNotes: [{ language: 'vi', text: RELEASE_NOTES_VI }],
       },
     ],
   };
@@ -218,8 +218,32 @@ if (cmd === 'publish' && !existsSync(AAB_PATH)) {
 }
 
 if (cmd === 'check') {
-  const app = await api('GET', '');
-  console.log('app reachable:', app ? 'yes' : 'no');
+  // GET /applications/{pkg} is not a real API endpoint - the true
+  // access probe is opening an edit, then deleting it.
+  const editId = await openEdit();
+  await api('DELETE', `/edits/${editId}`);
+  console.log('app reachable: yes (edit open+delete ok)');
+} else if (cmd === 'assets') {
+  // Listing images only: icon + feature graphic + phone screenshots.
+  // No bundle/track changes - safe to run between releases.
+  const editId = await openEdit();
+  try {
+    await uploadImage(editId, 'icon', ICON_PATH);
+    await uploadImage(editId, 'featureGraphic', join(ASSETS_DIR, 'feature-graphic.png'));
+    for (const f of ['01-entry.png', '02-home.png', '03-practice.png', '04-report.png']) {
+      const fp = join(ASSETS_DIR, f);
+      if (existsSync(fp)) {
+        const bytes = readFileSync(fp);
+        await up(`/edits/${editId}/listings/vi/phoneScreenshots?uploadType=media`, bytes, 'image/png');
+        console.log(`screenshot ${f}: ok`);
+      }
+    }
+    await commitEdit(editId);
+    console.log('ASSETS COMMITTED (icon + featureGraphic + screenshots)');
+  } catch (e) {
+    await api('DELETE', `/edits/${editId}`).catch(() => {});
+    throw e;
+  }
 } else if (cmd === 'publish') {
   const editId = await openEdit();
   try {
@@ -227,11 +251,11 @@ if (cmd === 'check') {
     await uploadImage(editId, 'icon', ICON_PATH);
     await uploadImage(editId, 'featureGraphic', join(ASSETS_DIR, 'feature-graphic.png'));
     // phone screenshots: individual uploads
-    for (const f of ['01-entry.png', '02-grade-select.png', '03-next.png', '04-gamezone.png']) {
+    for (const f of ['01-entry.png', '02-home.png', '03-practice.png', '04-report.png']) {
       const fp = join(ASSETS_DIR, f);
       if (existsSync(fp)) {
         const bytes = readFileSync(fp);
-        await up(`/edits/${editId}/listings/vi-VN/phoneScreenshots?uploadType=media`, bytes, 'image/png');
+        await up(`/edits/${editId}/listings/vi/phoneScreenshots?uploadType=media`, bytes, 'image/png');
         console.log(`screenshot ${f}: ok`);
       }
     }
