@@ -101,7 +101,14 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
       history.pushState({ ea: 'classshow' }, '');
     }
     const onPop = () => {
-      if (pendingClassshowPops > 0) { pendingClassshowPops -= 1; return; }
+      if (pendingClassshowPops > 0) {
+        pendingClassshowPops -= 1;
+        /* r202: the absorbed self-pop removed the entry this mount
+           skipped pushing - re-claim it or the next platform back
+           slips past the show to the app exit. */
+        history.pushState({ ea: 'classshow' }, '');
+        return;
+      }
       onBack();
     };
     window.addEventListener('popstate', onPop);
