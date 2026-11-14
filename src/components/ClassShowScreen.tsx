@@ -67,9 +67,16 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
   /* CR-142 D8: inside the Capacitor WebView the hardware back button
      (and the browser back button) had nothing to pop - screens swap
      via React state, not URLs. Push one history entry on mount so
-     platform back lands on the same path as "← Quay lại". A stale
-     entry left by an in-app back is harmless: it pops onto the same
-     hub screen the user is already on. */
+     platform back lands on the same path as "← Quay lại".
+     r200: an in-app back must CONSUME the entry - leaving it stale
+     meant re-entry skipped the push (state still matched), so a later
+     platform back could pop clean past the show. handleBack fires
+     history.back() then onBack(); popstate resolves async, after this
+     component has unmounted, so the listener never double-fires. */
+  const handleBack = () => {
+    if ((history.state as { ea?: string } | null)?.ea === 'classshow') history.back();
+    onBack();
+  };
   useEffect(() => {
     if ((history.state as { ea?: string } | null)?.ea !== 'classshow') {
       history.pushState({ ea: 'classshow' }, '');
@@ -234,7 +241,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
   return (
     <div ref={stageRef} className={`${SCREEN_ENTER} mx-auto w-full max-w-5xl px-4 pb-10`} data-testid="class-show">
       <div className="mb-4 flex items-center justify-between">
-        <button type="button" onClick={onBack} className={NAV_PILL_SM} data-testid="class-show-back">
+        <button type="button" onClick={handleBack} className={NAV_PILL_SM} data-testid="class-show-back">
           ← Quay lại
         </button>
         <span className={CHIP_GOLD}>🎤 Sân khấu lớp</span>
@@ -497,7 +504,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
             <button type="button" data-testid="show-again" onClick={() => { setPhase('setup'); }} className={CTA_GOLD_XL}>
               Diễn lại từ đầu
             </button>
-            <button type="button" onClick={onBack} className={NAV_PILL_SM}>
+            <button type="button" onClick={handleBack} className={NAV_PILL_SM}>
               Về trang chủ
             </button>
           </div>
