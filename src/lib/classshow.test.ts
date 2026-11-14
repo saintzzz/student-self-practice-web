@@ -79,6 +79,21 @@ describe('normalizeShowQuestion', () => {
     expect(normalizeShowQuestion({ ...mcq, correctIndex: -1 } as unknown as ExamQuestion)).toBeNull();
   });
 
+  /* r198: NaN and fractional indexes pass `typeof number` but can never
+     match a rendered cell - the stage would light nothing up. */
+  it('drops MCQs with NaN or fractional key indexes', () => {
+    expect(normalizeShowQuestion({ ...mcq, correctIndex: NaN } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({ ...mcq, correctIndex: 1.5 } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({
+      id: 'q12', topicId: 't', kind: 'odd-pronunciation',
+      options: ['a', 'b', 'c'], correctIndex: NaN,
+    } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({
+      id: 'q13', topicId: 't', kind: 'listening-mcq',
+      prompt: 'Nghe.', options: ['a', 'b'], correctIndex: 0.5,
+    } as unknown as ExamQuestion)).toBeNull();
+  });
+
   it('drops true-false rows without a boolean key', () => {
     expect(normalizeShowQuestion({
       id: 'q8', topicId: 't', kind: 'true-false-reading',

@@ -40,8 +40,9 @@ export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
       const imgs = anyQ.optionImages as readonly string[] | undefined;
       const options = q.options as readonly string[] | null;
       /* CR-142 D1b: a missing key index would highlight the same cell
-         every show - treat as unstageable. */
-      if (!options?.length || typeof q.correctIndex !== 'number' || q.correctIndex < 0 || q.correctIndex >= options.length) return null;
+         every show - treat as unstageable. r198: integer check too -
+         NaN/fractional keys pass `typeof number` but match no cell. */
+      if (!options?.length || !Number.isInteger(q.correctIndex) || (q.correctIndex as number) < 0 || (q.correctIndex as number) >= options.length) return null;
       return {
         id: q.id, kind: 'choice', prompt: q.prompt,
         subPrompt: q.passage ?? (q.transcript ? 'Nghe cô đọc câu này nhé!' : undefined),
@@ -49,7 +50,8 @@ export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
       };
     }
     case 'odd-pronunciation':
-      if (!q.options?.length || typeof q.correctIndex !== 'number') return null;
+      if (!q.options?.length || !Number.isInteger(q.correctIndex)
+          || (q.correctIndex as number) < 0 || (q.correctIndex as number) >= q.options.length) return null;
       return {
         id: q.id, kind: 'choice', prompt: 'Từ nào phát âm khác các từ còn lại?',
         options: q.options, correctIndex: q.correctIndex,
@@ -85,7 +87,7 @@ export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
           && (anyQ.options as unknown[]).every((o) => typeof o === 'string')) {
         const opts = anyQ.options as readonly string[];
         const idx = anyQ.correctIndex as number;
-        if (idx < 0 || idx >= opts.length) return null;
+        if (!Number.isInteger(idx) || idx < 0 || idx >= opts.length) return null;
         return {
           id: q.id, kind: 'choice',
           prompt: String(anyQ.prompt ?? anyQ.sentence ?? q.kind),
