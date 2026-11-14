@@ -596,3 +596,9 @@
   default-branch MCQs -> integer+bounds guards + tests); 1 minor
   not-confirmed (INTENT.md is per-intake by convention). r199 CLEAN -
   loop closed.
+- User round-2 findings -> D8 (hardware/browser back dead in WebView -
+  screens swap by state, no URL; the show now pushes one history entry,
+  popstate = "← Quay lại") and D9 (steal only existed post-reveal -
+  meaningless once the class can read the answer; verdicts now also
+  work pre-reveal, post-reveal Sai just advances). Both Playwright-
+  verified.

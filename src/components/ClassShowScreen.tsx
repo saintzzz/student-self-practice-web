@@ -64,6 +64,22 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
 
   useEffect(() => () => { if (spotTimer.current) clearInterval(spotTimer.current); }, []);
 
+  /* CR-142 D8: inside the Capacitor WebView the hardware back button
+     (and the browser back button) had nothing to pop - screens swap
+     via React state, not URLs. Push one history entry on mount so
+     platform back lands on the same path as "← Quay lại". A stale
+     entry left by an in-app back is harmless: it pops onto the same
+     hub screen the user is already on. */
+  useEffect(() => {
+    if ((history.state as { ea?: string } | null)?.ea !== 'classshow') {
+      history.pushState({ ea: 'classshow' }, '');
+    }
+    const onPop = () => onBack();
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function start() {
     if (roster.length < 2) { setError('Cần ít nhất 2 học sinh để mở sân khấu.'); return; }
     setError(null);
@@ -143,15 +159,21 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
       playSfx('correct');
       setPlayers((ps) => ps.map((p, i) => (i === picked ? { ...p, score: p.score + SHOW_POINTS } : p)));
       advance();
-    } else {
+    } else if (phase === 'question') {
       playGentleWrong();
       /* Steal mechanic: a wrong answer opens the same question to
          another student - classic classroom drama, per Questora's
-         "pass the turn" rule. Everyone missing ends the question. */
+         "pass the turn" rule. Everyone missing ends the question.
+         CR-142 D9: steal MUST happen before the reveal - once the
+         class can read the answer on the projector, "stealing" the
+         question is meaningless, so post-reveal wrong just advances. */
       const next = new Set(missed);
       if (picked >= 0 && picked < players.length) next.add(picked);
       setMissed(next);
       spin(next);
+    } else {
+      playGentleWrong();
+      advance();
     }
   }
 
@@ -165,8 +187,11 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
       if (tag && ['TEXTAREA', 'INPUT', 'BUTTON', 'SELECT', 'A'].includes(tag)) return;
       if (phase === 'setup' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); void start(); }
       else if (phase === 'question' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); setPhase('revealed'); }
-      else if (phase === 'revealed' && (e.key === 'ArrowRight' || e.key === 'Enter')) verdict(true);
-      else if (phase === 'revealed' && e.key === 'ArrowLeft') verdict(false);
+      /* CR-142 D9: verdicts also fire pre-reveal - the steal only
+         means something while the answer is still hidden. */
+      else if ((phase === 'revealed' || phase === 'question') && e.key === 'ArrowRight') verdict(true);
+      else if (phase === 'revealed' && e.key === 'Enter') verdict(true);
+      else if ((phase === 'revealed' || phase === 'question') && e.key === 'ArrowLeft') verdict(false);
       else if ((phase === 'question' || phase === 'revealed') && e.key === 'ArrowDown') advance();
     };
     window.addEventListener('keydown', onKey);
@@ -376,24 +401,35 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
                 </p>
               ) : null}
 
-              {/* Teacher controls */}
+              {/* Teacher controls - CR-142 D9: the verdicts live on the
+                  pre-reveal surface too. Steal only counts while the
+                  answer is hidden; after reveal, "sai" just means no
+                  points (Câu khác). */}
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 {phase === 'question' ? (
                   <>
-                    <button type="button" data-testid="show-reveal-btn" onClick={() => setPhase('revealed')}
-                      className={CTA_GOLD_XL}>
-                      <IconPlay size={22} className="mr-2" /> Hiện đáp án
+                    <button type="button" data-testid="show-wrong" onClick={() => verdict(false)}
+                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95">
+                      <IconX size={26} /> Sai - cướp lượt
                     </button>
                     <button type="button" data-testid="show-skip" onClick={advance}
                       className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95">
                       Câu khác ↓
+                    </button>
+                    <button type="button" data-testid="show-reveal-btn" onClick={() => setPhase('revealed')}
+                      className={CTA_GOLD_XL}>
+                      <IconPlay size={22} className="mr-2" /> Hiện đáp án
+                    </button>
+                    <button type="button" data-testid="show-correct" onClick={() => verdict(true)}
+                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-emerald-500/25 px-8 text-2xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50 transition hover:bg-emerald-500/35 active:scale-95">
+                      <IconCheck size={26} /> Đúng +{SHOW_POINTS}
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" data-testid="show-wrong" onClick={() => verdict(false)}
                       className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95">
-                      <IconX size={26} /> Sai - cướp lượt
+                      <IconX size={26} /> Sai
                     </button>
                     <button type="button" data-testid="show-skip" onClick={advance}
                       className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95">

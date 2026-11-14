@@ -231,13 +231,19 @@ screen and operates it from the podium. Conventions:
   step" semantics). Verdicts are emerald (`Đúng +10`) and rose
   (`Sai - cướp lượt`) - never gold; `Bỏ qua`/`Câu khác` is a plain
   white/10 secondary.
-- **Steal state:** wrong answer flips the spotlight caption to
-  `🔥 Cướp lượt!` - the only amber-flame affordance; scoreboard row of
-  the picked student is `bg-amber-400/15`.
+- **Steal rule (CR-142):** `Sai - cướp lượt` only exists while the
+  answer is hidden - steal flips the caption to `🔥 Cướp lượt!` and the
+  scoreboard row of the picked student is `bg-amber-400/15`. Once the
+  answer is on the projector a "steal" is meaningless: post-reveal Sai
+  just advances with no points.
 - **Keyboard contract** (teacher walks the room): Space/Enter = start
-  (setup) or reveal (question), → / Enter = Đúng, ← = Sai (cướp lượt),
-  ↓ = skip. Interactive elements own their keys - handler skips when the
-  event target is BUTTON/TEXTAREA/INPUT/SELECT/A.
+  (setup) or reveal (question), → / Enter = Đúng, ← = Sai (pre-reveal:
+  cướp lượt; post-reveal: không điểm, câu tiếp), ↓ = skip. Interactive
+  elements own their keys - handler skips when the event target is
+  BUTTON/TEXTAREA/INPUT/SELECT/A.
+- **Platform back (CR-142):** the stage mounts one history entry so
+  hardware/browser back takes the same path as `← Quay lại` - inside
+  the Capacitor WebView this is the only way back exists.
 - **a11y:** spotlight name is `role="status" aria-live="polite"`; phase
   changes move focus to the `[data-stage-focus]` element (`tabIndex={-1}`);
   setup controls go `inert` while loading.

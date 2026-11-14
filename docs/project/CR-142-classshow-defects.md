@@ -43,6 +43,22 @@ shipped CR-114 feature - requirements unchanged.
   final pick respects `exclude`. Cosmetic; fix = flicker pool respects
   the same exclusion.
 
+- **D8 - platform back is dead inside the WebView.** User report:
+  "vào sân khấu lớp chơi xong không back ra được màn hình chính".
+  Browser-side "← Quay lại"/"Về trang chủ" work (Playwright-verified),
+  but the Android hardware back button has no history to pop - the SPA
+  swaps screens via React state. Fix: the show pushes one history
+  entry on mount; `popstate` calls the same `onBack`.
+
+- **D9 (design flaw) - steal only existed after the reveal.** User
+  report: "hiển thị đáp án xong mới có cướp lượt, thì cả lớp nhìn thấy
+  rồi còn đâu". Verdict buttons lived exclusively in `revealed`, so the
+  teacher had to show the answer before marking wrong - a "steal"
+  where everyone can read the answer is meaningless. Fix: Đúng/Sai
+  buttons + ←/→ keys also work in `question` (pre-reveal); a post-
+  reveal Sai just advances with no points (no steal). "Hiện đáp án"
+  stays available for the show-the-answer-first flow.
+
 ## Scope
 - `src/lib/classshow.ts` - normalizeShowQuestion key guards.
 - `src/components/ClassShowScreen.tsx` - D2-D7 layout guards.
@@ -63,5 +79,9 @@ shipped CR-114 feature - requirements unchanged.
   question phase. Shots: `_shots/classshow-fix/q-*.png`.
 - Answer spot-check on bundled set (D fine, B are, B am, SAI for
   "Tom has a cat"/dog passage): all correct.
+- D8/D9 (user round-2 report) Playwright-verified: pre-reveal Sai
+  steals to a different student with the answer still hidden; post-
+  reveal Sai advances without steal; browser `goBack()` (== Android
+  hardware back inside the WebView) leaves the show to the hub.
 - DESIGN_SYSTEM.md: overflow law + key law appended to the CR-114
-  Class Show section.
+  Class Show section; keyboard contract + steal rule updated.
