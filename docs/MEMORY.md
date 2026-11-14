@@ -591,3 +591,8 @@
   flicker pool respects steal exclusions.
 - Verified: 30-student roster page height 2242 -> ~1070px at 1440x900,
   controls always visible. `scripts/classshow-verify.mjs` reusable.
+- External review r198 (codex): 2 majors fixed (NaN/fractional
+  correctIndex slipped past `typeof number` on odd-pronunciation +
+  default-branch MCQs -> integer+bounds guards + tests); 1 minor
+  not-confirmed (INTENT.md is per-intake by convention). r199 CLEAN -
+  loop closed.
