@@ -38,6 +38,12 @@ const AVATARS = ['🦊', '🐰', '🐼', '🐯', '🦁', '🐸', '🐵', '🐨',
 
 type Phase = 'setup' | 'loading' | 'spotlight' | 'question' | 'revealed' | 'podium';
 
+/* CR-142 D8/r201: history.back() pops are async; a fast re-open mounts
+   before the self-triggered pop lands and must absorb it instead of
+   treating it as a platform back. Module-level because the absorbing
+   listener can belong to a different mount generation. */
+let pendingClassshowPops = 0;
+
 interface Player { name: string; score: number; }
 
 export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: () => void; initialGradeId?: string | null }) {
@@ -68,20 +74,36 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
      (and the browser back button) had nothing to pop - screens swap
      via React state, not URLs. Push one history entry on mount so
      platform back lands on the same path as "← Quay lại".
-     r200: an in-app back must CONSUME the entry - leaving it stale
-     meant re-entry skipped the push (state still matched), so a later
-     platform back could pop clean past the show. handleBack fires
-     history.back() then onBack(); popstate resolves async, after this
-     component has unmounted, so the listener never double-fires. */
+     r200: an in-app back must CONSUME its entry or the stale entry
+     makes re-entry skip the push.
+     r201: history.back() resolves the pop ASYNC - a fast re-open can
+     mount before that pop lands, and the new listener would eat it
+     and close the just-reopened show. pendingClassshowPops marks pops
+     we triggered ourselves; whichever mount hears them absorbs them. */
   const handleBack = () => {
-    if ((history.state as { ea?: string } | null)?.ea === 'classshow') history.back();
+    if ((history.state as { ea?: string } | null)?.ea === 'classshow') {
+      pendingClassshowPops += 1;
+      history.back();
+    }
     onBack();
   };
   useEffect(() => {
-    if ((history.state as { ea?: string } | null)?.ea !== 'classshow') {
+    const st = (history.state as { ea?: string } | null)?.ea;
+    if (st === 'classshow') {
+      /* A classshow entry is already current: either StrictMode's
+         second mount sharing the first push, or a fast re-open while
+         our self-triggered pop is still in flight - the counter below
+         absorbs whichever pop arrives. */
+    } else {
+      // Any earlier self-pop already landed while unmounted - its
+      // credit must not swallow the next real platform back.
+      pendingClassshowPops = 0;
       history.pushState({ ea: 'classshow' }, '');
     }
-    const onPop = () => onBack();
+    const onPop = () => {
+      if (pendingClassshowPops > 0) { pendingClassshowPops -= 1; return; }
+      onBack();
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
     // eslint-disable-next-line react-hooks/exhaustive-deps
