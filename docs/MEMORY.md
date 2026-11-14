@@ -574,3 +574,20 @@
 - Brevo hard bounces -> gtm.suppression (kind=email, source
   brevo-events) + leads marked bounced: 21 addresses total.
 - Total today: 126 center + 136 school = 262 sends under 300/day cap.
+
+## 2026-11-14 - CR-142 Sân khấu lớp defect batch
+
+- User report: wrong correct answers + overflow/overlap on the class
+  stage. Root cause D1: pending/unkeyed bank rows (`bankId` marker)
+  reached the projector - MCQ highlighted A, true-false marked SAI,
+  text-answer showed an empty green reveal. `normalizeShowQuestion`
+  now drops bankId rows and any question with a missing/out-of-range
+  key. 5 new guard tests in classshow.test.ts.
+- D2-D7 layout fixes in ClassShowScreen: scoreboard owns its scroll
+  (`relative max-h-[30vh]`, picked row centers via container scrollTop -
+  `scrollIntoView` scrolls the document too, learned the hard way);
+  subPrompt capped `max-h-48`; break-words/min-w-0 guards; podium name
+  truncate; img onError -> text fallback (brokenImgs set); spotlight
+  flicker pool respects steal exclusions.
+- Verified: 30-student roster page height 2242 -> ~1070px at 1440x900,
+  controls always visible. `scripts/classshow-verify.mjs` reusable.

@@ -57,6 +57,52 @@ describe('normalizeShowQuestion', () => {
     const s = normalizeShowQuestion({ id: 'q5', topicId: 't', kind: 'letter-tracing' } as unknown as ExamQuestion);
     expect(s).toBeNull();
   });
+
+  /* CR-142 D1: pending/unkeyed bank rows (bankId marker) must never
+     reach the projector - they render fabricated verdicts (MCQ -> A,
+     true-false -> SAI, text-answer -> empty reveal). */
+  it('drops pending bank rows - the bankId marker means no key exists', () => {
+    expect(normalizeShowQuestion({ ...mcq, bankId: 'b1' } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({
+      id: 'q6', topicId: 't', kind: 'true-false-reading',
+      passage: 'P', statement: 'S', answer: false, bankId: 'b2',
+    } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({
+      id: 'q7', topicId: 't', kind: 'text-answer',
+      displaySentence: 'D', accept: [], bankId: 'b3',
+    } as unknown as ExamQuestion)).toBeNull();
+  });
+
+  it('drops MCQs whose key index is missing or out of range', () => {
+    expect(normalizeShowQuestion({ ...mcq, correctIndex: undefined } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({ ...mcq, correctIndex: 4 } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({ ...mcq, correctIndex: -1 } as unknown as ExamQuestion)).toBeNull();
+  });
+
+  it('drops true-false rows without a boolean key', () => {
+    expect(normalizeShowQuestion({
+      id: 'q8', topicId: 't', kind: 'true-false-reading',
+      passage: 'P', statement: 'S', answer: undefined,
+    } as unknown as ExamQuestion)).toBeNull();
+  });
+
+  it('drops reveal rows with nothing to reveal', () => {
+    expect(normalizeShowQuestion({
+      id: 'q9', topicId: 't', kind: 'text-answer',
+      displaySentence: 'Five times nine is ___.', accept: [],
+    } as unknown as ExamQuestion)).toBeNull();
+    expect(normalizeShowQuestion({
+      id: 'q10', topicId: 't', kind: 'word-order',
+      sentence: '', tiles: ['a', 'b'],
+    } as unknown as ExamQuestion)).toBeNull();
+  });
+
+  it('drops default-branch MCQ shapes that are pending', () => {
+    expect(normalizeShowQuestion({
+      id: 'q11', topicId: 't', kind: 'listening-mcq',
+      prompt: 'Nghe và chọn.', options: ['a', 'b'], correctIndex: 1, bankId: 'b4',
+    } as unknown as ExamQuestion)).toBeNull();
+  });
 });
 
 describe('parseRoster', () => {

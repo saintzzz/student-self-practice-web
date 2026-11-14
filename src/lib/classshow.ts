@@ -27,13 +27,21 @@ export interface ShowQuestion {
  *  class can answer it aloud or by pointing, without typing. */
 export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
   const anyQ = q as unknown as Record<string, unknown>;
+  /* CR-142 D1: pending/unkeyed bank rows (bankId marker) have no
+     revealable answer - on stage they render a FABRICATED verdict
+     (MCQ highlights A, true-false marks SAI, text-answer shows an
+     empty green box). Ungradeable questions must never reach the
+     projector. */
+  if (anyQ.bankId) return null;
   switch (q.kind) {
     case 'grammar-mcq': {
       // word-to-image-mcq rows carry optionImages - the class points at
       // the letter, so picture cells are stage-displayable too.
       const imgs = anyQ.optionImages as readonly string[] | undefined;
       const options = q.options as readonly string[] | null;
-      if (!options?.length) return null;
+      /* CR-142 D1b: a missing key index would highlight the same cell
+         every show - treat as unstageable. */
+      if (!options?.length || typeof q.correctIndex !== 'number' || q.correctIndex < 0 || q.correctIndex >= options.length) return null;
       return {
         id: q.id, kind: 'choice', prompt: q.prompt,
         subPrompt: q.passage ?? (q.transcript ? 'Nghe cô đọc câu này nhé!' : undefined),
@@ -41,26 +49,31 @@ export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
       };
     }
     case 'odd-pronunciation':
+      if (!q.options?.length || typeof q.correctIndex !== 'number') return null;
       return {
         id: q.id, kind: 'choice', prompt: 'Từ nào phát âm khác các từ còn lại?',
         options: q.options, correctIndex: q.correctIndex,
       };
     case 'true-false-reading':
+      if (typeof q.answer !== 'boolean') return null;
       return {
         id: q.id, kind: 'bool', prompt: q.statement,
         subPrompt: q.passage, boolAnswer: q.answer,
       };
     case 'text-answer':
+      if (!q.accept?.length || !q.displaySentence) return null;
       return {
         id: q.id, kind: 'reveal', prompt: q.displaySentence,
         revealText: q.accept[0], imageUrl: q.imageUrl,
       };
     case 'missing-letter':
+      if (!q.displaySentence || !q.word) return null;
       return {
         id: q.id, kind: 'reveal', prompt: q.displaySentence,
         subPrompt: `Điền chữ còn thiếu: ${q.maskedWord}`, revealText: q.word,
       };
     case 'word-order':
+      if (!q.sentence || !q.tiles?.length) return null;
       return {
         id: q.id, kind: 'reveal', prompt: 'Sắp xếp các từ thành câu đúng:',
         subPrompt: q.tiles.join('  ·  '), revealText: q.sentence,
@@ -70,11 +83,14 @@ export function normalizeShowQuestion(q: ExamQuestion): ShowQuestion | null {
       // stage fine - detect the shape instead of whitelisting every kind.
       if (Array.isArray(anyQ.options) && typeof anyQ.correctIndex === 'number'
           && (anyQ.options as unknown[]).every((o) => typeof o === 'string')) {
+        const opts = anyQ.options as readonly string[];
+        const idx = anyQ.correctIndex as number;
+        if (idx < 0 || idx >= opts.length) return null;
         return {
           id: q.id, kind: 'choice',
           prompt: String(anyQ.prompt ?? anyQ.sentence ?? q.kind),
-          options: anyQ.options as readonly string[],
-          correctIndex: anyQ.correctIndex as number,
+          options: opts,
+          correctIndex: idx,
         };
       }
       return null;

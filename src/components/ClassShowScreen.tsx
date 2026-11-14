@@ -102,10 +102,14 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
     const eligibleCount = names.map((_, i) => i).filter((i) => !exclude.has(i)).length;
     if (eligibleCount <= 0) { advance(); return; }
     setPhase('spotlight');
+    // CR-142 D7: the flicker pool respects the same exclusion as the
+    // pick - flashing a name that already missed reads as a bug on the
+    // projector even though the final pick was correct.
+    const flicker = names.map((_, i) => i).filter((i) => !exclude.has(i));
     let ticks = 0;
     spotTimer.current = setInterval(() => {
       ticks += 1;
-      setSpotName(names[Math.floor(Math.random() * names.length)]);
+      setSpotName(names[flicker[Math.floor(Math.random() * flicker.length)] ?? 0]);
       if (ticks >= 16) {
         if (spotTimer.current) clearInterval(spotTimer.current);
         const idx = pickStudent(names, lastPicked.current, Math.random, exclude);
@@ -185,6 +189,22 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
   }, [phase, qIndex]);
 
   const podium = useMemo(() => podiumOrder(players), [players]);
+  /* CR-142 D2: scroll the picked row into view INSIDE the scoreboard's
+     own scroll box - element.scrollIntoView also scrolls the document,
+     which pushed the question and header off the projector. */
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board || picked < 0) return;
+    const row = board.querySelector<HTMLElement>(`[data-testid="show-player-${picked}"]`);
+    if (row) board.scrollTop = row.offsetTop - board.clientHeight / 2 + row.offsetHeight / 2;
+  }, [picked]);
+  /* CR-142 D6: picture options that 404/slow-load would render an empty
+     cell - swap back to the text label. Keyed by image URL so a retry
+     on a different question still attempts the load. */
+  const [brokenImgs, setBrokenImgs] = useState<ReadonlySet<string>>(new Set());
+  const markImgBroken = (src: string) =>
+    setBrokenImgs((s) => (s.has(src) ? s : new Set(s).add(src)));
 
   return (
     <div ref={stageRef} className={`${SCREEN_ENTER} mx-auto w-full max-w-5xl px-4 pb-10`} data-testid="class-show">
@@ -286,7 +306,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.18),transparent_65%)]" />
             <p className={`${TYPE_SECTION_NAVY} relative`}>{missed.size > 0 ? '🔥 Cướp lượt!' : 'Em trả lời'}</p>
             <p data-testid="show-spotlight" role="status" aria-live="polite"
-              className={`relative font-display text-5xl font-extrabold tracking-tight sm:text-6xl ${phase === 'spotlight' ? 'animate-pulse text-amber-200/80' : 'text-amber-300'}`}>
+              className={`relative break-words px-6 font-display text-5xl font-extrabold tracking-tight sm:text-6xl ${phase === 'spotlight' ? 'animate-pulse text-amber-200/80' : 'text-amber-300'}`}>
               {spotName || '...'}
             </p>
           </div>
@@ -295,15 +315,19 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
           {phase !== 'spotlight' ? (
             <div className={`${CARD} space-y-5`}>
               {question.subPrompt && (
-                <p className="rounded-2xl bg-white/5 px-5 py-4 text-lg leading-relaxed text-sky-100 ring-1 ring-white/10">
+                /* CR-142 D3: unbounded passages pushed the options and
+                   teacher controls off the projector - cap at ~6 lines
+                   and scroll inside the box. */
+                <p className="max-h-48 overflow-y-auto rounded-2xl bg-white/5 px-5 py-4 text-lg leading-relaxed text-sky-100 ring-1 ring-white/10">
                   {question.subPrompt}
                 </p>
               )}
-              {question.imageUrl && (
-                <img src={question.imageUrl} alt="" className="mx-auto max-h-44 rounded-2xl ring-1 ring-white/15" />
+              {question.imageUrl && !brokenImgs.has(question.imageUrl) && (
+                <img src={question.imageUrl} alt="" onError={() => markImgBroken(question.imageUrl!)}
+                  className="mx-auto max-h-44 rounded-2xl ring-1 ring-white/15" />
               )}
               <p data-testid="show-question" data-stage-focus tabIndex={-1}
-                className="text-center font-display text-3xl font-extrabold leading-snug text-white outline-none sm:text-4xl">
+                className="break-words text-center font-display text-3xl font-extrabold leading-snug text-white outline-none sm:text-4xl">
                 {question.prompt}
               </p>
 
@@ -317,9 +341,15 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
                         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-extrabold ${isCorrect ? 'bg-emerald-300 text-emerald-950' : 'bg-white/10 text-amber-200'}`}>
                           {String.fromCharCode(65 + i)}
                         </span>
-                        {question.optionImages?.[i]
-                          ? <img src={question.optionImages[i]} alt={opt} className="h-20 w-20 rounded-xl object-contain" />
-                          : opt}
+                        {question.optionImages?.[i] && !brokenImgs.has(question.optionImages[i]!)
+                          /* CR-142 D4+D6: option text needs a flex
+                             wrapper that can wrap + shrink (bare text
+                             in flex overflows), and dead image URLs
+                             must fall back to the label. */
+                          ? <img src={question.optionImages[i]} alt={opt}
+                              onError={() => markImgBroken(question.optionImages![i]!)}
+                              className="h-20 w-20 shrink-0 rounded-xl object-contain" />
+                          : <span className="min-w-0 flex-1 break-words text-left">{opt}</span>}
                       </div>
                     );
                   })}
@@ -341,7 +371,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               ) : null}
 
               {question.kind === 'reveal' && phase === 'revealed' ? (
-                <p data-testid="show-reveal" className="rounded-2xl bg-emerald-400/20 px-5 py-5 text-center font-display text-4xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50">
+                <p data-testid="show-reveal" className="break-words rounded-2xl bg-emerald-400/20 px-5 py-5 text-center font-display text-4xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50">
                   {question.revealText}
                 </p>
               ) : null}
@@ -379,20 +409,26 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
             </div>
           ) : null}
 
-          {/* Racer scoreboard */}
+          {/* Racer scoreboard - CR-142 D2: real classes run 30-40
+              students; an unbounded list pushed the whole stage past
+              2200px tall. The board owns its own scroll so the stage,
+              options and teacher controls stay in one viewport; the
+              picked row auto-scrolls into view. */}
           <div className={`${CARD} space-y-2`}>
+            <div ref={boardRef} className="relative max-h-[30vh] space-y-2 overflow-y-auto">
             {players.map((p, i) => (
               <div key={p.name} data-testid={`show-player-${i}`}
                 className={`flex items-center gap-3 rounded-xl px-3 py-1.5 transition ${i === picked && phase !== 'spotlight' ? 'bg-amber-400/15 ring-1 ring-amber-300/40' : ''}`}>
-                <span className="w-8 text-center text-xl">{AVATARS[i % AVATARS.length]}</span>
-                <span className={`w-32 truncate text-base font-bold ${i === picked ? 'text-amber-300' : 'text-amber-100'}`}>{p.name}</span>
-                <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/10">
+                <span className="w-8 shrink-0 text-center text-xl">{AVATARS[i % AVATARS.length]}</span>
+                <span className={`w-32 shrink-0 truncate text-base font-bold ${i === picked ? 'text-amber-300' : 'text-amber-100'}`}>{p.name}</span>
+                <div className="h-4 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-[width] duration-500 motion-reduce:transition-none"
                     style={{ width: `${leader > 0 ? Math.max(4, (p.score / Math.max(leader, 1)) * 100) : 2}%` }} />
                 </div>
-                <span className="w-14 text-right font-display text-lg font-extrabold text-amber-200">{p.score}</span>
+                <span className="w-14 shrink-0 text-right font-display text-lg font-extrabold text-amber-200">{p.score}</span>
               </div>
             ))}
+            </div>
           </div>
         </div>
       ) : null}
@@ -414,8 +450,8 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
                   <span className="mb-1 flex items-center gap-1 font-display text-2xl font-extrabold text-amber-200">
                     <IconStar size={18} /> {player.score}
                   </span>
-                  <div className={`flex w-28 items-start justify-center rounded-t-2xl bg-gradient-to-b ${gradient} ${height} px-2 pt-3`}>
-                    <span className="text-center text-base font-extrabold leading-tight text-slate-900">{player.name}</span>
+                  <div className={`flex w-28 items-start justify-center overflow-hidden rounded-t-2xl bg-gradient-to-b ${gradient} ${height} px-2 pt-3`}>
+                    <span className="truncate text-center text-base font-extrabold leading-tight text-slate-900">{player.name}</span>
                   </div>
                 </div>
               );

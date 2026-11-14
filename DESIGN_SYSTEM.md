@@ -241,6 +241,19 @@ screen and operates it from the podium. Conventions:
 - **a11y:** spotlight name is `role="status" aria-live="polite"`; phase
   changes move focus to the `[data-stage-focus]` element (`tabIndex={-1}`);
   setup controls go `inert` while loading.
+- **Overflow law (CR-142):** the stage must fit one projector viewport
+  with a real 30-60 student roster. The scoreboard owns its scroll -
+  `relative max-h-[30vh] overflow-y-auto`, and the picked row centers
+  itself via container `scrollTop` (never `scrollIntoView`, which also
+  scrolls the document and pushes the stage off). Long content caps:
+  subPrompt `max-h-48 overflow-y-auto`, headline/options/reveal
+  `break-words`, option text wrapped `min-w-0 flex-1`, podium names
+  `truncate`, image cells fall back to their text label on error.
+- **Key law (CR-142):** `normalizeShowQuestion` rejects pending bank
+  rows (`bankId` marker) and any question whose key field is missing or
+  out of range - an unkeyed question on a projector is a fabricated
+  answer (MCQ highlights A, true-false marks SAI, reveal shows empty
+  green).
 - **Resilience:** questions load from the public practice bank exactly
   `count` deep (no over-fetch); any shortfall pads from the bundled
   16-question sample set so a dead wifi never kills a live class.
