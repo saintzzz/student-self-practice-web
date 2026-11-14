@@ -94,3 +94,32 @@ Committed to Play Families policy: YES (kids app, see below)
    by default).
 4. Release notes (vi): "Phát hành đầu tiên."
 5. Submit for review.
+
+## Status as of 2026-11-13 (audited via console + API)
+
+Console: dev 9000336336756902041 (personal account "Vi-eSchool.com"),
+app 4975805123872991253, owner duylinhcn3@gmail.com.
+Alpha track id: 4701179092073316425.
+
+DONE:
+- App shell, SA linked, API publish verified (`play-publish.mjs check`).
+- AAB v3 (versionName 1.0.2) live on internal + alpha closed track.
+- Listings vi + en-US, icon, feature graphic, 5 phone screenshots.
+- Store settings: Education category + tags, contact info.
+- All app-content declarations addressed (data safety, rating,
+  audience/Families, ads=no, app access). Policy center: clean.
+- Feedback channel set: duylinhcn3@gmail.com.
+- Opt-in link: https://play.google.com/apps/testing/com.vieschool.englisharena
+- testers email list (5): duylinhcn3 (OPTED IN), gba19527170,
+  giang.btr97, sel.14580635, thuyhuong.ptit @gmail.com
+
+BLOCKER (only remaining gate for production):
+- Personal account -> needs >=12 testers OPTED IN on the closed
+  track, held >=14 days, then "Đăng ký phát hành công khai".
+  Count as of 2026-11-13: 1/12 opted in.
+- Add emails: `node scripts/console-add-testers.mjs a@b.com ...`
+  or `--file emails.txt`. Testers must open the opt-in link while
+  logged into the listed Gmail and press "Become a tester".
+
+POST-LAUNCH: Teacher Approved program (currently "not eligible" -
+needs published app + Families review).

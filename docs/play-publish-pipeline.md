@@ -74,6 +74,9 @@ profile + Playwright persistent context:
      types the password once in the opened window, session persists
      in the temp profile afterwards.
 4. `scripts/console-probe.mjs` is the reusable driver pattern.
+   `scripts/console-status.mjs` dumps every setup page;
+   `scripts/console-add-testers.mjs <emails...>` appends to the
+   alpha testers email list (uses the profile session).
 
 Profile lock: only one Chrome can hold a profile dir - kill stray
 instances (`pkill -f ea-chrome-prof`) before relaunching.
