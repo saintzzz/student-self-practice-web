@@ -602,3 +602,9 @@
   meaningless once the class can read the answer; verdicts now also
   work pre-reveal, post-reveal Sai just advances). Both Playwright-
   verified.
+- External review rounds on D8 history-nav: r200 (in-app back must
+  consume its entry), r201 (async self-pop races a fast re-open ->
+  module-level pending counter), r202 (absorb must re-push or the next
+  back exits the app). r203 CLEAN. Back-nav for a stateful SPA inside a
+  WebView is finicky - the final pattern lives in ClassShowScreen and
+  is documented in DESIGN_SYSTEM.md "Platform back".
