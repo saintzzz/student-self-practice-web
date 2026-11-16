@@ -59,14 +59,17 @@ async function ensureFresh(): Promise<void> {
   notify();
 }
 
-/* r207-1: the caller captured the uid BEFORE this fetch; re-verify the
-   session still belongs to that uid right before the rpc so a mid-flight
-   account switch can never cache the new user's streak under the old uid. */
+/* r207-1/r208-1: the caller captured the uid BEFORE this fetch. Resolve
+   the client first, then re-verify the session uid in the same
+   synchronous step that fires the rpc - no await sits between the check
+   and the call, so a mid-flight account switch can never run the query
+   under the new session and cache it against the old uid. */
 async function fetchForUid(uid: string): Promise<ServerStreak | null> {
   try {
+    const supa = await getSupabase();
     const session = await getSession();
     if (session?.user?.id !== uid) return null;
-    const { data, error } = await (await getSupabase()).rpc('streak_status');
+    const { data, error } = await supa.rpc('streak_status');
     if (error || !data) return null;
     const row = (typeof data === 'string' ? JSON.parse(data) : data) as Record<string, unknown>;
     return {

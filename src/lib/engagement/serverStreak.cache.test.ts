@@ -7,9 +7,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
 const rpc = vi.fn();
-const { getSessionMock } = vi.hoisted(() => ({ getSessionMock: vi.fn() }));
+const { getSessionMock, getSupabaseMock } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
+  getSupabaseMock: vi.fn(),
+}));
 vi.mock('../supabase/client', () => ({
-  getSupabase: async () => ({ rpc }),
+  getSupabase: getSupabaseMock,
   isSupabaseConfigured: () => true,
 }));
 vi.mock('../auth/practiceAuth', () => ({
@@ -26,6 +29,8 @@ const asStreak = (n: number) =>
 beforeEach(() => {
   rpc.mockReset();
   getSessionMock.mockReset();
+  getSupabaseMock.mockReset();
+  getSupabaseMock.mockResolvedValue({ rpc });
 });
 
 describe('useServerStreak - uid-keyed cache (r204-1)', () => {
@@ -66,6 +71,27 @@ describe('useServerStreak - uid-keyed cache (r204-1)', () => {
       .mockResolvedValue({ user: { id: 'u-b' } });
     asStreak(9);
     const h = renderHook(() => useServerStreak());
+    await waitFor(() => expect(getSessionMock.mock.calls.length).toBeGreaterThanOrEqual(2));
+    expect(rpc).not.toHaveBeenCalled();
+    expect(h.result.current).toBeNull();
+    h.unmount();
+  });
+
+  it('r208-1: rechecks uid after getSupabase resolves - a switch during that await aborts', async () => {
+    // Session stays u-x through ensureFresh's capture AND any pre-client
+    // session read; hold every getSupabase call on a shared gate, flip
+    // to u-y, then release. Under the old order (uid check before
+    // getSupabase) the rpc would still fire - now it must not. Fresh
+    // uids keep this independent of earlier tests' module cache.
+    getSessionMock.mockResolvedValue({ user: { id: 'u-x' } });
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((res) => { release = res; });
+    getSupabaseMock.mockImplementation(async () => { await gate; return { rpc }; });
+    asStreak(9);
+    const h = renderHook(() => useServerStreak());
+    await waitFor(() => expect(getSessionMock).toHaveBeenCalledTimes(1));
+    getSessionMock.mockResolvedValue({ user: { id: 'u-y' } });
+    release?.();
     await waitFor(() => expect(getSessionMock.mock.calls.length).toBeGreaterThanOrEqual(2));
     expect(rpc).not.toHaveBeenCalled();
     expect(h.result.current).toBeNull();
