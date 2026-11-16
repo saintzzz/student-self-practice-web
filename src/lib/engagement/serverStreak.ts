@@ -43,13 +43,18 @@ const notify = () => listeners.forEach((l) => l());
 async function ensureFresh(): Promise<void> {
   const session = await getSession().catch(() => null);
   const uid = session?.user?.id ?? null;
-  if (cacheUid === uid && cache !== undefined) return;
+  if (cacheUid === uid && cache !== undefined) {
+    notify(); // a new mount starts at null - serve the verified cache.
+    return;
+  }
   // Clear BEFORE the fetch so the other user's streak never renders
   // while the new one is in flight.
   cacheUid = uid;
   cache = null;
   notify();
   const value = uid ? await fetchServerStreak() : null;
+  // r206-3: a session change during the fetch must not let the late
+  // response repopulate the cache under the OLD uid.
   if (cacheUid === uid) cache = value;
   notify();
 }
@@ -79,18 +84,39 @@ export async function refreshServerStreak(): Promise<void> {
   const session = await getSession().catch(() => null);
   const uid = session?.user?.id ?? null;
   cacheUid = uid;
-  cache = uid ? await fetchServerStreak() : null;
-  notify();
+  const value = uid ? await fetchServerStreak() : null;
+  // r206-3: apply only if the uid captured before the fetch still holds.
+  if (cacheUid === uid) {
+    cache = value;
+    notify();
+  }
 }
 
 export function useServerStreak(): ServerStreak | null {
-  const [s, setS] = useState<ServerStreak | null>(cache ?? null);
+  /* r206-1: start null - the global cache is only served AFTER the
+     session uid is verified, so a remount can never paint the previous
+     user's streak for even one frame. */
+  const [s, setS] = useState<ServerStreak | null>(null);
   useEffect(() => {
     const listener = () => setS(cache ?? null);
     listeners.add(listener);
     void ensureFresh();
+    /* r206-2: a mounted hook must survive live account switches - re-run
+       the uid check on every auth event. Subscribes through the client
+       (not practiceAuth.onAuthChange) so partial test mocks degrade to
+       no subscription instead of a TypeError. */
+    let sub: { unsubscribe: () => void } | undefined;
+    try {
+      Promise.resolve(getSupabase())
+        .then((supa) => supa?.auth?.onAuthStateChange?.(() => void ensureFresh()))
+        .then((res) => { sub = res?.data?.subscription; })
+        .catch(() => { /* guest-only/test env: no session, no switches */ });
+    } catch {
+      /* fully-mocked modules can throw synchronously too */
+    }
     return () => {
       listeners.delete(listener);
+      sub?.unsubscribe();
     };
   }, []);
   return s;
