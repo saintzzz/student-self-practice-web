@@ -5,7 +5,7 @@ CR candidates ranked by expected impact x feasibility. Source reports:
 
 | # | Candidate | Evidence | Status |
 |---|---|---|---|
-| 1 | **Server-truth streak + separated daily goal** (CR-138) - streak from `practice.results`, goal from `qb_attempt_events`, weekend amulet, day-3/7 milestone | Duolingo: separation +3.3% D14, freeze +0.38% DAU, loss-aversion @day7 | in-SDLC (W47) |
+| 1 | **Server-truth streak + separated daily goal** (CR-138) - streak from `practice.results`, goal from `qb_attempt_events`, weekend amulet, day-3/7 milestone | Duolingo: separation +3.3% D14, freeze +0.38% DAU, loss-aversion @day7 | shipped W47 (review-clean r210) |
 | 2 | **math-vi live arena** (CR-143) - extend arenaLive realtime races to math bank, accuracy-first scoring, same-seed | VioEdu đấu trường 5M+ students; meta-analysis: competition+collab strongest behavioral combo | file CR (W47) |
 | 3 | **Strategy-aware adaptivity** - response-time + error-pattern signals into fetch_questions_adaptive | DreamBox strategy-tracking (37 as tens vs singles) | backlog - latency_ms now logged in qb_attempt_events; needs selection-signal design |
 | 4 | **Productive-struggle puzzle bank** - logic/pattern/multi-step puzzles for Nâng cao | Beast Academy puzzle-first engagement | backlog - content authoring cost |
