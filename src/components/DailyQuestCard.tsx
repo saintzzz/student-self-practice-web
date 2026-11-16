@@ -7,6 +7,7 @@ import {
   type DailyQuestId,
 } from '../lib/engagement/store';
 import { CARD_DAY, BTN_REWARD_EARNED, ROW_DAY } from '../lib/ui/tokens';
+import { useServerStreak } from '../lib/engagement/serverStreak';
 import { useViewer } from '../lib/viewer/ViewerContext';
 import { usePressRelease } from '../hooks/usePressRelease';
 import { IconCheckCircle, IconFlame, IconPencil, IconTarget, IconTrophy, type IconProps } from './icons';
@@ -23,7 +24,10 @@ const QUEST_META: Record<DailyQuestId, { icon: ComponentType<IconProps>; label: 
  */
 export default function DailyQuestCard() {
   const [snapshot, setSnapshot] = useState(() => getDailyQuests());
-  const streak = getState().streak.count;
+  /* CR-138: server streak is truth for signed-in kids; goal progress is
+     a SEPARATE chip from the streak (Duolingo: coupling them hurt D14). */
+  const srv = useServerStreak();
+  const streak = srv?.streak ?? getState().streak.count;
   const { density } = useViewer();
   /* CR-82 (spec s16.1): the "Nhận thưởng" reward button springs on
      release. Hook is unconditional - the button mounts conditionally. */
@@ -50,13 +54,20 @@ export default function DailyQuestCard() {
 
   return (
     <div data-testid="daily-quest-card" className={`mt-4 ${CARD_DAY} text-left`}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-xl font-extrabold text-amber-800">Nhiệm vụ ngày</h2>
-        {streak > 0 && (
-          <span data-testid="quest-streak" className="rounded-full bg-orange-100 px-3 py-1 text-sm font-extrabold text-orange-800 ring-1 ring-orange-300">
-            <IconFlame size={14} className="mr-1 inline" />{streak} ngày liên tiếp
-          </span>
-        )}
+        <span className="flex items-center gap-1.5">
+          {srv && (
+            <span data-testid="quest-goal" className="rounded-full bg-sky-100 px-3 py-1 text-sm font-extrabold text-sky-800 ring-1 ring-sky-300">
+              <IconTarget size={14} className="mr-1 inline" />Mục tiêu {Math.min(srv.goalDone, srv.goalTarget)}/{srv.goalTarget} câu
+            </span>
+          )}
+          {streak > 0 && (
+            <span data-testid="quest-streak" className="rounded-full bg-orange-100 px-3 py-1 text-sm font-extrabold text-orange-800 ring-1 ring-orange-300">
+              <IconFlame size={14} className="mr-1 inline" />{streak} ngày liên tiếp
+            </span>
+          )}
+        </span>
       </div>
       <ul className="mt-3 space-y-2">
         {snapshot.quests.map((quest) => {

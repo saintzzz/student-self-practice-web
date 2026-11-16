@@ -22,7 +22,9 @@ import {
   type Sticker,
 } from '../lib/engagement/store';
 import { savePracticeResult } from '../lib/practiceResults';
+import { refreshServerStreak } from '../lib/engagement/serverStreak';
 import { IconHome, IconPlay, IconStar } from './icons';
+import StreakMilestoneToast from './StreakMilestoneToast';
 import { GAME_DEFS } from '../games/defs';
 import type { GameId } from '../games/types';
 
@@ -92,7 +94,9 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
         recordBigModeComplete();
         const streakStickers = checkStreakStickers();
         // Luu ket qua len Supabase cho bao cao tien do - no-op voi guest.
-        void savePracticeResult(gradeId, result);
+        // CR-138: streak refresh must chain AFTER the insert lands so the
+        // milestone check sees this round in rounds_today.
+        void Promise.resolve(savePracticeResult(gradeId, result)).then(() => refreshServerStreak());
         awarded.current = { batch, streakStickers, totalStars: getState().totalStars };
       }
       setAward(awarded.current);
@@ -282,6 +286,7 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
         </div>
       )}
       </div>
+      <StreakMilestoneToast />
     </div>
   );
 }

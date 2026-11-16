@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getState, subscribe } from '../lib/engagement/store';
+import { useServerStreak } from '../lib/engagement/serverStreak';
 import LevelRing from './LevelRing';
 import StickerAlbum from './StickerAlbum';
 import { IconFlame, IconMedal, IconStar } from './icons';
@@ -26,7 +27,11 @@ export default function EngagementBar({ tone = 'dark' }: EngagementBarProps) {
   /* CR-45: re-read the store on every persist so synced stars/streaks
      show without a remount. */
   useEffect(() => subscribe(() => setTick((t) => t + 1)), []);
+  /* CR-138: server streak is source of truth for signed-in kids -
+     local count stays the guest/offline fallback. */
+  const srv = useServerStreak();
   const state = getState();
+  const streakDays = srv?.streak ?? state.streak.count;
   const day = tone === 'day';
 
   const segment = `inline-flex min-h-[44px] items-center gap-1.5 px-4 py-1.5 text-sm font-extrabold ${
@@ -45,7 +50,7 @@ export default function EngagementBar({ tone = 'dark' }: EngagementBarProps) {
         </span>
         <span data-testid="streak-chip" className={segment} title="Số ngày liên tiếp em đã luyện tập">
           <span aria-hidden="true" className={`inline-flex shrink-0 ${day ? 'text-orange-500' : 'text-orange-400'}`}><IconFlame size={16} /></span>
-          {state.streak.count} ngày
+          {streakDays} ngày
         </span>
         <LevelRing tone={tone} />
         <button

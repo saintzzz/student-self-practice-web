@@ -1,8 +1,21 @@
 # CR-138: Streak + daily goal retention loop
 
+## Status: IN-SDLC (implementation started cycle W47)
+
 Research: `docs/research/edu-apps/2026-W46.md` G4 - Duolingo: learners
 at a 7-day streak are 2.4x more likely to return next day; separating
 streak from daily goal lifted D14 retention; weekend amulet +4%.
+W47 report (`2026-W47.md`) reaffirmed + added two spec refinements:
+
+- R1: streak extends on ANY 1 completed round - never gate it behind
+  the daily-goal count (Duolingo measured +3.3% D14 retention from
+  decoupling exactly this).
+- R2: milestone moment at day 3 and day 7 (loss-aversion window) -
+  reuse existing StreakBurst FX, no new assets.
+- R3 (schema correction): `score_bank_attempts` is a stateless scoring
+  oracle - it logs nothing. Derivation source is `practice.results`
+  (completed rounds) + `qb_attempt_events` (per-question goal count),
+  both already persisted and RLS self-readable.
 
 ## Problem
 

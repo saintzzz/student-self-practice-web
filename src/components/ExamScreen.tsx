@@ -29,6 +29,8 @@ import {
 } from '../lib/engagement/store';
 import { bankSkillOf, skillKeyFor } from '../lib/engagement/skills';
 import { saveExamResult, bindActivityOwner, activityOwnerMatches } from '../lib/practiceResults';
+import { refreshServerStreak } from '../lib/engagement/serverStreak';
+import StreakMilestoneToast from './StreakMilestoneToast';
 import { getSession } from '../lib/auth/practiceAuth';
 import { arenaAccept, arenaCreate, botGhost, type ArenaDuelResult } from '../lib/arena';
 import { liveRoomFinish, liveRoomLeave, liveRoomState, subscribeLiveRoom, type LiveChannel, type LivePlayer } from '../lib/arenaLive';
@@ -497,7 +499,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       // counts all results rows, not only 4-round batches. Review sessions
       // replay already-earned points, so they don't insert again.
       if (!isReview) {
-        void saveExamResult(gradeId, programId, {
+        // CR-138: streak refresh chains after the insert so the milestone
+        // check sees this run in rounds_today.
+        void Promise.resolve(saveExamResult(gradeId, programId, {
           points: result.points,
           totalCount: result.totalCount,
           correctCount: result.correctCount,
@@ -505,7 +509,7 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
         }, {
           formId,
           questionIds: exam.questions.map((q) => String(q.id)),
-        });
+        })).then(() => refreshServerStreak());
       }
     }
   }, [exam, result, isPractice, isReview, isArena, isAssignment, assignment, gradeId, programId, submitAssignment]);
@@ -1017,6 +1021,9 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
           </div>
         )}
         <ExamResult result={result} programId={programId} gradeLabel={gradeLabel} isPractice={isPractice} studentName={studentName} examLabel={exam?.examLabel} onExit={onExit} onRetry={canRetry ? begin : undefined} />
+        {/* CR-138: streak milestone only where a results row was just
+            written - arena/review runs don't insert, so no toast. */}
+        {!isArena && !isReview && <StreakMilestoneToast />}
       </div>
     );
   }
