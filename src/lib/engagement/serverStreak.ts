@@ -32,8 +32,27 @@ export function isStreakMilestone(s: ServerStreak | null): boolean {
     && (s.streak === 3 || s.streak % 7 === 0);
 }
 
+/* r204-1: the cache is keyed by the signed-in uid - an account switch
+   must never show the previous user's streak, even for one paint.
+   `cacheUid` stays undefined until the first session check. */
+let cacheUid: string | null | undefined;
 let cache: ServerStreak | null | undefined; // undefined = not fetched yet
 const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((l) => l());
+
+async function ensureFresh(): Promise<void> {
+  const session = await getSession().catch(() => null);
+  const uid = session?.user?.id ?? null;
+  if (cacheUid === uid && cache !== undefined) return;
+  // Clear BEFORE the fetch so the other user's streak never renders
+  // while the new one is in flight.
+  cacheUid = uid;
+  cache = null;
+  notify();
+  const value = uid ? await fetchServerStreak() : null;
+  if (cacheUid === uid) cache = value;
+  notify();
+}
 
 export async function fetchServerStreak(): Promise<ServerStreak | null> {
   try {
@@ -57,8 +76,11 @@ export async function fetchServerStreak(): Promise<ServerStreak | null> {
 /** Re-read after a completed round - the save must land first, so
  *  callers chain this off savePracticeResult/saveExamResult. */
 export async function refreshServerStreak(): Promise<void> {
-  cache = await fetchServerStreak();
-  listeners.forEach((l) => l());
+  const session = await getSession().catch(() => null);
+  const uid = session?.user?.id ?? null;
+  cacheUid = uid;
+  cache = uid ? await fetchServerStreak() : null;
+  notify();
 }
 
 export function useServerStreak(): ServerStreak | null {
@@ -66,7 +88,7 @@ export function useServerStreak(): ServerStreak | null {
   useEffect(() => {
     const listener = () => setS(cache ?? null);
     listeners.add(listener);
-    if (cache === undefined) void refreshServerStreak();
+    void ensureFresh();
     return () => {
       listeners.delete(listener);
     };

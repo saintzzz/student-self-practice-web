@@ -30,33 +30,40 @@ declare
   v_rounds_today int;
   v_goal_done int;
   v_last_active date;
+  /* r204-2: materialize the active days ONCE - the old loop probed the
+     table per day with a tz-cast predicate no index can serve (up to
+     400 scans/call). The created_at bound below uses the
+     (account_id, created_at) index; the tz cast runs on those rows only. */
+  v_active date[];
 begin
   if v_uid is null then
     return null;
   end if;
 
-  select max((created_at at time zone 'Asia/Ho_Chi_Minh')::date)
-    into v_last_active
-    from practice.results
-   where account_id = v_uid;
+  select coalesce(array_agg(d), '{}'), max(d)
+    into v_active, v_last_active
+    from (select distinct (created_at at time zone 'Asia/Ho_Chi_Minh')::date as d
+            from practice.results
+           where account_id = v_uid
+             and created_at >= now() - interval '401 days') t;
 
-  select count(*) into v_rounds_today
-    from practice.results
-   where account_id = v_uid
-     and (created_at at time zone 'Asia/Ho_Chi_Minh')::date = v_today;
+  v_rounds_today := case when v_today = any(v_active) then
+    (select count(*) from practice.results
+      where account_id = v_uid
+        and created_at >= v_today::timestamp at time zone 'Asia/Ho_Chi_Minh'
+        and created_at < (v_today + 1)::timestamp at time zone 'Asia/Ho_Chi_Minh')
+    else 0 end;
 
   select count(*) into v_goal_done
     from practice.qb_attempt_events
    where learner_id = v_uid
      and (answered_at at time zone 'Asia/Ho_Chi_Minh')::date = v_today;
 
-  -- Walk back from today (or yesterday when today has no round yet - a
-  -- day still in progress never breaks the run).
+  -- Walk the in-memory set from today (or yesterday when today has no
+  -- round yet - a day still in progress never breaks the run).
   v_cursor := case when v_rounds_today > 0 then v_today else v_today - 1 end;
   while v_cursor > v_today - 400 loop
-    if exists (select 1 from practice.results
-                where account_id = v_uid
-                  and (created_at at time zone 'Asia/Ho_Chi_Minh')::date = v_cursor) then
+    if v_cursor = any(v_active) then
       v_streak := v_streak + 1;
       v_cursor := v_cursor - 1;
     elsif extract(isodow from v_cursor) in (6, 7)
