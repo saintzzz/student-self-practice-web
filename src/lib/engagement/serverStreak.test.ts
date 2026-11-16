@@ -18,7 +18,7 @@ import { fetchServerStreak, isStreakMilestone, type ServerStreak } from './serve
 
 beforeEach(() => {
   rpc.mockReset().mockResolvedValue({
-    data: { streak: 4, today_done: true, rounds_today: 1, goal_done: 7, goal_target: 5 },
+    data: { uid: 'u1', streak: 4, today_done: true, rounds_today: 1, goal_done: 7, goal_target: 5 },
     error: null,
   });
   getSessionMock.mockReset().mockResolvedValue({ user: { id: 'u1' } });
@@ -32,7 +32,7 @@ describe('fetchServerStreak', () => {
   });
 
   it('accepts a string payload (jsonb over text)', async () => {
-    rpc.mockResolvedValue({ data: '{"streak":2,"today_done":false,"rounds_today":0,"goal_done":1,"goal_target":5}', error: null });
+    rpc.mockResolvedValue({ data: '{"uid":"u1","streak":2,"today_done":false,"rounds_today":0,"goal_done":1,"goal_target":5}', error: null });
     const s = await fetchServerStreak();
     expect(s?.streak).toBe(2);
     expect(s?.todayDone).toBe(false);
@@ -42,6 +42,14 @@ describe('fetchServerStreak', () => {
     getSessionMock.mockResolvedValue(null);
     expect(await fetchServerStreak()).toBeNull();
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('r209-1: discards a payload whose echoed uid is not the caller uid', async () => {
+    rpc.mockResolvedValue({
+      data: { uid: 'u-other', streak: 9, today_done: true, rounds_today: 1, goal_done: 5, goal_target: 5 },
+      error: null,
+    });
+    expect(await fetchServerStreak()).toBeNull();
   });
 
   it('returns null on RPC error and on throw', async () => {

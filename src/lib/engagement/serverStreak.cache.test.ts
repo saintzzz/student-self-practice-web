@@ -4,7 +4,7 @@
  * it while the new one loads.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 const rpc = vi.fn();
 const { getSessionMock, getSupabaseMock } = vi.hoisted(() => ({
@@ -23,8 +23,8 @@ import { useServerStreak } from './serverStreak';
 
 const asUser = (uid: string | null) =>
   getSessionMock.mockResolvedValue(uid ? { user: { id: uid } } : null);
-const asStreak = (n: number) =>
-  rpc.mockResolvedValue({ data: { streak: n, today_done: true, rounds_today: 1, goal_done: 0, goal_target: 5 }, error: null });
+const asStreak = (uid: string, n: number) =>
+  rpc.mockResolvedValue({ data: { uid, streak: n, today_done: true, rounds_today: 1, goal_done: 0, goal_target: 5 }, error: null });
 
 beforeEach(() => {
   rpc.mockReset();
@@ -36,13 +36,13 @@ beforeEach(() => {
 describe('useServerStreak - uid-keyed cache (r204-1)', () => {
   it('refetches and never shows user A streak after switching to user B', async () => {
     asUser('u-a');
-    asStreak(4);
+    asStreak('u-a', 4);
     const first = renderHook(() => useServerStreak());
     await waitFor(() => expect(first.result.current?.streak).toBe(4));
     first.unmount();
 
     asUser('u-b');
-    asStreak(9);
+    asStreak('u-b', 9);
     const second = renderHook(() => useServerStreak());
     // ensureFresh detects the uid switch, clears, then serves user B's
     // value - the final state is never user A's "4".
@@ -52,7 +52,7 @@ describe('useServerStreak - uid-keyed cache (r204-1)', () => {
 
   it('drops to null when the user signs out', async () => {
     asUser('u-c');
-    asStreak(6);
+    asStreak('u-c', 6);
     const signed = renderHook(() => useServerStreak());
     await waitFor(() => expect(signed.result.current?.streak).toBe(6));
     signed.unmount();
@@ -69,7 +69,7 @@ describe('useServerStreak - uid-keyed cache (r204-1)', () => {
     getSessionMock
       .mockResolvedValueOnce({ user: { id: 'u-a' } })
       .mockResolvedValue({ user: { id: 'u-b' } });
-    asStreak(9);
+    asStreak('u-b', 9);
     const h = renderHook(() => useServerStreak());
     await waitFor(() => expect(getSessionMock.mock.calls.length).toBeGreaterThanOrEqual(2));
     expect(rpc).not.toHaveBeenCalled();
@@ -87,13 +87,29 @@ describe('useServerStreak - uid-keyed cache (r204-1)', () => {
     let release: (() => void) | undefined;
     const gate = new Promise<void>((res) => { release = res; });
     getSupabaseMock.mockImplementation(async () => { await gate; return { rpc }; });
-    asStreak(9);
+    asStreak('u-y', 9);
     const h = renderHook(() => useServerStreak());
     await waitFor(() => expect(getSessionMock).toHaveBeenCalledTimes(1));
     getSessionMock.mockResolvedValue({ user: { id: 'u-y' } });
     release?.();
     await waitFor(() => expect(getSessionMock.mock.calls.length).toBeGreaterThanOrEqual(2));
     expect(rpc).not.toHaveBeenCalled();
+    expect(h.result.current).toBeNull();
+    h.unmount();
+  });
+
+  it('r209-1: discards an rpc payload the server ran under a different uid', async () => {
+    // Both session reads agree on u-z, but the response echoes u-y -
+    // credentials swapped inside the rpc; the payload must be dropped.
+    getSessionMock.mockResolvedValue({ user: { id: 'u-z' } });
+    let finish!: () => void;
+    rpc.mockImplementation(async () => {
+      await new Promise<void>((r) => { finish = r; });
+      return { data: { uid: 'u-y', streak: 9, today_done: true, rounds_today: 1, goal_done: 0, goal_target: 5 }, error: null };
+    });
+    const h = renderHook(() => useServerStreak());
+    await waitFor(() => expect(rpc).toHaveBeenCalled());
+    await act(async () => finish());
     expect(h.result.current).toBeNull();
     h.unmount();
   });

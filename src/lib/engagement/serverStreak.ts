@@ -72,6 +72,10 @@ async function fetchForUid(uid: string): Promise<ServerStreak | null> {
     const { data, error } = await supa.rpc('streak_status');
     if (error || !data) return null;
     const row = (typeof data === 'string' ? JSON.parse(data) : data) as Record<string, unknown>;
+    /* r209-1: the credentials the rpc ran under can still have swapped
+       after the sync recheck - the server echoes the uid it evaluated,
+       so discard anything that isn't the uid this call was made for. */
+    if (row.uid !== uid) return null;
     return {
       streak: Number(row.streak) || 0,
       todayDone: row.today_done === true,

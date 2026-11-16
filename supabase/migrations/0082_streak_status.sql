@@ -78,6 +78,11 @@ begin
   end loop;
 
   return jsonb_build_object(
+    /* r209-1: echo the uid the request actually ran as - the client
+       discards any payload whose uid is not the one it captured, so a
+       mid-flight credential swap can never cache the wrong account's
+       streak under the old uid. */
+    'uid', v_uid,
     'streak', v_streak,
     'today_done', v_rounds_today > 0,
     'rounds_today', v_rounds_today,
