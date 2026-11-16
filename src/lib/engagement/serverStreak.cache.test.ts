@@ -57,4 +57,18 @@ describe('useServerStreak - uid-keyed cache (r204-1)', () => {
     await waitFor(() => expect(guest.result.current).toBeNull());
     guest.unmount();
   });
+
+  it('r207-1: aborts the fetch when the session uid changes mid-flight', async () => {
+    // ensureFresh captures u-a, then the account switches before the
+    // inner session re-check - the rpc must not even fire for u-b's data.
+    getSessionMock
+      .mockResolvedValueOnce({ user: { id: 'u-a' } })
+      .mockResolvedValue({ user: { id: 'u-b' } });
+    asStreak(9);
+    const h = renderHook(() => useServerStreak());
+    await waitFor(() => expect(getSessionMock.mock.calls.length).toBeGreaterThanOrEqual(2));
+    expect(rpc).not.toHaveBeenCalled();
+    expect(h.result.current).toBeNull();
+    h.unmount();
+  });
 });

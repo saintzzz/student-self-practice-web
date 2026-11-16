@@ -52,17 +52,20 @@ async function ensureFresh(): Promise<void> {
   cacheUid = uid;
   cache = null;
   notify();
-  const value = uid ? await fetchServerStreak() : null;
+  const value = uid ? await fetchForUid(uid) : null;
   // r206-3: a session change during the fetch must not let the late
   // response repopulate the cache under the OLD uid.
   if (cacheUid === uid) cache = value;
   notify();
 }
 
-export async function fetchServerStreak(): Promise<ServerStreak | null> {
+/* r207-1: the caller captured the uid BEFORE this fetch; re-verify the
+   session still belongs to that uid right before the rpc so a mid-flight
+   account switch can never cache the new user's streak under the old uid. */
+async function fetchForUid(uid: string): Promise<ServerStreak | null> {
   try {
     const session = await getSession();
-    if (!session) return null;
+    if (session?.user?.id !== uid) return null;
     const { data, error } = await (await getSupabase()).rpc('streak_status');
     if (error || !data) return null;
     const row = (typeof data === 'string' ? JSON.parse(data) : data) as Record<string, unknown>;
@@ -78,13 +81,19 @@ export async function fetchServerStreak(): Promise<ServerStreak | null> {
   }
 }
 
+export async function fetchServerStreak(): Promise<ServerStreak | null> {
+  const session = await getSession().catch(() => null);
+  const uid = session?.user?.id;
+  return uid ? fetchForUid(uid) : null;
+}
+
 /** Re-read after a completed round - the save must land first, so
  *  callers chain this off savePracticeResult/saveExamResult. */
 export async function refreshServerStreak(): Promise<void> {
   const session = await getSession().catch(() => null);
   const uid = session?.user?.id ?? null;
   cacheUid = uid;
-  const value = uid ? await fetchServerStreak() : null;
+  const value = uid ? await fetchForUid(uid) : null;
   // r206-3: apply only if the uid captured before the fetch still holds.
   if (cacheUid === uid) {
     cache = value;
@@ -106,15 +115,22 @@ export function useServerStreak(): ServerStreak | null {
        (not practiceAuth.onAuthChange) so partial test mocks degrade to
        no subscription instead of a TypeError. */
     let sub: { unsubscribe: () => void } | undefined;
+    let mounted = true;
     try {
       Promise.resolve(getSupabase())
         .then((supa) => supa?.auth?.onAuthStateChange?.(() => void ensureFresh()))
-        .then((res) => { sub = res?.data?.subscription; })
+        .then((res) => {
+          /* r207-2: cleanup may run before the client resolves - drop a
+             subscription that arrives after unmount instead of leaking it. */
+          if (mounted) sub = res?.data?.subscription;
+          else res?.data?.subscription?.unsubscribe?.();
+        })
         .catch(() => { /* guest-only/test env: no session, no switches */ });
     } catch {
       /* fully-mocked modules can throw synchronously too */
     }
     return () => {
+      mounted = false;
       listeners.delete(listener);
       sub?.unsubscribe();
     };
