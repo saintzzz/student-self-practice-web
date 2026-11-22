@@ -221,8 +221,15 @@ surfaces (grade-select map, login, loading splash) ride
 screen and operates it from the podium. Conventions:
 
 - **Surface:** existing `CARD` navy glass on the brand shell - no new
-  background token; the radial `amber-300/18` glow behind the spotlight
-  card is the stage light.
+  background token; the radial `amber-300/30` glow behind the spotlight
+  card is the stage light (rose tint during steal); the card adds an
+  amber outer glow while names spin.
+- **Control layout law (CR-142 designer pass):** the four teacher
+  controls use a semantic `sm:grid-cols-2` grid - verdict pair
+  (Sai/Đúng) is row 1 because the judgment is the primary task,
+  navigation pair (Câu khác/Hiện đáp án, or Bỏ qua spanning both
+  columns post-reveal) is row 2. Never flex-wrap these: an orphaned
+  button on a projector reads as a defect.
 - **Scale:** everything reads from 3+ meters - spotlight name `text-5xl/
   sm:6xl`, question `text-3xl/sm:4xl font-display`, options `text-2xl`,
   verdicts `text-2xl min-h-[64px]`. Never `text-sm` for on-stage content

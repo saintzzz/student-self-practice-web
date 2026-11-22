@@ -85,3 +85,32 @@ shipped CR-114 feature - requirements unchanged.
   hardware back inside the WebView) leaves the show to the hub.
 - DESIGN_SYSTEM.md: overflow law + key law appended to the CR-114
   Class Show section; keyboard contract + steal rule updated.
+
+## Designer pass (round 3)
+
+Polish audit on all 6 phases at 1440x900 + 768x1024
+(`_shots/design-pass/`). Findings fixed:
+
+- **Control row orphaned a button.** At projector width the four
+  pre-reveal controls wrapped 3+1 leaving "Đúng +10" alone on a line.
+  Fixed: semantic 2-col grid - verdict pair [Sai - cướp lượt | Đúng +10]
+  on row 1 (the primary teacher judgment), navigation pair
+  [Câu khác | Hiện đáp án] on row 2; revealed phase keeps the same
+  grid with Bỏ qua spanning both columns. Identical layout at tablet.
+- **Spotlight lacked stage presence.** Radial glow 0.18 -> 0.30 +
+  amber outer glow during the spin; steal mode now tints the radial
+  rose instead of amber (matches the rose verdict).
+- **No keyboard discoverability.** Setup card now states the shortcut
+  contract (Space / arrows) so teachers learn it before the show.
+- **Focus-visible gaps.** Verdict/skip/reveal buttons, setup picker
+  chips and the sample-roster link had no focus ring - all get the
+  system's amber focus-visible treatment.
+- **Motion/a11y.** spotlight `animate-pulse` gains
+  `motion-reduce:animate-none`; card glow transition is
+  motion-reduced; active:scale-95 reduced too.
+- **Browser surface.** Scoreboard + passage scroll areas get thin
+  on-palette scrollbars (webkit + Firefox `scrollbar-width`).
+
+Verification: impeccable detect `[]`; tsc clean; build green;
+classshow-verify (30 students, 1440x900) - controlsVisible, steal
+flow, scoreboard bounded; 12 fresh phase shots captured.

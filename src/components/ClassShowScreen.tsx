@@ -294,7 +294,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               {GRADES.map((g) => (
                 <button key={g.id} type="button" data-testid={`show-grade-${g.id}`}
                   onClick={() => setGradeId(g.id)}
-                  className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition ${gradeId === g.id ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
+                  className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 ${gradeId === g.id ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
                   {g.name}
                 </button>
               ))}
@@ -307,7 +307,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               {PROGRAMS.map((p) => (
                 <button key={p.id} type="button" data-testid={`show-program-${p.id}`}
                   onClick={() => setProgramId(p.id)}
-                  className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition ${programId === p.id ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
+                  className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 ${programId === p.id ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
                   {p.emoji} {p.name}
                 </button>
               ))}
@@ -320,7 +320,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               {QUESTION_COUNTS.map((n) => (
                 <button key={n} type="button" data-testid={`show-count-${n}`}
                   onClick={() => setCount(n)}
-                  className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition ${count === n ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
+                  className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 ${count === n ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
                   {n} câu
                 </button>
               ))}
@@ -340,7 +340,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               placeholder="Minh Anh, Bảo Nam, Khánh Linh..."
             />
             <button type="button" onClick={() => setRosterText(SAMPLE_ROSTER.join(', '))}
-              className="mt-2 text-sm font-bold text-sky-300 underline underline-offset-2 hover:text-sky-200">
+              className="mt-2 rounded-lg text-sm font-bold text-sky-300 underline underline-offset-2 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70">
               Dùng lớp mẫu 8 em
             </button>
           </div>
@@ -352,6 +352,12 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
             className={`${CTA_GOLD_XL} w-full ${phase === 'loading' ? 'opacity-60' : ''}`}>
             {phase === 'loading' ? 'Đang lấy câu hỏi...' : '🎬 Bắt đầu buổi diễn'}
           </button>
+
+          {/* Teacher shortcut discoverability - the stage is fully
+              keyboard-driven once the show starts, so say so up front. */}
+          <p className="text-center text-sm font-semibold text-sky-300/70">
+            Phím tắt trong buổi diễn: Space hiện đáp án · → Đúng · ← Sai · ↓ Câu khác
+          </p>
         </div>
       ) : null}
 
@@ -363,11 +369,11 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
           </div>
 
           {/* Spotlight card - who answers */}
-          <div className={`${CARD} relative overflow-hidden py-8 text-center`}>
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.18),transparent_65%)]" />
+          <div className={`${CARD} relative overflow-hidden py-8 text-center transition-shadow duration-700 motion-reduce:transition-none ${phase === 'spotlight' ? 'shadow-[0_0_90px_-12px_rgba(251,191,36,0.45)]' : ''}`}>
+            <div className={`absolute inset-0 ${missed.size > 0 ? 'bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.20),transparent_65%)]' : 'bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.30),transparent_65%)]'}`} />
             <p className={`${TYPE_SECTION_NAVY} relative`}>{missed.size > 0 ? '🔥 Cướp lượt!' : 'Em trả lời'}</p>
             <p data-testid="show-spotlight" role="status" aria-live="polite"
-              className={`relative break-words px-6 font-display text-5xl font-extrabold tracking-tight sm:text-6xl ${phase === 'spotlight' ? 'animate-pulse text-amber-200/80' : 'text-amber-300'}`}>
+              className={`relative break-words px-6 font-display text-5xl font-extrabold tracking-tight sm:text-6xl ${phase === 'spotlight' ? 'animate-pulse text-amber-200/80 motion-reduce:animate-none' : 'text-amber-300'}`}>
               {spotName || '...'}
             </p>
           </div>
@@ -379,7 +385,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
                 /* CR-142 D3: unbounded passages pushed the options and
                    teacher controls off the projector - cap at ~6 lines
                    and scroll inside the box. */
-                <p className="max-h-48 overflow-y-auto rounded-2xl bg-white/5 px-5 py-4 text-lg leading-relaxed text-sky-100 ring-1 ring-white/10">
+                <p className="max-h-48 overflow-y-auto rounded-2xl bg-white/5 px-5 py-4 text-lg leading-relaxed text-sky-100 ring-1 ring-white/10 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
                   {question.subPrompt}
                 </p>
               )}
@@ -440,40 +446,42 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               {/* Teacher controls - CR-142 D9: the verdicts live on the
                   pre-reveal surface too. Steal only counts while the
                   answer is hidden; after reveal, "sai" just means no
-                  points (Câu khác). */}
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  points (Câu khác). Designer pass: fixed 2-col grid so
+                  the button row never wraps an orphan - the verdict
+                  pair reads as one judgment row. */}
+              <div className="grid grid-cols-1 items-stretch justify-center gap-3 pt-2 sm:grid-cols-2">
                 {phase === 'question' ? (
                   <>
                     <button type="button" data-testid="show-wrong" onClick={() => verdict(false)}
-                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95">
+                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70">
                       <IconX size={26} /> Sai - cướp lượt
                     </button>
+                    <button type="button" data-testid="show-correct" onClick={() => verdict(true)}
+                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-emerald-500/25 px-8 text-2xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50 transition hover:bg-emerald-500/35 active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70">
+                      <IconCheck size={26} /> Đúng +{SHOW_POINTS}
+                    </button>
                     <button type="button" data-testid="show-skip" onClick={advance}
-                      className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95">
+                      className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70">
                       Câu khác ↓
                     </button>
                     <button type="button" data-testid="show-reveal-btn" onClick={() => setPhase('revealed')}
-                      className={CTA_GOLD_XL}>
+                      className={`${CTA_GOLD_XL} min-w-0`}>
                       <IconPlay size={22} className="mr-2" /> Hiện đáp án
-                    </button>
-                    <button type="button" data-testid="show-correct" onClick={() => verdict(true)}
-                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-emerald-500/25 px-8 text-2xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50 transition hover:bg-emerald-500/35 active:scale-95">
-                      <IconCheck size={26} /> Đúng +{SHOW_POINTS}
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" data-testid="show-wrong" onClick={() => verdict(false)}
-                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95">
+                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-rose-500/20 px-8 text-2xl font-extrabold text-rose-200 ring-2 ring-rose-400/40 transition hover:bg-rose-500/30 active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70">
                       <IconX size={26} /> Sai
                     </button>
-                    <button type="button" data-testid="show-skip" onClick={advance}
-                      className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95">
-                      Bỏ qua ↓
-                    </button>
                     <button type="button" data-testid="show-correct" onClick={() => verdict(true)}
-                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-emerald-500/25 px-8 text-2xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50 transition hover:bg-emerald-500/35 active:scale-95">
+                      className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-3xl bg-emerald-500/25 px-8 text-2xl font-extrabold text-emerald-200 ring-2 ring-emerald-300/50 transition hover:bg-emerald-500/35 active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70">
                       <IconCheck size={26} /> Đúng +{SHOW_POINTS}
+                    </button>
+                    <button type="button" data-testid="show-skip" onClick={advance}
+                      className="inline-flex min-h-[64px] items-center justify-center rounded-3xl bg-white/10 px-6 text-xl font-bold text-sky-200 ring-1 ring-white/15 transition hover:bg-white/15 active:scale-95 motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 sm:col-span-2">
+                      Bỏ qua ↓
                     </button>
                   </>
                 )}
@@ -487,7 +495,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               options and teacher controls stay in one viewport; the
               picked row auto-scrolls into view. */}
           <div className={`${CARD} space-y-2`}>
-            <div ref={boardRef} className="relative max-h-[30vh] space-y-2 overflow-y-auto">
+            <div ref={boardRef} className="relative max-h-[30vh] space-y-2 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
             {players.map((p, i) => (
               <div key={p.name} data-testid={`show-player-${i}`}
                 className={`flex items-center gap-3 rounded-xl px-3 py-1.5 transition ${i === picked && phase !== 'spotlight' ? 'bg-amber-400/15 ring-1 ring-amber-300/40' : ''}`}>
