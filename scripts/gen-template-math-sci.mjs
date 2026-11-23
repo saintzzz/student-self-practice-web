@@ -798,14 +798,14 @@ function scienceGrade(g) {
   }
   const plantNeeds = ['water', 'sunlight', 'air', 'soil/nutrients'];
   for (const need of plantNeeds) {
-    mcq(`What does a plant need to grow?`, `water, sunlight and air`, ['only water', 'only sunlight', 'food from the soil'], {
-      d: 1, ex: `Cây cần nước, ánh sáng mặt trời và không khí để quang hợp và lớn lên.`, lo: 'Nhu cầu của cây.', top: 'plants', skill: 'concept',
-      // r212: 'food from the soil' = the classic K-5 misconception that
-      // plants EAT soil; 'candy and toys' was a junk filler.
+    mcq(`What does a plant need to grow?`, `water, sunlight, air and nutrients`, ['only water', 'only sunlight', 'food from the soil'], {
+      d: 1, ex: `Cây cần nước, ánh nắng, không khí và chất khoáng để lớn - thức ăn thì cây tự tạo nhờ quang hợp.`, lo: 'Nhu cầu của cây.', top: 'plants', skill: 'concept',
+      // r212/r214: 'food from the soil' = the classic K-5 misconception that
+      // plants EAT soil; nutrients listed in the key so soil is not taught as useless.
       fb: {
-        'only water': 'Chỉ nước thôi chưa đủ - cây còn cần ánh nắng và không khí.',
-        'only sunlight': 'Chỉ nắng thôi chưa đủ - cây còn cần nước và không khí.',
-        'food from the soil': 'Đất chỉ cho cây chất khoáng - cây tự tạo thức ăn nhờ ánh nắng, không "ăn" đất.',
+        'only water': 'Chỉ nước thôi chưa đủ - cây còn cần ánh nắng, không khí và chất khoáng.',
+        'only sunlight': 'Chỉ nắng thôi chưa đủ - cây còn cần nước, không khí và chất khoáng.',
+        'food from the soil': 'Đất cho cây nước và chất khoáng - thức ăn thì cây TỰ TẠO nhờ ánh nắng, không "ăn" đất.',
       },
     });
   }
