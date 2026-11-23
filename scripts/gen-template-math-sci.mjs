@@ -22,6 +22,7 @@ const arg = (n, d) => { const i = ARGS.indexOf(n); return i >= 0 ? ARGS[i + 1] :
 const SUBJECT = arg('--subject', 'math');
 const GRADE = Number(arg('--grade', 0));
 const DRY = ARGS.includes('--dry');
+const PATCH = ARGS.includes('--patch');
 const TARGET = Number(arg('--target', 0));
 if (!GRADE || !['math', 'science'].includes(SUBJECT)) {
   console.error('need --subject math|science --grade 1..5');
@@ -653,8 +654,33 @@ function scienceGrade(g) {
   const HEALTH = [
     ['exercise', 'makes muscles and heart strong', 'tập thể dục'], ['vegetables', 'give us vitamins', 'rau củ'],
     ['sleep', 'helps the body rest and grow', 'ngủ'], ['washing hands', 'keeps germs away', 'rửa tay'],
-    ['too much candy', 'is bad for teeth', 'ăn nhiều kẹo hại răng'], ['water', 'keeps the body working', 'uống nước'],
+    // CR-144 r1: stays in this table (one mcq call, same rng draws) but
+    // the frame below now keys it as harmful - the live "keep doing it"
+    // rows are quarantined via review_status='rejected' this cycle.
+    ['too much candy', 'harms our teeth', 'ăn nhiều kẹo hại răng'],
+    ['water', 'keeps the body working', 'uống nước'],
   ];
+  // CR-144 r1: harmful-habit items appended at the END of scienceGrade
+  // so zero rng draws shift and every live template id stays stable.
+  const HEALTH_BAD = [
+    // 'too much candy' lives in HEALTH above (corrected bad-habit frame) -
+    // keeping it out here avoids two near-identical prompts in one grade.
+    ['skipping breakfast', 'leaves us tired in the morning', 'bỏ bữa sáng khiến mệt mỏi'],
+    ['watching screens all day', 'hurts our eyes and sleep', 'xem màn hình cả ngày hại mắt và giấc ngủ'],
+  ];
+
+  // CR-144 - lookup maps for distractor_feedback ("tại sao sai" per
+  // wrong option, math-vi style: short Vietnamese hint naming the
+  // picked option's real identity).
+  const animalOf = Object.fromEntries(ANIMALS.map((a) => [a[0], a]));
+  const GRP_VI = {
+    mammal: 'động vật có vú', bird: 'chim', fish: 'cá', reptile: 'bò sát',
+    amphibian: 'lưỡng cư', insect: 'côn trùng', arachnid: 'nhện',
+    mollusc: 'động vật thân mềm', worm: 'giun', cnidarian: 'sứa', crustacean: 'giáp xác',
+  };
+  const STATE_VI = { solid: 'thể rắn', liquid: 'thể lỏng', gas: 'thể khí' };
+  const DIET_VI = { herbivore: 'ăn cây cỏ', carnivore: 'ăn thịt', omnivore: 'ăn tạp' };
+  const FORCE_VI = { push: 'đẩy', pull: 'kéo', gravity: 'trọng lực', friction: 'ma sát', magnet: 'nam châm' };
 
   // 1. living / non-living (g1-2 focus, light for older)
   const lvN = g <= 2 ? 300 : 100;
@@ -664,6 +690,11 @@ function scienceGrade(g) {
     mcq(`Is ${thing} a living thing?`, isLiv ? 'Yes, it is living' : 'No, it is non-living',
       [isLiv ? 'No, it is non-living' : 'Yes, it is living', 'It is both', 'We cannot know'], {
       d: 1, ex: `${thing} ${isLiv ? 'là sinh vật sống vì nó lớn lên, cần ăn/thở' : 'là vật không sống - không lớn lên, không cần ăn'}.`, lo: 'Phân biệt sinh vật sống/không sống.', top: 'living-things', skill: 'classification',
+      fb: {
+        [isLiv ? 'No, it is non-living' : 'Yes, it is living']: `${thing} ${isLiv ? 'là sinh vật sống - nó lớn lên, cần ăn và thở' : 'là vật không sống - không lớn lên, không cần ăn'}.`,
+        'It is both': 'Không có vật vừa sống vừa không sống - chỉ một trong hai.',
+        'We cannot know': 'Ta phân biệt được - sinh vật lớn lên, cần ăn và thở; đồ vật thì không.',
+      },
     });
   }
 
@@ -674,6 +705,7 @@ function scienceGrade(g) {
         const match = { see: 'a flower', hear: 'a song', taste: 'ice cream', 'touch/feel': 'a soft pillow', smell: 'hot soup' }[verb] === obj;
         mcq(`Which body part do we use to ${verb} ${obj}?`, organ, pickN(SENSES.map((s) => s[0]), 3, organ), {
           d: 1, ex: `Ta dùng ${organ} để ${verb} - ${vn}.`, lo: `Giác quan: ${organ} -> ${verb}.`, top: 'senses', skill: 'concept',
+          fb: Object.fromEntries(SENSES.filter((s) => s[0] !== organ).map((s) => [s[0], `${s[0]} dùng để ${s[2]} - không phải để ${vn}.`])),
         });
       }
     }
@@ -684,13 +716,16 @@ function scienceGrade(g) {
   for (const [name, grp, feat, babies, vn] of ANIMALS) {
     mcq(`A ${name} is a ___.`, `a ${grp}`, pickN(groups.map((x) => `a ${x}`), 3, `a ${grp}`), {
       d: 2, ex: `${name[0].toUpperCase() + name.slice(1)} (${vn}) thuộc nhóm ${grp}.`, lo: `Phân loại động vật: ${name} = ${grp}.`, top: 'animal-groups', skill: 'classification',
+      fb: Object.fromEntries(groups.filter((x) => x !== grp).map((x) => [`a ${x}`, `${name} (${vn}) là ${grp} (${GRP_VI[grp] ?? grp}) - không phải ${x}.`])),
     });
     mcq(`Which covering does a ${name} have?`, feat, pickN(['fur', 'feathers', 'scales', 'wings', 'wet skin', 'six legs', 'a shell', 'thick skin'], 3, feat), {
       d: 2, ex: `${name} (${vn}) có ${feat}.`, lo: `Đặc điểm cơ thể: ${name}.`, top: 'animal-features', skill: 'concept',
+      fb: Object.fromEntries(['fur', 'feathers', 'scales', 'wings', 'wet skin', 'six legs', 'a shell', 'thick skin'].filter((x) => x !== feat).map((x) => [x, `"${x}" là đặc điểm của loài khác - ${name} (${vn}) có ${feat}.`])),
     });
     if (g >= 3) {
       mcq(`A ${name} has ___.`, babies, pickN(ANIMALS.map((a) => a[3]), 3, babies), {
         d: 3, ex: `${name} sinh ra ${babies}.`, lo: `Sinh sản: ${name}.`, top: 'life-cycles', skill: 'concept',
+        fb: Object.fromEntries([...new Set(ANIMALS.map((a) => a[3]))].filter((b) => b !== babies).map((b) => [b, `${name} (${vn}) sinh ra ${babies} - "${b}" là của loài khác.`])),
       });
     }
   }
@@ -704,6 +739,7 @@ function scienceGrade(g) {
     const odd = pick(outGrp)[0];
     mcq(`Which one is NOT a ${grp}?`, odd, three, {
       d: 3, ex: `${odd} không phải ${grp}, còn ${three.join(', ')} đều là ${grp}.`, lo: `Tìm khác loại trong nhóm ${grp}.`, top: 'animal-groups', skill: 'classification',
+      fb: Object.fromEntries(inGrp.map((a) => a[0]).map((m) => [m, `${m} LÀ ${grp} (${GRP_VI[grp] ?? grp}) - câu hỏi tìm con KHÔNG thuộc nhóm này.`])),
     });
   }
 
@@ -711,9 +747,11 @@ function scienceGrade(g) {
   for (const [an, hab, vn] of HABITATS) {
     mcq(`Where does a ${an} live?`, hab, pickN(HABITATS.map((h) => h[1]), 3, hab), {
       d: 2, ex: `${an} sống ở ${hab} (${vn}).`, lo: `Môi trường sống: ${an}.`, top: 'habitats', skill: 'concept',
+      fb: Object.fromEntries([...new Set(HABITATS.map((h) => h[1]))].filter((h) => h !== hab).map((h) => [h, `${an} (${vn}) sống ở ${hab} - không phải ${h}.`])),
     });
     mcq(`Which animal lives in ${hab}?`, an, pickN(HABITATS.filter((h) => h[1] !== hab).map((h) => h[0]), 3, an), {
       d: 2, ex: `${an} sống ở ${hab} (${vn}).`, lo: `Môi trường sống: ${an}.`, top: 'habitats', skill: 'classification',
+      fb: Object.fromEntries([...new Set(HABITATS.filter((h) => h[1] !== hab).map((h) => h[0]))].filter((a) => a !== an).map((a) => [a, `${a} sống ở nơi khác - ${an} (${vn}) mới sống ở ${hab}.`])),
     });
   }
 
@@ -721,6 +759,7 @@ function scienceGrade(g) {
   for (const [an, mv, vn] of MOVES) {
     mcq(`How does a ${an} move?`, `It ${mv}`, pickN(MOVES.filter((m) => m[1] !== mv).map((m) => `It ${m[1]}`), 3), {
       d: 1, ex: `${an} ${vn}.`, lo: `Di chuyển: ${an}.`, top: 'movement', skill: 'concept',
+      fb: Object.fromEntries([...new Set(MOVES.filter((m) => m[1] !== mv).map((m) => m[1]))].map((m) => [`It ${m}`, `"${m}" là cách đi của loài khác - ${an} ${vn}.`])),
     });
   }
 
@@ -729,9 +768,11 @@ function scienceGrade(g) {
     for (const [an, cls, eats, vn] of DIET) {
       mcq(`A ${an} eats ${eats}. It is a ___.`, cls, pickN(['herbivore', 'carnivore', 'omnivore'], 3, cls), {
         d: 3, ex: `${vn} nên ${an} là ${cls} (ăn ${cls === 'herbivore' ? 'cây cỏ' : cls === 'carnivore' ? 'thịt' : 'tạp'}).`, lo: `Phân loại thức ăn: ${an} = ${cls}.`, top: 'diets', skill: 'classification',
+        fb: Object.fromEntries(['herbivore', 'carnivore', 'omnivore'].filter((x) => x !== cls).map((x) => [x, `${an} ăn ${eats} nên là ${cls} (${DIET_VI[cls]}) - không phải ${x} (${DIET_VI[x]}).`])),
       });
       mcq(`What does a ${an} mainly eat?`, eats, pickN(DIET.map((d) => d[2]), 3, eats), {
         d: 2, ex: `${vn}.`, lo: `Thức ăn: ${an}.`, top: 'diets', skill: 'concept',
+        fb: Object.fromEntries([...new Set(DIET.map((d) => d[2]))].filter((e) => e !== eats).map((e) => [e, `"${e}" là thức ăn của loài khác - ${vn}.`])),
       });
     }
   }
@@ -740,6 +781,7 @@ function scienceGrade(g) {
   for (const an of NOCTURNAL) {
     mcq(`Which animal is active at night (nocturnal)?`, an, pickN(['chicken', 'cow', 'dog', 'goat', 'duck', 'sparrow'], 3, an), {
       d: 2, ex: `${an} hoạt động về đêm (nocturnal).`, lo: 'Động vật hoạt động ban đêm.', top: 'habitats', skill: 'concept',
+      fb: Object.fromEntries(['chicken', 'cow', 'dog', 'goat', 'duck', 'sparrow'].map((x) => [x, `${x} hoạt động ban ngày - ${an} mới thức về đêm.`])),
     });
   }
 
@@ -747,15 +789,22 @@ function scienceGrade(g) {
   for (const [part, job, vn] of PLANTS_PARTS) {
     mcq(`What do the ${part} of a plant do?`, job, pickN(PLANTS_PARTS.map((p) => p[1]), 3, job), {
       d: 2, ex: `${vn}.`, lo: `Bộ phận cây: ${part}.`, top: 'plants', skill: 'concept',
+      fb: Object.fromEntries(PLANTS_PARTS.map((p) => p[1]).filter((j) => j !== job).map((j) => [j, `"${j}" là việc của bộ phận khác - ${vn}.`])),
     });
     mcq(`Which part of a plant ${job}?`, part, pickN(PLANTS_PARTS.map((p) => p[0]), 3, part), {
       d: 2, ex: `${vn}.`, lo: `Bộ phận cây: ${part}.`, top: 'plants', skill: 'concept',
+      fb: Object.fromEntries(PLANTS_PARTS.map((p) => p[0]).filter((p) => p !== part).map((p) => [p, `${p} làm việc khác - ${vn}.`])),
     });
   }
   const plantNeeds = ['water', 'sunlight', 'air', 'soil/nutrients'];
   for (const need of plantNeeds) {
     mcq(`What does a plant need to grow?`, `water, sunlight and air`, ['only water', 'only sunlight', 'candy and toys'], {
       d: 1, ex: `Cây cần nước, ánh sáng mặt trời và không khí để quang hợp và lớn lên.`, lo: 'Nhu cầu của cây.', top: 'plants', skill: 'concept',
+      fb: {
+        'only water': 'Chỉ nước thôi chưa đủ - cây còn cần ánh nắng và không khí.',
+        'only sunlight': 'Chỉ nắng thôi chưa đủ - cây còn cần nước và không khí.',
+        'candy and toys': 'Kẹo và đồ chơi không giúp cây lớn - cây cần nước, nắng và không khí.',
+      },
     });
   }
 
@@ -763,6 +812,7 @@ function scienceGrade(g) {
   for (const [mat, prop, vn] of MATERIALS) {
     mcq(`Which material is ${prop.split(';')[0].split(',')[0].trim()}?`, mat, pickN(MATERIALS.map((m) => m[0]), 3, mat), {
       d: 2, ex: `${vn} - ${prop}.`, lo: `Vật liệu: ${mat}.`, top: 'materials', skill: 'concept',
+      fb: Object.fromEntries(MATERIALS.filter((m) => m[0] !== mat).map((m) => [m[0], `${m[0]} (${m[2]}) không có tính chất đó - ${mat} (${vn}) mới đúng.`])),
     });
   }
   const MAT_USE = [
@@ -772,6 +822,7 @@ function scienceGrade(g) {
   for (const [item_, m, vn] of MAT_USE) {
     mcq(`${item_[0].toUpperCase() + item_.slice(1)} is best made of ___.`, m, pickN(MATERIALS.map((x) => x[0]), 3), {
       d: 2, ex: `${vn} nên làm bằng ${m}.`, lo: `Chọn vật liệu phù hợp.`, top: 'materials', skill: 'application',
+      fb: Object.fromEntries(MATERIALS.map((x) => [x[0], `${x[0]} (${x[2]}) không hợp - ${vn} cần ${m}.`])),
     });
   }
 
@@ -779,11 +830,13 @@ function scienceGrade(g) {
   for (const [w, def, vn] of WEATHER) {
     mcq(`It is ___ today - ${def}.`, w, pickN(WEATHER.map((x) => x[0]), 3, w), {
       d: 1, ex: `${def} nên trời đang ${vn}.`, lo: `Thời tiết: ${w}.`, top: 'weather', skill: 'concept',
+      fb: Object.fromEntries(WEATHER.filter((x) => x[0] !== w).map((x) => [x[0], `"${def}" là dấu hiệu của ${w} (${vn}) - không phải ${x[0]} (${x[2]}).`])),
     });
   }
   for (const [s, def, vn] of SEASONS) {
     mcq(`In ${s}, ${def}. Which season is it?`, s, pickN(SEASONS.map((x) => x[0]), 3, s), {
       d: 1, ex: `${def} đó là ${vn}.`, lo: `Mùa: ${s}.`, top: 'seasons', skill: 'concept',
+      fb: Object.fromEntries(SEASONS.filter((x) => x[0] !== s).map((x) => [x[0], `"${def}" là của ${s} (${vn}) - không phải ${x[0]} (${x[2]}).`])),
     });
   }
 
@@ -792,6 +845,7 @@ function scienceGrade(g) {
     for (const [org, job, vn] of BODY) {
       mcq(`Which body part ${job}?`, org, pickN(BODY.map((b) => b[0]), 3, org), {
         d: 2, ex: `${vn}.`, lo: `Cơ quan: ${org}.`, top: 'human-body', skill: 'concept',
+        fb: Object.fromEntries(BODY.filter((b) => b[0] !== org).map((b) => [b[0], `${b[0]} làm việc khác - ${vn}.`])),
       });
     }
   }
@@ -801,6 +855,7 @@ function scienceGrade(g) {
     for (const [thing, st, vn] of MATTER) {
       mcq(`What state of matter is ${thing}?`, `a ${st}`, pickN(['a solid', 'a liquid', 'a gas'], 3, `a ${st}`), {
         d: 3, ex: `${vn}.`, lo: `Thể của chất: ${thing} = ${st}.`, top: 'matter', skill: 'classification',
+        fb: Object.fromEntries(['a solid', 'a liquid', 'a gas'].filter((x) => x !== `a ${st}`).map((x) => [x, `${thing} là ${st} (${vn}) - không phải ${x.replace('a ', '')} (${STATE_VI[x.replace('a ', '')] ?? x}).`])),
       });
     }
     const CHANGES = [
@@ -812,6 +867,7 @@ function scienceGrade(g) {
     for (const [sit, res, vn] of CHANGES) {
       mcq(`${sit} ___.`, res, pickN(CHANGES.map((c) => c[1]), 3, res), {
         d: 3, ex: `${vn}.`, lo: 'Chuyển thể của nước.', top: 'matter-changes', skill: 'concept',
+        fb: Object.fromEntries(CHANGES.filter((c) => c[1] !== res).map((c) => [c[1], `"${c[1]}" là kết quả của tình huống khác - ${vn}.`])),
       });
     }
   }
@@ -821,6 +877,7 @@ function scienceGrade(g) {
     for (const [f, act, vn] of FORCES) {
       mcq(`To ${act}, we use a ___.`, f === 'a magnet' ? 'magnet' : f, pickN(['push', 'pull', 'gravity', 'friction', 'magnet'], 3, f === 'a magnet' ? 'magnet' : f), {
         d: 3, ex: `${vn}.`, lo: `Lực: ${f}.`, top: 'forces', skill: 'concept',
+        fb: Object.fromEntries(['push', 'pull', 'gravity', 'friction', 'magnet'].filter((x) => x !== (f === 'a magnet' ? 'magnet' : f)).map((x) => [x, `${x} (${FORCE_VI[x]}) không dùng để ${act} - ${vn}.`])),
       });
     }
   }
@@ -830,6 +887,7 @@ function scienceGrade(g) {
     for (const [tool, job, vn] of TOOLS) {
       mcq(`Which tool ${job}?`, `a ${tool}`, pickN(TOOLS.map((t) => `a ${t[0]}`), 3, `a ${tool}`), {
         d: 2, ex: `${vn}.`, lo: `Dụng cụ đo: ${tool}.`, top: 'tools', skill: 'concept',
+        fb: Object.fromEntries(TOOLS.filter((t) => t[0] !== tool).map((t) => [`a ${t[0]}`, `a ${t[0]} (${t[2]}) dùng để ${t[1]} - không phải để ${job}.`])),
       });
     }
   }
@@ -837,16 +895,22 @@ function scienceGrade(g) {
     for (const [src, emits, vn] of LIGHTSRC) {
       mcq(`Is ${src} a light source (makes its own light)?`, emits ? 'Yes' : 'No - it only reflects light', [emits ? 'No - it only reflects light' : 'Yes', 'It makes light at night only'], {
         d: 3, ex: `${vn}.`, lo: `Nguồn sáng: ${src}.`, top: 'light', skill: 'concept',
+        fb: {
+          [emits ? 'No - it only reflects light' : 'Yes']: `${vn}.`,
+          'It makes light at night only': 'Nguồn sáng tự phát sáng mọi lúc - không chỉ ban đêm.',
+        },
       });
     }
     for (const [phen, why, vn] of EARTH) {
       mcq(`${phen[0].toUpperCase() + phen.slice(1)} ___.`, why, pickN(EARTH.map((e) => e[1]), 3, why), {
         d: 4, ex: `${vn}.`, lo: `Trái Đất: ${phen}.`, top: 'earth-space', skill: 'concept',
+        fb: Object.fromEntries(EARTH.filter((e) => e[1] !== why).map((e) => [e[1], `"${e[1]}" thuộc hiện tượng khác - ${vn}.`])),
       });
     }
     for (const [step, name, vn] of WATERCYCLE) {
       mcq(`${step}. This part of the water cycle is called ___.`, name.split(' - ')[0], pickN(['evaporation', 'condensation', 'precipitation', 'collection'], 3, name.split(' - ')[0]), {
         d: 4, ex: `${vn} - ${name}.`, lo: `Vòng tuần hoàn nước: ${name.split(' - ')[0]}.`, top: 'water-cycle', skill: 'concept',
+        fb: Object.fromEntries(['evaporation', 'condensation', 'precipitation', 'collection'].filter((x) => x !== name.split(' - ')[0]).map((x) => [x, `"${x}" là giai đoạn khác - ${vn}.`])),
       });
     }
   }
@@ -854,17 +918,28 @@ function scienceGrade(g) {
     for (const [e, kind, vn] of ENERGY) {
       mcq(`Is ${e} a renewable or non-renewable energy source?`, kind, [kind === 'renewable' ? 'non-renewable' : 'renewable', 'it is not energy'], {
         d: 4, ex: `${vn}.`, lo: `Năng lượng: ${e} = ${kind}.`, top: 'energy', skill: 'classification',
+        fb: {
+          [kind === 'renewable' ? 'non-renewable' : 'renewable']: `${e} là nguồn ${kind} - ${vn}.`,
+          'it is not energy': `${e} LÀ nguồn năng lượng ${kind === 'renewable' ? 'tái tạo' : 'không tái tạo'}.`,
+        },
       });
     }
     for (const [seed, how, vn] of SEEDDISP) {
       mcq(`How does ${seed} spread its seeds?`, how, pickN(SEEDDISP.map((s) => s[1]), 3, how), {
         d: 4, ex: `${vn}.`, lo: `Phát tán hạt: ${seed}.`, top: 'plants-reproduction', skill: 'concept',
+        fb: Object.fromEntries(SEEDDISP.filter((s) => s[1] !== how).map((s) => [s[1], `"${s[1]}" là cách của ${s[0]} - ${vn}.`])),
       });
     }
   }
   for (const [h, why, vn] of HYGIENE) {
     mcq(`Why is ${h} important?`, `It ${why.replace(/^(removes|prevents|stops|protects|avoids)/, '$1')}`, pickN(['It looks nice only', 'It is a rule with no reason', 'It makes you run faster', 'It helps you sleep'], 3), {
       d: 2, ex: `${vn}.`, lo: `Vệ sinh/an toàn: ${h}.`, top: 'hygiene-safety', skill: 'concept',
+      fb: {
+        'It looks nice only': `Không chỉ để đẹp - ${vn}.`,
+        'It is a rule with no reason': `Không phải luật vô lý - ${vn}.`,
+        'It makes you run faster': `Không giúp chạy nhanh hơn - ${vn}.`,
+        'It helps you sleep': `Không phải để ngủ - ${vn}.`,
+      },
     });
   }
 
@@ -873,11 +948,17 @@ function scienceGrade(g) {
     for (const [org, role, vn] of ECOSYSTEM) {
       mcq(`In a food chain, ${org} is a ___.`, role.split(' ')[0], pickN(['producer', 'herbivore', 'carnivore', 'omnivore', 'decomposer'], 3, role.split(' ')[0]), {
         d: 4, ex: `${vn}.`, lo: `Chuỗi thức ăn: ${org} = ${role}.`, top: 'ecosystems', skill: 'classification',
+        fb: Object.fromEntries(['producer', 'herbivore', 'carnivore', 'omnivore', 'decomposer'].filter((x) => x !== role.split(' ')[0]).map((x) => [x, `${org} là ${role} - ${vn}.`])),
       });
     }
     for (const [m, role, vn] of ELECTRIC) {
       mcq(`In a circuit, ${m} is a ___.`, role, [role === 'conductor' ? 'insulator' : 'conductor', 'battery', 'switch'], {
         d: 4, ex: `${vn}.`, lo: `Điện: ${m} = ${role}.`, top: 'electricity', skill: 'classification',
+        fb: {
+          [role === 'conductor' ? 'insulator' : 'conductor']: `${m} là ${role} - ${vn}.`,
+          'battery': 'Battery là nguồn điện của mạch - không phải conductor/insulator.',
+          'switch': 'Switch đóng/ngắt mạch - không phải conductor/insulator.',
+        },
       });
     }
   }
@@ -887,11 +968,31 @@ function scienceGrade(g) {
     mcq(`To help the environment, we should ___ - this means ${why}.`, act.split(' ')[0] === 'not' ? 'not litter' : act,
       pickN(['litter everywhere', 'waste water', 'cut all trees', 'throw rubbish in the river'], 3), {
       d: 2, ex: `${vn} - ${why}.`, lo: `Bảo vệ môi trường: ${act}.`, top: 'environment', skill: 'concept',
+      fb: {
+        'litter everywhere': 'Xả rác làm bẩn môi trường - không giúp bảo vệ nó.',
+        'waste water': 'Lãng phí nước làm hại môi trường.',
+        'cut all trees': 'Chặt cây phá rừng và làm không khí bẩn hơn.',
+        'throw rubbish in the river': 'Bỏ rác xuống sông làm ô nhiễm nguồn nước.',
+      },
     });
   }
   for (const [h, why, vn] of HEALTH) {
-    mcq(`${h[0].toUpperCase() + h.slice(1)} is good for us because ${why}. True or False - the correct action is:`, `keep doing it`, ['avoid it always', 'it harms the body', 'stop it forever'], {
-      d: 2, ex: `${vn} - ${why} nên nên duy trì/làm.`, lo: `Sức khỏe: ${h}.`, top: 'health', skill: 'concept',
+    const good = h !== 'too much candy';
+    mcq(good
+      ? `${h[0].toUpperCase() + h.slice(1)} is good for us because ${why}. True or False - the correct action is:`
+      : `${h[0].toUpperCase() + h.slice(1)} is bad for us because it ${why}. True or False - the correct action is:`,
+      good ? 'keep doing it' : 'avoid it always',
+      good ? ['avoid it always', 'it harms the body', 'stop it forever'] : ['keep doing it', 'it is always safe', 'eat even more'], {
+      d: 2, ex: `${vn} - ${why} nên ${good ? 'duy trì/làm' : 'tránh'}.`, lo: `Sức khỏe: ${h}.`, top: 'health', skill: 'concept',
+      fb: good ? {
+        'avoid it always': `${vn} - thói quen tốt nên duy trì, không tránh.`,
+        'it harms the body': `${vn} - không gây hại cho cơ thể.`,
+        'stop it forever': `Không nên dừng - ${vn} nên tiếp tục.`,
+      } : {
+        'keep doing it': `${vn} - không nên tiếp tục.`,
+        'it is always safe': `${vn} - không phải lúc nào cũng an toàn.`,
+        'eat even more': `${vn} - ăn nhiều hơn chỉ hại thêm.`,
+      },
     });
   }
 
@@ -901,9 +1002,11 @@ function scienceGrade(g) {
       const key = grp.split(' ')[0];
       mcq(`${food[0].toUpperCase() + food.slice(1)} belongs to which food group?`, key, pickN(['grains/carbs', 'protein', 'vitamins', 'fats', 'sugar'], 3, key), {
         d: 3, ex: `${vn}.`, lo: `Nhóm thực phẩm: ${food} = ${key}.`, top: 'nutrition', skill: 'classification',
+        fb: Object.fromEntries(['grains/carbs', 'protein', 'vitamins', 'fats', 'sugar'].filter((x) => x !== key).map((x) => [x, `${food} thuộc nhóm ${key} - ${vn}.`])),
       });
       mcq(`Why is ${food} good (or limited) for us?`, grp.split('- ')[1] ?? grp, pickN(FOODGROUPS.map((f) => f[1].split('- ')[1] ?? f[1]), 3), {
         d: 3, ex: `${vn}.`, lo: `Giá trị dinh dưỡng: ${food}.`, top: 'nutrition', skill: 'concept',
+        fb: Object.fromEntries(FOODGROUPS.map((f) => f[1].split('- ')[1] ?? f[1]).filter((x) => x !== (grp.split('- ')[1] ?? grp)).map((x) => [x, `"${x}" là giá trị của thực phẩm khác - ${vn}.`])),
       });
     }
   }
@@ -948,21 +1051,35 @@ function scienceGrade(g) {
     const noFeat = ANIMALS.filter((a) => a[2] !== feat && a[0] !== an).map((a) => a[0]);
     const noBabies = ANIMALS.filter((a) => a[3] !== babies).map((a) => a[3]);
     const featSharedAcrossGroups = ANIMALS.some((a) => a[2] === feat && a[1] !== grp);
+    // rng-picks hoisted in the same order as before so live ids stay stable
+    const wFeat = pickN(noFeat, 3);
+    const wNotGrp = pickN(ANIMALS.filter((a) => a[1] !== grp).map((a) => a[0]), 3, an);
+    const wGrp = featSharedAcrossGroups ? [] : pickN(groups.map((x) => `a ${x}`), 3, `a ${grp}`);
+    const wBabies = pickN(noBabies, 3);
     const frames = [
-      [`${st} sees an animal with ${feat} at ${pl}. Which animal could it be?`, an, pickN(noFeat, 3),
-        `Con vật có ${feat} - ${an} (${vn}) có ${feat}.`],
-      [`Which animal is a ${grp}?`, an, pickN(ANIMALS.filter((a) => a[1] !== grp).map((a) => a[0]), 3, an),
-        `${an} (${vn}) là ${grp}.`],
+      [`${st} sees an animal with ${feat} at ${pl}. Which animal could it be?`, an, wFeat,
+        `Con vật có ${feat} - ${an} (${vn}) có ${feat}.`,
+        Object.fromEntries(noFeat.map((m) => [m, `${m} không có ${feat} - ${an} (${vn}) mới có.`]))],
+      [`Which animal is a ${grp}?`, an, wNotGrp,
+        `${an} (${vn}) là ${grp}.`,
+        Object.fromEntries(ANIMALS.filter((a) => a[1] !== grp && a[0] !== an).map((a) => a[0]).map((m) => [m, `${m} là ${animalOf[m]?.[1] ?? 'nhóm khác'} - không phải ${grp}.`]))],
       ...(featSharedAcrossGroups ? [] : [[
-        `${st} finds a ${an} at ${pl}. It has ${feat}. What group is it?`, `a ${grp}`, pickN(groups.map((x) => `a ${x}`), 3, `a ${grp}`),
-        `${an} (${vn}) có ${feat} nên là ${grp}.`]]),
+        `${st} finds a ${an} at ${pl}. It has ${feat}. What group is it?`, `a ${grp}`, wGrp,
+        `${an} (${vn}) có ${feat} nên là ${grp}.`,
+        Object.fromEntries(groups.filter((x) => x !== grp).map((x) => `a ${x}`).map((x) => [x, `${an} (${vn}) là ${grp} (${GRP_VI[grp] ?? grp}) - không phải ${x.replace('a ', '')}.`]))]]),
       [`Why does a ${an} live well in its home?`, `because its body fits that place`, ['because it has wheels', 'because it reads books', 'because it wears clothes'],
-        `Cơ thể ${an} thích nghi với môi trường sống của nó.`],
-      [`At ${pl}, ${st} finds a baby ${an}. It came from ___.`, babies, pickN(noBabies, 3),
-        `${an} sinh ra ${babies}.`],
+        `Cơ thể ${an} thích nghi với môi trường sống của nó.`,
+        {
+          'because it has wheels': 'Động vật không có bánh xe - nó thích nghi bằng cơ thể.',
+          'because it reads books': 'Động vật không đọc sách - cơ thể nó thích nghi với nơi sống.',
+          'because it wears clothes': 'Động vật không mặc quần áo - cơ thể nó thích nghi với nơi sống.',
+        }],
+      [`At ${pl}, ${st} finds a baby ${an}. It came from ___.`, babies, wBabies,
+        `${an} sinh ra ${babies}.`,
+        Object.fromEntries(noBabies.map((b) => [b, `"${b}" là của loài khác - ${an} sinh ra ${babies}.`]))],
     ];
-    for (const [q, c, w, ex] of frames) {
-      mcq(q, c, Array.isArray(w) ? w : [w], { d: 2, ex, lo: `Ứng dụng kiến thức: ${an}.`, top: 'application', skill: 'application' });
+    for (const [q, c, w, ex, fb] of frames) {
+      mcq(q, c, Array.isArray(w) ? w : [w], { d: 2, ex, lo: `Ứng dụng kiến thức: ${an}.`, top: 'application', skill: 'application', fb });
     }
   }
 
@@ -975,11 +1092,20 @@ function scienceGrade(g) {
     ['Which animal gives milk to its babies?', ['cow', 'goat', 'dog', 'cat', 'whale', 'bat'], ['chicken', 'fish', 'frog', 'snake', 'duck']],
     ['Which lives both on land and in water?', ['frog', 'toad', 'turtle', 'crocodile', 'duck'], ['eagle', 'rabbit', 'horse', 'worm', 'ant']],
   ];
+  const CAN_DO_VI = {
+    'Which animal can fly?': 'không biết bay',
+    'Which animal can swim?': 'không bơi được',
+    'Which animal has four legs?': 'không có bốn chân',
+    'Which animal lays eggs?': 'không đẻ trứng',
+    'Which animal gives milk to its babies?': 'không cho con bú sữa',
+    'Which lives both on land and in water?': 'không sống được cả trên cạn lẫn dưới nước',
+  };
   for (let i = 0; i < 600; i++) {
     const [q, yes, no] = pick(CAN_DO);
     const correct = pick(yes);
     mcq(q, `a ${correct}`, pickN(no.map((x) => `a ${x}`), 3), {
       d: 1, ex: `${correct} đúng với yêu cầu câu hỏi, các đáp án kia không.`, lo: 'Phân loại theo khả năng/đặc điểm.', top: 'classification', skill: 'classification',
+      fb: Object.fromEntries(no.map((x) => [`a ${x}`, `a ${x} ${CAN_DO_VI[q] ?? 'không đúng yêu cầu'} - ${correct} mới đúng.`])),
     });
   }
 
@@ -1013,6 +1139,25 @@ function scienceGrade(g) {
     const [s, b] = pick(FACTS);
     mcq(`True or false: "${s}"`, b ? 'True' : 'False', [b ? 'False' : 'True', 'Maybe', 'No answer'], {
       d: 2, ex: `"${s}" là ${b ? 'đúng' : 'sai'}.`, lo: 'Kiểm tra kiến thức khoa học.', top: 'facts', skill: 'concept',
+      fb: {
+        [b ? 'False' : 'True']: `Theo khoa học, "${s}" là ${b ? 'ĐÚNG' : 'SAI'}.`,
+        'Maybe': 'Câu này có đáp án rõ ràng - không phải "maybe".',
+        'No answer': 'Luôn có đáp án - theo khoa học câu này đúng hay sai.',
+      },
+    });
+  }
+
+  // 17. CR-144 r1: harmful-habit frames appended LAST so zero rng draws
+  // shift - every live template id stays stable, these are new ids only.
+  for (const [h, why, vn] of HEALTH_BAD) {
+    mcq(`${h[0].toUpperCase() + h.slice(1)} is bad for us because it ${why}. True or False - the correct action is:`,
+      'avoid it always', ['keep doing it', 'it is always safe', 'do even more'], {
+      d: 2, ex: `${vn} - nên tránh.`, lo: `Sức khỏe: ${h}.`, top: 'health', skill: 'concept',
+      fb: {
+        'keep doing it': `${vn} - không nên tiếp tục.`,
+        'it is always safe': `${vn} - không phải lúc nào cũng an toàn.`,
+        'do even more': `${vn} - làm nhiều hơn chỉ hại thêm.`,
+      },
     });
   }
 }
@@ -1028,7 +1173,15 @@ function toRow(it) {
   const idKey = (it.q ?? it.statement) + '|' + JSON.stringify(it.c ?? it.bool ?? '');
   const id = `g${GRADE}-${SUBJECT}-tpl-${createHash('sha1').update(`${GRADE}|${SUBJECT}|${idKey}`).digest('hex').slice(0, 12)}`;
   const choices = it.tf ? ['True', 'False'] : it.c;
-  const answer = it.tf ? { boolean: it.bool } : { text: it.c[it.a], index: it.a };
+    const answer = it.tf ? { boolean: it.bool } : { text: it.c[it.a], index: it.a };
+  // CR-144: misconception "tại sao sai" per wrong option - keyed by option
+  // TEXT (the oracle looks the pick up verbatim). Only the emitted wrongs
+  // keep a key; fb entries for unused wrongs are dropped here.
+  if (!it.tf && it.fb) {
+    const fb = {};
+    for (const ch of it.c) if (ch !== it.c[it.a] && it.fb[ch]) fb[ch] = it.fb[ch];
+    if (Object.keys(fb).length) answer.distractor_feedback = fb;
+  }
   const contentHash = createHash('sha1').update(JSON.stringify([promptText, choices, answer, it.passage ?? null])).digest('hex').slice(0, 16);
   return {
     id, grade: GRADE, subject: SUBJECT,
@@ -1055,29 +1208,157 @@ const uniqId = new Set(rows.map((r) => r.id));
 const uniqHash = new Set(rows.map((r) => r.content_hash));
 console.log(`unique ids: ${uniqId.size}, unique content_hash: ${uniqHash.size} / ${rows.length}`);
 
-if (!DRY && rows.length) {
+async function insertRows(batch) {
+  // "*/N" = rows actually inserted; missing count is a push failure and
+  // 0 is a valid count - never substitute the attempted batch size (r5).
   let failed = 0;
   let inserted = 0;
-  for (let c = 0; c < rows.length; c += 300) {
-    const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' }, body: JSON.stringify(rows.slice(c, c + 300)) });
+  for (let c = 0; c < batch.length; c += 300) {
+    const res = await fetch(`${SUPA}/rest/v1/qb_questions`, { method: 'POST', headers: { ...H, Prefer: 'resolution=ignore-duplicates,return=minimal,count=exact' }, body: JSON.stringify(batch.slice(c, c + 300)) });
     if (!res.ok) {
-      failed += rows.slice(c, c + 300).length;
+      failed += batch.slice(c, c + 300).length;
       console.error('push fail', res.status, (await res.text()).slice(0, 200));
       continue;
     }
-    // "*/N" = rows actually inserted; missing count is a push failure and
-    // 0 is a valid count - never substitute the attempted batch size (r5).
     const range = res.headers.get('content-range') ?? '';
     const n = Number(range.split('/')[1]);
     if (!Number.isFinite(n)) {
-      failed += rows.slice(c, c + 300).length;
+      failed += batch.slice(c, c + 300).length;
       console.error(`push fail: missing content-range count (got "${range}")`);
       continue;
     }
     inserted += n;
   }
-  console.log(`inserted ${inserted} / ${rows.length} attempted${failed ? `, ${failed} FAILED` : ''}`);
+  return { inserted, failed };
+}
+
+if (!DRY && rows.length) {
+  let failed = 0;
+  if (PATCH) {
+    // CR-144 --patch: live tpl rows were seeded by older generator
+    // versions, so ids/choice-order drift - match by CONTENT instead:
+    // (normalized prompt + normalized correct-text) -> full fb pool.
+    // fb maps cover every candidate wrong, so any live wrong-pick is
+    // covered. Only full-coverage rows are patched; {answer, content_hash}
+    // are the ONLY columns touched - editorial fields stay untouched.
+    const fbByKey = new Map();
+    for (const it of items) {
+      if (it.tf || !it.fb) continue;
+      const key = `${norm(it.q)}|${norm(it.c[it.a])}`;
+      const cur = fbByKey.get(key) ?? {};
+      for (const [k, v] of Object.entries(it.fb)) {
+        if (cur[k] && cur[k] !== v) console.error(`fb conflict "${key}" opt "${k}"`);
+        cur[k] = v;
+      }
+      fbByKey.set(key, cur);
+    }
+    console.log(`fb pool: ${fbByKey.size} (prompt|correct) keys`);
+
+    // Live tpl rows were seeded by OTHER generator versions, so many
+    // prompts never appear in this script's pool. Parse the row's own
+    // prompt shape -> per-option fb; fall back to the row's own
+    // explanation_vi so every wrong pick still gets an honest hint.
+    const liveFb = (row) => {
+      const p = row.prompt_text, c = row.answer?.text;
+      const wrongs = (row.choices ?? []).filter((x) => x !== c);
+      const ex = (row.explanation_vi ?? '').replace(/\.$/, '');
+      const mk = (fn) => Object.fromEntries(wrongs.map(fn));
+      let m;
+      if ((m = p.match(/^A baby (.+?) is called/))) {
+        return mk((w) => [w, `"${w}" là tên con của loài khác - con của ${m[1]} là ${c}.`]);
+      }
+      if ((m = p.match(/sees an animal with (.+?) (?:at|in) .+?\.\s*Which animal could it be/))) {
+        return mk((w) => [w, `${w} không có ${m[1]} - ${c} mới có.`]);
+      }
+      if ((m = p.match(/finds an? (.+?) (?:at|in) .+?\.\s*It has (.+?)\.\s*What group/))) {
+        return mk((w) => [w, `${m[1]} có ${m[2]} nên là ${c} - không phải ${w.replace(/^an? /, '')}.`]);
+      }
+      if ((m = p.match(/finds a baby (.+?)\.\s*It came from/))) {
+        return mk((w) => [w, `"${w}" không phải cách sinh của ${m[1]} - ${m[1]} sinh ra ${c}.`]);
+      }
+      if ((m = p.match(/one is NOT an? (.+?)\?/))) {
+        return mk((w) => [w, `${w} LÀ ${m[1]} - câu hỏi tìm con KHÔNG thuộc nhóm này.`]);
+      }
+      if ((m = p.match(/^Which animal is an? (.+?)\?/))) {
+        return mk((w) => [w, `${w} không phải ${m[1]} - ${c} mới là.`]);
+      }
+      if ((m = p.match(/^Which animal (?:can|has|lays|gives|lives) (.+?)\?/))) {
+        return mk((w) => [w, `${w} không đúng yêu cầu - ${c} mới đúng.`]);
+      }
+      if ((m = p.match(/^Where does an? (.+?) live/))) {
+        return mk((w) => [w, `${m[1]} không sống ở ${w} - nó sống ở ${c}.`]);
+      }
+      if ((m = p.match(/^Which animal lives in (.+?)\?/))) {
+        return mk((w) => [w, `${w} không sống ở ${m[1]} - ${c} mới sống đó.`]);
+      }
+      if ((m = p.match(/^How does an? (.+?) move/))) {
+        return mk((w) => [w, `"${w}" là cách đi của loài khác - ${m[1]} ${c.toLowerCase().startsWith('it ') ? c.slice(3) : c}.`]);
+      }
+      if ((m = p.match(/^What does an? (.+?) mainly eat/))) {
+        return mk((w) => [w, `"${w}" là thức ăn của loài khác - ${m[1]} ăn ${c}.`]);
+      }
+      if ((m = p.match(/^A (.+?) eats .+?\.\s*It is a/))) {
+        return mk((w) => [w, `${m[1]} là ${c} - không phải ${w}.`]);
+      }
+      if ((m = p.match(/^Why does an? (.+?) live well/))) {
+        return mk((w) => [w, `${w} không đúng - cơ thể ${m[1]} thích nghi với nơi sống của nó.`]);
+      }
+      if (ex) return mk((w) => [w, `"${w}" chưa đúng - ${ex}.`]);
+      return null;
+    };
+    const live = [];
+    for (let off = 0; ; off += 1000) {
+      const res = await fetch(`${SUPA}/rest/v1/qb_questions?subject=eq.${SUBJECT}&grade=eq.${GRADE}&question_type=eq.mcq&select=id,prompt_text,choices,answer,passage,explanation_vi&limit=1000&offset=${off}`, { headers: H });
+      if (!res.ok) { console.error('fetch live fail', res.status, (await res.text()).slice(0, 200)); process.exit(1); }
+      const batch = await res.json();
+      live.push(...batch);
+      if (batch.length < 1000) break;
+    }
+    console.log(`live ${SUBJECT} g${GRADE} mcq rows: ${live.length}`);
+    let patched = 0, noMatch = 0, partial = 0, already = 0;
+    const todo = [];
+    for (const row of live) {
+      if (row.answer?.distractor_feedback) { already++; continue; }
+      const wrongs = (row.choices ?? []).filter((x) => x !== row.answer?.text);
+      const poolFb = fbByKey.get(`${norm(row.prompt_text)}|${norm(row.answer?.text ?? '')}`);
+      let newFb;
+      if (poolFb) {
+        newFb = {};
+        for (const w of wrongs) if (poolFb[w]) newFb[w] = poolFb[w];
+        if (Object.keys(newFb).length !== wrongs.length) newFb = null;
+      }
+      if (!newFb) newFb = liveFb(row);
+      if (!newFb || Object.keys(newFb).length !== wrongs.length) { poolFb ? partial++ : noMatch++; continue; }
+      const answer = { ...row.answer, distractor_feedback: newFb };
+      const content_hash = createHash('sha1').update(JSON.stringify([row.prompt_text, row.choices, answer, row.passage ?? null])).digest('hex').slice(0, 16);
+      todo.push({ id: row.id, answer, content_hash });
+    }
+    console.log(`match: ${todo.length} to patch | no-key ${noMatch} | partial ${partial} | already ${already}`);
+    for (let i = 0; i < todo.length; i += 50) {
+      const results = await Promise.all(todo.slice(i, i + 50).map(async (r) => {
+        const res = await fetch(`${SUPA}/rest/v1/qb_questions?id=eq.${r.id}`, {
+          method: 'PATCH',
+          headers: { ...H, Prefer: 'count=exact,return=minimal' },
+          body: JSON.stringify({ answer: r.answer, content_hash: r.content_hash }),
+        });
+        if (!res.ok) return { r, err: `${res.status} ${(await res.text()).slice(0, 120)}` };
+        const n = Number((res.headers.get('content-range') ?? '').split('/')[1]);
+        return { r, n };
+      }));
+      for (const x of results) {
+        if (x.err) { failed++; console.error('patch fail', x.r.id, x.err); }
+        else patched += x.n ?? 0;
+      }
+    }
+    console.log(`patched ${patched} / ${todo.length} matched${failed ? `, ${failed} FAILED` : ''}`);
+  } else {
+    const ins = await insertRows(rows);
+    console.log(`inserted ${ins.inserted} / ${rows.length} attempted${ins.failed ? `, ${ins.failed} FAILED` : ''}`);
+    failed = ins.failed;
+  }
   if (failed > 0) process.exit(1);
 }
 mkdirSync(join(HERE, 'gen-bulk-out'), { recursive: true });
 writeFileSync(join(HERE, 'gen-bulk-out', `tpl-${SUBJECT}-g${GRADE}-preview.json`), JSON.stringify(rows.slice(0, 8), null, 1));
+// CR-144 --dry: full id list for live-id overlap checks before patching.
+if (DRY) writeFileSync(join(HERE, 'gen-bulk-out', `tpl-${SUBJECT}-g${GRADE}-ids.json`), JSON.stringify(rows.map((r) => r.id)));

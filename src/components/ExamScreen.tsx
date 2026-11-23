@@ -799,7 +799,13 @@ export default function ExamScreen({ programId, gradeId, gradeLabel, studentName
       telemetryRef.current?.record(question, answer, Date.now() - questionShownAtRef.current);
       telemetryRef.current?.logAdaptive(question, isCorrect);
       setExam(answerCurrent(exam, answer));
-      setVerdict({ isCorrect });
+      // CR-144: local MCQs (khoa học) carry per-option "tại sao sai" -
+      // resolve the picked wrong option's hint into the verdict line.
+      const optionFeedback =
+        !isCorrect && answer.type === 'option' && 'optionFeedback' in question
+          ? question.optionFeedback?.[question.options[answer.index] ?? '']
+          : undefined;
+      setVerdict({ isCorrect, feedback: optionFeedback });
       setCombo((c) => (isCorrect ? c + 1 : 0));
       playSfx(isCorrect ? 'correct' : 'wrong');
       // CR-97: live race - broadcast this answer's progress so the

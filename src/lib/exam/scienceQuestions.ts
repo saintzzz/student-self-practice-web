@@ -84,7 +84,7 @@ export function generateScienceQuestions(gradeId: string): ExamQuestion[] {
 
   for (const fact of facts) {
     // MCQ variant
-    const texts = [fact.answer, ...fact.distractors] as [string, string, string, string];
+    const texts = [fact.answer, ...fact.distractors.map((d) => d.text)] as [string, string, string, string];
     const order = seededShuffleIndices(4, `${fact.question}-o`);
     const options = order.map((i) => texts[i]!) as [string, string, string, string];
     const correctIndex = order.indexOf(0) as 0 | 1 | 2 | 3;
@@ -96,6 +96,8 @@ export function generateScienceQuestions(gradeId: string): ExamQuestion[] {
       options,
       correctIndex,
       explanation: `${fact.answer} - ${fact.explanationVi}`,
+      // CR-144: misconception "tại sao sai" per wrong option.
+      optionFeedback: Object.fromEntries(fact.distractors.map((d) => [d.text, d.whyVi])),
     } satisfies GrammarMcqQuestion);
 
     // True/False variants
@@ -147,6 +149,8 @@ export function generateScienceQuestions(gradeId: string): ExamQuestion[] {
         options,
         correctIndex: order.indexOf(0) as 0 | 1 | 2 | 3,
         explanation: `${member} là ${cls.labelVi}.`,
+        // CR-144: every wrong pick is a nonMember - say so.
+        optionFeedback: Object.fromEntries(wrongs.map((w) => [w, `${w} không phải ${cls.labelVi}.`])),
       } satisfies GrammarMcqQuestion);
     }
     for (const nonMember of cls.nonMembers) {
@@ -163,6 +167,8 @@ export function generateScienceQuestions(gradeId: string): ExamQuestion[] {
         options,
         correctIndex: order.indexOf(0) as 0 | 1 | 2 | 3,
         explanation: `${nonMember} không phải ${cls.labelVi}.`,
+        // CR-144: every wrong pick IS a member - say so.
+        optionFeedback: Object.fromEntries(members3.map((m) => [m, `${m} là ${cls.labelVi}.`])),
       } satisfies GrammarMcqQuestion);
     }
     // True/False per member + nonMember: "A whale is a mammal."

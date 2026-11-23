@@ -143,6 +143,14 @@ export interface GrammarMcqQuestion extends BankScored {
    * refers to ("Read the passage. ..."), rendered above the prompt.
    */
   passage?: string;
+  /**
+   * CR-144 - per-option "tại sao sai" hint for locally generated MCQs
+   * (khoa học misconception distractors), keyed by option TEXT so it
+   * survives the seeded option shuffle. Resolved at answer time into
+   * `verdict.feedback`; bank rows get the equivalent from the oracle's
+   * `distractorFeedback` instead.
+   */
+  optionFeedback?: Record<string, string>;
   bankSkill?: string;
 }
 

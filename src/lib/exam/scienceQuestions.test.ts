@@ -93,4 +93,17 @@ describe('generateScienceQuestions - content audit invariants', () => {
       }
     }
   });
+
+  it('CR-144: every wrong MCQ option resolves a non-empty "tại sao sai" hint', () => {
+    for (const q of allQuestions) {
+      if (q.kind !== 'grammar-mcq') continue;
+      expect(q.optionFeedback).toBeDefined();
+      q.options.forEach((opt, i) => {
+        if (i === q.correctIndex) return;
+        const hint = q.optionFeedback?.[opt];
+        expect(hint, `missing optionFeedback for "${opt}" in "${q.prompt}"`).toBeTruthy();
+        expect(hint!.trim().length).toBeGreaterThan(0);
+      });
+    }
+  });
 });
