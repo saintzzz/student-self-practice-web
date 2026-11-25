@@ -1,4 +1,4 @@
-# CR-146 - Duong den long (Lantern Trail core loop)
+# CR-146 - CLOSED r239 CLEAN - Duong den long (Lantern Trail core loop)
 
 Source: `docs/reviews/GAMEFI-DESIGN-po.md` §3 + roadmap P1. Fixes the
 synthesis finding that long-term progression scored 1.5/5 - home items
