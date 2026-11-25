@@ -103,3 +103,17 @@ Nguồn: `docs/reviews/REVIEW-SYNTHESIS.md` + `GAMEFI-DESIGN-po.md` roadmap
   card art (missing-letter, sentence-scramble, odd-one-out, say-it-loud,
   story-time, counting-shop, rhyme-pond, flag-voyage), `concepts/grape`
   cardinal-safe art.
+
+## Kết quả
+
+- **Implement**: commit `8da197e` (37 files, +762/-97).
+- **External review**: r243 (3 findings - attempted denominators +
+  rest-banner edges) -> fix `d1b3680`; r244 (1 finding - GoldQuest
+  hearts-out) -> fix `50115a0`; **r245 CLEAN**.
+- `GameEnd.attempted` giờ REQUIRED + semantics "câu đã present" -
+  hearts-out games báo `Math.min(round + 1, rounds)`, cả hai fallback
+  `?? correctCount` (GameScreen, batchSession) bị xóa.
+- Tests: +13 pin mới (shelf sections/weak badge/island unlock/pet
+  stage 4-5/rest stretch), 13 assertion `onEnd` cập nhật field `wrong`.
+- Nợ còn lại: P1-8 class co-op (rpc), P2-5 seasonal (artgen), artgen
+  queue (pet 4/5, sticker island+trail, 8 game card art, grape).
