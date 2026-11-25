@@ -44,10 +44,10 @@ export interface GameEnd {
   /**
    * CR-86: question items the run actually presented (denominator for
    * honest scoring when the game is embedded as a Round/exam section).
-   * Undefined falls back to correctCount in the mapper - only games with
-   * an unambiguous item count set it.
+   * CR-148 r243: REQUIRED - early-ending games must report the presented
+   * count, not the configured round count, so skill accuracy is honest.
    */
-  attempted?: number;
+  attempted: number;
   /**
    * CR-148 (P1-4): real Question-union items the run answered WRONG -
    * game rounds are already ExamQuestion-compatible objects, so the

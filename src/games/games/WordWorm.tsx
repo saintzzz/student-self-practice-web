@@ -68,7 +68,10 @@ export default function WordWorm({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalEaten: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalEaten, maxPoints: totalLetters, correctCount: finalEaten , attempted: totalLetters});
+    /* CR-148 r243: on hearts-out only the words spawned so far were
+       presented - all letters of the current word spawn together. */
+    const presented = words.slice(0, wordIdx + 1).reduce((n, w) => n + w.length, 0);
+    onEnd({ points: finalEaten, maxPoints: totalLetters, correctCount: finalEaten, attempted: presented });
   };
 
   const hurt = (newHearts: number) => {

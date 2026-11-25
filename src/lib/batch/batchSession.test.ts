@@ -501,9 +501,9 @@ describe('CR-86 bonus game Round (game-as-exam)', () => {
     expect(outcome?.implemented).toBe(true);
   });
 
-  it('completeGameRound falls back to correctCount when a game omits attempted', () => {
+  it('completeGameRound floors the denominator at correctCount - a malformed low attempted cannot lose credit', () => {
     let batch = walkToGameRound();
-    batch = completeGameRound(batch, { points: 3, maxPoints: 6, correctCount: 3 });
+    batch = completeGameRound(batch, { points: 3, maxPoints: 6, correctCount: 3, attempted: 2 });
 
     expect(batch.completedRounds[4]?.totalCount).toBe(3);
   });
@@ -512,7 +512,7 @@ describe('CR-86 bonus game Round (game-as-exam)', () => {
     let batch = walkToGameRound();
     batch = completeGameRound(batch, { points: 5, maxPoints: 10, correctCount: 5, attempted: 10 });
     const rounds = batch.completedRounds.length;
-    const again = completeGameRound(batch, { points: 99, maxPoints: 99, correctCount: 99 });
+    const again = completeGameRound(batch, { points: 99, maxPoints: 99, correctCount: 99, attempted: 99 });
 
     expect(again).toBe(batch);
     expect(again.completedRounds).toHaveLength(rounds);

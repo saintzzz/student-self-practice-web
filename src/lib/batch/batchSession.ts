@@ -268,7 +268,7 @@ export function completeGameRound(state: BatchState, end: GameEnd): BatchState {
   if (!definition?.game) {
     return { ...state, phase: 'batch-summary' };
   }
-  const attempted = Math.max(end.attempted ?? end.correctCount, end.correctCount);
+  const attempted = Math.max(end.attempted, end.correctCount);
   const outcome: RoundOutcome = {
     roundNumber: definition.roundNumber,
     roundType: definition.roundType,

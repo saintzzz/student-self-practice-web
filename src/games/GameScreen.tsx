@@ -160,7 +160,7 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
        `attempted` is the honest denominator (correctCount alone would
        report a 3/3 wipeout as perfect). */
     if (def?.skill) {
-      recordSkillAnswers(grade.id, def.skill, result.correctCount, result.attempted ?? result.correctCount);
+      recordSkillAnswers(grade.id, def.skill, result.correctCount, result.attempted);
     }
     /* Game-wrong -> review queue bridge: rounds that are real Question
        objects re-enter via the spaced-repetition path (CR-28). */

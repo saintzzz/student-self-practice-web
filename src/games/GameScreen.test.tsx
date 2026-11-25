@@ -18,7 +18,7 @@ vi.mock('./registry', async () => {
       'button',
       {
         'data-testid': 'stub-finish',
-        onClick: () => props.onEnd({ points: 10, maxPoints: 10, correctCount: 5 }),
+        onClick: () => props.onEnd({ points: 10, maxPoints: 10, correctCount: 5, attempted: 10 }),
       },
       'finish',
     );

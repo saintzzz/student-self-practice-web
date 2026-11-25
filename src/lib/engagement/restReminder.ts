@@ -32,10 +32,13 @@ export function setRestReminderEnabled(on: boolean): void {
 
 /** Pure stretch-timer step for tests: `active` accrues only while the
  *  tab is visible; a hidden span longer than the break window is a real
- *  rest and resets the stretch. Returns the new active-stretch ms. */
+ *  rest and resets the stretch - including on the return tick, when a
+ *  suspended interval may have skipped the hidden ticks entirely
+ *  (r243). Returns the new active-stretch ms. */
 export function tickStretch(activeMs: number, tickMs: number, visible: boolean, hiddenForMs: number): number {
-  if (visible) return activeMs + tickMs;
-  return hiddenForMs >= BREAK_RESET_MINUTES * 60_000 ? 0 : activeMs;
+  const rested = hiddenForMs >= BREAK_RESET_MINUTES * 60_000;
+  if (visible) return (rested ? 0 : activeMs) + tickMs;
+  return rested ? 0 : activeMs;
 }
 
 /** React hook: true while the banner should show. `dismiss` ends the
@@ -53,6 +56,8 @@ export function useRestReminder(): { show: boolean; dismiss: () => void } {
     const timer = setInterval(() => {
       if (!restReminderEnabled()) {
         activeMs.current = 0;
+        /* r243: a toggle-off also retracts an already-visible banner. */
+        setShow(false);
         return;
       }
       const visible = document.visibilityState !== 'hidden';

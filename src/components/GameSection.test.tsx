@@ -31,7 +31,7 @@ vi.mock('../games/lazyComponents', () => {
       type="button"
       data-testid="stub-game-seed"
       data-seed={seed}
-      onClick={() => onEnd({ points: 1, maxPoints: 10, correctCount: 1 } satisfies GameEnd)}
+      onClick={() => onEnd({ points: 1, maxPoints: 10, correctCount: 1, attempted: 1 } satisfies GameEnd)}
     >
       end
     </button>

@@ -51,7 +51,9 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
+    /* CR-148 r243: shared finish also runs on hearts-out - report the
+       waves actually presented, not the configured count. */
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect, attempted: Math.min(round + 1, rounds.length), wrong: wrongRef.current });
   };
 
   const advance = (newSlimes: Slime[], newHearts: number, newCorrect: number, newPoints: number) => {

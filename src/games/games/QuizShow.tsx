@@ -40,7 +40,9 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
     if (endedRef.current) return;
     endedRef.current = true;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
+    /* CR-148 r243: hearts-out mid-ladder reports only the questions
+       actually presented - attempted must be the honest denominator. */
+    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect, attempted: Math.min(round + 1, rounds.length), wrong: wrongRef.current });
   };
 
   useEffect(() => () => {

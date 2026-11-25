@@ -145,7 +145,8 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
+    /* CR-148 r243: hearts-out mid-maze reports only presented rounds. */
+    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect, attempted: Math.min(round + 1, rounds.length), wrong: wrongRef.current });
   };
 
   const advanceRound = (newCorrect: number) => {

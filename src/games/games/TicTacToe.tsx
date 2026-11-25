@@ -58,7 +58,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
     endedRef.current = true;
     const bonus = w === 'X' ? 4 : w === null ? 2 : 0;
     timerRef.current = setTimeout(
-      () => onEnd({ points: correct + bonus, maxPoints: 9, correctCount: correct, wrong: wrongRef.current }),
+      () => onEnd({ points: correct + bonus, maxPoints: 9, correctCount: correct, attempted: qIdx + 1, wrong: wrongRef.current }),
       700,
     );
   };
