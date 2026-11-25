@@ -170,6 +170,37 @@ describe('mergeEngagement - no progress is ever lost', () => {
     expect(Math.floor((reconverged.trail?.['grade-1']?.events.length ?? 0) / 12)).toBe(1);
   });
 
+  it('CR-146 r236: pads + legacy epoch reconcile to claim, never double-count', () => {
+    /* The r236 repro: r233 blob (60 pads + 1 real event) merges with a
+       legacy epoch-5 blob (48 retired ids + same event). Truth: epoch 5,
+       lit 1 - the pads and the retired ids describe the SAME laps. */
+    const pads = Array.from({ length: 60 }, (_, i) => ({ id: `pad:${i}`, stars: 0 }));
+    const x = { ...base, trail: { 'grade-1': { events: [...pads, { id: 'batch:cur', stars: 3 }] } } };
+    const ids = Array.from({ length: 48 }, (_, i) => `batch:old${i}`);
+    const y = { ...base, trail: { 'grade-1': { epoch: 5, seenIds: ids, lights: [{ id: 'batch:cur', stars: 3 }] } } };
+    const m = mergeEngagement(x, y as never);
+    const t = m.trail?.['grade-1'];
+    expect(t?.events.some((e) => e.id.startsWith('pad:'))).toBe(false);
+    expect(t?.events.length).toBe(49);
+    /* epoch = base + floor(events/12) = 1 + 4 = 5, lit = 1. */
+    expect(t?.base).toBe(1);
+    const rev = mergeEngagement(y as never, x);
+    expect(rev.trail?.['grade-1']).toEqual(t);
+  });
+
+  it('CR-146 r236: merge with migrated epoch does not absorb new real laps', () => {
+    /* A device carrying 12 REAL events (own claim: epoch 1) merges with
+       a 5-lap legacy blob: claim stays 5 and the 12 events sit inside
+       it - conservative, no inflation either direction. */
+    const x = { ...base, trail: { 'grade-1': { epoch: 5, events: [] } } };
+    const evs = Array.from({ length: 12 }, (_, i) => ({ id: `batch:n${i}`, stars: 3 }));
+    const y = { ...base, trail: { 'grade-1': { events: evs } } };
+    const m = mergeEngagement(x as never, y);
+    const t = m.trail?.['grade-1'];
+    expect(t?.base).toBe(4);
+    expect(t?.events.length).toBe(12);
+  });
+
   it('M1: a legit streak reset survives - newer day keeps its own count', () => {
     const local = { ...base, streak: { lastDayISO: '2026-02-01', count: 1 } };
     const remote = { ...base, streak: { lastDayISO: '2026-01-01', count: 10 } };

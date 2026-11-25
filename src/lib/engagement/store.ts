@@ -149,6 +149,9 @@ export const TRAIL_CHEST_NODES = [4, 8, 12] as const;
 /** CR-146 r234: sanitize bound on stored lap counts - ~83 years of
  *  daily laps; a blob above this is malformed, not a real history. */
 export const TRAIL_DONE_CAP = 10000;
+/** CR-146 r236: sanitize bound on stored event ids - 1000 laps worth
+ *  of lights is far beyond real play. */
+export const TRAIL_EVENTS_CAP = 12000;
 const TRAIL_HALF_NODE = 6;
 const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
   'grade-1': { key: 'playground', nameVi: 'Sân chơi' },
@@ -159,9 +162,13 @@ const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
 };
 
 export interface TrailState {
-  /** CR-146 r234: completed laps as a COUNT - durable, max-merged, and
-   *  needs no materialized events for laps whose ids were never
-   *  recorded (pre-r230 builds). epoch = max(done, floor(len/12)). */
+  /** CR-146 r236: BASELINE lap count - completed laps whose event ids
+   *  were never recorded. `epoch = base + floor(events/12)`. Distinct
+   *  from legacy `done`/`epoch` fields, which were TOTAL claims that
+   *  already included the laps their recorded ids covered. */
+  base?: number;
+  /** Legacy r234 total-claim lap count - migrate reads it as claimed
+   *  epoch, never as baseline. */
   done?: number;
   /** CR-146 r232: every unique light event ever - {objectiveId, stars,
    *  completion ts}. UNCAPPED like grantedObjectives: the set itself is
@@ -554,36 +561,74 @@ export interface BatchAwardResult {
 /** CR-146: normalize any stored trail shape to the all-time event set.
  *  Retired/legacy ids are kept (stars unknown -> 0) because the set is
  *  the dedupe history; display only reads the current lap's slice. */
-export function trailEvents(t: TrailState | undefined): { id: string; stars: number; ts?: number }[] {
-  if (!t) return [];
-  if (Array.isArray(t.events)) return t.events;
-  const out: { id: string; stars: number; ts?: number }[] = [];
-  for (const id of t.seenIds ?? []) out.push({ id, stars: 0 });
-  if (Array.isArray(t.lights)) out.push(...t.lights);
-  else out.push(...(t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s })));
-  return out;
+export interface NormalizedTrail {
+  /** Baseline laps whose event ids were never recorded - computed ONCE
+   *  at migration, never recomputed (r236): `epoch = base +
+   *  floor(events/12)` so new real events always advance the count. */
+  base: number;
+  events: { id: string; stars: number; ts?: number }[];
 }
 
-/** CR-146 r234: completed-lap count - durable `done` covers laps whose
- *  ids were never recorded; the event set gives the floor. */
-function trailDone(t: TrailState | undefined): number {
-  if (!t) return 0;
-  return Math.max(t.done ?? t.epoch ?? 0, Math.floor(trailEvents(t).length / TRAIL_NODES));
+/** CR-146 r236: normalize ANY persisted shape to {base, realEvents}.
+ *  `pad:*` ids (r233 synthetic laps) convert to baseline count and are
+ *  stripped - they must never survive into an event union. `base` is
+ *  derived once from the state's claimed epoch minus the laps its
+ *  recorded ids already cover. */
+export function normalizeTrail(t: TrailState | undefined): NormalizedTrail {
+  if (!t) return { base: 0, events: [] };
+  const raw: { id: string; stars: number; ts?: number }[] = [...(t.events ?? [])];
+  for (const id of t.seenIds ?? []) raw.push({ id, stars: 0 });
+  if (Array.isArray(t.lights)) raw.push(...t.lights);
+  else raw.push(...(t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s })));
+  const byId = new Map<string, { id: string; stars: number; ts?: number }>();
+  for (const ev of raw) {
+    const prev = byId.get(ev.id);
+    if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
+  }
+  let pads = 0;
+  const events: { id: string; stars: number; ts?: number }[] = [];
+  for (const ev of byId.values()) {
+    if (ev.id.startsWith('pad:')) pads++;
+    else events.push(ev);
+  }
+  /* Claimed epoch: a normalized `base` is the BASELINE (ids are extra
+     evidence on top), while legacy `done`/`epoch` are TOTAL claims that
+     already include the laps their recorded ids cover. Pads imply lap
+     counts of their own. Baseline keeps only what the recorded ids in
+     this state cannot explain. */
+  const covered = Math.floor(events.length / TRAIL_NODES);
+  const padLaps = Math.floor(pads / TRAIL_NODES);
+  const meta = t.base !== undefined
+    ? t.base + covered
+    : Math.max(t.done ?? 0, t.epoch ?? 0);
+  const claimed = Math.max(meta, padLaps);
+  return { base: Math.max(0, claimed - covered), events };
+}
+
+export function trailEvents(t: TrailState | undefined): { id: string; stars: number; ts?: number }[] {
+  return normalizeTrail(t).events;
+}
+
+/** CR-146 r236: epoch = baseline laps + laps the recorded ids cover. */
+function trailEpoch(t: TrailState | undefined): number {
+  const n = normalizeTrail(t);
+  return n.base + Math.floor(n.events.length / TRAIL_NODES);
 }
 
 /** CR-146: one completed batch lights one trail node; nodes 4/8/12 are
  *  chests and node 12 completes the lap (sticker + prestige relight). */
 function advanceTrail(state: EngagementState, gradeId: string, batchStars: number, objectiveId: string | undefined, newly: Set<string>): { litNode: number; chestNode?: number } {
-  const prev = state.trail?.[gradeId];
-  const trail: TrailState = { events: trailEvents(prev), done: trailDone(prev) };
+  const n = normalizeTrail(state.trail?.[gradeId]);
+  const trail: TrailState = { base: n.base, events: n.events };
   (state.trail ??= {})[gradeId] = trail;
   trail.events.push({
     id: objectiveId ?? `anon:${Math.random().toString(36).slice(2, 10)}`,
     stars: Math.max(0, Math.min(3, batchStars)),
     ts: Date.now(),
   });
-  const total = trail.events.length;
-  trail.done = Math.max(trail.done ?? 0, Math.floor(total / TRAIL_NODES));
+  /* r236: `base` is the pre-migration baseline only - total completions
+     = base*12 + real events, so a fresh lap always moves the epoch. */
+  const total = (trail.base ?? 0) * TRAIL_NODES + trail.events.length;
   const litNode = total % TRAIL_NODES === 0 ? TRAIL_NODES : total % TRAIL_NODES;
   const land = TRAIL_STICKER_LAND[gradeId];
   let chestNode: number | undefined;
@@ -683,7 +728,8 @@ export function pendingTrailChest(gradeId: string): number | null {
   if (!trail) return null;
   /* A completed lap lit every chest node - any chest whose objective
      is still ungranted stays claimable. */
-  const total = trailDone(trail) * TRAIL_NODES + (trailEvents(trail).length % TRAIL_NODES);
+  const tn = normalizeTrail(trail);
+  const total = tn.base * TRAIL_NODES + tn.events.length;
   const nodesToCheck = total >= TRAIL_NODES
     ? [...TRAIL_CHEST_NODES]
     : TRAIL_CHEST_NODES.filter((n) => n <= total);
@@ -707,7 +753,7 @@ export function trailSnapshot(gradeId: string): TrailSnapshot {
   return {
     lit,
     stars: events.slice(lapStart).map((l) => l.stars),
-    epoch: trailDone(t),
+    epoch: trailEpoch(t),
     next: lit + 1,
   };
 }

@@ -70,6 +70,25 @@ and sanitize.
    whichever came first; reversed inputs produced different ts. Merge
    now takes min-defined ts.
 
+### r236 fixes
+
+1. **[major] Migrated laps stopped advancing** - `{epoch:5}` + 12 real
+   completions stayed epoch 5: `done` was a max-merged floor that
+   absorbed new laps. `base` is now the BASELINE (laps whose ids were
+   never recorded), computed once at migration as
+   `claimed - floor(recordedIds/12)`; `epoch = base + floor(events/12)`
+   always grows. The r234 `done` field is read as a legacy TOTAL claim
+   (it was copied from `epoch`), distinct from `base`.
+2. **[major] Persisted pad:* ids still double-counted** - r233 blobs in
+   the wild carry synthetic `pad:*` ids inside `events`. `normalizeTrail`
+   now strips pads everywhere (read, write, merge, sanitize) and folds
+   `floor(pads/12)` into the baseline - the r236 repro merges to epoch 5
+   lit 1 instead of epoch 9.
+3. Merge reconciliation: `claimed = max(each side's derived epoch)`;
+   `base = max(0, claimed - floor(unionIds/12))` - convergent,
+   idempotent, and pads/seenIds can never inflate. Sanitize clamps the
+   claimed epoch (TRAIL_DONE_CAP) and stored ids (TRAIL_EVENTS_CAP).
+
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
   across laps (`trail:<grade>:<node>` granted once ever - pool exhausts
   after ~8 laps as designed).

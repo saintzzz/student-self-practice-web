@@ -12,10 +12,12 @@ import {
   restoreParkedBlob,
   subscribe,
   TRAIL_NODES,
-  trailEvents,
-  /* r234: cap on sanitized lap counts - real play is bounded and a
-     hostile blob must not smuggle an absurd epoch. */
+  normalizeTrail,
+  /* r234/r236: caps on sanitized lap counts + stored event ids - real
+     play is bounded and a hostile blob must not smuggle an absurd
+     epoch or megabytes of fake ids. */
   TRAIL_DONE_CAP,
+  TRAIL_EVENTS_CAP,
   writeState,
   type EngagementState,
   type PetSpecies,
@@ -236,8 +238,12 @@ export function mergeEngagement(
         ? (() => {
             const merged: NonNullable<EngagementState['trail']> = {};
             for (const gid of new Set([...Object.keys(local.trail ?? {}), ...Object.keys(remote.trail ?? {})])) {
+              /* r236: normalize each side ONCE - legacy epoch/pads become
+                 a baseline lap COUNT disjoint from the real-id events. */
+              const a = normalizeTrail(local.trail?.[gid]);
+              const b = normalizeTrail(remote.trail?.[gid]);
               const byId = new Map<string, { id: string; stars: number; ts?: number }>();
-              for (const ev of [...trailEvents(local.trail?.[gid]), ...trailEvents(remote.trail?.[gid])]) {
+              for (const ev of [...a.events, ...b.events]) {
                 const prev = byId.get(ev.id);
                 /* Same event both sides: max stars + MIN defined ts -
                    commutative regardless of argument order (r234). */
@@ -247,15 +253,18 @@ export function mergeEngagement(
                   byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts });
                 }
               }
-              /* r233/r234: canonical order = completion ts then id; the
-                 current-lap slice shows the NEWEST completions. `done`
-                 is a max-merged lap COUNT for laps whose ids were never
-                 recorded - it never materializes synthetic events. */
+              /* Canonical order = completion ts then id; the current-lap
+                 slice shows the NEWEST completions (r233). The claimed
+                 epoch is the authority: baseline keeps only the laps no
+                 recorded id in the UNION can explain (r236) - so pads /
+                 stale seenIds can never double-count. */
               const events = [...byId.values()].sort((x, y) => (x.ts ?? 0) - (y.ts ?? 0) || (x.id < y.id ? -1 : 1));
-              const a = local.trail?.[gid];
-              const b = remote.trail?.[gid];
-              const done = Math.max(a?.done ?? a?.epoch ?? 0, b?.done ?? b?.epoch ?? 0, Math.floor(events.length / TRAIL_NODES));
-              merged[gid] = { done, events };
+              const claimed = Math.max(
+                a.base + Math.floor(a.events.length / TRAIL_NODES),
+                b.base + Math.floor(b.events.length / TRAIL_NODES),
+              );
+              const base = Math.max(0, claimed - Math.floor(events.length / TRAIL_NODES));
+              merged[gid] = { base, events };
             }
             return merged;
           })()
@@ -633,17 +642,32 @@ function sanitizeRemote(raw: unknown): EngagementState {
         const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
         t.stars.slice(0, lit).forEach((s, i) => push(`legacy:${i}`, s));
       }
-      /* r234: `done`/`epoch` are lap COUNTS, not materialized events -
-         a huge remote epoch allocates nothing (it is clamped, not
-         looped). Events still dedupe by id. */
-      const done = Math.min(Math.max(Math.trunc(num(t.done ?? t.epoch)), 0), TRAIL_DONE_CAP);
-      /* Dedupe by id - a malformed blob could carry the same id twice. */
+      /* r236: run the sanitized events through the same normalize path
+         as local state - pads become baseline count, never survive as
+         ids. `done`/`epoch` are lap COUNTS: a huge value allocates
+         nothing and is clamped, not looped (r234). */
       const byId = new Map<string, { id: string; stars: number; ts?: number }>();
       for (const ev of events) {
         const prev = byId.get(ev.id);
         if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
       }
-      trail[gid] = { done, events: [...byId.values()] };
+      let pads = 0;
+      const real: { id: string; stars: number; ts?: number }[] = [];
+      for (const ev of byId.values()) {
+        if (ev.id.startsWith('pad:')) pads++;
+        else real.push(ev);
+      }
+      real.sort((x, y) => (x.ts ?? 0) - (y.ts ?? 0) || (x.id < y.id ? -1 : 1));
+      /* Cap the stored event set - real play needs far less, and a
+         hostile blob must not smuggle megabytes of fake ids. */
+      const capped = real.slice(-TRAIL_EVENTS_CAP);
+      const covered = Math.floor(capped.length / TRAIL_NODES);
+      const meta = t.base !== undefined
+        ? Math.trunc(num(t.base)) + Math.floor(real.length / TRAIL_NODES)
+        : Math.max(Math.trunc(num(t.done)), Math.trunc(num(t.epoch)));
+      const claimed = Math.min(TRAIL_DONE_CAP, Math.max(meta, Math.floor(pads / TRAIL_NODES), 0));
+      const base = Math.max(0, claimed - covered);
+      trail[gid] = { base, events: capped };
     }
     if (Object.keys(trail).length) out.trail = trail;
   }

@@ -9,6 +9,8 @@ import {
   getState,
   recordRoundResult,
   trailSnapshot,
+  writeState,
+  normalizeTrail,
   TRAIL_NODES,
   SHOP_ITEM_STARS,
 } from './store';
@@ -85,6 +87,37 @@ describe('CR-146 lantern trail', () => {
     expect(pendingTrailChest(G)).toBe(4);
     expect(grantTrailChest(G, 4, 0)).not.toBeNull();
     expect(pendingTrailChest(G)).toBe(8);
+  });
+
+  it('r236: a migrated legacy epoch keeps advancing with new laps', () => {
+    /* Legacy blob: 5 laps, zero recorded ids -> baseline 5. */
+    writeState({ ...getState(), trail: { [G]: { epoch: 5, events: [] } } });
+    const n = normalizeTrail(getState().trail?.[G]);
+    expect(n.base).toBe(5);
+    runBatches(TRAIL_NODES); // a whole new lap of REAL events
+    const snap = trailSnapshot(G);
+    expect(snap.epoch).toBe(6);
+    expect(snap.lit).toBe(0);
+  });
+
+  it('r236: legacy epoch + recorded ids migrate to baseline, not sum', () => {
+    /* epoch 5 with 48 retired ids: the ids already explain 4 laps, so
+       baseline = 1 and total stays 60 - never 108. */
+    const ids = Array.from({ length: 48 }, (_, i) => `batch:old${i}`);
+    const n = normalizeTrail({ epoch: 5, seenIds: ids, events: [] });
+    expect(n.base).toBe(1);
+    expect(n.events.length).toBe(48);
+    writeState({ ...getState(), trail: { [G]: { epoch: 5, seenIds: ids, events: [] } } });
+    expect(trailSnapshot(G).epoch).toBe(5);
+  });
+
+  it('r236: persisted pad:* events convert to baseline, never survive', () => {
+    /* r233 blob: 60 synthetic pads + 1 real current-lap event. */
+    const pads = Array.from({ length: 60 }, (_, i) => ({ id: `pad:${i}`, stars: 0 }));
+    const n = normalizeTrail({ events: [...pads, { id: 'batch:cur', stars: 3 }] });
+    expect(n.base).toBe(5);
+    expect(n.events).toHaveLength(1);
+    expect(n.events[0]!.id).toBe('batch:cur');
   });
 });
 
