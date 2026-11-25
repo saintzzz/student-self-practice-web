@@ -1,4 +1,4 @@
-# CR-147 - Ba game mới (GAMEFI-DESIGN-po §3.4, roadmap P2)
+# CR-147 - Ba game mới - CLOSED r242 CLEAN
 
 ## Scope
 
