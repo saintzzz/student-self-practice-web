@@ -569,6 +569,13 @@ export interface NormalizedTrail {
   events: { id: string; stars: number; ts?: number }[];
 }
 
+/** CR-146 r237: coerce a stored lap count - localStorage is untrusted
+ *  so strings/NaN/negatives become 0, absurd values clamp to the cap. */
+function safeLapCount(v: unknown): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.min(Math.trunc(n), TRAIL_DONE_CAP) : 0;
+}
+
 /** CR-146 r236: normalize ANY persisted shape to {base, realEvents}.
  *  `pad:*` ids (r233 synthetic laps) convert to baseline count and are
  *  stripped - they must never survive into an event union. `base` is
@@ -582,8 +589,16 @@ export function normalizeTrail(t: TrailState | undefined): NormalizedTrail {
   else raw.push(...(t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s })));
   const byId = new Map<string, { id: string; stars: number; ts?: number }>();
   for (const ev of raw) {
+    /* r237: same dedupe rule as mergeEngagement - max stars + min
+       defined ts, so array order inside one blob cannot change the
+       canonical order downstream. */
     const prev = byId.get(ev.id);
-    if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
+    if (!prev) {
+      byId.set(ev.id, ev);
+    } else {
+      const ts = prev.ts === undefined ? ev.ts : ev.ts === undefined ? prev.ts : Math.min(prev.ts, ev.ts);
+      byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts });
+    }
   }
   let pads = 0;
   const events: { id: string; stars: number; ts?: number }[] = [];
@@ -595,12 +610,14 @@ export function normalizeTrail(t: TrailState | undefined): NormalizedTrail {
      evidence on top), while legacy `done`/`epoch` are TOTAL claims that
      already include the laps their recorded ids cover. Pads imply lap
      counts of their own. Baseline keeps only what the recorded ids in
-     this state cannot explain. */
+     this state cannot explain. r237: every stored lap count is coerced
+     and validated - localStorage is untrusted and a string `base`
+     must never concatenate into arithmetic. */
   const covered = Math.floor(events.length / TRAIL_NODES);
   const padLaps = Math.floor(pads / TRAIL_NODES);
   const meta = t.base !== undefined
-    ? t.base + covered
-    : Math.max(t.done ?? 0, t.epoch ?? 0);
+    ? safeLapCount(t.base) + covered
+    : Math.max(safeLapCount(t.done), safeLapCount(t.epoch));
   const claimed = Math.max(meta, padLaps);
   return { base: Math.max(0, claimed - covered), events };
 }

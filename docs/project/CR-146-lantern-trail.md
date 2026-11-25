@@ -89,6 +89,17 @@ and sanitize.
    idempotent, and pads/seenIds can never inflate. Sanitize clamps the
    claimed epoch (TRAIL_DONE_CAP) and stored ids (TRAIL_EVENTS_CAP).
 
+### r237 fixes
+
+1. **[major] String `base` concatenated** - localStorage is untrusted;
+   a stored `base:"5"` produced epoch 50 via `+` concat. All stored lap
+   counts now pass `safeLapCount` (finite, non-negative, clamped to
+   TRAIL_DONE_CAP) before any arithmetic, on local reads too.
+2. **[minor] In-blob dedupe kept first ts** - duplicate ids inside one
+   stored state kept whichever ts appeared first, so array order could
+   change merged order. `normalizeTrail` dedupe now matches
+   `mergeEngagement`: max stars + min-defined ts.
+
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
   across laps (`trail:<grade>:<node>` granted once ever - pool exhausts
   after ~8 laps as designed).
