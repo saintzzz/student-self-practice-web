@@ -121,85 +121,53 @@ describe('mergeEngagement - no progress is ever lost', () => {
     expect(m.stickerIds.sort()).toEqual(['a', 'b', 'c']);
   });
 
-  it('CR-146: trail + gameBest merge keeps the further lap and best stars', () => {
+  it('CR-146: trail + gameBest merge keeps unique events and best stars', () => {
     const local = {
       ...base,
-      trail: { 'grade-1': { epoch: 1, lights: [{ id: 'a1', stars: 2 }, { id: 'a2', stars: 1 }, { id: 'a3', stars: 3 }], seenIds: ['old1'] } },
+      trail: { 'grade-1': { events: [{ id: 'a1', stars: 2 }, { id: 'a2', stars: 1 }, { id: 'a3', stars: 3 }] } },
       gameBest: { fish: 2, 'fish:L2': 1 },
       spends: { devA: 25 },
     };
     const remote = {
       ...base,
       trail: {
-        'grade-1': { epoch: 0, lights: [{ id: 'b1', stars: 3 }, { id: 'b2', stars: 0 }], seenIds: ['old2'] },
-        'grade-2': { epoch: 0, lights: [{ id: 'c1', stars: 1 }, { id: 'c2', stars: 0 }] },
+        'grade-1': { events: [{ id: 'b1', stars: 3 }, { id: 'b2', stars: 0 }] },
+        'grade-2': { events: [{ id: 'c1', stars: 1 }, { id: 'c2', stars: 0 }] },
       },
       gameBest: { fish: 3, pop: 1 },
       spends: { devB: 25 },
     };
     const m = mergeEngagement(local, remote);
-    /* local is on lap 2 (epoch 1); remote's 2 unique lap-1 lights fold
-       into the merged lap - concurrent progress is never lost. */
-    expect(m.trail?.['grade-1']).toEqual({
-      epoch: 1,
-      lights: [{ id: 'a1', stars: 2 }, { id: 'a2', stars: 1 }, { id: 'a3', stars: 3 }, { id: 'b1', stars: 3 }, { id: 'b2', stars: 0 }],
-      seenIds: ['old1', 'old2'],
-    });
-    expect(m.trail?.['grade-2']).toEqual({ epoch: 0, lights: [{ id: 'c1', stars: 1 }, { id: 'c2', stars: 0 }], seenIds: [] });
+    /* All 5 unique events survive, sorted canonically by id - convergent
+       regardless of argument order (r232). */
+    expect(m.trail?.['grade-1']?.events.map((e) => e.id)).toEqual(['a1', 'a2', 'a3', 'b1', 'b2']);
+    expect(m.trail?.['grade-2']?.events.map((e) => e.id)).toEqual(['c1', 'c2']);
     expect(m.gameBest).toEqual({ fish: 3, 'fish:L2': 1, pop: 1 });
     /* r230: concurrent 25-star purchases on two devices SUM to 50. */
     expect(m.spends).toEqual({ devA: 25, devB: 25 });
   });
 
-  it('CR-146: same-lap concurrent lights union by objective id (r229)', () => {
-    const local = { ...base, trail: { 'grade-1': { epoch: 0, lights: [{ id: 'batch:x1', stars: 3 }, { id: 'batch:x2', stars: 1 }] } } };
-    const remote = { ...base, trail: { 'grade-1': { epoch: 0, lights: [{ id: 'batch:x2', stars: 1 }, { id: 'batch:y1', stars: 2 }] } } };
+  it('CR-146: concurrent lights union by objective id (r229)', () => {
+    const local = { ...base, trail: { 'grade-1': { events: [{ id: 'batch:x1', stars: 3 }, { id: 'batch:x2', stars: 1 }] } } };
+    const remote = { ...base, trail: { 'grade-1': { events: [{ id: 'batch:x2', stars: 1 }, { id: 'batch:y1', stars: 2 }] } } };
     const m = mergeEngagement(local, remote);
-    /* x2 deduped; x1+x2+y1 = 3 lit nodes - no advancement lost. */
-    expect(m.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['batch:x1', 'batch:x2', 'batch:y1']);
+    expect(m.trail?.['grade-1']?.events.map((l) => l.id)).toEqual(['batch:x1', 'batch:x2', 'batch:y1']);
   });
 
-  it('CR-146 r230: retired lap ids in seenIds never re-fold into the next epoch', () => {
-    const local = {
-      ...base,
-      trail: { 'grade-1': { epoch: 1, lights: [{ id: 'a1', stars: 3 }], seenIds: ['b1', 'b2'] } },
-    };
-    const remote = {
-      ...base,
-      /* stale epoch-0 state whose lap-1 ids already retired locally -
-         re-folding them must NOT grant free advancements. */
-      trail: { 'grade-1': { epoch: 0, lights: [{ id: 'b1', stars: 3 }, { id: 'b2', stars: 2 }, { id: 'b3', stars: 1 }] } },
-    };
-    const m = mergeEngagement(local, remote);
-    /* b1+b2 already seen -> only b3 folds. */
-    expect(m.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['a1', 'b3']);
-    expect(m.trail?.['grade-1']?.epoch).toBe(1);
-  });
-
-  it('CR-146 r231: base lights retired on the other side are filtered too', () => {
-    /* Equal epochs - b retired x1 in ITS lap 1 while a still carries it
-       in the current lap. Counting both would double the same event. */
-    const local = { ...base, trail: { 'grade-1': { epoch: 1, lights: [{ id: 'x1', stars: 3 }], seenIds: [] } } };
-    const remote = { ...base, trail: { 'grade-1': { epoch: 1, lights: [{ id: 'y1', stars: 2 }], seenIds: ['x1'] } } };
-    const m = mergeEngagement(local, remote);
-    expect(m.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['y1']);
-    /* reversed argument order must agree (no argument-order bias). */
-    const r = mergeEngagement(remote, local);
-    expect(r.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['y1']);
-  });
-
-  it('CR-146 r231: seenIds is durable - replay beyond any lap count cannot refold', () => {
-    /* epoch 5 with every retired id still remembered: a stale epoch-0
-       payload's 12 lights all match history -> nothing folds. */
-    const retired = Array.from({ length: 60 }, (_, i) => `lap${Math.floor(i / 12)}:${i % 12}`);
-    const local = { ...base, trail: { 'grade-1': { epoch: 5, lights: [], seenIds: retired } } };
-    const remote = {
-      ...base,
-      trail: { 'grade-1': { epoch: 0, lights: retired.slice(0, 12).map((id) => ({ id, stars: 3 })) } },
-    };
-    const m = mergeEngagement(local, remote);
-    expect(m.trail?.['grade-1']?.epoch).toBe(5);
-    expect(m.trail?.['grade-1']?.lights).toEqual([]);
+  it('CR-146 r232: opposite-order merges followed by remerge converge (no erased remainder)', () => {
+    /* The r232 repro: two epoch-0 devices with 11 DISTINCT lights each.
+       merge(A,B) and merge(B,A) produce different intermediate sets;
+       merging THOSE results must still equal the full union - epoch 1
+       (12 consumed) + 10 remainder lights. */
+    const ids = Array.from({ length: 22 }, (_, i) => `b${i}`);
+    const a = { ...base, trail: { 'grade-1': { events: ids.slice(0, 11).map((id) => ({ id, stars: 3 })) } } };
+    const b = { ...base, trail: { 'grade-1': { events: ids.slice(11).map((id) => ({ id, stars: 3 })) } } };
+    const ab = mergeEngagement(a, b);
+    const ba = mergeEngagement(b, a);
+    const reconverged = mergeEngagement(ab, ba);
+    expect(reconverged.trail?.['grade-1']?.events.length).toBe(22);
+    /* 22 unique lights = 1 full lap + 10 remainder - nothing erased. */
+    expect(Math.floor((reconverged.trail?.['grade-1']?.events.length ?? 0) / 12)).toBe(1);
   });
 
   it('M1: a legit streak reset survives - newer day keeps its own count', () => {

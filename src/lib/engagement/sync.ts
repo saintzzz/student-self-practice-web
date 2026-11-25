@@ -12,6 +12,7 @@ import {
   restoreParkedBlob,
   subscribe,
   TRAIL_NODES,
+  trailEvents,
   writeState,
   type EngagementState,
   type PetSpecies,
@@ -222,32 +223,22 @@ export function mergeEngagement(
             return merged;
           })()
         : undefined,
-    /* CR-146 r229/r230: trail merges as an EVENT UNION - each light
-       carries the objective id that lit it, so two devices that each
-       completed different batches keep both advancements. seenIds keeps
-       dedupe history across laps so a re-merged stale state cannot
-       fold its retired lights into the next epoch. */
+    /* CR-146 r232: trail merges as a CONVERGENT union - the all-time
+       unique event set sorted by id is identical regardless of argument
+       order or merge history; epoch/lit derive from the count so no
+       remainder can be lost (earlier fold-based merges could erase
+       surplus lights at lap boundaries). */
     trail:
       local.trail || remote.trail
         ? (() => {
             const merged: NonNullable<EngagementState['trail']> = {};
             for (const gid of new Set([...Object.keys(local.trail ?? {}), ...Object.keys(remote.trail ?? {})])) {
-              const a = local.trail?.[gid];
-              const b = remote.trail?.[gid];
-              if (!a || !b) {
-                const only = a ?? b;
-                if (only) merged[gid] = { epoch: only.epoch, lights: normalizeLights(only), seenIds: only.seenIds ?? [] };
-                continue;
+              const byId = new Map<string, { id: string; stars: number }>();
+              for (const ev of [...trailEvents(local.trail?.[gid]), ...trailEvents(remote.trail?.[gid])]) {
+                const prev = byId.get(ev.id);
+                if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
               }
-              const hi = a.epoch >= b.epoch ? a : b;
-              const lo = hi === a ? b : a;
-              const seenIds = [...new Set([...(hi.seenIds ?? []), ...(lo.seenIds ?? [])])];
-              const seenSet = new Set(seenIds);
-              /* r231: filter the BASE lights too - an id retired on the
-                 other side but still in this lap's lights would count
-                 twice (retired once, lit again). */
-              const baseLights = normalizeLights(hi).filter((l) => !seenSet.has(l.id));
-              merged[gid] = foldLights({ epoch: hi.epoch, lights: baseLights, seenIds }, normalizeLights(lo));
+              merged[gid] = { events: [...byId.values()].sort((x, y) => (x.id < y.id ? -1 : 1)) };
             }
             return merged;
           })()
@@ -269,32 +260,7 @@ export function mergeEngagement(
   };
 }
 
-/** CR-146: legacy {lit, stars} entries become synthetic light ids. */
-function normalizeLights(t: { epoch: number; lights?: { id: string; stars: number }[]; lit?: number; stars?: number[] }): { id: string; stars: number }[] {
-  if (Array.isArray(t.lights)) return [...t.lights];
-  return (t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
-}
 
-/** CR-146: union light events by objective id; hitting TRAIL_NODES
- *  completes a lap (epoch++ + ids retire into seenIds). Ids in seenIds
- *  never fold again - stale re-merges cannot double-credit (r230). */
-function foldLights(
-  base: { epoch: number; lights: { id: string; stars: number }[]; seenIds: string[] },
-  incoming: { id: string; stars: number }[],
-): { epoch: number; lights: { id: string; stars: number }[]; seenIds: string[] } {
-  const seen = new Set([...base.seenIds, ...base.lights.map((l) => l.id)]);
-  for (const l of incoming) {
-    if (seen.has(l.id)) continue;
-    seen.add(l.id);
-    base.lights.push(l);
-    if (base.lights.length >= TRAIL_NODES) {
-      base.epoch += 1;
-      base.seenIds = [...base.seenIds, ...base.lights.map((x) => x.id)];
-      base.lights = [];
-    }
-  }
-  return base;
-}
 
 // ---- r17 per-device counter merge ----------------------------------------
 
@@ -632,24 +598,29 @@ function sanitizeRemote(raw: unknown): EngagementState {
     const trail: NonNullable<EngagementState['trail']> = {};
     for (const [gid, t] of Object.entries(raw.trail)) {
       if (!isObj(t) || !/^[A-Za-z0-9_-]{1,40}$/.test(gid)) continue;
-      let lights: { id: string; stars: number }[] = [];
-      if (Array.isArray(t.lights)) {
-        lights = t.lights
-          .filter((l): l is { id: string; stars: number } => isObj(l) && typeof l.id === 'string' && l.id.length <= 80)
-          .slice(0, TRAIL_NODES)
-          .map((l) => ({ id: l.id, stars: Math.min(Math.max(Math.trunc(num(l.stars)), 0), 3) }));
-      } else {
-        /* Legacy {lit, stars} shape from the first CR-146 build. */
+      /* r232: normalize every historical shape into the all-time event
+         set - events (r231+), lights+seenIds (r230), lit/stars (r229). */
+      const events: { id: string; stars: number }[] = [];
+      const push = (id: unknown, stars: unknown) => {
+        if (typeof id === 'string' && id.length <= 80) {
+          events.push({ id, stars: Math.min(Math.max(Math.trunc(num(stars)), 0), 3) });
+        }
+      };
+      if (Array.isArray(t.events)) t.events.forEach((l) => isObj(l) && push(l.id, l.stars));
+      if (Array.isArray(t.seenIds)) t.seenIds.forEach((id) => push(id, 0));
+      if (Array.isArray(t.lights)) t.lights.forEach((l) => isObj(l) && push(l.id, l.stars));
+      else if (Array.isArray(t.stars)) {
         const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
-        const stars = Array.isArray(t.stars)
-          ? t.stars.slice(0, TRAIL_NODES).map((s) => Math.min(Math.max(Math.trunc(num(s)), 0), 3))
-          : [];
-        lights = stars.slice(0, lit).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
+        t.stars.slice(0, lit).forEach((s, i) => push(`legacy:${i}`, s));
       }
-      const seenIds = Array.isArray(t.seenIds)
-        ? t.seenIds.filter((x): x is string => typeof x === 'string' && x.length <= 80)
-        : [];
-      trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lights, seenIds };
+      /* Dedupe by id - a malformed blob could carry the same id in both
+         events and lights. */
+      const byId = new Map<string, { id: string; stars: number }>();
+      for (const ev of events) {
+        const prev = byId.get(ev.id);
+        if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
+      }
+      trail[gid] = { events: [...byId.values()] };
     }
     if (Object.keys(trail).length) out.trail = trail;
   }

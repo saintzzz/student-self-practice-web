@@ -156,21 +156,17 @@ const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
 };
 
 export interface TrailState {
-  /** Prestige laps completed - increments each time all 12 nodes lit. */
-  epoch: number;
-  /** Ordered light events for the current lap (<=TRAIL_NODES). Each
-   *  entry records the objective id that lit the node + the batch's
-   *  stars, so a sync merge can UNION lights by id instead of max-ing
-   *  positional counters - two devices that each completed different
-   *  batches keep both lights (external r229). */
-  lights: { id: string; stars: number }[];
-  /** CR-146 r230/r231: folded light ids - UNCAPPED like
-   *  grantedObjectives (a cap lets a stale re-merge replay retired
-   *  lights for free laps). Completing a lap retires the lap's ids
-   *  here so stale state can never double-credit them. */
+  /** CR-146 r232: every unique light event ever - {objectiveId, stars}.
+   *  UNCAPPED like grantedObjectives: the set itself is the durable
+   *  dedupe history, so merge is a pure union by id - commutative, no
+   *  fold order, no lost remainder. epoch/lit derive from the count:
+   *  epoch = floor(len/12), lit = len%12. */
+  events: { id: string; stars: number }[];
+  /** Legacy shapes (r229/r230 builds + the positional first build) -
+   *  reads normalize via trailEvents(); writes always use `events`. */
+  epoch?: number;
+  lights?: { id: string; stars: number }[];
   seenIds?: string[];
-  /** Legacy fields from the first CR-146 build - reads normalize via
-   *  trailLights(); writes always use `lights`. */
   lit?: number;
   stars?: number[];
 }
@@ -548,39 +544,40 @@ export interface BatchAwardResult {
   trailChestNode?: number;
 }
 
-/** CR-146: normalize a trail entry to the lights-event model - legacy
- *  blobs (positional lit/stars) convert to synthetic ids that can never
- *  collide with real objective ids. */
-function trailLights(t: TrailState | undefined): { id: string; stars: number }[] {
+/** CR-146: normalize any stored trail shape to the all-time event set.
+ *  Retired/legacy ids are kept (stars unknown -> 0) because the set is
+ *  the dedupe history; display only reads the current lap's slice. */
+export function trailEvents(t: TrailState | undefined): { id: string; stars: number }[] {
   if (!t) return [];
-  if (Array.isArray(t.lights)) return t.lights;
-  return (t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
+  if (Array.isArray(t.events)) return t.events;
+  const out: { id: string; stars: number }[] = [];
+  for (const id of t.seenIds ?? []) out.push({ id, stars: 0 });
+  if (Array.isArray(t.lights)) out.push(...t.lights);
+  else out.push(...(t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s })));
+  return out;
 }
 
 /** CR-146: one completed batch lights one trail node; nodes 4/8/12 are
- *  chests and node 12 completes the lap (sticker + epoch++ + relight). */
+ *  chests and node 12 completes the lap (sticker + prestige relight). */
 function advanceTrail(state: EngagementState, gradeId: string, batchStars: number, objectiveId: string | undefined, newly: Set<string>): { litNode: number; chestNode?: number } {
-  const trail = (state.trail ??= {})[gradeId] ?? { epoch: 0, lights: [] };
-  if (!Array.isArray(trail.lights)) trail.lights = trailLights(trail);
+  const trail = (state.trail ??= {})[gradeId] ?? { events: [] };
+  trail.events = trailEvents(trail);
+  delete trail.lights;
+  delete trail.seenIds;
+  delete trail.lit;
+  delete trail.stars;
+  delete trail.epoch;
   state.trail[gradeId] = trail;
-  const litNode = trail.lights.length + 1;
-  trail.lights.push({
+  trail.events.push({
     id: objectiveId ?? `anon:${Math.random().toString(36).slice(2, 10)}`,
     stars: Math.max(0, Math.min(3, batchStars)),
   });
-  delete trail.lit;
-  delete trail.stars;
+  const total = trail.events.length;
+  const litNode = total % TRAIL_NODES === 0 ? TRAIL_NODES : total % TRAIL_NODES;
   const land = TRAIL_STICKER_LAND[gradeId];
   let chestNode: number | undefined;
   if (litNode === TRAIL_HALF_NODE && land) awardSticker(state, `trail-half-${land.key}`, newly);
-  if (litNode >= TRAIL_NODES) {
-    if (land) awardSticker(state, `trail-full-${land.key}`, newly);
-    trail.epoch += 1;
-    /* Retire the lap's light ids into seenIds - a stale state merged
-       back later cannot re-fold them into the next lap (r230/r231). */
-    trail.seenIds = [...(trail.seenIds ?? []), ...trail.lights.map((l) => l.id)];
-    trail.lights = [];
-  }
+  if (litNode === TRAIL_NODES && land) awardSticker(state, `trail-full-${land.key}`, newly);
   if ((TRAIL_CHEST_NODES as readonly number[]).includes(litNode)) chestNode = litNode;
   return { litNode, chestNode };
 }
@@ -673,11 +670,12 @@ export function pendingTrailChest(gradeId: string): number | null {
   const granted = state.grantedObjectives ?? {};
   const trail = state.trail?.[gradeId];
   if (!trail) return null;
-  /* epoch>0 means a previous lap lit every chest node - any chest whose
-     objective is still ungranted stays claimable. */
-  const nodesToCheck = trail.epoch > 0
+  /* A completed lap lit every chest node - any chest whose objective
+     is still ungranted stays claimable. */
+  const total = trailEvents(trail).length;
+  const nodesToCheck = total >= TRAIL_NODES
     ? [...TRAIL_CHEST_NODES]
-    : TRAIL_CHEST_NODES.filter((n) => n <= trailLights(trail).length);
+    : TRAIL_CHEST_NODES.filter((n) => n <= total % TRAIL_NODES);
   return nodesToCheck.find((n) => !granted[`trail:${gradeId}:${n}`]) ?? null;
 }
 
@@ -691,10 +689,15 @@ export interface TrailSnapshot {
 }
 
 export function trailSnapshot(gradeId: string): TrailSnapshot {
-  const t = load().trail?.[gradeId];
-  const lights = trailLights(t);
-  const lit = Math.min(lights.length, TRAIL_NODES);
-  return { lit, stars: lights.map((l) => l.stars), epoch: t?.epoch ?? 0, next: lit >= TRAIL_NODES ? 0 : lit + 1 };
+  const events = trailEvents(load().trail?.[gradeId]);
+  const lit = events.length % TRAIL_NODES;
+  const lapStart = events.length - lit;
+  return {
+    lit,
+    stars: events.slice(lapStart).map((l) => l.stars),
+    epoch: Math.floor(events.length / TRAIL_NODES),
+    next: lit + 1,
+  };
 }
 
 /** CR-146: total stars ever spent - legacy flat counter plus the

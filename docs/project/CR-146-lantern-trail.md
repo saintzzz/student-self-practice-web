@@ -33,6 +33,18 @@ EngagementState.spentStars?: number;       // legacy flat counter
 EngagementState.spends?: Record<deviceId, number>;  // per-device, summed
 ```
 
+### r232 rewrite (convergent merge)
+
+Fold-based merging could erase surplus lights at lap boundaries (two
+epoch-0 devices with 11 distinct lights each reconverged to 12, losing
+10 completions). Trail is now the ALL-TIME unique event set -
+`events: {objectiveId, stars}[]` uncapped, sorted canonically by id on
+merge; `epoch = floor(len/12)` and `lit = len%12` derive from the count
+so no positional remainder exists to lose. The event set itself is the
+durable dedupe history (replaces seenIds). All prior shapes (r229
+lit/stars, r230 lights+seenIds) normalize into events on read, merge
+and sanitize.
+
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
   across laps (`trail:<grade>:<node>` granted once ever - pool exhausts
   after ~8 laps as designed).
