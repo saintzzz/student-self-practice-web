@@ -104,7 +104,10 @@ export default function CountingShop({ grade, seed, level, onEnd }: GameProps) {
         <EmojiVisual emoji="🐷" variant="block" className="text-5xl" />
         {q.trays.map((t, i) => (
           <div key={i} data-testid={`tray-${i}`} className="rounded-2xl border-2 border-amber-300/80 bg-white/90 p-2 shadow-inner">
-            <img src={t.imageUrl} alt={`Khay ${i + 1}`} className="h-24 w-24 rounded-xl object-contain" draggable={false} />
+            {/* r241: the count is the question, so the accessible name
+                carries the full equivalent - a screen-reader child must
+                be able to play the same round. */}
+            <img src={t.imageUrl} alt={`Khay ${i + 1} có ${t.count} ${t.slug}`} className="h-24 w-24 rounded-xl object-contain" draggable={false} />
           </div>
         ))}
       </div>

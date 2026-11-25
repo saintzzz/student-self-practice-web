@@ -40,4 +40,22 @@ content pools đã audit-safe:
 
 ## Review log
 
-- (pending)
+### r241 fixes
+
+1. **[major] Initial-sound compared keys, not phonemes** - c/k and other
+   same-phoneme spellings were marked wrong. Mates + distractors now use
+   `soundsSharePhoneme`; the cake/kite/crayon repro is pinned.
+2. **[major] Rhyme bypassed the containment guard** - direct group
+   equality let "notebook" rhyme with "book". Mates now use
+   `rhymesWith`; distractors exclude at the looser group level so a
+   same-group compound can never sit beside the real mate either.
+3. **[major] Territory exclusion incomplete** - first-pass set missed
+   isle-of-man, jersey-island, puerto-rico, greenland, guam,
+   french-polynesia and ~40 more dependencies. The exclude set is now an
+   audited sovereignty classification over all 246 flag words (UK
+   constituent countries + Crown dependencies + Overseas Territories,
+   FR/NL/US/DK/AU/NZ territories and associated states, EU,
+   Antarctica, One-China sensitive, disputed regions).
+4. **[major] Tray images had no accessible equivalent** - alt now
+   carries "Khay N có K <object>" so a screen-reader child gets the
+   same information the image gives.

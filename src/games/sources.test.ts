@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isLiteralImageWord, isFlagEmoji } from '../lib/content/imageSemantics';
-import { getRhymeGroup } from '../lib/phonics/rhymes';
-import { getInitialSound } from '../lib/phonics/initialSounds';
+import { getRhymeGroup, rhymesWith } from '../lib/phonics/rhymes';
+import { getInitialSound, soundsSharePhoneme } from '../lib/phonics/initialSounds';
 import {
   countingShopRounds,
   flagPool,
@@ -242,13 +242,48 @@ describe('rhymeRounds (CR-147)', () => {
     }
   });
 
-  it('L2: exactly one option shares the initial sound', () => {
+  it('L2: exactly one option shares the initial PHONEME (c/k fold)', () => {
     const rounds = rhymeRounds('grade-2', 'rp2', 5, 2);
     expect(rounds.length).toBeGreaterThan(0);
     for (const q of rounds) {
       const mate = q.options[q.correctIndex]!;
-      expect(getInitialSound(mate.word)).toBe(getInitialSound(q.target.word));
+      expect(soundsSharePhoneme(getInitialSound(mate.word), getInitialSound(q.target.word))).toBe(true);
       expect(q.mode).toBe('initial');
+      for (const [i, w] of q.options.entries()) {
+        if (i === q.correctIndex) continue;
+        expect(soundsSharePhoneme(getInitialSound(w.word), getInitialSound(q.target.word))).toBe(false);
+      }
+    }
+  });
+
+  it('r241: same-phoneme spellings mate correctly (cake/kite/crayon)', () => {
+    /* The r241 repro: 'cake' -> 'c' key, 'crayon' -> 'c'... 'kite' -> 'k'
+       key but the same /k/ phoneme. Both must be valid mates. */
+    const mates = ['crayon', 'kite'].filter((w) =>
+      soundsSharePhoneme(getInitialSound('cake'), getInitialSound(w)),
+    );
+    expect(mates).toEqual(['crayon', 'kite']);
+  });
+
+  it('r241: same-family compounds can never be the mate (notebook/book)', () => {
+    expect(rhymesWith('book', 'notebook')).toBe(false);
+    expect(rhymesWith('hot dog', 'dog')).toBe(false);
+    /* and a group-mate that IS a compound is also excluded as distractor
+       - the child would see it and pick it. */
+    const rounds = rhymeRounds('grade-1', 'rp-comp', 10, 1);
+    for (const q of rounds) {
+      for (const w of q.options) {
+        if (w.id === q.target.id) continue;
+        const sameGroup =
+          getRhymeGroup(w.word) === getRhymeGroup(q.target.word) &&
+          !getRhymeGroup(q.target.word).startsWith('solo:');
+        /* any same-group word must be a real rhyme (not a compound) and
+           must be the correct slot. */
+        if (sameGroup) {
+          expect(rhymesWith(q.target.word, w.word)).toBe(true);
+          expect(q.options.indexOf(w)).toBe(q.correctIndex);
+        }
+      }
     }
   });
 
@@ -263,8 +298,21 @@ describe('rhymeRounds (CR-147)', () => {
 
 describe('flagPool + flagRounds (CR-147)', () => {
   const EXCLUDED = new Set([
-    'european-union', 'taiwan', 'hong-kong', 'macau', 'kosovo',
-    'aland', 'guernsey', 'faroe-islands', 'gibraltar',
+    'european-union', 'antarctica',
+    'taiwan', 'hong-kong', 'macau', 'kosovo', 'western-sahara',
+    'england', 'scotland', 'wales',
+    'isle-of-man', 'guernsey', 'jersey-island',
+    'anguilla', 'bermuda', 'british-indian-ocean', 'british-virgin-islands',
+    'cayman-islands', 'falkland-islands', 'gibraltar', 'montserrat',
+    'pitcairn', 'saint-helena', 'south-georgia', 'turks-caicos',
+    'french-guiana', 'french-polynesia', 'guadeloupe', 'martinique',
+    'mayotte', 'new-caledonia', 'reunion-island', 'saint-barthelemy',
+    'saint-martin', 'saint-pierre', 'wallis-futuna',
+    'aruba', 'caribbean-netherlands', 'curacao', 'sint-maarten',
+    'american-samoa', 'guam', 'northern-mariana', 'puerto-rico', 'us-virgin-islands',
+    'aland', 'faroe-islands', 'greenland',
+    'christmas-island', 'cocos-islands', 'norfolk-island',
+    'cook-islands', 'niue', 'tokelau',
   ]);
 
   it('pool holds only flag-emoji words minus EU + territories', () => {
@@ -274,6 +322,16 @@ describe('flagPool + flagRounds (CR-147)', () => {
       for (const w of pool) {
         expect(isFlagEmoji(w.emoji)).toBe(true);
         expect(EXCLUDED.has(w.id)).toBe(false);
+      }
+    }
+  });
+
+  it('r241: every reviewer-named territory is actually excluded', () => {
+    /* The r241 repro list - these leaked through the first-pass set. */
+    for (const gradeId of ['grade-4', 'grade-5']) {
+      const ids = new Set(flagPool(gradeId).map((w) => w.id));
+      for (const id of ['isle-of-man', 'jersey-island', 'puerto-rico', 'greenland', 'guam', 'french-polynesia']) {
+        expect(ids.has(id)).toBe(false);
       }
     }
   });

@@ -2,8 +2,8 @@ import { seededPickN, seededShuffleIndices, hashString } from '../lib/prng';
 import { getWordsByGrade } from '../lib/content/contentBank';
 import { isLiteralImageWord, isFlagEmoji } from '../lib/content/imageSemantics';
 import { COUNTING_ART } from '../lib/content/countingArt';
-import { getRhymeGroup } from '../lib/phonics/rhymes';
-import { getInitialSound } from '../lib/phonics/initialSounds';
+import { getRhymeGroup, rhymesWith } from '../lib/phonics/rhymes';
+import { getInitialSound, soundsSharePhoneme } from '../lib/phonics/initialSounds';
 import { generateImageChoiceQuestions } from '../lib/generators/imageChoice';
 import { generateListeningImageChoiceQuestions } from '../lib/generators/listeningImageChoice';
 import { generateWordOrderQuestions } from '../lib/exam/wordOrder';
@@ -317,17 +317,26 @@ export interface RhymeRound {
 export function rhymeRounds(gradeId: string, seed: string, n: number, level = 1): RhymeRound[] {
   const pool = gameWordPool(gradeId).filter((w) => /^[a-zA-Z]+$/.test(w.word));
   const mode: 'rhyme' | 'initial' = level === 2 ? 'initial' : 'rhyme';
-  const match = (a: string, b: string) =>
+  /* r241: mates use the REAL correctness rule - rhymesWith carries the
+     compound-containment guard ("notebook" never rhymes with "book"),
+     soundsSharePhoneme folds c/k and other same-phoneme spellings.
+     Distractors exclude at the looser GROUP level so a word that only
+     LOOKS like it rhymes still cannot sit beside the mate. */
+  const isMate = (target: VocabWord, w: VocabWord) =>
     mode === 'rhyme'
-      ? getRhymeGroup(a) === getRhymeGroup(b) && !getRhymeGroup(a).startsWith('solo:')
-      : getInitialSound(a) === getInitialSound(b) && getInitialSound(a) !== '';
+      ? rhymesWith(target.word, w.word)
+      : soundsSharePhoneme(getInitialSound(target.word), getInitialSound(w.word));
+  const couldLookCorrect = (target: VocabWord, w: VocabWord) =>
+    mode === 'rhyme'
+      ? getRhymeGroup(target.word) === getRhymeGroup(w.word) && !getRhymeGroup(target.word).startsWith('solo:')
+      : soundsSharePhoneme(getInitialSound(target.word), getInitialSound(w.word));
   const rounds: RhymeRound[] = [];
   for (let attempt = 0; attempt < n * 8 && rounds.length < n; attempt++) {
     const [target] = seededPickN(pool, 1, `${seed}:rp${attempt}:t`);
     if (!target) continue;
-    const mates = pool.filter((w) => w.id !== target.id && match(w.word, target.word));
+    const mates = pool.filter((w) => w.id !== target.id && isMate(target, w));
     if (mates.length < 1) continue;
-    const distractors = pool.filter((w) => w.id !== target.id && !match(w.word, target.word));
+    const distractors = pool.filter((w) => w.id !== target.id && !couldLookCorrect(target, w));
     const [mate] = seededPickN(mates, 1, `${seed}:rp${attempt}:m`);
     const picks = seededPickN(distractors, 3, `${seed}:rp${attempt}:d`);
     if (!mate || picks.length < 3) continue;
@@ -339,11 +348,36 @@ export function rhymeRounds(gradeId: string, seed: string, n: number, level = 1)
   return rounds;
 }
 
-/** CR-147 flag pool excludes (F6/F8 + non-sovereign territories). */
+/** CR-147 flag pool excludes - EVERY flag id in the bank that is not a
+ *  sovereign country a child can be "from" (r241: audited across all
+ *  246 flag words, not just the named findings):
+ *  supranational bodies, disputed/politically sensitive regions for a
+ *  VN product (One-China), UK constituent countries + Crown
+ *  dependencies + Overseas Territories, and FR/NL/US/DK/AU/NZ
+ *  dependent territories and associated states. */
 const FLAG_VOYAGE_EXCLUDE: ReadonlySet<string> = new Set([
-  'european-union',
-  'taiwan', 'hong-kong', 'macau', 'kosovo',
-  'aland', 'guernsey', 'faroe-islands', 'gibraltar',
+  // supranational / not a place
+  'european-union', 'antarctica',
+  // politically sensitive (One-China) + disputed
+  'taiwan', 'hong-kong', 'macau', 'kosovo', 'western-sahara',
+  // UK constituent countries + Crown dependencies + Overseas Territories
+  'england', 'scotland', 'wales',
+  'isle-of-man', 'guernsey', 'jersey-island',
+  'anguilla', 'bermuda', 'british-indian-ocean', 'british-virgin-islands',
+  'cayman-islands', 'falkland-islands', 'gibraltar', 'montserrat',
+  'pitcairn', 'saint-helena', 'south-georgia', 'turks-caicos',
+  // French territories
+  'french-guiana', 'french-polynesia', 'guadeloupe', 'martinique',
+  'mayotte', 'new-caledonia', 'reunion-island', 'saint-barthelemy',
+  'saint-martin', 'saint-pierre', 'wallis-futuna',
+  // Dutch territories
+  'aruba', 'caribbean-netherlands', 'curacao', 'sint-maarten',
+  // US territories
+  'american-samoa', 'guam', 'northern-mariana', 'puerto-rico', 'us-virgin-islands',
+  // DK / AU / NZ territories + associated states
+  'aland', 'faroe-islands', 'greenland',
+  'christmas-island', 'cocos-islands', 'norfolk-island',
+  'cook-islands', 'niue', 'tokelau',
 ]);
 
 /** One Flag Voyage round: "I am from ___" -> pick the flag. */
