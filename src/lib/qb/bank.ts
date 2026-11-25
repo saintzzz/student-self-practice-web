@@ -204,6 +204,14 @@ function assetUrl(path: string): string {
   return `/${path.replace(/^\/+/, '')}`;
 }
 
+/** Question types whose prompt or options cannot survive losing all art. */
+const IMAGE_DEPENDENT_TYPES = new Set([
+  'image-to-word-mcq',
+  'word-to-image-mcq',
+  'visual-mcq',
+  'visual-count-mcq',
+]);
+
 /**
  * word-to-image-mcq options: choices carry {assetId} objects and the row's
  * asset_paths can link MORE than the 4 rendered options (extras share
@@ -275,6 +283,16 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
   const assetPaths = row.asset_paths.filter(
     (p) => !/v6\/(science|math)\//.test(p),
   );
+  // r222: rows whose prompt/options DEPEND on the quarantined art become
+  // guesswork ("Look at the picture" with no picture) - drop them. Rows
+  // that never had art, or still have surviving art, map as before.
+  if (
+    assetPaths.length === 0 &&
+    row.asset_paths.length > 0 &&
+    IMAGE_DEPENDENT_TYPES.has(row.question_type)
+  ) {
+    return null;
+  }
   const imageUrl = assetPaths[0] ? assetUrl(assetPaths[0]) : undefined;
   const transcript = row.audio_transcripts[0] ?? row.transcript ?? undefined;
 

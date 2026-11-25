@@ -89,13 +89,15 @@ describe('toExamQuestion', () => {
   });
 
   it('CR-144: quarantines v6 science/math placeholder art, keeps math-vi svg', () => {
+    // r222: image-dependent rows whose ONLY art is quarantined are dropped
+    // (a "look at the picture" prompt with no picture is guesswork).
     const quarantined = toExamQuestion(row({
       question_type: 'image-to-word-mcq',
       choices: ['a', 'b', 'c', 'd'],
       answer: { index: 0 },
       asset_paths: ['images/v6/science/v6-sci-g1-00-7819f6.webp'],
     }));
-    expect(quarantined).toMatchObject({ kind: 'grammar-mcq', imageUrl: undefined });
+    expect(quarantined).toBeNull();
 
     const mathPlaceholder = toExamQuestion(row({
       question_type: 'image-to-word-mcq',
@@ -103,7 +105,7 @@ describe('toExamQuestion', () => {
       answer: { index: 0 },
       asset_paths: ['images/v6/math/v6-math-g2-03-x.webp'],
     }));
-    expect(mathPlaceholder).toMatchObject({ kind: 'grammar-mcq', imageUrl: undefined });
+    expect(mathPlaceholder).toBeNull();
 
     const kept = toExamQuestion(row({
       question_type: 'image-to-word-mcq',
@@ -112,6 +114,16 @@ describe('toExamQuestion', () => {
       asset_paths: ['images/v6/math-vi/mathvi-0006eb55d9.svg'],
     }));
     expect(kept).toMatchObject({ kind: 'grammar-mcq', imageUrl: '/images/v6/math-vi/mathvi-0006eb55d9.svg' });
+  });
+
+  it('CR-144: text-only rows keep the question when quarantined art drops', () => {
+    // plain mcq is independently answerable from its prompt text.
+    const q = toExamQuestion(row({
+      choices: ['a', 'b', 'c', 'd'],
+      answer: { index: 0 },
+      asset_paths: ['images/v6/science/x.webp'],
+    }));
+    expect(q).toMatchObject({ kind: 'grammar-mcq', imageUrl: undefined });
   });
 
   it('maps reading mcq: passage flows through (CR-51)', () => {

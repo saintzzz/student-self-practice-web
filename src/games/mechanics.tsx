@@ -76,9 +76,13 @@ export function EmojiChoiceField({
 
   /* CR-144 (art audit F-03): all-or-nothing option art - resolve the whole
      set first and only use images when EVERY option has audited art, so a
-     question never mixes kawaii art and Twemoji in the same field. */
+     question never mixes kawaii art and Twemoji in the same field.
+     r222: a LOAD failure also drops the whole set - one surviving broken
+     slot must not leave a half-art board. */
+  const [artFailed, setArtFailed] = useState(false);
+  useEffect(() => setArtFailed(false), [options]);
   const optionImages = optionWordIds?.map((id) => getWordVisual(id)?.imageUrl);
-  const allArt = optionImages?.every(Boolean) ? optionImages : undefined;
+  const allArt = !artFailed && optionImages?.every(Boolean) ? optionImages : undefined;
 
   return (
     <div
@@ -116,7 +120,7 @@ export function EmojiChoiceField({
                     per mount"), so key by visual identity - a slot whose
                     word changes across rounds must remount, else an
                     image-mode shell renders a wordless slot blank. */}
-                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" className="text-3xl" />
+                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" onImageError={() => setArtFailed(true)} className="text-3xl" />
               </span>
               <span aria-hidden className="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-inherit" />
             </button>
@@ -136,7 +140,7 @@ export function EmojiChoiceField({
             >
               {/* CR-91: light disc stage - art pops, tile keeps its hue. */}
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-[inset_0_2px_0_rgba(255,255,255,0.8),0_2px_6px_-2px_rgba(0,0,0,0.3)]">
-                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" className="text-2xl" />
+                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" onImageError={() => setArtFailed(true)} className="text-2xl" />
               </span>
             </button>
           );
@@ -161,7 +165,7 @@ export function EmojiChoiceField({
                 className={`${moleUp ? (up ? 'game-mole-up' : 'game-mole-down') : 'game-peek'} flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-b from-amber-100 to-amber-200 text-4xl shadow-[inset_0_3px_0_rgba(255,255,255,0.6)] ${wrong ? 'opacity-40' : ''}`}
                 style={moleUp ? undefined : { animationDelay: `${i * 300}ms` }}
               >
-                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" />
+                <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" onImageError={() => setArtFailed(true)} />
               </span>
             </button>
           );
@@ -178,7 +182,7 @@ export function EmojiChoiceField({
               className={`${base} game-bob mx-auto h-24 w-24 flex-col rounded-full border-4 border-amber-100/80 bg-gradient-to-b from-amber-50 to-orange-100 text-4xl shadow-[inset_0_4px_0_rgba(255,255,255,0.7),0_10px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-1 active:scale-95 disabled:opacity-35 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
               style={{ animationDelay: wrong || hit ? '0ms' : `${i * 240}ms` }}
             >
-              <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" className="text-4xl drop-shadow-sm" />
+              <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" onImageError={() => setArtFailed(true)} className="text-4xl drop-shadow-sm" />
             </button>
           );
         }
@@ -192,7 +196,7 @@ export function EmojiChoiceField({
             onClick={() => handlePick(i)}
             className={`${base} h-24 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 text-5xl shadow-[0_8px_20px_-8px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : hit ? 'game-hit' : ''}`}
           >
-            <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" />
+            <EmojiVisual key={`${imageUrl ?? emoji}@${i}`} emoji={emoji} imageUrl={imageUrl} variant="block" onImageError={() => setArtFailed(true)} />
           </button>
         );
       })}

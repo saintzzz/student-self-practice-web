@@ -66,8 +66,11 @@ export default function OddOneOut({ grade, seed, level, onEnd }: GameProps) {
 
   /* CR-144 (art audit F-03): the whole option set only shows audited art
      when every word resolves to an image - same all-or-nothing law as
-     ListeningImageChoiceQuestion. */
-  const oddAllArt = q.words.every((word) => getWordVisual(word.id)?.imageUrl);
+     ListeningImageChoiceQuestion. r222: a load failure drops the set too. */
+  const [artFailed, setArtFailed] = useState(false);
+  useEffect(() => setArtFailed(false), [q]);
+  const oddAllArt =
+    !artFailed && q.words.every((word) => getWordVisual(word.id)?.imageUrl);
 
   return (
     <div data-testid="game-odd-one-out" className="flex flex-col items-center gap-5">
@@ -96,7 +99,7 @@ export default function OddOneOut({ grade, seed, level, onEnd }: GameProps) {
               onClick={() => pick(i)}
               className={`flex min-h-[96px] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-amber-200/70 bg-gradient-to-b from-amber-50 to-orange-100 px-3 py-2 shadow-[inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-4px_0_rgba(180,83,9,0.2),0_8px_20px_-8px_rgba(0,0,0,0.55)] transition hover:-translate-y-0.5 active:scale-95 motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300 disabled:opacity-40 disabled:hover:translate-y-0 ${wrong ? 'game-shake' : ''}`}
             >
-              <EmojiVisual key={`${visual?.imageUrl ?? word.emoji}-${i}`} emoji={visual?.emoji ?? word.emoji} imageUrl={visual?.imageUrl} variant="block" className="text-4xl" />
+              <EmojiVisual key={`${visual?.imageUrl ?? word.emoji}-${i}`} emoji={visual?.emoji ?? word.emoji} imageUrl={visual?.imageUrl} variant="block" className="text-4xl" onImageError={() => setArtFailed(true)} />
               <span className="text-lg font-extrabold text-slate-800">{word.word}</span>
             </button>
           );
