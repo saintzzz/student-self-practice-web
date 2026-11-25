@@ -79,8 +79,14 @@ export interface EngagementState {
    *  batches; chest at 4/8/12, prestige lap at 12. */
   trail?: Record<string, TrailState>;
   /** CR-146: lifetime stars spent in the shop - monotonic so sync
-   *  merges max() without refunding purchases (external r229). */
+   *  merges max() without refunding purchases (external r229). Legacy
+   *  field; new spends write `spends[deviceId]` instead. */
   spentStars?: number;
+  /** CR-146 r230: deviceId -> stars spent by THIS device. Per-device
+   *  monotonic counters merge as per-key max then SUM - two devices
+   *  buying concurrently count 50 spent, not max(25,25) (same model as
+   *  stats.devices r17). */
+  spends?: Record<string, number>;
   /** kids-UX: forward-compat marker - future clients detect and preserve
    *  fields they do not know. Does not protect pre-R0 clients. */
   schemaVersion?: number;
@@ -140,6 +146,8 @@ const BATCH_CHEST_STARS = 2;
  *  trail but keeps the epoch counter. */
 export const TRAIL_NODES = 12;
 export const TRAIL_CHEST_NODES = [4, 8, 12] as const;
+/** Cap on folded-light dedupe history - covers 4 laps of ids. */
+export const TRAIL_SEEN_CAP = 48;
 const TRAIL_HALF_NODE = 6;
 const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
   'grade-1': { key: 'playground', nameVi: 'Sân chơi' },
@@ -158,6 +166,10 @@ export interface TrailState {
    *  positional counters - two devices that each completed different
    *  batches keep both lights (external r229). */
   lights: { id: string; stars: number }[];
+  /** CR-146 r230: recently-folded light ids (cap 48). Completing a lap
+   *  retires the lap's ids here so a re-merged stale state cannot
+   *  double-credit them into the next lap. */
+  seenIds?: string[];
   /** Legacy fields from the first CR-146 build - reads normalize via
    *  trailLights(); writes always use `lights`. */
   lit?: number;
@@ -565,6 +577,9 @@ function advanceTrail(state: EngagementState, gradeId: string, batchStars: numbe
   if (litNode >= TRAIL_NODES) {
     if (land) awardSticker(state, `trail-full-${land.key}`, newly);
     trail.epoch += 1;
+    /* Retire the lap's light ids into seenIds - a stale state merged
+       back later cannot re-fold them into the next lap (r230). */
+    trail.seenIds = [...(trail.seenIds ?? []), ...trail.lights.map((l) => l.id)].slice(-TRAIL_SEEN_CAP);
     trail.lights = [];
   }
   if ((TRAIL_CHEST_NODES as readonly number[]).includes(litNode)) chestNode = litNode;
@@ -683,23 +698,29 @@ export function trailSnapshot(gradeId: string): TrailSnapshot {
   return { lit, stars: lights.map((l) => l.stars), epoch: t?.epoch ?? 0, next: lit >= TRAIL_NODES ? 0 : lit + 1 };
 }
 
+/** CR-146: total stars ever spent - legacy flat counter plus the
+ *  per-device buckets summed (concurrent purchases add, not max). */
+function totalSpent(s: EngagementState): number {
+  let sum = s.spentStars ?? 0;
+  for (const v of Object.values(s.spends ?? {})) sum += v;
+  return sum;
+}
+
 /** CR-146: spendable balance = lifetime earned minus lifetime spent.
  *  totalStars stays the immutable achievement record; spending writes
- *  the monotonic spentStars counter so a sync merge never refunds a
- *  purchase (external r229). */
+ *  monotonic counters so a sync merge never refunds a purchase (r229). */
 export function spendableStars(): number {
-  const s = load();
-  return s.totalStars - (s.spentStars ?? 0);
+  return load().totalStars - totalSpent(load());
 }
 
 /** CR-146: star shop - child picks ONE unowned item for SHOP_ITEM_STARS.
  *  Refuses when stars are short or the item is already owned / invalid. */
 export function spendStarsForHomeItem(itemId: string): { item: (typeof HOME_ITEMS)[number] } | null {
   const state = load();
-  if (state.totalStars - (state.spentStars ?? 0) < SHOP_ITEM_STARS) return null;
+  if (state.totalStars - totalSpent(state) < SHOP_ITEM_STARS) return null;
   const item = HOME_ITEMS.find((i) => i.id === itemId);
   if (!item || (state.homeItems ?? []).includes(itemId)) return null;
-  state.spentStars = (state.spentStars ?? 0) + SHOP_ITEM_STARS;
+  (state.spends ??= {})[getDeviceId()] = (state.spends[getDeviceId()] ?? 0) + SHOP_ITEM_STARS;
   (state.homeItems ??= []).push(itemId);
   state.homeItems = state.homeItems.slice(-HOME_ITEMS_CAP);
   persist(state);

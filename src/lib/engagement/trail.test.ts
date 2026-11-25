@@ -102,11 +102,12 @@ describe('CR-146 star shop', () => {
     const result = spendStarsForHomeItem('ball');
     expect(result?.item.id).toBe('ball');
     const state = getState();
-    /* r229: totalStars stays the immutable earn record; the spend lives
-       in the monotonic spentStars counter so sync cannot refund. */
+    /* r229/r230: totalStars stays the immutable earn record; the spend
+       lives in per-device counters summed on read - sync merges cannot
+       refund or undercount concurrent purchases. */
     expect(state.totalStars).toBe(before);
-    expect(state.spentStars).toBe(SHOP_ITEM_STARS);
-    expect(state.totalStars - (state.spentStars ?? 0)).toBe(before - SHOP_ITEM_STARS);
+    expect(Object.values(state.spends ?? {}).reduce((a, b) => a + b, 0)).toBe(SHOP_ITEM_STARS);
+    expect(state.totalStars - SHOP_ITEM_STARS).toBe(before - SHOP_ITEM_STARS);
     expect(state.homeItems).toContain('ball');
     expect(spendStarsForHomeItem('ball')).toBeNull(); // already owned
   });

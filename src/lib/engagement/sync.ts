@@ -12,6 +12,7 @@ import {
   restoreParkedBlob,
   subscribe,
   TRAIL_NODES,
+  TRAIL_SEEN_CAP,
   writeState,
   type EngagementState,
   type PetSpecies,
@@ -222,10 +223,11 @@ export function mergeEngagement(
             return merged;
           })()
         : undefined,
-    /* CR-146 r229: trail merges as an EVENT UNION - each light carries
-       the objective id that lit it, so two devices that each completed
-       different batches keep both advancements. Folding a full lap
-       rolls into the next epoch. */
+    /* CR-146 r229/r230: trail merges as an EVENT UNION - each light
+       carries the objective id that lit it, so two devices that each
+       completed different batches keep both advancements. seenIds keeps
+       dedupe history across laps so a re-merged stale state cannot
+       fold its retired lights into the next epoch. */
     trail:
       local.trail || remote.trail
         ? (() => {
@@ -235,17 +237,30 @@ export function mergeEngagement(
               const b = remote.trail?.[gid];
               if (!a || !b) {
                 const only = a ?? b;
-                if (only) merged[gid] = { epoch: only.epoch, lights: normalizeLights(only) };
+                if (only) merged[gid] = { epoch: only.epoch, lights: normalizeLights(only), seenIds: only.seenIds ?? [] };
                 continue;
               }
               const hi = a.epoch >= b.epoch ? a : b;
               const lo = hi === a ? b : a;
-              merged[gid] = foldLights({ epoch: hi.epoch, lights: [...normalizeLights(hi)] }, normalizeLights(lo));
+              const seenIds = [...new Set([...(hi.seenIds ?? []), ...(lo.seenIds ?? [])])].slice(-TRAIL_SEEN_CAP);
+              merged[gid] = foldLights({ epoch: hi.epoch, lights: [...normalizeLights(hi)], seenIds }, normalizeLights(lo));
             }
             return merged;
           })()
         : undefined,
     spentStars: Math.max(local.spentStars ?? 0, remote.spentStars ?? 0) || undefined,
+    /* r230: per-device spends merge per-key max then sum on read -
+       concurrent purchases on two devices are not undercounted. */
+    spends:
+      local.spends || remote.spends
+        ? (() => {
+            const merged: Record<string, number> = { ...remote.spends };
+            for (const [k, v] of Object.entries(local.spends ?? {})) {
+              if (v > (merged[k] ?? 0)) merged[k] = v;
+            }
+            return merged;
+          })()
+        : undefined,
     schemaVersion: Math.max(local.schemaVersion ?? 0, remote.schemaVersion ?? 0) || undefined,
   };
 }
@@ -257,16 +272,20 @@ function normalizeLights(t: { epoch: number; lights?: { id: string; stars: numbe
 }
 
 /** CR-146: union light events by objective id; hitting TRAIL_NODES
- *  completes a lap (epoch++ + fresh lights). */
+ *  completes a lap (epoch++ + ids retire into seenIds). Ids in seenIds
+ *  never fold again - stale re-merges cannot double-credit (r230). */
 function foldLights(
-  base: { epoch: number; lights: { id: string; stars: number }[] },
+  base: { epoch: number; lights: { id: string; stars: number }[]; seenIds: string[] },
   incoming: { id: string; stars: number }[],
-): { epoch: number; lights: { id: string; stars: number }[] } {
+): { epoch: number; lights: { id: string; stars: number }[]; seenIds: string[] } {
+  const seen = new Set([...base.seenIds, ...base.lights.map((l) => l.id)]);
   for (const l of incoming) {
-    if (base.lights.some((x) => x.id === l.id)) continue;
+    if (seen.has(l.id)) continue;
+    seen.add(l.id);
     base.lights.push(l);
     if (base.lights.length >= TRAIL_NODES) {
       base.epoch += 1;
+      base.seenIds = [...base.seenIds, ...base.lights.map((x) => x.id)].slice(-TRAIL_SEEN_CAP);
       base.lights = [];
     }
   }
@@ -623,11 +642,21 @@ function sanitizeRemote(raw: unknown): EngagementState {
           : [];
         lights = stars.slice(0, lit).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
       }
-      trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lights };
+      const seenIds = Array.isArray(t.seenIds)
+        ? t.seenIds.filter((x): x is string => typeof x === 'string' && x.length <= 80).slice(-TRAIL_SEEN_CAP)
+        : [];
+      trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lights, seenIds };
     }
     if (Object.keys(trail).length) out.trail = trail;
   }
   out.spentStars = Math.max(Math.trunc(num(raw.spentStars)), 0);
+  if (isObj(raw.spends)) {
+    const spends: Record<string, number> = {};
+    for (const [k, v] of Object.entries(raw.spends)) {
+      if (typeof v === 'number' && Number.isFinite(v) && v > 0 && /^[A-Za-z0-9_-]{1,64}$/.test(k)) spends[k] = Math.trunc(v);
+    }
+    if (Object.keys(spends).length) out.spends = spends;
+  }
   if (typeof raw.schemaVersion === 'number' && Number.isFinite(raw.schemaVersion)) {
     out.schemaVersion = raw.schemaVersion;
   }

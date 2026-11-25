@@ -29,7 +29,8 @@ EngagementState.trail?: Record<gradeId, {
   epoch: number;      // prestige laps completed
   lights: { id: string; stars: number }[];  // <=12, unioned by objective id on merge
 }>
-EngagementState.spentStars?: number;  // monotonic spend counter
+EngagementState.spentStars?: number;       // legacy flat counter
+EngagementState.spends?: Record<deviceId, number>;  // per-device, summed
 ```
 
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
@@ -76,3 +77,15 @@ EngagementState.spentStars?: number;  // monotonic spend counter
    pool cycles every item through the 8 slots.
 5. **[minor] HomeShelf stale after async sync** - subscribes to store;
    balance + ownership refresh live.
+
+### r230 fixes
+
+1. **[major] Concurrent purchases undercounted** - `spentStars` merged
+   as max, so two devices buying 25 each recorded 25 spent while keeping
+   both items. Spends are now per-device monotonic counters
+   (`spends[deviceId]`, same model as `stats.devices`) merged per-key
+   max and summed on read.
+2. **[major] Retired lap ids could re-fold** - a stale epoch-0 state
+   merged back could fold its 12 lights into the next lap for a free
+   epoch. `TrailState.seenIds` (cap 48) retires folded ids; merge skips
+   anything already seen, on either side.
