@@ -89,3 +89,14 @@ EngagementState.spends?: Record<deviceId, number>;  // per-device, summed
    merged back could fold its 12 lights into the next lap for a free
    epoch. `TrailState.seenIds` (cap 48) retires folded ids; merge skips
    anything already seen, on either side.
+
+### r231 fixes
+
+1. **[major] Base lights skipped the retirement filter** - merged
+   seenIds only filtered incoming lights; an id retired on the other
+   side but still in base's current lap counted twice. Merge now
+   filters BOTH arrays; tests assert reversed-argument agreement.
+2. **[major] 48-id dedupe cap allowed replay after 4 laps** - epoch 5 +
+   stale epoch-0 lights folded to epoch 6 for free. seenIds is now
+   uncapped (same precedent as grantedObjectives - the keyspace is
+   bounded by real completions).

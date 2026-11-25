@@ -146,8 +146,6 @@ const BATCH_CHEST_STARS = 2;
  *  trail but keeps the epoch counter. */
 export const TRAIL_NODES = 12;
 export const TRAIL_CHEST_NODES = [4, 8, 12] as const;
-/** Cap on folded-light dedupe history - covers 4 laps of ids. */
-export const TRAIL_SEEN_CAP = 48;
 const TRAIL_HALF_NODE = 6;
 const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
   'grade-1': { key: 'playground', nameVi: 'Sân chơi' },
@@ -166,9 +164,10 @@ export interface TrailState {
    *  positional counters - two devices that each completed different
    *  batches keep both lights (external r229). */
   lights: { id: string; stars: number }[];
-  /** CR-146 r230: recently-folded light ids (cap 48). Completing a lap
-   *  retires the lap's ids here so a re-merged stale state cannot
-   *  double-credit them into the next lap. */
+  /** CR-146 r230/r231: folded light ids - UNCAPPED like
+   *  grantedObjectives (a cap lets a stale re-merge replay retired
+   *  lights for free laps). Completing a lap retires the lap's ids
+   *  here so stale state can never double-credit them. */
   seenIds?: string[];
   /** Legacy fields from the first CR-146 build - reads normalize via
    *  trailLights(); writes always use `lights`. */
@@ -578,8 +577,8 @@ function advanceTrail(state: EngagementState, gradeId: string, batchStars: numbe
     if (land) awardSticker(state, `trail-full-${land.key}`, newly);
     trail.epoch += 1;
     /* Retire the lap's light ids into seenIds - a stale state merged
-       back later cannot re-fold them into the next lap (r230). */
-    trail.seenIds = [...(trail.seenIds ?? []), ...trail.lights.map((l) => l.id)].slice(-TRAIL_SEEN_CAP);
+       back later cannot re-fold them into the next lap (r230/r231). */
+    trail.seenIds = [...(trail.seenIds ?? []), ...trail.lights.map((l) => l.id)];
     trail.lights = [];
   }
   if ((TRAIL_CHEST_NODES as readonly number[]).includes(litNode)) chestNode = litNode;

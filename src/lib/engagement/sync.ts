@@ -12,7 +12,6 @@ import {
   restoreParkedBlob,
   subscribe,
   TRAIL_NODES,
-  TRAIL_SEEN_CAP,
   writeState,
   type EngagementState,
   type PetSpecies,
@@ -242,8 +241,13 @@ export function mergeEngagement(
               }
               const hi = a.epoch >= b.epoch ? a : b;
               const lo = hi === a ? b : a;
-              const seenIds = [...new Set([...(hi.seenIds ?? []), ...(lo.seenIds ?? [])])].slice(-TRAIL_SEEN_CAP);
-              merged[gid] = foldLights({ epoch: hi.epoch, lights: [...normalizeLights(hi)], seenIds }, normalizeLights(lo));
+              const seenIds = [...new Set([...(hi.seenIds ?? []), ...(lo.seenIds ?? [])])];
+              const seenSet = new Set(seenIds);
+              /* r231: filter the BASE lights too - an id retired on the
+                 other side but still in this lap's lights would count
+                 twice (retired once, lit again). */
+              const baseLights = normalizeLights(hi).filter((l) => !seenSet.has(l.id));
+              merged[gid] = foldLights({ epoch: hi.epoch, lights: baseLights, seenIds }, normalizeLights(lo));
             }
             return merged;
           })()
@@ -285,7 +289,7 @@ function foldLights(
     base.lights.push(l);
     if (base.lights.length >= TRAIL_NODES) {
       base.epoch += 1;
-      base.seenIds = [...base.seenIds, ...base.lights.map((x) => x.id)].slice(-TRAIL_SEEN_CAP);
+      base.seenIds = [...base.seenIds, ...base.lights.map((x) => x.id)];
       base.lights = [];
     }
   }
@@ -643,7 +647,7 @@ function sanitizeRemote(raw: unknown): EngagementState {
         lights = stars.slice(0, lit).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
       }
       const seenIds = Array.isArray(t.seenIds)
-        ? t.seenIds.filter((x): x is string => typeof x === 'string' && x.length <= 80).slice(-TRAIL_SEEN_CAP)
+        ? t.seenIds.filter((x): x is string => typeof x === 'string' && x.length <= 80)
         : [];
       trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lights, seenIds };
     }

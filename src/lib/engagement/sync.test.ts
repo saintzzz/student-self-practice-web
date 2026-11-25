@@ -176,6 +176,32 @@ describe('mergeEngagement - no progress is ever lost', () => {
     expect(m.trail?.['grade-1']?.epoch).toBe(1);
   });
 
+  it('CR-146 r231: base lights retired on the other side are filtered too', () => {
+    /* Equal epochs - b retired x1 in ITS lap 1 while a still carries it
+       in the current lap. Counting both would double the same event. */
+    const local = { ...base, trail: { 'grade-1': { epoch: 1, lights: [{ id: 'x1', stars: 3 }], seenIds: [] } } };
+    const remote = { ...base, trail: { 'grade-1': { epoch: 1, lights: [{ id: 'y1', stars: 2 }], seenIds: ['x1'] } } };
+    const m = mergeEngagement(local, remote);
+    expect(m.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['y1']);
+    /* reversed argument order must agree (no argument-order bias). */
+    const r = mergeEngagement(remote, local);
+    expect(r.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['y1']);
+  });
+
+  it('CR-146 r231: seenIds is durable - replay beyond any lap count cannot refold', () => {
+    /* epoch 5 with every retired id still remembered: a stale epoch-0
+       payload's 12 lights all match history -> nothing folds. */
+    const retired = Array.from({ length: 60 }, (_, i) => `lap${Math.floor(i / 12)}:${i % 12}`);
+    const local = { ...base, trail: { 'grade-1': { epoch: 5, lights: [], seenIds: retired } } };
+    const remote = {
+      ...base,
+      trail: { 'grade-1': { epoch: 0, lights: retired.slice(0, 12).map((id) => ({ id, stars: 3 })) } },
+    };
+    const m = mergeEngagement(local, remote);
+    expect(m.trail?.['grade-1']?.epoch).toBe(5);
+    expect(m.trail?.['grade-1']?.lights).toEqual([]);
+  });
+
   it('M1: a legit streak reset survives - newer day keeps its own count', () => {
     const local = { ...base, streak: { lastDayISO: '2026-02-01', count: 1 } };
     const remote = { ...base, streak: { lastDayISO: '2026-01-01', count: 10 } };
