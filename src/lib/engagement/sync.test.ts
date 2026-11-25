@@ -121,6 +121,24 @@ describe('mergeEngagement - no progress is ever lost', () => {
     expect(m.stickerIds.sort()).toEqual(['a', 'b', 'c']);
   });
 
+  it('CR-146: trail + gameBest merge keeps the further lap and best stars', () => {
+    const local = {
+      ...base,
+      trail: { 'grade-1': { epoch: 1, lit: 3, stars: [2, 1, 3] } },
+      gameBest: { fish: 2, 'fish:L2': 1 },
+    };
+    const remote = {
+      ...base,
+      trail: { 'grade-1': { epoch: 0, lit: 9, stars: [3, 3, 3, 3, 3, 3, 3, 3, 3] }, 'grade-2': { epoch: 0, lit: 2, stars: [1, 0] } },
+      gameBest: { fish: 3, pop: 1 },
+    };
+    const m = mergeEngagement(local, remote);
+    /* local is on lap 2 (epoch 1) - further than remote's mid-lap-1. */
+    expect(m.trail?.['grade-1']).toEqual({ epoch: 1, lit: 3, stars: [2, 1, 3] });
+    expect(m.trail?.['grade-2']).toEqual({ epoch: 0, lit: 2, stars: [1, 0] });
+    expect(m.gameBest).toEqual({ fish: 3, 'fish:L2': 1, pop: 1 });
+  });
+
   it('M1: a legit streak reset survives - newer day keeps its own count', () => {
     const local = { ...base, streak: { lastDayISO: '2026-02-01', count: 1 } };
     const remote = { ...base, streak: { lastDayISO: '2026-01-01', count: 10 } };

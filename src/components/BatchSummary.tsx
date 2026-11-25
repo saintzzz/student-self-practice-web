@@ -15,7 +15,9 @@ import {
   checkStreakStickers,
   getState,
   pendingGiftStickerIds,
+  pendingTrailChest,
   recordBatchResult,
+  starsForScore,
   recordBigModeComplete,
   touchStreak,
   type BatchAwardResult,
@@ -80,7 +82,9 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
   useEffect(() => {
     if (!earned) return;
     if (!awarded.current) {
-      const batch = recordBatchResult(gradeId, objectiveId);
+      /* CR-146: batch stars feed the trail's per-node gold-lantern
+         record (0-3 via starsForScore on the batch total). */
+      const batch = recordBatchResult(gradeId, objectiveId, starsForScore(result.points, result.maxPoints));
       /* Dev-review #5: alreadyGranted = this run was counted before -
          skip EVERY completion-derived mutation (streak, quest, stickers,
          server result write) so a remount never double-counts. */
@@ -107,6 +111,9 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
   /* Dev-review #6: pending gift is persisted state - the box offer must
      survive leaving this summary unclaimed. */
   const giftStickerId = earned ? pendingGiftStickerIds()[0] ?? null : null;
+  /* CR-146: a lit chest node stays claimable until opened (persisted,
+     same pattern as pendingGiftStickerIds). */
+  const trailChestNode = earned ? pendingTrailChest(gradeId) : null;
   const gradeName = GRADES.find((g) => g.id === gradeId)?.name ?? gradeId;
 
   return (
@@ -151,6 +158,9 @@ export default function BatchSummary({ result, gradeId, onStartNewBatch, onChoos
       {/* kids-UX s3.5.b: the sticker moment opens the gift box - home items
           grant through the picker, never silently. */}
       {giftStickerId && <GiftBoxPicker stickerId={giftStickerId} />}
+      {/* CR-146: trail chest station (nodes 4/8/12) reuses the pick-1-of-3
+          box; the `trail:<grade>:<node>` objective keeps it idempotent. */}
+      {trailChestNode && <GiftBoxPicker trailChest={{ gradeId, node: trailChestNode }} />}
       {earned && (
         <>
           {/* AC-4.1: points demote to a secondary sky chip - gold fills are

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { grantHomeItem, isObjectiveGranted, ownedHomeItems, type HomeItemResult } from '../lib/engagement/store';
+import { grantHomeItem, grantTrailChest, isObjectiveGranted, ownedHomeItems, type HomeItemResult } from '../lib/engagement/store';
 import { HOME_ITEMS } from '../data/homeItems';
 import { GIFT_BOX } from '../lib/ui/tokens';
 import { EmojiVisual } from './EmojiVisual';
@@ -11,9 +11,12 @@ interface GiftBoxPickerProps {
    * The reward-moment identity (a sticker id such as 'first-batch' or
    * 'star-hoard'). `grantHomeItem` keys the grant on it, so a remount /
    * replay of the same summary replays the SAME item instead of granting
-   * again (AC-4.4).
+   * again (AC-4.4). Omit when `trailChest` is set.
    */
-  stickerId: string;
+  stickerId?: string;
+  /** CR-146: a lantern-trail chest station - grants via the idempotent
+   *  `trail:<grade>:<node>` objective instead of `gift:<stickerId>`. */
+  trailChest?: { gradeId: string; node: number };
   /** Fires once when the pick is settled (fresh pick or replayed grant). */
   onDone?: () => void;
 }
@@ -30,7 +33,7 @@ const BOX_COUNT = 3;
  * previously granted item shows immediately - replays never re-open a gift.
  * An exhausted pool renders nothing (the sticker chips above still show).
  */
-export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps) {
+export default function GiftBoxPicker({ stickerId, trailChest, onDone }: GiftBoxPickerProps) {
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [result, setResult] = useState<HomeItemResult | null>(null);
   const [poolEmpty] = useState(() => ownedHomeItems().length >= HOME_ITEMS.length);
@@ -38,13 +41,20 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
   /* CR-82 (D-20): the reveal used to gate a Lottie slot - the bespoke
      art image needs no player, so the budget no longer applies here. */
 
-  /* Replay path: this sticker already granted a home item - skip the offer
-     and show the stored item straight away (AC-4.4). */
+  /* The idempotent objective + grant call differ between sticker gifts
+     and trail chests; both replay the SAME item on remount (AC-4.4). */
+  const objectiveId = trailChest ? `trail:${trailChest.gradeId}:${trailChest.node}` : `gift:${stickerId}`;
+  const grant = (index: number) =>
+    trailChest ? grantTrailChest(trailChest.gradeId, trailChest.node, index) : grantHomeItem(stickerId ?? '', index);
+
+  /* Replay path: this objective already granted a home item - skip the
+     offer and show the stored item straight away (AC-4.4). */
   useEffect(() => {
-    if (result || !isObjectiveGranted(`gift:${stickerId}`)) return;
-    const replay = grantHomeItem(stickerId, 0);
+    if (result || !isObjectiveGranted(objectiveId)) return;
+    const replay = grant(0);
     if (replay) setResult(replay);
-  }, [stickerId, result]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objectiveId, result]);
 
   useEffect(() => {
     if (result && !doneFired.current) {
@@ -55,7 +65,7 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
 
   function handlePick(index: number): void {
     if (result) return;
-    const granted = grantHomeItem(stickerId, index);
+    const granted = grant(index);
     if (!granted) return; // pool exhausted - the offer simply has no gift.
     setPickedIndex(index);
     setResult(granted);
@@ -72,7 +82,7 @@ export default function GiftBoxPicker({ stickerId, onDone }: GiftBoxPickerProps)
             text="Em mở được quà! Chọn một hộp quà nhé!"
             lang="vi-VN"
 
-            autoplayKey={`gift-${stickerId}`}
+            autoplayKey={`gift-${objectiveId}`}
           />
         </div>
       )}

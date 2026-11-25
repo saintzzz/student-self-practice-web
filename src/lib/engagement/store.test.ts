@@ -180,6 +180,16 @@ describe('store resilience', () => {
       'quest-3',
       'pet-baby',
       'pet-adult',
+      'trail-half-playground',
+      'trail-full-playground',
+      'trail-half-town',
+      'trail-full-town',
+      'trail-half-jungle',
+      'trail-full-jungle',
+      'trail-half-city',
+      'trail-full-city',
+      'trail-half-space',
+      'trail-full-space',
     ]);
   });
 });

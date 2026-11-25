@@ -593,3 +593,25 @@ update this file AND the token comment that introduced them in the same commit.
   (retryable lazy + reload affordance after two failed chunk imports), the
   same pattern as tracing/flashcards - keeps the entry chunk inside the
   CR-82 delta budget.
+
+## 16. CR-146 - lantern trail & collectible economy
+
+- **TrailPath (`src/components/TrailPath.tsx`):** 12 lantern nodes overlay
+  the launchpad land vignette at deterministic arc positions. States:
+  dark `slate-600/40`, next `amber-200/30 + animate-pulse` (always
+  `motion-reduce:animate-none`), lit `amber-400 + glow shadow`, 3-star
+  node gets the stronger gold ring `amber-300 + amber-100`. Chest nodes
+  (4/8/12) render `IconChest` while unlit. Pet art perches 9% above the
+  next node. The overlay is `pointer-events-none` + `aria-hidden` - the
+  trail is ambient progress, not a control.
+- **LandDecor (`src/components/LandDecor.tsx`):** owned home items sit at
+  8 fixed slots (`hashSeed(itemId)` picks, collision -> next free) near
+  the ground line, `ArtImg` size 20, `aria-hidden` overlay.
+- **Star shop:** "Đổi quà" row inside `HomeShelf` - the affordance is a
+  toggle that expands a 4-col grid of unowned items; each card shows art
+  + `25 sao` chip; disabled state is `opacity-50` + `cursor-not-allowed`
+  (never hidden - the catalog is the motivation).
+- **Reward idempotency:** every grant surface keys its objective
+  (`gift:<stickerId>`, `trail:<grade>:<node>`); the shared
+  `pickHomeItem` persists grantKey -> itemId so replays return the same
+  item. New grant surfaces must reuse `pickHomeItem`, not re-roll.

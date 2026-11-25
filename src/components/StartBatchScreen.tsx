@@ -14,6 +14,8 @@ import LeaderboardCard from './LeaderboardCard';
 import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
 import HomeShelf from './HomeShelf';
+import LandDecor from './LandDecor';
+import TrailPath from './TrailPath';
 import { InstructionSpeaker } from './InstructionSpeaker';
 import ModeHub, { HubGroup, type HubTileDef } from './ModeHub';
 import GameZoneShelf from '../games/GameZoneShelf';
@@ -579,6 +581,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             navy - each grade's home screen wears its land identity. */}
         <div className={`relative mx-auto h-28 max-w-sm overflow-hidden rounded-2xl ring-1 ring-sky-300/70 sm:h-40 ${land.pageGradient}`}>
           <LandArt land={land.key} variant="strip" tone="day" />
+          <LandDecor />
+          <TrailPath gradeId={grade.id} />
           <div className="absolute inset-x-0 bottom-1 flex justify-center">
             <Mascot mood="greeting" />
           </div>

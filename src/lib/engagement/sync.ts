@@ -11,6 +11,7 @@ import {
   markOwnerAccountId,
   restoreParkedBlob,
   subscribe,
+  TRAIL_NODES,
   writeState,
   type EngagementState,
   type PetSpecies,
@@ -207,6 +208,38 @@ export function mergeEngagement(
             const merged: Record<string, string> = { ...remote.grantedObjectives };
             for (const [k, v] of Object.entries(local.grantedObjectives ?? {})) {
               if (!merged[k] || v > merged[k]) merged[k] = v;
+            }
+            return merged;
+          })()
+        : undefined,
+    gameBest:
+      local.gameBest || remote.gameBest
+        ? (() => {
+            const merged: Record<string, number> = { ...remote.gameBest };
+            for (const [k, v] of Object.entries(local.gameBest ?? {})) {
+              if (v > (merged[k] ?? 0)) merged[k] = v;
+            }
+            return merged;
+          })()
+        : undefined,
+    /* CR-146: trail merge - further lap wins; same lap takes the deeper
+       node count and per-node best stars. */
+    trail:
+      local.trail || remote.trail
+        ? (() => {
+            const merged: NonNullable<EngagementState['trail']> = {};
+            for (const gid of new Set([...Object.keys(local.trail ?? {}), ...Object.keys(remote.trail ?? {})])) {
+              const a = local.trail?.[gid];
+              const b = remote.trail?.[gid];
+              const pick = !a ? b : !b ? a : a.epoch !== b.epoch ? (a.epoch > b.epoch ? a : b) : (a.lit >= b.lit ? a : b);
+              const other = pick === a ? b : a;
+              if (pick) {
+                merged[gid] = {
+                  epoch: pick.epoch,
+                  lit: pick.lit,
+                  stars: pick.stars.map((s, i) => Math.max(s, other?.epoch === pick.epoch ? other.stars[i] ?? 0 : 0)),
+                };
+              }
             }
             return merged;
           })()
@@ -522,7 +555,9 @@ function sanitizeRemote(raw: unknown): EngagementState {
   if (isObj(raw.giftGrants)) {
     const grants: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw.giftGrants)) {
-      if (typeof v === 'string' && HOME_ITEM_IDS.has(v) && /^[A-Za-z0-9_-]{1,80}$/.test(k)) grants[k] = v;
+      /* CR-146: keys may be sticker ids ('first-batch') or trail chest
+         objectives ('trail:grade-1:4') - allow the colon grammar. */
+      if (typeof v === 'string' && HOME_ITEM_IDS.has(v) && /^[A-Za-z0-9:_-]{1,80}$/.test(k)) grants[k] = v;
     }
     if (Object.keys(grants).length) out.giftGrants = grants;
   }
@@ -530,10 +565,32 @@ function sanitizeRemote(raw: unknown): EngagementState {
     const objs: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw.grantedObjectives)) {
       /* No cap: eviction would let a replayed objective double-grant
-         (AC-4.4). Keyspace is bounded by replayable content. */
-      if (typeof v === 'string' && /^(round|batch|gift):[A-Za-z0-9:_-]{1,80}$/.test(k)) objs[k] = v;
+         (AC-4.4). Keyspace is bounded by replayable content.
+         CR-146: the game: branch existed since CR-83 but was missing
+         here - remote pulls silently stripped game objectives, letting
+         a replayed run double-grant on the second device. */
+      if (typeof v === 'string' && /^(round|batch|gift|game|trail):[A-Za-z0-9:_-]{1,80}$/.test(k)) objs[k] = v;
     }
     if (Object.keys(objs).length) out.grantedObjectives = objs;
+  }
+  if (isObj(raw.gameBest)) {
+    const best: Record<string, number> = {};
+    for (const [k, v] of Object.entries(raw.gameBest)) {
+      if (typeof v === 'number' && Number.isFinite(v) && /^[A-Za-z0-9:_-]{1,80}$/.test(k)) best[k] = Math.min(Math.max(Math.trunc(v), 0), 3);
+    }
+    if (Object.keys(best).length) out.gameBest = best;
+  }
+  if (isObj(raw.trail)) {
+    const trail: NonNullable<EngagementState['trail']> = {};
+    for (const [gid, t] of Object.entries(raw.trail)) {
+      if (!isObj(t) || !/^[A-Za-z0-9_-]{1,40}$/.test(gid)) continue;
+      const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
+      const stars = Array.isArray(t.stars)
+        ? t.stars.slice(0, TRAIL_NODES).map((s) => Math.min(Math.max(Math.trunc(num(s)), 0), 3))
+        : [];
+      trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lit, stars: stars.slice(0, lit) };
+    }
+    if (Object.keys(trail).length) out.trail = trail;
   }
   if (typeof raw.schemaVersion === 'number' && Number.isFinite(raw.schemaVersion)) {
     out.schemaVersion = raw.schemaVersion;

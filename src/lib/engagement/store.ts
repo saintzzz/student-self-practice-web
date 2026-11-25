@@ -75,6 +75,9 @@ export interface EngagementState {
    *  Powers the shelf badge; stars themselves are granted per run via
    *  recordRoundResult with `game:<id>:<seed>` objectives. */
   gameBest?: Record<string, number>;
+  /** CR-146: lantern trail per grade - 12 nodes lit by completed
+   *  batches; chest at 4/8/12, prestige lap at 12. */
+  trail?: Record<string, TrailState>;
   /** kids-UX: forward-compat marker - future clients detect and preserve
    *  fields they do not know. Does not protect pre-R0 clients. */
   schemaVersion?: number;
@@ -129,6 +132,32 @@ const OWNER_KEY = 'beheo-engagement-owner';
 const STARS_PER_ROUND_CAP = 4 * 3; // 4 rounds x 3 stars
 const BATCH_CHEST_STARS = 2;
 
+/** CR-146: lantern trail constants - 12 nodes per grade, chest at
+ *  every 4th, half/full stickers at 6/12, prestige lap resets the
+ *  trail but keeps the epoch counter. */
+export const TRAIL_NODES = 12;
+export const TRAIL_CHEST_NODES = [4, 8, 12] as const;
+const TRAIL_HALF_NODE = 6;
+const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
+  'grade-1': { key: 'playground', nameVi: 'Sân chơi' },
+  'grade-2': { key: 'town', nameVi: 'Thị trấn' },
+  'grade-3': { key: 'jungle', nameVi: 'Rừng rậm' },
+  'grade-4': { key: 'city', nameVi: 'Thành phố' },
+  'grade-5': { key: 'space', nameVi: 'Vũ trụ' },
+};
+
+export interface TrailState {
+  /** Prestige laps completed - increments each time all 12 nodes lit. */
+  epoch: number;
+  /** Nodes lit in the current lap (0..TRAIL_NODES). */
+  lit: number;
+  /** Stars earned by the batch that lit each node this lap. */
+  stars: number[];
+}
+
+/** CR-146: spendable-star cost of one chosen home item in the shop. */
+export const SHOP_ITEM_STARS = 25;
+
 export const STICKERS: readonly Sticker[] = [
   // Luyện tập - milestones from batches, rounds and raw effort.
   { id: 'first-batch', nameVi: 'Bài luyện đầu tiên', emoji: '🏅', art: `/images/stickers/sticker-first-batch.webp`, category: 'luyen' },
@@ -156,6 +185,11 @@ export const STICKERS: readonly Sticker[] = [
   // Pet.
   { id: 'pet-baby', nameVi: 'Pet nở ra', emoji: '🐣', art: `/images/stickers/sticker-pet-baby.webp`, category: 'pet' },
   { id: 'pet-adult', nameVi: 'Pet trưởng thành', emoji: '👑', art: `/images/stickers/sticker-pet-adult.webp`, category: 'pet' },
+  // CR-146: lantern trail - half (6 nodes) and full (12 nodes) per land.
+  ...Object.entries(TRAIL_STICKER_LAND).flatMap(([, land]): Sticker[] => [
+    { id: `trail-half-${land.key}`, nameVi: `Nửa hành trình ${land.nameVi}`, emoji: '🏮', art: `/images/stickers/sticker-trail-half-${land.key}.webp`, category: 'luyen' },
+    { id: `trail-full-${land.key}`, nameVi: `Thắp sáng ${land.nameVi}`, emoji: '✨', art: `/images/stickers/sticker-trail-full-${land.key}.webp`, category: 'luyen' },
+  ]),
 ] as const;
 
 const EMPTY_STATE: EngagementState = {
@@ -390,7 +424,7 @@ export interface RoundAwardResult {
 /** kids-UX objective id grammar: `round:<seed>:<n>` | `batch:<seed>` |
  *  `gift:<stickerId>` | CR-83 `game:<gameId>:<seed>` (ruling OBJ-1:
  *  keyed by the run's seed - each arcade play is a fresh run). */
-const OBJECTIVE_RE = /^(round|batch|gift|game):[A-Za-z0-9:_-]{1,80}$/;
+const OBJECTIVE_RE = /^(round|batch|gift|game|trail):[A-Za-z0-9:_-]{1,80}$/;
 
 /** kids-UX: true when this objective already granted its rewards. */
 export function isObjectiveGranted(objectiveId: string): boolean {
@@ -487,11 +521,38 @@ export interface BatchAwardResult {
   chestStars: number;
   newStickers: Sticker[];
   alreadyGranted?: boolean;
+  /** CR-146: the trail node this batch just lit (1..TRAIL_NODES). */
+  trailLitNode?: number;
+  /** CR-146: set when the newly lit node is a chest node - the summary
+   *  offers the pick-1-of-3 via `trail:<grade>:<node>` objectives. */
+  trailChestNode?: number;
+}
+
+/** CR-146: one completed batch lights one trail node; nodes 4/8/12 are
+ *  chests and node 12 completes the lap (sticker + epoch++ + relight). */
+function advanceTrail(state: EngagementState, gradeId: string, batchStars: number, newly: Set<string>): { litNode: number; chestNode?: number } {
+  const trail = (state.trail ??= {})[gradeId] ?? { epoch: 0, lit: 0, stars: [] };
+  state.trail[gradeId] = trail;
+  const litNode = trail.lit + 1;
+  trail.stars.push(Math.max(0, Math.min(3, batchStars)));
+  const land = TRAIL_STICKER_LAND[gradeId];
+  let chestNode: number | undefined;
+  if (litNode === TRAIL_HALF_NODE && land) awardSticker(state, `trail-half-${land.key}`, newly);
+  if (litNode >= TRAIL_NODES) {
+    if (land) awardSticker(state, `trail-full-${land.key}`, newly);
+    trail.epoch += 1;
+    trail.lit = 0;
+    trail.stars = [];
+  } else {
+    trail.lit = litNode;
+  }
+  if ((TRAIL_CHEST_NODES as readonly number[]).includes(litNode)) chestNode = litNode;
+  return { litNode, chestNode };
 }
 
 /** Records a finished batch: chest bonus + first-batch/explorer stickers.
  *  kids-UX AC-4.4: passing `batch:<seed>` makes the grant idempotent. */
-export function recordBatchResult(gradeId: string, objectiveId?: string): BatchAwardResult {
+export function recordBatchResult(gradeId: string, objectiveId?: string, batchStars = 0): BatchAwardResult {
   const state = load();
   if (objectiveId && state.grantedObjectives?.[objectiveId]) {
     return { chestStars: 0, newStickers: [], alreadyGranted: true };
@@ -507,9 +568,15 @@ export function recordBatchResult(gradeId: string, objectiveId?: string): BatchA
   awardSticker(state, 'first-batch', newly);
   if (state.gradesPlayed.length >= 5) awardSticker(state, 'explorer', newly);
   if (state.totalStars >= 50) awardSticker(state, 'star-hoard', newly);
+  const { litNode, chestNode } = advanceTrail(state, gradeId, batchStars, newly);
   if (objectiveId) grantObjective(state, objectiveId);
   persist(state);
-  return { chestStars: BATCH_CHEST_STARS, newStickers: [...newly].map((id) => STICKERS.find((s) => s.id === id)!) };
+  return {
+    chestStars: BATCH_CHEST_STARS,
+    newStickers: [...newly].map((id) => STICKERS.find((s) => s.id === id)!),
+    trailLitNode: litNode,
+    trailChestNode: chestNode,
+  };
 }
 
 // ---- kids-UX: collectible home + gift grants ------------------------------
@@ -527,14 +594,13 @@ function hashSeed(text: string): number {
   return h;
 }
 
-/** kids-UX (AC-4.2/R-04): gift-box grant. First call picks deterministically
- *  from the not-owned pool and persists the mapping; every later call for
- *  the same stickerId returns the stored item - replays never re-open.
- *  Returns null when the pool is exhausted or ids are malformed. */
-export function grantHomeItem(stickerId: string, boxIndex: number): HomeItemResult | null {
-  if (!/^gift:[A-Za-z0-9_-]{1,80}$/.test(`gift:${stickerId}`)) return null;
+/** kids-UX (AC-4.2/R-04): deterministic pick from the not-owned pool.
+ *  `grantKey` persists the stickerId/trail-objective -> item mapping so
+ *  replays return the SAME item; `objectiveId` records the idempotent
+ *  completion. Shared by gift boxes and trail chests (CR-146). */
+function pickHomeItem(grantKey: string, objectiveId: string, boxIndex: number): HomeItemResult | null {
   const state = load();
-  const existing = state.giftGrants?.[stickerId];
+  const existing = state.giftGrants?.[grantKey];
   if (existing) {
     const item = HOME_ITEMS.find((i) => i.id === existing);
     return item ? { item, alreadyGranted: true } : null;
@@ -542,13 +608,73 @@ export function grantHomeItem(stickerId: string, boxIndex: number): HomeItemResu
   const owned = new Set(state.homeItems ?? []);
   const pool = HOME_ITEMS.filter((i) => !owned.has(i.id));
   if (!pool.length) return null;
-  const item = pool[hashSeed(`${stickerId}:${boxIndex}`) % pool.length];
+  const item = pool[hashSeed(`${grantKey}:${boxIndex}`) % pool.length];
   (state.homeItems ??= []).push(item.id);
   state.homeItems = state.homeItems.slice(-HOME_ITEMS_CAP);
-  (state.giftGrants ??= {})[stickerId] = item.id;
-  grantObjective(state, `gift:${stickerId}`);
+  (state.giftGrants ??= {})[grantKey] = item.id;
+  grantObjective(state, objectiveId);
   persist(state);
   return { item, alreadyGranted: false };
+}
+
+export function grantHomeItem(stickerId: string, boxIndex: number): HomeItemResult | null {
+  if (!/^gift:[A-Za-z0-9_-]{1,80}$/.test(`gift:${stickerId}`)) return null;
+  return pickHomeItem(stickerId, `gift:${stickerId}`, boxIndex);
+}
+
+/** CR-146: trail chest at node 4/8/12 - same pick-1-of-3 mechanics,
+ *  objective id `trail:<grade>:<node>` so a chest grants once ever. */
+export function grantTrailChest(gradeId: string, node: number, boxIndex: number): HomeItemResult | null {
+  const key = `trail:${gradeId}:${node}`;
+  if (!OBJECTIVE_RE.test(key)) return null;
+  return pickHomeItem(key, key, boxIndex);
+}
+
+/** CR-146: a lit chest node whose gift was never claimed - derived from
+ *  persisted state like `pendingGiftStickerIds` so leaving the summary
+ *  unclaimed re-offers the chest on the next surface. */
+export function pendingTrailChest(gradeId: string): number | null {
+  const state = load();
+  const granted = state.grantedObjectives ?? {};
+  const trail = state.trail?.[gradeId];
+  if (!trail) return null;
+  /* epoch>0 means a previous lap lit every chest node - any chest whose
+     objective is still ungranted stays claimable. */
+  const nodesToCheck = trail.epoch > 0
+    ? [...TRAIL_CHEST_NODES]
+    : TRAIL_CHEST_NODES.filter((n) => n <= trail.lit);
+  return nodesToCheck.find((n) => !granted[`trail:${gradeId}:${n}`]) ?? null;
+}
+
+/** CR-146: trail snapshot for the launchpad lantern strip. */
+export interface TrailSnapshot {
+  lit: number;
+  stars: number[];
+  epoch: number;
+  /** Next node to light (1-based); 0 when the lap is complete. */
+  next: number;
+}
+
+export function trailSnapshot(gradeId: string): TrailSnapshot {
+  const t = load().trail?.[gradeId];
+  const lit = Math.min(t?.lit ?? 0, TRAIL_NODES);
+  return { lit, stars: t?.stars ?? [], epoch: t?.epoch ?? 0, next: lit >= TRAIL_NODES ? 0 : lit + 1 };
+}
+
+/** CR-146: star shop - child picks ONE unowned item for SHOP_ITEM_STARS.
+ *  Refuses when stars are short or the item is already owned / invalid.
+ *  Grade stars stay untouched (achievement record); totalStars is the
+ *  spendable currency. */
+export function spendStarsForHomeItem(itemId: string): { item: (typeof HOME_ITEMS)[number] } | null {
+  const state = load();
+  if (state.totalStars < SHOP_ITEM_STARS) return null;
+  const item = HOME_ITEMS.find((i) => i.id === itemId);
+  if (!item || (state.homeItems ?? []).includes(itemId)) return null;
+  state.totalStars -= SHOP_ITEM_STARS;
+  (state.homeItems ??= []).push(itemId);
+  state.homeItems = state.homeItems.slice(-HOME_ITEMS_CAP);
+  persist(state);
+  return { item };
 }
 
 export interface HomeItemResult {
