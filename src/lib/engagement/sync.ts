@@ -13,6 +13,7 @@ import {
   subscribe,
   TRAIL_NODES,
   normalizeTrail,
+  safeTs,
   /* r234/r236: caps on sanitized lap counts + stored event ids - real
      play is bounded and a hostile blob must not smuggle an absurd
      epoch or megabytes of fake ids. */
@@ -246,10 +247,13 @@ export function mergeEngagement(
               for (const ev of [...a.events, ...b.events]) {
                 const prev = byId.get(ev.id);
                 /* Same event both sides: max stars + MIN defined ts -
-                   commutative regardless of argument order (r234). */
-                if (!prev) byId.set(ev.id, ev);
+                   commutative regardless of argument order (r234), and
+                   only finite ts merge so malformed values cannot
+                   produce NaN (r238). */
+                const ets = safeTs(ev.ts);
+                if (!prev) byId.set(ev.id, { id: ev.id, stars: ev.stars, ts: ets });
                 else {
-                  const ts = prev.ts === undefined ? ev.ts : ev.ts === undefined ? prev.ts : Math.min(prev.ts, ev.ts);
+                  const ts = prev.ts === undefined ? ets : ets === undefined ? prev.ts : Math.min(prev.ts, ets);
                   byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts });
                 }
               }

@@ -100,6 +100,15 @@ and sanitize.
    change merged order. `normalizeTrail` dedupe now matches
    `mergeEngagement`: max stars + min-defined ts.
 
+### r238 fixes
+
+1. **[minor] `Number("5")` passed as a lap claim** - safeLapCount now
+   requires `typeof v === 'number'`; numeric strings are malformed
+   data, not claims.
+2. **[minor] Malformed ts could NaN-poison ordering** - `safeTs` admits
+   only finite numbers in both normalize and merge dedupe paths, so
+   `Math.min` never yields NaN.
+
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
   across laps (`trail:<grade>:<node>` granted once ever - pool exhausts
   after ~8 laps as designed).

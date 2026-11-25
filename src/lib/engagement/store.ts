@@ -569,11 +569,19 @@ export interface NormalizedTrail {
   events: { id: string; stars: number; ts?: number }[];
 }
 
-/** CR-146 r237: coerce a stored lap count - localStorage is untrusted
- *  so strings/NaN/negatives become 0, absurd values clamp to the cap. */
+/** CR-146 r237/r238: validate a stored lap count - only genuine
+ *  numbers pass (a string `"5"` is malformed data, not a claim),
+ *  negatives/NaN become 0, absurd values clamp to the cap. */
 function safeLapCount(v: unknown): number {
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? Math.min(Math.trunc(n), TRAIL_DONE_CAP) : 0;
+  return typeof v === 'number' && Number.isFinite(v) && v > 0
+    ? Math.min(Math.trunc(v), TRAIL_DONE_CAP)
+    : 0;
+}
+
+/** CR-146 r238: a stored event ts must be a finite number - anything
+ *  else is undefined so Math.min can never produce NaN. */
+export function safeTs(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 }
 
 /** CR-146 r236: normalize ANY persisted shape to {base, realEvents}.
@@ -589,15 +597,16 @@ export function normalizeTrail(t: TrailState | undefined): NormalizedTrail {
   else raw.push(...(t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s })));
   const byId = new Map<string, { id: string; stars: number; ts?: number }>();
   for (const ev of raw) {
-    /* r237: same dedupe rule as mergeEngagement - max stars + min
-       defined ts, so array order inside one blob cannot change the
-       canonical order downstream. */
+    /* r237/r238: same dedupe rule as mergeEngagement - max stars + min
+       defined ts, and only finite numeric ts count as defined so a
+       malformed value cannot poison ordering. */
+    const ts = safeTs(ev.ts);
     const prev = byId.get(ev.id);
     if (!prev) {
-      byId.set(ev.id, ev);
+      byId.set(ev.id, { id: ev.id, stars: ev.stars, ts });
     } else {
-      const ts = prev.ts === undefined ? ev.ts : ev.ts === undefined ? prev.ts : Math.min(prev.ts, ev.ts);
-      byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts });
+      const mts = prev.ts === undefined ? ts : ts === undefined ? prev.ts : Math.min(prev.ts, ts);
+      byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts: mts });
     }
   }
   let pads = 0;
