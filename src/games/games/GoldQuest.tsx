@@ -62,7 +62,8 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
+    /* CR-148 r244: hearts-out mid-run reports presented rounds only. */
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect, attempted: Math.min(round + 1, rounds.length), wrong: wrongRef.current });
   };
 
   const advance = (newCorrect: number) => {
