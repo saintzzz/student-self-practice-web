@@ -14,7 +14,7 @@ function buildTiles(pairs: readonly PairMatchingPair[], seed: string): PicturePa
   const raw: PairMatchingTile[] = [];
   pairs.forEach((pair, pairIndex) => {
     raw.push({ pairIndex: pairIndex as 0 | 1 | 2 | 3, tileType: 'word', label: pair.word });
-    raw.push({ pairIndex: pairIndex as 0 | 1 | 2 | 3, tileType: 'picture', label: pair.emoji });
+    raw.push({ pairIndex: pairIndex as 0 | 1 | 2 | 3, tileType: 'picture', label: pair.emoji, wordId: pair.wordId });
   });
 
   const order = seededShuffleIndices(TILES_PER_BOARD, `${seed}-tiles`);

@@ -453,6 +453,21 @@ exception surface (paper reports). No theme switch.
   generated art = hero/mascot/collectible/bank visuals. Neither is the
   sole carrier of state (earned vs locked stickers also differ by
   `???`/name + dimming; exam answered cells carry a check icon + text).
+- **All-or-nothing art law (CR-144/145):** when a question shows a SET of
+  visuals (option tiles, pair-matching board, game choice fields), every
+  member renders in the same family. One missing `getWordVisual`/
+  `COUNTING_ART` entry OR one `onImageError` drops the whole group to the
+  emoji chain - a half-art board is worse than no art (group failure
+  state is the mechanism, same as `ListeningImageChoiceQuestion`).
+- **Single emoji render path (CR-145):** every kid-facing emoji goes
+  through `EmojiVisual` (Twemoji/svg/lottie chain) - raw emoji literals
+  in JSX render in the OS font, a different color/line weight per device.
+  The "Nghe chậm" 🐢 lives in `PlaySlowButton` (`ListenButtons.tsx`),
+  never re-copy it.
+- **Counting art:** `COUNTING_ART["<word-slug>|<count>"]` maps to bespoke
+  N-object images (`/images/counting/`). The art already contains N
+  objects, so it always renders with `count=1` (`count>1` hard-forces
+  svg mode in `EmojiVisual`).
 
 ## 9. Image & asset rules
 

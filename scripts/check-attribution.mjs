@@ -216,10 +216,21 @@ async function main() {
     check(r.license === 'cc0' || !!r.creator, `image ${f}: "by" license requires a creator`);
     check(wordIds.has(wordId), `image ${f}: wordId not in ALL_WORDS`);
   }
+  // CR-145 (F-08 dedupe): a record may point at either its own
+  // images/vocab file or the shared images/concepts twin (identical
+  // bytes - the vocab duplicate was removed). The declared file must
+  // exist in whichever directory it names.
+  const conceptFiles = await ls(path.join(PUBLIC_DIR, 'images/concepts'));
   for (const r of images) {
-    check(imageFiles.includes(path.basename(r.file ?? '')), `attribution record without file: ${r.wordId} -> ${r.file}`);
+    const rel = String(r.file ?? '');
+    const inVocab = rel.startsWith('/images/vocab/');
+    const inConcepts = rel.startsWith('/images/concepts/');
+    check(inVocab || inConcepts, `attribution ${r.wordId}: file must be /images/vocab/ or /images/concepts/...`);
+    const exists =
+      (inVocab && imageFiles.includes(path.basename(rel))) ||
+      (inConcepts && conceptFiles.includes(path.basename(rel)));
+    check(exists, `attribution record without file: ${r.wordId} -> ${r.file}`);
     check(wordIds.has(r.wordId), `attribution record wordId not in ALL_WORDS: ${r.wordId}`);
-    check(String(r.file).startsWith('/images/vocab/'), `attribution ${r.wordId}: file must be /images/vocab/...`);
     for (const field of REQUIRED_IMAGE_FIELDS) {
       check(field in r, `attribution ${r.wordId}: missing field "${field}"`);
     }

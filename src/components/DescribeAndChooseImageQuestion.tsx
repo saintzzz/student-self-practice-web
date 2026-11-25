@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
-import type { DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
+import { useEffect, useRef, useState } from 'react';
+import type { CountingImageOption, DescribeAndChooseImageQuestion as DescribeAndChooseImageQuestionType } from '../types';
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
+import { COUNTING_ART } from '../lib/content/countingArt';
 import { speakSentence } from '../lib/speech';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import AudioPlaybackWarning from './AudioPlaybackWarning';
@@ -14,6 +15,13 @@ import ListenButtons from './ListenButtons';
 import QuestionBanner from './QuestionBanner';
 
 const INSTRUCTION = 'Nghe hoặc đọc câu rồi chọn hình đúng nhé!';
+
+/* CR-145 (art audit F-04): bespoke "N objects in one image" art for the
+   count options, same lookup as CountingImageQuestion. */
+function countingArtUrl(option: CountingImageOption): string | undefined {
+  const slug = option.word.trim().toLowerCase().replace(/\s+/g, '-');
+  return COUNTING_ART[`${slug}|${option.count}`];
+}
 
 interface DescribeAndChooseImageQuestionProps {
   question: DescribeAndChooseImageQuestionType;
@@ -52,6 +60,10 @@ export default function DescribeAndChooseImageQuestion({
   const { density } = useViewer();
   const demo = useDemoHint('describe-and-choose-image');
   const gridRef = useRef<HTMLDivElement>(null);
+  /* CR-145: all-or-nothing counting art - one missing/failed asset drops
+     the whole option set back to repeated emoji. */
+  const [artFailed, setArtFailed] = useState(false);
+  const optionArt = !artFailed && question.options.every(countingArtUrl);
 
   return (
     <div>
@@ -78,7 +90,12 @@ export default function DescribeAndChooseImageQuestion({
           >
             <span className="text-base font-semibold">{getOptionLabelPrefix(index, selectedIndex, question.correctIndex)}</span>
             <span aria-hidden="true" className={`text-4xl sm:text-6xl leading-relaxed ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
-              <EmojiVisual emoji={option.emoji} count={option.count} />
+              <EmojiVisual
+                emoji={option.emoji}
+                count={optionArt ? 1 : option.count}
+                imageUrl={optionArt ? countingArtUrl(option) : undefined}
+                onImageError={() => setArtFailed(true)}
+              />
             </span>
           </PressableOptionButton>
         ))}

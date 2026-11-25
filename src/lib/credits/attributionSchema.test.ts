@@ -74,7 +74,7 @@ describe('public/attribution.json schema (PRD 9.2, AC-4.9)', () => {
       expect(img.reviewedBy).toBeTruthy();
       expect(img.reviewedAt).toBeTruthy();
       expect(wordIds.has(img.wordId)).toBe(true);
-      expect(img.file).toMatch(/^\/images\/vocab\//);
+      expect(img.file).toMatch(/^\/images\/(vocab|concepts)\//);
       expect(existsSync(path.join(PUBLIC_DIR, img.file))).toBe(true);
       expect(img.modified).toBe(true);
     }

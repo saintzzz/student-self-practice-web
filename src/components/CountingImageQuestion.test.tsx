@@ -88,4 +88,42 @@ describe('CountingImageQuestion', () => {
     expect(screen.getByTestId('option-2')).toBeDisabled();
     expect(screen.getByTestId('option-3')).toBeDisabled();
   });
+
+  it('CR-145: prompt shows bespoke counting art when the asset exists (cat|4)', () => {
+    render(
+      <CountingImageQuestion
+        question={{
+          ...IMAGE_TO_COUNT_QUESTION,
+          prompt: { word: 'cat', plural: 'cats', emoji: '🐱', count: 4 },
+        }}
+        selectedIndex={null}
+        onSelectOption={vi.fn()}
+      />,
+    );
+
+    const visual = document.querySelector('[data-emoji-mode="image"]');
+    expect(visual).not.toBeNull();
+    expect(visual?.querySelector('img')?.getAttribute('src')).toContain('/images/counting/');
+  });
+
+  it('CR-145: options stay emoji when any option lacks counting art (all-or-nothing)', () => {
+    render(
+      <CountingImageQuestion
+        question={{
+          ...COUNT_TO_IMAGE_QUESTION,
+          options: [
+            { word: 'cat', plural: 'cats', emoji: '🐱', count: 4 }, // cat|4 art exists
+            { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 }, // no art
+            { word: 'dog', plural: 'dogs', emoji: '🐶', count: 2 }, // dog|2 art exists
+            { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 }, // no art
+          ],
+        }}
+        selectedIndex={null}
+        onSelectOption={vi.fn()}
+      />,
+    );
+
+    // 2 of 4 options have art - the whole set must still fall back to emoji.
+    expect(document.querySelector('[data-emoji-mode="image"]')).toBeNull();
+  });
 });

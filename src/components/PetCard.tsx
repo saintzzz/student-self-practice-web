@@ -13,6 +13,7 @@ import { CARD_DAY, BTN_REWARD_EARNED, ROW_DAY } from '../lib/ui/tokens';
 import { usePressRelease } from '../hooks/usePressRelease';
 import PressableOptionButton from './PressableOptionButton';
 import { IconParty, IconPaw } from './icons';
+import { EmojiVisual } from './EmojiVisual';
 
 /**
  * CR-36: companion pet on the grade home screen. Every correct answer in
@@ -26,7 +27,7 @@ import { IconParty, IconPaw } from './icons';
  *  stage image would pin the emoji forever. */
 function PetImg({ src, alt, size, emoji }: { src: string; alt: string; size: number; emoji: string }) {
   const [failed, setFailed] = useState(false);
-  if (failed) return <span className="text-4xl">{emoji}</span>;
+  if (failed) return <span className="text-4xl"><EmojiVisual emoji={emoji} variant="block" /></span>;
   return (
     <img
       src={src}

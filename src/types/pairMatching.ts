@@ -28,6 +28,9 @@ export interface PairMatchingTile {
   pairIndex: 0 | 1 | 2 | 3;
   tileType: PairTileType;
   label: string;
+  /** CR-145 (F-04): picture tiles carry the pair's word id so the board
+      can resolve curated art through getWordVisual. */
+  wordId?: string;
 }
 
 /**

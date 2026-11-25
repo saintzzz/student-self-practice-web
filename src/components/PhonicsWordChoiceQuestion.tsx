@@ -13,6 +13,7 @@ import AudioPlaybackWarning from './AudioPlaybackWarning';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import PressableOptionButton from './PressableOptionButton';
 import { AUDIO_BUTTON_CLASSNAME } from './actionButtonStyle';
+import { PlaySlowButton } from './ListenButtons';
 import QuestionBanner from './QuestionBanner';
 import { IconRefresh, IconSpeaker } from './icons';
 
@@ -97,16 +98,7 @@ export default function PhonicsWordChoiceQuestion({
         >
           {hasPlayed ? <><IconRefresh size={18} /> Nghe lại</> : <><IconSpeaker size={18} /> Nghe</>}
         </button>
-        {hasPlayed && (
-          <button
-            type="button"
-            data-testid="play-slow-button"
-            onClick={playSlow}
-            className="inline-flex min-h-[56px] items-center justify-center rounded-full bg-slate-700/80 px-5 py-2 text-lg font-bold text-sky-200 ring-1 ring-sky-400/40 transition hover:bg-slate-600/80 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus:ring-4 focus:ring-sky-400"
-          >
-            🐢 Nghe chậm
-          </button>
-        )}
+        {hasPlayed && <PlaySlowButton playSlow={playSlow} />}
       </div>
       {playbackFailed && <AudioPlaybackWarning />}
 

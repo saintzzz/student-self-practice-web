@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PicturePairMatchingQuestion as PicturePairMatchingQuestionType } from '../types';
 import { EmojiVisual } from './EmojiVisual';
+import { getWordVisual } from '../lib/emoji/wordVisual';
 import {
   MAX_PAIR_MATCHING_MISTAKES,
   clickPairMatchingTile,
@@ -73,6 +74,21 @@ export default function PicturePairMatchingQuestion({
 }: PicturePairMatchingQuestionProps) {
   const [state, setState] = useState(createPairMatchingBoardState);
   const hasSubmittedRef = useRef(false);
+  /* CR-145 (art audit F-04): picture tiles show curated vocab art -
+     all-or-nothing across the board so a missing/failed asset can never
+     leave a half-art half-emoji board (same law as the game fields). */
+  const [artFailed, setArtFailed] = useState(false);
+  const boardArt =
+    !artFailed &&
+    question.tiles.every(
+      (t) =>
+        t.tileType !== 'picture' ||
+        (t.wordId !== undefined && getWordVisual(t.wordId)?.imageUrl !== undefined),
+    );
+  const tileArt = (tile: (typeof question.tiles)[number]) =>
+    boardArt && tile.tileType === 'picture' && tile.wordId
+      ? getWordVisual(tile.wordId)?.imageUrl
+      : undefined;
   const outcome = getPairMatchingOutcome(state);
   const viewer = useViewer();
   const demo = useDemoHint('picture-pair-matching');
@@ -92,7 +108,7 @@ export default function PicturePairMatchingQuestion({
       if (!tile) return null;
       return tile.tileType === 'picture' ? (
         <span aria-hidden="true" className={material.exhibitPaper}>
-          <EmojiVisual emoji={tile.label} />
+          <EmojiVisual emoji={tile.label} imageUrl={tileArt(tile)} />
         </span>
       ) : (
         tile.label
@@ -157,7 +173,11 @@ export default function PicturePairMatchingQuestion({
             >
               {tile.tileType === 'picture' ? (
                 <span aria-hidden="true" className={material.exhibitPaper}>
-                  <EmojiVisual emoji={tile.label} />
+                  <EmojiVisual
+                    emoji={tile.label}
+                    imageUrl={tileArt(tile)}
+                    onImageError={() => setArtFailed(true)}
+                  />
                 </span>
               ) : (
                 tile.label

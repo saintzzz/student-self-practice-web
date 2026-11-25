@@ -1900,7 +1900,7 @@ function LiveStandingsStrip({
         >
           {i === 0 && <IconTrophy size={12} className="text-amber-300" />}
           <span className="max-w-24 truncate">{r.name}</span>
-          <span className="tabular-nums text-slate-400">{r.finished ? '🏁' : `c${r.q}/${total}`}</span>
+          <span className="tabular-nums text-slate-400">{r.finished ? <EmojiVisual emoji="🏁" variant="inline" /> : `c${r.q}/${total}`}</span>
           <span className="tabular-nums text-amber-300">{r.score ?? 0}đ</span>
         </span>
       ))}

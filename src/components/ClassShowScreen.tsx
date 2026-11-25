@@ -16,6 +16,7 @@ import {
 import { playGentleWrong, playSfx } from '../lib/sfx';
 import Confetti from './celebrations/Confetti';
 import { IconCheck, IconPlay, IconStar, IconTrophy, IconX } from './icons';
+import { EmojiVisual } from './EmojiVisual';
 import {
   CARD, CHIP_EMERALD, CHIP_GOLD, CHIP_SKY, CTA_GOLD_XL,
   H2, NAV_PILL_SM, SCREEN_ENTER, TYPE_SECTION_NAVY,
@@ -273,7 +274,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
         <button type="button" onClick={handleBack} className={NAV_PILL_SM} data-testid="class-show-back">
           ← Quay lại
         </button>
-        <span className={CHIP_GOLD}>🎤 Sân khấu lớp</span>
+        <span className={CHIP_GOLD}><EmojiVisual emoji="🎤" variant="inline" /> Sân khấu lớp</span>
       </div>
 
       {phase === 'setup' || phase === 'loading' ? (
@@ -308,7 +309,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
                 <button key={p.id} type="button" data-testid={`show-program-${p.id}`}
                   onClick={() => setProgramId(p.id)}
                   className={`rounded-full px-5 py-2.5 text-base font-bold ring-1 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 ${programId === p.id ? 'bg-amber-300 text-amber-950 ring-amber-200' : 'bg-white/10 text-amber-100 ring-white/15 hover:bg-white/15'}`}>
-                  {p.emoji} {p.name}
+                  <EmojiVisual emoji={p.emoji} variant="inline" /> {p.name}
                 </button>
               ))}
             </div>
@@ -499,7 +500,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
             {players.map((p, i) => (
               <div key={p.name} data-testid={`show-player-${i}`}
                 className={`flex items-center gap-3 rounded-xl px-3 py-1.5 transition ${i === picked && phase !== 'spotlight' ? 'bg-amber-400/15 ring-1 ring-amber-300/40' : ''}`}>
-                <span className="w-8 shrink-0 text-center text-xl">{AVATARS[i % AVATARS.length]}</span>
+                <span className="w-8 shrink-0 text-center text-xl"><EmojiVisual emoji={AVATARS[i % AVATARS.length]} variant="inline" /></span>
                 <span className={`w-32 shrink-0 truncate text-base font-bold ${i === picked ? 'text-amber-300' : 'text-amber-100'}`}>{p.name}</span>
                 <div className="h-4 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-[width] duration-500 motion-reduce:transition-none"
@@ -526,7 +527,7 @@ export default function ClassShowScreen({ onBack, initialGradeId }: { onBack: ()
               const gradient = real === 0 ? 'from-amber-300 to-amber-600' : real === 1 ? 'from-slate-300 to-slate-500' : 'from-orange-300 to-orange-600';
               return (
                 <div key={player.name} data-testid={`show-podium-${real}`} className="flex flex-col items-center">
-                  <span className="mb-2 text-4xl">{real === 0 ? '🥇' : real === 1 ? '🥈' : '🥉'}</span>
+                  <span className="mb-2 text-4xl"><EmojiVisual emoji={real === 0 ? '🥇' : real === 1 ? '🥈' : '🥉'} variant="block" /></span>
                   <span className="mb-1 flex items-center gap-1 font-display text-2xl font-extrabold text-amber-200">
                     <IconStar size={18} /> {player.score}
                   </span>

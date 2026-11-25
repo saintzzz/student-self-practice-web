@@ -1,5 +1,6 @@
 import { CONTINUE_BUTTON_CLASSNAME } from './actionButtonStyle';
 import { IconArrowRight } from './icons';
+import { EmojiVisual } from './EmojiVisual';
 import { CARD, SCREEN_ENTER } from '../lib/ui/tokens';
 
 interface RoundStubProps {
@@ -19,7 +20,7 @@ export default function RoundStub({ titleVi, onNextRound }: RoundStubProps) {
   return (
     <div className={`${CARD} ${SCREEN_ENTER} py-6 text-center`}>
       <div className="mb-3 text-6xl" aria-hidden="true">
-        🚧
+        <EmojiVisual emoji="🚧" variant="block" />
       </div>
       <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-white">{titleVi}</h2>
       <p className="mt-3 text-xl font-semibold text-amber-200">

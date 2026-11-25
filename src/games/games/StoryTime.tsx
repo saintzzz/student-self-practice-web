@@ -4,6 +4,7 @@ import { usePronunciationRecording } from '../../hooks/usePronunciationRecording
 import { scorePronunciationAttempt } from '../../lib/rounds/pronunciationScoring';
 import { gameVerdictSfx, GameRoundDots } from '../mechanics';
 import { IconMic, IconSpeaker } from '../../components/icons';
+import { EmojiVisual } from '../../components/EmojiVisual';
 import { storiesForGrade, type Story } from '../stories';
 import type { GameProps } from '../types';
 
@@ -248,7 +249,7 @@ export default function StoryTime({ grade, seed, level = 1, onEnd }: GameProps) 
             onClick={() => pick(st)}
             className="flex items-center gap-4 rounded-3xl border border-white/10 bg-navy-800/80 px-5 py-4 text-left shadow-lg transition hover:-translate-y-0.5 hover:border-amber-300/50 focus:outline-none focus:ring-4 focus:ring-amber-400"
           >
-            <span className="text-4xl" aria-hidden>{st.emoji}</span>
+            <span className="text-4xl" aria-hidden><EmojiVisual emoji={st.emoji} variant="block" /></span>
             <span className="min-w-0">
               <span className="block truncate text-base font-extrabold text-amber-100">{st.titleVi}</span>
               <span className="block truncate text-sm font-semibold text-slate-300">{st.titleEn} · {st.sentences.length} câu</span>

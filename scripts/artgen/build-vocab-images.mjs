@@ -30,7 +30,8 @@ const records = (JSON.parse(readFileSync(ATTR, 'utf8')).images ?? [])
       r.reviewStatus === 'approved' &&
       typeof r.wordId === 'string' &&
       typeof r.file === 'string' &&
-      r.file.startsWith('/images/vocab/'),
+      // CR-145: deduped records point at the shared concepts twin.
+      (r.file.startsWith('/images/vocab/') || r.file.startsWith('/images/concepts/')),
   );
 
 if (publish) {

@@ -19,7 +19,7 @@ describe('getWordVisual (ADR-5)', () => {
       const visual = getWordVisual(w.id);
       if (w.imageUrl) {
         expect(visual?.imageUrl).toBe(w.imageUrl);
-        expect(visual?.imageUrl).toMatch(/^\/?images\/vocab\//);
+        expect(visual?.imageUrl).toMatch(/^\/?images\/(vocab|concepts)\//);
       } else {
         expect(visual?.imageUrl).toBeUndefined();
       }

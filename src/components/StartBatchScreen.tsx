@@ -359,7 +359,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         onClick={onStartClassShow}
         className="flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-fuchsia-100 to-sky-100 p-4 text-left ring-1 ring-fuchsia-300/70 transition hover:from-fuchsia-200 hover:to-sky-200 active:scale-[0.98]"
       >
-        <span className="text-3xl" aria-hidden>🎤</span>
+        <span className="text-3xl" aria-hidden><EmojiVisual emoji="🎤" variant="block" /></span>
         <span className="flex-1">
           <span className="block text-lg font-extrabold text-fuchsia-900">Sân khấu lớp</span>
           <span className="block text-sm font-semibold text-sky-700">Chiếu màn này - cả lớp thi trả lời, không cần thiết bị</span>
