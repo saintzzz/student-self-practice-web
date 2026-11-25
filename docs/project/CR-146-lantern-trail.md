@@ -56,6 +56,20 @@ and sanitize.
    Events now carry `ts`; canonical order is `(ts, id)` - convergent
    AND the displayed lap reflects the newest completions.
 
+### r234 fixes
+
+1. **[major] Pad double-count + unbounded epoch DoS** - synthetic
+   `pad:*` events double-counted history across stale devices (epoch4 +
+   ids 0-47 merged with epoch5 + ids 12-59 -> 72 instead of 60), and a
+   remote `epoch:1e12` froze the browser materializing pads. `pad:*`
+   events are REMOVED: `done` is a max-merged lap COUNT kept separate
+   from the real-id event set, so `epoch = max(done, floor(len/12))`
+   converges without materializing anything. Sanitize clamps
+   `done`/`epoch` to TRAIL_DONE_CAP (10000) instead of looping pads.
+2. **[minor] ts merge not commutative** - `prev.ts ?? ev.ts` kept
+   whichever came first; reversed inputs produced different ts. Merge
+   now takes min-defined ts.
+
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
   across laps (`trail:<grade>:<node>` granted once ever - pool exhausts
   after ~8 laps as designed).
