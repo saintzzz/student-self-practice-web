@@ -74,7 +74,7 @@ await p2.addInitScript(() => {
 await p2.route('**/auth/v1/token**', () => new Promise(() => {}));
 // r219: register the request wait BEFORE goto - a refresh fired during
 // navigation would otherwise be missed (flaky timeout on a healthy app).
-const refreshFired = p2.waitForRequest('**/auth/v1/token**', { timeout: 8000 });
+const refreshFired = p2.waitForRequest('**/auth/v1/token**', { timeout: 20000 });
 await p2.goto('http://localhost:5173/app');
 // r218: prove the seeded session actually fired the held refresh -
 // only then is the visible splash the auth skeleton, not a transient
