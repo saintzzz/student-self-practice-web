@@ -20,6 +20,24 @@ import { COUNTING_ART } from './countingArt';
 
 export type CountingArtMode = 'single' | 'repeat';
 
+/* r226: repeat tier assumes one object per concept image. Words whose
+   audited art depicts MULTIPLE of the counted unit are excluded (the
+   group falls back to emoji instead of lying about the count). 'team',
+   'forest', 'nest', 'couple' stay: those depict ONE team/forest/nest/
+   couple - the named unit matches the picture. Entries are matched on
+   wordId AND lowercased word text (legacy bank rows carry no wordId).
+   Audited r226: 'grape' shows a ~15-grape bunch - "3 grapes" would render
+   3 bunches. Regenerate a single-grape asset via the artgen loop, then
+   remove the entry (see docs/project/CR-145-art-wiring-dedupe.md). */
+export const REPEAT_ART_EXCLUDE: ReadonlySet<string> = new Set(['grape']);
+
+function repeatExcluded(option: Pick<CountingImageOption, 'word' | 'wordId'>): boolean {
+  return (
+    (option.wordId !== undefined && REPEAT_ART_EXCLUDE.has(option.wordId)) ||
+    REPEAT_ART_EXCLUDE.has(option.word.trim().toLowerCase())
+  );
+}
+
 export function countingArtKey(option: Pick<CountingImageOption, 'word' | 'count'>): string {
   const slug = option.word.trim().toLowerCase().replace(/\s+/g, '-');
   return `${slug}|${option.count}`;
@@ -50,6 +68,7 @@ export function resolveCountingGroupArt(
     return 'single';
   }
   if (options.every((o) => {
+    if (repeatExcluded(o)) return false;
     const id = wordIdFor(o);
     return id !== undefined && getWordVisual(id)?.imageUrl !== undefined;
   })) {

@@ -63,6 +63,19 @@ vocab<->concepts duplicate set.
   3,130/3,130 image-to-count prompts** - pinned by
   `countingArtResolve.test.ts`.
 
+### r226 fixes (external review round 226)
+- **Cardinality guard:** repeat tier assumes one counted unit per image.
+  Visual audit of the risky subset (61 name-heuristic suspects + generic
+  sample) found exactly one breaker: `grape` shows a ~15-grape bunch, so
+  "3 grapes" would render 3 bunches. `REPEAT_ART_EXCLUDE` drops it from
+  repeat (wordId + word-text match for legacy rows); groups containing it
+  fall back to emoji. Words depicting the named unit stay (`team` = one
+  team, `forest` = one forest, `nest` = one nest). Coverage post-guard:
+  3,114/3,130 count-to-image, 3,729/3,749 describe, 3,125/3,130 prompts.
+- **Debt:** regenerate `concept-grape` as a single grape through the
+  artgen loop (needs the subscription browser pipeline - no
+  `GEMINI_API_KEY` locally), then remove the exclusion entry.
+
 ## Files
 
 - `src/lib/content/countingArt.ts` (generated manifest, 100 entries)

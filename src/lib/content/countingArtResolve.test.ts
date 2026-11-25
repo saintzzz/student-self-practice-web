@@ -47,6 +47,18 @@ describe('resolveCountingGroupArt (CR-145 r225)', () => {
     expect(resolveCountingGroupArt([])).toBeNull();
   });
 
+  it('r226: excludes multi-object depictions from repeat (grape = a bunch, not one grape)', () => {
+    /* One grape option anywhere in the group drops the repeat tier. */
+    const withGrapeId = [opt('cat', 4, 'cat'), opt('grape', 3, 'grape'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
+    expect(resolveCountingGroupArt(withGrapeId)).toBeNull();
+    /* Legacy rows resolve exclusion by word text too. */
+    const withGrapeText = [opt('cat', 4), opt('grape', 3), opt('dog', 2), opt('apple', 5)];
+    expect(resolveCountingGroupArt(withGrapeText)).toBeNull();
+    /* A same-unit depiction (one nest containing eggs = one nest) stays. */
+    const withNest = [opt('cat', 4, 'cat'), opt('nest', 3, 'nest'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
+    expect(resolveCountingGroupArt(withNest)).toBe('repeat');
+  });
+
   it('countingOptionArtUrl serves the bespoke asset in single mode, concept art in repeat mode', () => {
     const cat4 = opt('cat', 4, 'cat');
     expect(countingOptionArtUrl(cat4, 'single')).toBe('/images/counting/g1/count-g1-cat-4-889749.webp');
