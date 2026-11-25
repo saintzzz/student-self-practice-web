@@ -73,6 +73,10 @@ await p2.addInitScript(() => {
 });
 await p2.route('**/auth/v1/token**', () => new Promise(() => {}));
 await p2.goto('http://localhost:5173/app');
+// r218: prove the seeded session actually fired the held refresh -
+// only then is the visible splash the auth skeleton, not a transient
+// lazy-route fallback.
+await p2.waitForRequest('**/auth/v1/token**', { timeout: 8000 });
 await p2.locator('text=Đang tải...').waitFor({ timeout: 8000 });
 await p2.screenshot({ path: `${OUT}/tablet-00-splash.png` });
 await p2.close();
