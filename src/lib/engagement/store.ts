@@ -78,6 +78,9 @@ export interface EngagementState {
   /** CR-146: lantern trail per grade - 12 nodes lit by completed
    *  batches; chest at 4/8/12, prestige lap at 12. */
   trail?: Record<string, TrailState>;
+  /** CR-146: lifetime stars spent in the shop - monotonic so sync
+   *  merges max() without refunding purchases (external r229). */
+  spentStars?: number;
   /** kids-UX: forward-compat marker - future clients detect and preserve
    *  fields they do not know. Does not protect pre-R0 clients. */
   schemaVersion?: number;
@@ -149,10 +152,16 @@ const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
 export interface TrailState {
   /** Prestige laps completed - increments each time all 12 nodes lit. */
   epoch: number;
-  /** Nodes lit in the current lap (0..TRAIL_NODES). */
-  lit: number;
-  /** Stars earned by the batch that lit each node this lap. */
-  stars: number[];
+  /** Ordered light events for the current lap (<=TRAIL_NODES). Each
+   *  entry records the objective id that lit the node + the batch's
+   *  stars, so a sync merge can UNION lights by id instead of max-ing
+   *  positional counters - two devices that each completed different
+   *  batches keep both lights (external r229). */
+  lights: { id: string; stars: number }[];
+  /** Legacy fields from the first CR-146 build - reads normalize via
+   *  trailLights(); writes always use `lights`. */
+  lit?: number;
+  stars?: number[];
 }
 
 /** CR-146: spendable-star cost of one chosen home item in the shop. */
@@ -528,23 +537,35 @@ export interface BatchAwardResult {
   trailChestNode?: number;
 }
 
+/** CR-146: normalize a trail entry to the lights-event model - legacy
+ *  blobs (positional lit/stars) convert to synthetic ids that can never
+ *  collide with real objective ids. */
+function trailLights(t: TrailState | undefined): { id: string; stars: number }[] {
+  if (!t) return [];
+  if (Array.isArray(t.lights)) return t.lights;
+  return (t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
+}
+
 /** CR-146: one completed batch lights one trail node; nodes 4/8/12 are
  *  chests and node 12 completes the lap (sticker + epoch++ + relight). */
-function advanceTrail(state: EngagementState, gradeId: string, batchStars: number, newly: Set<string>): { litNode: number; chestNode?: number } {
-  const trail = (state.trail ??= {})[gradeId] ?? { epoch: 0, lit: 0, stars: [] };
+function advanceTrail(state: EngagementState, gradeId: string, batchStars: number, objectiveId: string | undefined, newly: Set<string>): { litNode: number; chestNode?: number } {
+  const trail = (state.trail ??= {})[gradeId] ?? { epoch: 0, lights: [] };
+  if (!Array.isArray(trail.lights)) trail.lights = trailLights(trail);
   state.trail[gradeId] = trail;
-  const litNode = trail.lit + 1;
-  trail.stars.push(Math.max(0, Math.min(3, batchStars)));
+  const litNode = trail.lights.length + 1;
+  trail.lights.push({
+    id: objectiveId ?? `anon:${Math.random().toString(36).slice(2, 10)}`,
+    stars: Math.max(0, Math.min(3, batchStars)),
+  });
+  delete trail.lit;
+  delete trail.stars;
   const land = TRAIL_STICKER_LAND[gradeId];
   let chestNode: number | undefined;
   if (litNode === TRAIL_HALF_NODE && land) awardSticker(state, `trail-half-${land.key}`, newly);
   if (litNode >= TRAIL_NODES) {
     if (land) awardSticker(state, `trail-full-${land.key}`, newly);
     trail.epoch += 1;
-    trail.lit = 0;
-    trail.stars = [];
-  } else {
-    trail.lit = litNode;
+    trail.lights = [];
   }
   if ((TRAIL_CHEST_NODES as readonly number[]).includes(litNode)) chestNode = litNode;
   return { litNode, chestNode };
@@ -568,7 +589,7 @@ export function recordBatchResult(gradeId: string, objectiveId?: string, batchSt
   awardSticker(state, 'first-batch', newly);
   if (state.gradesPlayed.length >= 5) awardSticker(state, 'explorer', newly);
   if (state.totalStars >= 50) awardSticker(state, 'star-hoard', newly);
-  const { litNode, chestNode } = advanceTrail(state, gradeId, batchStars, newly);
+  const { litNode, chestNode } = advanceTrail(state, gradeId, batchStars, objectiveId, newly);
   if (objectiveId) grantObjective(state, objectiveId);
   persist(state);
   return {
@@ -642,7 +663,7 @@ export function pendingTrailChest(gradeId: string): number | null {
      objective is still ungranted stays claimable. */
   const nodesToCheck = trail.epoch > 0
     ? [...TRAIL_CHEST_NODES]
-    : TRAIL_CHEST_NODES.filter((n) => n <= trail.lit);
+    : TRAIL_CHEST_NODES.filter((n) => n <= trailLights(trail).length);
   return nodesToCheck.find((n) => !granted[`trail:${gradeId}:${n}`]) ?? null;
 }
 
@@ -657,20 +678,28 @@ export interface TrailSnapshot {
 
 export function trailSnapshot(gradeId: string): TrailSnapshot {
   const t = load().trail?.[gradeId];
-  const lit = Math.min(t?.lit ?? 0, TRAIL_NODES);
-  return { lit, stars: t?.stars ?? [], epoch: t?.epoch ?? 0, next: lit >= TRAIL_NODES ? 0 : lit + 1 };
+  const lights = trailLights(t);
+  const lit = Math.min(lights.length, TRAIL_NODES);
+  return { lit, stars: lights.map((l) => l.stars), epoch: t?.epoch ?? 0, next: lit >= TRAIL_NODES ? 0 : lit + 1 };
+}
+
+/** CR-146: spendable balance = lifetime earned minus lifetime spent.
+ *  totalStars stays the immutable achievement record; spending writes
+ *  the monotonic spentStars counter so a sync merge never refunds a
+ *  purchase (external r229). */
+export function spendableStars(): number {
+  const s = load();
+  return s.totalStars - (s.spentStars ?? 0);
 }
 
 /** CR-146: star shop - child picks ONE unowned item for SHOP_ITEM_STARS.
- *  Refuses when stars are short or the item is already owned / invalid.
- *  Grade stars stay untouched (achievement record); totalStars is the
- *  spendable currency. */
+ *  Refuses when stars are short or the item is already owned / invalid. */
 export function spendStarsForHomeItem(itemId: string): { item: (typeof HOME_ITEMS)[number] } | null {
   const state = load();
-  if (state.totalStars < SHOP_ITEM_STARS) return null;
+  if (state.totalStars - (state.spentStars ?? 0) < SHOP_ITEM_STARS) return null;
   const item = HOME_ITEMS.find((i) => i.id === itemId);
   if (!item || (state.homeItems ?? []).includes(itemId)) return null;
-  state.totalStars -= SHOP_ITEM_STARS;
+  state.spentStars = (state.spentStars ?? 0) + SHOP_ITEM_STARS;
   (state.homeItems ??= []).push(itemId);
   state.homeItems = state.homeItems.slice(-HOME_ITEMS_CAP);
   persist(state);

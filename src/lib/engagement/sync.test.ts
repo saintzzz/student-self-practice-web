@@ -124,19 +124,37 @@ describe('mergeEngagement - no progress is ever lost', () => {
   it('CR-146: trail + gameBest merge keeps the further lap and best stars', () => {
     const local = {
       ...base,
-      trail: { 'grade-1': { epoch: 1, lit: 3, stars: [2, 1, 3] } },
+      trail: { 'grade-1': { epoch: 1, lights: [{ id: 'a1', stars: 2 }, { id: 'a2', stars: 1 }, { id: 'a3', stars: 3 }] } },
       gameBest: { fish: 2, 'fish:L2': 1 },
+      spentStars: 25,
     };
     const remote = {
       ...base,
-      trail: { 'grade-1': { epoch: 0, lit: 9, stars: [3, 3, 3, 3, 3, 3, 3, 3, 3] }, 'grade-2': { epoch: 0, lit: 2, stars: [1, 0] } },
+      trail: {
+        'grade-1': { epoch: 0, lights: [{ id: 'b1', stars: 3 }, { id: 'b2', stars: 0 }] },
+        'grade-2': { epoch: 0, lights: [{ id: 'c1', stars: 1 }, { id: 'c2', stars: 0 }] },
+      },
       gameBest: { fish: 3, pop: 1 },
+      spentStars: 0,
     };
     const m = mergeEngagement(local, remote);
-    /* local is on lap 2 (epoch 1) - further than remote's mid-lap-1. */
-    expect(m.trail?.['grade-1']).toEqual({ epoch: 1, lit: 3, stars: [2, 1, 3] });
-    expect(m.trail?.['grade-2']).toEqual({ epoch: 0, lit: 2, stars: [1, 0] });
+    /* local is on lap 2 (epoch 1); remote's 2 unique lap-1 lights fold
+       into the merged lap - concurrent progress is never lost. */
+    expect(m.trail?.['grade-1']).toEqual({
+      epoch: 1,
+      lights: [{ id: 'a1', stars: 2 }, { id: 'a2', stars: 1 }, { id: 'a3', stars: 3 }, { id: 'b1', stars: 3 }, { id: 'b2', stars: 0 }],
+    });
+    expect(m.trail?.['grade-2']).toEqual({ epoch: 0, lights: [{ id: 'c1', stars: 1 }, { id: 'c2', stars: 0 }] });
     expect(m.gameBest).toEqual({ fish: 3, 'fish:L2': 1, pop: 1 });
+    expect(m.spentStars).toBe(25);
+  });
+
+  it('CR-146: same-lap concurrent lights union by objective id (r229)', () => {
+    const local = { ...base, trail: { 'grade-1': { epoch: 0, lights: [{ id: 'batch:x1', stars: 3 }, { id: 'batch:x2', stars: 1 }] } } };
+    const remote = { ...base, trail: { 'grade-1': { epoch: 0, lights: [{ id: 'batch:x2', stars: 1 }, { id: 'batch:y1', stars: 2 }] } } };
+    const m = mergeEngagement(local, remote);
+    /* x2 deduped; x1+x2+y1 = 3 lit nodes - no advancement lost. */
+    expect(m.trail?.['grade-1']?.lights.map((l) => l.id)).toEqual(['batch:x1', 'batch:x2', 'batch:y1']);
   });
 
   it('M1: a legit streak reset survives - newer day keeps its own count', () => {

@@ -27,9 +27,9 @@ unreachable beyond 2 gift stickers, stars have no sink.
 ```ts
 EngagementState.trail?: Record<gradeId, {
   epoch: number;      // prestige laps completed
-  lit: number;        // nodes lit this lap (0..12)
-  stars: number[];    // stars earned by the batch that lit each node
+  lights: { id: string; stars: number }[];  // <=12, unioned by objective id on merge
 }>
+EngagementState.spentStars?: number;  // monotonic spend counter
 ```
 
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
@@ -54,3 +54,25 @@ EngagementState.trail?: Record<gradeId, {
 - `HomeShelf` gains the "Doi qua" shop row.
 - `BatchSummary` passes batch stars into `recordBatchResult` and offers
   the trail chest via `GiftBoxPicker`.
+
+## External review
+
+### r229 fixes
+
+1. **[major] Star spends refunded by sync** - `totalStars` max-merge
+   would restore spent stars while keeping the item. Fix: `spentStars`
+   monotonic counter; spendable = `totalStars - spentStars`;
+   `spendableStars()` is the only balance read.
+2. **[major] Concurrent batches lost trail progress** - positional
+   `lit`/`stars` could not distinguish "same node lit twice" from
+   "different nodes". Trail is now an EVENT UNION: `lights[]` carries
+   the objective id per lit node; merge folds unique ids (full lap
+   rolls to epoch+1). Legacy `{lit,stars}` blobs normalize on read.
+   Also fixed the pre-existing `sanitizeRemote` gaps: `game:` objectives
+   and colon-keyed `giftGrants` were stripped on pull.
+3. **[minor] LandDecor mount-cache** - now subscribes to engagement
+   changes; a shop buy appears on the land without reload.
+4. **[minor] 8-slot cap hid items 9+** - daily rotation of the owned
+   pool cycles every item through the 8 slots.
+5. **[minor] HomeShelf stale after async sync** - subscribes to store;
+   balance + ownership refresh live.

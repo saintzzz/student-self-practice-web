@@ -222,8 +222,10 @@ export function mergeEngagement(
             return merged;
           })()
         : undefined,
-    /* CR-146: trail merge - further lap wins; same lap takes the deeper
-       node count and per-node best stars. */
+    /* CR-146 r229: trail merges as an EVENT UNION - each light carries
+       the objective id that lit it, so two devices that each completed
+       different batches keep both advancements. Folding a full lap
+       rolls into the next epoch. */
     trail:
       local.trail || remote.trail
         ? (() => {
@@ -231,21 +233,44 @@ export function mergeEngagement(
             for (const gid of new Set([...Object.keys(local.trail ?? {}), ...Object.keys(remote.trail ?? {})])) {
               const a = local.trail?.[gid];
               const b = remote.trail?.[gid];
-              const pick = !a ? b : !b ? a : a.epoch !== b.epoch ? (a.epoch > b.epoch ? a : b) : (a.lit >= b.lit ? a : b);
-              const other = pick === a ? b : a;
-              if (pick) {
-                merged[gid] = {
-                  epoch: pick.epoch,
-                  lit: pick.lit,
-                  stars: pick.stars.map((s, i) => Math.max(s, other?.epoch === pick.epoch ? other.stars[i] ?? 0 : 0)),
-                };
+              if (!a || !b) {
+                const only = a ?? b;
+                if (only) merged[gid] = { epoch: only.epoch, lights: normalizeLights(only) };
+                continue;
               }
+              const hi = a.epoch >= b.epoch ? a : b;
+              const lo = hi === a ? b : a;
+              merged[gid] = foldLights({ epoch: hi.epoch, lights: [...normalizeLights(hi)] }, normalizeLights(lo));
             }
             return merged;
           })()
         : undefined,
+    spentStars: Math.max(local.spentStars ?? 0, remote.spentStars ?? 0) || undefined,
     schemaVersion: Math.max(local.schemaVersion ?? 0, remote.schemaVersion ?? 0) || undefined,
   };
+}
+
+/** CR-146: legacy {lit, stars} entries become synthetic light ids. */
+function normalizeLights(t: { epoch: number; lights?: { id: string; stars: number }[]; lit?: number; stars?: number[] }): { id: string; stars: number }[] {
+  if (Array.isArray(t.lights)) return [...t.lights];
+  return (t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
+}
+
+/** CR-146: union light events by objective id; hitting TRAIL_NODES
+ *  completes a lap (epoch++ + fresh lights). */
+function foldLights(
+  base: { epoch: number; lights: { id: string; stars: number }[] },
+  incoming: { id: string; stars: number }[],
+): { epoch: number; lights: { id: string; stars: number }[] } {
+  for (const l of incoming) {
+    if (base.lights.some((x) => x.id === l.id)) continue;
+    base.lights.push(l);
+    if (base.lights.length >= TRAIL_NODES) {
+      base.epoch += 1;
+      base.lights = [];
+    }
+  }
+  return base;
 }
 
 // ---- r17 per-device counter merge ----------------------------------------
@@ -584,14 +609,25 @@ function sanitizeRemote(raw: unknown): EngagementState {
     const trail: NonNullable<EngagementState['trail']> = {};
     for (const [gid, t] of Object.entries(raw.trail)) {
       if (!isObj(t) || !/^[A-Za-z0-9_-]{1,40}$/.test(gid)) continue;
-      const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
-      const stars = Array.isArray(t.stars)
-        ? t.stars.slice(0, TRAIL_NODES).map((s) => Math.min(Math.max(Math.trunc(num(s)), 0), 3))
-        : [];
-      trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lit, stars: stars.slice(0, lit) };
+      let lights: { id: string; stars: number }[] = [];
+      if (Array.isArray(t.lights)) {
+        lights = t.lights
+          .filter((l): l is { id: string; stars: number } => isObj(l) && typeof l.id === 'string' && l.id.length <= 80)
+          .slice(0, TRAIL_NODES)
+          .map((l) => ({ id: l.id, stars: Math.min(Math.max(Math.trunc(num(l.stars)), 0), 3) }));
+      } else {
+        /* Legacy {lit, stars} shape from the first CR-146 build. */
+        const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
+        const stars = Array.isArray(t.stars)
+          ? t.stars.slice(0, TRAIL_NODES).map((s) => Math.min(Math.max(Math.trunc(num(s)), 0), 3))
+          : [];
+        lights = stars.slice(0, lit).map((s, i) => ({ id: `legacy:${i}`, stars: s }));
+      }
+      trail[gid] = { epoch: Math.max(Math.trunc(num(t.epoch)), 0), lights };
     }
     if (Object.keys(trail).length) out.trail = trail;
   }
+  out.spentStars = Math.max(Math.trunc(num(raw.spentStars)), 0);
   if (typeof raw.schemaVersion === 'number' && Number.isFinite(raw.schemaVersion)) {
     out.schemaVersion = raw.schemaVersion;
   }

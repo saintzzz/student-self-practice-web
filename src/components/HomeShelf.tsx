@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ownedHomeItems, spendStarsForHomeItem, getState, SHOP_ITEM_STARS } from '../lib/engagement/store';
+import { useEffect, useState } from 'react';
+import { ownedHomeItems, spendStarsForHomeItem, spendableStars, subscribe, SHOP_ITEM_STARS } from '../lib/engagement/store';
 import { HOME_ITEMS } from '../data/homeItems';
 import { CARD_DAY } from '../lib/ui/tokens';
 import { ArtImg } from './ArtImg';
@@ -14,9 +14,17 @@ import { IconHome, IconStar } from './icons';
  */
 export default function HomeShelf() {
   const [items, setItems] = useState(() => ownedHomeItems());
-  const [stars, setStars] = useState(() => getState().totalStars);
+  const [stars, setStars] = useState(() => spendableStars());
   const [shopOpen, setShopOpen] = useState(false);
   const [justBought, setJustBought] = useState<string | null>(null);
+
+  /* r229: refresh on every engagement mutation - a synced balance or a
+     gift grant landing while this screen is open must not leave the
+     shop stale. */
+  useEffect(() => subscribe(() => {
+    setItems(ownedHomeItems());
+    setStars(spendableStars());
+  }), []);
 
   const ownedIds = new Set(items.map((i) => i.id));
   const unowned = HOME_ITEMS.filter((i) => !ownedIds.has(i.id));
@@ -26,7 +34,7 @@ export default function HomeShelf() {
     const result = spendStarsForHomeItem(itemId);
     if (!result) return;
     setItems(ownedHomeItems());
-    setStars(getState().totalStars);
+    setStars(spendableStars());
     setJustBought(result.item.id);
   }
 

@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { TRAIL_NODES, TRAIL_CHEST_NODES, getPet, trailSnapshot } from '../lib/engagement/store';
+import { useEffect, useMemo, useState } from 'react';
+import { TRAIL_NODES, TRAIL_CHEST_NODES, getPet, subscribe, trailSnapshot, type TrailSnapshot } from '../lib/engagement/store';
 import { IconChest } from './icons';
 
 /** Deterministic node positions along a gentle arc (percent coords). */
@@ -36,8 +36,11 @@ function Lantern({ lit, gold, next }: { lit: boolean; gold: boolean; next: boole
  * the child starts - "duong den long" per the gamefi spec.
  */
 export default function TrailPath({ gradeId }: { gradeId: string }) {
-  const snap = trailSnapshot(gradeId);
-  const pet = getPet();
+  const [snap, setSnap] = useState<TrailSnapshot>(() => trailSnapshot(gradeId));
+  const [pet] = useState(getPet);
+  /* Re-read on engagement changes so a synced trail (or a lap completed
+     in another tab) repaints without a remount. */
+  useEffect(() => subscribe(() => setSnap(trailSnapshot(gradeId))), [gradeId]);
   const nodes = useMemo(() => Array.from({ length: TRAIL_NODES }, (_, i) => nodePos(i)), []);
   const nextNode = snap.next > 0 ? nodes[snap.next - 1] : null;
 
