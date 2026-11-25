@@ -150,19 +150,28 @@ export function EmojiVisual({
       {...(ready ? { 'data-emoji-ready': 'true' } : {})}
       className={className ? `${rootClass} ${className}` : rootClass}
     >
-      {mode === 'image' && imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          aria-hidden="true"
-          loading={loading}
-          decoding="async"
-          draggable={false}
-          onLoad={() => setStaticReady(true)}
-          onError={handlePhotoError}
-          className="block h-full w-full select-none object-contain"
-        />
-      ) : null}
+      {mode === 'image' && imageUrl
+        ? /* CR-145 r225: count > 1 repeats the picture (counting option
+             tiles); count === 1 keeps the single fill-box behaviour. */
+          Array.from({ length: count }, (_, i) => (
+            <img
+              key={i}
+              src={imageUrl}
+              alt=""
+              aria-hidden="true"
+              loading={loading}
+              decoding="async"
+              draggable={false}
+              onLoad={() => setStaticReady(true)}
+              onError={handlePhotoError}
+              className={
+                count > 1
+                  ? 'mx-[0.05em] inline-block h-[1em] w-[1em] select-none object-contain align-[-0.125em]'
+                  : 'block h-full w-full select-none object-contain'
+              }
+            />
+          ))
+        : null}
       {mode === 'lottie' ? (
         <>
           {lottieReady ? null : svgImg}

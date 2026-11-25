@@ -45,8 +45,17 @@ describe('svg mode (default static path, AC-1.1/1.3/1.5)', () => {
     expect(screen.getByText('🐷🐷🐷')).toBeInTheDocument();
   });
 
-  it('count > 1 never renders photo or lottie even if asked (AC-2.3/5.5)', () => {
-    render(<EmojiVisual emoji={SPARKLES} count={2} animated imageUrl="/images/vocab/x.webp" />);
+  it('count > 1 with imageUrl renders count copies of the photo (CR-145 r225)', () => {
+    render(<EmojiVisual emoji={SPARKLES} count={2} animated imageUrl="/images/concepts/x.webp" />);
+    const el = root(SPARKLES);
+    expect(el.dataset.emojiMode).toBe('image');
+    expect(el.querySelectorAll('img')).toHaveLength(2);
+    expect(el.querySelector('img')).toHaveAttribute('src', '/images/concepts/x.webp');
+    expect(el.querySelector('span.sr-only')).toHaveTextContent('✨✨');
+  });
+
+  it('count > 1 without imageUrl still never renders photo or lottie (AC-2.3/5.5)', () => {
+    render(<EmojiVisual emoji={SPARKLES} count={2} animated />);
     const el = root(SPARKLES);
     expect(el.dataset.emojiMode).toBe('svg');
     expect(el.querySelector('img')).toHaveAttribute('src', '/emoji/svg/2728.svg');

@@ -17,8 +17,12 @@ function input(overrides: Partial<EmojiModeInput> = {}): EmojiModeInput {
 }
 
 describe('initialMode (design-spec 3.3)', () => {
-  it('count > 1 forces svg (repeated context, AC-2.3/AC-5.5)', () => {
-    expect(initialMode(input({ count: 3, animated: true, imageUrl: '/x.webp' }))).toBe('svg');
+  it('imageUrl wins even at count > 1 - image mode repeats the picture (CR-145 r225)', () => {
+    expect(initialMode(input({ count: 3, animated: true, imageUrl: '/x.webp' }))).toBe('image');
+  });
+
+  it('count > 1 without imageUrl still forces svg (repeated context, AC-2.3/AC-5.5)', () => {
+    expect(initialMode(input({ count: 3, animated: true }))).toBe('svg');
   });
 
   it('imageUrl wins for single-picture contexts (AC-5.1)', () => {

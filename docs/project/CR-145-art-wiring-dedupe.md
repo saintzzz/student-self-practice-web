@@ -12,15 +12,17 @@ vocab<->concepts duplicate set.
 ## Changes
 
 ### F-04 art wiring (coverage)
-- `public/images/counting/` (100 purpose-built "N objects" webp) now drives
-  `CountingImageQuestion` (both directions) and `DescribeAndChooseImageQuestion`
-  options via generated manifest `src/lib/content/countingArt.ts`
-  (`"<slug>|<count>"` -> path). `count>1` forces svg mode in `EmojiVisual`,
-  so art tiles pass `count=1` - the image already contains N objects.
+- `public/images/counting/` (100 purpose-built "N objects" webp) plus the
+  repeat-concept-art tier now drive `CountingImageQuestion` (both
+  directions) and `DescribeAndChooseImageQuestion` options via
+  `src/lib/content/countingArt.ts` (bespoke `"<slug>|<count>"` manifest)
+  + `countingArtResolve.ts` (two-tier all-or-nothing resolver - see r225
+  fixes below).
 - `PicturePairMatchingQuestion` picture tiles resolve `getWordVisual` art via
   new `PairMatchingTile.wordId`.
 - All wiring follows the all-or-nothing law: one missing/failed asset drops
-  the whole visible group back to emoji (`onImageError` group state).
+  the whole visible group back to emoji (`onImageError` group state +
+  mode-keyed remount).
 
 ### F-07 raw-emoji bypasses -> EmojiVisual
 - `PlaySlowButton` extracted into `ListenButtons.tsx` (Twemoji 🐢); the 4
@@ -44,6 +46,22 @@ vocab<->concepts duplicate set.
   semantic (N identical objects is clearer to count than a scene); the
   counting art set is also earmarked for the CR-147 counting game.
 - `v6/math-vi` SVG schematics stay (real diagrams, not placeholders).
+
+### r225 fixes (external review round 225)
+- **Blank-tile bug:** `EmojiVisual` mode is mount-only; a group art
+  failure that removed `imageUrl` left mounted 'image' visuals rendering
+  nothing. All group-fallback visuals now key on the resolved art mode
+  (`CountingImage`, `DescribeAndChooseImage`, `PicturePairMatching`;
+  `EmojiChoiceField`/`OddOneOut`/`ListeningImageChoice` already keyed).
+- **0% art reachability:** bespoke `slug|count` art covers ~1 count per
+  object while distractor rules need several (0/3,130 counting, 0/3,749
+  describe questions satisfied `every(COUNTING_ART)`). Added the
+  `'repeat'` tier: `CountingImageOption.wordId` (populated by generators,
+  resolved by word text for legacy bank rows) + `EmojiVisual` image mode
+  at `count>1` renders N copies of the concept art. Coverage measured on
+  the real bank: **3,130/3,130 count-to-image, 3,749/3,749 describe,
+  3,130/3,130 image-to-count prompts** - pinned by
+  `countingArtResolve.test.ts`.
 
 ## Files
 

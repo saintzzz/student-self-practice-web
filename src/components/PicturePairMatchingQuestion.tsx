@@ -173,7 +173,11 @@ export default function PicturePairMatchingQuestion({
             >
               {tile.tileType === 'picture' ? (
                 <span aria-hidden="true" className={material.exhibitPaper}>
+                  {/* r225: key on the group art state - after a failure
+                      flips boardArt off, remounting drops the stale
+                      'image' mode instead of rendering a blank tile. */}
                   <EmojiVisual
+                    key={boardArt ? 'art' : 'emoji'}
                     emoji={tile.label}
                     imageUrl={tileArt(tile)}
                     onImageError={() => setArtFailed(true)}

@@ -5,7 +5,7 @@ const MIN_COUNT = 1;
 const MAX_COUNT = 5;
 
 function toOption(word: VocabWord, count: number): CountingImageOption {
-  return { word: word.word, plural: word.plural ?? `${word.word}s`, emoji: word.emoji, count };
+  return { word: word.word, plural: word.plural ?? `${word.word}s`, emoji: word.emoji, count, wordId: word.id };
 }
 
 /**

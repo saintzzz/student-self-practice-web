@@ -22,6 +22,7 @@ function buildInstance(
     plural: word.plural ?? `${word.word}s`,
     emoji: word.emoji,
     count,
+    wordId: word.id,
   };
   const distractors = buildDistractorOptions(word, count, topicWords, seedBase).options;
 

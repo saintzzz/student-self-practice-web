@@ -464,10 +464,17 @@ exception surface (paper reports). No theme switch.
   in JSX render in the OS font, a different color/line weight per device.
   The "Nghe chậm" 🐢 lives in `PlaySlowButton` (`ListenButtons.tsx`),
   never re-copy it.
-- **Counting art:** `COUNTING_ART["<word-slug>|<count>"]` maps to bespoke
-  N-object images (`/images/counting/`). The art already contains N
-  objects, so it always renders with `count=1` (`count>1` hard-forces
-  svg mode in `EmojiVisual`).
+- **Counting art (r225 two-tier law):** option sets resolve art in two
+  all-or-nothing tiers via `countingArtResolve.ts` - `'single'` when every
+  option has bespoke `COUNTING_ART["<slug>|<count>"]` (one scene image
+  containing N objects, rendered `count=1`), else `'repeat'` when every
+  option resolves concept art (EmojiVisual image mode now renders `count`
+  copies of the picture - N copies of the object = N objects), else the
+  emoji chain. `EmojiVisual` `imageUrl` + `count>1` = repeated image, so
+  `imageUrl` now wins over the count>1 svg rule in `initialMode`. Any
+  `EmojiVisual` behind a group art-failure state MUST carry a `key` on the
+  resolved mode - removing `imageUrl` alone leaves a mounted 'image'
+  visual rendering blank.
 
 ## 9. Image & asset rules
 

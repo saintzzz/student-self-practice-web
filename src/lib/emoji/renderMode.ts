@@ -20,11 +20,15 @@ export interface EmojiModeInput {
 }
 
 export function initialMode(input: EmojiModeInput): EmojiRenderMode {
-  if (input.count > 1) {
-    return 'svg';
-  }
+  /* CR-145 r225: imageUrl wins over the count>1 static rule - image mode
+     renders `count` copies of the picture (concept art x N = "N objects"
+     for the counting/describe option tiles). Callers that still want
+     repeated Twemoji simply omit imageUrl. */
   if (input.imageUrl) {
     return 'image';
+  }
+  if (input.count > 1) {
+    return 'svg';
   }
   if (
     input.animated &&

@@ -109,6 +109,9 @@ export interface CountingImageOption {
   plural: string;
   emoji: string;
   count: number;
+  /** VocabWord behind the option - resolves concept art via getWordVisual
+      (CR-145 r225). Optional: older fixtures/bank rows may omit it. */
+  wordId?: string;
 }
 
 export interface CountingImageQuestion {

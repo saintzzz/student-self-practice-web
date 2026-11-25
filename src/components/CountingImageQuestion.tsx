@@ -3,7 +3,7 @@ import type { CountingImageOption, CountingImageQuestion as CountingImageQuestio
 import { useDemoHint } from '../hooks/useDemoHint';
 import DemoHint from './DemoHint';
 import { EmojiVisual } from './EmojiVisual';
-import { COUNTING_ART } from '../lib/content/countingArt';
+import { countingOptionArtUrl, resolveCountingGroupArt } from '../lib/content/countingArtResolve';
 import { getOptionButtonClassName, getOptionLabelPrefix, getOptionStateAttrs } from './optionButtonStyle';
 import PressableOptionButton from './PressableOptionButton';
 import { EXHIBIT_TILT, material } from '../lib/ui/tokens';
@@ -22,13 +22,6 @@ function countLabel(option: CountingImageOption): string {
   return `${option.count} ${option.count === 1 ? option.word : option.plural}`;
 }
 
-/* CR-145 (art audit F-04): bespoke "N objects in one image" art replaces
-   the repeated-emoji tile when a matching asset exists. */
-function countingArtUrl(option: CountingImageOption): string | undefined {
-  const slug = option.word.trim().toLowerCase().replace(/\s+/g, '-');
-  return COUNTING_ART[`${slug}|${option.count}`];
-}
-
 export default function CountingImageQuestion({
   question,
   selectedIndex,
@@ -41,11 +34,14 @@ export default function CountingImageQuestion({
   const gridRef = useRef<HTMLDivElement>(null);
   const isCountToImage = question.direction === 'count-to-image';
   const instruction = isCountToImage ? 'Chọn hình có đúng số lượng nhé!' : 'Đếm số lượng rồi chọn đáp án đúng!';
-  /* CR-145: all-or-nothing counting art - one missing/failed asset drops
-     the whole visible group back to repeated emoji. */
+  /* CR-145 r225: two all-or-nothing tiers (bespoke scene art, then
+     repeated concept art) - one missing/failed asset drops the whole
+     visible group back to repeated emoji. The EmojiVisual key tracks the
+     resolved mode so a mid-render failure remounts into svg/emoji mode
+     instead of leaving a mounted 'image' visual with no imageUrl. */
   const [artFailed, setArtFailed] = useState(false);
-  const optionArt = !artFailed && question.options.every(countingArtUrl);
-  const promptArt = artFailed ? undefined : countingArtUrl(question.prompt);
+  const optionArtMode = artFailed ? null : resolveCountingGroupArt(question.options);
+  const promptArtMode = artFailed ? null : resolveCountingGroupArt([question.prompt]);
 
   return (
     <div>
@@ -56,12 +52,11 @@ export default function CountingImageQuestion({
       ) : (
         <div className="mb-3 text-6xl sm:text-7xl leading-relaxed" aria-hidden="true">
           <span className={material.exhibitPaper}>
-            {/* count>1 forces svg mode - the counting art already contains
-                N objects, so art renders as a single image frame. */}
             <EmojiVisual
+              key={promptArtMode ?? 'emoji'}
               emoji={question.prompt.emoji}
-              count={promptArt ? 1 : question.prompt.count}
-              imageUrl={promptArt}
+              count={promptArtMode === 'single' ? 1 : question.prompt.count}
+              imageUrl={promptArtMode ? countingOptionArtUrl(question.prompt, promptArtMode) : undefined}
               onImageError={() => setArtFailed(true)}
             />
           </span>
@@ -83,9 +78,10 @@ export default function CountingImageQuestion({
             {isCountToImage ? (
               <span aria-hidden="true" className={`text-4xl sm:text-5xl ${material.exhibitPaper} ${EXHIBIT_TILT[index % 2]}`}>
                 <EmojiVisual
+                  key={optionArtMode ?? 'emoji'}
                   emoji={option.emoji}
-                  count={optionArt ? 1 : option.count}
-                  imageUrl={optionArt ? countingArtUrl(option) : undefined}
+                  count={optionArtMode === 'single' ? 1 : option.count}
+                  imageUrl={optionArtMode ? countingOptionArtUrl(option, optionArtMode) : undefined}
                   onImageError={() => setArtFailed(true)}
                 />
               </span>

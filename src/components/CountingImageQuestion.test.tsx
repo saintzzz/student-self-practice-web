@@ -106,16 +106,16 @@ describe('CountingImageQuestion', () => {
     expect(visual?.querySelector('img')?.getAttribute('src')).toContain('/images/counting/');
   });
 
-  it('CR-145: options stay emoji when any option lacks counting art (all-or-nothing)', () => {
+  it('CR-145: options stay emoji when any option resolves no art (all-or-nothing)', () => {
     render(
       <CountingImageQuestion
         question={{
           ...COUNT_TO_IMAGE_QUESTION,
           options: [
-            { word: 'cat', plural: 'cats', emoji: '🐱', count: 4 }, // cat|4 art exists
-            { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 }, // no art
-            { word: 'dog', plural: 'dogs', emoji: '🐶', count: 2 }, // dog|2 art exists
-            { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 }, // no art
+            { word: 'cat', plural: 'cats', emoji: '🐱', count: 4 }, // art resolves (repeat tier)
+            { word: 'cat', plural: 'cats', emoji: '🐱', count: 3 }, // art resolves
+            { word: 'zzflargle', plural: 'zzflargles', emoji: '❓', count: 2 }, // no bank word, no art
+            { word: 'dog', plural: 'dogs', emoji: '🐶', count: 3 }, // art resolves
           ],
         }}
         selectedIndex={null}
@@ -123,7 +123,23 @@ describe('CountingImageQuestion', () => {
       />,
     );
 
-    // 2 of 4 options have art - the whole set must still fall back to emoji.
+    // 1 of 4 options has no art at either tier - the whole set falls back.
     expect(document.querySelector('[data-emoji-mode="image"]')).toBeNull();
+  });
+
+  it('CR-145 r225: options render repeated concept art when every option resolves it', () => {
+    render(
+      <CountingImageQuestion
+        question={COUNT_TO_IMAGE_QUESTION}
+        selectedIndex={null}
+        onSelectOption={vi.fn()}
+      />,
+    );
+
+    // cat/dog resolve concept art by word text - count copies per option.
+    const visuals = document.querySelectorAll('[data-emoji-mode="image"]');
+    expect(visuals.length).toBe(4);
+    expect(visuals[0]?.querySelectorAll('img').length).toBe(3);
+    expect(visuals[0]?.querySelector('img')?.getAttribute('src')).toContain('/images/');
   });
 });

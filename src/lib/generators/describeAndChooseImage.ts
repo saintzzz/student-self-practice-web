@@ -29,7 +29,7 @@ function article(word: string): 'a' | 'an' {
 }
 
 function toOption(word: VocabWord, count: number): CountingImageOption {
-  return { word: word.word, plural: word.plural ?? `${word.word}s`, emoji: word.emoji, count };
+  return { word: word.word, plural: word.plural ?? `${word.word}s`, emoji: word.emoji, count, wordId: word.id };
 }
 
 /** "There is a cat." / "There are 3 cats." - simple present, safe grammar per plan.md v5. */
