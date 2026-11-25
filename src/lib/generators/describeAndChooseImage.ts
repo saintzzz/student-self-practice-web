@@ -1,5 +1,5 @@
 import type { CountingImageOption, DescribeAndChooseImageQuestion, VocabWord } from '../../types';
-import { isLiteralImageWord } from '../content/imageSemantics';
+import { isCountingEligibleWord } from '../content/imageSemantics';
 import { pickDistinct, seededShuffleIndices } from '../prng';
 import { buildDistractorOptions } from './countingImageDistractors';
 import { formatCountLabel } from './countingImage';
@@ -154,7 +154,8 @@ export function generateDescribeAndChooseImageQuestions(
   // CR-24: figurative-emoji words out - options ARE the emoji, so a
   // figurative distractor (e.g. 📹 meaning "vlog") would also be a valid
   // depiction of a different prompt and break "exactly one correct".
-  const countableWords = words.filter((w) => w.countable && isLiteralImageWord(w));
+  // r227: bunch/collection depictions out entirely (emoji is wrong too).
+  const countableWords = words.filter(isCountingEligibleWord);
   const questions: DescribeAndChooseImageQuestion[] = [];
 
   for (const word of countableWords) {

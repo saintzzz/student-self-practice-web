@@ -76,6 +76,17 @@ vocab<->concepts duplicate set.
   artgen loop (needs the subscription browser pipeline - no
   `GEMINI_API_KEY` locally), then remove the exclusion entry.
 
+### r227 fixes (external review round 227)
+- **Emoji fallback was equally wrong:** 🍇 (and its Twemoji svg) is also
+  a bunch - excluding grape from repeat art just swapped one bad
+  depiction for another. `COUNTING_UNIT_EXCLUDE` in `imageSemantics.ts`
+  now removes bunch/collection words from the count pool entirely via
+  `isCountingEligibleWord` (both generators); `REPEAT_ART_EXCLUDE` reuses
+  the same set as the render-level guard for legacy/bank content. Pin
+  test asserts no generated counting/describe option carries `grape`.
+  Post-guard coverage: 3,125/3,125 count-to-image, 3,743/3,743 describe,
+  3,125/3,125 prompts (100% of the emitted pool).
+
 ## Files
 
 - `src/lib/content/countingArt.ts` (generated manifest, 100 entries)

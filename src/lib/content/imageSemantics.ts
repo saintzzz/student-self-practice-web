@@ -77,3 +77,22 @@ export function isLiteralImageWord(word: VocabWord): boolean {
   if (isFlagEmoji(word.emoji)) return false;
   return !FIGURATIVE_IMAGE_WORDS.has(word.id);
 }
+
+/**
+ * r227 (external review): words whose ONLY available depiction shows
+ * MULTIPLE of the counted unit can never appear in a count-question -
+ * the art AND the emoji show a bunch, so every visual layer would grade
+ * the wrong quantity. ('team'/'forest'/'nest' depict ONE team/forest/
+ * nest and stay - the named unit matches the picture.)
+ * `grape`: emoji + concept art are both a ~7-15-grape bunch; regenerate a
+ * single-grape asset via the artgen loop, then remove the entry.
+ */
+export const COUNTING_UNIT_EXCLUDE: ReadonlySet<string> = new Set(['grape']);
+
+/**
+ * Counting-image / describe-and-choose-image pool rule: countable AND
+ * literally depicted AND the depicted unit equals the counted unit.
+ */
+export function isCountingEligibleWord(word: VocabWord): boolean {
+  return word.countable && isLiteralImageWord(word) && !COUNTING_UNIT_EXCLUDE.has(word.id);
+}

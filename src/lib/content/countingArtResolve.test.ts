@@ -110,4 +110,16 @@ describe('generated-question art coverage (CR-145 r225 proof)', () => {
     expect(total).toBeGreaterThan(0);
     expect(covered / total).toBeGreaterThan(0.8);
   });
+
+  it('r227: no generated counting/describe question shows a multi-unit word (grape bunch)', () => {
+    for (const words of topics().values()) {
+      for (const q of generateCountingImageQuestions(words)) {
+        for (const o of q.options) expect(o.wordId).not.toBe('grape');
+        expect(q.prompt.wordId).not.toBe('grape');
+      }
+      for (const q of generateDescribeAndChooseImageQuestions(words)) {
+        for (const o of q.options) expect(o.wordId).not.toBe('grape');
+      }
+    }
+  });
 });

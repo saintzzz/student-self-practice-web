@@ -15,21 +15,18 @@
  */
 import type { CountingImageOption } from '../../types';
 import { allWords } from './contentBank';
+import { COUNTING_UNIT_EXCLUDE } from './imageSemantics';
 import { getWordVisual } from '../emoji/wordVisual';
 import { COUNTING_ART } from './countingArt';
 
 export type CountingArtMode = 'single' | 'repeat';
 
-/* r226: repeat tier assumes one object per concept image. Words whose
-   audited art depicts MULTIPLE of the counted unit are excluded (the
-   group falls back to emoji instead of lying about the count). 'team',
-   'forest', 'nest', 'couple' stay: those depict ONE team/forest/nest/
-   couple - the named unit matches the picture. Entries are matched on
-   wordId AND lowercased word text (legacy bank rows carry no wordId).
-   Audited r226: 'grape' shows a ~15-grape bunch - "3 grapes" would render
-   3 bunches. Regenerate a single-grape asset via the artgen loop, then
-   remove the entry (see docs/project/CR-145-art-wiring-dedupe.md). */
-export const REPEAT_ART_EXCLUDE: ReadonlySet<string> = new Set(['grape']);
+/* r226/r227: repeat tier assumes one object per concept image, and the
+   EMOJI for these words is a bunch too - so generators exclude them from
+   count questions entirely (COUNTING_UNIT_EXCLUDE in imageSemantics).
+   This set is the render-level guard for legacy/bank content that may
+   still carry them. Matched on wordId AND lowercased word text. */
+export const REPEAT_ART_EXCLUDE: ReadonlySet<string> = COUNTING_UNIT_EXCLUDE;
 
 function repeatExcluded(option: Pick<CountingImageOption, 'word' | 'wordId'>): boolean {
   return (
