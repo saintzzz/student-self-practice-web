@@ -47,20 +47,33 @@ for (const [name, vp] of Object.entries(viewports)) {
   await first.click();
   await page.getByTestId('game-level-picker').waitFor({ timeout: 8000 });
   await page.screenshot({ path: `${OUT}/${name}-40-game-picker.png` });
-  await page.locator('[data-testid="game-level-picker"] button').first().click();
-  await page.waitForTimeout(1200);
+  // r217: the picker's first button is the decorative game-art-pet -
+  // click the explicit level-1 control and prove gameplay mounted
+  // (picker detaches) before capturing.
+  await page.getByTestId('game-level-1').click();
+  await page.getByTestId('game-level-picker').waitFor({ state: 'detached', timeout: 8000 });
   await page.screenshot({ path: `${OUT}/${name}-50-game-play.png` });
   await page.close();
 }
 
-// splash skeleton: hold the supabase BACKEND request so the auth
-// 'loading' state persists (aborting *supabase* also killed the vite
-// /src/lib/supabase module last run - blank shot). Assert the skeleton
-// is visible before capture.
+// splash skeleton (r217): getSession() resolves locally without a
+// session - so seed an EXPIRED session, which forces a network token
+// refresh, then hold that one endpoint. Auth 'loading' now persists
+// deterministically instead of racing the screenshot.
 const p2 = await browser.newPage({ viewport: viewports.tablet });
-await p2.route('**://*.supabase.co/**', () => new Promise(() => {}));
+await p2.addInitScript(() => {
+  window.localStorage.setItem('sb-cxjpgfhqchjoernfmcra-auth-token', JSON.stringify({
+    access_token: 'ea-verify-expired',
+    refresh_token: 'ea-verify-held',
+    token_type: 'bearer',
+    expires_at: 1,
+    expires_in: 3600,
+    user: { id: 'ea-verify', aud: 'authenticated', role: 'authenticated' },
+  }));
+});
+await p2.route('**/auth/v1/token**', () => new Promise(() => {}));
 await p2.goto('http://localhost:5173/app');
-await p2.locator('text=Đang tải...').waitFor({ timeout: 5000 });
+await p2.locator('text=Đang tải...').waitFor({ timeout: 8000 });
 await p2.screenshot({ path: `${OUT}/tablet-00-splash.png` });
 await p2.close();
 
