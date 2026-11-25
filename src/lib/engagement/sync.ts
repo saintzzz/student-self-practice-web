@@ -13,6 +13,9 @@ import {
   subscribe,
   TRAIL_NODES,
   trailEvents,
+  /* r234: cap on sanitized lap counts - real play is bounded and a
+     hostile blob must not smuggle an absurd epoch. */
+  TRAIL_DONE_CAP,
   writeState,
   type EngagementState,
   type PetSpecies,
@@ -236,17 +239,23 @@ export function mergeEngagement(
               const byId = new Map<string, { id: string; stars: number; ts?: number }>();
               for (const ev of [...trailEvents(local.trail?.[gid]), ...trailEvents(remote.trail?.[gid])]) {
                 const prev = byId.get(ev.id);
-                /* Same event on both sides: keep max stars + earliest
-                   ts (deterministic given the same set). */
+                /* Same event both sides: max stars + MIN defined ts -
+                   commutative regardless of argument order (r234). */
                 if (!prev) byId.set(ev.id, ev);
-                else byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts: prev.ts ?? ev.ts });
+                else {
+                  const ts = prev.ts === undefined ? ev.ts : ev.ts === undefined ? prev.ts : Math.min(prev.ts, ev.ts);
+                  byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts });
+                }
               }
-              /* r233: canonical order = completion ts then id - same set
-                 always yields the same array, and the current-lap slice
-                 shows the NEWEST completions, not id order. */
-              merged[gid] = {
-                events: [...byId.values()].sort((x, y) => (x.ts ?? 0) - (y.ts ?? 0) || (x.id < y.id ? -1 : 1)),
-              };
+              /* r233/r234: canonical order = completion ts then id; the
+                 current-lap slice shows the NEWEST completions. `done`
+                 is a max-merged lap COUNT for laps whose ids were never
+                 recorded - it never materializes synthetic events. */
+              const events = [...byId.values()].sort((x, y) => (x.ts ?? 0) - (y.ts ?? 0) || (x.id < y.id ? -1 : 1));
+              const a = local.trail?.[gid];
+              const b = remote.trail?.[gid];
+              const done = Math.max(a?.done ?? a?.epoch ?? 0, b?.done ?? b?.epoch ?? 0, Math.floor(events.length / TRAIL_NODES));
+              merged[gid] = { done, events };
             }
             return merged;
           })()
@@ -617,28 +626,24 @@ function sanitizeRemote(raw: unknown): EngagementState {
           events.push(e);
         }
       };
-      let retired = 0;
       if (Array.isArray(t.events)) t.events.forEach((l) => isObj(l) && push(l.id, l.stars, l.ts));
-      if (Array.isArray(t.seenIds)) {
-        t.seenIds.forEach((id) => push(id, 0));
-        retired = t.seenIds.length;
-      }
+      if (Array.isArray(t.seenIds)) t.seenIds.forEach((id) => push(id, 0));
       if (Array.isArray(t.lights)) t.lights.forEach((l) => isObj(l) && push(l.id, l.stars, l.ts));
       else if (Array.isArray(t.stars)) {
         const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
         t.stars.slice(0, lit).forEach((s, i) => push(`legacy:${i}`, s));
       }
-      /* r233: a legacy epoch beyond retired+current means completed-lap
-         ids were never stored - pad so the lap count survives sync. */
-      const epoch = Math.max(0, Math.trunc(num(t.epoch)));
-      for (let i = retired; i < epoch * TRAIL_NODES; i++) push(`pad:${i}`, 0);
+      /* r234: `done`/`epoch` are lap COUNTS, not materialized events -
+         a huge remote epoch allocates nothing (it is clamped, not
+         looped). Events still dedupe by id. */
+      const done = Math.min(Math.max(Math.trunc(num(t.done ?? t.epoch)), 0), TRAIL_DONE_CAP);
       /* Dedupe by id - a malformed blob could carry the same id twice. */
       const byId = new Map<string, { id: string; stars: number; ts?: number }>();
       for (const ev of events) {
         const prev = byId.get(ev.id);
         if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
       }
-      trail[gid] = { events: [...byId.values()] };
+      trail[gid] = { done, events: [...byId.values()] };
     }
     if (Object.keys(trail).length) out.trail = trail;
   }
