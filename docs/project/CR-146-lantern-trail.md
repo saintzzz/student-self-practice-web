@@ -45,6 +45,17 @@ durable dedupe history (replaces seenIds). All prior shapes (r229
 lit/stars, r230 lights+seenIds) normalize into events on read, merge
 and sanitize.
 
+### r233 fixes
+
+1. **[major] Legacy epoch dropped on sanitize** - r229 blobs stored no
+   retired ids and r230 capped seenIds at 48, so completed laps were
+   lost when normalizing. Synthetic `pad:N` events now backfill
+   `epoch*12 - retired` so lap counts survive migration.
+2. **[minor] id-sort broke completion order** - the current-lap slice
+   showed stars in id order, not completion order, after a sync.
+   Events now carry `ts`; canonical order is `(ts, id)` - convergent
+   AND the displayed lap reflects the newest completions.
+
 - `OBJECTIVE_RE` gains a `trail` branch; chest grants are idempotent
   across laps (`trail:<grade>:<node>` granted once ever - pool exhausts
   after ~8 laps as designed).

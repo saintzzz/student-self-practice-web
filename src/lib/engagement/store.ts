@@ -156,12 +156,13 @@ const TRAIL_STICKER_LAND: Record<string, { key: string; nameVi: string }> = {
 };
 
 export interface TrailState {
-  /** CR-146 r232: every unique light event ever - {objectiveId, stars}.
-   *  UNCAPPED like grantedObjectives: the set itself is the durable
-   *  dedupe history, so merge is a pure union by id - commutative, no
-   *  fold order, no lost remainder. epoch/lit derive from the count:
-   *  epoch = floor(len/12), lit = len%12. */
-  events: { id: string; stars: number }[];
+  /** CR-146 r232: every unique light event ever - {objectiveId, stars,
+   *  completion ts}. UNCAPPED like grantedObjectives: the set itself is
+   *  the durable dedupe history, so merge is a pure union by id.
+   *  `ts` keeps a deterministic completion order across devices so the
+   *  current-lap slice shows the newest completions (r233). epoch/lit
+   *  derive from the count: epoch = floor(len/12), lit = len%12. */
+  events: { id: string; stars: number; ts?: number }[];
   /** Legacy shapes (r229/r230 builds + the positional first build) -
    *  reads normalize via trailEvents(); writes always use `events`. */
   epoch?: number;
@@ -547,10 +548,17 @@ export interface BatchAwardResult {
 /** CR-146: normalize any stored trail shape to the all-time event set.
  *  Retired/legacy ids are kept (stars unknown -> 0) because the set is
  *  the dedupe history; display only reads the current lap's slice. */
-export function trailEvents(t: TrailState | undefined): { id: string; stars: number }[] {
+export function trailEvents(t: TrailState | undefined): { id: string; stars: number; ts?: number }[] {
   if (!t) return [];
   if (Array.isArray(t.events)) return t.events;
-  const out: { id: string; stars: number }[] = [];
+  const out: { id: string; stars: number; ts?: number }[] = [];
+  /* r233: retired-id count covers completed laps; a legacy epoch larger
+     than retired+current (r229 blobs had no retired ids at all, r230's
+     seenIds was capped) gets synthetic pad events so completed laps are
+     never forgotten. Pads carry no ts -> they sort oldest. */
+  const retired = t.seenIds?.length ?? 0;
+  const epoch = Math.max(0, t.epoch ?? 0);
+  for (let i = retired; i < epoch * TRAIL_NODES; i++) out.push({ id: `pad:${i}`, stars: 0 });
   for (const id of t.seenIds ?? []) out.push({ id, stars: 0 });
   if (Array.isArray(t.lights)) out.push(...t.lights);
   else out.push(...(t.stars ?? []).slice(0, t.lit ?? t.stars?.length ?? 0).map((s, i) => ({ id: `legacy:${i}`, stars: s })));
@@ -571,6 +579,7 @@ function advanceTrail(state: EngagementState, gradeId: string, batchStars: numbe
   trail.events.push({
     id: objectiveId ?? `anon:${Math.random().toString(36).slice(2, 10)}`,
     stars: Math.max(0, Math.min(3, batchStars)),
+    ts: Date.now(),
   });
   const total = trail.events.length;
   const litNode = total % TRAIL_NODES === 0 ? TRAIL_NODES : total % TRAIL_NODES;

@@ -233,12 +233,20 @@ export function mergeEngagement(
         ? (() => {
             const merged: NonNullable<EngagementState['trail']> = {};
             for (const gid of new Set([...Object.keys(local.trail ?? {}), ...Object.keys(remote.trail ?? {})])) {
-              const byId = new Map<string, { id: string; stars: number }>();
+              const byId = new Map<string, { id: string; stars: number; ts?: number }>();
               for (const ev of [...trailEvents(local.trail?.[gid]), ...trailEvents(remote.trail?.[gid])]) {
                 const prev = byId.get(ev.id);
-                if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
+                /* Same event on both sides: keep max stars + earliest
+                   ts (deterministic given the same set). */
+                if (!prev) byId.set(ev.id, ev);
+                else byId.set(ev.id, { id: ev.id, stars: Math.max(prev.stars, ev.stars), ts: prev.ts ?? ev.ts });
               }
-              merged[gid] = { events: [...byId.values()].sort((x, y) => (x.id < y.id ? -1 : 1)) };
+              /* r233: canonical order = completion ts then id - same set
+                 always yields the same array, and the current-lap slice
+                 shows the NEWEST completions, not id order. */
+              merged[gid] = {
+                events: [...byId.values()].sort((x, y) => (x.ts ?? 0) - (y.ts ?? 0) || (x.id < y.id ? -1 : 1)),
+              };
             }
             return merged;
           })()
@@ -598,24 +606,34 @@ function sanitizeRemote(raw: unknown): EngagementState {
     const trail: NonNullable<EngagementState['trail']> = {};
     for (const [gid, t] of Object.entries(raw.trail)) {
       if (!isObj(t) || !/^[A-Za-z0-9_-]{1,40}$/.test(gid)) continue;
-      /* r232: normalize every historical shape into the all-time event
-         set - events (r231+), lights+seenIds (r230), lit/stars (r229). */
-      const events: { id: string; stars: number }[] = [];
-      const push = (id: unknown, stars: unknown) => {
+      /* r232/r233: normalize every historical shape into the all-time
+         event set - events (r231+), lights+seenIds (r230), lit/stars
+         (r229). Retired count + legacy epoch preserve completed laps. */
+      const events: { id: string; stars: number; ts?: number }[] = [];
+      const push = (id: unknown, stars: unknown, ts?: unknown) => {
         if (typeof id === 'string' && id.length <= 80) {
-          events.push({ id, stars: Math.min(Math.max(Math.trunc(num(stars)), 0), 3) });
+          const e: { id: string; stars: number; ts?: number } = { id, stars: Math.min(Math.max(Math.trunc(num(stars)), 0), 3) };
+          if (typeof ts === 'number' && Number.isFinite(ts)) e.ts = ts;
+          events.push(e);
         }
       };
-      if (Array.isArray(t.events)) t.events.forEach((l) => isObj(l) && push(l.id, l.stars));
-      if (Array.isArray(t.seenIds)) t.seenIds.forEach((id) => push(id, 0));
-      if (Array.isArray(t.lights)) t.lights.forEach((l) => isObj(l) && push(l.id, l.stars));
+      let retired = 0;
+      if (Array.isArray(t.events)) t.events.forEach((l) => isObj(l) && push(l.id, l.stars, l.ts));
+      if (Array.isArray(t.seenIds)) {
+        t.seenIds.forEach((id) => push(id, 0));
+        retired = t.seenIds.length;
+      }
+      if (Array.isArray(t.lights)) t.lights.forEach((l) => isObj(l) && push(l.id, l.stars, l.ts));
       else if (Array.isArray(t.stars)) {
         const lit = Math.min(Math.max(Math.trunc(num(t.lit)), 0), TRAIL_NODES);
         t.stars.slice(0, lit).forEach((s, i) => push(`legacy:${i}`, s));
       }
-      /* Dedupe by id - a malformed blob could carry the same id in both
-         events and lights. */
-      const byId = new Map<string, { id: string; stars: number }>();
+      /* r233: a legacy epoch beyond retired+current means completed-lap
+         ids were never stored - pad so the lap count survives sync. */
+      const epoch = Math.max(0, Math.trunc(num(t.epoch)));
+      for (let i = retired; i < epoch * TRAIL_NODES; i++) push(`pad:${i}`, 0);
+      /* Dedupe by id - a malformed blob could carry the same id twice. */
+      const byId = new Map<string, { id: string; stars: number; ts?: number }>();
       for (const ev of events) {
         const prev = byId.get(ev.id);
         if (!prev || ev.stars > prev.stars) byId.set(ev.id, ev);
