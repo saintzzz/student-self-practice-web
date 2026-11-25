@@ -35,24 +35,21 @@ for (const [name, vp] of Object.entries(viewports)) {
     await page.screenshot({ path: `${OUT}/${name}-30-learn-cards.png` });
   }
 
-  // game board: Khu trò chơi -> first game -> level
+  // game board: Khu trò chơi -> first game -> level. r216: fail loudly
+  // instead of silently skipping - a pass without picker/play evidence
+  // is a false green.
   const games = page.getByTestId('hub-tile-games');
-  if (await games.isVisible().catch(() => false)) {
-    await games.click();
-    await page.waitForTimeout(600);
-    const first = page.locator('[data-testid^="game-card-"]:not([data-testid="game-card-coming-soon"])').first();
-    if (await first.isVisible().catch(() => false)) {
-      await first.click();
-      await page.waitForTimeout(800);
-      await page.screenshot({ path: `${OUT}/${name}-40-game-picker.png` });
-      const lvl = page.locator('[data-testid^="game-level-"]').first();
-      if (await lvl.isVisible().catch(() => false)) {
-        await lvl.click();
-        await page.waitForTimeout(1000);
-        await page.screenshot({ path: `${OUT}/${name}-50-game-play.png` });
-      }
-    }
-  }
+  await games.scrollIntoViewIfNeeded();
+  await games.click();
+  await page.waitForTimeout(600);
+  const first = page.locator('[data-testid^="game-card-"]:not([data-testid="game-card-coming-soon"])').first();
+  await first.waitFor({ timeout: 8000 });
+  await first.click();
+  await page.getByTestId('game-level-picker').waitFor({ timeout: 8000 });
+  await page.screenshot({ path: `${OUT}/${name}-40-game-picker.png` });
+  await page.locator('[data-testid="game-level-picker"] button').first().click();
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: `${OUT}/${name}-50-game-play.png` });
   await page.close();
 }
 
@@ -63,7 +60,7 @@ for (const [name, vp] of Object.entries(viewports)) {
 const p2 = await browser.newPage({ viewport: viewports.tablet });
 await p2.route('**://*.supabase.co/**', () => new Promise(() => {}));
 await p2.goto('http://localhost:5173/app');
-await p2.locator('text=Đang tải...').waitFor({ timeout: 5000 }).catch(() => {});
+await p2.locator('text=Đang tải...').waitFor({ timeout: 5000 });
 await p2.screenshot({ path: `${OUT}/tablet-00-splash.png` });
 await p2.close();
 
