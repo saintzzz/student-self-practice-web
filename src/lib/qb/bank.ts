@@ -268,7 +268,14 @@ export function optionLabel(choice: unknown): string {
 export function toExamQuestion(row: QbRow): ExamQuestion | null {
   const topicId = row.topic_key ?? row.domain ?? 'v6';
   const explanation = str(row.explanation_vi);
-  const imageUrl = row.asset_paths[0] ? assetUrl(row.asset_paths[0]) : undefined;
+  // CR-144 (art audit F-01): v6 science/math webp are placeholder cards
+  // with baked-in English labels that leak the answer. Drop those paths
+  // so affected questions fall back to text until art is regenerated
+  // (CR-145). v6/math-vi SVG schematics are real diagrams - kept.
+  const assetPaths = row.asset_paths.filter(
+    (p) => !/v6\/(science|math)\//.test(p),
+  );
+  const imageUrl = assetPaths[0] ? assetUrl(assetPaths[0]) : undefined;
   const transcript = row.audio_transcripts[0] ?? row.transcript ?? undefined;
 
   // CR-102: `row.answer` is stripped on the wire - a keyless row maps to
@@ -292,7 +299,7 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
       if (hasKey && (correctIndex === undefined || correctIndex < 0 || correctIndex > 3)) return null;
       const rawImages =
         row.question_type === 'word-to-image-mcq'
-          ? resolveOptionImages(row.choices, row.asset_paths)
+          ? resolveOptionImages(row.choices, assetPaths)
           : undefined;
       // CR-104: stored choice order skews the key toward index 0
       // (~30-39% position bias). Permute display order deterministically

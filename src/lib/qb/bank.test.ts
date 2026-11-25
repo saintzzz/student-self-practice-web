@@ -88,6 +88,32 @@ describe('toExamQuestion', () => {
     expect(q.optionImages).toEqual(order.map((i) => `/images/${'abcd'[i]}.webp`));
   });
 
+  it('CR-144: quarantines v6 science/math placeholder art, keeps math-vi svg', () => {
+    const quarantined = toExamQuestion(row({
+      question_type: 'image-to-word-mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: { index: 0 },
+      asset_paths: ['images/v6/science/v6-sci-g1-00-7819f6.webp'],
+    }));
+    expect(quarantined).toMatchObject({ kind: 'grammar-mcq', imageUrl: undefined });
+
+    const mathPlaceholder = toExamQuestion(row({
+      question_type: 'image-to-word-mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: { index: 0 },
+      asset_paths: ['images/v6/math/v6-math-g2-03-x.webp'],
+    }));
+    expect(mathPlaceholder).toMatchObject({ kind: 'grammar-mcq', imageUrl: undefined });
+
+    const kept = toExamQuestion(row({
+      question_type: 'image-to-word-mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: { index: 0 },
+      asset_paths: ['images/v6/math-vi/mathvi-0006eb55d9.svg'],
+    }));
+    expect(kept).toMatchObject({ kind: 'grammar-mcq', imageUrl: '/images/v6/math-vi/mathvi-0006eb55d9.svg' });
+  });
+
   it('maps reading mcq: passage flows through (CR-51)', () => {
     const q = toExamQuestion(row({
       prompt_text: 'Read the passage. Where does Lan go on Sunday?',

@@ -74,6 +74,12 @@ export function EmojiChoiceField({
     onPick(index);
   };
 
+  /* CR-144 (art audit F-03): all-or-nothing option art - resolve the whole
+     set first and only use images when EVERY option has audited art, so a
+     question never mixes kawaii art and Twemoji in the same field. */
+  const optionImages = optionWordIds?.map((id) => getWordVisual(id)?.imageUrl);
+  const allArt = optionImages?.every(Boolean) ? optionImages : undefined;
+
   return (
     <div
       data-testid="emoji-choice-field"
@@ -84,10 +90,8 @@ export function EmojiChoiceField({
         const hit = picked === i && !wrong;
         /* CR-115: audited concept art for this option when the word id
            resolves to one; EmojiVisual falls back to the emoji chain on
-           missing art or load error. */
-        const imageUrl = optionWordIds
-          ? getWordVisual(optionWordIds[i] ?? '')?.imageUrl
-          : undefined;
+           missing art or load error. CR-144: all-or-nothing (allArt). */
+        const imageUrl = allArt?.[i];
         const base =
           'relative flex items-center justify-center transition motion-reduce:transition-none focus:outline-none focus:ring-4 focus:ring-amber-300';
         if (variant === 'balloon') {

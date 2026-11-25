@@ -73,4 +73,16 @@ describe('getInitialBlend', () => {
       expect(blends.has(cluster), `bank must contain an "${cluster}-" word`).toBe(true);
     }
   });
+
+  it('CR-144: silent-letter and soft-c exceptions return null (two/sword/science family)', () => {
+    // two -> /tu:/ (silent w), sword -> /sɔ:d/ (silent w),
+    // science/scientist/scissors -> 'sc' is /s/ alone before 'i'.
+    for (const word of ['two', 'sword', 'science', 'scientist', 'scissors']) {
+      expect(getInitialBlend(word), `"${word}" must not be a blend question`).toBeNull();
+    }
+    // The same clusters stay real blends for genuinely sounded words.
+    expect(getInitialBlend('twin')).toBe('tw');
+    expect(getInitialBlend('swim')).toBe('sw');
+    expect(getInitialBlend('scarf')).toBe('sc');
+  });
 });

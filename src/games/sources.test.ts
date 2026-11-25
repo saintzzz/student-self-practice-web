@@ -33,6 +33,19 @@ describe('pickGameWords', () => {
     expect(pickGameWords('grade-1', 't', 5)).toHaveLength(5);
     expect(pickGameWords('grade-1', 't', 9999).length).toBeGreaterThan(0);
   });
+
+  it('CR-144: blocked word ids never enter the game pool', () => {
+    const blocked = new Set([
+      'liar', 'villain', 'crazy', 'woozy', 'kiss', 'santa-claus', 'billiards',
+      'pinata', 'aland',
+      'ok-badge', 'new-badge', 'free-badge', 'vs-badge',
+    ]);
+    for (const gradeId of GRADES) {
+      for (const w of pickGameWords(gradeId, 't', 9999)) {
+        expect(blocked.has(w.id), `game pool must not contain "${w.id}"`).toBe(false);
+      }
+    }
+  });
 });
 
 describe('imageChoiceRounds (Racing / Tic-tac-toe)', () => {

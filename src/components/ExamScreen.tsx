@@ -1690,14 +1690,18 @@ export function ExamQuestionView({
 }
 
 function PromptLine({ text, imageUrl, className = TYPE_PROMPT_PAPER_G345 }: { text: string; imageUrl?: string; className?: string }) {
+  // CR-144 (art audit F-02): a missing/broken prompt image must not leave
+  // a broken-image icon above the question - fall back to text-only.
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <div className={`mx-auto mb-6 max-w-xl text-center leading-relaxed ${className}`}>
-      {imageUrl && (
+      {imageUrl && !imgFailed && (
         <img
           src={imageUrl}
           alt=""
           decoding="async"
           data-testid="exam-question-image"
+          onError={() => setImgFailed(true)}
           className="art-breathe mx-auto mb-3 max-h-48 sm:max-h-64 rounded-lg bg-white object-contain ring-1 ring-slate-200"
         />
       )}

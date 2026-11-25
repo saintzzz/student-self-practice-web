@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { VocabWord } from '../../types';
-import { blankOutWord, generateListeningSentenceFillBlankQuestions } from './listeningSentenceFillBlank';
+import { blankOutWord, generateListeningSentenceFillBlankQuestions, sentencesForWord } from './listeningSentenceFillBlank';
 
 const ACTIONS_TOPIC_ID = 'g2-actions';
 
@@ -126,6 +126,60 @@ describe('generateListeningSentenceFillBlankQuestions (Actions topic)', () => {
     for (const q of questions) {
       expect(blankOutWord(q.sentence, q.word)).toBe(q.displaySentence);
     }
+  });
+});
+
+describe('CR-144 content guards', () => {
+  const mk = (id: string, word: string, topicId = 't-x', countable = true): VocabWord => ({
+    id,
+    topicId,
+    word,
+    emoji: '❓',
+    countable,
+    explanation: 'e',
+  });
+
+  it('never generates sentences for blocked words (aspiration/number/badge/non-country)', () => {
+    const blocked = [
+      mk('liar', 'liar', 'g3-xp-people'),
+      mk('villain', 'villain', 'g3-xp-people'),
+      mk('kiss', 'kiss', 'g3-xp-feelings'),
+      mk('woozy', 'woozy', 'g3-xp-feelings', false),
+      mk('infinity', 'infinity', 'g4-xp-signs', false),
+      mk('zero', 'zero', 'g4-xp-signs', false),
+      mk('hundred', 'hundred', 'g4-xp-signs', false),
+      mk('european-union', 'the European Union', 'g4-xp-flags-europe', false),
+      mk('ok-badge', 'OK badge'),
+      mk('new-badge', 'NEW badge'),
+      mk('free-badge', 'FREE badge'),
+      mk('vs-badge', 'VS badge'),
+    ];
+    expect(generateListeningSentenceFillBlankQuestions(blocked)).toHaveLength(0);
+    for (const w of blocked) {
+      expect(sentencesForWord(w), `"${w.id}" must produce no sentences`).toEqual([]);
+    }
+  });
+
+  it('drops non-ASCII words from the typing path (CR-144 C1)', () => {
+    const questions = generateListeningSentenceFillBlankQuestions([
+      mk('pinata', 'piñata'),
+      mk('cat', 'cat'),
+    ]);
+    expect(questions.every((q) => q.word === 'cat')).toBe(true);
+  });
+
+  it('keeps flag regions out of the country frame and Santa out of occupations', () => {
+    for (const [id, word] of [
+      ['taiwan', 'Taiwan'],
+      ['hong-kong', 'Hong Kong'],
+      ['macau', 'Macau'],
+    ] as const) {
+      const sentences = sentencesForWord(mk(id, word, 'g5-xp-flags-asia', false));
+      expect(sentences.length).toBeGreaterThan(0);
+      expect(sentences.every((s) => !s.startsWith('I am from'))).toBe(true);
+    }
+    const santa = sentencesForWord(mk('santa-claus', 'Santa Claus', 'g3-xp-people', false));
+    expect(santa.every((s) => !s.includes('want to be'))).toBe(true);
   });
 });
 

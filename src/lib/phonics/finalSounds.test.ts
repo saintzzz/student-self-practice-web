@@ -102,4 +102,11 @@ describe('getFinalSound', () => {
       expect(sounds.has(key), `bank must produce final-sound key "${key}"`).toBe(true);
     }
   });
+
+  it('CR-144: vowel-ending loanwords are not silent-e stripped (PE/karate)', () => {
+    // "PE" ends /i:/ and "karate" ends /i/ - stripping -e would mis-group
+    // them under 'p'/'t'.
+    expect(getFinalSound('PE')).toBe('e');
+    expect(getFinalSound('karate')).toBe('e');
+  });
 });

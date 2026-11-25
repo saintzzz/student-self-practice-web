@@ -111,7 +111,13 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
         data-testid="chest-visual"
         className={`relative flex h-28 w-40 items-center justify-center rounded-3xl border-4 border-amber-700/80 bg-gradient-to-b from-amber-600 to-amber-800 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.6)] ${locksOpen >= LOCKS ? 'game-flip-in' : ''}`}
       >
-        <EmojiVisual emoji={locksOpen >= LOCKS ? '🎁' : '🧰'} variant="block" className="text-6xl" />
+        {/* CR-144 (art audit F-05): bespoke chest art, not a toolbox. */}
+        <EmojiVisual
+          emoji={locksOpen >= LOCKS ? '🎁' : '🧰'}
+          imageUrl={locksOpen >= LOCKS ? undefined : '/images/games/treasure-chest.webp'}
+          variant="block"
+          className="text-6xl"
+        />
         <div className="absolute -bottom-3 flex gap-2">
           {Array.from({ length: LOCKS }).map((_, i) => (
             <span

@@ -46,7 +46,16 @@ const TWO_LETTER_BLENDS = [
  * 'write' begins 'wr' (silent w, sounded /r/ - not a blend); keep a small
  * exception table for any similar case rather than broadening the rules.
  */
-const BLEND_EXCEPTIONS: Record<string, null> = {};
+const BLEND_EXCEPTIONS: Record<string, null> = {
+  // CR-144 (teacher audit H4): silent-letter + soft-c cases where a
+  // listed blend is NOT sounded as two letters - these generated wrong
+  // round-4 blend questions.
+  two: null,      // /tuː/ - silent w, 'tw' is not a blend
+  sword: null,    // /sɔːd/ - silent w, 'sw' is not a blend
+  science: null,  // /ˈsaɪəns/ - 'sc' is /s/ alone before 'i'
+  scientist: null,
+  scissors: null, // /ˈsɪzəz/ - 'sc' is /s/ alone before 'i'
+};
 
 function firstToken(word: string): string {
   return word.trim().toLowerCase().split(/\s+/)[0] ?? '';

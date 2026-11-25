@@ -59,6 +59,11 @@ const FINAL_SOUND_EXCEPTIONS: Record<string, string> = {
   synagogue: 'g',
   // "Chile" ends /i/ - vowel ending keyed 'e' like -ee.
   chile: 'e',
+  // CR-144 (teacher audit H5): "PE" ends /iː/ - the silent-e rule
+  // stripped it to 'p'. Same vowel-ending convention as chile/-ee.
+  pe: 'e',
+  // "karate" ends /i/ (loanword); silent-e would strip to 't'.
+  karate: 'e',
   // NOTE: -ey words (key/hockey/honey/money/monkey) are deliberately NOT
   // exceptions: every other /i/ ending in the bank (baby, candy, turkey,
   // butterfly) resolves to 'y' by the last-letter rule, so -ey words must

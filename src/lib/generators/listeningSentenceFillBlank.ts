@@ -1,4 +1,5 @@
 import type { ListeningSentenceFillBlankQuestion, VocabWord } from '../../types';
+import { TYPEABLE_WORD } from './listeningFillBlank';
 
 /**
  * The Actions topic's stable id (see data/vocabulary/actions.ts,
@@ -277,6 +278,15 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   cycle: 'action',
   'wake-up': 'action',
   // "I can brush teeth" is wrong; routine-label frames keep it natural.
+  // CR-144: flag-topic entries that are not sovereign countries dodge
+  // the "I am from ..." frame via the bare place frames instead
+  // ("I go to Taiwan" / "I am in Hong Kong" - natural and neutral).
+  taiwan: 'place-bare',
+  'hong-kong': 'place-bare',
+  macau: 'place-bare',
+  // "I like Santa Claus" reads naturally; the occupation frames would
+  // produce "He is a Santa Claus".
+  'santa-claus': 'sport',
   'brush-teeth': 'routine-action',
   // Event noun inside an activity topic - "I like school festival" is
   // unnatural; the definite-article frames fix it.
@@ -304,8 +314,6 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   hug: 'action',
   think: 'action',
   sigh: 'action',
-  kiss: 'action',
-  liar: 'occupation',
   // g3-xp-people exceptions to the occupation topic class.
   person: 'countable',
   skull: 'countable',
@@ -323,9 +331,7 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   'point-left': 'action',
   'point-up': 'action',
   'point-down': 'action',
-  // g4-xp-signs numbers and the non-countable checkpoint.
-  hundred: 'number',
-  zero: 'number',
+
   // g1-xp-nature nouns that need "the" (and a/an would misfire on Earth).
   earth: 'the-noun',
   sunrise: 'the-noun',
@@ -353,7 +359,6 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   // CR-15 wave 2.
   salute: 'action',
   'baggage-claim': 'the-noun',
-  infinity: 'number',
   wifi: 'the-noun',
   // CR-16 semantics sweep - "I want some X" is only right for consumables.
   // Activities and routines take the sport/like frames instead.
@@ -395,6 +400,30 @@ const WORD_ID_OVERRIDES: Readonly<Record<string, SentenceClass>> = {
   'passport-control': 'place',
 };
 
+/**
+ * CR-144 (teacher audit): words that must never generate model sentences
+ * in ANY sentence-based family (listening fill-blank, word-order,
+ * missing-letter - all share sentencesForWord via templatesForWord).
+ * Reasons: unsafe aspirations ("I want to be a liar/villain"), wrong
+ * number frames ("I can count to infinity/zero/hundred"), non-country
+ * "I am from the European Union", and badge labels that are not real
+ * vocabulary. These words still appear in choice-based kinds.
+ */
+const SENTENCE_BLOCKED_WORDS: ReadonlySet<string> = new Set([
+  'liar',
+  'villain',
+  'kiss',
+  'woozy',
+  'infinity',
+  'zero',
+  'hundred',
+  'european-union',
+  'ok-badge',
+  'new-badge',
+  'free-badge',
+  'vs-badge',
+]);
+
 /** BR-16 precedence: word-id override -> actions topic -> topic class -> countable/mass. */
 export function sentenceClassFor(word: VocabWord): SentenceClass {
   const override = WORD_ID_OVERRIDES[word.id];
@@ -412,6 +441,9 @@ export function sentenceClassFor(word: VocabWord): SentenceClass {
 }
 
 function templatesForWord(word: VocabWord): readonly SentenceTemplate[] {
+  if (SENTENCE_BLOCKED_WORDS.has(word.id)) {
+    return [];
+  }
   return CLASS_TEMPLATES[sentenceClassFor(word)];
 }
 
@@ -453,6 +485,9 @@ export function generateListeningSentenceFillBlankQuestions(
   const questions: ListeningSentenceFillBlankQuestion[] = [];
 
   for (const word of words) {
+    // CR-144 (C1): same typability guard as listeningFillBlank - the
+    // blanked word is typed, so non-ASCII words would be unanswerable.
+    if (!TYPEABLE_WORD.test(word.word)) continue;
     const templates = templatesForWord(word);
     templates.forEach((buildSentence, index) => {
       const sentence = buildSentence(word.word);

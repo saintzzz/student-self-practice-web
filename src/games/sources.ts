@@ -18,10 +18,25 @@ import type {
  * round object is a real `Question` union member.
  */
 
+/** CR-144 content guard (teacher audit + PO G-2): word ids that must
+ *  never enter any game - negative-aspiration/tone-flagged vocab the
+ *  teacher review marked unsafe for kids, and non-lexis badge labels
+ *  that are not teachable vocabulary. Games amplify whatever the bank
+ *  holds (SentenceScramble builds "I want to be a liar" from `liar`),
+ *  so the pool gate sits here, at the single entry point. */
+const GAME_BLOCKED_WORDS = new Set([
+  'liar', 'villain', 'crazy', 'woozy', 'kiss', 'santa-claus', 'billiards',
+  'pinata', 'aland',
+  'ok-badge', 'new-badge', 'free-badge', 'vs-badge',
+]);
+
 /** Literal-emoji words only - every game shows the picture, so figurative
- *  entries (📹 for "vlog") would be unanswerable, same rule as generators. */
+ *  entries (📹 for "vlog") would be unanswerable, same rule as generators.
+ *  CR-144: minus the blocked ids above. */
 function gameWordPool(gradeId: string): VocabWord[] {
-  return getWordsByGrade(gradeId).filter(isLiteralImageWord);
+  return getWordsByGrade(gradeId).filter(
+    (w) => isLiteralImageWord(w) && !GAME_BLOCKED_WORDS.has(w.id),
+  );
 }
 
 /** Seeded pick of `n` usable words for a run. */

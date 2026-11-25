@@ -64,6 +64,11 @@ export default function OddOneOut({ grade, seed, level, onEnd }: GameProps) {
     timerRef.current = setTimeout(() => nextRound(newCorrect), 750);
   };
 
+  /* CR-144 (art audit F-03): the whole option set only shows audited art
+     when every word resolves to an image - same all-or-nothing law as
+     ListeningImageChoiceQuestion. */
+  const oddAllArt = q.words.every((word) => getWordVisual(word.id)?.imageUrl);
+
   return (
     <div data-testid="game-odd-one-out" className="flex flex-col items-center gap-5">
       <div className="flex items-center gap-4">
@@ -76,7 +81,10 @@ export default function OddOneOut({ grade, seed, level, onEnd }: GameProps) {
       </p>
       <div className="grid grid-cols-2 gap-3" data-testid="odd-choice-field">
         {q.words.map((word, i) => {
-          const visual = getWordVisual(word.id);
+          /* CR-144 (art audit F-03): all-or-nothing option art - one
+             missing asset drops the whole set to emoji, never a
+             half-kawaii half-Twemoji question. */
+          const visual = oddAllArt ? getWordVisual(word.id) : undefined;
           const wrong = wrongPicks.includes(i);
           return (
             <button

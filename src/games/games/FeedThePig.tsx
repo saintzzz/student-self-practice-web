@@ -102,7 +102,13 @@ export default function FeedThePig({ grade, seed, level, onEnd }: GameProps) {
           data-testid="pig-face"
           className={`text-6xl transition-transform motion-reduce:transition-none ${fed ? 'scale-125' : 'game-bob'}`}
         >
-          <EmojiVisual emoji={fed ? '😋' : '🐷'} animated variant="block" />
+          {/* CR-144 (art audit F-09): Be Heo mascot poses, not a generic pig. */}
+          <EmojiVisual
+            emoji={fed ? '😋' : '🐷'}
+            imageUrl={fed ? '/images/mascot/be-heo-celebrating.webp' : '/images/mascot/be-heo-idle.webp'}
+            animated
+            variant="block"
+          />
         </span>
         <span className="text-sm font-semibold text-slate-300">
           {fed ? 'Ngon quá!' : 'Heo đói bụng rồi!'}
