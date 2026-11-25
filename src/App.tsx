@@ -95,13 +95,30 @@ function RouteFlashcards({ grade, onExit }: { grade: Grade; onExit: () => void }
   return <FlashcardErrorBoundary grade={grade} onExit={onExit} />;
 }
 
-/** Suspense fallback for lazy route chunks - matches the auth-loading state. */
-function RouteFallback() {
+/** CR-143 P3: cold-open paint is the login card's skeleton, not a dead
+ *  gradient - the milk-glass card, inputs and gold CTA arrive in the
+ *  first frame so the app reads as "loading" instead of "blank".
+ *  Shared by the auth-loading splash and the lazy-route fallback. */
+export function SplashSkeleton({ full = false }: { full?: boolean }) {
+  const bone = 'animate-pulse rounded-2xl bg-sky-200/50 motion-reduce:animate-none';
   return (
-    <div className="flex min-h-screen items-center justify-center text-lg font-bold text-sky-700">
-      Đang tải...
+    <div className={`flex ${full ? 'min-h-screen' : 'min-h-[42vh]'} items-center justify-center px-4`}>
+      <div className="w-full max-w-md rounded-3xl bg-white/80 p-6 shadow-xl ring-1 ring-sky-200/80 backdrop-blur-md sm:p-8">
+        <div className="mx-auto h-8 w-3/5 animate-pulse rounded-xl bg-sky-300/40 motion-reduce:animate-none" />
+        <div className="mx-auto mt-3 h-4 w-4/5 animate-pulse rounded-lg bg-sky-200/50 motion-reduce:animate-none" />
+        <div className={`mt-6 h-[76px] border-2 border-sky-200/80 bg-sky-50/80 ${bone}`} />
+        <div className={`mt-3 h-[76px] border-2 border-sky-200/80 bg-sky-50/80 ${bone}`} />
+        <div className="mt-4 h-[76px] animate-pulse rounded-3xl bg-gradient-to-b from-amber-200/70 to-amber-300/70 motion-reduce:animate-none" />
+        <div className={`mx-auto mt-4 h-11 w-3/4 ${bone}`} />
+        <p className="mt-5 text-center text-sm font-bold text-sky-700/80" role="status">Đang tải...</p>
+      </div>
     </div>
   );
+}
+
+/** Suspense fallback for lazy route chunks - matches the auth-loading state. */
+function RouteFallback() {
+  return <SplashSkeleton full />;
 }
 const suspense = (node: ReactNode) => <Suspense fallback={<RouteFallback />}>{node}</Suspense>;
 
@@ -544,12 +561,7 @@ export default function App() {
   }
 
   if (authMode === 'loading') {
-    return shell(
-      <div className="flex min-h-[42vh] items-center justify-center text-lg font-bold text-sky-700">
-        Đang tải...
-      </div>,
-      { hero: 'compact', land: 'map', tone: 'day' },
-    );
+    return shell(<SplashSkeleton />, { hero: 'compact', land: 'map', tone: 'day' });
   }
 
   /* CR-82 (D-21 / AC-2.5): pre-round screens mount ZERO Lottie players -

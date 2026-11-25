@@ -133,19 +133,21 @@ export default function RoundSummary({
       {/* kids-UX s3.5.a: stars are the headline - "Em được N sao!" with the
           0-star process-praise variant (never deficit framing). CR-82 M3:
           the star count is the screen's hero number. */}
+      {/* CR-143 C3: the 0-star line is pure encouragement - no "giỏi
+          lắm" praise fighting the completion badge's push below. */}
       <div className="mt-3 flex items-center justify-center gap-2">
         <p data-testid="round-stars-summary" className="text-2xl font-semibold text-amber-200">
           {stars > 0 ? (
             <>Em được <span className={TYPE_HERO_NUMBER_NAVY}>{stars}</span> sao!</>
           ) : (
-            'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'
+            'Em đã chơi hết vòng này - vòng sau mình cùng lấy sao nhé!'
           )}
         </p>
         <InstructionSpeaker
           text={
             stars > 0
               ? `Em được ${stars} sao! Em đúng ${outcome.correctCount} trên ${outcome.totalCount} câu.`
-              : 'Em đã chơi hết vòng này - giỏi lắm! Vòng sau mình cùng lấy sao nhé.'
+              : 'Em đã chơi hết vòng này. Vòng sau mình cùng lấy sao nhé!'
           }
           lang="vi-VN"
 
@@ -153,16 +155,22 @@ export default function RoundSummary({
         />
       </div>
 
-      <p data-testid="round-score-summary" className="mt-2 text-lg font-semibold text-slate-300">
-        Em trả lời đúng {outcome.correctCount}/{outcome.totalCount} câu ở vòng này.
-      </p>
-      {/* kids-UX AC-4.1: points are demoted to a secondary sky chip - gold
-          fills are reserved for earned treasure (stars, gifts). */}
-      <p className="mt-2 flex justify-center">
-        <span data-testid="round-points-summary" className={CHIP_SKY}>
-          {outcome.points}/{outcome.maxPoints} điểm
-        </span>
-      </p>
+      {/* CR-143 C3: a round with zero questions (timed out / guest-locked
+          before any answer) skips the meaningless 0/0 stat + chip. */}
+      {outcome.totalCount > 0 && (
+        <>
+          <p data-testid="round-score-summary" className="mt-2 text-lg font-semibold text-slate-300">
+            Em trả lời đúng {outcome.correctCount}/{outcome.totalCount} câu ở vòng này.
+          </p>
+          {/* kids-UX AC-4.1: points are demoted to a secondary sky chip - gold
+              fills are reserved for earned treasure (stars, gifts). */}
+          <p className="mt-2 flex justify-center">
+            <span data-testid="round-points-summary" className={CHIP_SKY}>
+              {outcome.points}/{outcome.maxPoints} điểm
+            </span>
+          </p>
+        </>
+      )}
       {award?.alreadyGranted && (
         <p className="mt-2 text-sm font-semibold text-sky-300">Đã nhận thưởng rồi</p>
       )}

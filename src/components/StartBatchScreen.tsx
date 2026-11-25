@@ -25,12 +25,14 @@ import {
   IconBook,
   IconChevronDown,
   IconChevronUp,
+  IconClock,
   IconFlag,
   IconFlask,
   IconGift,
   IconHash,
   IconMuscle,
   IconNote,
+  IconPencil,
   IconPlay,
   IconSwords,
   type IconProps,
@@ -250,30 +252,50 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             </div>
           </div>
         )}
+        {/* CR-143 P4: mode rows become kid-scannable cards - icon chip +
+            big label + one-line promise instead of "Name - N câu" text. */}
         <div className="mt-2 flex flex-col gap-2">
           <button
             type="button"
             data-testid={`drill-${program.id}`}
             onClick={() => onStartExam(program.id, 'practice')}
-            className={`${BTN_DRILL} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
+            className={`${BTN_DRILL} flex w-full items-center gap-3 py-2.5 text-left${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
           >
-            Luyện đề - {examConfig.drillCount} câu
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/80 ring-1 ring-sky-300/80" aria-hidden="true">
+              <IconPencil size={20} className="text-sky-700" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-extrabold">Luyện đề</span>
+              <span className="block text-xs font-semibold text-sky-700/90">{examConfig.drillCount} câu - biết đúng sai ngay</span>
+            </span>
           </button>
           <button
             type="button"
             data-testid={`exam-program-${program.id}`}
             onClick={() => onStartExam(program.id, 'exam')}
-            className={`${BTN_EXAM} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
+            className={`${BTN_EXAM} flex w-full items-center gap-3 py-2.5 text-left${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
           >
-            Thi thử - {examConfig.examCount} câu
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30" aria-hidden="true">
+              <IconClock size={20} className="text-amber-200" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-extrabold">Thi thử</span>
+              <span className="block text-xs font-semibold text-sky-200/90">{examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút - giống thi thật</span>
+            </span>
           </button>
           <button
             type="button"
             data-testid={`advanced-${program.id}`}
             onClick={() => onStartExam(program.id, 'practice', undefined, { minDifficulty: 3, label: 'Nâng cao' })}
-            className={`${BTN_ADVANCED} w-full${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
+            className={`${BTN_ADVANCED} flex w-full items-center gap-3 py-2.5 text-left${density.primaryMinH >= 76 ? ' !min-h-[76px]' : ''}`}
           >
-            Nâng cao - {examConfig.drillCount} câu
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-100 ring-1 ring-sky-300/80" aria-hidden="true">
+              <IconMuscle size={20} className="text-sky-700" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-extrabold">Nâng cao</span>
+              <span className="block text-xs font-semibold text-sky-700/90">{examConfig.drillCount} câu khó hơn - thử sức nhé</span>
+            </span>
           </button>
           {/* CR-82 (R-v5-12): flashcards = the 4th row of the English
               block only (vocabulary is English content), a BTN_DRILL-
@@ -355,13 +377,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
     </div>
   );
 
-  /* CR-92: the note sits inside the dark hub tray - slate-600 was the
-     paper-pairing value; on the tray it needs light ink. */
-  const learnNote = (
-    <p className="text-sm font-semibold text-slate-600">
-      Luyện đề: {examConfig.drillCount} câu, chữa ngay. Thi thử: {examConfig.examCount} câu trong {Math.floor(examConfig.examTimeSec / 60)} phút, giống thi thật.
-    </p>
-  );
+  /* CR-143 P4: the old grey explainer note is gone - each mode card now
+     carries its own one-line promise (count + what it feels like). */
 
   const tiles: HubTileDef[] = isG12
     ? [
@@ -478,7 +495,6 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
           content: (
             <>
               <div id="hub-section-learn" data-testid="hub-section-learn" className="space-y-3">
-                {learnNote}
                 {EXAM_PROGRAMS.filter((p) => p.id !== 'math-vi' || isSupabaseConfigured()).map((p) => programBlock(p))}
               </div>
               {hasDueReview && (
@@ -537,8 +553,10 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         },
       ];
 
+  /* CR-143 P2: on desktop the launchpad stops being a phone column -
+     lg splits it into hero (left) + interactive hub (right). */
   return (
-    <div className={`mx-auto -mt-[12vh] max-w-2xl px-4 pb-6 sm:pb-10 ${SCREEN_ENTER}`}>
+    <div className={`mx-auto -mt-[12vh] max-w-2xl px-4 pb-6 sm:pb-10 lg:max-w-5xl ${SCREEN_ENTER}`}>
       <div className={`${CARD_DAY} text-center`}>
         <div className="mb-6 flex items-start justify-between gap-2">
           <button type="button" data-testid="back-to-grades" onClick={onBack} className={NAV_PILL_DAY}>
@@ -554,6 +572,8 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             autoplayKey={`start-${grade.id}`}
           />
         </div>
+        <div className="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-8">
+        <div>
         {/* Land vignette: the mascot stands ON its land's ground (strip
             scene over the land's page gradient) instead of floating on
             navy - each grade's home screen wears its land identity. */}
@@ -614,11 +634,13 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
         {/* G3-5: the headline progress card stays on-screen above the
             hub (AC-2.1 amendment: ≤6 elements with sections collapsed). */}
         {!isG12 && <DailyQuestCard />}
+        </div>
 
         {/* CR-73: the hub lives inside the launchpad card as a light
             paper panel - labeled tiles, inline expansion, no sheet. */}
-        <div className="mt-5 text-left">
+        <div className="mt-5 text-left lg:mt-0">
           <ModeHub tiles={tiles} voiceKeyPrefix={`hub-${grade.id}`} initialOpenId={initialHubTile} />
+        </div>
         </div>
       </div>
     </div>

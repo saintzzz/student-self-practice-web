@@ -331,15 +331,38 @@ exception surface (paper reports). No theme switch.
 - **Containers:** `max-w-3xl` journey map, `max-w-2xl` summary, `max-w-xl`
   dialogs, `max-w-md` auth.
 - **Spacing:** page `px-4 py-6 sm:py-8`; cards `p-6 sm:p-8`; chip gaps `gap-2`.
-- **Page anatomy (journey map, CR-116):** nav pills (top-right, day glass) →
-  mascot medallion + H1/prompt → placement CTA + engagement chips +
-  guest hint + parent-report pill (one wrap row) → winding trail of
+- **Page anatomy (journey map, CR-116, amended CR-143):** nav pills
+  (top-right, day glass) → mascot medallion + H1/prompt → **stats row**
+  (the `EngagementBar` HUD as ONE unit, own line) → **action row**
+  (placement gold CTA + guest hint + parent pill) → winding trail of
   zigzag land postcards (`TrailDots` connectors + waypoint discs, finish
-  flag at the tail) → join-class / assignments slots → footer. The whole
-  page rides `land="map" tone="day"`: `land-map-day.webp` hero art up
-  top, `sky-300→emerald-100` gradient continuing under the trail.
-- **Page anatomy (launchpad, CR-73):** back nav → gold `Chơi` CTA →
-  (G3-5 only: DailyQuestCard) → inline **ModeHub** sections → footer.
+  flag at the tail) → join-class / assignments slots → footer. Law: stats
+  and actions never share a wrap row - an action competing with stat
+  segments reads as five equal pills (CR-143 P1). The whole page rides
+  `land="map" tone="day"`: `land-map-day.webp` hero art up top,
+  `sky-300→emerald-100` gradient continuing under the trail.
+- **Page anatomy (launchpad, CR-73, amended CR-143):** back nav → gold
+  `Chơi` CTA → (G3-5 only: DailyQuestCard) → inline **ModeHub** sections
+  → footer. **Desktop law (CR-143 P2):** at `lg:` the card splits into
+  `grid-cols-[5fr_7fr]` - hero+vignette+CTA+quest left, ModeHub right;
+  container widens to `lg:max-w-5xl`. No surface may render a phone-width
+  column in a sea of gradient on desktop.
+- **Board-fill law (CR-143 P2):** every play stage fills its viewport -
+  content vertically centers (`justify-center` on the flex-1 stage)
+  instead of top-clustering; a board using <50% of a tall screen reads
+  broken. Game boards widen to `lg:max-w-2xl`.
+- **Splash law (CR-143 P3):** loading states render the DESTINATION's
+  skeleton (`SplashSkeleton` = milk card + input bones + gold CTA
+  silhouette), never a bare gradient + text. First paint must look like
+  the product, not a void.
+- **Mode-card law (CR-143 P4):** exam-mode entries inside `programBlock`
+  are icon-chip + big label + one-line promise cards ("Thi thử / 120 câu
+  trong 25 phút - giống thi thật"), never "Name - N câu" flat text or a
+  shared explainer paragraph - G1-3 readers scan pictures, not prose.
+- **Round-end copy law (CR-143 C3):** the summary speaks with ONE voice -
+  stars>0 praise headline + threshold badge; stars===0 encouragement
+  headline (no "giỏi lắm" competing with the badge's push); a round with
+  `totalCount===0` hides the score line + points chip (0/0 is meaningless).
   The old bottom-sheet `ExploreSheet` IA is replaced by `ModeHub`
   (`src/components/ModeHub.tsx`) - all sections collapsed on first paint,
   collapsed children unmount while empty `hub-panel-*`/`hub-section-*`

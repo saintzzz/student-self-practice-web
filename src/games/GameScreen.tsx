@@ -197,7 +197,10 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
 
   return (
     <LandShell gradeId={grade.id} tone={deskTone} variant="hero">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5">
+      {/* CR-143 P2: play boards vertically fill their stage - content
+          centers instead of top-clustering on tall tablets; lg widens
+          the stage so desktops don't show a phone column. */}
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-5 lg:max-w-2xl">
         <header className="mb-4 flex items-center gap-3">
           <button
             type="button"
@@ -227,7 +230,7 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
           )}
         </header>
 
-        <main className="flex flex-1 flex-col rounded-3xl border border-white/10 bg-navy-900/70 p-5 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.6)] backdrop-blur">
+        <main className="flex flex-1 flex-col justify-center rounded-3xl border border-white/10 bg-navy-900/70 p-5 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.6)] backdrop-blur">
           {end ? (
             <div data-testid="game-end-screen" className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
               <StarRain stars={stars} />

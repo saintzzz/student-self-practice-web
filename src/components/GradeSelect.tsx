@@ -201,39 +201,42 @@ export default function GradeSelect({ grades, onSelectGrade, onOpenCredits, focu
           <p className={PROMPT_DAY + ' mt-0.5'}>Chọn một vùng đất để bắt đầu phiêu lưu nhé!</p>
         </div>
       </div>
-      {/* CR-72 + CR-82 polish: placement CTA + guest hint + engagement
-          chips + the parent pill share ONE wrap row - kills the stacked
-          dead space that pushed the map off-screen on phones. */}
-      <div className="mb-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-        {onPlacement && (
-          <button
-            type="button"
-            data-testid="placement-start"
-            onClick={onPlacement}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-2 text-sm font-extrabold text-amber-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.55),inset_0_-2px_0_rgba(146,64,14,0.3),0_10px_22px_-8px_rgba(245,158,11,0.6)] ring-1 ring-amber-300/80 transition hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-4 focus:ring-amber-300"
-          >
-            Làm bài kiểm tra đầu vào
-          </button>
-        )}
+      {/* CR-143 P1: stats vs actions split into two clear rows - the
+          engagement HUD is one unit on its own line; the gold placement
+          CTA + guest hint + parent pill share the action row below it.
+          No more five-pill soup where an action competed with stats. */}
+      <div className="mb-5 flex flex-col items-center gap-2.5">
         <EngagementBar tone="day" />
-        {guestTrial && (
-          <p
-            data-testid="guest-trial-hint"
-            className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-sm font-bold text-sky-800 shadow-sm ring-1 ring-sky-300/80 backdrop-blur"
-          >
-            Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 5 vòng
-          </p>
-        )}
-        {onReport && (
-          <button
-            type="button"
-            data-testid="open-parent-report"
-            onClick={() => (isParentVerified() ? onReport() : setReportGateOpen(true))}
-            className={`${NAV_PILL_SM_DAY} inline-flex items-center gap-1`}
-          >
-            <IconFamily size={14} className="text-sky-600" /> Góc ba mẹ
-          </button>
-        )}
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+          {onPlacement && (
+            <button
+              type="button"
+              data-testid="placement-start"
+              onClick={onPlacement}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 px-5 py-2 text-sm font-extrabold text-amber-950 shadow-[inset_0_2px_0_rgba(255,255,255,0.55),inset_0_-2px_0_rgba(146,64,14,0.3),0_10px_22px_-8px_rgba(245,158,11,0.6)] ring-1 ring-amber-300/80 transition hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-4 focus:ring-amber-300"
+            >
+              Làm bài kiểm tra đầu vào
+            </button>
+          )}
+          {guestTrial && (
+            <p
+              data-testid="guest-trial-hint"
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-sm font-bold text-sky-800 shadow-sm ring-1 ring-sky-300/80 backdrop-blur"
+            >
+              Chơi thử: mỗi lớp 1 vòng miễn phí - đăng nhập để mở đủ 5 vòng
+            </p>
+          )}
+          {onReport && (
+            <button
+              type="button"
+              data-testid="open-parent-report"
+              onClick={() => (isParentVerified() ? onReport() : setReportGateOpen(true))}
+              className={`${NAV_PILL_SM_DAY} inline-flex items-center gap-1`}
+            >
+              <IconFamily size={14} className="text-sky-600" /> Góc ba mẹ
+            </button>
+          )}
+        </div>
       </div>
       {reportGateOpen && (
         <ParentGate
