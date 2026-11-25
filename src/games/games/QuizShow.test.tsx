@@ -49,7 +49,7 @@ describe('QuizShow', () => {
       if (i < 2) expect(onEnd).not.toHaveBeenCalled();
     }
     expect(screen.getByTestId('heart-meter').getAttribute('aria-label')).toContain('0/3');
-    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS, wrong: expect.arrayContaining([expect.objectContaining({ kind: 'image-choice' })]) });
   });
 
   it('CR-100: timing out drops a heart and advances; the run ends when hearts run out', () => {
@@ -61,7 +61,7 @@ describe('QuizShow', () => {
     // Two more full timeouts burn the remaining hearts.
     act(() => vi.advanceTimersByTime(21000));
     act(() => vi.advanceTimersByTime(21000));
-    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: 0, maxPoints: ROUNDS, correctCount: 0, attempted: ROUNDS, wrong: expect.arrayContaining([expect.objectContaining({ kind: 'image-choice' })]) });
   });
 
   it('an accepted last-second answer does not race the timeout', () => {
@@ -99,6 +99,6 @@ describe('QuizShow', () => {
       fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
       act(() => vi.advanceTimersByTime(700));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS });
+    expect(onEnd).toHaveBeenCalledWith({ points: ROUNDS, maxPoints: ROUNDS, correctCount: ROUNDS, attempted: ROUNDS, wrong: [] });
   });
 });

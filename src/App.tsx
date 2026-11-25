@@ -43,6 +43,7 @@ import { __resetInstructionAutoplay } from './components/InstructionSpeaker';
 import type { ExamProgramId } from './types/exam';
 import FlashcardErrorBoundary from './components/flashcards/FlashcardErrorBoundary';
 import GameRouteBoundary from './games/GameRouteBoundary';
+import RestBanner from './components/RestBanner';
 import {
   advanceRoundQuestion,
   completeGameRound,
@@ -841,6 +842,7 @@ export default function App() {
     >
       {renderScreen()}
       <PwaUi screen={screen} />
+      <RestBanner />
     </ViewerProvider>
   );
 }

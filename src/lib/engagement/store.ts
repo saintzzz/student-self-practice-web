@@ -220,6 +220,8 @@ export const STICKERS: readonly Sticker[] = [
     { id: `trail-half-${land.key}`, nameVi: `Nửa hành trình ${land.nameVi}`, emoji: '🏮', art: `/images/stickers/sticker-trail-half-${land.key}.webp`, category: 'luyen' },
     { id: `trail-full-${land.key}`, nameVi: `Thắp sáng ${land.nameVi}`, emoji: '✨', art: `/images/stickers/sticker-trail-full-${land.key}.webp`, category: 'luyen' },
   ]),
+  // CR-148 (P2-4): finishing a full lantern lap opens Đảo bí mật.
+  { id: 'mystery-island', nameVi: 'Nhà thám hiểm đảo bí mật', emoji: '🏝️', art: `/images/stickers/sticker-mystery-island.webp`, category: 'luyen' },
 ] as const;
 
 const EMPTY_STATE: EngagementState = {
@@ -454,7 +456,7 @@ export interface RoundAwardResult {
 /** kids-UX objective id grammar: `round:<seed>:<n>` | `batch:<seed>` |
  *  `gift:<stickerId>` | CR-83 `game:<gameId>:<seed>` (ruling OBJ-1:
  *  keyed by the run's seed - each arcade play is a fresh run). */
-const OBJECTIVE_RE = /^(round|batch|gift|game|trail):[A-Za-z0-9:_-]{1,80}$/;
+const OBJECTIVE_RE = /^(round|batch|gift|game|trail|island):[A-Za-z0-9:_-]{1,80}$/;
 
 /** kids-UX: true when this objective already granted its rewards. */
 export function isObjectiveGranted(objectiveId: string): boolean {
@@ -760,6 +762,23 @@ export function pendingTrailChest(gradeId: string): number | null {
     ? [...TRAIL_CHEST_NODES]
     : TRAIL_CHEST_NODES.filter((n) => n <= total);
   return nodesToCheck.find((n) => !granted[`trail:${gradeId}:${n}`]) ?? null;
+}
+
+/** CR-148 (P2-4): visit Đảo bí mật - unlocks once a grade's first
+ *  lantern lap completes (epoch >= 1); the visit grants the
+ *  mystery-island sticker once ever via `island:<gradeId>`. Returns
+ *  whether this visit was the first. */
+export function visitMysteryIsland(gradeId: string): { unlocked: boolean; firstVisit: boolean } {
+  const unlocked = trailSnapshot(gradeId).epoch >= 1;
+  if (!unlocked) return { unlocked, firstVisit: false };
+  const state = load();
+  const key = `island:${gradeId}`;
+  if (state.grantedObjectives?.[key]) return { unlocked, firstVisit: false };
+  const newly = new Set<string>();
+  awardSticker(state, 'mystery-island', newly);
+  grantObjective(state, key);
+  persist(state);
+  return { unlocked, firstVisit: true };
 }
 
 /** CR-146: trail snapshot for the launchpad lantern strip. */
@@ -1334,23 +1353,32 @@ export function getPlayerLevel(): PlayerLevelSnapshot {
     progress: span === null ? 1 : Math.min(1, (xp - floor) / span),
   };
 }
-/** XP thresholds per stage: egg -> baby -> kid -> adult. */
-export const PET_STAGE_XP = [0, 50, 250, 600] as const;
-const PET_STAGE_NAMES = ['Trứng', 'Bé', 'Nhỏ', 'Trưởng thành'] as const;
+/** XP thresholds per stage: egg -> baby -> kid -> adult -> hero ->
+ *  legend (CR-148 P1-5 - mirrors PLAYER_LEVEL_XP so the pet arc keeps
+ *  a goal after "adult" instead of dead-ending at 600xp). */
+export const PET_STAGE_XP = [0, 50, 250, 600, 1500, 4000] as const;
+const PET_STAGE_NAMES = ['Trứng', 'Bé', 'Nhỏ', 'Trưởng thành', 'Anh hùng', 'Huyền thoại'] as const;
 
-export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly [string, string, string, string] }> = {
-  cat: { nameVi: 'Mèo Mun', emojis: ['🥚', '🐱', '🐈', '🐯'] },
-  dragon: { nameVi: 'Rồng Con', emojis: ['🥚', '🦎', '🐲', '🐉'] },
+/** Stage art exists for 0-3 only (CR-148 debt: pet-{species}-4/5.webp
+ *  needs the artgen pass) - stages 4/5 keep the adult art with the new
+ *  title instead of a broken image. */
+const PET_MAX_ART_STAGE = 3;
+
+export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly string[] }> = {
+  cat: { nameVi: 'Mèo Mun', emojis: ['🥚', '🐱', '🐈', '🐯', '🐯✨', '🐯👑'] },
+  dragon: { nameVi: 'Rồng Con', emojis: ['🥚', '🦎', '🐲', '🐉', '🐉✨', '🐉👑'] },
   // CR-57: adult bunny is a crowned rabbit, not the unicorn that used to
   // render as "a weird horse". Unicode has only two rabbit glyphs, so the
   // 👑 carries the apex-stage signal - same crown as the pet-adult badge.
-  bunny: { nameVi: 'Thỏ Trắng', emojis: ['🥚', '🐰', '🐇', '🐇👑'] },
+  bunny: { nameVi: 'Thỏ Trắng', emojis: ['🥚', '🐰', '🐇', '🐇👑', '🐇👑✨', '🐇👑🌟'] },
 };
 
 /** Bespoke art path per stage - generated pet arc (public/images/pets).
- *  Stage 0 egg is shared across species. */
+ *  Stage 0 egg is shared across species; stages above PET_MAX_ART_STAGE
+ *  clamp to the adult art (CR-148). */
 export function petArtUrl(species: PetSpecies, stage: number): string {
-  return stage === 0 ? '/images/pets/pet-egg.webp' : `/images/pets/pet-${species}-${stage}.webp`;
+  const artStage = Math.min(stage, PET_MAX_ART_STAGE);
+  return artStage === 0 ? '/images/pets/pet-egg.webp' : `/images/pets/pet-${species}-${artStage}.webp`;
 }
 
 export function petStageForXp(xp: number): number {

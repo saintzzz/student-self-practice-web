@@ -36,7 +36,7 @@ describe('TreasureChest', () => {
     act(() => vi.advanceTimersByTime(800));
     expect(screen.getByTestId('chest-visual').textContent).toContain('🎁');
     act(() => vi.advanceTimersByTime(1000));
-    expect(onEnd).toHaveBeenCalledWith({ points: 10, maxPoints: 10, correctCount: 5, attempted: 5 });
+    expect(onEnd).toHaveBeenCalledWith({ points: 10, maxPoints: 10, correctCount: 5, attempted: 5, wrong: [] });
   });
 
   it('a miss leaves the chest closed and the score below max', () => {
@@ -52,7 +52,7 @@ describe('TreasureChest', () => {
       act(() => vi.advanceTimersByTime(800));
     }
     act(() => vi.advanceTimersByTime(1000));
-    expect(onEnd).toHaveBeenCalledWith({ points: 8, maxPoints: 10, correctCount: 4, attempted: 5 });
+    expect(onEnd).toHaveBeenCalledWith({ points: 8, maxPoints: 10, correctCount: 4, attempted: 5, wrong: [expect.objectContaining({ id: 'q-ic-tomato-a' })] });
   });
 
   it('two misses on a round earn nothing but consume the round', () => {

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Grade, QuestionKind } from '../types';
+import type { ExamQuestion } from '../types/exam';
 import type { HubTone } from '../lib/ui/tokens';
 
 /**
@@ -47,6 +48,15 @@ export interface GameEnd {
    * an unambiguous item count set it.
    */
   attempted?: number;
+  /**
+   * CR-148 (P1-4): real Question-union items the run answered WRONG -
+   * game rounds are already ExamQuestion-compatible objects, so the
+   * shell can feed them into the spaced-repetition queue
+   * (`recordWrongExamQuestion`). Games whose rounds are not re-askable
+   * question objects (memory tiles, counting trays, flag rounds) omit
+   * this - their stats still flow through the skill aggregate.
+   */
+  wrong?: readonly ExamQuestion[];
 }
 
 export interface GameProps {
@@ -77,6 +87,11 @@ export interface GameDef {
   /** CR-95: bespoke illustrated card art - same-origin webp; when set it
    *  replaces the emoji diorama on the shelf card. Emoji stays as fallback. */
   artImage?: string;
+  /** CR-148 (P1-4/P1-6): the skill bucket this game trains (a
+   *  SKILL_LABELS key). Feeds `recordSkillAnswers` so game practice is
+   *  visible to the parent report + coach, and groups the shelf into
+   *  skill sections. Absent = no skill attribution. */
+  skill?: string;
 }
 
 /**

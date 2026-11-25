@@ -5,6 +5,7 @@ import { GameRoundDots, HintButton, ModelSpeaker, gameVerdictSfx } from '../mech
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
 const COLS = 6;
@@ -92,6 +93,8 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
   const [lock, setLock] = useState(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   const heroRef = useRef(hero);
   heroRef.current = hero;
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
@@ -142,7 +145,7 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
+    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
   };
 
   const advanceRound = (newCorrect: number) => {
@@ -179,6 +182,10 @@ export default function MazeChase({ grade, seed, level, onEnd }: GameProps) {
       const newHearts = hearts - 1;
       setHearts(newHearts);
       if (newHearts <= 0) {
+        /* CR-148 (P1-4): running out of hearts on a wrong pad = the
+           question was answered wrong (a stumble that later lands the
+           right pad still counts correct - exam-verdict semantics). */
+        wrongRef.current.push(q);
         timerRef.current = setTimeout(() => finish(correctCount), 700);
         return;
       }

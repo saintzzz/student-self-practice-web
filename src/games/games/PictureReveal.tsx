@@ -6,6 +6,7 @@ import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFi
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
 const TILES = 9;
@@ -42,6 +43,8 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
   const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(round, rounds.length - 1)];
@@ -55,7 +58,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
     if (round + 1 >= rounds.length || nextRevealed >= tiles) {
       if (endedRef.current) return;
       endedRef.current = true;
-      onEnd({ points: nextRevealed, maxPoints: tiles, correctCount: newCorrect , attempted: tiles});
+      onEnd({ points: nextRevealed, maxPoints: tiles, correctCount: newCorrect , attempted: tiles, wrong: wrongRef.current});
       return;
     }
     setRound(round + 1);
@@ -66,6 +69,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
     if (lock || !q || endedRef.current) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (!correct) wrongRef.current.push(q);
     if (correct) combo.hit(); else combo.miss();
     setLock(true);
     const newCorrect = correctCount + (correct ? 1 : 0);
@@ -76,7 +80,7 @@ export default function PictureReveal({ grade, seed, level = 1, onEnd }: GamePro
         timerRef.current = setTimeout(() => {
           if (endedRef.current) return;
           endedRef.current = true;
-          onEnd({ points: revealed, maxPoints: tiles, correctCount: newCorrect, attempted: round + 1 });
+          onEnd({ points: revealed, maxPoints: tiles, correctCount: newCorrect, attempted: round + 1, wrong: wrongRef.current });
         }, 700);
         return;
       }

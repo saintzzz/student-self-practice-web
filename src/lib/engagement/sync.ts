@@ -613,7 +613,7 @@ function sanitizeRemote(raw: unknown): EngagementState {
          CR-146: the game: branch existed since CR-83 but was missing
          here - remote pulls silently stripped game objectives, letting
          a replayed run double-grant on the second device. */
-      if (typeof v === 'string' && /^(round|batch|gift|game|trail):[A-Za-z0-9:_-]{1,80}$/.test(k)) objs[k] = v;
+      if (typeof v === 'string' && /^(round|batch|gift|game|trail|island):[A-Za-z0-9:_-]{1,80}$/.test(k)) objs[k] = v;
     }
     if (Object.keys(objs).length) out.grantedObjectives = objs;
   }

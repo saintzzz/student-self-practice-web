@@ -5,6 +5,7 @@ import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFi
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 5;
@@ -31,11 +32,14 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
   const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(round, rounds.length - 1)];
 
   const advance = (earned: number, opened: boolean, newCorrect: number) => {
+    if (!opened) wrongRef.current.push(q);
     const nextPoints = points + earned;
     const nextLocks = locksOpen + (opened ? 1 : 0);
     setPoints(nextPoints);
@@ -47,7 +51,7 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
       if (endedRef.current) return;
       endedRef.current = true;
       const report = () =>
-        onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: newCorrect , attempted: spec.rounds});
+        onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: newCorrect , attempted: spec.rounds, wrong: wrongRef.current});
       // Let the opened chest breathe for a beat before the end screen swaps in.
       if (nextLocks >= LOCKS) {
         timerRef.current = setTimeout(report, 900);
@@ -77,10 +81,11 @@ export default function TreasureChest({ grade, seed, level, onEnd }: GameProps) 
     setWrongPicks(next);
     const left = lives.lose();
     if (left <= 0) {
+      wrongRef.current.push(q);
       timerRef.current = setTimeout(() => {
         if (endedRef.current) return;
         endedRef.current = true;
-        onEnd({ points, maxPoints: spec.rounds * 2, correctCount: newCorrect, attempted: Math.min(round + 1, spec.rounds) });
+        onEnd({ points, maxPoints: spec.rounds * 2, correctCount: newCorrect, attempted: Math.min(round + 1, spec.rounds), wrong: wrongRef.current });
       }, 650);
       return;
     }

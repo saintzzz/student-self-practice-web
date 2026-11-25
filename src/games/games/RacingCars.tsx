@@ -5,6 +5,7 @@ import { GameRoundDots, HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFi
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 6;
@@ -29,6 +30,9 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
   const lives = useGameLives(spec.lives);
   const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): rounds answered wrong feed the review queue via
+     GameEnd.wrong - a ref stays current inside end-of-round timeouts. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[round];
@@ -43,7 +47,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
 
   const nextRound = (newCorrect: number) => {
     if (round + 1 >= rounds.length) {
-      onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect , attempted: rounds.length});
+      onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect , attempted: rounds.length, wrong: wrongRef.current});
       return;
     }
     setRound(round + 1);
@@ -56,6 +60,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
     if (lock) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (!correct) wrongRef.current.push(q);
     if (correct) combo.hit(); else combo.miss();
     setLock(true);
     if (correct) setPlayer(player + 1);
@@ -66,7 +71,7 @@ export default function RacingCars({ grade, seed, level, onEnd }: GameProps) {
       setWrongPicks([index]);
       if (lives.lose() <= 0) {
         timerRef.current = setTimeout(
-          () => onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect, attempted: round + 1 }),
+          () => onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect, attempted: round + 1, wrong: wrongRef.current }),
           750,
         );
         return;

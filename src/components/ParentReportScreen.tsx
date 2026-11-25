@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getDueReviewItems, getReportSnapshot, getState, STICKERS } from '../lib/engagement/store';
+import { restReminderEnabled, setRestReminderEnabled } from '../lib/engagement/restReminder';
 import { skillLabel } from '../lib/engagement/skills';
 import { fetchParentContact, isValidParentEmail, requestParentVerify, saveParentContact } from '../lib/parentContact';
 import { isParentVerified, ParentGate } from './ParentGate';
@@ -83,6 +84,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
      report stays open - contact writes must re-check the live token and
      re-gate instead of silently sending verification mail. */
   const [reGateOpen, setReGateOpen] = useState(false);
+  const [restOn, setRestOn] = useState(() => restReminderEnabled());
 
   useEffect(() => {
     trackFunnel('report_view', 'parent-report');
@@ -489,6 +491,29 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
             )}
           </div>
         )}
+
+        {/* CR-148 (P2-6): parent-only device settings - this surface is
+            already behind ParentGate, so the toggle is parent-controlled
+            while the banner itself only reads the flag. */}
+        <div data-testid="parent-settings" className="mt-5 rounded-2xl bg-gradient-to-b from-white to-sky-50 p-4 ring-1 ring-sky-200 shadow-[inset_0_1px_0_#ffffff,0_3px_0_rgba(3,105,161,0.12)]">
+          <h2 className="font-display text-lg font-extrabold text-sky-800">Cài đặt</h2>
+          <label className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              data-testid="rest-reminder-toggle"
+              checked={restOn}
+              onChange={(e) => {
+                setRestReminderEnabled(e.target.checked);
+                setRestOn(e.target.checked);
+              }}
+              className="h-4 w-4 accent-sky-500"
+            />
+            Nhắc giờ nghỉ sau 30 phút chơi liên tục
+          </label>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            Khi bật, bé sẽ thấy một lời nhắc nhỏ nghỉ mắt sau nửa giờ chơi liền.
+          </p>
+        </div>
 
         {/* kids-UX AC-9.1: the funnel's last step - real pricing + bank
             transfer, mounted inside the already-gated parent corner. */}

@@ -5,6 +5,7 @@ import { EmojiChoiceField, GameRoundDots, HintButton, ModelSpeaker, gameVerdictS
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 
 const ROUNDS = 5;
 
@@ -29,12 +30,17 @@ export default function BalloonPop({ grade, seed, level, onEnd }: GameProps) {
   const lives = useGameLives(spec.lives);
   const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): rounds answered wrong feed the review queue via
+     GameEnd.wrong - a ref stays current inside the end-of-round
+     setTimeouts. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[round];
   if (!q) return null;
 
   const advance = (addedPoints: number, wasCorrect: boolean) => {
+    if (!wasCorrect) wrongRef.current.push(q);
     const nextPoints = points + addedPoints;
     const nextCorrect = correctCount + (wasCorrect ? 1 : 0);
     setPoints(nextPoints);
@@ -42,7 +48,7 @@ export default function BalloonPop({ grade, seed, level, onEnd }: GameProps) {
     setWrongPicks([]);
     setHints([]);
     if (round + 1 >= rounds.length) {
-      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect , attempted: spec.rounds});
+      onEnd({ points: nextPoints, maxPoints: spec.rounds * 2, correctCount: nextCorrect , attempted: spec.rounds, wrong: wrongRef.current});
       return;
     }
     setRound(round + 1);
@@ -66,9 +72,10 @@ export default function BalloonPop({ grade, seed, level, onEnd }: GameProps) {
     setWrongPicks(next);
     const left = lives.lose();
     if (left <= 0) {
+      wrongRef.current.push(q);
       setLock(true);
       timerRef.current = setTimeout(
-        () => onEnd({ points, maxPoints: spec.rounds * 2, correctCount, attempted: Math.min(round + 1, spec.rounds) }),
+        () => onEnd({ points, maxPoints: spec.rounds * 2, correctCount, attempted: Math.min(round + 1, spec.rounds), wrong: wrongRef.current }),
         650,
       );
       return;

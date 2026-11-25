@@ -51,6 +51,7 @@ import { assignmentSubmit } from '../lib/assignments';
 import { createExamTelemetry, type ExamTelemetry } from '../lib/qb/telemetry';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { EmojiVisual } from './EmojiVisual';
+import ListeningImageChoiceQuestion from './ListeningImageChoiceQuestion';
 import { ArtImg } from './ArtImg';
 import QuestionReportButton from './QuestionReportButton';
 import ConfirmEndDialog from './ConfirmEndDialog';
@@ -1617,6 +1618,18 @@ export function ExamQuestionView({
       );
     case 'word-order':
       return <WordOrderView key={question.id} question={question} onAnswer={onAnswer} promptClass={promptClass} />;
+    /* CR-148 (P1-4): game-wrong items re-enter through the review queue -
+       without this case a missed listening question landed on the
+       "chưa hỗ trợ" default and became unanswerable. */
+    case 'listening-image-choice':
+      return (
+        <ListeningImageChoiceQuestion
+          key={question.id}
+          question={question}
+          selectedIndex={answer?.type === 'option' ? answer.index : null}
+          onSelectOption={(i) => onAnswer({ type: 'option', index: i })}
+        />
+      );
     case 'missing-letter':
       return (
         <TextInputView

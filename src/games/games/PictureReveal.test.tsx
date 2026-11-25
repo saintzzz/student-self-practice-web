@@ -61,7 +61,7 @@ describe('PictureReveal', () => {
       fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
       act(() => vi.advanceTimersByTime(800));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: TILES, maxPoints: TILES, correctCount: TILES, attempted: TILES });
+    expect(onEnd).toHaveBeenCalledWith({ points: TILES, maxPoints: TILES, correctCount: TILES, attempted: TILES, wrong: [] });
   });
 
   it('one miss caps the score below max', () => {
@@ -75,6 +75,6 @@ describe('PictureReveal', () => {
       fireEvent.click(screen.getByTestId(`option-${q.correctIndex}`));
       act(() => vi.advanceTimersByTime(800));
     }
-    expect(onEnd).toHaveBeenCalledWith({ points: 8, maxPoints: TILES, correctCount: 8, attempted: TILES });
+    expect(onEnd).toHaveBeenCalledWith({ points: 8, maxPoints: TILES, correctCount: 8, attempted: TILES, wrong: [expect.objectContaining({ kind: 'image-choice' })] });
   });
 });

@@ -190,6 +190,7 @@ describe('store resilience', () => {
       'trail-full-city',
       'trail-half-space',
       'trail-full-space',
+      'mystery-island',
     ]);
   });
 });

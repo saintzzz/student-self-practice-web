@@ -6,6 +6,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 6;
@@ -52,6 +53,8 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
   const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(round, rounds.length - 1)];
@@ -59,7 +62,7 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
   };
 
   const advance = (newCorrect: number) => {
@@ -98,10 +101,12 @@ export default function GoldQuest({ grade, seed, level, onEnd }: GameProps) {
     setWrongPicks(next);
     const left = lives.lose();
     if (left <= 0) {
+      wrongRef.current.push(q);
       timerRef.current = setTimeout(() => finish(correctCount, points), 750);
       return;
     }
     if (next.length >= spec.missLimit) {
+      wrongRef.current.push(q);
       setMissed(true);
       timerRef.current = setTimeout(() => advance(correctCount), 750);
       return;

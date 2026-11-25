@@ -5,6 +5,7 @@ import { GameRoundDots, WordOrderField, gameVerdictSfx } from '../mechanics';
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 
 const ROUNDS = 4;
 
@@ -29,6 +30,8 @@ export default function SentenceScramble({ grade, seed, level, onEnd }: GameProp
   const lives = useGameLives(spec.lives);
   const combo = useCombo();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(round, rounds.length - 1)];
@@ -36,7 +39,7 @@ export default function SentenceScramble({ grade, seed, level, onEnd }: GameProp
 
   const advance = (newCorrect: number) => {
     if (round + 1 >= rounds.length) {
-      onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect, attempted: rounds.length });
+      onEnd({ points: newCorrect, maxPoints: rounds.length, correctCount: newCorrect, attempted: rounds.length, wrong: wrongRef.current });
       return;
     }
     setRound(round + 1);
@@ -48,6 +51,7 @@ export default function SentenceScramble({ grade, seed, level, onEnd }: GameProp
     const picked = nextPlaced.map((i) => q.tiles[i]!);
     const correct = isWordOrderCorrect(q.sentence, picked);
     gameVerdictSfx(correct);
+    if (!correct) wrongRef.current.push(q);
     setLock(true);
     if (correct) {
       combo.hit();
@@ -60,7 +64,7 @@ export default function SentenceScramble({ grade, seed, level, onEnd }: GameProp
     setWrongFlash(true);
     if (lives.lose() <= 0) {
       timerRef.current = setTimeout(
-        () => onEnd({ points: correctCount, maxPoints: rounds.length, correctCount, attempted: round + 1 }),
+        () => onEnd({ points: correctCount, maxPoints: rounds.length, correctCount, attempted: round + 1, wrong: wrongRef.current }),
         700,
       );
       return;

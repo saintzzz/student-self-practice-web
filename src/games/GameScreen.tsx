@@ -3,11 +3,11 @@ import LandShell from '../components/LandShell';
 import StarRain from '../components/celebrations/StarRain';
 import { IconArrowLeft, IconRefresh } from '../components/icons';
 import { playSfx } from '../lib/sfx';
-import { gameLevelStars, recordCorrectAnswers, recordGameResult, starsForScore } from '../lib/engagement/store';
+import { gameLevelStars, recordCorrectAnswers, recordGameResult, recordSkillAnswers, recordWrongExamQuestion, starsForScore } from '../lib/engagement/store';
 import { GAME_DEFS } from './defs';
 import { GAME_COMPONENTS } from './registry';
 import GameArt from './GameArt';
-import { GAME_LEVELS, LEVEL_META, specFor, timeBonusFor, type GameLevel } from './levels';
+import { GAME_LEVELS, LEVEL_META, type GameLevel } from './levels';
 import type { GameEnd, GameId } from './types';
 import type { Grade } from '../types';
 import { bandForGrade } from '../lib/ui/theme';
@@ -100,12 +100,12 @@ function LevelPicker({ gameId, onPick }: { gameId: GameId; onPick: (level: GameL
  * CR-83 game screen - one arcade run inside the grade's land vignette.
  * The shell owns: header (exit + identity + run clock), level pick, the
  * seeded run (remount per replay), and the award end screen (StarRain +
- * score + speed bonus + replay/back). Game components own the play loop
+ * score + run time + replay/back). Game components own the play loop
  * and report one GameEnd.
  *
- * CR-88: the run clock measures mount->onEnd; beating the level's par
- * adds a "+điểm nhanh" bonus shown on the end screen (stars stay
- * accuracy-only per the clean-play doctrine).
+ * CR-88: the run clock measures mount->onEnd and shows on the end
+ * screen (informational only - stars stay accuracy-only per the
+ * clean-play doctrine; CR-148 P1-9 removed the unanchored bonus).
  */
 export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
   const def = GAME_DEFS.find((d) => d.id === gameId);
@@ -116,7 +116,6 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
   const [stars, setStars] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [tick, setTick] = useState(0);
-  const [bonus, setBonus] = useState(0);
   const endedRef = useRef(false);
   const startRef = useRef(0);
 
@@ -152,15 +151,20 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
   const handleEnd = (result: GameEnd) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    const elapsed = Date.now() - startRef.current;
-    setElapsedMs(elapsed);
-    const spec = specFor(level ?? 1);
+    setElapsedMs(Date.now() - startRef.current);
     const starCount = starsForScore(result.points, result.maxPoints);
-    /* Speed bonus only on a run worth >=1 star - a fast wipeout is not
-       a "fast win" (review r39). */
-    setBonus(starCount > 0 ? timeBonusFor(elapsed, spec, Math.round(result.maxPoints * 0.2)) : 0);
     const award = recordGameResult(grade.id, gameId, seed, result.points, result.maxPoints, level ?? 1);
     recordCorrectAnswers(result.correctCount);
+    /* CR-148 (P1-4 / D6): game practice was invisible to the parent
+       report + coach - aggregate the run into the game's skill bucket.
+       `attempted` is the honest denominator (correctCount alone would
+       report a 3/3 wipeout as perfect). */
+    if (def?.skill) {
+      recordSkillAnswers(grade.id, def.skill, result.correctCount, result.attempted ?? result.correctCount);
+    }
+    /* Game-wrong -> review queue bridge: rounds that are real Question
+       objects re-enter via the spaced-repetition path (CR-28). */
+    for (const q of result.wrong ?? []) recordWrongExamQuestion(grade.id, q);
     setStars(starCount);
     setEnd(result);
     playSfx('star');
@@ -174,7 +178,6 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
     endedRef.current = false;
     setEnd(null);
     setStars(0);
-    setBonus(0);
     setTick(0);
     freshSeed();
   };
@@ -186,7 +189,6 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
     endedRef.current = false;
     setLevel(null);
     setEnd(null);
-    setBonus(0);
     setTick(0);
     freshSeed();
   };
@@ -240,11 +242,11 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
               <p className="text-lg font-semibold text-amber-200">
                 {end.points}/{end.maxPoints} điểm - {end.correctCount} câu đúng
               </p>
+              {/* CR-148 (P1-9 / D5): the "+điểm nhanh" number went
+                  nowhere - removed per clean-play doctrine (stars stay
+                  accuracy-only). The clock stays as honest info. */}
               <p data-testid="game-time-report" className="text-sm font-semibold text-slate-300">
                 ⏱ {formatClock(elapsedMs)}
-                {bonus > 0 && (
-                  <span data-testid="game-time-bonus" className="ml-2 text-emerald-300">+{bonus} điểm nhanh</span>
-                )}
               </p>
               <div className="mt-2 flex flex-wrap justify-center gap-3">
                 <button

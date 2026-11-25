@@ -8,6 +8,7 @@ import type { GameDef } from './types';
 export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'memory-match',
+    skill: 'matching',
     artImage: '/images/games/memory-match.webp',
     title: 'Lật thẻ nhớ',
     tagline: 'Ghép hình với từ giống nhau',
@@ -17,6 +18,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'balloon-pop',
+    skill: 'listening',
     artImage: '/images/games/balloon-pop.webp',
     title: 'Bóng bay',
     tagline: 'Nghe từ rồi chạm đúng bóng',
@@ -26,6 +28,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'racing-cars',
+    skill: 'vocabulary',
     artImage: '/images/games/racing-cars.webp',
     title: 'Đua xe',
     tagline: 'Trả lời đúng để xe Heo về đích',
@@ -35,6 +38,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'fishing-catch',
+    skill: 'listening',
     artImage: '/images/games/fishing-catch.webp',
     title: 'Câu cá',
     tagline: 'Chạm con cá mang hình đúng',
@@ -44,6 +48,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'letter-catch',
+    skill: 'spelling',
     artImage: '/images/games/letter-catch.webp',
     title: 'Bắt chữ',
     tagline: 'Chạm bóng chữ theo thứ tự đánh vần',
@@ -53,6 +58,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'tic-tac-toe',
+    skill: 'vocabulary',
     artImage: '/images/games/tic-tac-toe.webp',
     title: 'Caro',
     tagline: 'Trả lời để đặt X thắng máy',
@@ -62,6 +68,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'whack-a-mole',
+    skill: 'listening',
     artImage: '/images/games/whack-a-mole.webp',
     title: 'Đập chuột',
     tagline: 'Nghe từ rồi đập con chuột đúng',
@@ -71,6 +78,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'feed-the-pig',
+    skill: 'listening',
     artImage: '/images/games/feed-the-pig.webp',
     title: 'Cho Heo ăn',
     tagline: 'Chọn đúng đĩa để cho Heo ăn',
@@ -80,6 +88,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'picture-reveal',
+    skill: 'vocabulary',
     artImage: '/images/games/picture-reveal.webp',
     title: 'Lật tranh',
     tagline: 'Trả lời đúng để lật mở bức tranh',
@@ -89,6 +98,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'treasure-chest',
+    skill: 'vocabulary',
     artImage: '/images/games/treasure-chest.webp',
     title: 'Hòm kho báu',
     tagline: 'Trả lời đúng để mở ổ khóa vàng',
@@ -98,6 +108,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'gold-quest',
+    skill: 'vocabulary',
     artImage: '/images/games/gold-quest.webp',
     title: 'Đào vàng',
     tagline: 'Trả lời đúng rồi chọn rương may mắn',
@@ -108,6 +119,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'quiz-show',
+    skill: 'vocabulary',
     artImage: '/images/games/quiz-show.webp',
     title: 'Ai là triệu phú',
     tagline: 'Lên đỉnh giải thưởng trước khi hết giờ',
@@ -119,6 +131,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'maze-chase',
+    skill: 'listening',
     artImage: '/images/games/maze-chase.webp',
     title: 'Đi mê cung',
     tagline: 'Dẫn Heo tới ô đáp án, né con ma',
@@ -129,6 +142,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'word-worm',
+    skill: 'spelling',
     artImage: '/images/games/word-worm.webp',
     title: 'Rắn đánh vần',
     tagline: 'Ăn chữ cái theo thứ tự đánh vần',
@@ -139,6 +153,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'castle-guard',
+    skill: 'vocabulary',
     artImage: '/images/games/castle-guard.webp',
     title: 'Giữ thành',
     tagline: 'Trả lời đúng bắn hạ quái trước cổng',
@@ -149,6 +164,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'missing-letter',
+    skill: 'spelling',
     title: 'Điền chữ khuyết',
     tagline: 'Chọn đúng chữ còn thiếu trong từ',
     emoji: '🔠',
@@ -158,6 +174,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'sentence-scramble',
+    skill: 'wordorder',
     title: 'Xếp câu',
     tagline: 'Chạm các từ theo đúng thứ tự thành câu',
     emoji: '🧩',
@@ -167,6 +184,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'odd-one-out',
+    skill: 'vocabulary',
     title: 'Tìm kẻ lạ',
     tagline: 'Chọn từ không cùng nhóm với ba từ kia',
     emoji: '🕵️',
@@ -176,6 +194,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'say-it-loud',
+    skill: 'speaking',
     title: 'Đọc to nào',
     tagline: 'Nghe mẫu rồi đọc to vào micro',
     emoji: '🎤',
@@ -185,6 +204,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'story-time',
+    skill: 'reading',
     title: 'Đọc truyện',
     tagline: 'Nghe truyện, đọc theo rồi trả lời câu hỏi',
     emoji: '📖',
@@ -196,6 +216,7 @@ export const GAME_DEFS: readonly GameDef[] = [
      (same status as the 5 existing art-less defs). */
   {
     id: 'counting-shop',
+    skill: 'count-and-name',
     title: 'Cửa hàng của Heo',
     tagline: 'Đếm hàng rồi chọn đúng số',
     emoji: '🏪',
@@ -205,6 +226,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'rhyme-pond',
+    skill: 'phonics',
     title: 'Ao vần',
     tagline: 'Nghe từ rồi chọn lá sen cùng vần',
     emoji: '🪷',
@@ -214,6 +236,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   },
   {
     id: 'flag-voyage',
+    skill: 'listening',
     title: 'Chuyến tàu cờ',
     tagline: 'Nghe tên nước, chọn đúng lá cờ',
     emoji: '🚂',

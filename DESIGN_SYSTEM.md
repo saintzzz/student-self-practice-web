@@ -615,3 +615,24 @@ update this file AND the token comment that introduced them in the same commit.
   (`gift:<stickerId>`, `trail:<grade>:<node>`); the shared
   `pickHomeItem` persists grantKey -> itemId so replays return the same
   item. New grant surfaces must reuse `pickHomeItem`, not re-roll.
+
+## 17. CR-148 - gamefi polish
+
+- **Skill shelf (`GameZoneShelf`):** the game grid groups cards into
+  fixed-order skill sections (`SKILL_SECTIONS`) with `skillLabel`
+  headers + a hairline rule - the shelf answers "chơi gì để giỏi hơn",
+  not just "có gì để chơi". Defs without `skill` land in "Khám phá".
+- **Weak badge:** `game-weak-badge` (rose-500 chip, top-left) marks
+  cards whose `def.skill` matches a coach weak key - directly or via
+  `drillSkillsFor` (qb keys like `vocabulary-recognition` flag their
+  `vocabulary` games). Evidence-gated (`weakSkillsFor` COACH_MIN).
+- **Unlockable destinations:** `MysteryIslandCard` is the pattern for
+  teaser cards that must become real: locked state keeps the wiggle
+  easter egg, `subscribe`-driven `trailSnapshot().epoch >= 1` flips it
+  to an "Đã mở" amber card, tap opens a `col-span-2` panel that grants
+  its sticker once via an `island:<gradeId>` objective.
+- **Screen-time nudge (`RestBanner`):** soft toast on the streak-toast
+  perch (fixed bottom-6, emerald surface), never blocking, one dismiss
+  CTA. The parent toggle lives on the gated ParentReport surface; the
+  flag is device-local (`ea-rest-reminder`) - prefs never enter the
+  engagement merge.

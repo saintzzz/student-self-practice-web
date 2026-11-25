@@ -59,6 +59,7 @@ describe('BalloonPop', () => {
       maxPoints: ROUNDS * 2,
       correctCount: ROUNDS,
       attempted: ROUNDS,
+      wrong: [],
     });
   });
 });

@@ -5,6 +5,7 @@ import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 
 const ROUNDS = 8;
@@ -40,6 +41,8 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
   const [hintUsed, setHintUsed] = useState(false);
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   const nextSlimeId = useRef(1);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -48,7 +51,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
   const finish = (finalCorrect: number, finalPoints: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
-    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
+    onEnd({ points: finalPoints, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
   };
 
   const advance = (newSlimes: Slime[], newHearts: number, newCorrect: number, newPoints: number) => {
@@ -96,6 +99,7 @@ export default function CastleGuard({ grade, seed, level, onEnd }: GameProps) {
     const next = [...wrongPicks, index];
     setWrongPicks(next);
     if (next.length >= spec.missLimit) {
+      wrongRef.current.push(q);
       timerRef.current = setTimeout(() => {
         // Missed round: the whole wave creeps forward one cell.
         let newHearts = hearts;

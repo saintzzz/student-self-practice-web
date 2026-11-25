@@ -32,7 +32,7 @@ describe('pet XP (AC-36.1)', () => {
 });
 
 describe('pet stages (AC-36.2)', () => {
-  it('maps xp to egg/baby/kid/adult thresholds', () => {
+  it('maps xp to egg/baby/kid/adult/hero/legend thresholds', () => {
     expect(petStageForXp(0)).toBe(0);
     expect(petStageForXp(49)).toBe(0);
     expect(petStageForXp(50)).toBe(1);
@@ -40,7 +40,21 @@ describe('pet stages (AC-36.2)', () => {
     expect(petStageForXp(250)).toBe(2);
     expect(petStageForXp(599)).toBe(2);
     expect(petStageForXp(600)).toBe(3);
-    expect(petStageForXp(99999)).toBe(3);
+    // CR-148 P1-5: two more apex stages keep the arc alive past 600xp.
+    expect(petStageForXp(1499)).toBe(3);
+    expect(petStageForXp(1500)).toBe(4);
+    expect(petStageForXp(3999)).toBe(4);
+    expect(petStageForXp(4000)).toBe(5);
+    expect(petStageForXp(99999)).toBe(5);
+  });
+
+  it('CR-148 P1-5: stages 4/5 clamp to adult art until artgen delivers', () => {
+    recordCorrectAnswers(160); // 1600 xp -> hero stage
+    choosePet('dragon');
+    const pet = getPet();
+    expect(pet.stage).toBe(4);
+    expect(pet.stageName).toBe('Anh hùng');
+    expect(pet.art).toBe('/images/pets/pet-dragon-3.webp');
   });
 
   it('choosing a species keeps earned xp and resolves emoji/name', () => {
@@ -63,10 +77,10 @@ describe('pet stages (AC-36.2)', () => {
   });
 
   it('a maxed pet reports no next stage', () => {
-    recordCorrectAnswers(70); // 700 xp -> adult
+    recordCorrectAnswers(400); // 4000 xp -> legend (CR-148 P1-5)
     choosePet('cat');
     const pet = getPet();
-    expect(pet.stageName).toBe('Trưởng thành');
+    expect(pet.stageName).toBe('Huyền thoại');
     expect(pet.xpToNext).toBeNull();
   });
 });

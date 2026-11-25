@@ -7,6 +7,7 @@ import { HintButton, WordChoiceField, gameVerdictSfx, pickFiftyFifty } from '../
 import { specFor } from '../levels';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 
 const WIN_LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -43,6 +44,8 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
   const combo = useCombo();
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const q = rounds[Math.min(qIdx, rounds.length - 1)];
@@ -55,7 +58,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
     endedRef.current = true;
     const bonus = w === 'X' ? 4 : w === null ? 2 : 0;
     timerRef.current = setTimeout(
-      () => onEnd({ points: correct + bonus, maxPoints: 9, correctCount: correct }),
+      () => onEnd({ points: correct + bonus, maxPoints: 9, correctCount: correct, wrong: wrongRef.current }),
       700,
     );
   };
@@ -99,6 +102,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
     if (pendingCell === null || lock || !q) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (!correct) wrongRef.current.push(q);
     if (correct) combo.hit(); else combo.miss();
     setLock(true);
     const nextCorrect = correctCount + (correct ? 1 : 0);
@@ -120,7 +124,7 @@ export default function TicTacToe({ grade, seed, level, onEnd }: GameProps) {
       setHints([]);
       if (lives.out && !endedRef.current) {
         endedRef.current = true;
-        onEnd({ points: nextCorrect, maxPoints: 9, correctCount: nextCorrect, attempted: qIdx + 1 });
+        onEnd({ points: nextCorrect, maxPoints: 9, correctCount: nextCorrect, attempted: qIdx + 1, wrong: wrongRef.current });
         return;
       }
       finish(next, nextCorrect);

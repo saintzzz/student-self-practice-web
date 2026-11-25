@@ -4,6 +4,7 @@ import { WordChoiceField, gameVerdictSfx } from '../mechanics';
 import { getWordVisual } from '../../lib/emoji/wordVisual';
 import { specFor } from '../levels';
 import type { GameProps } from '../types';
+import type { ExamQuestion } from '../../types/exam';
 import { EmojiVisual } from '../../components/EmojiVisual';
 import { ComboMeter, HeartMeter, useCombo, useGameLives } from '../lives';
 
@@ -32,12 +33,14 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
   const endedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /* CR-148 (P1-4): wrong answers feed the review queue. */
+  const wrongRef = useRef<ExamQuestion[]>([]);
 
   const finish = (finalCorrect: number) => {
     if (endedRef.current) return;
     endedRef.current = true;
     if (intervalRef.current) clearInterval(intervalRef.current);
-    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length});
+    onEnd({ points: finalCorrect, maxPoints: rounds.length, correctCount: finalCorrect , attempted: rounds.length, wrong: wrongRef.current});
   };
 
   useEffect(() => () => {
@@ -58,6 +61,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
   // pick; this guards a tick that already reached 0 in the same instant).
   useEffect(() => {
     if (seconds === 0 && !endedRef.current && !lock) {
+      wrongRef.current.push(q);
       // CR-104: a timeout is a failed question - it breaks the combo just
       // like a wrong pick (correct -> timeout -> correct must not show x2).
       combo.miss();
@@ -80,6 +84,7 @@ export default function QuizShow({ grade, seed, level, onEnd }: GameProps) {
     if (lock || !q || endedRef.current) return;
     const correct = index === q.correctIndex;
     gameVerdictSfx(correct);
+    if (!correct) wrongRef.current.push(q);
     if (correct) combo.hit(); else combo.miss();
     setLock(true);
     // Stop the countdown the moment an answer is accepted - a correct
