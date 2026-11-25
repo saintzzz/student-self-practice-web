@@ -192,4 +192,34 @@ export const GAME_DEFS: readonly GameDef[] = [
     tone: 'sky',
     fresh: true,
   },
+  /* CR-147 trio - emoji diorama cards until the games/ artgen pass
+     (same status as the 5 existing art-less defs). */
+  {
+    id: 'counting-shop',
+    title: 'Cửa hàng của Heo',
+    tagline: 'Đếm hàng rồi chọn đúng số',
+    emoji: '🏪',
+    art: ['🐷','🏪','🧺','✨'],
+    tone: 'amber',
+    fresh: true,
+  },
+  {
+    id: 'rhyme-pond',
+    title: 'Ao vần',
+    tagline: 'Nghe từ rồi chọn lá sen cùng vần',
+    emoji: '🪷',
+    art: ['🐸','🪷','💧','✨'],
+    tone: 'emerald',
+    fresh: true,
+  },
+  {
+    id: 'flag-voyage',
+    title: 'Chuyến tàu cờ',
+    tagline: 'Nghe tên nước, chọn đúng lá cờ',
+    emoji: '🚂',
+    art: ['🚂','🚩','🌍','✨'],
+    tone: 'sky',
+    grades: ['grade-4', 'grade-5'],
+    fresh: true,
+  },
 ];

@@ -1,6 +1,9 @@
 import { seededPickN, seededShuffleIndices, hashString } from '../lib/prng';
 import { getWordsByGrade } from '../lib/content/contentBank';
-import { isLiteralImageWord } from '../lib/content/imageSemantics';
+import { isLiteralImageWord, isFlagEmoji } from '../lib/content/imageSemantics';
+import { COUNTING_ART } from '../lib/content/countingArt';
+import { getRhymeGroup } from '../lib/phonics/rhymes';
+import { getInitialSound } from '../lib/phonics/initialSounds';
 import { generateImageChoiceQuestions } from '../lib/generators/imageChoice';
 import { generateListeningImageChoiceQuestions } from '../lib/generators/listeningImageChoice';
 import { generateWordOrderQuestions } from '../lib/exam/wordOrder';
@@ -224,6 +227,159 @@ export function oddOneOutRounds(gradeId: string, seed: string, n: number): OddOn
       correctIndex: shuffled.indexOf(intruder),
       groupTopicId: topicId,
     });
+  }
+  return rounds;
+}
+
+/* ------------------------------------------------------------------ */
+/* CR-147 sources - the three PO games (GAMEFI-DESIGN 3.4).             */
+/* ------------------------------------------------------------------ */
+
+/** Number words the Counting Shop answers with (g1-2 numbers unit). */
+const NUM_WORDS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'] as const;
+
+/** One counting-shop tray: a bespoke scene image of `count` objects. */
+export interface CountingTray {
+  slug: string;
+  count: number;
+  imageUrl: string;
+}
+
+/** One Counting Shop round: 1-2 trays to count, 4 number-word options. */
+export interface CountingShopRound {
+  trays: readonly CountingTray[];
+  /** Total objects across trays - the answer. */
+  total: number;
+  options: readonly string[];
+  correctIndex: number;
+}
+
+function countingTrays(gradeId: string): CountingTray[] {
+  const g = `g${gradeId.replace(/\D/g, '')}`;
+  const out: CountingTray[] = [];
+  for (const [key, imageUrl] of Object.entries(COUNTING_ART)) {
+    if (!imageUrl.includes(`/counting/${g}/`)) continue;
+    const [slug, countStr] = key.split('|');
+    const count = Number(countStr);
+    if (slug && Number.isInteger(count) && count >= 1 && count <= 9) {
+      out.push({ slug, count, imageUrl });
+    }
+  }
+  return out;
+}
+
+/**
+ * CR-147 "Cửa hàng của Heo" - count the objects on the tray, pick the
+ * number word. L1 shows one tray; L2+ shows two trays and the child
+ * counts the TOTAL (off-by-one distractors +-1/+-2, clamped 1..10).
+ * Content is safe by construction: the answer lives inside the audited
+ * image, so countability edge cases cannot leak in (GAMEFI G-NEW-1).
+ */
+export function countingShopRounds(gradeId: string, seed: string, n: number, trays = 1): CountingShopRound[] {
+  const pool = countingTrays(gradeId);
+  const picks = seededPickN(pool, Math.min(n * trays, pool.length), `${seed}:cs`);
+  const rounds: CountingShopRound[] = [];
+  for (let i = 0; i < Math.floor(picks.length / trays); i++) {
+    const group = picks.slice(i * trays, i * trays + trays);
+    const total = group.reduce((a, t) => a + t.count, 0);
+    const candidates = new Set<number>([total, total - 1, total + 1, total - 2, total + 2]);
+    const usable = [...candidates].filter((c) => c >= 1 && c <= 10 && c !== total);
+    const optionNums: number[] = [total, ...seededPickN(usable, Math.min(3, usable.length), `${seed}:cs${i}:d`)];
+    /* Totals near the 1..10 rail can yield <3 off-by-one distractors -
+       pad with plain distant numbers so the field always holds 4. */
+    for (let c = 1; optionNums.length < 4 && c <= 10; c++) {
+      if (!optionNums.includes(c)) optionNums.push(c);
+    }
+    if (optionNums.length < 4) continue;
+    const order = seededShuffleIndices(4, `${seed}:cs${i}:o`);
+    const options = order.map((idx) => NUM_WORDS[optionNums[idx]! - 1]!);
+    rounds.push({ trays: group, total, options, correctIndex: options.indexOf(NUM_WORDS[total - 1]!) });
+  }
+  return rounds;
+}
+
+/** One Rhyme Pond round: target word + 4 lily pads, exactly 1 mate. */
+export interface RhymeRound {
+  target: VocabWord;
+  options: readonly VocabWord[];
+  correctIndex: number;
+  /** 'rhyme' matches the rime family; 'initial' matches first sound. */
+  mode: 'rhyme' | 'initial';
+}
+
+/**
+ * CR-147 "Ao vần" - hear the target word, pick the lily pad whose word
+ * rhymes (L1/L3) or shares its initial sound (L2). Pool = the grade's
+ * literal-image words minus blocked ids; correctness comes ONLY from
+ * `rhymes.ts` + `initialSounds.ts` - blends/finals are never touched
+ * (G-6: a wrong phonics game is worse than none).
+ */
+export function rhymeRounds(gradeId: string, seed: string, n: number, level = 1): RhymeRound[] {
+  const pool = gameWordPool(gradeId).filter((w) => /^[a-zA-Z]+$/.test(w.word));
+  const mode: 'rhyme' | 'initial' = level === 2 ? 'initial' : 'rhyme';
+  const match = (a: string, b: string) =>
+    mode === 'rhyme'
+      ? getRhymeGroup(a) === getRhymeGroup(b) && !getRhymeGroup(a).startsWith('solo:')
+      : getInitialSound(a) === getInitialSound(b) && getInitialSound(a) !== '';
+  const rounds: RhymeRound[] = [];
+  for (let attempt = 0; attempt < n * 8 && rounds.length < n; attempt++) {
+    const [target] = seededPickN(pool, 1, `${seed}:rp${attempt}:t`);
+    if (!target) continue;
+    const mates = pool.filter((w) => w.id !== target.id && match(w.word, target.word));
+    if (mates.length < 1) continue;
+    const distractors = pool.filter((w) => w.id !== target.id && !match(w.word, target.word));
+    const [mate] = seededPickN(mates, 1, `${seed}:rp${attempt}:m`);
+    const picks = seededPickN(distractors, 3, `${seed}:rp${attempt}:d`);
+    if (!mate || picks.length < 3) continue;
+    const options4 = [...picks, mate];
+    const order = seededShuffleIndices(4, `${seed}:rp${attempt}:o`);
+    const shuffled = order.map((i) => options4[i]!);
+    rounds.push({ target, options: shuffled, correctIndex: shuffled.indexOf(mate), mode });
+  }
+  return rounds;
+}
+
+/** CR-147 flag pool excludes (F6/F8 + non-sovereign territories). */
+const FLAG_VOYAGE_EXCLUDE: ReadonlySet<string> = new Set([
+  'european-union',
+  'taiwan', 'hong-kong', 'macau', 'kosovo',
+  'aland', 'guernsey', 'faroe-islands', 'gibraltar',
+]);
+
+/** One Flag Voyage round: "I am from ___" -> pick the flag. */
+export interface FlagRound {
+  word: VocabWord;
+  options: readonly VocabWord[];
+  correctIndex: number;
+}
+
+/**
+ * CR-147 "Chuyến tàu cờ" (G4-5 only) - the ONLY surface allowed to
+ * render flags. flagPool bypasses the global isFlagEmoji exclusion on
+ * purpose (G-5); every other game keeps the ban.
+ */
+export function flagPool(gradeId: string): VocabWord[] {
+  return getWordsByGrade(gradeId).filter(
+    (w) => isFlagEmoji(w.emoji) && !FLAG_VOYAGE_EXCLUDE.has(w.id),
+  );
+}
+
+export function flagRounds(gradeId: string, seed: string, n: number): FlagRound[] {
+  const pool = flagPool(gradeId);
+  const targets = seededPickN(pool, Math.min(n, pool.length), `${seed}:fv:t`);
+  const rounds: FlagRound[] = [];
+  for (let i = 0; i < targets.length; i++) {
+    const target = targets[i]!;
+    const distractors = seededPickN(
+      pool.filter((w) => w.id !== target.id),
+      3,
+      `${seed}:fv${i}:d`,
+    );
+    if (distractors.length < 3) continue;
+    const options4 = [...distractors, target];
+    const order = seededShuffleIndices(4, `${seed}:fv${i}:o`);
+    const shuffled = order.map((i2) => options4[i2]!);
+    rounds.push({ word: target, options: shuffled, correctIndex: shuffled.indexOf(target) });
   }
   return rounds;
 }

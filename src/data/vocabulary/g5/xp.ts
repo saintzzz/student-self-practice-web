@@ -1,7 +1,9 @@
 import type { Topic, VocabWord } from '../../../types';
 import { xp } from '../xp';
 
-export const G5_XP_FLAGS_ASIA_TOPIC: Topic = { id: 'g5-xp-flags-asia', gradeId: 'grade-5', name: 'Các nước châu Á' };
+/* CR-147 (teacher audit F8): Hong Kong/Macau/Taiwan are regions, not
+   sovereign countries - the name must say so. */
+export const G5_XP_FLAGS_ASIA_TOPIC: Topic = { id: 'g5-xp-flags-asia', gradeId: 'grade-5', name: 'Các nước và vùng châu Á' };
 export const G5_XP_FLAGS_AMERICAS_TOPIC: Topic = { id: 'g5-xp-flags-americas', gradeId: 'grade-5', name: 'Các nước châu Mỹ' };
 export const G5_XP_FLAGS_AFRICA_TOPIC: Topic = { id: 'g5-xp-flags-africa', gradeId: 'grade-5', name: 'Các nước châu Phi' };
 export const G5_XP_FLAGS_OCEANIA_TOPIC: Topic = { id: 'g5-xp-flags-oceania', gradeId: 'grade-5', name: 'Châu Đại Dương và vùng lãnh thổ' };
@@ -15,9 +17,11 @@ export const G5_XP_FLAGS_ASIA_WORDS: VocabWord[] = xp('g5-xp-flags-asia', [
   ['philippines', 'the Philippines', null, '🇵🇭', 'Nước Philippines', false],
   ['brunei', 'Brunei', null, '🇧🇳', 'Nước Brunei', false],
   ['timor-leste', 'Timor-Leste', null, '🇹🇱', 'Nước Timor-Leste', false],
-  ['hong-kong', 'Hong Kong', null, '🇭🇰', 'Hồng Kông', false],
-  ['macau', 'Macau', null, '🇲🇴', 'Ma Cao', false],
-  ['taiwan', 'Taiwan', null, '🇹🇼', 'Đài Loan', false],
+  /* CR-147 (teacher audit F8): glossed as regions, not countries -
+     One-China political sensitivity for a VN product. */
+  ['hong-kong', 'Hong Kong', null, '🇭🇰', 'Hồng Kông (vùng)', false],
+  ['macau', 'Macau', null, '🇲🇴', 'Ma Cao (vùng)', false],
+  ['taiwan', 'Taiwan', null, '🇹🇼', 'Đài Loan (vùng)', false],
   ['mongolia', 'Mongolia', null, '🇲🇳', 'Nước Mông Cổ', false],
   ['north-korea', 'North Korea', null, '🇰🇵', 'Nước Triều Tiên', false],
   ['pakistan', 'Pakistan', null, '🇵🇰', 'Nước Pakistan', false],

@@ -29,7 +29,10 @@ export type GameId =
   | 'sentence-scramble'
   | 'odd-one-out'
   | 'say-it-loud'
-  | 'story-time';
+  | 'story-time'
+  | 'counting-shop'
+  | 'rhyme-pond'
+  | 'flag-voyage';
 
 export interface GameEnd {
   /** Numerator for starsForScore (normalized per game, see each shell). */

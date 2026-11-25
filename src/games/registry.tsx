@@ -27,6 +27,9 @@ import SentenceScramble from './games/SentenceScramble';
 import OddOneOut from './games/OddOneOut';
 import SayItLoud from './games/SayItLoud';
 import StoryTime from './games/StoryTime';
+import CountingShop from './games/CountingShop';
+import RhymePond from './games/RhymePond';
+import FlagVoyage from './games/FlagVoyage';
 import {
   EmojiChoiceField,
   LetterOrderField,
@@ -68,6 +71,9 @@ export const GAME_COMPONENTS: Record<GameId, GameComponent> = {
   'odd-one-out': OddOneOut,
   'say-it-loud': SayItLoud,
   'story-time': StoryTime,
+  'counting-shop': CountingShop,
+  'rhyme-pond': RhymePond,
+  'flag-voyage': FlagVoyage,
 };
 
 export const GAME_MECHANICS = {

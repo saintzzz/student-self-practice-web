@@ -8,7 +8,10 @@ export const G4_XP_GESTURES_TOPIC: Topic = { id: 'g4-xp-gestures', gradeId: 'gra
 export const G4_XP_SIGNS_TOPIC: Topic = { id: 'g4-xp-signs', gradeId: 'grade-4', name: 'Biển báo và ký hiệu' };
 export const G4_XP_TIME_TOPIC: Topic = { id: 'g4-xp-time', gradeId: 'grade-4', name: 'Giờ giấc' };
 export const G4_XP_NATURE_TOPIC: Topic = { id: 'g4-xp-nature', gradeId: 'grade-4', name: 'Bầu trời và thời tiết' };
-export const G4_XP_FLAGS_EUROPE_TOPIC: Topic = { id: 'g4-xp-flags-europe', gradeId: 'grade-4', name: 'Các nước châu Âu' };
+/* CR-147 (teacher audit F8): the topic holds territories as well as
+   sovereign countries - the name says so, matching the g5 oceania
+   pattern. */
+export const G4_XP_FLAGS_EUROPE_TOPIC: Topic = { id: 'g4-xp-flags-europe', gradeId: 'grade-4', name: 'Các nước và vùng châu Âu' };
 
 export const G4_XP_OBJECTS_WORDS: VocabWord[] = xp('g4-xp-objects', [
   ['axe', 'axe', 'axes', '🪓', 'Cái rìu', true],
@@ -247,7 +250,10 @@ export const G4_XP_FLAGS_EUROPE_WORDS: VocabWord[] = xp('g4-xp-flags-europe', [
   ['liechtenstein', 'Liechtenstein', null, '🇱🇮', 'Nước Liechtenstein', false],
   ['san-marino', 'San Marino', null, '🇸🇲', 'Nước San Marino', false],
   ['vatican', 'Vatican City', null, '🇻🇦', 'Thành Vatican', false],
-  ['england', 'England', null, '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Nước Anh', false],
+  /* CR-147 (teacher audit F7): 'Xứ Anh' distinguishes the constituent
+     country from 'Britain' (Vương quốc Anh) - same convention as the
+     existing 'Xứ Wales' gloss. */
+  ['england', 'England', null, '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Xứ Anh', false],
   ['scotland', 'Scotland', null, '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Nước Scotland', false],
   ['wales', 'Wales', null, '🏴󠁧󠁢󠁷󠁬󠁳󠁿', 'Xứ Wales', false],
   ['isle-of-man', 'the Isle of Man', null, '🇮🇲', 'Đảo Man', false],

@@ -60,7 +60,7 @@ const FIGURATIVE_IMAGE_WORDS: ReadonlySet<string> = new Set([
  * appear in text and audio kinds; flags are only excluded from
  * image-prompted generators.
  */
-function isFlagEmoji(emoji: string): boolean {
+export function isFlagEmoji(emoji: string): boolean {
   for (const ch of emoji) {
     const cp = ch.codePointAt(0)!;
     if (cp >= 0x1f1e6 && cp <= 0x1f1ff) return true; // regional indicator

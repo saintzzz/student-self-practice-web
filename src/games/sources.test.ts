@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { isLiteralImageWord } from '../lib/content/imageSemantics';
+import { isLiteralImageWord, isFlagEmoji } from '../lib/content/imageSemantics';
+import { getRhymeGroup } from '../lib/phonics/rhymes';
+import { getInitialSound } from '../lib/phonics/initialSounds';
 import {
+  countingShopRounds,
+  flagPool,
+  flagRounds,
   imageChoiceRounds,
   listeningImageRounds,
   missingLetterRounds,
   oddOneOutRounds,
   pickGameWords,
+  rhymeRounds,
   spellableWords,
   wordOrderRounds,
 } from './sources';
@@ -181,5 +187,112 @@ describe('oddOneOutRounds (CR-119)', () => {
   it('is deterministic per seed', () => {
     const a = oddOneOutRounds('grade-3', 'oo2', 4).map((q) => q.words.map((w) => w.id).join(','));
     expect(a).toEqual(oddOneOutRounds('grade-3', 'oo2', 4).map((q) => q.words.map((w) => w.id).join(',')));
+  });
+});
+
+describe('countingShopRounds (CR-147)', () => {
+  const NUM_WORDS = new Set(['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']);
+
+  it('every grade with manifest art yields rounds; correct option matches the tray total', () => {
+    for (const gradeId of GRADES) {
+      const rounds = countingShopRounds(gradeId, 'cs1', 4, 1);
+      expect(rounds.length).toBeGreaterThan(0);
+      for (const q of rounds) {
+        expect(q.trays).toHaveLength(1);
+        expect(q.options).toHaveLength(4);
+        expect(q.options[q.correctIndex]).toBe([...NUM_WORDS].find((_, i) => i === q.total - 1));
+        // off-by-one distractors live inside +-2 of the total or pad cleanly
+        for (const o of q.options) expect(NUM_WORDS.has(o)).toBe(true);
+      }
+    }
+  });
+
+  it('level 2 two-tray rounds sum both trays and stay within 1..10', () => {
+    const rounds = countingShopRounds('grade-1', 'cs2', 5, 2);
+    expect(rounds.length).toBeGreaterThan(0);
+    for (const q of rounds) {
+      expect(q.trays).toHaveLength(2);
+      expect(q.total).toBe(q.trays[0]!.count + q.trays[1]!.count);
+      expect(q.total).toBeGreaterThanOrEqual(1);
+      expect(q.total).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it('is deterministic per seed', () => {
+    const a = countingShopRounds('grade-2', 'cs3', 3, 1).map((q) => q.trays[0]!.imageUrl);
+    expect(a).toEqual(countingShopRounds('grade-2', 'cs3', 3, 1).map((q) => q.trays[0]!.imageUrl));
+  });
+});
+
+describe('rhymeRounds (CR-147)', () => {
+  it('L1: exactly one option rhymes with the target (sound family, not spelling)', () => {
+    for (const gradeId of GRADES) {
+      const rounds = rhymeRounds(gradeId, 'rp1', 4, 1);
+      expect(rounds.length).toBeGreaterThan(0);
+      for (const q of rounds) {
+        const mate = q.options[q.correctIndex]!;
+        expect(getRhymeGroup(mate.word)).toBe(getRhymeGroup(q.target.word));
+        expect(getRhymeGroup(mate.word).startsWith('solo:')).toBe(false);
+        for (const [i, w] of q.options.entries()) {
+          if (i === q.correctIndex) continue;
+          const same = getRhymeGroup(w.word) === getRhymeGroup(q.target.word) && !getRhymeGroup(w.word).startsWith('solo:');
+          expect(same).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('L2: exactly one option shares the initial sound', () => {
+    const rounds = rhymeRounds('grade-2', 'rp2', 5, 2);
+    expect(rounds.length).toBeGreaterThan(0);
+    for (const q of rounds) {
+      const mate = q.options[q.correctIndex]!;
+      expect(getInitialSound(mate.word)).toBe(getInitialSound(q.target.word));
+      expect(q.mode).toBe('initial');
+    }
+  });
+
+  it('never touches blends/finals - options come from the audited pool only', () => {
+    const rounds = rhymeRounds('grade-3', 'rp3', 8, 1);
+    for (const q of rounds) {
+      expect(isLiteralImageWord(q.target)).toBe(true);
+      q.options.forEach((w) => expect(isLiteralImageWord(w)).toBe(true));
+    }
+  });
+});
+
+describe('flagPool + flagRounds (CR-147)', () => {
+  const EXCLUDED = new Set([
+    'european-union', 'taiwan', 'hong-kong', 'macau', 'kosovo',
+    'aland', 'guernsey', 'faroe-islands', 'gibraltar',
+  ]);
+
+  it('pool holds only flag-emoji words minus EU + territories', () => {
+    for (const gradeId of ['grade-4', 'grade-5']) {
+      const pool = flagPool(gradeId);
+      expect(pool.length).toBeGreaterThan(0);
+      for (const w of pool) {
+        expect(isFlagEmoji(w.emoji)).toBe(true);
+        expect(EXCLUDED.has(w.id)).toBe(false);
+      }
+    }
+  });
+
+  it('flags never leak into the shared game word pool (G-5 pin)', () => {
+    for (const gradeId of GRADES) {
+      for (const w of pickGameWords(gradeId, 'fp', 200)) {
+        expect(isFlagEmoji(w.emoji)).toBe(false);
+      }
+    }
+  });
+
+  it('rounds put the matching flag among 4 flag options', () => {
+    const rounds = flagRounds('grade-5', 'fv1', 5);
+    expect(rounds.length).toBeGreaterThan(0);
+    for (const q of rounds) {
+      expect(q.options).toHaveLength(4);
+      expect(q.options[q.correctIndex]!.id).toBe(q.word.id);
+      for (const o of q.options) expect(isFlagEmoji(o.emoji)).toBe(true);
+    }
   });
 });

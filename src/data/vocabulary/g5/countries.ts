@@ -8,7 +8,7 @@ const t = G5_COUNTRIES_TOPIC.id;
     Uses the dedicated 'country' sentence class ("I am from Vietnam."). */
 export const G5_COUNTRIES_WORDS: VocabWord[] = [
   { id: 'vietnam', topicId: t, word: 'Vietnam', emoji: '🇻🇳', countable: false, explanation: 'Việt Nam tiếng Anh là "Vietnam".' },
-  { id: 'britain', topicId: t, word: 'Britain', emoji: '🇬🇧', countable: false, explanation: 'Nước Anh tiếng Anh là "Britain".' },
+  { id: 'britain', topicId: t, word: 'Britain', emoji: '🇬🇧', countable: false, explanation: 'Nước Anh (Vương quốc Anh) tiếng Anh là "Britain".' },
   { id: 'america', topicId: t, word: 'America', emoji: '🇺🇸', countable: false, explanation: 'Nước Mỹ tiếng Anh là "America".' },
   { id: 'japan', topicId: t, word: 'Japan', emoji: '🇯🇵', countable: false, explanation: 'Nước Nhật tiếng Anh là "Japan".' },
   { id: 'korea', topicId: t, word: 'Korea', emoji: '🇰🇷', countable: false, explanation: 'Nước Hàn Quốc tiếng Anh là "Korea".' },
