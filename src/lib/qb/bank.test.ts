@@ -116,6 +116,23 @@ describe('toExamQuestion', () => {
     expect(kept).toMatchObject({ kind: 'grammar-mcq', imageUrl: '/images/v6/math-vi/mathvi-0006eb55d9.svg' });
   });
 
+  it('CR-144 (r223): image-dependent rows drop when ANY path is quarantined', () => {
+    // a mixed row cannot keep an unrelated prompt image or lose required
+    // option art - surviving paths do not rescue it.
+    const mixed = toExamQuestion(row({
+      question_type: 'word-to-image-mcq',
+      choices: ['a', 'b', 'c', 'd'],
+      answer: { index: 0 },
+      asset_paths: [
+        'images/concepts/ok.webp',
+        'images/v6/science/bad.webp',
+        'images/concepts/ok2.webp',
+        'images/concepts/ok3.webp',
+      ],
+    }));
+    expect(mixed).toBeNull();
+  });
+
   it('CR-144: text-only rows keep the question when quarantined art drops', () => {
     // plain mcq is independently answerable from its prompt text.
     const q = toExamQuestion(row({

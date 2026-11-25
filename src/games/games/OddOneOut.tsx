@@ -30,7 +30,13 @@ export default function OddOneOut({ grade, seed, level, onEnd }: GameProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
+  /* CR-144 (art audit F-03): the whole option set only shows audited art
+     when every word resolves to an image - same all-or-nothing law as
+     ListeningImageChoiceQuestion. r222: a load failure drops the set too.
+     r223: hooks must sit above the early return. */
+  const [artFailed, setArtFailed] = useState(false);
   const q = rounds[Math.min(round, rounds.length - 1)];
+  useEffect(() => setArtFailed(false), [q]);
   if (!q) return null;
 
   const nextRound = (newCorrect: number) => {
@@ -64,11 +70,6 @@ export default function OddOneOut({ grade, seed, level, onEnd }: GameProps) {
     timerRef.current = setTimeout(() => nextRound(newCorrect), 750);
   };
 
-  /* CR-144 (art audit F-03): the whole option set only shows audited art
-     when every word resolves to an image - same all-or-nothing law as
-     ListeningImageChoiceQuestion. r222: a load failure drops the set too. */
-  const [artFailed, setArtFailed] = useState(false);
-  useEffect(() => setArtFailed(false), [q]);
   const oddAllArt =
     !artFailed && q.words.every((word) => getWordVisual(word.id)?.imageUrl);
 

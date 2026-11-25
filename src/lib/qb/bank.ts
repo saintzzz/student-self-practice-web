@@ -283,12 +283,12 @@ export function toExamQuestion(row: QbRow): ExamQuestion | null {
   const assetPaths = row.asset_paths.filter(
     (p) => !/v6\/(science|math)\//.test(p),
   );
-  // r222: rows whose prompt/options DEPEND on the quarantined art become
-  // guesswork ("Look at the picture" with no picture) - drop them. Rows
-  // that never had art, or still have surviving art, map as before.
+  // r222/r223: rows whose prompt/options DEPEND on art cannot survive
+  // losing ANY path - a surviving-but-unrelated prompt image or missing
+  // option art is worse than no question. Drop them. Text-only-capable
+  // types keep the row with whatever art remains.
   if (
-    assetPaths.length === 0 &&
-    row.asset_paths.length > 0 &&
+    assetPaths.length !== row.asset_paths.length &&
     IMAGE_DEPENDENT_TYPES.has(row.question_type)
   ) {
     return null;
