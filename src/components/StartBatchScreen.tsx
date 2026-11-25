@@ -572,7 +572,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             autoplayKey={`start-${grade.id}`}
           />
         </div>
-        <div className="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-8">
+        <div className="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start lg:gap-8">
         <div>
         {/* Land vignette: the mascot stands ON its land's ground (strip
             scene over the land's page gradient) instead of floating on

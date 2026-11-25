@@ -40,7 +40,7 @@ for (const [name, vp] of Object.entries(viewports)) {
   if (await games.isVisible().catch(() => false)) {
     await games.click();
     await page.waitForTimeout(600);
-    const first = page.locator('[data-testid^="game-shelf-"]').first();
+    const first = page.locator('[data-testid^="game-card-"]:not([data-testid="game-card-coming-soon"])').first();
     if (await first.isVisible().catch(() => false)) {
       await first.click();
       await page.waitForTimeout(800);
@@ -56,11 +56,14 @@ for (const [name, vp] of Object.entries(viewports)) {
   await page.close();
 }
 
-// splash skeleton: block supabase so auth 'loading' state persists
+// splash skeleton: hold the supabase BACKEND request so the auth
+// 'loading' state persists (aborting *supabase* also killed the vite
+// /src/lib/supabase module last run - blank shot). Assert the skeleton
+// is visible before capture.
 const p2 = await browser.newPage({ viewport: viewports.tablet });
-await p2.route('**/*supabase*/**', (r) => r.abort());
+await p2.route('**://*.supabase.co/**', () => new Promise(() => {}));
 await p2.goto('http://localhost:5173/app');
-await p2.waitForTimeout(1200);
+await p2.locator('text=Đang tải...').waitFor({ timeout: 5000 }).catch(() => {});
 await p2.screenshot({ path: `${OUT}/tablet-00-splash.png` });
 await p2.close();
 
