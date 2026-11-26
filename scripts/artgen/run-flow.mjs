@@ -149,7 +149,12 @@ async function main() {
     console.log(`[flow] pass ${pass + 1}: ${missing.length} missing`);
     for (const a of missing) {
       const file = join(OUT, `${a.id}.png`);
+      /* Hard watchdog: playwright evaluate/click calls have NO default
+         timeout - a wedged CDP eval hung the run 37min once. Bound the
+         whole per-asset block; on timeout reload the page to unwedge. */
       try {
+        await Promise.race([
+          (async () => {
         const pre = await asbSrcs(page);
         await submit(page, a.prompt);
         const got = await waitNewImage(page, pre);
@@ -164,10 +169,23 @@ async function main() {
           consecFails = 0;
           console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved (${++doneSinceReload} this pass)`);
         }
+          })(),
+          sleep(300_000).then(() => {
+            const e = new Error('watchdog 300s - per-asset block hung');
+            e.watchdog = true;
+            throw e;
+          }),
+        ]);
       } catch (e) {
-        if (e.fatal) throw e; // propagate past the per-asset catch (r247)
-        consecFails++;
-        console.log(`[flow] ${a.id}: FAIL ${e.message?.slice(0, 160)}`);
+        if (e.watchdog) {
+          console.log(`[flow] ${a.id}: WATCHDOG hung - reloading page`);
+          try { await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 }); } catch { /* page may be dead too */ }
+          consecFails++;
+        } else {
+          if (e.fatal) throw e; // propagate past the per-asset catch (r247)
+          consecFails++;
+          console.log(`[flow] ${a.id}: FAIL ${e.message?.slice(0, 160)}`);
+        }
       }
       if (consecFails >= FAIL_BREAKER) {
         console.log(`[flow] ${consecFails} consecutive failures - session likely dead, aborting`);
