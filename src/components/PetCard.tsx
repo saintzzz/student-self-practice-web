@@ -14,6 +14,7 @@ import { usePressRelease } from '../hooks/usePressRelease';
 import PressableOptionButton from './PressableOptionButton';
 import { IconParty, IconPaw } from './icons';
 import LoopingVideo from './LoopingVideo';
+import MotionToggle from './MotionToggle';
 import { EmojiVisual } from './EmojiVisual';
 
 /**
@@ -68,8 +69,12 @@ export default function PetCard() {
     <div data-testid="pet-card" className={`mt-4 ${CARD_DAY} text-left`}>
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-extrabold text-amber-800"><IconPaw size={20} className="mr-1.5 inline-block" /> Bạn đồng hành</h2>
-        <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-extrabold text-amber-800 ring-1 ring-amber-300">
-          {pet.xp} XP
+        <span className="flex items-center gap-2">
+          {/* r256: ungated motion control for the evolve clip below. */}
+          {pet.stage >= 4 && <MotionToggle />}
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-extrabold text-amber-800 ring-1 ring-amber-300">
+            {pet.xp} XP
+          </span>
         </span>
       </div>
 

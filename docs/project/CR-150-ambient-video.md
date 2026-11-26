@@ -63,3 +63,11 @@ xác khẩu hình phonics). 9 clips, Omni 1.2 Flash 16:9 720p.
   - Error scan dùng transcript boundary (innerText length lúc submit)
     thay prompt anchor - các land prompt trùng prefix 40-char nên
     lastIndexOf bắt nhầm error của turn trước.
+- **r256** (commit 8f55c5b): 3 findings - fixed tất cả.
+  - Control ungated: `MotionToggle` chip trên chính bề mặt có video -
+    LandShell hero top-right (cover mọi màn), island panel, PetCard
+    header. Kid tự tắt được, không qua ParentGate.
+  - `ambientMotion.ts`: in-memory override + luôn dispatch event -
+    storage throw không còn làm checkbox lệch store.
+  - run-flow-video: boundary capture TRƯỚC click - rejection instant
+    không bị nuốt vào boundary (trước đây 8-phút timeout mới phát hiện).

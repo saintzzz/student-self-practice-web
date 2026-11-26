@@ -7,6 +7,7 @@ import { gameCardChip, gameCardClass, gameHeroClass } from '../lib/ui/tokens';
 import { IconLock, IconParty } from '../components/icons';
 import { EmojiVisual } from '../components/EmojiVisual';
 import LoopingVideo from '../components/LoopingVideo';
+import MotionToggle from '../components/MotionToggle';
 import { playSfx } from '../lib/sfx';
 import { GAME_DEFS } from './defs';
 import GameArt from './GameArt';
@@ -110,6 +111,8 @@ function MysteryIslandCard({ gradeId }: { gradeId?: string }) {
           loop={false}
           className="aspect-video w-full rounded-2xl object-cover ring-1 ring-sky-100"
         />
+        {/* r256: ungated motion control right on the affected surface. */}
+        <MotionToggle className="absolute right-2 top-2" />
         <div className="flex w-full items-center justify-between gap-2">
           <span className="font-display text-base font-extrabold text-slate-700">🏝️ Đảo bí mật</span>
           <button

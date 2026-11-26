@@ -47,12 +47,13 @@ async function submit(page, prompt) {
   await sleep(400);
   await page.keyboard.type(prompt, { delay: 3 });
   await sleep(300);
+  // Transcript boundary BEFORE the click: the typed prompt already sits
+  // in the composer so it is counted here; everything appended after
+  // submission belongs to this turn only. Capturing post-click could
+  // swallow an instant rejection into the boundary itself (r256).
+  const boundary = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').length);
   await page.locator('[aria-label="Bắt đầu tạo"], [aria-label="Start creating"]').last().click();
-  // Transcript boundary: everything appended AFTER this point belongs to
-  // the current turn. A prompt-text anchor is unreliable - sibling
-  // prompts share identical prefixes (r255: the 5 land prompts all begin
-  // alike, so lastIndexOf matched the PREVIOUS turn's error).
-  return page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').length);
+  return boundary;
 }
 
 async function waitNewVideoCard(page, preSrcs, boundary) {

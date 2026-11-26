@@ -5,8 +5,9 @@ import LandScene, { type LandSceneProps } from './LandScene';
 import LoopingVideo from '../LoopingVideo';
 
 /** CR-150: lands with generated ambient loops (Veo via Flow). Strip
- *  stays static - motion belongs on the hero, not on every strip. */
-const LAND_LOOPS = new Set(['playground', 'town', 'jungle', 'city', 'space']);
+ *  stays static - motion belongs on the hero, not on every strip.
+ *  Exported for LandShell's ungated motion toggle (r256). */
+export const LAND_LOOPS = new Set(['playground', 'town', 'jungle', 'city', 'space']);
 
 /**
  * Bespoke generated scene art (ChatGPT soft-3D storybook render per

@@ -1,7 +1,8 @@
 import { useRef, type ReactNode } from 'react';
 import { bandForGrade, getLand, LANDS, type Land, type LandKey, type SceneTone } from '../lib/ui/theme';
-import LandArt from './scene/LandArt';
+import LandArt, { LAND_LOOPS } from './scene/LandArt';
 import { SceneJourneyProvider } from './scene/SceneJourneyContext';
+import MotionToggle from './MotionToggle';
 
 interface LandShellProps {
   /** Grade id - resolves to its land; omit/null for the sky land. */
@@ -37,6 +38,12 @@ export default function LandShell({ gradeId, land, night = false, tone, variant 
       data-band={bandForGrade(gradeId)}
     >
       <LandArt ref={sceneRef} land={resolved.key} variant={variant} tone={resolvedTone} />
+      {/* CR-150 (r256): ungated motion control on surfaces that play an
+          ambient loop - the chip floats over the hero's top-right,
+          outside the aria-hidden decorative layer. */}
+      {(variant === 'hero' || variant === 'hero-compact') && LAND_LOOPS.has(resolved.key) && (
+        <MotionToggle className="absolute right-3 top-3 z-20" />
+      )}
       <SceneJourneyProvider rootRef={sceneRef}>
         <div className="relative z-10">{children}</div>
       </SceneJourneyProvider>

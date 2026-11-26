@@ -198,6 +198,14 @@ export function IconPlay(props: IconProps) {
   );
 }
 
+export function IconPause(props: IconProps) {
+  return (
+    <svg {...iconProps(props)} fill="currentColor" stroke="none">
+      <path d="M7 5a1.6 1.6 0 011.6-1.6h.8A1.6 1.6 0 0111 5v14a1.6 1.6 0 01-1.6 1.6h-.8A1.6 1.6 0 017 19zM13 5a1.6 1.6 0 011.6-1.6h.8A1.6 1.6 0 0117 5v14a1.6 1.6 0 01-1.6 1.6h-.8A1.6 1.6 0 0113 19z" />
+    </svg>
+  );
+}
+
 export function IconCheck(props: IconProps) {
   return (
     <svg {...iconProps(props)}>

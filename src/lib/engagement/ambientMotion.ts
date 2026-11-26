@@ -3,15 +3,23 @@ import { useSyncExternalStore } from 'react';
 /* CR-150 (r255): ambient video motion switch - the accessible stop
  * mechanism WCAG 2.2.2 asks for on decorative auto-playing surfaces
  * that cannot host their own pause control (aria-hidden layers).
- * Parents toggle it in Goc ba me next to the rest-reminder flag; kids
- * get the OS-level prefers-reduced-motion gate plus this persisted one.
- * Same contract as restReminder.ts - the flag is only honored, never
- * set, by the video surfaces themselves. */
+ * Parents toggle it in Goc ba me next to the rest-reminder flag and
+ * kids get the ungated MotionToggle chip on screens with ambient
+ * video; both write the same flag. Same contract as restReminder.ts -
+ * the flag is only honored, never set, by the video surfaces
+ * themselves. */
 
 const KEY = 'ea-ambient-motion';
 const EVENT = 'ea-ambient-motion-changed';
 
+/** Session-truth override: when persistence is unavailable (private
+ *  mode, quota, throwing storage stub) the toggle must still WORK -
+ *  the checkbox reflects this value, not a silently-failed write
+ *  (r256). Persisted value wins on a fresh load once storage works. */
+let memoryOverride: boolean | null = null;
+
 export function ambientMotionEnabled(): boolean {
+  if (memoryOverride !== null) return memoryOverride;
   try {
     return localStorage.getItem(KEY) !== 'off';
   } catch {
@@ -20,12 +28,13 @@ export function ambientMotionEnabled(): boolean {
 }
 
 export function setAmbientMotionEnabled(on: boolean): void {
+  memoryOverride = on;
   try {
     localStorage.setItem(KEY, on ? 'on' : 'off');
-    window.dispatchEvent(new Event(EVENT));
   } catch {
-    /* private-mode safari: the toggle just won't persist - honest no-op. */
+    /* storage unavailable - the override above still applies live. */
   }
+  window.dispatchEvent(new Event(EVENT));
 }
 
 function subscribe(cb: () => void): () => void {
