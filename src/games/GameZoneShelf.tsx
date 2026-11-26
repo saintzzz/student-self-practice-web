@@ -107,6 +107,7 @@ function MysteryIslandCard({ gradeId }: { gradeId?: string }) {
         <LoopingVideo
           src="/videos/mystery-island-reveal.mp4"
           poster="/images/stickers/sticker-mystery-island.webp"
+          loop={false}
           className="aspect-video w-full rounded-2xl object-cover ring-1 ring-sky-100"
         />
         <div className="flex w-full items-center justify-between gap-2">

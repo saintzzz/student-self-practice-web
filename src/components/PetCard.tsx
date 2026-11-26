@@ -85,6 +85,7 @@ export default function PetCard() {
             <LoopingVideo
               src={`/videos/pet-${pet.species}-evolve.mp4`}
               poster={pet.art}
+              loop={false}
               className="h-16 w-28 shrink-0 rounded-xl object-cover ring-1 ring-amber-200"
             />
           )}

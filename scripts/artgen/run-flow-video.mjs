@@ -50,8 +50,13 @@ async function submit(page, prompt) {
   await page.locator('[aria-label="Bắt đầu tạo"], [aria-label="Start creating"]').last().click();
 }
 
-async function waitNewVideoCard(page, preSrcs) {
+async function waitNewVideoCard(page, preSrcs, prompt) {
   const deadline = Date.now() + GEN_WAIT_MS;
+  // Error text only counts if it appears AFTER this asset's own prompt -
+  // the session transcript keeps earlier failures, so an unanchored tail
+  // scan sees stale errors and fails a render that is still pending
+  // (the next asset then inherits its late card = misattribution).
+  const anchor = prompt.replace(/\s+/g, ' ').slice(0, 40);
   while (Date.now() < deadline) {
     const pick = await page.evaluate((pre) => {
       const cards = [...document.querySelectorAll('.video-container')];
@@ -67,10 +72,13 @@ async function waitNewVideoCard(page, preSrcs) {
     // only safe early exit is explicit error text; anything else keeps
     // polling, because a late card landing under the NEXT asset's name
     // is the misattribution bug this lane exists to avoid.
-    const err = await page.evaluate(() => {
-      const tail = (document.body?.innerText ?? '').replace(/\s+/g, ' ').slice(-400);
+    const err = await page.evaluate((a) => {
+      const body = (document.body?.innerText ?? '').replace(/\s+/g, ' ');
+      const idx = body.lastIndexOf(a);
+      if (idx < 0) return null; // our turn not in transcript yet - keep polling
+      const tail = body.slice(idx + a.length).slice(-400);
       return /(lỗi|thử lại|error|try again|unable|không thể)/i.test(tail) ? tail : null;
-    });
+    }, anchor);
     if (err) return { err, fatal: false };
     await sleep(8000);
   }
@@ -133,7 +141,7 @@ async function main() {
         (async () => {
           const pre = await videoCardSrcs(page);
           await submit(page, a.prompt);
-          const got = await waitNewVideoCard(page, pre);
+          const got = await waitNewVideoCard(page, pre, a.prompt);
           if (!got.src) {
             if (got.fatal) {
               const e = new Error(got.err);

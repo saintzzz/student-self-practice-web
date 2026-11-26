@@ -45,3 +45,11 @@ xác khẩu hình phonics). 9 clips, Omni 1.2 Flash 16:9 720p.
     (render có thể còn pending) -> fatal abort, resume-safe; full
     session URL resolve từ tab (hint chỉ là prefix).
 - Clips đã ở `public/videos/` (9/9).
+- **r254** (commit 49cf28f): 3 findings - fixed tất cả.
+  - Error scan giờ anchor SAU prompt của asset hiện tại (transcript giữ
+    error cũ -> tail-scan trần vẫn misattribute).
+  - Motion bound: evolve/reveal = `loop={false}` (one-shot moment, hold
+    last frame); land loops auto-stop sau 60s - bề mặt aria-hidden không
+    chứa được pause control nên motion phải tự kết thúc (WCAG 2.2.2).
+  - Playback effect dep thêm `hidden` - reduced-motion flip remount video
+    giờ re-bind listeners/IO đúng.
