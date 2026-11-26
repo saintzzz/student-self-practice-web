@@ -54,7 +54,7 @@ async function submit(page, prompt) {
   const boundary = await page.evaluate(() => {
     const norm = (s) => (s ?? '').replace(/\s+/g, ' ');
     const body = norm(document.body.innerText);
-    const composer = norm(document.querySelector('.ProseMirror')?.innerText);
+    const composer = norm([...document.querySelectorAll('.ProseMirror')].pop()?.innerText);
     return body.length - composer.length;
   });
   await page.locator('[aria-label="Bắt đầu tạo"], [aria-label="Start creating"]').last().click();
