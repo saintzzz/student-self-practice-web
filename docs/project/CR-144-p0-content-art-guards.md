@@ -1,6 +1,6 @@
 # CR-144 - P0 Content + Art Guards
 
-**Status:** implemented, review loop pending
+**Status:** shipped - review loop CLOSED (r224 CLEAN)
 **Sources:** `docs/reviews/REVIEW-SYNTHESIS.md` (PM triage of teacher + designer + game-PO audits)
 **Directive:** user approved full 4-CR plan ("làm hết đi")
 
@@ -46,4 +46,4 @@ a wrong model sentence, or answer-leaking art. All size-S changes.
 - New pin tests: blend exceptions, PE/karate, TYPEABLE_WORD filter,
   sentence blocklist + flag/place-bare/Santa frames, v6 quarantine,
   game-pool blocklist
-- External review loop: pending
+- External review loop: closed - r224 CLEAN

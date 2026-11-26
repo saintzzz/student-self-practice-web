@@ -1,6 +1,6 @@
 # CR-145 - Art Wiring + Dedupe
 
-**Status:** implemented, review loop pending
+**Status:** shipped - review loop CLOSED (r228 CLEAN)
 **Sources:** `docs/reviews/ART-REVIEW-designer.md` F-04/F-07/F-08 + PO art plan
 
 ## Scope
@@ -104,4 +104,4 @@ vocab<->concepts duplicate set.
 
 - `tsc --noEmit` clean; tests incl. new CR-145 pins pass
 - `check-attribution` green post-dedupe
-- External review loop: pending
+- External review loop: closed - r228 CLEAN
