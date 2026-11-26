@@ -192,10 +192,22 @@ async function main() {
         return;
       }
       if (doneSinceReload >= RELOAD_EVERY) {
-        await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.locator('.ProseMirror').first().waitFor({ timeout: 20000 });
-        doneSinceReload = 0;
-        await sleep(2000);
+        // Housekeeping reload is outside the per-asset try - a dead page
+        // here used to kill the whole lane mid-queue. Count it as a fail
+        // and let the breaker decide if the session is really gone.
+        try {
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await page.locator('.ProseMirror').first().waitFor({ timeout: 20000 });
+          doneSinceReload = 0;
+          await sleep(2000);
+        } catch (e) {
+          consecFails++;
+          console.log(`[flow] reload failed (${e.message?.slice(0, 80)}) - treating as fail`);
+          if (consecFails >= FAIL_BREAKER) {
+            console.log(`[flow] ${consecFails} consecutive failures - session likely dead, aborting`);
+            return;
+          }
+        }
       }
       await sleep(BETWEEN_MS);
     }
