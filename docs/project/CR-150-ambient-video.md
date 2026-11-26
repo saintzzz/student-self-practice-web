@@ -30,6 +30,18 @@ xác khẩu hình phonics). 9 clips, Omni 1.2 Flash 16:9 720p.
 
 ## Còn lại
 
-- Clips ở `artgen-out/*.mp4` -> `public/videos/` (copy khi lane xong).
 - Nếu cần loop seamless hơn: re-gen với prompt "perfect loop" hoặc
   trim frame đầu/cuối.
+
+## External review
+
+- **r253** (commit 2de92eb): 5 findings - fixed tất cả.
+  - LoopingVideo: reduced-motion + Save-Data -> video không mount
+    (still art là mechanism, ADR-1); pause khi tab ẩn/offscreen qua
+    visibilitychange + IntersectionObserver; `failedSrc` scoped theo
+    src (recover khi đổi clip).
+  - run-flow-video: quiet-agent 90s KHÔNG còn là failure - chỉ
+    explicit error text mới fail sớm; timeout/watchdog = ambiguous
+    (render có thể còn pending) -> fatal abort, resume-safe; full
+    session URL resolve từ tab (hint chỉ là prefix).
+- Clips đã ở `public/videos/` (9/9).

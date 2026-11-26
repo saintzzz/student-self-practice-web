@@ -62,19 +62,21 @@ async function waitNewVideoCard(page, preSrcs) {
       return { src: fresh[0].src, index: cards.indexOf(fresh[0].el) };
     }, preSrcs);
     if (pick) return pick;
-    // Agent finished without producing a card -> error text.
-    const done = await page.evaluate(() => {
-      const stopped = !document.querySelector('[aria-label="Dừng"], [aria-label="Stop"]');
-      const tail = (document.body?.innerText ?? '').replace(/\s+/g, ' ').slice(-300);
-      return stopped ? tail : null;
+    // A quiet agent does NOT mean failure - it confirms "generation has
+    // started" then goes silent while the ~5min render is pending. The
+    // only safe early exit is explicit error text; anything else keeps
+    // polling, because a late card landing under the NEXT asset's name
+    // is the misattribution bug this lane exists to avoid.
+    const err = await page.evaluate(() => {
+      const tail = (document.body?.innerText ?? '').replace(/\s+/g, ' ').slice(-400);
+      return /(lỗi|thử lại|error|try again|unable|không thể)/i.test(tail) ? tail : null;
     });
-    // The agent answers "generation has started" BEFORE the card lands -
-    // an early all-quiet does not mean failure; only treat as error once
-    // a second quiet stretch confirms it (~90s).
-    if (done && Date.now() > deadline - GEN_WAIT_MS + 90_000) return { err: done };
+    if (err) return { err, fatal: false };
     await sleep(8000);
   }
-  return { err: 'timeout waiting for video card' };
+  // Timeout is AMBIGUOUS - the render may still land after we give up.
+  // Fatal-abort the run instead of starting the next asset (resume-safe).
+  return { err: 'timeout waiting for video card', fatal: true };
 }
 
 async function downloadVideo(page, cardIndex, file) {
@@ -100,9 +102,25 @@ async function main() {
     console.log(`[flow-video] no tab matching ${projectHint} - open the video project first`);
     return;
   }
+  // projectHint may be only an id prefix - resolve the FULL session URL
+  // from the matched tab before any goto() (a truncated id navigates
+  // away from the real project and the composer never mounts).
+  let sessionUrl = page.url().match(/https:\/\/flow\.google\.com\/project\/[0-9a-f-]+/i)?.[0];
+  if (!sessionUrl && /^[0-9a-f-]{36}$/i.test(projectHint)) {
+    sessionUrl = `https://flow.google.com/project/${projectHint}`;
+  }
+  if (!sessionUrl) {
+    // Tab is sitting on /edit/ - step back to the session view for the id.
+    await page.goBack({ waitUntil: 'domcontentloaded' }).catch(() => {});
+    sessionUrl = page.url().match(/https:\/\/flow\.google\.com\/project\/[0-9a-f-]+/i)?.[0];
+  }
+  if (!sessionUrl) {
+    console.log('[flow-video] cannot resolve project URL - pass --project=<full uuid>');
+    return;
+  }
   // The tab may be sitting on an /edit/ page from a previous download -
   // always return to the session view first (composer lives there).
-  await page.goto(`https://flow.google.com/project/${projectHint}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(sessionUrl, { waitUntil: 'domcontentloaded' });
   await page.locator('.ProseMirror').first().waitFor({ timeout: 20000 });
   await sleep(1500);
 
@@ -117,6 +135,11 @@ async function main() {
           await submit(page, a.prompt);
           const got = await waitNewVideoCard(page, pre);
           if (!got.src) {
+            if (got.fatal) {
+              const e = new Error(got.err);
+              e.fatal = true;
+              throw e;
+            }
             consecFails++;
             console.log(`[flow-video] ${a.id}: ${got.err}`);
             return;
@@ -127,14 +150,20 @@ async function main() {
         })(),
         sleep(GEN_WAIT_MS + 120_000).then(() => {
           const e = new Error('watchdog - per-asset block hung');
-          e.watchdog = true;
+          e.fatal = true;
           throw e;
         }),
       ]);
     } catch (e) {
       consecFails++;
       console.log(`[flow-video] ${a.id}: FAIL ${e.message?.slice(0, 160)}`);
-      try { await page.goto(`https://flow.google.com/project/${projectHint}`, { waitUntil: 'domcontentloaded' }); } catch { /* noop */ }
+      // Timeout/watchdog while a render may still be pending -> the late
+      // card could land under the next asset's name. Abort; resume-safe.
+      if (e.fatal) {
+        console.log('[flow-video] ambiguous state - aborting run (rerun resumes)');
+        return;
+      }
+      try { await page.goto(sessionUrl, { waitUntil: 'domcontentloaded' }); } catch { /* noop */ }
       await sleep(3000);
     }
     if (consecFails >= FAIL_BREAKER) {
