@@ -76,3 +76,6 @@ xác khẩu hình phonics). 9 clips, Omni 1.2 Flash 16:9 720p.
     nhỏ hơn boundary cũ, rejection ngắn bị nuốt).
   - MotionToggle: label ổn định "Video chuyển động" + `aria-pressed={on}`
     - action text chuyển sang `title` (announce không còn mâu thuẫn).
+- **r258** (commit 7810d33): 1 minor - boundary đo đúng ProseMirror
+  last (submit gõ vào last, boundary trước đo first).
+- **r259** (commit 446893e): **CLEAN** - review loop đóng.
