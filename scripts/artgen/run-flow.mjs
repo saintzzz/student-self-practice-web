@@ -93,6 +93,17 @@ async function waitNewImage(page, preSrcs) {
     }
     await sleep(2500);
   }
+  // Initial timeout: only recoverable when generation has STOPPED (the
+  // agent answered without an image). If it is still running, late
+  // outputs would land after the next asset's snapshot - same poison
+  // path as the settle timeout, so abort the run (r248).
+  const stillGenerating = await page.evaluate(
+    () => !!document.querySelector('[aria-label="Dừng"], [aria-label="Stop"]'));
+  if (stillGenerating) {
+    const e = new Error('generation timeout - still active, run aborted');
+    e.fatal = true;
+    throw e;
+  }
   const tail = await page.evaluate(() => (document.body?.innerText ?? '').slice(-500));
   return { err: `timeout. tail=${JSON.stringify(tail)}` };
 }
