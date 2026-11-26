@@ -24,6 +24,14 @@ describe('emoji asset coverage (AC-1.5)', () => {
     expect(svgUrl('1f431')).toMatch(/^\/?emoji\/svg\/1f431\.svg$/);
     expect(lottieUrl('2728')).toMatch(/^\/?emoji\/lottie\/2728\.json$/);
   });
+
+  it('r246: grape key overrides to the single-berry art + loses lottie', () => {
+    /* The stock 🍇 glyph is a bunch; the counting fallback must render
+       one berry, so the key resolves to our concept webp instead. */
+    expect(svgUrl('1f347')).toMatch(/images\/concepts\/concept-grape-fc24e5\.webp$/);
+    expect(existsSync(path.join(PUBLIC_DIR, 'images/concepts/concept-grape-fc24e5.webp'))).toBe(true);
+    expect(hasLottie('1f347')).toBe(false);
+  });
 });
 
 describe('lottieKeys.generated.json <-> public/emoji/lottie bijection (ADR-4)', () => {

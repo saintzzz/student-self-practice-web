@@ -25,6 +25,11 @@ mkdirSync(OUT, { recursive: true });
 const CDP = process.env.CDP || 'http://localhost:9222';
 const GEN_WAIT_MS = 180_000;
 const BETWEEN_MS = 4_000;
+/* Long-run guards: hundreds of x2 generations bloat the session DOM, so
+   reload the project page periodically; a run of consecutive failures
+   means the session/auth is dead - stop early instead of burning hours. */
+const RELOAD_EVERY = 40;
+const FAIL_BREAKER = 8;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -136,6 +141,8 @@ async function main() {
   await page.locator('.ProseMirror').first().waitFor({ timeout: 20000 });
   await sleep(1500);
 
+  let doneSinceReload = 0;
+  let consecFails = 0;
   for (let pass = 0; pass < 4; pass++) {
     const missing = ASSETS.filter((a) => !existsSync(join(OUT, `${a.id}.png`)));
     if (!missing.length) break;
@@ -146,12 +153,24 @@ async function main() {
         const pre = await asbSrcs(page);
         await submit(page, a.prompt);
         const got = await waitNewImage(page, pre);
-        if (!got.src) { console.log(`[flow] ${a.id}: ${got.err}`); continue; }
+        if (!got.src) { console.log(`[flow] ${a.id}: ${got.err}`); consecFails++; continue; }
         await download(page, got.src, file);
-        console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved`);
+        consecFails = 0;
+        console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved (${++doneSinceReload} this pass)`);
       } catch (e) {
         if (e.fatal) throw e; // propagate past the per-asset catch (r247)
+        consecFails++;
         console.log(`[flow] ${a.id}: FAIL ${e.message?.slice(0, 160)}`);
+      }
+      if (consecFails >= FAIL_BREAKER) {
+        console.log(`[flow] ${consecFails} consecutive failures - session likely dead, aborting`);
+        return;
+      }
+      if (doneSinceReload >= RELOAD_EVERY) {
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await page.locator('.ProseMirror').first().waitFor({ timeout: 20000 });
+        doneSinceReload = 0;
+        await sleep(2000);
       }
       await sleep(BETWEEN_MS);
     }

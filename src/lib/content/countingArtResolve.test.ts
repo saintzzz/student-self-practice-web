@@ -4,6 +4,7 @@ import { ensureContentBank, allWords } from './contentBank';
 import { getWordVisual } from '../emoji/wordVisual';
 import { generateCountingImageQuestions } from '../generators/countingImage';
 import { generateDescribeAndChooseImageQuestions } from '../generators/describeAndChooseImage';
+import { COUNTING_UNIT_EXCLUDE } from './imageSemantics';
 import {
   countingArtKey,
   countingOptionArtUrl,
@@ -47,14 +48,11 @@ describe('resolveCountingGroupArt (CR-145 r225)', () => {
     expect(resolveCountingGroupArt([])).toBeNull();
   });
 
-  it('r226/r246: grape stays out - the emoji fallback still shows a bunch', () => {
-    /* concept-grape-fc24e5 is now one berry, but any art failure drops
-       the group to emoji and 🍇 is a bunch - grape stays excluded until
-       a single-berry non-emoji fallback exists. */
+  it('r246: grape back in repeat - emoji fallback now renders one berry', () => {
+    /* SVG_OVERRIDES['1f347'] -> single-berry concept art + lottie
+       suppressed, so even the art-failure fallback counts units right. */
     const withGrapeId = [opt('cat', 4, 'cat'), opt('grape', 3, 'grape'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
-    expect(resolveCountingGroupArt(withGrapeId)).toBeNull();
-    const withGrapeText = [opt('cat', 4), opt('grape', 3), opt('dog', 2), opt('apple', 5)];
-    expect(resolveCountingGroupArt(withGrapeText)).toBeNull();
+    expect(resolveCountingGroupArt(withGrapeId)).toBe('repeat');
     /* A same-unit depiction (one nest containing eggs = one nest) stays. */
     const withNest = [opt('cat', 4, 'cat'), opt('nest', 3, 'nest'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
     expect(resolveCountingGroupArt(withNest)).toBe('repeat');
@@ -112,16 +110,18 @@ describe('generated-question art coverage (CR-145 r225 proof)', () => {
     expect(covered / total).toBeGreaterThan(0.8);
   });
 
-  it('r227: no generated counting/describe question shows a unit-mismatched word', () => {
-    /* grape stays excluded (emoji fallback = bunch) - assert it never
-       surfaces in generated questions. */
+  it('r227: generated questions only show words whose fallbacks count right', () => {
+    /* grape re-entered: the emoji-asset override renders one berry even
+       on art failure, so COUNTING_UNIT_EXCLUDE is empty - assert it
+       stays empty (any future entry would silently drop words). */
+    expect(COUNTING_UNIT_EXCLUDE.size).toBe(0);
     for (const words of topics().values()) {
       for (const q of generateCountingImageQuestions(words)) {
-        for (const o of q.options) expect(o.wordId).not.toBe('grape');
-        expect(q.prompt.wordId).not.toBe('grape');
+        for (const o of q.options) expect(COUNTING_UNIT_EXCLUDE.has(o.wordId ?? '')).toBe(false);
+        expect(COUNTING_UNIT_EXCLUDE.has(q.prompt.wordId ?? '')).toBe(false);
       }
       for (const q of generateDescribeAndChooseImageQuestions(words)) {
-        for (const o of q.options) expect(o.wordId).not.toBe('grape');
+        for (const o of q.options) expect(COUNTING_UNIT_EXCLUDE.has(o.wordId ?? '')).toBe(false);
       }
     }
   });

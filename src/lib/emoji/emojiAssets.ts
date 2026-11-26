@@ -14,8 +14,19 @@ function baseUrl(): string {
   return import.meta.env.BASE_URL ?? '/';
 }
 
+/* Emoji-codepoint -> bespoke art override: the stock Twemoji/Noto glyph
+   depicts the wrong counted unit (🍇 U+1F347 renders a bunch while the
+   word 'grape' counts single berries). The key resolves to our
+   single-berry concept art so every static render tier shows one grape;
+   lottie is suppressed for overridden keys (the animated bunch has the
+   same unit bug - r246 counting-fallback fix). */
+const SVG_OVERRIDES: Readonly<Record<string, string>> = {
+  '1f347': 'images/concepts/concept-grape-fc24e5.webp',
+};
+
 export function svgUrl(key: string): string {
-  return `${baseUrl()}emoji/svg/${key}.svg`;
+  const override = SVG_OVERRIDES[key];
+  return override ? `${baseUrl()}${override}` : `${baseUrl()}emoji/svg/${key}.svg`;
 }
 
 export function lottieUrl(key: string): string {
@@ -24,5 +35,5 @@ export function lottieUrl(key: string): string {
 
 /** Whether a Noto Animated Emoji Lottie exists for this Twemoji key (ADR-4). */
 export function hasLottie(key: string): boolean {
-  return LOTTIE_KEYS.has(key);
+  return !(key in SVG_OVERRIDES) && LOTTIE_KEYS.has(key);
 }
