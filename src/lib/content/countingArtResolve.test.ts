@@ -4,6 +4,7 @@ import { ensureContentBank, allWords } from './contentBank';
 import { getWordVisual } from '../emoji/wordVisual';
 import { generateCountingImageQuestions } from '../generators/countingImage';
 import { generateDescribeAndChooseImageQuestions } from '../generators/describeAndChooseImage';
+import { COUNTING_UNIT_EXCLUDE } from './imageSemantics';
 import {
   countingArtKey,
   countingOptionArtUrl,
@@ -47,13 +48,11 @@ describe('resolveCountingGroupArt (CR-145 r225)', () => {
     expect(resolveCountingGroupArt([])).toBeNull();
   });
 
-  it('r226: excludes multi-object depictions from repeat (grape = a bunch, not one grape)', () => {
-    /* One grape option anywhere in the group drops the repeat tier. */
-    const withGrapeId = [opt('cat', 4, 'cat'), opt('grape', 3, 'grape'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
-    expect(resolveCountingGroupArt(withGrapeId)).toBeNull();
-    /* Legacy rows resolve exclusion by word text too. */
-    const withGrapeText = [opt('cat', 4), opt('grape', 3), opt('dog', 2), opt('apple', 5)];
-    expect(resolveCountingGroupArt(withGrapeText)).toBeNull();
+  it('single-berry grape art restores grape to the repeat tier', () => {
+    /* concept-grape-fc24e5 now depicts ONE grape (artgen CR-148 debt
+       closed) - grape options resolve repeat like any countable. */
+    const withGrape = [opt('cat', 4, 'cat'), opt('grape', 3, 'grape'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
+    expect(resolveCountingGroupArt(withGrape)).toBe('repeat');
     /* A same-unit depiction (one nest containing eggs = one nest) stays. */
     const withNest = [opt('cat', 4, 'cat'), opt('nest', 3, 'nest'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
     expect(resolveCountingGroupArt(withNest)).toBe('repeat');
@@ -111,14 +110,17 @@ describe('generated-question art coverage (CR-145 r225 proof)', () => {
     expect(covered / total).toBeGreaterThan(0.8);
   });
 
-  it('r227: no generated counting/describe question shows a multi-unit word (grape bunch)', () => {
+  it('r227: generated counting/describe questions never show a unit-mismatched word', () => {
+    /* grape left COUNTING_UNIT_EXCLUDE when its art became a single
+       berry - keep the invariant as "every shown word is unit-safe". */
+    expect([...COUNTING_UNIT_EXCLUDE].length).toBe(0);
     for (const words of topics().values()) {
       for (const q of generateCountingImageQuestions(words)) {
-        for (const o of q.options) expect(o.wordId).not.toBe('grape');
-        expect(q.prompt.wordId).not.toBe('grape');
+        for (const o of q.options) expect(COUNTING_UNIT_EXCLUDE.has(o.wordId ?? '')).toBe(false);
+        expect(COUNTING_UNIT_EXCLUDE.has(q.prompt.wordId ?? '')).toBe(false);
       }
       for (const q of generateDescribeAndChooseImageQuestions(words)) {
-        for (const o of q.options) expect(o.wordId).not.toBe('grape');
+        for (const o of q.options) expect(COUNTING_UNIT_EXCLUDE.has(o.wordId ?? '')).toBe(false);
       }
     }
   });

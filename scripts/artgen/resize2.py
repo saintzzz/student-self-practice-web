@@ -7,7 +7,10 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'artgen-out'
 PUB = ROOT / 'public' / 'images'
-MANIFESTS = [Path(__file__).parent / 'manifest2.mjs']
+MANIFESTS = [
+    Path(__file__).parent / 'manifest2.mjs',
+    Path(__file__).parent / 'manifest-cr148.mjs',
+]
 # Non-JSON manifests (JS literal entries) handled by stem glob below.
 GLOBS = [('land-', 'lands', 1024, 88), ('emblem-', 'emblems', 512, 85)]
 

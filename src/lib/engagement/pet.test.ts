@@ -48,13 +48,15 @@ describe('pet stages (AC-36.2)', () => {
     expect(petStageForXp(99999)).toBe(5);
   });
 
-  it('CR-148 P1-5: stages 4/5 clamp to adult art until artgen delivers', () => {
+  it('P1-5: stages 4/5 resolve their own bespoke art', () => {
     recordCorrectAnswers(160); // 1600 xp -> hero stage
     choosePet('dragon');
     const pet = getPet();
     expect(pet.stage).toBe(4);
     expect(pet.stageName).toBe('Anh hùng');
-    expect(pet.art).toBe('/images/pets/pet-dragon-3.webp');
+    expect(pet.art).toBe('/images/pets/pet-dragon-4.webp');
+    recordCorrectAnswers(240); // 4000 xp -> legend stage
+    expect(getPet().art).toBe('/images/pets/pet-dragon-5.webp');
   });
 
   it('choosing a species keeps earned xp and resolves emoji/name', () => {

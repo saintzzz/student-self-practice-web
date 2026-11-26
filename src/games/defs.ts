@@ -165,6 +165,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'missing-letter',
     skill: 'spelling',
+    artImage: '/images/games/missing-letter.webp',
     title: 'Điền chữ khuyết',
     tagline: 'Chọn đúng chữ còn thiếu trong từ',
     emoji: '🔠',
@@ -175,6 +176,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'sentence-scramble',
     skill: 'wordorder',
+    artImage: '/images/games/sentence-scramble.webp',
     title: 'Xếp câu',
     tagline: 'Chạm các từ theo đúng thứ tự thành câu',
     emoji: '🧩',
@@ -185,6 +187,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'odd-one-out',
     skill: 'vocabulary',
+    artImage: '/images/games/odd-one-out.webp',
     title: 'Tìm kẻ lạ',
     tagline: 'Chọn từ không cùng nhóm với ba từ kia',
     emoji: '🕵️',
@@ -195,6 +198,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'say-it-loud',
     skill: 'speaking',
+    artImage: '/images/games/say-it-loud.webp',
     title: 'Đọc to nào',
     tagline: 'Nghe mẫu rồi đọc to vào micro',
     emoji: '🎤',
@@ -205,6 +209,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'story-time',
     skill: 'reading',
+    artImage: '/images/games/story-time.webp',
     title: 'Đọc truyện',
     tagline: 'Nghe truyện, đọc theo rồi trả lời câu hỏi',
     emoji: '📖',
@@ -212,11 +217,10 @@ export const GAME_DEFS: readonly GameDef[] = [
     tone: 'sky',
     fresh: true,
   },
-  /* CR-147 trio - emoji diorama cards until the games/ artgen pass
-     (same status as the 5 existing art-less defs). */
   {
     id: 'counting-shop',
     skill: 'count-and-name',
+    artImage: '/images/games/counting-shop.webp',
     title: 'Cửa hàng của Heo',
     tagline: 'Đếm hàng rồi chọn đúng số',
     emoji: '🏪',
@@ -227,6 +231,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'rhyme-pond',
     skill: 'phonics',
+    artImage: '/images/games/rhyme-pond.webp',
     title: 'Ao vần',
     tagline: 'Nghe từ rồi chọn lá sen cùng vần',
     emoji: '🪷',
@@ -237,6 +242,7 @@ export const GAME_DEFS: readonly GameDef[] = [
   {
     id: 'flag-voyage',
     skill: 'listening',
+    artImage: '/images/games/flag-voyage.webp',
     title: 'Chuyến tàu cờ',
     tagline: 'Nghe tên nước, chọn đúng lá cờ',
     emoji: '🚂',

@@ -1359,10 +1359,7 @@ export function getPlayerLevel(): PlayerLevelSnapshot {
 export const PET_STAGE_XP = [0, 50, 250, 600, 1500, 4000] as const;
 const PET_STAGE_NAMES = ['Trứng', 'Bé', 'Nhỏ', 'Trưởng thành', 'Anh hùng', 'Huyền thoại'] as const;
 
-/** Stage art exists for 0-3 only (CR-148 debt: pet-{species}-4/5.webp
- *  needs the artgen pass) - stages 4/5 keep the adult art with the new
- *  title instead of a broken image. */
-const PET_MAX_ART_STAGE = 3;
+
 
 export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly string[] }> = {
   cat: { nameVi: 'Mèo Mun', emojis: ['🥚', '🐱', '🐈', '🐯', '🐯✨', '🐯👑'] },
@@ -1374,11 +1371,9 @@ export const PET_SPECIES: Record<PetSpecies, { nameVi: string; emojis: readonly 
 };
 
 /** Bespoke art path per stage - generated pet arc (public/images/pets).
- *  Stage 0 egg is shared across species; stages above PET_MAX_ART_STAGE
- *  clamp to the adult art (CR-148). */
+ *  Stage 0 egg is shared across species. */
 export function petArtUrl(species: PetSpecies, stage: number): string {
-  const artStage = Math.min(stage, PET_MAX_ART_STAGE);
-  return artStage === 0 ? '/images/pets/pet-egg.webp' : `/images/pets/pet-${species}-${artStage}.webp`;
+  return stage === 0 ? '/images/pets/pet-egg.webp' : `/images/pets/pet-${species}-${stage}.webp`;
 }
 
 export function petStageForXp(xp: number): number {

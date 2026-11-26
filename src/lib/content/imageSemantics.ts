@@ -84,10 +84,8 @@ export function isLiteralImageWord(word: VocabWord): boolean {
  * the art AND the emoji show a bunch, so every visual layer would grade
  * the wrong quantity. ('team'/'forest'/'nest' depict ONE team/forest/
  * nest and stay - the named unit matches the picture.)
- * `grape`: emoji + concept art are both a ~7-15-grape bunch; regenerate a
- * single-grape asset via the artgen loop, then remove the entry.
  */
-export const COUNTING_UNIT_EXCLUDE: ReadonlySet<string> = new Set(['grape']);
+export const COUNTING_UNIT_EXCLUDE: ReadonlySet<string> = new Set();
 
 /**
  * Counting-image / describe-and-choose-image pool rule: countable AND

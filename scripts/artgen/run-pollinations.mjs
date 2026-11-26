@@ -37,7 +37,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function fetchImage(prompt, seed) {
   const u =
     'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) +
-    `?width=1024&height=1024&nologo=true&private=true&seed=${seed}&model=flux`;
+    `?width=1024&height=1024&nologo=true&seed=${seed}&model=${process.env.POLLI_MODEL || 'turbo'}`;
   const res = await fetch(u, { signal: AbortSignal.timeout(180_000) });
   if (!res.ok) return { err: res.status };
   const buf = Buffer.from(await res.arrayBuffer());
