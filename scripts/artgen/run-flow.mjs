@@ -65,8 +65,10 @@ async function waitNewImage(page, preSrcs) {
         // x2 outputs: the second variant can land late - if it arrives
         // after the next asset's pre-snapshot it gets misattributed to
         // that asset. Require generation COMPLETE (Stop button gone) +
-        // buffer; a settle timeout fails the asset instead of writing a
-        // poisoned resume marker (r246).
+        // buffer; a settle timeout ABORTS the run (r246/r247) - the
+        // asset keeps no marker and a rerun resumes cleanly, while a
+        // "skip and continue" would still let the late output poison
+        // the NEXT asset's candidate set.
         const settleEnd = Date.now() + 120_000;
         let generating = true;
         while (Date.now() < settleEnd) {
@@ -75,7 +77,11 @@ async function waitNewImage(page, preSrcs) {
           if (!generating) break;
           await sleep(1500);
         }
-        if (generating) return { err: 'settle timeout - generation still active' };
+        if (generating) {
+          const e = new Error('settle timeout - generation still active, run aborted');
+          e.fatal = true;
+          throw e;
+        }
         await sleep(4000);
         return pick;
       }
@@ -133,6 +139,7 @@ async function main() {
         await download(page, got.src, file);
         console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved`);
       } catch (e) {
+        if (e.fatal) throw e; // propagate past the per-asset catch (r247)
         console.log(`[flow] ${a.id}: FAIL ${e.message?.slice(0, 160)}`);
       }
       await sleep(BETWEEN_MS);
