@@ -46,3 +46,21 @@ Aggregate-only rpc, không lộ dữ liệu cá nhân.
 - `sticker-class-lantern.webp` - artgen (manifest-p18.mjs, chạy sau
   queue manifest2); tới đó UI fallback emoji 🏮.
 - P2-5 seasonal trail variants (artgen-dependent).
+
+## External review r250 - 5 findings, đã sửa hết
+
+1. grape override + vocab image share 1 webp -> art-failure rơi về
+   native 🍇 bunch -> `COUNTING_UNIT_EXCLUDE` khôi phục `grape`
+   (imageSemantics.ts) cho tới khi có fallback độc lập.
+2. run-flow.mjs: `continue` khi no-image nhảy qua circuit-breaker +
+   pacing -> đường fail giờ cũng chạy qua breaker.
+3. `savePlacementResult` insert thiếu `program` -> inherit 'batch'
+   -> bài placement bị đếm nhầm là batch-completed. Migration 0084:
+   label `program='placement'` (constraint + backfill + client insert),
+   rpc filter `program='batch'` giữ nguyên semantics đúng.
+4. Week key: client tính ISO week local có thể lệch boundary của
+   aggregate quanh nửa đêm Thứ Hai -> rpc trả `iso_week` server-side
+   (`to_char(date_trunc('week', now()), 'IYYY-"W"IW')`), card claim
+   theo key đó; `isoWeekKey()` local bỏ.
+5. `aria-hidden` bọc cả achievement text -> dots vẫn ẩn, met text
+   chuyển `role="status"`.

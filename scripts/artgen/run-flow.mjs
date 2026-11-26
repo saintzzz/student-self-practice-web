@@ -153,10 +153,17 @@ async function main() {
         const pre = await asbSrcs(page);
         await submit(page, a.prompt);
         const got = await waitNewImage(page, pre);
-        if (!got.src) { console.log(`[flow] ${a.id}: ${got.err}`); consecFails++; continue; }
-        await download(page, got.src, file);
-        consecFails = 0;
-        console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved (${++doneSinceReload} this pass)`);
+        // r250: failures must still flow through the breaker + pacing
+        // below - a bare `continue` skipped both and let a dead session
+        // burn 40+ consecutive prompts before aborting.
+        if (!got.src) {
+          consecFails++;
+          console.log(`[flow] ${a.id}: ${got.err}`);
+        } else {
+          await download(page, got.src, file);
+          consecFails = 0;
+          console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved (${++doneSinceReload} this pass)`);
+        }
       } catch (e) {
         if (e.fatal) throw e; // propagate past the per-asset catch (r247)
         consecFails++;

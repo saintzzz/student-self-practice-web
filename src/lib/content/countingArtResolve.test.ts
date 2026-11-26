@@ -48,11 +48,11 @@ describe('resolveCountingGroupArt (CR-145 r225)', () => {
     expect(resolveCountingGroupArt([])).toBeNull();
   });
 
-  it('r246: grape back in repeat - emoji fallback now renders one berry', () => {
-    /* SVG_OVERRIDES['1f347'] -> single-berry concept art + lottie
-       suppressed, so even the art-failure fallback counts units right. */
+  it('r250: grape stays excluded - art-failure fallback would show a bunch', () => {
+    /* SVG_OVERRIDES['1f347'] and the vocab image share ONE webp - on
+       load failure the floor is the native bunch glyph, wrong quantity. */
     const withGrapeId = [opt('cat', 4, 'cat'), opt('grape', 3, 'grape'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
-    expect(resolveCountingGroupArt(withGrapeId)).toBe('repeat');
+    expect(resolveCountingGroupArt(withGrapeId)).not.toBe('repeat');
     /* A same-unit depiction (one nest containing eggs = one nest) stays. */
     const withNest = [opt('cat', 4, 'cat'), opt('nest', 3, 'nest'), opt('dog', 2, 'dog'), opt('apple', 5, 'apple')];
     expect(resolveCountingGroupArt(withNest)).toBe('repeat');
@@ -111,10 +111,9 @@ describe('generated-question art coverage (CR-145 r225 proof)', () => {
   });
 
   it('r227: generated questions only show words whose fallbacks count right', () => {
-    /* grape re-entered: the emoji-asset override renders one berry even
-       on art failure, so COUNTING_UNIT_EXCLUDE is empty - assert it
-       stays empty (any future entry would silently drop words). */
-    expect(COUNTING_UNIT_EXCLUDE.size).toBe(0);
+    /* grape stays excluded (r250) - its override shares the vocab webp
+       so a load failure drops to the native bunch glyph. */
+    expect(COUNTING_UNIT_EXCLUDE).toEqual(new Set(['grape']));
     for (const words of topics().values()) {
       for (const q of generateCountingImageQuestions(words)) {
         for (const o of q.options) expect(COUNTING_UNIT_EXCLUDE.has(o.wordId ?? '')).toBe(false);

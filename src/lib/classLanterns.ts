@@ -7,16 +7,9 @@ export interface ClassLanterns {
   lanterns: number;
   goal: number;
   met: boolean;
-}
-
-/** ISO week key `YYYY-Www` - scopes the once-per-week sticker grant. */
-export function isoWeekKey(d = new Date()): string {
-  const day = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dow = (day.getUTCDay() + 6) % 7; // Mon=0
-  day.setUTCDate(day.getUTCDate() - dow + 3); // Thursday of this week
-  const firstThu = new Date(Date.UTC(day.getUTCFullYear(), 0, 4));
-  const week = 1 + Math.round((day.getTime() - firstThu.getTime()) / (7 * 86400_000));
-  return `${day.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+  /** Server-side ISO week key - scopes the once-per-week sticker grant
+   *  so it can never drift from the aggregate's week boundary (r250). */
+  isoWeek: string;
 }
 
 /**
@@ -30,8 +23,8 @@ export async function fetchClassLanterns(): Promise<ClassLanterns | null> {
     if (!session) return null;
     const { data, error } = await (await getSupabase()).rpc('class_week_lanterns');
     if (error || !data?.length) return null;
-    const row = data[0] as { class_name: string; members: number; lanterns: number; goal: number; met: boolean };
-    return { className: row.class_name, members: row.members, lanterns: row.lanterns, goal: row.goal, met: row.met };
+    const row = data[0] as { class_name: string; members: number; lanterns: number; goal: number; met: boolean; iso_week: string };
+    return { className: row.class_name, members: row.members, lanterns: row.lanterns, goal: row.goal, met: row.met, isoWeek: row.iso_week };
   } catch {
     return null;
   }

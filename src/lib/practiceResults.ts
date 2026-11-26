@@ -128,6 +128,9 @@ export async function savePlacementResult(
       correct_count: correctCount,
       total_questions: totalQuestions,
       rounds_completed: 1,
+      // r250: must not inherit the 'batch' default - the class lantern
+      // aggregate (and any batch-completed metric) counts these rows.
+      program: 'placement',
     });
     if (rErr) console.warn('[practice] placement result:', rErr.message);
   } catch {

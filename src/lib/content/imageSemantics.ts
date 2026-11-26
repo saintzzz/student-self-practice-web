@@ -84,12 +84,12 @@ export function isLiteralImageWord(word: VocabWord): boolean {
  * the art AND the emoji show a bunch, so every visual layer would grade
  * the wrong quantity. ('team'/'forest'/'nest' depict ONE team/forest/
  * nest and stay - the named unit matches the picture.)
- * `grape` re-entered once the emoji-asset layer could show ONE berry:
-   `SVG_OVERRIDES['1f347']` (emojiAssets.ts) points the grape key at the
-   single-berry concept art and suppresses the bunch lottie, so even the
-   art-failure fallback renders countable units. The native-glyph floor
-   (every asset failed) is the only bunch left and is irreducible. */
-export const COUNTING_UNIT_EXCLUDE: ReadonlySet<string> = new Set();
+ * `grape` stays out even with the emoji-asset override (r250): the
+   override and the vocab image reference the SAME webp, so a failed
+   load drops to the native 🍇 glyph - a bunch - and teaches the wrong
+   quantity. The override still improves vocab display; counting pools
+   need an independent single-berry fallback before re-entering. */
+export const COUNTING_UNIT_EXCLUDE: ReadonlySet<string> = new Set(['grape']);
 
 /**
  * Counting-image / describe-and-choose-image pool rule: countable AND

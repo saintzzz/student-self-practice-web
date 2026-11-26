@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchClassLanterns, isoWeekKey, type ClassLanterns } from '../lib/classLanterns';
+import { fetchClassLanterns, type ClassLanterns } from '../lib/classLanterns';
 import { claimClassLantern } from '../lib/engagement/store';
 import { isSupabaseConfigured } from '../lib/supabase/client';
 import { CARD_DAY } from '../lib/ui/tokens';
@@ -30,7 +30,9 @@ export default function ClassLanternCard({ isGuest }: ClassLanternCardProps) {
       if (cancelled) return;
       setData(res);
       setLoaded(true);
-      if (res?.met) claimClassLantern(isoWeekKey());
+      // r250: claim under the SERVER's week key - a local-clock week
+      // could disagree with the aggregate around the Monday boundary.
+      if (res?.met) claimClassLantern(res.isoWeek);
     });
     return () => {
       cancelled = true;
@@ -48,18 +50,22 @@ export default function ClassLanternCard({ isGuest }: ClassLanternCardProps) {
       <p className="mt-1 text-sm font-semibold text-slate-600">
         {data.className} - cả lớp hoàn thành <b>{data.lanterns}/{data.goal}</b> bài luyện tuần này!
       </p>
-      <div className="mt-2 flex items-center gap-1.5" aria-hidden>
-        {Array.from({ length: DOTS }, (_, i) => (
-          <span
-            key={i}
-            className={`h-3.5 w-3.5 rounded-full transition-colors ${
-              i < filled ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]' : 'bg-slate-200'
-            }`}
-          />
-        ))}
+      <div className="mt-2 flex items-center gap-1.5">
+        <span className="flex items-center gap-1.5" aria-hidden>
+          {Array.from({ length: DOTS }, (_, i) => (
+            <span
+              key={i}
+              className={`h-3.5 w-3.5 rounded-full transition-colors ${
+                i < filled ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]' : 'bg-slate-200'
+              }`}
+            />
+          ))}
+        </span>
         {data.met && (
-          <span data-testid="class-lantern-met" className="ml-1 text-sm font-extrabold text-amber-700">
-            <IconParty size={16} className="mr-1 inline-block" /> Đạt rồi - nhận sticker Cả lớp thắp đèn!
+          /* r250: the achievement text must be announced - it was inside
+             the decorative aria-hidden block before. */
+          <span role="status" data-testid="class-lantern-met" className="ml-1 text-sm font-extrabold text-amber-700">
+            <IconParty size={16} className="mr-1 inline-block" aria-hidden /> Đạt rồi - nhận sticker Cả lớp thắp đèn!
           </span>
         )}
       </div>
