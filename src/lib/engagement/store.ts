@@ -222,6 +222,8 @@ export const STICKERS: readonly Sticker[] = [
   ]),
   // CR-148 (P2-4): finishing a full lantern lap opens Đảo bí mật.
   { id: 'mystery-island', nameVi: 'Nhà thám hiểm đảo bí mật', emoji: '🏝️', art: `/images/stickers/sticker-mystery-island.webp`, category: 'luyen' },
+  // CR-149 (P1-8): class weekly lantern goal met (art pending artgen).
+  { id: 'class-lantern', nameVi: 'Cả lớp thắp đèn', emoji: '🏮', art: `/images/stickers/sticker-class-lantern.webp`, category: 'luyen' },
 ] as const;
 
 const EMPTY_STATE: EngagementState = {
@@ -456,7 +458,7 @@ export interface RoundAwardResult {
 /** kids-UX objective id grammar: `round:<seed>:<n>` | `batch:<seed>` |
  *  `gift:<stickerId>` | CR-83 `game:<gameId>:<seed>` (ruling OBJ-1:
  *  keyed by the run's seed - each arcade play is a fresh run). */
-const OBJECTIVE_RE = /^(round|batch|gift|game|trail|island):[A-Za-z0-9:_-]{1,80}$/;
+const OBJECTIVE_RE = /^(round|batch|gift|game|trail|island|classlantern):[A-Za-z0-9:_-]{1,80}$/;
 
 /** kids-UX: true when this objective already granted its rewards. */
 export function isObjectiveGranted(objectiveId: string): boolean {
@@ -779,6 +781,22 @@ export function visitMysteryIsland(gradeId: string): { unlocked: boolean; firstV
   grantObjective(state, key);
   persist(state);
   return { unlocked, firstVisit: true };
+}
+
+/** CR-149 (P1-8): when the class weekly lantern goal is met, every
+ *  member banks the class-lantern sticker once per week via
+ *  `classlantern:<isoWeek>` (the sticker itself is idempotent, so later
+ *  met weeks are a no-op). Returns whether this call was the week's
+ *  first grant. */
+export function claimClassLantern(weekKey: string): boolean {
+  const state = load();
+  const key = `classlantern:${weekKey}`;
+  if (state.grantedObjectives?.[key]) return false;
+  const newly = new Set<string>();
+  awardSticker(state, 'class-lantern', newly);
+  grantObjective(state, key);
+  persist(state);
+  return true;
 }
 
 /** CR-146: trail snapshot for the launchpad lantern strip. */

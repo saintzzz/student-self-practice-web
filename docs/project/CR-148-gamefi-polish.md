@@ -14,7 +14,7 @@ Nguồn: `docs/reviews/REVIEW-SYNTHESIS.md` + `GAMEFI-DESIGN-po.md` roadmap
 | P1-9 | Speed bonus persist-or-remove (D5) | **Bỏ khỏi UI** - clean-play |
 | P2-4 | "Đảo bí mật" mở khi trail xong vòng 1 | Làm |
 | P2-6 | "Giờ nghỉ" banner + parent toggle | Làm |
-| P1-8 | Class co-op weekly goal (rpc) | Defer - cần migration + rpc |
+| P1-8 | Class co-op weekly goal (rpc) | **Shipped CR-149** - migration 0083 + ClassLanternCard |
 | P2-5 | Seasonal trail variants | Defer - cần artgen |
 | P1-10 | 5+3 `artImage` game cards | Defer - cần artgen (không có key) |
 
@@ -97,12 +97,10 @@ Nguồn: `docs/reviews/REVIEW-SYNTHESIS.md` + `GAMEFI-DESIGN-po.md` roadmap
 - **P1-8 class co-op**: cần rpc aggregate `class_week_lanterns`
   (sum batch-completed của members theo tuần) + RLS - migration riêng.
 - **P2-5 seasonal**: cần artgen land seasonal variants.
-- **artgen queue**: `pet-{species}-4/5.webp` x3 species,
-  `sticker-mystery-island.webp` + 10 `sticker-trail-*.webp` (kế thừa
-  CR-146), 8 `games/*.webp`
-  card art (missing-letter, sentence-scramble, odd-one-out, say-it-loud,
-  story-time, counting-shop, rhyme-pond, flag-voyage), `concepts/grape`
-  cardinal-safe art.
+- ~~**artgen queue**~~ **DONE** (`444d8c2`, Google Flow lane
+  `run-flow.mjs`): pet 4/5 x3, sticker-mystery-island + 10 trail
+  stickers, 8 games card art, grape single-berry art. Grape vẫn ngoài
+  counting pools - emoji fallback 🍇 vẫn là chùm (r246).
 
 ## Kết quả
 

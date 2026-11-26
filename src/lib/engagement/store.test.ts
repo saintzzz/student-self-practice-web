@@ -191,6 +191,7 @@ describe('store resilience', () => {
       'trail-half-space',
       'trail-full-space',
       'mystery-island',
+      'class-lantern',
     ]);
   });
 });
@@ -280,5 +281,17 @@ describe('recordGameResult levels (CR-88)', () => {
     expect(gameLevelStars('fishing-catch', 1)).toBe(3);
     const keys = Object.keys(getState().grantedObjectives ?? {});
     expect(keys.some((k) => k.startsWith('game:fishing-catch:L1:'))).toBe(true);
+  });
+});
+
+describe('claimClassLantern (P1-8)', () => {
+  it('grants the class-lantern sticker once per ISO week', async () => {
+    const { claimClassLantern } = await import('./store');
+    expect(claimClassLantern('2026-W14')).toBe(true);
+    expect(claimClassLantern('2026-W14')).toBe(false); // same week idempotent
+    expect(claimClassLantern('2026-W15')).toBe(true); // next week grants again
+    const keys = Object.keys(getState().grantedObjectives ?? {});
+    expect(keys).toContain('classlantern:2026-W14');
+    expect(keys).toContain('classlantern:2026-W15');
   });
 });

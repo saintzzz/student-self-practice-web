@@ -116,7 +116,10 @@ describe('StartBatchScreen', () => {
     // is the subtile prefix inside 'more'.)
     const first = renderSBS(SBS(), GRADE.id);
     const noHandlers = screen.getByTestId('hub-tile-arena');
-    expect(noHandlers).toHaveAttribute('aria-controls', 'hub-panel-rank');
+    expect(noHandlers).toHaveAttribute(
+      'aria-controls',
+      'hub-panel-rank hub-panel-classlantern',
+    );
     expect(document.getElementById('hub-panel-arena')).not.toBeInTheDocument();
     expect(document.getElementById('hub-panel-rank')).toBeInTheDocument();
     await user.click(noHandlers);
@@ -130,7 +133,7 @@ describe('StartBatchScreen', () => {
     );
     expect(screen.getByTestId('hub-tile-arena')).toHaveAttribute(
       'aria-controls',
-      'hub-panel-arena hub-panel-rank',
+      'hub-panel-arena hub-panel-rank hub-panel-classlantern',
     );
     expect(document.getElementById('hub-panel-arena')).toBeInTheDocument();
     expect(document.getElementById('hub-panel-rank')).toBeInTheDocument();

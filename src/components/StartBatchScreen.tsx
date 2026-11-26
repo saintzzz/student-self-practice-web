@@ -11,6 +11,7 @@ import DailyQuestCard from './DailyQuestCard';
 import ReviewCard from './ReviewCard';
 import CoachCard from './CoachCard';
 import LeaderboardCard from './LeaderboardCard';
+import ClassLanternCard from './ClassLanternCard';
 import ArenaCard from './ArenaCard';
 import PetCard from './PetCard';
 import HomeShelf from './HomeShelf';
@@ -351,6 +352,10 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
     <LeaderboardCard gradeId={grade.id} isGuest={isGuest ?? false} onLogin={onLogin} />
   );
 
+  /* CR-149 (P1-8): class co-op weekly lantern goal sits beside the
+     solo leaderboard - same weekly-competition family, team target. */
+  const classLanternEl = <ClassLanternCard isGuest={isGuest ?? false} />;
+
   /* CR-114: teacher-led class show lives inside Đấu trường - same
      competition family, different screen (projector vs devices). */
   const classShowEl = onStartClassShow ? (
@@ -455,6 +460,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
             ...(arenaHandlers ? [{ id: 'arena', content: arenaCardEl }] : []),
             ...(classShowEl ? [{ id: 'classshow', content: classShowEl }] : []),
             { id: 'rank', content: leaderboardEl },
+            { id: 'classlantern', content: classLanternEl },
           ],
         },
         /* CR-83: Game Zone sits between competition and rewards -
@@ -525,6 +531,7 @@ export default function StartBatchScreen({ grade, onStartBatch, onStartExam, onA
               <div id="hub-section-arena" data-testid="hub-section-arena">{arenaCardEl}</div>
               {classShowEl}
               <div id="hub-section-rank" data-testid="hub-section-rank">{leaderboardEl}</div>
+              <div id="hub-section-classlantern" data-testid="hub-section-classlantern">{classLanternEl}</div>
             </>
           ),
         },
