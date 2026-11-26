@@ -6,6 +6,7 @@ import { hashString } from '../lib/prng';
 import { gameCardChip, gameCardClass, gameHeroClass } from '../lib/ui/tokens';
 import { IconLock, IconParty } from '../components/icons';
 import { EmojiVisual } from '../components/EmojiVisual';
+import LoopingVideo from '../components/LoopingVideo';
 import { playSfx } from '../lib/sfx';
 import { GAME_DEFS } from './defs';
 import GameArt from './GameArt';
@@ -101,6 +102,13 @@ function MysteryIslandCard({ gradeId }: { gradeId?: string }) {
         data-testid="mystery-island-panel"
         className={`${gameCardClass('sky')} relative col-span-2 !items-start gap-2 text-left`}
       >
+        {/* CR-150: reveal clip plays on the island panel - the one
+            high-drama moment this card owns. Missing clip -> text only. */}
+        <LoopingVideo
+          src="/videos/mystery-island-reveal.mp4"
+          poster="/images/stickers/sticker-mystery-island.webp"
+          className="aspect-video w-full rounded-2xl object-cover ring-1 ring-sky-100"
+        />
         <div className="flex w-full items-center justify-between gap-2">
           <span className="font-display text-base font-extrabold text-slate-700">🏝️ Đảo bí mật</span>
           <button

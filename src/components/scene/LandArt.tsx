@@ -2,6 +2,11 @@ import { forwardRef, useState, type CSSProperties } from 'react';
 import { LANDS, type SceneTone } from '../../lib/ui/theme';
 import { scene } from '../../lib/ui/tokens';
 import LandScene, { type LandSceneProps } from './LandScene';
+import LoopingVideo from '../LoopingVideo';
+
+/** CR-150: lands with generated ambient loops (Veo via Flow). Strip
+ *  stays static - motion belongs on the hero, not on every strip. */
+const LAND_LOOPS = new Set(['playground', 'town', 'jungle', 'city', 'space']);
 
 /**
  * Bespoke generated scene art (ChatGPT soft-3D storybook render per
@@ -81,6 +86,25 @@ const LandArt = forwardRef<HTMLDivElement, LandSceneProps>(function LandArt(
               : {}),
           }}
         />
+        {/* CR-150: ambient loop overlays the same slot as the still
+            art - identical crop/filter/mask so the motion reads as the
+            same scene, just alive. Missing clip hides itself. */}
+        {LAND_LOOPS.has(resolvedLand) && (
+          <LoopingVideo
+            src={`/videos/land-${resolvedLand}-loop.mp4`}
+            poster={src}
+            className="scene-layer scene-layer-mid absolute bottom-0 left-[-7%] h-full w-[114%] max-w-none object-cover object-[center_bottom]"
+            style={{
+              filter: TONE_FILTER[resolvedTone],
+              ...(dayHero
+                ? {
+                    maskImage: 'linear-gradient(to bottom, black 0%, black 68%, transparent 96%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 68%, transparent 96%)',
+                  }
+                : {}),
+            }}
+          />
+        )}
         {/* L4 scrim equivalent - keeps page content readable over the
             generated scene; day tone uses the white-mist twin so the
             bright art stays bright (CR-116). */}

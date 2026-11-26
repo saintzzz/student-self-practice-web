@@ -56,3 +56,4 @@ scripts/_*.png
 .playwright-cli/
 supabase/.temp/
 logs/
+scripts/artgen/_*.log

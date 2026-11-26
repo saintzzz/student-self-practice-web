@@ -13,6 +13,7 @@ import { CARD_DAY, BTN_REWARD_EARNED, ROW_DAY } from '../lib/ui/tokens';
 import { usePressRelease } from '../hooks/usePressRelease';
 import PressableOptionButton from './PressableOptionButton';
 import { IconParty, IconPaw } from './icons';
+import LoopingVideo from './LoopingVideo';
 import { EmojiVisual } from './EmojiVisual';
 
 /**
@@ -77,6 +78,16 @@ export default function PetCard() {
           data-testid="pet-evolved"
           className="mt-3 flex items-center justify-between gap-2 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-300"
         >
+          {/* CR-150: evolve clip plays in the congrats banner at the
+              hero/legendary stages it depicts (stage >= 4 art shows the
+              crowned/star-charm form). Missing clip -> text-only banner. */}
+          {pet.stage >= 4 && pet.art && (
+            <LoopingVideo
+              src={`/videos/pet-${pet.species}-evolve.mp4`}
+              poster={pet.art}
+              className="h-16 w-28 shrink-0 rounded-xl object-cover ring-1 ring-amber-200"
+            />
+          )}
           <p className="text-sm font-extrabold text-amber-800">
             <IconParty size={18} className="mr-1 inline-block text-amber-600" /> {pet.nameVi} vừa lớn lên thành {pet.stageName}! Giỏi quá!
           </p>
