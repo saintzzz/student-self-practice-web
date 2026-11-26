@@ -64,3 +64,9 @@ Aggregate-only rpc, không lộ dữ liệu cá nhân.
    theo key đó; `isoWeekKey()` local bỏ.
 5. `aria-hidden` bọc cả achievement text -> dots vẫn ẩn, met text
    chuyển `role="status"`.
+
+## r251 - 1 minor
+
+- `role="status"` mount kèm content (không pre-exist) -> SR có thể
+  không announce. Một live region sr-only persist suốt loading ->
+  populated khi `met` resolve; visible copy tách riêng tránh đọc kép.
