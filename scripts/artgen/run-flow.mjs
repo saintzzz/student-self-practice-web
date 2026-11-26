@@ -64,15 +64,18 @@ async function waitNewImage(page, preSrcs) {
       if (pick.src === lastPick) {
         // x2 outputs: the second variant can land late - if it arrives
         // after the next asset's pre-snapshot it gets misattributed to
-        // that asset. Settle until the Stop button is gone + buffer so
-        // the DOM holds BOTH variants before we return.
-        const settleEnd = Date.now() + 60_000;
+        // that asset. Require generation COMPLETE (Stop button gone) +
+        // buffer; a settle timeout fails the asset instead of writing a
+        // poisoned resume marker (r246).
+        const settleEnd = Date.now() + 120_000;
+        let generating = true;
         while (Date.now() < settleEnd) {
-          const generating = await page.evaluate(
+          generating = await page.evaluate(
             () => !!document.querySelector('[aria-label="Dừng"], [aria-label="Stop"]'));
           if (!generating) break;
           await sleep(1500);
         }
+        if (generating) return { err: 'settle timeout - generation still active' };
         await sleep(4000);
         return pick;
       }

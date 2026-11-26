@@ -8527,14 +8527,14 @@
       "licenseVersion": "4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "sourceUrl": "",
-      "provider": "openai-chatgpt-image",
+      "provider": "google-flow-image",
       "openverseId": "",
       "modified": true,
       "reviewStatus": "approved",
-      "reviewedBy": "devin-cr115",
-      "reviewedAt": "2026-11-01",
+      "reviewedBy": "devin-cr148",
+      "reviewedAt": "2026-11-26",
       "sourceFile": "/images/concepts/concept-grape-fc24e5.webp",
-      "sourceSha256": "fc4b8f58a9c5bb9a81ed8985765f52b8d89f4c39258a22ba0eeb38aaa7ef9193"
+      "sourceSha256": "24e87fd69d6faffe005a378cda6585abdc10bd4fa6aea77910cf10d727590e0e"
     },
     {
       "wordId": "grasshopper",
