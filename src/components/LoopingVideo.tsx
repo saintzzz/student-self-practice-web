@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { useAmbientMotionEnabled } from '../lib/engagement/ambientMotion';
 
 interface LoopingVideoProps {
   /** /videos/<clip>.mp4 - missing file -> hides itself, callers keep
@@ -9,8 +10,7 @@ interface LoopingVideoProps {
   poster: string;
   /** false = one-shot moment clip (evolve/reveal): plays once and holds
    *  the last frame. Looping ambience clips auto-stop after
-   *  MAX_AMBIENT_MS - WCAG 2.2.2 requires motion to end on surfaces
-   *  that cannot host a user pause control (aria-hidden layers). */
+   *  MAX_AMBIENT_MS so no surface carries indefinite motion. */
   loop?: boolean;
   className?: string;
   style?: CSSProperties;
@@ -30,11 +30,11 @@ function saveDataOn(): boolean {
  * as a muted overlay on top of the existing still art - the poster +
  * the underlying <img> remain the graceful-degradation path for missing
  * clips, slow networks, and reduced-data clients.
- * Motion policy (ADR-1): prefers-reduced-motion or Save-Data -> video
- * never mounts, the still is the mechanism. Playback also pauses while
- * the tab is hidden or the clip is scrolled offscreen, and ambient
- * loops self-stop after MAX_AMBIENT_MS so no visible surface carries
- * indefinite motion without a pause control.
+ * Motion policy (ADR-1, WCAG 2.2.2): the accessible stop mechanisms are
+ * (a) OS-level prefers-reduced-motion, (b) the persisted ambient-motion
+ * toggle in Goc ba me (ea-ambient-motion), and (c) self-termination -
+ * loops stop after MAX_AMBIENT_MS and one-shots hold their last frame.
+ * Playback also pauses while the tab is hidden or the clip is offscreen.
  */
 export default function LoopingVideo({
   src,
@@ -44,14 +44,24 @@ export default function LoopingVideo({
   style,
 }: LoopingVideoProps) {
   const reducedMotion = usePrefersReducedMotion();
+  const ambientOn = useAmbientMotionEnabled();
   const ref = useRef<HTMLVideoElement>(null);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const hidden = reducedMotion || saveDataOn() || failedSrc === src;
+  const hidden = reducedMotion || !ambientOn || saveDataOn() || failedSrc === src;
 
   useEffect(() => {
     const video = ref.current;
     if (!video || hidden) return;
+    // Latched terminal state: once the ambient budget or the clip ends,
+    // nothing may resume playback (visibility/IO would otherwise restart
+    // a video that already self-stopped - r255).
+    let done = false;
+    const finish = () => {
+      done = true;
+      video.pause();
+    };
     const syncPlay = () => {
+      if (done || video.ended) return;
       if (document.hidden || video.dataset.offscreen === '1') {
         video.pause();
       } else {
@@ -65,11 +75,13 @@ export default function LoopingVideo({
         })
       : null;
     io?.observe(video);
+    video.addEventListener('ended', finish);
     document.addEventListener('visibilitychange', syncPlay);
-    const stop = loop ? setTimeout(() => video.pause(), MAX_AMBIENT_MS) : null;
+    const stop = loop ? setTimeout(finish, MAX_AMBIENT_MS) : null;
     syncPlay();
     return () => {
       io?.disconnect();
+      video.removeEventListener('ended', finish);
       document.removeEventListener('visibilitychange', syncPlay);
       if (stop) clearTimeout(stop);
     };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDueReviewItems, getReportSnapshot, getState, STICKERS } from '../lib/engagement/store';
 import { restReminderEnabled, setRestReminderEnabled } from '../lib/engagement/restReminder';
+import { ambientMotionEnabled, setAmbientMotionEnabled } from '../lib/engagement/ambientMotion';
 import { skillLabel } from '../lib/engagement/skills';
 import { fetchParentContact, isValidParentEmail, requestParentVerify, saveParentContact } from '../lib/parentContact';
 import { isParentVerified, ParentGate } from './ParentGate';
@@ -85,6 +86,7 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
      re-gate instead of silently sending verification mail. */
   const [reGateOpen, setReGateOpen] = useState(false);
   const [restOn, setRestOn] = useState(() => restReminderEnabled());
+  const [motionOn, setMotionOn] = useState(() => ambientMotionEnabled());
 
   useEffect(() => {
     trackFunnel('report_view', 'parent-report');
@@ -512,6 +514,22 @@ export default function ParentReportScreen({ grades, onBack, isLoggedIn = false 
           </label>
           <p className="mt-1 text-xs font-semibold text-slate-500">
             Khi bật, bé sẽ thấy một lời nhắc nhỏ nghỉ mắt sau nửa giờ chơi liền.
+          </p>
+          <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              data-testid="ambient-motion-toggle"
+              checked={motionOn}
+              onChange={(e) => {
+                setAmbientMotionEnabled(e.target.checked);
+                setMotionOn(e.target.checked);
+              }}
+              className="h-4 w-4 accent-sky-500"
+            />
+            Hiệu ứng video chuyển động (đất nước, thú cưng)
+          </label>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            Tắt nếu bé dễ bị phân tâm hoặc nhạy cảm với chuyển động - ảnh tĩnh vẫn hiện đầy đủ.
           </p>
         </div>
 

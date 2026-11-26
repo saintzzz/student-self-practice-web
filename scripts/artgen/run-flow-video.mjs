@@ -48,15 +48,15 @@ async function submit(page, prompt) {
   await page.keyboard.type(prompt, { delay: 3 });
   await sleep(300);
   await page.locator('[aria-label="Bắt đầu tạo"], [aria-label="Start creating"]').last().click();
+  // Transcript boundary: everything appended AFTER this point belongs to
+  // the current turn. A prompt-text anchor is unreliable - sibling
+  // prompts share identical prefixes (r255: the 5 land prompts all begin
+  // alike, so lastIndexOf matched the PREVIOUS turn's error).
+  return page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').length);
 }
 
-async function waitNewVideoCard(page, preSrcs, prompt) {
+async function waitNewVideoCard(page, preSrcs, boundary) {
   const deadline = Date.now() + GEN_WAIT_MS;
-  // Error text only counts if it appears AFTER this asset's own prompt -
-  // the session transcript keeps earlier failures, so an unanchored tail
-  // scan sees stale errors and fails a render that is still pending
-  // (the next asset then inherits its late card = misattribution).
-  const anchor = prompt.replace(/\s+/g, ' ').slice(0, 40);
   while (Date.now() < deadline) {
     const pick = await page.evaluate((pre) => {
       const cards = [...document.querySelectorAll('.video-container')];
@@ -72,13 +72,12 @@ async function waitNewVideoCard(page, preSrcs, prompt) {
     // only safe early exit is explicit error text; anything else keeps
     // polling, because a late card landing under the NEXT asset's name
     // is the misattribution bug this lane exists to avoid.
-    const err = await page.evaluate((a) => {
+    const err = await page.evaluate((b) => {
       const body = (document.body?.innerText ?? '').replace(/\s+/g, ' ');
-      const idx = body.lastIndexOf(a);
-      if (idx < 0) return null; // our turn not in transcript yet - keep polling
-      const tail = body.slice(idx + a.length).slice(-400);
+      if (body.length <= b) return null; // nothing new yet - keep polling
+      const tail = body.slice(b);
       return /(lỗi|thử lại|error|try again|unable|không thể)/i.test(tail) ? tail : null;
-    }, anchor);
+    }, boundary);
     if (err) return { err, fatal: false };
     await sleep(8000);
   }
@@ -140,8 +139,8 @@ async function main() {
       await Promise.race([
         (async () => {
           const pre = await videoCardSrcs(page);
-          await submit(page, a.prompt);
-          const got = await waitNewVideoCard(page, pre, a.prompt);
+          const boundary = await submit(page, a.prompt);
+          const got = await waitNewVideoCard(page, pre, boundary);
           if (!got.src) {
             if (got.fatal) {
               const e = new Error(got.err);

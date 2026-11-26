@@ -53,3 +53,13 @@ xác khẩu hình phonics). 9 clips, Omni 1.2 Flash 16:9 720p.
     chứa được pause control nên motion phải tự kết thúc (WCAG 2.2.2).
   - Playback effect dep thêm `hidden` - reduced-motion flip remount video
     giờ re-bind listeners/IO đúng.
+- **r255** (commit bc414d6): 3 findings - fixed tất cả.
+  - Motion control thật: toggle "Hiệu ứng video chuyển động" trong
+    Góc ba mẹ (`ea-ambient-motion`, `ambientMotion.ts` + live
+    `useSyncExternalStore`) - mechanism accessible ngoài decorative
+    layer, cùng OS reduced-motion + auto-stop = 3 tầng dừng.
+  - Latch `done` + guard `video.ended` - visibility/IO không resume được
+    clip đã self-stop (r254 chỉ pause 1 lần rồi bị syncPlay đánh thức).
+  - Error scan dùng transcript boundary (innerText length lúc submit)
+    thay prompt anchor - các land prompt trùng prefix 40-char nên
+    lastIndexOf bắt nhầm error của turn trước.
