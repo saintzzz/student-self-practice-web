@@ -71,3 +71,8 @@ xác khẩu hình phonics). 9 clips, Omni 1.2 Flash 16:9 720p.
     storage throw không còn làm checkbox lệch store.
   - run-flow-video: boundary capture TRƯỚC click - rejection instant
     không bị nuốt vào boundary (trước đây 8-phút timeout mới phát hiện).
+- **r257** (commit cb9f8c8): 2 minors - fixed cả hai.
+  - Boundary trừ composer text (composer biến mất sau submit -> body
+    nhỏ hơn boundary cũ, rejection ngắn bị nuốt).
+  - MotionToggle: label ổn định "Video chuyển động" + `aria-pressed={on}`
+    - action text chuyển sang `title` (announce không còn mâu thuẫn).

@@ -18,8 +18,9 @@ export default function MotionToggle({ className = '' }: MotionToggleProps) {
     <button
       type="button"
       data-testid="ambient-motion-chip"
-      aria-pressed={!on}
-      aria-label={on ? 'Tắt video chuyển động' : 'Bật video chuyển động'}
+      aria-pressed={on}
+      aria-label="Video chuyển động"
+      title={on ? 'Tắt video chuyển động' : 'Bật video chuyển động'}
       onClick={() => {
         playSfx('pop');
         setAmbientMotionEnabled(!on);

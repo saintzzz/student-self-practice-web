@@ -47,11 +47,16 @@ async function submit(page, prompt) {
   await sleep(400);
   await page.keyboard.type(prompt, { delay: 3 });
   await sleep(300);
-  // Transcript boundary BEFORE the click: the typed prompt already sits
-  // in the composer so it is counted here; everything appended after
-  // submission belongs to this turn only. Capturing post-click could
-  // swallow an instant rejection into the boundary itself (r256).
-  const boundary = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').length);
+  // Transcript boundary BEFORE the click, EXCLUDING the composer: its
+  // text disappears on submission, and a short rejection would drop the
+  // body below a boundary that counted it (r257 - error swallowed,
+  // 8-min stall). New transcript text always lands past this offset.
+  const boundary = await page.evaluate(() => {
+    const norm = (s) => (s ?? '').replace(/\s+/g, ' ');
+    const body = norm(document.body.innerText);
+    const composer = norm(document.querySelector('.ProseMirror')?.innerText);
+    return body.length - composer.length;
+  });
   await page.locator('[aria-label="Bắt đầu tạo"], [aria-label="Start creating"]').last().click();
   return boundary;
 }
