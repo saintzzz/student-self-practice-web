@@ -34,6 +34,10 @@ GAMEFI-DESIGN-po (sticker sources) - "3 sao cả 3 màn của 10 game".
   (single funnel cho mọi gameBest write) + gọi sau merge trong
   `bindEngagement`. Tests: grant ngay khi 10th game hoàn thành +
   sync-merge 5+5 games -> sticker.
+- **r261** (commit 18da126): 1 major - background `runCycle()` cũng
+  merge gameBest mà không check (stars earn ở device khác sau bind).
+  Fix: gọi `checkGameMaster()` sau writeStateSilently(merged) trong
+  runCycle. Test: already-bound device merge 5 remote games -> sticker.
 
 ## Bug bắt được trong test
 

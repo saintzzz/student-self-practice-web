@@ -797,6 +797,10 @@ function runCycle(): Promise<void> {
           const merged = mergeEngagement(getState(), row.state);
           if (JSON.stringify(merged) !== JSON.stringify(getState())) {
             writeStateSilently(merged);
+            /* CR-151 (r261): background-cycle merges can complete the
+               10-game mastery too (stars earned on another device since
+               bind) - same evaluation as the bind-time merge. */
+            checkGameMaster();
           }
         }
         if (boundAccountId !== accountId) return;
