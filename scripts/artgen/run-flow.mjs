@@ -18,6 +18,11 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const manifestArg = process.argv.find((a) => a.startsWith('--manifest='));
 const manifestFile = manifestArg ? manifestArg.split('=')[1] : 'manifest-cr148.mjs';
+/* Optional project UUID (prefix ok) - pins the lane to that project tab.
+   Without it ANY flow.google.com/project tab matches, which once almost
+   sent image prompts into the video project after its tab was closed. */
+const projectArg = process.argv.find((a) => a.startsWith('--project='));
+const projectId = projectArg ? projectArg.split('=')[1] : null;
 const { ASSETS } = await import(`./${manifestFile}`);
 const OUT = join(HERE, '..', '..', 'artgen-out');
 mkdirSync(OUT, { recursive: true });
@@ -128,7 +133,8 @@ async function download(page, src, file) {
 async function main() {
   const browser = await chromium.connectOverCDP(CDP);
   const ctx = browser.contexts()[0];
-  let page = ctx.pages().find((p) => p.url().includes('flow.google.com/project'));
+  let page = ctx.pages().find((p) =>
+    p.url().includes(`flow.google.com/project/${projectId ?? ''}`));
   if (!page) {
     page = await ctx.newPage();
     await page.goto('https://flow.google.com/', { waitUntil: 'domcontentloaded' });
