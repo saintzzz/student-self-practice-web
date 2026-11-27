@@ -1,5 +1,7 @@
 import type { ExamQuestion } from '../../types/exam';
 import { HOME_ITEMS } from '../../data/homeItems';
+import { GAME_DEFS } from '../../games/defs';
+import { GAME_LEVELS } from '../../games/levels';
 
 /**
  * CR-10 engagement layer (PRD s19 R-T3/R-T4). LocalStorage-backed
@@ -224,6 +226,9 @@ export const STICKERS: readonly Sticker[] = [
   { id: 'mystery-island', nameVi: 'Nhà thám hiểm đảo bí mật', emoji: '🏝️', art: `/images/stickers/sticker-mystery-island.webp`, category: 'luyen' },
   // CR-149 (P1-8): class weekly lantern goal met (art pending artgen).
   { id: 'class-lantern', nameVi: 'Cả lớp thắp đèn', emoji: '🏮', art: `/images/stickers/sticker-class-lantern.webp`, category: 'luyen' },
+  // CR-151: game zone completionist - 3 stars on all 3 levels of 10
+  // games (spec GAMEFI-DESIGN-po sticker sources; art pending artgen).
+  { id: 'game-master', nameVi: 'Bậc thầy trò chơi', emoji: '🎮', art: `/images/stickers/sticker-game-master.webp`, category: 'luyen' },
 ] as const;
 
 const EMPTY_STATE: EngagementState = {
@@ -795,6 +800,24 @@ export function claimClassLantern(weekKey: string): boolean {
   const newly = new Set<string>();
   awardSticker(state, 'class-lantern', newly);
   grantObjective(state, key);
+  persist(state);
+  return true;
+}
+
+/** CR-151: 3 stars on all 3 levels of >= 10 games banks the
+ *  game-master sticker once via `gamemaster` (idempotent - later
+ *  masteries are a no-op). Call after recordGameResult. */
+export function checkGameMaster(): boolean {
+  const state = load();
+  if (state.grantedObjectives?.['game:master']) return false;
+  const best = state.gameBest ?? {};
+  const mastered = GAME_DEFS.filter((d) =>
+    GAME_LEVELS.every((l) => (best[`${d.id}:L${l}`] ?? 0) >= 3),
+  ).length;
+  if (mastered < 10) return false;
+  const newly = new Set<string>();
+  awardSticker(state, 'game-master', newly);
+  grantObjective(state, 'game:master');
   persist(state);
   return true;
 }

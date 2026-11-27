@@ -3,7 +3,7 @@ import LandShell from '../components/LandShell';
 import StarRain from '../components/celebrations/StarRain';
 import { IconArrowLeft, IconRefresh } from '../components/icons';
 import { playSfx } from '../lib/sfx';
-import { gameLevelStars, recordCorrectAnswers, recordGameResult, recordSkillAnswers, recordWrongExamQuestion, starsForScore } from '../lib/engagement/store';
+import { checkGameMaster, gameLevelStars, recordCorrectAnswers, recordGameResult, recordSkillAnswers, recordWrongExamQuestion, starsForScore } from '../lib/engagement/store';
 import { GAME_DEFS } from './defs';
 import { GAME_COMPONENTS } from './registry';
 import GameArt from './GameArt';
@@ -165,6 +165,9 @@ export default function GameScreen({ grade, gameId, onExit }: GameScreenProps) {
     /* Game-wrong -> review queue bridge: rounds that are real Question
        objects re-enter via the spaced-repetition path (CR-28). */
     for (const q of result.wrong ?? []) recordWrongExamQuestion(grade.id, q);
+    /* CR-151: 3 stars everywhere on 10 games -> game-master sticker.
+       Runs after recordGameResult so this run's stars count. */
+    checkGameMaster();
     setStars(starCount);
     setEnd(result);
     playSfx('star');
