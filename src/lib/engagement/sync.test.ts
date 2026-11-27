@@ -313,6 +313,22 @@ describe('bindEngagement - AC-45.1/45.2/45.3', () => {
     expect((lastUpsert(remote)?.state as EngagementState).totalStars).toBe(30);
   });
 
+  it('CR-151 (r260): gameBest union across devices completes the 10-game mastery', async () => {
+    const { GAME_DEFS } = await import('../../games/defs');
+    const mastered = (ids: string[]) =>
+      Object.fromEntries(ids.flatMap((id) => [1, 2, 3].map((l) => [`${id}:L${l}`, 3] as const)));
+    const remote = mockRemote({ 'acct-1': { ...base, gameBest: mastered(GAME_DEFS.slice(5, 10).map((d) => d.id)) } });
+    await wired(remote);
+    markOwnerAccountId('acct-1');
+    writeState({ ...base, gameBest: mastered(GAME_DEFS.slice(0, 5).map((d) => d.id)) });
+
+    await bindEngagement('acct-1');
+
+    /* Neither device locally saw 10 mastered games - only the merge
+       does, and bindEngagement must evaluate the sticker then. */
+    expect(getState().stickerIds).toContain('game-master');
+  });
+
   it('B1: a different owner\'s local state is discarded, never merged', async () => {
     const remote = mockRemote({ 'acct-b': { ...base, totalStars: 5 } });
     await wired(remote);

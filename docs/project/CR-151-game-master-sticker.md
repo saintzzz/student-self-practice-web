@@ -23,10 +23,17 @@ GAMEFI-DESIGN-po (sticker sources) - "3 sao cả 3 màn của 10 game".
 - `store.ts`: sticker entry `game-master` (category luyen, art
   `sticker-game-master.webp` chờ artgen manifest-p18) +
   `checkGameMaster()` đếm mastered games.
-- `GameScreen.handleEnd`: gọi `checkGameMaster()` sau
-  `recordGameResult` (run vừa xong đã tính sao).
 - `manifest-p18.mjs`: + `sticker-game-master` (trophy + controller +
   3 sao).
+
+## External review
+
+- **r260** (commit 1227c5d): 1 major - check chỉ chạy ở GameScreen
+  standalone; GameSection embedded + merge cross-device bỏ lỡ.
+  Fix: `checkGameMaster()` chuyển vào TRONG `recordGameResult`
+  (single funnel cho mọi gameBest write) + gọi sau merge trong
+  `bindEngagement`. Tests: grant ngay khi 10th game hoàn thành +
+  sync-merge 5+5 games -> sticker.
 
 ## Bug bắt được trong test
 

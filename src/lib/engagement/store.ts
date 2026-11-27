@@ -542,6 +542,10 @@ export function recordGameResult(
       state.gameBest = best;
       persist(state);
     }
+    /* CR-151: game-master check lives at the single funnel where
+       gameBest writes - GameScreen, embedded GameSection rounds, and
+       any future caller all reach it (r260). */
+    checkGameMaster();
   }
   return result;
 }

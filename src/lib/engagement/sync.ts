@@ -2,6 +2,7 @@ import { getSupabase, isSupabaseConfigured } from '../supabase/client';
 import type { ExamQuestion } from '../../types/exam';
 import { HOME_ITEM_IDS } from '../../data/homeItems';
 import {
+  checkGameMaster,
   DAY_STATS_CAP,
   REVIEW_CAP,
   REVIEW_MASTERED_CAP,
@@ -897,6 +898,10 @@ export async function bindEngagement(accountId: string): Promise<void> {
       const merged = mergeEngagement(getState(), remote);
       if (JSON.stringify(merged) !== JSON.stringify(getState())) {
         writeStateSilently(merged);
+        /* CR-151 (r260): the merge itself can complete the 10-game
+           mastery (stars earned on another device) - evaluate the
+           sticker right after the union lands. */
+        checkGameMaster();
       }
     }
     pullState = 'done';

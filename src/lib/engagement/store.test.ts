@@ -286,26 +286,20 @@ describe('recordGameResult levels (CR-88)', () => {
 });
 
 describe('checkGameMaster (CR-151)', () => {
-  async function masterGames(ids: string[]) {
-    const { checkGameMaster, recordGameResult } = await import('./store');
-    for (const id of ids) {
+  it('grants at 10 fully-mastered games via recordGameResult itself, not at 9', async () => {
+    const { GAME_DEFS } = await import('../../games/defs');
+    const { checkGameMaster } = await import('./store');
+    for (const d of GAME_DEFS.slice(0, 9)) {
       for (const level of [1, 2, 3]) {
-        recordGameResult('grade-4', id, `${id}-s${level}`, 10, 10, level);
+        recordGameResult('grade-4', d.id, `${d.id}-s${level}`, 10, 10, level);
       }
     }
-    return checkGameMaster;
-  }
-
-  it('grants the sticker at 10 fully-mastered games, not at 9', async () => {
-    const { GAME_DEFS } = await import('../../games/defs');
-    const checkGameMaster = await masterGames(GAME_DEFS.slice(0, 9).map((d) => d.id));
-    expect(checkGameMaster()).toBe(false);
+    expect(getState().stickerIds).not.toContain('game-master');
     const tenth = GAME_DEFS[9];
-    const { recordGameResult } = await import('./store');
     for (const level of [1, 2, 3]) {
       recordGameResult('grade-4', tenth.id, `tenth-s${level}`, 10, 10, level);
     }
-    expect(checkGameMaster()).toBe(true);
+    // r260: the grant fires inside recordGameResult - no separate call.
     expect(getState().stickerIds).toContain('game-master');
     expect(checkGameMaster()).toBe(false); // idempotent
   });
