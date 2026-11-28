@@ -29,7 +29,12 @@ mkdirSync(OUT, { recursive: true });
 
 const CDP = process.env.CDP || 'http://localhost:9222';
 const GEN_WAIT_MS = 180_000;
-const BETWEEN_MS = 4_000;
+const BETWEEN_MS = 12_000;
+/* Flow shows "Bạn đang hỏi quá nhanh" when the account is rate-limited -
+   a burst cap, NOT the daily quota wall. Backing off clears it; burning
+   the asset would just waste a prompt slot. */
+const RATELIMIT_RE = /hỏi quá nhanh|quá nhanh|too fast|rate.?limit|slow down/i;
+const RATELIMIT_MAX_RETRY = 4;
 /* Long-run guards: hundreds of x2 generations bloat the session DOM, so
    reload the project page periodically; a run of consecutive failures
    means the session/auth is dead - stop early instead of burning hours. */
@@ -99,7 +104,9 @@ async function waitNewImage(page, preSrcs) {
     }
     if (pick?.err && Date.now() > deadline - GEN_WAIT_MS + 60_000) {
       // Generation finished with no image - capture the agent's answer.
-      return { err: pick.err };
+      return RATELIMIT_RE.test(pick.err)
+        ? { ratelimit: true, err: pick.err }
+        : { err: pick.err };
     }
     await sleep(2500);
   }
@@ -130,15 +137,31 @@ async function download(page, src, file) {
   writeFileSync(file, Buffer.from(b64, 'base64'));
 }
 
+const PROJECT_URL = `https://flow.google.com/project/${projectId ?? ''}`;
+
+/* The shared Chrome gets repurposed for manual browsing - its Flow tab
+   has been navigated away mid-run twice. Own a tab instead: find ours
+   by URL, else open a fresh one. Returns null when Flow won't load. */
+async function acquirePage(ctx) {
+  let page = ctx.pages().find((p) => p.url().includes(PROJECT_URL));
+  if (!page) {
+    try {
+      page = await ctx.newPage();
+      await page.goto(PROJECT_URL, { waitUntil: 'domcontentloaded' });
+    } catch { return null; }
+  }
+  try {
+    await page.locator('.ProseMirror').first().waitFor({ timeout: 20000 });
+    return page;
+  } catch { return null; }
+}
+
 async function main() {
   const browser = await chromium.connectOverCDP(CDP);
   const ctx = browser.contexts()[0];
-  let page = ctx.pages().find((p) =>
-    p.url().includes(`flow.google.com/project/${projectId ?? ''}`));
+  let page = await acquirePage(ctx);
   if (!page) {
-    page = await ctx.newPage();
-    await page.goto('https://flow.google.com/', { waitUntil: 'domcontentloaded' });
-    console.log('[flow] no project tab - open one and rerun');
+    console.log('[flow] project page unreachable - check login, rerun');
     return;
   }
   // Reload so any open sub-panel (agent settings etc.) resets to the
@@ -149,11 +172,21 @@ async function main() {
 
   let doneSinceReload = 0;
   let consecFails = 0;
+  let rlRetries = 0;
   for (let pass = 0; pass < 4; pass++) {
     const missing = ASSETS.filter((a) => !existsSync(join(OUT, `${a.id}.png`)));
     if (!missing.length) break;
     console.log(`[flow] pass ${pass + 1}: ${missing.length} missing`);
-    for (const a of missing) {
+    for (let ai = 0; ai < missing.length; ai++) {
+      const a = missing[ai];
+      /* Self-heal: if our tab was navigated away or closed since the
+         last asset, acquire a fresh one before submitting - count a
+         failed acquire like a failed asset so the breaker still works. */
+      let pageUrl = '';
+      try { pageUrl = page.url(); } catch { /* closed tab */ }
+      if (!pageUrl.includes('flow.google.com/project')) {
+        page = (await acquirePage(ctx)) ?? page;
+      }
       const file = join(OUT, `${a.id}.png`);
       /* Hard watchdog: playwright evaluate/click calls have NO default
          timeout - a wedged CDP eval hung the run 37min once. Bound the
@@ -167,12 +200,19 @@ async function main() {
         // r250: failures must still flow through the breaker + pacing
         // below - a bare `continue` skipped both and let a dead session
         // burn 40+ consecutive prompts before aborting.
-        if (!got.src) {
+        if (got.ratelimit && rlRetries < RATELIMIT_MAX_RETRY) {
+          rlRetries++;
+          const backoff = Math.min(60_000 * rlRetries, 120_000);
+          console.log(`[flow] ${a.id}: rate-limited - backoff ${backoff / 1000}s (retry ${rlRetries}/${RATELIMIT_MAX_RETRY})`);
+          await sleep(backoff);
+          ai--; // retry the same asset next iteration
+        } else if (!got.src) {
           consecFails++;
           console.log(`[flow] ${a.id}: ${got.err}`);
         } else {
           await download(page, got.src, file);
           consecFails = 0;
+          rlRetries = 0;
           console.log(`[flow] ${a.id}: ${got.w}x${got.h} saved (${++doneSinceReload} this pass)`);
         }
           })(),
